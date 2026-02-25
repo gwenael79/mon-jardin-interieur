@@ -10,6 +10,7 @@ import { RITUAL_CATALOG } from '../services/ritual.service'
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;width:100%}
 :root{
   --bg:#090c08;--bg2:#0e1209;--bg3:#131810;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.04);
@@ -18,18 +19,12 @@ const css = `
   --gold:#c8b89a;
 }
 body{background:var(--bg)}
-.root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;color:var(--text)}
+.root{font-family:'Jost',sans-serif;background:var(--bg);height:100vh;width:100vw;color:var(--text);display:flex;flex-direction:column;overflow:hidden}
 ::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--greenT);border-radius:100px}
-.shell{max-width:1100px;margin:0 auto;padding:32px 24px 48px;display:flex;flex-direction:column;gap:20px}
-.shell-title{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:300;letter-spacing:0.3em;text-transform:uppercase;color:var(--text3);text-align:center}
-.browser{background:var(--bg2);border-radius:18px;border:1.5px solid var(--border);overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 40px 100px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.05)}
-.browser-bar{display:flex;align-items:center;gap:14px;padding:11px 18px;background:var(--bg);border-bottom:1px solid var(--border2);flex-shrink:0}
-.bdots{display:flex;gap:6px}.bdot{width:10px;height:10px;border-radius:50%}
-.browser-url{flex:1;background:rgba(255,255,255,.03);border:1px solid var(--border2);border-radius:100px;padding:4px 14px;font-size:10px;color:var(--text3);letter-spacing:.05em}
-.browser-user{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text3)}
-.buser-av{width:22px;height:22px;border-radius:50%;background:var(--green2);border:1px solid var(--greenT);display:flex;align-items:center;justify-content:center;font-size:11px}
-.app-layout{display:flex;height:640px}
-.sidebar{width:210px;flex-shrink:0;border-right:1px solid var(--border2);background:rgba(0,0,0,.25);display:flex;flex-direction:column;padding:22px 0 18px}
+
+/* FULL SCREEN LAYOUT */
+.app-layout{display:flex;flex:1;overflow:hidden;min-height:0}
+.sidebar{width:210px;flex-shrink:0;border-right:1px solid var(--border2);background:rgba(0,0,0,.25);display:flex;flex-direction:column;padding:22px 0 18px;overflow-y:auto}
 .sb-logo{padding:0 22px 18px;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;color:var(--gold);border-bottom:1px solid var(--border2);margin-bottom:14px;letter-spacing:.02em;line-height:1.4}
 .sb-logo em{font-style:italic;color:var(--green)}
 .sb-section{padding:0 14px 6px;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3)}
@@ -55,7 +50,7 @@ body{background:var(--bg)}
 .tb-btn.ghost{background:transparent;color:var(--text2);border-color:var(--border)}
 .tb-notif{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;position:relative;cursor:pointer}
 .notif-dot{position:absolute;top:-1px;right:-1px;width:8px;height:8px;background:var(--green);border-radius:50%;border:1.5px solid var(--bg2)}
-.content{flex:1;overflow:hidden;display:flex}
+.content{flex:1;overflow:hidden;display:flex;min-height:0}
 .col{overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:16px}
 .slabel{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);padding-bottom:10px;border-bottom:1px solid var(--border2)}
 .rpanel{width:256px;flex-shrink:0;border-left:1px solid var(--border2);overflow-y:auto}
@@ -102,7 +97,7 @@ body{background:var(--bg)}
 .gi-emoji{font-size:14px}.gi-text{flex:1;font-size:9px;font-weight:300;color:var(--text2);line-height:1.4}
 .gi-text b{color:var(--text);font-weight:400}.gi-time{font-size:8px;color:var(--text3)}
 /* Mon Jardin */
-.mj-layout{display:flex;flex:1;overflow:hidden}
+.mj-layout{display:flex;flex:1;overflow:hidden;min-height:0}
 .mj-left{flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px}
 .mj-right{width:250px;flex-shrink:0;border-left:1px solid var(--border2);overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:16px}
 .plant-hero{background:linear-gradient(160deg,rgba(20,30,15,.8),rgba(10,18,8,.9));border:1px solid rgba(122,173,110,.15);border-radius:18px;padding:24px;display:flex;align-items:center;gap:28px;position:relative;overflow:hidden}
@@ -235,7 +230,6 @@ body{background:var(--bg)}
 .cps-lbl{font-size:8px;color:var(--text3);letter-spacing:.06em;margin-top:1px}
 `;
 
-// ─── PLANT SVG ────────────────────────────────────────────
 function PlantSVG({ health = 72, w = 90, h = 100 }) {
   const r = health / 100;
   return (
@@ -268,10 +262,8 @@ function PlantSVG({ health = 72, w = 90, h = 100 }) {
   );
 }
 
-// ─── HELPERS ──────────────────────────────────────────────
 const MEMBER_EMOJIS = { Marie:'🌸', Lucas:'🌿', Sofia:'🌾', Paul:'🌱', Léa:'🌺', Tom:'🍃' }
 const memberEmoji = (name) => MEMBER_EMOJIS[name] ?? '🌿'
-
 const GESTURE_EMOJI = { water:'💧', sun:'☀️', seed:'🌱' }
 const GESTURE_LABEL = { water:'une goutte', sun:'un rayon', seed:'une graine' }
 
@@ -288,7 +280,6 @@ function formatDate(iso) {
   return new Intl.DateTimeFormat('fr-FR', { weekday:'short', day:'numeric', month:'short' }).format(new Date(iso))
 }
 
-// ─── ZONE CONFIG ──────────────────────────────────────────
 const ZONES = [
   { key:'zone_racines',  icon:'🌱', name:'Racines',  color:'#7aad6e' },
   { key:'zone_tige',     icon:'🌿', name:'Tige',     color:'#6aad74' },
@@ -297,7 +288,6 @@ const ZONES = [
   { key:'zone_souffle',  icon:'🌬️', name:'Souffle',  color:'#80a8d0' },
 ]
 
-// ─── SCREEN 1 — CERCLE DU MATIN ───────────────────────────
 function ScreenCercle({ userId }) {
   const { circleMembers, activeCircle } = useCircle(userId)
   const { received } = useGestures(userId)
@@ -318,16 +308,11 @@ function ScreenCercle({ userId }) {
   return (
     <div className="content">
       <div className="col" style={{ flex:1 }}>
-        <div className="slabel">
-          Jardins du cercle — {activeCircle?.name ?? 'Cercle'} · Aujourd'hui
-        </div>
-
-        {/* Grille jardins — données réelles via circleMembers */}
+        <div className="slabel">Jardins du cercle — {activeCircle?.name ?? 'Cercle'} · Aujourd'hui</div>
         <div className="gardens-grid">
           {circleMembers.map(m => {
             const name  = m.user?.display_name ?? m.user?.email ?? '?'
             const plant = m.todayPlant
-            const ritualCount = 0 // à brancher sur rituels réels
             return (
               <div key={m.userId} className={`gcard${!plant ? ' gcard-absent' : ''}`}>
                 <div className="gcard-emoji">{memberEmoji(name)}</div>
@@ -335,15 +320,11 @@ function ScreenCercle({ userId }) {
                 <div className="gcard-bar">
                   <div className="gcard-fill" style={{ width:`${plant?.health ?? 0}%` }} />
                 </div>
-                <div className="gcard-n">
-                  {plant ? `${plant.health}%` : 'Pas encore là'}
-                </div>
+                <div className="gcard-n">{plant ? `${plant.health}%` : 'Pas encore là'}</div>
               </div>
             )
           })}
         </div>
-
-        {/* Collectif */}
         <div className="collective-banner">
           <div className="cb-top">
             <span className="cb-badge">Collectif · Ce soir</span>
@@ -359,8 +340,6 @@ function ScreenCercle({ userId }) {
             <div className="cb-join">Rejoindre</div>
           </div>
         </div>
-
-        {/* Activité */}
         <div className="slabel">Activité récente</div>
         {ACTIVITY.map((a, i) => (
           <div key={i} className="act-item">
@@ -373,8 +352,6 @@ function ScreenCercle({ userId }) {
           </div>
         ))}
       </div>
-
-      {/* Panel droit */}
       <div className="rpanel">
         <div className="rp-section">
           <div className="rp-slabel">Membres · {circleMembers.length}</div>
@@ -391,21 +368,16 @@ function ScreenCercle({ userId }) {
             )
           })}
         </div>
-
-        {/* Gestes reçus — données réelles */}
         <div className="rp-section" style={{ marginTop:16 }}>
           <div className="rp-slabel">Gestes reçus</div>
           {received.map(g => (
             <div key={g.id} className="gesture-item">
               <div className="gi-emoji">{GESTURE_EMOJI[g.type]}</div>
-              <div className="gi-text">
-                <b>{g.users?.display_name ?? '?'}</b> t'a envoyé {GESTURE_LABEL[g.type]}
-              </div>
+              <div className="gi-text"><b>{g.users?.display_name ?? '?'}</b> t'a envoyé {GESTURE_LABEL[g.type]}</div>
               <div className="gi-time">{timeAgo(g.created_at)}</div>
             </div>
           ))}
         </div>
-
         <div className="rp-section" style={{ marginTop:16 }}>
           <div className="rp-slabel">Prochains collectifs</div>
           {UPCOMING.map((r, i) => (
@@ -423,18 +395,17 @@ function ScreenCercle({ userId }) {
   );
 }
 
-// ─── SCREEN 2 — MON JARDIN ────────────────────────────────
 function ScreenMonJardin({ userId }) {
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)
   const { settings, toggle } = usePrivacy(userId)
   const { entries } = useJournal(userId)
 
   const PRIVACY_FIELDS = [
-    { field:'show_health',      icon:'💚', label:'Vitalité globale' },
-    { field:'show_rituals',     icon:'🌿', label:'Rituels complétés' },
-    { field:'show_zone_scores', icon:'📊', label:'Scores par zone' },
-    { field:'show_quiz_answers',icon:'📝', label:'Réponses au quiz' },
-    { field:'show_journal',     icon:'📓', label:'Journal personnel' },
+    { field:'show_health',       icon:'💚', label:'Vitalité globale' },
+    { field:'show_rituals',      icon:'🌿', label:'Rituels complétés' },
+    { field:'show_zone_scores',  icon:'📊', label:'Scores par zone' },
+    { field:'show_quiz_answers', icon:'📝', label:'Réponses au quiz' },
+    { field:'show_journal',      icon:'📓', label:'Journal personnel' },
   ]
 
   const doneRitualIds = new Set(todayRituals.map(r => {
@@ -460,17 +431,11 @@ function ScreenMonJardin({ userId }) {
   return (
     <div className="mj-layout">
       <div className="mj-left">
-
-        {/* Hero plante — données réelles */}
         <div className="plant-hero">
           <div className="ph-glow" />
-          <div className="ph-plant">
-            <PlantSVG health={todayPlant?.health ?? 50} w={90} h={100} />
-          </div>
+          <div className="ph-plant"><PlantSVG health={todayPlant?.health ?? 50} w={90} h={100} /></div>
           <div className="ph-info">
-            <div className="ph-health">
-              {todayPlant?.health ?? '—'} <span>%</span>
-            </div>
+            <div className="ph-health">{todayPlant?.health ?? '—'} <span>%</span></div>
             <div className="ph-label">Vitalité · {todayLabel}</div>
             <div className="ph-zones">
               {ZONES.map(z => {
@@ -489,30 +454,22 @@ function ScreenMonJardin({ userId }) {
             </div>
           </div>
         </div>
-
-        {/* Rituels interactifs — branchés sur completeRitual */}
         <div className="slabel">Rituels du jour</div>
         <div className="ritual-grid">
           {RITUAL_CATALOG.map(r => {
             const done = doneRitualIds.has(r.id)
             return (
-              <div
-                key={r.id}
+              <div key={r.id}
                 className={`ritual-btn ${r.delta > 0 ? 'positive' : 'negative'}${done ? ' done' : ''}`}
                 onClick={() => !done && completeRitual(r.id)}
-                title={done ? 'Déjà complété aujourd\'hui' : ''}
               >
                 <span className="rb-emoji">{done ? '✅' : r.emoji}</span>
                 <span className="rb-name">{r.name}</span>
-                <span className={`rb-delta ${r.delta > 0 ? 'pos' : 'neg'}`}>
-                  {r.delta > 0 ? `+${r.delta}` : r.delta}
-                </span>
+                <span className={`rb-delta ${r.delta > 0 ? 'pos' : 'neg'}`}>{r.delta > 0 ? `+${r.delta}` : r.delta}</span>
               </div>
             )
           })}
         </div>
-
-        {/* Graphe historique — données réelles */}
         <div className="history-chart">
           <div className="hc-header">
             <div className="hc-title">Évolution sur 7 jours</div>
@@ -535,21 +492,15 @@ function ScreenMonJardin({ userId }) {
             })}
           </div>
         </div>
-
-        {/* Grille rituelle hebdomadaire — données réelles */}
         <div className="slabel">Rituels cette semaine</div>
         <div className="week-grid">
           {weekGrid.map((d, i) => (
             <div key={i} className="wday">
-              <div className={`wd-dot ${d.status}${d.isToday ? ' today' : ''}`}>
-                {d.count || '–'}
-              </div>
+              <div className={`wd-dot ${d.status}${d.isToday ? ' today' : ''}`}>{d.count || '–'}</div>
               <div className="wd-label">{d.label}</div>
             </div>
           ))}
         </div>
-
-        {/* Journal — données réelles */}
         <div className="slabel">Journal personnel</div>
         {entries.map(e => (
           <div key={e.id} className="journal-entry">
@@ -561,42 +512,32 @@ function ScreenMonJardin({ userId }) {
           </div>
         ))}
       </div>
-
-      {/* Panel droit */}
       <div className="mj-right">
         <div className="slabel">Confidentialité</div>
         <div style={{ fontSize:9, color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>
           Ce que vos cercles peuvent voir de vous.
         </div>
-
-        {/* Toggles — branchés sur usePrivacy */}
         {PRIVACY_FIELDS.map(p => (
           <div key={p.field} className="privacy-item">
             <div className="priv-icon">{p.icon}</div>
             <div className="priv-label">{p.label}</div>
-            <div
-              className={`priv-toggle ${settings?.[p.field] ? 'on' : 'off'}`}
-              onClick={() => toggle(p.field)}
-            >
+            <div className={`priv-toggle ${settings?.[p.field] ? 'on' : 'off'}`} onClick={() => toggle(p.field)}>
               <div className="pt-knob" />
             </div>
           </div>
         ))}
-
-        {/* Stats — données réelles */}
         <div className="slabel" style={{ marginTop:8 }}>Statistiques</div>
         {[
           { label:'Jours consécutifs',   val: stats ? `${stats.streak} 🔥` : '—' },
-          { label:'Rituels ce mois',     val: stats?.ritualsThisMonth ?? '—'   },
-          { label:'Zone la plus active', val: stats?.favoriteZone ?? '—'       },
-          { label:'Cercles actifs',      val: '2'                               },
+          { label:'Rituels ce mois',     val: stats?.ritualsThisMonth ?? '—'      },
+          { label:'Zone la plus active', val: stats?.favoriteZone ?? '—'          },
+          { label:'Cercles actifs',      val: '2'                                 },
         ].map((s, i) => (
           <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
             <div style={{ fontSize:10, color:'var(--text2)', fontWeight:300 }}>{s.label}</div>
             <div style={{ fontSize:12, color:'var(--text)', fontFamily:"'Cormorant Garamond', serif" }}>{s.val}</div>
           </div>
         ))}
-
         <div className="slabel" style={{ marginTop:8 }}>Exporter</div>
         {['Journal PDF','Données CSV','Partager le bilan'].map((e, i) => (
           <div key={i} style={{ padding:'7px 12px', background:'rgba(255,255,255,.02)', border:'1px solid var(--border)', borderRadius:9, fontSize:10, color:'var(--text2)', cursor:'pointer', marginBottom:6, display:'flex', alignItems:'center', gap:8 }}>
@@ -608,33 +549,25 @@ function ScreenMonJardin({ userId }) {
   );
 }
 
-// ─── SCREEN 3 — CERCLES ───────────────────────────────────
 function ScreenCercles({ userId }) {
-  const { circles, activeCircle, isLoading } = useCircle(userId)
+  const { circles, activeCircle } = useCircle(userId)
   const [joinCode, setJoinCode] = useState('')
-
   const CIRCLE_EMOJIS = ['🌸','🌿','🌾','🌱','🌺','🍃','🌼','🌷','🌻']
 
   return (
     <div className="content">
       <div className="col" style={{ flex:1 }}>
         <div className="slabel">Mes cercles · {circles.length} actifs</div>
-
-        {/* Grille cercles — données réelles */}
         <div className="circles-grid">
           {circles.map((c, ci) => (
             <div key={c.id} className={`circle-card-big${c.id === activeCircle?.id ? ' active-circle' : ''}`}>
               <div className="ccb-top">
                 <div className="ccb-name">{c.name}</div>
-                <div className={`ccb-badge ${c.isAdmin ? 'admin' : 'member'}`}>
-                  {c.isAdmin ? 'Admin' : 'Membre'}
-                </div>
+                <div className={`ccb-badge ${c.isAdmin ? 'admin' : 'member'}`}>{c.isAdmin ? 'Admin' : 'Membre'}</div>
               </div>
               <div className="ccb-theme">{c.theme}</div>
               <div className="ccb-members">
-                {CIRCLE_EMOJIS.slice(0, c.memberCount).map((e, i) => (
-                  <div key={i} className="ccb-member-av">{e}</div>
-                ))}
+                {CIRCLE_EMOJIS.slice(0, c.memberCount).map((e, i) => <div key={i} className="ccb-member-av">{e}</div>)}
                 <div className="ccb-member-count">{c.memberCount} membres</div>
               </div>
               <div className="ccb-stats">
@@ -643,9 +576,7 @@ function ScreenCercles({ userId }) {
                   <div className="ccbs-lbl">rituels ce mois</div>
                 </div>
                 <div className="ccbs-item">
-                  <div className="ccbs-val">
-                    {Math.floor((Date.now() - new Date(c.created_at ?? Date.now()).getTime()) / 86400000)}
-                  </div>
+                  <div className="ccbs-val">{Math.floor((Date.now() - new Date(c.created_at ?? Date.now()).getTime()) / 86400000)}</div>
                   <div className="ccbs-lbl">jours ensemble</div>
                 </div>
               </div>
@@ -656,37 +587,29 @@ function ScreenCercles({ userId }) {
             <div className="ccc-text">Créer un cercle<br />ou rejoindre via code</div>
           </div>
         </div>
-
-        {/* Détail cercle actif */}
         {activeCircle && (
           <>
             <div className="slabel" style={{ marginTop:4 }}>Détail — {activeCircle.name}</div>
             <div className="circle-detail">
               <div className="cd-header">
                 <div className="cd-title">{activeCircle.name} · {activeCircle.isAdmin ? 'Admin' : 'Membre'}</div>
-                <div className="cd-meta">
-                  {activeCircle.memberCount} membres · {activeCircle.theme}
-                </div>
+                <div className="cd-meta">{activeCircle.memberCount} membres · {activeCircle.theme}</div>
               </div>
               <div className="cd-body">
                 {activeCircle.isAdmin && (
                   <>
-                    <div style={{ fontSize:8, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>
-                      Code d'invitation
-                    </div>
+                    <div style={{ fontSize:8, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>Code d'invitation</div>
                     <div className="cd-invite">
                       <div className="cdi-code">{activeCircle.invite_code ?? '——'}</div>
-                      <div className="cdi-copy" onClick={() => navigator.clipboard?.writeText(activeCircle.invite_code ?? '')}>
-                        Copier
-                      </div>
+                      <div className="cdi-copy" onClick={() => navigator.clipboard?.writeText(activeCircle.invite_code ?? '')}>Copier</div>
                     </div>
                     <div style={{ height:1, background:'var(--border2)', margin:'8px 0' }} />
                   </>
                 )}
                 {[
-                  { l:'Thème',        v: activeCircle.theme ?? '—'        },
-                  { l:'Visibilité',   v: activeCircle.is_open ? 'Public' : 'Sur invitation' },
-                  { l:'Capacité',     v: `${activeCircle.memberCount}/${activeCircle.max_members ?? 8}` },
+                  { l:'Thème',      v: activeCircle.theme ?? '—' },
+                  { l:'Visibilité', v: activeCircle.is_open ? 'Public' : 'Sur invitation' },
+                  { l:'Capacité',   v: `${activeCircle.memberCount}/${activeCircle.max_members ?? 8}` },
                 ].map((s, i) => (
                   <div key={i} className="cd-setting">
                     <div className="cds-label">{s.l}</div>
@@ -698,17 +621,12 @@ function ScreenCercles({ userId }) {
           </>
         )}
       </div>
-
       <div className="rpanel">
         <div className="rp-section">
           <div className="rp-slabel">Rejoindre via code</div>
           <div style={{ display:'flex', gap:6, marginBottom:16 }}>
-            <input
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="CODE…"
-              style={{ flex:1, padding:'7px 12px', background:'rgba(255,255,255,.03)', border:'1px solid var(--border)', borderRadius:9, fontSize:10, color:'var(--text2)', letterSpacing:'.1em', outline:'none' }}
-            />
+            <input value={joinCode} onChange={e => setJoinCode(e.target.value.toUpperCase())} placeholder="CODE…"
+              style={{ flex:1, padding:'7px 12px', background:'rgba(255,255,255,.03)', border:'1px solid var(--border)', borderRadius:9, fontSize:10, color:'var(--text2)', letterSpacing:'.1em', outline:'none' }} />
             <div style={{ padding:'7px 14px', background:'var(--green2)', border:'1px solid var(--greenT)', borderRadius:9, fontSize:10, color:'#a8d4a0', cursor:'pointer' }}>→</div>
           </div>
           <div className="rp-slabel">Découvrir</div>
@@ -739,14 +657,13 @@ function ScreenCercles({ userId }) {
   );
 }
 
-// ─── SCREEN 4 — DÉFIS ─────────────────────────────────────
 const DEFIS_DATA = [
-  { e:'🌬️', t:'7 jours de silence matinal',  zone:'Souffle',  dur:'7 jours',  desc:'5 min de silence conscient chaque matin, avant tout écran.',             p:1847, joined:true,  fill:72, color:'#80a8d0' },
-  { e:'🌱',  t:'Semaine Racines',              zone:'Racines',  dur:'7 jours',  desc:'Centrage quotidien, repas conscient, coucher avant minuit.',              p:934,  joined:false, fill:45, color:'#7aad6e' },
-  { e:'💧',  t:'21 jours de gratitude',        zone:'Feuilles', dur:'21 jours', desc:'3 nouvelles gratitudes spécifiques chaque soir.',                        p:3201, joined:false, fill:58, color:'#90c890' },
-  { e:'🌸',  t:'Mois sans réseaux le matin',   zone:'Souffle',  dur:'30 jours', desc:'Pas de réseaux sociaux dans la première heure du matin.',                p:612,  joined:true,  fill:81, color:'#d07090' },
-  { e:'🧘',  t:'14 jours de respiration',      zone:'Tige',     dur:'14 jours', desc:'Cohérence cardiaque 5 min, chaque matin et chaque soir.',                p:1103, joined:false, fill:33, color:'#a8c8a0' },
-  { e:'🌙',  t:'Rituel du coucher — 30 jours', zone:'Racines',  dur:'30 jours', desc:'Téléphone coupé à 22h, décompression avant minuit.',                    p:788,  joined:false, fill:19, color:'#8890d0' },
+  { e:'🌬️', t:'7 jours de silence matinal',  zone:'Souffle',  dur:'7 jours',  desc:'5 min de silence conscient chaque matin, avant tout écran.',  p:1847, joined:true,  fill:72, color:'#80a8d0' },
+  { e:'🌱',  t:'Semaine Racines',              zone:'Racines',  dur:'7 jours',  desc:'Centrage quotidien, repas conscient, coucher avant minuit.',   p:934,  joined:false, fill:45, color:'#7aad6e' },
+  { e:'💧',  t:'21 jours de gratitude',        zone:'Feuilles', dur:'21 jours', desc:'3 nouvelles gratitudes spécifiques chaque soir.',             p:3201, joined:false, fill:58, color:'#90c890' },
+  { e:'🌸',  t:'Mois sans réseaux le matin',   zone:'Souffle',  dur:'30 jours', desc:'Pas de réseaux sociaux dans la première heure du matin.',     p:612,  joined:true,  fill:81, color:'#d07090' },
+  { e:'🧘',  t:'14 jours de respiration',      zone:'Tige',     dur:'14 jours', desc:'Cohérence cardiaque 5 min, chaque matin et chaque soir.',     p:1103, joined:false, fill:33, color:'#a8c8a0' },
+  { e:'🌙',  t:'Rituel du coucher — 30 jours', zone:'Racines',  dur:'30 jours', desc:'Téléphone coupé à 22h, décompression avant minuit.',         p:788,  joined:false, fill:19, color:'#8890d0' },
 ]
 
 function ScreenDefis({ userId }) {
@@ -774,15 +691,10 @@ function ScreenDefis({ userId }) {
             <div className="df-learn">En savoir plus</div>
           </div>
         </div>
-
         <div className="cat-filter">
-          {cats.map(c => (
-            <div key={c} className={`cat-btn${cat === c ? ' active' : ''}`} onClick={() => setCat(c)}>{c}</div>
-          ))}
+          {cats.map(c => <div key={c} className={`cat-btn${cat === c ? ' active' : ''}`} onClick={() => setCat(c)}>{c}</div>)}
         </div>
-
         <div className="slabel">{cat === 'Tous' ? 'Tous les défis' : `Zone ${cat}`} · {filtered.length} disponibles</div>
-
         <div className="defis-grid">
           {filtered.map((d, i) => (
             <div key={i} className="defi-card">
@@ -798,15 +710,12 @@ function ScreenDefis({ userId }) {
               <div className="dc-foot">
                 <div className="dc-participants">{d.p.toLocaleString()} pers.</div>
                 <div className="dc-bar"><div className="dc-bar-fill" style={{ width:`${d.fill}%`, background:d.color+'88' }} /></div>
-                {d.joined
-                  ? <div className="dc-joined">✓ En cours</div>
-                  : <div className="dc-join-btn">Rejoindre</div>}
+                {d.joined ? <div className="dc-joined">✓ En cours</div> : <div className="dc-join-btn">Rejoindre</div>}
               </div>
             </div>
           ))}
         </div>
       </div>
-
       <div className="rpanel">
         <div className="rp-section">
           <div className="rp-slabel">Mes défis actifs</div>
@@ -853,7 +762,6 @@ function ScreenDefis({ userId }) {
   );
 }
 
-// ─── MAIN APP ─────────────────────────────────────────────
 const SCREENS = [
   { id:'cercle',  icon:'🏠', label:'Cercle',     badge:null, Component: ScreenCercle    },
   { id:'jardin',  icon:'🌿', label:'Mon Jardin', badge:null, Component: ScreenMonJardin },
@@ -863,75 +771,53 @@ const SCREENS = [
 
 export default function DashboardPage() {
   const [active, setActive] = useState('cercle')
- const { user } = useAuth()  // → remplacer par: const { user } = useAuth()
+  const { user } = useAuth()
   const { todayPlant } = usePlant(user?.id)
 
   const { Component } = SCREENS.find(s => s.id === active)
 
   const topbar = {
-    cercle:  { title: <>Cercle <em>du Matin</em></>,     sub:`6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`, btn:'+ Inviter' },
-    jardin:  { title: <>Mon <em>Jardin</em></>,           sub:`${todayPlant?.health ?? '—'}% · 12 jours consécutifs`, btn:'Exporter'  },
-    cercles: { title: <>Mes <em>Cercles</em></>,          sub:'3 actifs · 13 membres au total',   btn:'Créer'     },
-    defis:   { title: <>Défis & <em>Challenges</em></>,   sub:'2 en cours · 8 432 participants',  btn:'Proposer'  },
+    cercle:  { title: <>Cercle <em>du Matin</em></>,   sub:`6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`, btn:'+ Inviter' },
+    jardin:  { title: <>Mon <em>Jardin</em></>,         sub:`${todayPlant?.health ?? '—'}% · 12 jours consécutifs`, btn:'Exporter'  },
+    cercles: { title: <>Mes <em>Cercles</em></>,        sub:'3 actifs · 13 membres au total',   btn:'Créer'     },
+    defis:   { title: <>Défis & <em>Challenges</em></>, sub:'2 en cours · 8 432 participants',  btn:'Proposer'  },
   }[active]
 
   return (
     <div className="root">
       <style>{css}</style>
-      <div className="shell">
-        <div className="shell-title">Mon Jardin Intérieur — Live · Supabase</div>
-        <div className="browser">
-          <div className="browser-bar">
-            <div className="bdots">
-              <div className="bdot" style={{ background:'#ff5f57' }} />
-              <div className="bdot" style={{ background:'#febc2e' }} />
-              <div className="bdot" style={{ background:'#28c840' }} />
+      <div className="app-layout">
+        <div className="sidebar">
+          <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
+          <div className="sb-section" style={{ marginBottom:4 }}>Navigation</div>
+          {SCREENS.map(s => (
+            <div key={s.id} className={`sb-item${active === s.id ? ' active' : ''}`} onClick={() => setActive(s.id)}>
+              <span className="sb-icon">{s.icon}</span>
+              {s.label}
+              {s.badge && <div className="sb-badge">{s.badge}</div>}
             </div>
-            <div className="browser-url">jardininterieur.app / {active}</div>
-            <div className="browser-user">
-              <div className="buser-av">🌸</div>
-              {user?.display_name ?? 'Emma'}
-            </div>
+          ))}
+          <div className="sb-divider" />
+          <div className="sb-plant-card" onClick={() => setActive('jardin')}>
+            <span className="spc-emoji">🌸</span>
+            <div className="spc-val">{todayPlant?.health ?? '—'}%</div>
+            <div className="spc-label">Mon jardin · aujourd'hui</div>
           </div>
-
-          <div className="app-layout">
-            <div className="sidebar">
-              <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
-              <div className="sb-section" style={{ marginBottom:4 }}>Navigation</div>
-              {SCREENS.map(s => (
-                <div key={s.id}
-                  className={`sb-item${active === s.id ? ' active' : ''}`}
-                  onClick={() => setActive(s.id)}
-                >
-                  <span className="sb-icon">{s.icon}</span>
-                  {s.label}
-                  {s.badge && <div className="sb-badge">{s.badge}</div>}
-                </div>
-              ))}
-              <div className="sb-divider" />
-              <div className="sb-plant-card" onClick={() => setActive('jardin')}>
-                <span className="spc-emoji">🌸</span>
-                <div className="spc-val">{todayPlant?.health ?? '—'}%</div>
-                <div className="spc-label">Mon jardin · aujourd'hui</div>
-              </div>
-              <div className="sb-footer">
-                {user?.display_name ?? 'Emma'}<br />
-                Niveau 2 · 18 rituels / semaine
-              </div>
-            </div>
-
-            <div className="main">
-              <div className="topbar">
-                <div className="tb-title">{topbar.title}</div>
-                <div className="tb-subtitle">{topbar.sub}</div>
-                <div style={{ flex:1 }} />
-                <div className="tb-btn ghost" style={{ marginRight:4 }}>Aide</div>
-                <div className="tb-btn">{topbar.btn}</div>
-                <div className="tb-notif">🔔<div className="notif-dot" /></div>
-              </div>
-              <Component userId={user?.id} />
-            </div>
+          <div className="sb-footer">
+            {user?.display_name ?? user?.email ?? 'Jardinier'}<br />
+            Niveau 2 · 18 rituels / semaine
           </div>
+        </div>
+        <div className="main">
+          <div className="topbar">
+            <div className="tb-title">{topbar.title}</div>
+            <div className="tb-subtitle">{topbar.sub}</div>
+            <div style={{ flex:1 }} />
+            <div className="tb-btn ghost" style={{ marginRight:4 }}>Aide</div>
+            <div className="tb-btn">{topbar.btn}</div>
+            <div className="tb-notif">🔔<div className="notif-dot" /></div>
+          </div>
+          <Component userId={user?.id} />
         </div>
       </div>
     </div>
