@@ -266,6 +266,63 @@ body { background: var(--bg); }
 .card.green { background: var(--green3); border-color: rgba(150,212,133,0.18); }
 
 /* ─────────────────────────────────────────
+   MODAL INVITATION
+───────────────────────────────────────── */
+function InviteModal({ circle, onClose, onCopied }) {
+  const [copied, setCopied] = useState(false)
+  const code = circle?.invite_code ?? '——'
+  const shareText = 'Rejoins mon cercle "' + (circle?.name ?? '') + '" sur Mon Jardin Intérieur 🌿 - Code : ' + code
+
+  function handleCopy() {
+    navigator.clipboard?.writeText(code).then(() => {
+      setCopied(true)
+      onCopied?.()
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  function handleShareText() {
+    navigator.clipboard?.writeText(shareText).then(() => {
+      onCopied?.()
+    })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">Inviter dans {circle?.name} 🌿</div>
+
+        <div style={{ fontSize:12, color:'var(--text3)', lineHeight:1.6 }}>
+          Partagez ce code avec les personnes que vous souhaitez inviter dans votre cercle.
+        </div>
+
+        <div style={{ background:'rgba(150,212,133,0.08)', border:'1px solid var(--greenT)', borderRadius:14, padding:'18px 20px', textAlign:'center' }}>
+          <div style={{ fontSize:9, letterSpacing:'.15em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Code d'invitation</div>
+          <div style={{ fontFamily:'monospace', fontSize:28, letterSpacing:'.3em', color:'var(--text)', fontWeight:300 }}>{code}</div>
+        </div>
+
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="modal-submit" style={{ flex:1 }} onClick={handleCopy}>
+            {copied ? '✓ Copié !' : '📋 Copier le code'}
+          </button>
+          <button className="modal-cancel" onClick={handleShareText} title="Copier un message complet">
+            ✉️ Copier message
+          </button>
+        </div>
+
+        <div style={{ fontSize:10, color:'var(--text3)', textAlign:'center', lineHeight:1.6 }}>
+          {circle?.memberCount ?? 0}/{circle?.max_members ?? 8} membres · {circle?.is_open ? 'Cercle ouvert' : 'Sur invitation uniquement'}
+        </div>
+
+        <div className="modal-actions">
+          <button className="modal-cancel" onClick={onClose}>Fermer</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
    SCREEN 1 — CERCLE
 ───────────────────────────────────────── */
 .gardens-grid {
@@ -379,6 +436,171 @@ body { background: var(--bg); }
 .gi-text { flex: 1; font-size: 11px; font-weight: 300; color: var(--text2); line-height: 1.4; }
 .gi-text b { color: var(--text); font-weight: 400; }
 .gi-time { font-size: 10px; color: var(--text3); }
+/* ── MON JARDIN ── */
+.mj-layout { display: flex; gap: 18px; }
+.mj-left  { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.mj-right { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
+.plant-hero { border-radius: 20px; padding: 22px; background: linear-gradient(160deg, rgba(30,55,30,0.85), rgba(20,40,20,0.90)); border: 1px solid var(--border); position: relative; overflow: hidden; display: flex; gap: 18px; align-items: center; }
+.ph-glow { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(150,212,133,0.12), transparent 70%); top: -40px; right: -20px; pointer-events: none; }
+.ph-plant { flex-shrink: 0; }
+.ph-info  { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.ph-health { font-family: 'Cormorant Garamond', serif; font-size: 54px; font-weight: 300; color: var(--text); line-height: 1; }
+.ph-label  { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); margin-top: -4px; }
+.ph-zones  { display: flex; flex-direction: column; gap: 6px; }
+.ph-zone-row { display: flex; align-items: center; gap: 8px; }
+.pzr-icon { font-size: 11px; width: 16px; text-align: center; }
+.pzr-name { font-size: 10px; color: var(--text3); width: 52px; }
+.pzr-bar  { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 100px; overflow: hidden; }
+.pzr-fill { height: 100%; border-radius: 100px; transition: width .6s ease; }
+.pzr-val  { font-size: 10px; color: var(--text3); width: 28px; text-align: right; }
+.ritual-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ritual-btn { border-radius: 14px; padding: 13px 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 7px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); transition: all .2s; text-align: center; }
+.ritual-btn.positive { border-color: rgba(150,212,133,0.3); background: rgba(150,212,133,0.06); }
+.ritual-btn.negative { border-color: rgba(210,110,110,0.25); background: rgba(210,110,110,0.04); }
+.ritual-btn.done { opacity: 0.55; }
+.ritual-btn:hover:not(.done) { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+.rb-emoji { font-size: 20px; }
+.rb-name  { font-size: 10px; color: var(--text2); line-height: 1.4; font-weight: 300; }
+.rb-delta { font-size: 9px; font-weight: 500; letter-spacing: .04em; }
+.rb-delta.pos { color: #96d485; }
+.rb-delta.neg { color: rgba(210,110,110,0.8); }
+.history-chart { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.hc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.hc-title  { font-size: 12px; color: var(--text2); }
+.hc-period { font-size: 10px; color: var(--text3); }
+.hc-graph  { display: flex; align-items: flex-end; gap: 6px; height: 64px; }
+.hc-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+.hc-bar { width: 100%; border-radius: 4px 4px 0 0; background: rgba(150,212,133,0.25); transition: height .4s ease; cursor: pointer; min-height: 3px; }
+.hc-bar.today { background: var(--green); }
+.hc-bar:hover { background: rgba(150,212,133,0.45); }
+.hc-day { font-size: 9px; color: var(--text3); letter-spacing: .04em; }
+.week-grid { display: flex; gap: 6px; }
+.wday { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.wd-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all .2s; }
+.wd-dot.full    { background: var(--green2); border: 1px solid var(--greenT); color: #c8f0b8; }
+.wd-dot.partial { background: rgba(150,212,133,0.12); border: 1px solid rgba(150,212,133,0.2); color: var(--text3); }
+.wd-dot.empty   { background: rgba(255,255,255,0.04); border: 1px solid var(--border2); color: var(--text3); }
+.wd-dot.today   { border-color: var(--green); box-shadow: 0 0 0 2px rgba(150,212,133,0.2); }
+.wd-label { font-size: 9px; color: var(--text3); letter-spacing: .05em; }
+.journal-entry { padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border2); border-radius: 13px; transition: all .2s; }
+.journal-entry:hover { background: rgba(255,255,255,0.07); }
+.je-date    { font-size: 10px; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
+.je-text    { font-size: 13px; color: var(--text2); font-weight: 300; line-height: 1.6; font-style: italic; }
+.je-rituals { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+.je-tag     { font-size: 9px; padding: 2px 9px; border-radius: 100px; background: var(--green2); border: 1px solid var(--greenT); color: #c8f0b8; letter-spacing: .06em; }
+.privacy-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border2); }
+.priv-icon  { font-size: 15px; flex-shrink: 0; }
+.priv-label { flex: 1; font-size: 12px; color: var(--text2); font-weight: 300; }
+.priv-toggle { width: 34px; height: 19px; border-radius: 100px; cursor: pointer; position: relative; transition: background .2s; flex-shrink: 0; }
+.priv-toggle.on  { background: var(--green); }
+.priv-toggle.off { background: rgba(255,255,255,0.15); }
+.pt-knob { position: absolute; top: 2px; width: 15px; height: 15px; border-radius: 50%; background: white; transition: left .2s; }
+.priv-toggle.on  .pt-knob { left: 17px; }
+.priv-toggle.off .pt-knob { left: 2px; }
+/* ── MODAL ── */
+.modal-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 28px 30px; width: 420px; box-shadow: 0 40px 80px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 18px; }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--gold); }
+.modal-field { display: flex; flex-direction: column; gap: 6px; }
+.modal-label { font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--text3); }
+.modal-input { padding: 11px 14px; background: rgba(255,255,255,.06); border: 1px solid var(--border); border-radius: 11px; font-size: 13px; font-family: 'Jost',sans-serif; color: var(--text); outline: none; transition: border-color .2s; }
+.modal-input:focus { border-color: var(--greenT); }
+.modal-input::placeholder { color: var(--text3); }
+.modal-row { display: flex; align-items: center; justify-content: space-between; }
+.modal-toggle-lbl { font-size: 12px; font-weight: 300; color: var(--text2); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-cancel { padding: 10px 20px; border: 1px solid var(--border); border-radius: 100px; font-size: 12px; color: var(--text3); cursor: pointer; background: transparent; }
+.modal-submit { padding: 10px 24px; border: 1px solid var(--greenT); border-radius: 100px; font-size: 12px; letter-spacing: .06em; color: #c8f0b8; background: var(--green2); cursor: pointer; transition: all .2s; }
+.modal-submit:hover { background: rgba(150,212,133,.32); }
+.modal-submit:disabled { opacity: .5; cursor: default; }
+.modal-error { font-size: 11px; color: rgba(210,110,110,.85); padding: 8px 12px; background: rgba(210,110,110,.07); border: 1px solid rgba(210,110,110,.2); border-radius: 9px; }
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--border); border-radius: 100px; padding: 10px 22px; font-size: 12px; color: var(--text2); letter-spacing: .04em; box-shadow: 0 8px 32px rgba(0,0,0,.4); z-index: 200; pointer-events: none; animation: toastIn .2s ease; }
+@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+/* ── DÉFIS ── */
+.cat-filter { display: flex; gap: 7px; flex-wrap: wrap; }
+.cat-btn { padding: 5px 14px; border-radius: 100px; font-size: 11px; border: 1px solid var(--border); color: var(--text3); cursor: pointer; transition: all .2s; background: transparent; }
+.cat-btn.active { background: var(--green2); border-color: var(--greenT); color: #c8f0b8; }
+.defi-featured { border-radius: 18px; padding: 22px; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(80,50,120,0.35), rgba(40,30,80,0.5)); border: 1px solid rgba(130,100,200,0.25); }
+.df-glow { position: absolute; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(150,100,220,0.15), transparent 70%); top: -30px; right: -20px; pointer-events: none; }
+.df-tag { font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: rgba(180,150,240,0.8); margin-bottom: 8px; }
+.df-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--text); margin-bottom: 6px; }
+.df-desc { font-size: 12px; color: var(--text3); line-height: 1.6; margin-bottom: 14px; }
+.df-meta { display: flex; gap: 14px; margin-bottom: 16px; }
+.dfm-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); }
+.df-progress { background: rgba(255,255,255,0.08); border-radius: 100px; height: 4px; margin-bottom: 6px; overflow: hidden; }
+.dfp-fill { height: 100%; background: linear-gradient(90deg, rgba(130,100,200,0.6), rgba(180,150,240,0.8)); border-radius: 100px; transition: width .6s ease; }
+.df-progress-label { font-size: 10px; color: var(--text3); margin-bottom: 14px; }
+.df-actions { display: flex; gap: 10px; }
+.df-join  { padding: 9px 22px; border-radius: 100px; font-size: 11px; letter-spacing: .08em; background: rgba(130,100,200,0.25); border: 1px solid rgba(130,100,200,0.4); color: rgba(200,180,255,0.9); cursor: pointer; transition: all .2s; }
+.df-join:hover { background: rgba(130,100,200,0.4); }
+.df-learn { padding: 9px 18px; border-radius: 100px; font-size: 11px; border: 1px solid var(--border); color: var(--text3); cursor: pointer; background: transparent; transition: all .2s; }
+.defis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.defi-card { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 14px; padding: 14px; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; gap: 8px; }
+.defi-card:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+.dc-top  { display: flex; align-items: flex-start; gap: 10px; }
+.dc-emoji { font-size: 22px; flex-shrink: 0; }
+.dc-info  { flex: 1; }
+.dc-title { font-size: 13px; color: var(--text); font-weight: 300; margin-bottom: 3px; }
+.dc-desc  { font-size: 10px; color: var(--text3); line-height: 1.5; }
+.dc-foot  { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.dc-bar   { flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 100px; margin: 0 10px; overflow: hidden; }
+.dc-bar-fill { height: 100%; background: var(--green); border-radius: 100px; }
+.dc-participants { font-size: 9px; color: var(--text3); }
+.dc-dur   { font-size: 9px; color: var(--text3); }
+.dc-zone  { font-size: 9px; padding: 2px 8px; border-radius: 100px; background: var(--green2); border: 1px solid var(--greenT); color: #c8f0b8; }
+.dc-join-btn { font-size: 10px; padding: 4px 12px; border-radius: 100px; border: 1px solid var(--greenT); color: #c8f0b8; background: var(--green2); cursor: pointer; transition: all .2s; white-space: nowrap; }
+.dc-join-btn:hover { background: rgba(150,212,133,0.3); }
+.dc-joined { font-size: 10px; padding: 4px 12px; border-radius: 100px; border: 1px solid var(--border); color: var(--text3); white-space: nowrap; }
+.community-pulse { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+.cp-title { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+.cp-stat  { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cps-icon { font-size: 18px; flex-shrink: 0; }
+.cps-info { flex: 1; }
+.cps-val  { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--text); line-height: 1; }
+.cps-lbl  { font-size: 9px; color: var(--text3); margin-top: 1px; }
+/* ── CERCLES ── */
+.circles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.circle-card-big {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px; cursor: pointer;
+  transition: all 0.2s; display: flex; flex-direction: column; gap: 10px;
+}
+.circle-card-big:hover { background: rgba(255,255,255,0.08); }
+.circle-card-big.active-circle { background: rgba(150,212,133,0.11); border-color: var(--greenT); }
+.ccb-top { display: flex; align-items: center; justify-content: space-between; }
+.ccb-name { font-size: 14px; font-weight: 400; color: var(--text); }
+.ccb-badge { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; padding: 3px 9px; border-radius: 100px; }
+.ccb-badge.admin { background: rgba(150,212,133,0.18); border: 1px solid var(--greenT); color: #c8f0b8; }
+.ccb-badge.member { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text3); }
+.ccb-theme { font-size: 11px; color: var(--text3); font-style: italic; line-height: 1.5; }
+.ccb-members { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ccb-member-av { width: 24px; height: 24px; border-radius: 50%; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+.ccb-member-count { font-size: 10px; color: var(--text3); margin-left: 4px; }
+.ccb-stats { display: flex; gap: 12px; border-top: 1px solid var(--border2); padding-top: 10px; }
+.ccbs-item { display: flex; flex-direction: column; gap: 2px; }
+.ccbs-val { font-size: 16px; font-family: 'Cormorant Garamond', serif; color: var(--text); font-weight: 300; }
+.ccbs-lbl { font-size: 9px; color: var(--text3); letter-spacing: .05em; }
+.create-circle-card {
+  background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: 16px; padding: 16px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+  transition: all 0.2s; min-height: 140px;
+}
+.create-circle-card:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.22); }
+.ccc-icon { font-size: 26px; color: var(--text3); }
+.ccc-text { font-size: 12px; color: var(--text3); letter-spacing: 0.05em; text-align: center; line-height: 1.6; }
+.circle-detail { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+.cd-header { padding: 14px 16px; background: rgba(150,212,133,0.07); border-bottom: 1px solid var(--border2); }
+.cd-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--gold); margin-bottom: 3px; }
+.cd-meta { font-size: 10px; color: var(--text3); letter-spacing: 0.04em; }
+.cd-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.cd-invite { display: flex; align-items: center; gap: 9px; padding: 9px 13px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px solid var(--border); }
+.cdi-code { flex: 1; font-size: 14px; letter-spacing: 0.2em; color: var(--text2); font-family: monospace; }
+.cdi-copy { font-size: 10px; letter-spacing: 0.07em; padding: 5px 12px; border-radius: 100px; background: var(--green2); border: 1px solid var(--greenT); color: #c8f0b8; cursor: pointer; }
+.cd-setting { display: flex; align-items: center; justify-content: space-between; }
+.cds-label { font-size: 12px; font-weight: 300; color: var(--text2); }
+.cds-val { font-size: 12px; color: var(--text3); }
 
 `
 
@@ -445,15 +667,76 @@ const ZONES = [
 ]
 
 /* ─────────────────────────────────────────
+   MODAL INVITATION
+───────────────────────────────────────── */
+function InviteModal({ circle, onClose, onCopied }) {
+  const [copied, setCopied] = useState(false)
+  const code = circle?.invite_code ?? '——'
+  const shareText = 'Rejoins mon cercle "' + (circle?.name ?? '') + '" sur Mon Jardin Intérieur 🌿 - Code : ' + code
+
+  function handleCopy() {
+    navigator.clipboard?.writeText(code).then(() => {
+      setCopied(true)
+      onCopied?.()
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  function handleShareText() {
+    navigator.clipboard?.writeText(shareText).then(() => {
+      onCopied?.()
+    })
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">Inviter dans {circle?.name} 🌿</div>
+
+        <div style={{ fontSize:12, color:'var(--text3)', lineHeight:1.6 }}>
+          Partagez ce code avec les personnes que vous souhaitez inviter dans votre cercle.
+        </div>
+
+        <div style={{ background:'rgba(150,212,133,0.08)', border:'1px solid var(--greenT)', borderRadius:14, padding:'18px 20px', textAlign:'center' }}>
+          <div style={{ fontSize:9, letterSpacing:'.15em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Code d'invitation</div>
+          <div style={{ fontFamily:'monospace', fontSize:28, letterSpacing:'.3em', color:'var(--text)', fontWeight:300 }}>{code}</div>
+        </div>
+
+        <div style={{ display:'flex', gap:10 }}>
+          <button className="modal-submit" style={{ flex:1 }} onClick={handleCopy}>
+            {copied ? '✓ Copié !' : '📋 Copier le code'}
+          </button>
+          <button className="modal-cancel" onClick={handleShareText} title="Copier un message complet">
+            ✉️ Copier message
+          </button>
+        </div>
+
+        <div style={{ fontSize:10, color:'var(--text3)', textAlign:'center', lineHeight:1.6 }}>
+          {circle?.memberCount ?? 0}/{circle?.max_members ?? 8} membres · {circle?.is_open ? 'Cercle ouvert' : 'Sur invitation uniquement'}
+        </div>
+
+        <div className="modal-actions">
+          <button className="modal-cancel" onClick={onClose}>Fermer</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
    SCREEN 1 — CERCLE
 ───────────────────────────────────────── */
-function ScreenCercle({ userId, openCreate, onCreateClose }) {
+function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteClose }) {
   const { circleMembers, activeCircle } = useCircle(userId)
   const { received, send } = useGestures(userId)
   const [sentGestures, setSentGestures] = useState(new Set())
   const [toast, setToast] = useState(null)
+  const [showInvite, setShowInvite] = useState(false)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
+
+  // Topbar "+ Inviter" ouvre le modal
+  const isInviteOpen = showInvite || openInvite
 
   async function handleSendGesture(toUserId, type) {
     const key = `${toUserId}-${type}`
@@ -479,6 +762,13 @@ function ScreenCercle({ userId, openCreate, onCreateClose }) {
   return (
     <>
       <Toast msg={toast} />
+      {isInviteOpen && activeCircle && (
+        <InviteModal
+          circle={activeCircle}
+          onClose={() => { setShowInvite(false); onInviteClose?.() }}
+          onCopied={() => showToast('🌿 Code copié !')}
+        />
+      )}
       <div className="content">
         <div className="col" style={{ flex:1 }}>
         <div className="slabel">Jardins du cercle — {activeCircle?.name ?? 'Cercle'} · Aujourd'hui</div>
@@ -1212,9 +1502,10 @@ export default function DashboardPage() {
   const { Component } = SCREENS.find(s => s.id === active)
 
   const [showCreateCircle, setShowCreateCircle] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   const topbar = {
-    cercle:  { title:<>Cercle <em>du Matin</em></>,   sub:`6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`, btn:'+ Inviter', onBtn: null },
+    cercle:  { title:<>Cercle <em>du Matin</em></>,   sub:`6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`, btn:'+ Inviter', onBtn: () => setShowInviteModal(true) },
     jardin:  { title:<>Mon <em>Jardin</em></>,         sub:`${todayPlant?.health??'—'}% · 12 jours consécutifs`, btn:null },
     cercles: { title:<>Mes <em>Cercles</em></>,        sub:'3 actifs · 13 membres au total',   btn:'+ Créer',    onBtn: () => setShowCreateCircle(true) },
     defis:   { title:<>Défis & <em>Challenges</em></>, sub:'2 en cours · 8 432 participants',  btn:'Proposer',   onBtn: null },
@@ -1260,7 +1551,7 @@ export default function DashboardPage() {
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
             <div className="tb-notif">🔔<div className="notif-dot" /></div>
           </div>
-          <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} />
+          <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} openInvite={showInviteModal} onInviteClose={() => setShowInviteModal(false)} />
         </div>
       </div>
     </div>
