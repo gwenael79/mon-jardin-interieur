@@ -6,17 +6,17 @@ const css = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%;width:100%}
 :root{
-  --bg:#090c08;--bg2:#0e1209;--bg3:#131810;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.04);
-  --text:#e8e0d0;--text2:rgba(232,224,208,0.55);--text3:rgba(232,224,208,0.28);
-  --green:#7aad6e;--green2:rgba(122,173,110,0.15);--green3:rgba(122,173,110,0.08);--greenT:rgba(122,173,110,0.35);
-  --gold:#c8b89a;
+  --bg:#1a2e1a;--bg2:#213d21;--bg3:#274827;
+  --border:rgba(255,255,255,0.18);--border2:rgba(255,255,255,0.10);
+  --text:#f2ede0;--text2:rgba(242,237,224,0.88);--text3:rgba(242,237,224,0.60);
+  --green:#96d485;--green2:rgba(150,212,133,0.25);--green3:rgba(150,212,133,0.12);--greenT:rgba(150,212,133,0.50);
+  --gold:#e8d4a8;
 }
 .auth-root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;width:100vw;color:var(--text);display:flex;overflow:hidden}
 
 /* LEFT — présentation */
 .auth-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 64px;position:relative;overflow:hidden}
-.auth-left-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(122,173,110,0.07),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(122,173,110,0.04),transparent 50%);pointer-events:none}
+.auth-left-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(150,212,133,0.12),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(122,173,110,0.04),transparent 50%);pointer-events:none}
 .auth-logo{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:300;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:60px}
 .auth-logo em{font-style:normal;color:var(--green)}
 .auth-hero-title{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;line-height:1.15;color:var(--text);margin-bottom:24px}
@@ -25,7 +25,7 @@ html,body,#root{height:100%;width:100%}
 .auth-features{display:flex;flex-direction:column;gap:16px}
 .auth-feat{display:flex;align-items:flex-start;gap:14px}
 .af-icon{font-size:18px;flex-shrink:0;margin-top:1px}
-.af-text{font-size:12px;font-weight:300;color:var(--text2);line-height:1.6}
+.af-text{font-size:14px;font-weight:300;color:var(--text2);line-height:1.6}
 .af-text b{color:var(--text);font-weight:400;display:block;margin-bottom:2px}
 .auth-tagline{margin-top:56px;font-size:11px;letter-spacing:.12em;color:var(--text3);font-style:italic}
 
@@ -33,19 +33,19 @@ html,body,#root{height:100%;width:100%}
 .deco-plant{position:absolute;opacity:.12;pointer-events:none}
 
 /* RIGHT — formulaire */
-.auth-right{width:440px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border2);display:flex;flex-direction:column;justify-content:center;padding:60px 48px}
+.auth-right{width:440px;flex-shrink:0;background:rgba(20,45,20,0.95);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;padding:60px 48px}
 .auth-form-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--gold);margin-bottom:6px}
 .auth-form-sub{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-bottom:36px}
 .auth-tabs{display:flex;gap:0;margin-bottom:32px;border-bottom:1px solid var(--border2)}
 .auth-tab{padding:8px 20px;font-size:11px;letter-spacing:.08em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
-.auth-tab.active{color:#a8d4a0;border-bottom-color:var(--green)}
+.auth-tab.active{color:#c8f0b8;border-bottom-color:var(--green)}
 .auth-field{margin-bottom:16px}
-.auth-label{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:block}
-.auth-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+.auth-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:block}
+.auth-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
 .auth-input:focus{border-color:var(--greenT);background:rgba(122,173,110,.04)}
 .auth-input::placeholder{color:var(--text3)}
 .auth-error{font-size:10px;color:rgba(210,110,110,.8);padding:8px 12px;background:rgba(210,110,110,.06);border:1px solid rgba(210,110,110,.15);border-radius:8px;margin-bottom:16px}
-.auth-submit{width:100%;padding:13px;background:linear-gradient(135deg,rgba(122,173,110,.25),rgba(122,173,110,.15));border:1px solid var(--greenT);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:#a8d4a0;cursor:pointer;transition:all .2s;margin-top:8px}
+.auth-submit{width:100%;padding:13px;background:linear-gradient(135deg,rgba(122,173,110,.25),rgba(122,173,110,.15));border:1px solid var(--greenT);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:#c8f0b8;cursor:pointer;transition:all .2s;margin-top:8px}
 .auth-submit:hover{background:linear-gradient(135deg,rgba(122,173,110,.35),rgba(122,173,110,.22));border-color:var(--green)}
 .auth-submit:disabled{opacity:.5;cursor:default}
 .auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0;font-size:9px;color:var(--text3);letter-spacing:.1em}
@@ -53,8 +53,8 @@ html,body,#root{height:100%;width:100%}
 .auth-success{text-align:center;padding:20px 0}
 .as-icon{font-size:40px;margin-bottom:16px}
 .as-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);margin-bottom:10px}
-.as-text{font-size:11px;font-weight:300;color:var(--text2);line-height:1.7}
-.as-email{color:#a8d4a0}
+.as-text{font-size:13px;font-weight:300;color:var(--text2);line-height:1.7}
+.as-email{color:#c8f0b8}
 .auth-footer{margin-top:32px;font-size:9px;color:var(--text3);text-align:center;line-height:1.8}
 `
 
