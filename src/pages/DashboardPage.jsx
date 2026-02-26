@@ -771,7 +771,7 @@ const SCREENS = [
 
 export default function DashboardPage() {
   const [active, setActive] = useState('cercle')
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const { todayPlant } = usePlant(user?.id)
 
   const { Component } = SCREENS.find(s => s.id === active)
@@ -806,6 +806,14 @@ export default function DashboardPage() {
           <div className="sb-footer">
             {user?.display_name ?? user?.email ?? 'Jardinier'}<br />
             Niveau 2 · 18 rituels / semaine
+            <div
+              onClick={signOut}
+              style={{ marginTop:10, display:'flex', alignItems:'center', gap:6, cursor:'pointer', padding:'6px 0', color:'rgba(232,224,208,0.2)', fontSize:9, letterSpacing:'.08em', transition:'color .2s' }}
+              onMouseEnter={e => e.currentTarget.style.color='rgba(210,110,110,0.6)'}
+              onMouseLeave={e => e.currentTarget.style.color='rgba(232,224,208,0.2)'}
+            >
+              <span>⎋</span> Se déconnecter
+            </div>
           </div>
         </div>
         <div className="main">
