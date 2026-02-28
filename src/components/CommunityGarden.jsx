@@ -8,10 +8,15 @@ import { supabase } from '../core/supabaseClient'
 ───────────────────────────────────────────────────── */
 async function loadCommunityPlants() {
   const [plantsRes, privacyRes, settingsRes, adminRes] = await Promise.all([
-    supabase
-      .from('plants')
-      .select('user_id, health, date')
-      .order('date', { ascending: false }),
+    (() => {
+      const since = new Date()
+      since.setDate(since.getDate() - 7)
+      return supabase
+        .from('plants')
+        .select('user_id, health, date')
+        .gte('date', since.toISOString().split('T')[0])
+        .order('date', { ascending: false })
+    })(),
     supabase
       .from('privacy_settings')
       .select('user_id')
@@ -127,7 +132,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   const pD  = 8+11*r
 
   /* ── Tige — plus fine que PlantSVG (champ = distance) ── */
-  const stemH = groundY * (0.10 + 0.52*r)  // proportionnel au stade, min réduit
+  const stemH = Math.min(groundY * 0.45, groundY * (0.08 + 0.38*r))  // max 45% du canvas
   const cx    = x
   const sTY   = groundY - stemH
   const sMY   = groundY - stemH * 0.50
@@ -320,22 +325,99 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   )
 }
 
+
+/* ─────────────────────────────────────────────────────
+   FOND ARRIÈRE — herbes hautes floues, effet profondeur
+───────────────────────────────────────────────────── */
+function BackgroundFoliage({ svgW, groundY }) {
+  const items = useMemo(() => {
+    const arr = []
+    // Grandes herbes hautes — plan intermédiaire
+    for (let i = 0; i < Math.floor(svgW / 8); i++) {
+      const x     = i * 8 + (hash('bg'+i, 1) % 8)
+      const h     = 28 + (hash('bg'+i, 2) % 55)       // 28–83px
+      const lean  = ((hash('bg'+i, 3) % 22) - 11) * 0.7
+      const thick = 0.8 + (hash('bg'+i, 4) % 12) / 10
+      const green = 68 + (hash('bg'+i, 5) % 28)
+      const alpha = 0.18 + (hash('bg'+i, 6) % 22) / 100
+      arr.push({ x, h, lean, thick, green, alpha, type: 'tall' })
+    }
+    // Touffes larges — feuilles ovales floues
+    for (let i = 0; i < Math.floor(svgW / 22); i++) {
+      const x    = 4 + i * 22 + (hash('bt'+i, 1) % 18) - 9
+      const h    = 18 + (hash('bt'+i, 2) % 32)
+      const w    = 6  + (hash('bt'+i, 3) % 14)
+      const g    = 72 + (hash('bt'+i, 4) % 30)
+      const a    = 0.12 + (hash('bt'+i, 5) % 18) / 100
+      arr.push({ x, h, w, g, a, type: 'bush' })
+    }
+    return arr
+  }, [svgW])
+
+  return (
+    <g filter="url(#cgBgBlur)" opacity={0.82}>
+      {items.map((b, i) => {
+        if (b.type === 'tall') {
+          // Brin d'herbe haute avec courbe naturelle
+          const mx = b.x + b.lean * 0.45
+          const my = groundY - b.h * 0.55
+          return (
+            <g key={'t'+i}
+              style={{
+                animation: `cgGrass ${2.8+(i%11)*0.32}s ease-in-out infinite ${(i%15)*0.19}s`,
+                transformOrigin: `${b.x}px ${groundY}px`,
+              }}
+            >
+              <path
+                d={`M${b.x},${groundY} Q${mx},${my} ${b.x+b.lean},${groundY-b.h}`}
+                stroke={`rgba(32,${b.green},18,${b.alpha})`}
+                strokeWidth={b.thick}
+                strokeLinecap="round"
+                fill="none"
+              />
+              {/* Feuille latérale sur les plus grandes */}
+              {b.h > 52 && (
+                <path
+                  d={`M${mx},${my+8} C${mx-b.lean*0.8-8},${my} ${mx-b.lean*0.8-10},${my-10} ${mx-b.lean*0.4-4},${my-12} C${mx-2},${my-8} ${mx},${my} ${mx},${my+8} Z`}
+                  fill={`rgba(28,${b.green-4},14,${b.alpha*0.9})`}
+                />
+              )}
+            </g>
+          )
+        }
+        // Touffe ovale floue
+        return (
+          <ellipse key={'b'+i}
+            cx={b.x} cy={groundY - b.h * 0.55}
+            rx={b.w} ry={b.h * 0.55}
+            fill={`rgba(24,${b.g},12,${b.a})`}
+            style={{
+              animation: `cgGrass ${3.2+(i%7)*0.4}s ease-in-out infinite ${(i%9)*0.23}s`,
+              transformOrigin: `${b.x}px ${groundY}px`,
+            }}
+          />
+        )
+      })}
+    </g>
+  )
+}
+
 /* ─────────────────────────────────────────────────────
    HERBES DE FOND
 ───────────────────────────────────────────────────── */
 function GrassLayer({ svgW, groundY }) {
   const items = useMemo(() => {
     const arr = []
-    for (let i = 0; i < Math.floor(svgW / 5); i++) {
-      const x    = i * 5 + (hash('g'+i, 1) % 5)
+    for (let i = 0; i < Math.floor(svgW / 3); i++) {
+      const x    = i * 3 + (hash('g'+i, 1) % 3)
       const h_   = 4 + (hash('g'+i, 2) % 22)
       const lean = ((hash('g'+i, 3) % 18) - 9) * 0.55
       const a    = 0.16 + (hash('g'+i, 4) % 62) / 100
       const gr   = 82 + (hash('g'+i, 5) % 42)
       arr.push({ x, h:h_, lean, a, gr, type:'blade' })
     }
-    for (let i = 0; i < Math.floor(svgW / 28); i++) {
-      const x    = 8 + i*28 + (hash('df'+i, 1) % 24) - 12
+    for (let i = 0; i < Math.floor(svgW / 18); i++) {
+      const x    = 8 + i*18 + (hash('df'+i, 1) % 24) - 12
       const yoff = 2 + (hash('df'+i, 2) % 12)
       const hue  = 15 + (hash('df'+i, 3) % 310)
       const r_   = 1.3 + (hash('df'+i, 4) % 20) / 10
@@ -422,26 +504,26 @@ export default function CommunityGarden({ currentUserId, onClose }) {
 
   const W_PER   = 42
   const MIN_W   = 960
-  const svgH    = 520
-  const groundY = Math.round(svgH * 0.88)
+  const svgH    = 580
+  const groundY = Math.round(svgH * 0.85)
   const svgW    = Math.max(MIN_W, plants.length * W_PER + 220)
 
   // Ciel global : calculé depuis les settings du user connecté
   // Chaque fleur utilise SES PROPRES horaires pour son opacité individuelle
   const hour = new Date().getHours() + new Date().getMinutes() / 60
   const mySettings = plants.find(p => p.user_id === currentUserId)?.gardenSettings
-  const myRiseH = (mySettings?.sunrise_h ?? 7)  + (mySettings?.sunrise_m ?? 0) / 60
-  const mySetH  = (mySettings?.sunset_h  ?? 20) + (mySettings?.sunset_m  ?? 0) / 60
+  const myRiseH = mySettings ? (mySettings.sunrise_h ?? 7)  + (mySettings.sunrise_m ?? 0) / 60 : 7
+  const mySetH  = mySettings ? (mySettings.sunset_h  ?? 20) + (mySettings.sunset_m  ?? 0) / 60 : 20
 
   // Progression dans la journée 0→1 (comme PlantSVG)
-  const dp      = Math.max(0, Math.min(1, (hour - myRiseH) / (mySetH - myRiseH)))
-  const isDay   = hour >= myRiseH && hour <= mySetH
-  const isNight = !isDay
+  const dp       = Math.max(0, Math.min(1, (hour - myRiseH) / (mySetH - myRiseH)))
+  const isDay    = hour >= myRiseH && hour <= mySetH
+  const isNight  = !isDay
   const isGolden = isDay && (Math.abs(hour - myRiseH) < 1.2 || Math.abs(hour - mySetH) < 1.2)
 
   // Soleil suit un arc : gauche (lever) → zénith (midi) → droite (coucher)
-  const sunX = svgW * 0.04 + dp * (svgW * 0.92)           // 4% à 96% de la largeur
-  const sunY = groundY * 0.04 + groundY * 0.55 * (1 - Math.sin(dp * Math.PI))  // arc parabolique
+  const sunX = svgW * 0.05 + dp * (svgW * 0.90)
+  const sunY = svgH * (0.62 - 0.36 * Math.sin(dp * Math.PI))  // arc modéré, visible au centre
 
   // Couleurs ciel dépendent de dp (teinte chaude lever/coucher, froide midi)
   const skyHue = isNight ? null : Math.round(200 - dp * (1 - dp) * 4 * 60)  // plus chaud aux extrêmes
@@ -467,12 +549,14 @@ export default function CommunityGarden({ currentUserId, onClose }) {
   // Ma fleur placée au centre du canvas SVG
   const positions = useMemo(() => {
     const myIdx = plants.findIndex(p => p.user_id === currentUserId)
+    // Si mon user n'est pas dans la liste (pas de plante aujourd'hui),
+    // distribuer les fleurs normalement centrées
+    const anchorIdx = myIdx >= 0 ? myIdx : Math.floor(plants.length / 2)
     return plants
       .map((p, i) => {
         const xNoise = (hash(p.user_id, 9) % 28) - 14
         const yNoise = (hash(p.user_id, 8) % 16) - 8
-        // Offset par rapport à ma fleur pour la centrer dans le SVG
-        const offset = myIdx >= 0 ? i - myIdx : i
+        const offset = i - anchorIdx
         const baseX  = svgW / 2 + offset * W_PER
         return { ...p, x: baseX + xNoise, yOff: yNoise }
       })
@@ -485,10 +569,11 @@ export default function CommunityGarden({ currentUserId, onClose }) {
     <div style={{
       position:'fixed', inset:0, zIndex:300,
       background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
+      overflow:'hidden',
       display:'flex', flexDirection:'column',
       backdropFilter:'blur(10px)',
       animation:'cgFadeIn 0.38s ease',
-      padding:'16px 0 0',
+      padding:'0',
     }}>
       <style>{`
         @keyframes cgFadeIn  { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
@@ -505,11 +590,12 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         div[data-cg]::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.40); }
       `}</style>
 
-      {/* HEADER */}
+      {/* HEADER — overlay sur le paysage */}
       <div style={{
-        width:'100%',
-        display:'flex', alignItems:'flex-end', justifyContent:'space-between',
-        padding:'0 24px 10px', flexShrink:0,
+        position:'absolute', top:0, left:0, right:0, zIndex:10,
+        display:'flex', alignItems:'flex-start', justifyContent:'space-between',
+        padding:'20px 24px 0',
+        pointerEvents:'none',  // le bouton a pointerEvents:auto
       }}>
         <div>
           <div style={{fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:300, color:'rgba(238,232,218,0.95)', letterSpacing:'.01em'}}>
@@ -527,22 +613,21 @@ export default function CommunityGarden({ currentUserId, onClose }) {
           color:'rgba(238,232,218,0.62)', fontSize:17, cursor:'pointer',
           display:'flex', alignItems:'center', justifyContent:'center',
           transition:'all .2s', flexShrink:0,
+          pointerEvents:'auto',
         }}
           onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
           onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
         >✕</button>
       </div>
 
-      {/* PAYSAGE — pleine largeur, hauteur restante */}
+      {/* PAYSAGE — pleine largeur, plein écran */}
       <div
         ref={scrollRef}
         data-cg="1"
         style={{
-          flex:1,
-          width:'100%',
+          position:'absolute', inset:0,
           overflowX:'auto',
           overflowY:'hidden',
-          minHeight:0,
           scrollbarWidth:'thin',
           scrollbarColor:'rgba(255,255,255,0.22) rgba(255,255,255,0.04)',
         }}
@@ -592,6 +677,10 @@ export default function CommunityGarden({ currentUserId, onClose }) {
                 <feGaussianBlur stdDeviation="14" result="b"/>
                 <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
               </filter>
+              {/* Flou arrière-plan — herbes hautes */}
+              <filter id="cgBgBlur" x="-5%" y="-5%" width="110%" height="110%">
+                <feGaussianBlur stdDeviation="2.8"/>
+              </filter>
             </defs>
 
             {/* CIEL */}
@@ -613,40 +702,44 @@ export default function CommunityGarden({ currentUserId, onClose }) {
             </>}
 
             {/* SOLEIL HEURE DORÉE */}
-            {isDay && <>
-              {/* Halo diffus */}
+            {/* SOLEIL — toujours visible, style selon heure */}
+            <>
+              {/* Halo */}
               <circle cx={sunX} cy={sunY}
-                r={isGolden ? 80 : 60}
-                fill={isGolden ? 'rgba(255,130,20,0.14)' : 'rgba(255,218,78,0.10)'}
+                r={isGolden ? 90 : isDay ? 70 : 50}
+                fill={isGolden ? 'rgba(255,130,20,0.16)' : isDay ? 'rgba(255,218,78,0.11)' : 'rgba(200,220,255,0.06)'}
                 filter="url(#cgSoftGlow)"
               />
-              {/* Disque solaire */}
+              {/* Disque */}
               <circle cx={sunX} cy={sunY}
-                r={isGolden ? 26 : 18}
-                fill={isGolden ? 'rgba(255,190,40,0.88)' : 'rgba(255,225,90,0.82)'}
+                r={isGolden ? 28 : isDay ? 20 : 14}
+                fill={isGolden ? 'rgba(255,185,35,0.92)' : isDay ? 'rgba(255,228,85,0.88)' : 'rgba(220,230,255,0.72)'}
                 filter="url(#cgGlow)"
               />
               <circle cx={sunX} cy={sunY}
-                r={isGolden ? 17 : 12}
-                fill={isGolden ? 'rgba(255,248,170,0.96)' : 'rgba(255,252,210,0.92)'}
+                r={isGolden ? 18 : isDay ? 13 : 9}
+                fill={isGolden ? 'rgba(255,248,165,0.97)' : isDay ? 'rgba(255,252,205,0.94)' : 'rgba(235,242,255,0.88)'}
               />
-              {/* Rayons */}
-              {Array.from({length: isGolden ? 12 : 8},(_,i)=>{
-                const a   = i*(isGolden?30:45)*Math.PI/180
-                const r1  = isGolden ? 30 : 21
-                const r2  = isGolden ? 48 : 34
+              {/* Rayons (jour seulement) */}
+              {isDay && Array.from({length: isGolden ? 12 : 8}, (_,i) => {
+                const a  = i*(isGolden ? 30 : 45)*Math.PI/180
+                const r1 = isGolden ? 33 : 24
+                const r2 = isGolden ? 52 : 38
                 return <line key={i}
                   x1={sunX+Math.cos(a)*r1} y1={sunY+Math.sin(a)*r1}
                   x2={sunX+Math.cos(a)*r2} y2={sunY+Math.sin(a)*r2}
-                  stroke={isGolden ? 'rgba(255,180,40,0.55)' : 'rgba(255,230,80,0.38)'}
-                  strokeWidth={isGolden ? 2 : 1.4}
+                  stroke={isGolden ? 'rgba(255,175,35,0.60)' : 'rgba(255,232,75,0.42)'}
+                  strokeWidth={isGolden ? 2.2 : 1.5}
                   strokeLinecap="round"
                   style={{animation:`cgRay ${1.8+i*0.14}s ease-in-out infinite ${i*0.11}s`}}/>
               })}
-            </>}
+            </>
 
             {/* BRUME HORIZON */}
             <rect x={0} y={groundY - svgH*0.18} width={svgW} height={svgH*0.22} fill="url(#cgFog)"/>
+
+            {/* FOND ARRIÈRE — herbes hautes floues */}
+            <BackgroundFoliage svgW={svgW} groundY={groundY}/>
 
             {/* FLEURS ARRIÈRE (profondeur yOff < 0) */}
             {positions.filter(p => p.yOff < 0).map(p => (
