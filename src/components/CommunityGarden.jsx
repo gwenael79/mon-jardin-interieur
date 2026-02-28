@@ -127,7 +127,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   const pD  = 8+11*r
 
   /* ── Tige — plus fine que PlantSVG (champ = distance) ── */
-  const stemH = groundY * (0.18 + 0.62*r)  // hauteur = % de la zone ciel disponible
+  const stemH = groundY * (0.10 + 0.52*r)  // proportionnel au stade, min réduit
   const cx    = x
   const sTY   = groundY - stemH
   const sMY   = groundY - stemH * 0.50
@@ -398,38 +398,61 @@ export default function CommunityGarden({ currentUserId, onClose }) {
   const [plants,  setPlants]  = useState([])
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
+  const scrollRef = useRef(null)
 
   useEffect(() => {
     loadCommunityPlants()
-      .then(d  => { setPlants(d);      setLoading(false) })
+      .then(d  => { setPlants(d); setLoading(false) })
       .catch(e => { setErr(e.message); setLoading(false) })
   }, [])
+
+  // Auto-scroll pour centrer MA fleur dans la fenêtre
+  useEffect(() => {
+    if (!plants.length || !scrollRef.current || !currentUserId) return
+    const myIndex = plants.findIndex(p => p.user_id === currentUserId)
+    if (myIndex === -1) return
+    const myX = positions.find(p => p.user_id === currentUserId)?.x ?? 0
+    const containerW = scrollRef.current.clientWidth
+    const svgRenderedW = scrollRef.current.scrollWidth
+    // Ratio pixels réels / unités SVG
+    const ratio = svgRenderedW / svgW
+    const scrollTo = myX * ratio - containerW / 2
+    scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' })
+  }, [plants, currentUserId])
 
   const W_PER   = 42
   const MIN_W   = 960
   const svgH    = 520
-  const groundY = Math.round(svgH * 0.91)
+  const groundY = Math.round(svgH * 0.88)
   const svgW    = Math.max(MIN_W, plants.length * W_PER + 220)
 
   // Ciel global : calculé depuis les settings du user connecté
-  // Chaque fleur utilise ses propres horaires pour sa luminosité individuelle
+  // Chaque fleur utilise SES PROPRES horaires pour son opacité individuelle
   const hour = new Date().getHours() + new Date().getMinutes() / 60
   const mySettings = plants.find(p => p.user_id === currentUserId)?.gardenSettings
   const myRiseH = (mySettings?.sunrise_h ?? 7)  + (mySettings?.sunrise_m ?? 0) / 60
   const mySetH  = (mySettings?.sunset_h  ?? 20) + (mySettings?.sunset_m  ?? 0) / 60
-  const isDay    = hour >= myRiseH && hour <= mySetH
-  const isNight  = !isDay
+
+  // Progression dans la journée 0→1 (comme PlantSVG)
+  const dp      = Math.max(0, Math.min(1, (hour - myRiseH) / (mySetH - myRiseH)))
+  const isDay   = hour >= myRiseH && hour <= mySetH
+  const isNight = !isDay
   const isGolden = isDay && (Math.abs(hour - myRiseH) < 1.2 || Math.abs(hour - mySetH) < 1.2)
+
+  // Soleil suit un arc : gauche (lever) → zénith (midi) → droite (coucher)
+  const sunX = svgW * 0.04 + dp * (svgW * 0.92)           // 4% à 96% de la largeur
+  const sunY = groundY * 0.04 + groundY * 0.55 * (1 - Math.sin(dp * Math.PI))  // arc parabolique
+
+  // Couleurs ciel dépendent de dp (teinte chaude lever/coucher, froide midi)
+  const skyHue = isNight ? null : Math.round(200 - dp * (1 - dp) * 4 * 60)  // plus chaud aux extrêmes
   const skyA = isNight ? '#020510'  : isGolden ? '#1a0a04' : '#0b1e3a'
-  const skyB = isNight ? '#060c1e'  : isGolden ? '#8c3208' : '#1e4e8a'
-  const skyC = isNight ? '#0a1228'  : isGolden ? '#d96418' : '#4a8ec2'
+  const skyB = isNight ? '#060c1e'  : isGolden ? `hsl(${skyHue},72%,22%)` : '#1e4e8a'
+  const skyC = isNight ? '#0a1228'  : isGolden ? '#d96418' : `hsl(${skyHue},60%,46%)`
   const fogC = isNight ? 'rgba(12,18,42,0.80)'
     : isGolden ? 'rgba(180,80,20,0.20)' : 'rgba(40,90,155,0.16)'
 
   const moonX = svgW * 0.14
   const moonY = groundY * 0.14
-  const sunX  = svgW * 0.80
-  const sunY  = isGolden ? groundY * 0.22 : groundY * 0.10
 
   const stars = useMemo(() => isNight
     ? Array.from({length:90},(_,i) => ({
@@ -441,25 +464,31 @@ export default function CommunityGarden({ currentUserId, onClose }) {
     : [], [isNight, svgW, groundY])
 
   // Positions — désordre naturel, chevauchement
-  const positions = useMemo(() => plants
-    .map((p, i) => {
-      const xNoise = (hash(p.user_id, 9) % 32) - 16
-      const yNoise = (hash(p.user_id, 8) % 16) - 8
-      return { ...p, x: 70 + i*W_PER + xNoise, yOff: yNoise }
-    })
-    .sort((a,b) => a.yOff - b.yOff),   // profondeur : loin d'abord
-  [plants])
+  // Ma fleur placée au centre du canvas SVG
+  const positions = useMemo(() => {
+    const myIdx = plants.findIndex(p => p.user_id === currentUserId)
+    return plants
+      .map((p, i) => {
+        const xNoise = (hash(p.user_id, 9) % 28) - 14
+        const yNoise = (hash(p.user_id, 8) % 16) - 8
+        // Offset par rapport à ma fleur pour la centrer dans le SVG
+        const offset = myIdx >= 0 ? i - myIdx : i
+        const baseX  = svgW / 2 + offset * W_PER
+        return { ...p, x: baseX + xNoise, yOff: yNoise }
+      })
+      .sort((a,b) => a.yOff - b.yOff)
+  }, [plants, currentUserId, svgW])
 
   const scrollable = svgW > 1380
 
   return (
     <div style={{
       position:'fixed', inset:0, zIndex:300,
-      background:'rgba(0,0,0,0.88)',
+      background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
       display:'flex', flexDirection:'column',
-      alignItems:'center', justifyContent:'center',
       backdropFilter:'blur(10px)',
       animation:'cgFadeIn 0.38s ease',
+      padding:'16px 0 0',
     }}>
       <style>{`
         @keyframes cgFadeIn  { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
@@ -470,17 +499,21 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         @keyframes cgGrass   { 0%,100%{transform:rotate(0deg)} 38%{transform:rotate(2.2deg)} 72%{transform:rotate(-1.6deg)} }
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }
         @keyframes cgRay     { 0%,100%{opacity:0.50} 50%{opacity:0.20} }
+        div[data-cg]::-webkit-scrollbar { height: 5px; }
+        div[data-cg]::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius:3px; }
+        div[data-cg]::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius:3px; }
+        div[data-cg]::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.40); }
       `}</style>
 
       {/* HEADER */}
       <div style={{
         width:'100%',
         display:'flex', alignItems:'flex-end', justifyContent:'space-between',
-        padding:'0 28px 14px', flexShrink:0,
+        padding:'0 24px 10px', flexShrink:0,
       }}>
         <div>
           <div style={{fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:300, color:'rgba(238,232,218,0.95)', letterSpacing:'.01em'}}>
-            Le Champ Collectif
+            Le Jardin Collectif
           </div>
           <div style={{fontSize:10, letterSpacing:'.22em', textTransform:'uppercase', color:'rgba(238,232,218,0.32)', marginTop:4}}>
             {loading ? "Les jardins s'éveillent…"
@@ -500,34 +533,35 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         >✕</button>
       </div>
 
-      {/* PAYSAGE 16/9 */}
-      <div style={{
-        width:'100%',
-        aspectRatio:'16/9',
-        overflowX: scrollable ? 'auto' : 'hidden',
-        overflowY:'hidden',
-        borderRadius:16,
-        border:'1px solid rgba(255,255,255,0.08)',
-        boxShadow:'0 32px 100px rgba(0,0,0,0.72)',
-        flexShrink:0,
-        scrollbarWidth:'thin',
-        scrollbarColor:'rgba(255,255,255,0.12) transparent',
-      }}>
+      {/* PAYSAGE — pleine largeur, hauteur restante */}
+      <div
+        ref={scrollRef}
+        data-cg="1"
+        style={{
+          flex:1,
+          width:'100%',
+          overflowX:'auto',
+          overflowY:'hidden',
+          minHeight:0,
+          scrollbarWidth:'thin',
+          scrollbarColor:'rgba(255,255,255,0.22) rgba(255,255,255,0.04)',
+        }}
+      >
 
         {loading && (
-          <div style={{width:'100%',height:'100%',background:`linear-gradient(180deg,${skyA},${skyB} 55%,${skyC})`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{width:'100%',height:'100%',minHeight:'300px',background:`linear-gradient(180deg,${skyA},${skyB} 55%,${skyC})`,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <div style={{fontSize:11,letterSpacing:'.2em',textTransform:'uppercase',color:'rgba(238,232,218,0.26)'}}>Les jardins s'éveillent…</div>
           </div>
         )}
 
         {!loading && err && (
-          <div style={{width:'100%',height:'100%',background:`linear-gradient(180deg,${skyA},${skyB})`,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{width:'100%',height:'100%',minHeight:'300px',background:`linear-gradient(180deg,${skyA},${skyB})`,display:'flex',alignItems:'center',justifyContent:'center'}}>
             <div style={{fontSize:12,color:'rgba(210,100,100,0.8)'}}>{err}</div>
           </div>
         )}
 
         {!loading && !err && (
-          <svg width={svgW} height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{display:'block',minWidth:'100%'}} fill="none">
+          <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMid slice" style={{display:'block'}} fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={skyA}/>
@@ -582,25 +616,25 @@ export default function CommunityGarden({ currentUserId, onClose }) {
             {isDay && <>
               {/* Halo diffus */}
               <circle cx={sunX} cy={sunY}
-                r={isGolden ? 60 : 48}
-                fill={isGolden ? 'rgba(255,130,20,0.10)' : 'rgba(255,218,78,0.07)'}
+                r={isGolden ? 80 : 60}
+                fill={isGolden ? 'rgba(255,130,20,0.14)' : 'rgba(255,218,78,0.10)'}
                 filter="url(#cgSoftGlow)"
               />
               {/* Disque solaire */}
               <circle cx={sunX} cy={sunY}
-                r={isGolden ? 20 : 14}
-                fill={isGolden ? 'rgba(255,190,40,0.85)' : 'rgba(255,225,90,0.80)'}
+                r={isGolden ? 26 : 18}
+                fill={isGolden ? 'rgba(255,190,40,0.88)' : 'rgba(255,225,90,0.82)'}
                 filter="url(#cgGlow)"
               />
               <circle cx={sunX} cy={sunY}
-                r={isGolden ? 13 : 9}
-                fill={isGolden ? 'rgba(255,240,160,0.95)' : 'rgba(255,252,200,0.90)'}
+                r={isGolden ? 17 : 12}
+                fill={isGolden ? 'rgba(255,248,170,0.96)' : 'rgba(255,252,210,0.92)'}
               />
               {/* Rayons */}
               {Array.from({length: isGolden ? 12 : 8},(_,i)=>{
                 const a   = i*(isGolden?30:45)*Math.PI/180
-                const r1  = isGolden ? 24 : 17
-                const r2  = isGolden ? 38 : 26
+                const r1  = isGolden ? 30 : 21
+                const r2  = isGolden ? 48 : 34
                 return <line key={i}
                   x1={sunX+Math.cos(a)*r1} y1={sunY+Math.sin(a)*r1}
                   x2={sunX+Math.cos(a)*r2} y2={sunY+Math.sin(a)*r2}
@@ -623,11 +657,12 @@ export default function CommunityGarden({ currentUserId, onClose }) {
               />
             ))}
 
-            {/* SOL TRÈS FIN — juste un liseré */}
+            {/* SOL */}
             <rect x={0} y={groundY} width={svgW} height={svgH - groundY} fill="url(#cgSoil)"/>
+            {/* Liseré herbe sur le sol */}
             <path
-              d={`M0,${groundY-1} Q${svgW*0.3},${groundY-3} ${svgW*0.6},${groundY-1} Q${svgW*0.8},${groundY} ${svgW},${groundY-2} L${svgW},${groundY+2} L0,${groundY+2} Z`}
-              fill="rgba(28,65,14,0.35)"
+              d={`M0,${groundY-2} Q${svgW*0.25},${groundY-5} ${svgW*0.5},${groundY-2} Q${svgW*0.75},${groundY-4} ${svgW},${groundY-2} L${svgW},${groundY+3} L0,${groundY+3} Z`}
+              fill="rgba(32,72,16,0.55)"
             />
 
             {/* HERBES */}
@@ -648,12 +683,7 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         )}
       </div>
 
-      {/* LÉGENDE */}
-      {!loading && !err && (
-        <div style={{marginTop:10, fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(238,232,218,0.18)'}}>
-          Chaque fleur reflète un jardin intérieur · anonyme · temps réel
-        </div>
-      )}
+
     </div>
   )
 }
