@@ -157,4 +157,39 @@ export const circleService = {
       'leaveCircle'
     )
   },
+// ─── STATS GLOBALES DES CERCLES ──────────────────────────
+async getGlobalStats(userId) {
+
+  // 🔹 Combien de cercles j’ai rejoint
+  const { count: myCircleCount } = await supabase
+    .from('circle_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  // 🔹 Nombre total de membres dans tous mes cercles
+  const { data: memberships } = await supabase
+    .from('circle_members')
+    .select('circle_id')
+    .eq('user_id', userId)
+
+  const circleIds = memberships?.map(m => m.circle_id) ?? []
+
+  let totalMembers = 0
+
+  if (circleIds.length) {
+    const { count } = await supabase
+      .from('circle_members')
+      .select('*', { count: 'exact', head: true })
+      .in('circle_id', circleIds)
+
+    totalMembers = count ?? 0
+  }
+
+  return {
+    myCircleCount: myCircleCount ?? 0,
+    totalMembers,
+  }
+},
+
+
 }

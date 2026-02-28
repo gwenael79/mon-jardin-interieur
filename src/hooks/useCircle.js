@@ -6,6 +6,7 @@ import { circleService }   from '../services/circle.service'
 export function useCircle(userId) {
   const {
     circles, activeCircleId, circleMembers, isLoading, error,
+    stats, setStats,
     setCircles, setActiveCircle, setCircleMembers,
     setLoading, setError, addCircle,
   } = useCircleStore()
@@ -16,22 +17,28 @@ export function useCircle(userId) {
   }, [userId]) // eslint-disable-line
 
   async function loadCircles() {
-    setLoading(true)
-    try {
-      const data = await circleService.getMyCircles(userId)
-      setCircles(data)
-      // Active le premier cercle par défaut
-      if (data.length && !activeCircleId) {
-        const first = data[0]
-        setActiveCircle(first.id)
-        loadMembers(first.id)
-      }
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
+  setLoading(true)
+  try {
+    const [data, globalStats] = await Promise.all([
+      circleService.getMyCircles(userId),
+      circleService.getGlobalStats(userId),
+    ])
+
+    setCircles(data)
+    setStats(globalStats)
+
+    if (data.length && !activeCircleId) {
+      const first = data[0]
+      setActiveCircle(first.id)
+      loadMembers(first.id)
     }
+
+  } catch (err) {
+    setError(err.message)
+  } finally {
+    setLoading(false)
   }
+}
 
   const loadMembers = useCallback(async (circleId) => {
     try {
@@ -63,7 +70,7 @@ export function useCircle(userId) {
 
   return {
     circles, activeCircle, circleMembers,
-    isLoading, error,
+    isLoading, error, stats,
     selectCircle, createCircle, joinByCode,
   }
 }

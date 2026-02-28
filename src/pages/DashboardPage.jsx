@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useDefi } from '../hooks/useDefi'
 import { useAuth }     from '../hooks/useAuth'
 import { usePlant }    from '../hooks/usePlant'
 import { useCircle }   from '../hooks/useCircle'
@@ -6,6 +7,8 @@ import { usePrivacy }  from '../hooks/usePrivacy'
 import { useGestures } from '../hooks/useGestures'
 import { useJournal }  from '../hooks/useJournal'
 import { RITUAL_CATALOG } from '../services/ritual.service'
+import { supabase } from '../core/supabaseClient'
+import CommunityGarden from '../components/CommunityGarden'
 
 /* ─────────────────────────────────────────
    STYLES
@@ -243,7 +246,7 @@ body { background: var(--bg); }
 
 /* ── CONTENT AREAS ── */
 .content { flex: 1; overflow: hidden; display: flex; min-height: 0; }
-.col { overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; }
+.col { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px; min-height: 0; }
 
 .slabel {
   font-size: 10px;
@@ -437,16 +440,58 @@ function InviteModal({ circle, onClose, onCopied }) {
 .gi-text b { color: var(--text); font-weight: 400; }
 .gi-time { font-size: 10px; color: var(--text3); }
 /* ── MON JARDIN ── */
-.mj-layout { display: flex; gap: 18px; }
-.mj-left  { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.mj-right { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; }
-.plant-hero { border-radius: 20px; padding: 22px; background: linear-gradient(160deg, rgba(30,55,30,0.85), rgba(20,40,20,0.90)); border: 1px solid var(--border); position: relative; overflow: hidden; display: flex; gap: 18px; align-items: center; }
+.mj-layout { display: flex; gap: 18px; flex: 1; overflow: hidden; min-height: 0; }
+.mj-left  { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow-y: auto; padding: 20px 22px; }
+.mj-right { width: 240px; flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; padding: 20px 18px; border-left: 1px solid var(--border2); }
+.ph-cards-row { display: flex; gap: 12px; }
+.plant-hero { border-radius: 20px; padding: 22px; background: linear-gradient(160deg, rgba(30,55,30,0.85), rgba(20,40,20,0.90)); border: 1px solid var(--border); position: relative; overflow: hidden; }
+.ph-card-flower { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 180px; }
+.ph-card-zones  { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+/* ── Carte jardin pleine largeur ── */
+.ph-card-fullwidth { padding: 0; display: flex; flex-direction: column; }
+.ph-scene { width: 100%; height: 260px; overflow: hidden; border-radius: 20px 20px 0 0; }
+.ph-scene svg { display: block; width: 100%; height: 100%; }
+/* ── Carte 2 colonnes ── */
+.ph-2col { display: flex; flex-direction: row; padding: 0; overflow: hidden; flex-shrink: 0; min-height: 240px; }
+.ph-col-flower { flex: 1; overflow: hidden; border-radius: 20px 0 0 20px; background: rgba(14,28,14,0.95); display: flex; }
+.ph-col-flower svg { display: block; width: 100%; height: 100%; }
+.ph-col-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 22px 16px; background: linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99)); border-left: 1px solid rgba(150,212,133,0.10); border-radius: 0 20px 20px 0; position: relative; overflow: hidden; }
+.ph-col-info::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; background: radial-gradient(circle, rgba(150,212,133,0.07), transparent 70%); pointer-events:none; }
+.ph-vitality-score { display: flex; flex-direction: column; gap: 2px; }
+.ph-score-number { display: flex; align-items: baseline; gap: 3px; line-height: 1; }
+.ph-score-digits { font-family: 'Cormorant Garamond', serif; font-size: 58px; font-weight: 300; color: #e8f5e0; letter-spacing: -2px; line-height: 1; }
+.ph-score-pct { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 300; color: rgba(150,212,133,0.80); margin-bottom: 4px; }
+.ph-score-label { font-size: 8px; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(150,212,133,0.55); font-weight: 500; }
+.ph-score-date { font-size: 9px; letter-spacing: 0.08em; color: rgba(255,255,255,0.28); text-transform: capitalize; margin-top: 4px; }
+.ph-zones-list { display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center; }
+.ph-zone-row-new { display: flex; align-items: center; gap: 8px; animation: zoneSlideIn 0.4s ease both; }
+@keyframes zoneSlideIn { from { opacity:0; transform:translateX(-8px) } to { opacity:1; transform:translateX(0) } }
+.ph-zone-icon-new { font-size: 11px; width: 16px; text-align: center; flex-shrink: 0; }
+.ph-zone-track { flex: 1; height: 3px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
+.ph-zone-fill-new { height: 100%; width: var(--zone-val); background: var(--zone-color); border-radius: 100px; opacity: 0.80; box-shadow: 0 0 6px var(--zone-color); transition: width 0.8s cubic-bezier(0.16,1,0.3,1); }
+.ph-zone-pct-new { font-family: 'Cormorant Garamond', serif; font-size: 12px; color: rgba(255,255,255,0.40); width: 24px; text-align: right; flex-shrink: 0; }
+.ph-overlay-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: linear-gradient(135deg, rgba(18,36,18,0.96), rgba(14,28,14,0.98)); border-top: 1px solid rgba(150,212,133,0.12); border-radius: 0 0 20px 20px; flex-shrink: 0; }
+.ph-overlay-left { display: flex; flex-direction: column; gap: 2px; min-width: 80px; }
+.ph-health-sm { font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 300; color: var(--text); line-height: 1; }
+.ph-health-sm span { font-size: 16px; }
+.ph-label-sm { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--text3); }
+.ph-overlay-zones { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.ph-zone-mini { display: flex; align-items: center; gap: 6px; }
+.pzm-icon { font-size: 10px; width: 14px; text-align: center; flex-shrink: 0; }
+.pzm-bar  { flex: 1; height: 2.5px; background: rgba(255,255,255,0.08); border-radius: 100px; overflow: hidden; }
+.pzm-fill { height: 100%; border-radius: 100px; transition: width .6s ease; }
+.pzm-val  { font-size: 9px; color: var(--text3); width: 26px; text-align: right; flex-shrink: 0; }
+.ph-settings-btn { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; color: var(--text3); background: rgba(255,255,255,0.06); border: 1px solid var(--border); transition: all .2s; user-select: none; }
+.ph-settings-btn:hover { background: rgba(150,212,133,0.15); color: #c8f0b8; border-color: rgba(150,212,133,0.48); }
 .ph-glow { position: absolute; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(circle, rgba(150,212,133,0.12), transparent 70%); top: -40px; right: -20px; pointer-events: none; }
+.ph-plant-centered { display: flex; align-items: center; justify-content: center; }
+.ph-health-block { text-align: center; }
 .ph-plant { flex-shrink: 0; }
 .ph-info  { flex: 1; display: flex; flex-direction: column; gap: 10px; }
 .ph-health { font-family: 'Cormorant Garamond', serif; font-size: 54px; font-weight: 300; color: var(--text); line-height: 1; }
-.ph-label  { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); margin-top: -4px; }
-.ph-zones  { display: flex; flex-direction: column; gap: 6px; }
+.ph-label  { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); margin-top: 4px; }
+.ph-zones  { display: flex; flex-direction: column; gap: 8px; }
 .ph-zone-row { display: flex; align-items: center; gap: 8px; }
 .pzr-icon { font-size: 11px; width: 16px; text-align: center; }
 .pzr-name { font-size: 10px; color: var(--text3); width: 52px; }
@@ -482,6 +527,19 @@ function InviteModal({ circle, onClose, onCopied }) {
 .wd-dot.empty   { background: rgba(255,255,255,0.04); border: 1px solid var(--border2); color: var(--text3); }
 .wd-dot.today   { border-color: var(--green); box-shadow: 0 0 0 2px rgba(150,212,133,0.2); }
 .wd-label { font-size: 9px; color: var(--text3); letter-spacing: .05em; }
+.journal-composer { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.jc-textarea { width: 100%; min-height: 90px; background: rgba(255,255,255,0.04); border: 1px solid var(--border2); border-radius: 10px; padding: 11px 13px; font-size: 13px; font-family: 'Jost', sans-serif; font-weight: 300; color: var(--text2); outline: none; resize: vertical; transition: border-color .2s; line-height: 1.6; }
+.jc-textarea:focus { border-color: var(--greenT); }
+.jc-textarea::placeholder { color: var(--text3); }
+.jc-zones { display: flex; gap: 6px; flex-wrap: wrap; }
+.jc-zone { padding: 4px 12px; border-radius: 100px; font-size: 10px; letter-spacing: .06em; border: 1px solid var(--border); color: var(--text3); cursor: pointer; transition: all .2s; }
+.jc-zone:hover { border-color: var(--greenT); color: #c8f0b8; }
+.jc-zone.selected { background: var(--green2); border-color: var(--greenT); color: #c8f0b8; }
+.jc-foot { display: flex; align-items: center; justify-content: space-between; }
+.jc-hint { font-size: 10px; color: var(--text3); letter-spacing: .03em; }
+.jc-save { padding: 7px 18px; border-radius: 100px; font-size: 11px; letter-spacing: .08em; background: var(--green2); border: 1px solid var(--greenT); color: #c8f0b8; cursor: pointer; transition: all .2s; font-family: 'Jost', sans-serif; }
+.jc-save:hover:not(:disabled) { background: rgba(150,212,133,.32); }
+.jc-save:disabled { opacity: .45; cursor: default; }
 .journal-entry { padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border2); border-radius: 13px; transition: all .2s; }
 .journal-entry:hover { background: rgba(255,255,255,0.07); }
 .je-date    { font-size: 10px; letter-spacing: .1em; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
@@ -521,8 +579,9 @@ function InviteModal({ circle, onClose, onCopied }) {
 .cat-filter { display: flex; gap: 7px; flex-wrap: wrap; }
 .cat-btn { padding: 5px 14px; border-radius: 100px; font-size: 11px; border: 1px solid var(--border); color: var(--text3); cursor: pointer; transition: all .2s; background: transparent; }
 .cat-btn.active { background: var(--green2); border-color: var(--greenT); color: #c8f0b8; }
-.defi-featured { border-radius: 18px; padding: 22px; position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(80,50,120,0.35), rgba(40,30,80,0.5)); border: 1px solid rgba(130,100,200,0.25); }
-.df-glow { position: absolute; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(150,100,220,0.15), transparent 70%); top: -30px; right: -20px; pointer-events: none; }
+.defi-featured { border-radius: 18px; padding: 22px; position: relative; overflow: visible; background: linear-gradient(135deg, rgba(80,50,120,0.35), rgba(40,30,80,0.5)); border: 1px solid rgba(130,100,200,0.25); flex-shrink: 0; }
+.df-glow { position: absolute; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(150,100,220,0.15), transparent 70%); top: -30px; right: -20px; pointer-events: none; z-index: 0; overflow: hidden; border-radius: 18px; }
+.defi-featured > *:not(.df-glow) { position: relative; z-index: 1; }
 .df-tag { font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: rgba(180,150,240,0.8); margin-bottom: 8px; }
 .df-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--text); margin-bottom: 6px; }
 .df-desc { font-size: 12px; color: var(--text3); line-height: 1.6; margin-bottom: 14px; }
@@ -530,7 +589,7 @@ function InviteModal({ circle, onClose, onCopied }) {
 .dfm-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); }
 .df-progress { background: rgba(255,255,255,0.08); border-radius: 100px; height: 4px; margin-bottom: 6px; overflow: hidden; }
 .dfp-fill { height: 100%; background: linear-gradient(90deg, rgba(130,100,200,0.6), rgba(180,150,240,0.8)); border-radius: 100px; transition: width .6s ease; }
-.df-progress-label { font-size: 10px; color: var(--text3); margin-bottom: 14px; }
+.df-progress-label { font-size: 10px; color: var(--text3); margin-bottom: 14px; display: flex; justify-content: space-between; }
 .df-actions { display: flex; gap: 10px; }
 .df-join  { padding: 9px 22px; border-radius: 100px; font-size: 11px; letter-spacing: .08em; background: rgba(130,100,200,0.25); border: 1px solid rgba(130,100,200,0.4); color: rgba(200,180,255,0.9); cursor: pointer; transition: all .2s; }
 .df-join:hover { background: rgba(130,100,200,0.4); }
@@ -607,34 +666,454 @@ function InviteModal({ circle, onClose, onCopied }) {
 /* ─────────────────────────────────────────
    PLANT SVG
 ───────────────────────────────────────── */
-function PlantSVG({ health = 72, w = 90, h = 100 }) {
-  const r = health / 100
+/* ─────────────────────────────────────────
+   GARDEN SETTINGS (stored in memory)
+───────────────────────────────────────── */
+const DEFAULT_GARDEN_SETTINGS = {
+  sunriseH: 7, sunriseM: 0,
+  sunsetH: 20, sunsetM: 0,
+  petalColor1: '#e8789a',
+  petalColor2: '#f0a8be',
+  petalShape: 'round',
+}
+
+/* ─────────────────────────────────────────
+   MODAL RÉGLAGES JARDIN
+───────────────────────────────────────── */
+function GardenSettingsModal({ settings, onSave, onClose }) {
+  const [s, setS] = useState({ ...settings })
+  const set = (k, v) => setS(prev => ({ ...prev, [k]: v }))
+
+  const PETAL_SHAPES = [
+    { id:'round',   label:'Ronde',   desc:'Pétales ovales doux' },
+    { id:'pointed', label:'Étoilée', desc:'Pétales effilés' },
+    { id:'wide',    label:'Large',   desc:'Pétales étalés' },
+  ]
+  const PRESET_COLORS = [
+    { c1:'#e8789a', c2:'#f0a8be', name:'Rose' },
+    { c1:'#8878e8', c2:'#b0a8f8', name:'Lilas' },
+    { c1:'#e89038', c2:'#f8c068', name:'Soleil' },
+    { c1:'#48c878', c2:'#88e8a8', name:'Émeraude' },
+    { c1:'#e84848', c2:'#f88888', name:'Corail' },
+    { c1:'#48b8e8', c2:'#88d8f8', name:'Azur' },
+  ]
+
   return (
-    <svg width={w} height={h} viewBox="0 0 90 100" fill="none">
-      <ellipse cx="45" cy="93" rx="18" ry="4" fill="rgba(100,60,30,0.25)" />
-      <path d="M29 93 Q27 81 30 79 H60 Q63 81 61 93 Z" fill="#7a4a2a" opacity="0.7" />
-      <rect x="28" y="76" width="34" height="5" rx="1.5" fill="#8a5535" />
-      <ellipse cx="45" cy="80" rx="15" ry="4" fill="#2d1f12" opacity={0.9 * r + 0.1} />
-      <path d={`M45 ${79 - 32 * r} Q42 ${68 - 18 * r} 45 ${79 - 6 * r}`}
-        stroke={`rgba(60,${100 + 40 * r},40,${0.4 + 0.6 * r})`}
-        strokeWidth={1.5 + r} strokeLinecap="round" fill="none" />
-      {r > 0.2 && <ellipse cx="37" cy={68 - 12 * r} rx={9 * r} ry={4.5 * r}
-        fill={`rgba(35,${70 + 70 * r},25,${0.55 + 0.35 * r})`}
-        transform={`rotate(-30,37,${68 - 12 * r})`} />}
-      {r > 0.3 && <ellipse cx="53" cy={62 - 16 * r} rx={10 * r} ry={5 * r}
-        fill={`rgba(40,${75 + 65 * r},30,${0.55 + 0.35 * r})`}
-        transform={`rotate(25,53,${62 - 16 * r})`} />}
-      {r > 0.45 && [0,60,120,180,240,300].map((a, i) => (
-        <ellipse key={i}
-          cx={45 + Math.cos(a * Math.PI / 180) * (5 * r)}
-          cy={(79 - 32 * r) + Math.sin(a * Math.PI / 180) * (5 * r)}
-          rx={3.5 * r} ry={2 * r}
-          fill={`rgba(${190 - 30 * r},${70 + 70 * r},${90 + 50 * r},${0.5 + 0.4 * r})`}
-          transform={`rotate(${a},${45 + Math.cos(a * Math.PI / 180) * 5 * r},${(79 - 32 * r) + Math.sin(a * Math.PI / 180) * 5 * r})`}
-        />
-      ))}
-      {r > 0.45 && <circle cx="45" cy={79 - 32 * r} r={3 * r} fill={`rgba(240,${170 + 50 * r},90,${0.7 + 0.3 * r})`} />}
-      {r > 0.65 && <circle cx="45" cy={79 - 32 * r} r={14 * r} fill={`rgba(150,212,133,${0.05 * r})`} />}
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ width:480, maxWidth:'95vw' }}>
+        <div className="modal-title">🌸 Personnaliser mon jardin</div>
+
+        <div className="modal-field">
+          <label className="modal-label">Couleur de la fleur</label>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
+            {PRESET_COLORS.map(p => (
+              <div key={p.name} onClick={() => { set('petalColor1',p.c1); set('petalColor2',p.c2) }}
+                style={{ width:36, height:36, borderRadius:'50%', background:`linear-gradient(135deg,${p.c1},${p.c2})`,
+                  border: s.petalColor1===p.c1 ? '2px solid #c8f0b8' : '2px solid transparent',
+                  cursor:'pointer', transition:'all .2s', position:'relative',
+                  boxShadow: s.petalColor1===p.c1 ? '0 0 0 3px rgba(150,212,133,0.4)' : 'none' }}
+                title={p.name}>
+                {s.petalColor1===p.c1 && <div style={{ position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'white',textShadow:'0 1px 3px rgba(0,0,0,0.5)' }}>✓</div>}
+              </div>
+            ))}
+          </div>
+          <div style={{ display:'flex', gap:10, marginTop:10 }}>
+            <div className="modal-field" style={{ flex:1 }}>
+              <label className="modal-label" style={{ fontSize:9 }}>Couleur principale</label>
+              <input type="color" value={s.petalColor1} onChange={e => set('petalColor1',e.target.value)}
+                style={{ width:'100%', height:32, borderRadius:8, border:'1px solid var(--border)', background:'transparent', cursor:'pointer', padding:2 }}/>
+            </div>
+            <div className="modal-field" style={{ flex:1 }}>
+              <label className="modal-label" style={{ fontSize:9 }}>Couleur secondaire</label>
+              <input type="color" value={s.petalColor2} onChange={e => set('petalColor2',e.target.value)}
+                style={{ width:'100%', height:32, borderRadius:8, border:'1px solid var(--border)', background:'transparent', cursor:'pointer', padding:2 }}/>
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-field">
+          <label className="modal-label">Forme des pétales</label>
+          <div style={{ display:'flex', gap:8, marginTop:6 }}>
+            {PETAL_SHAPES.map(ps => (
+              <div key={ps.id} onClick={() => set('petalShape',ps.id)}
+                style={{ flex:1, padding:'10px 8px', borderRadius:12, cursor:'pointer', textAlign:'center',
+                  border: s.petalShape===ps.id ? '1px solid var(--greenT)' : '1px solid var(--border)',
+                  background: s.petalShape===ps.id ? 'var(--green2)' : 'rgba(255,255,255,0.04)',
+                  transition:'all .2s' }}>
+                <div style={{ fontSize:10, color: s.petalShape===ps.id ? '#c8f0b8' : 'var(--text2)', fontWeight: s.petalShape===ps.id ? 400 : 300 }}>{ps.label}</div>
+                <div style={{ fontSize:9, color:'var(--text3)', marginTop:2 }}>{ps.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="modal-field">
+          <label className="modal-label">Lever & coucher du soleil</label>
+          <div style={{ display:'flex', gap:12, marginTop:6 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:10, color:'var(--text3)', marginBottom:4 }}>🌅 Lever</div>
+              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                <input type="number" min={4} max={11} value={s.sunriseH} onChange={e => set('sunriseH',+e.target.value)} className="modal-input" style={{ width:56, textAlign:'center', padding:'8px 6px' }}/>
+                <span style={{ color:'var(--text3)' }}>h</span>
+                <input type="number" min={0} max={59} value={s.sunriseM} onChange={e => set('sunriseM',+e.target.value)} className="modal-input" style={{ width:56, textAlign:'center', padding:'8px 6px' }}/>
+                <span style={{ color:'var(--text3)' }}>min</span>
+              </div>
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:10, color:'var(--text3)', marginBottom:4 }}>🌇 Coucher</div>
+              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                <input type="number" min={15} max={23} value={s.sunsetH} onChange={e => set('sunsetH',+e.target.value)} className="modal-input" style={{ width:56, textAlign:'center', padding:'8px 6px' }}/>
+                <span style={{ color:'var(--text3)' }}>h</span>
+                <input type="number" min={0} max={59} value={s.sunsetM} onChange={e => set('sunsetM',+e.target.value)} className="modal-input" style={{ width:56, textAlign:'center', padding:'8px 6px' }}/>
+                <span style={{ color:'var(--text3)' }}>min</span>
+              </div>
+            </div>
+          </div>
+          <div style={{ marginTop:12, padding:'10px 14px', background:'rgba(255,255,255,0.04)', borderRadius:10, border:'1px solid var(--border2)' }}>
+            <div style={{ fontSize:10, color:'var(--text3)', marginBottom:6, letterSpacing:'.08em' }}>Aperçu de la journée</div>
+            <div style={{ position:'relative', height:28 }}>
+              <div style={{ position:'absolute', left:0, right:0, top:'50%', height:1, background:'var(--border)' }}/>
+              {(() => {
+                const now = new Date(); const h = now.getHours() + now.getMinutes()/60
+                const rise = s.sunriseH + s.sunriseM/60; const set2 = s.sunsetH + s.sunsetM/60
+                const pct = Math.max(0,Math.min(1,(h-rise)/(set2-rise)))
+                const isD = h>=rise && h<=set2
+                return <>
+                  <div style={{ position:'absolute', left:'2%', top:'50%', transform:'translateY(-50%)', fontSize:9, color:'var(--text3)' }}>{s.sunriseH}h{String(s.sunriseM).padStart(2,'0')}</div>
+                  <div style={{ position:'absolute', right:'2%', top:'50%', transform:'translateY(-50%)', fontSize:9, color:'var(--text3)' }}>{s.sunsetH}h{String(s.sunsetM).padStart(2,'0')}</div>
+                  <div style={{ position:'absolute', left:`${pct*76+12}%`, top:'50%', transform:'translate(-50%,-50%)', fontSize:18, filter:isD?'none':'grayscale(1) opacity(0.4)' }}>☀️</div>
+                </>
+              })()}
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-actions">
+          <button className="modal-cancel" onClick={onClose}>Annuler</button>
+          <button className="modal-submit" onClick={() => { onSave(s); onClose() }}>Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
+   PLANT SVG — Scène de jardin complète
+───────────────────────────────────────── */
+let _svgN = 0
+function PlantSVG({ health = 72, gardenSettings = DEFAULT_GARDEN_SETTINGS }) {
+  const r   = Math.max(0, Math.min(1, (health ?? 50) / 100))
+  const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
+  const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
+  const id  = 'g' + (++_svgN)   // unique prefix per instance, no hooks needed
+
+  /* ── Soleil ── */
+  const now   = new Date()
+  const nowH  = now.getHours() + now.getMinutes() / 60
+  const riseH = (gs.sunriseH || 7)  + (gs.sunriseM || 0) / 60
+  const setH  = (gs.sunsetH  || 20) + (gs.sunsetM  || 0) / 60
+  const dp    = Math.max(0, Math.min(1, (nowH - riseH) / (setH - riseH)))
+  const isDay = nowH >= riseH && nowH <= setH
+  const isG   = isDay && (Math.abs(nowH - riseH) < 1.2 || Math.abs(nowH - setH) < 1.2)
+  const sunX  = 30 + dp * (W - 60)
+  const sunY  = 18 + 58 * (1 - Math.sin(dp * Math.PI))
+
+  /* ── Couleurs pétales personnalisées ── */
+  const h2r = h => { const v = parseInt((h || '#e8789a').replace('#',''), 16); return [(v>>16)&255,(v>>8)&255,v&255] }
+  const [r1,g1,b1]  = h2r(gs.petalColor1)
+  const [r2,g2,b2]  = h2r(gs.petalColor2)
+  const pC1   = `rgba(${r1},${g1},${b1},${0.78+0.18*r})`
+  const pC2   = `rgba(${r2},${g2},${b2},${0.60+0.28*r})`
+  const pInr  = `rgba(${Math.min(255,r2+28)},${Math.min(255,g2+28)},${Math.min(255,b2+28)},${0.45+0.22*r})`
+  const pBk1  = `rgba(${Math.round(r1*.72)},${Math.round(g1*.72)},${Math.round(b1*.72)},0.48)`
+  const pBk2  = `rgba(${Math.round(r1*.55)},${Math.round(g1*.55)},${Math.round(b1*.55)},0.30)`
+
+  /* ── Forme pétales ── */
+  const ps   = gs.petalShape || 'round'
+  const pRx  = ps==='wide'?8+14*r : ps==='pointed'?4+7*r  : 6+10*r
+  const pRy  = ps==='wide'?9+13*r : ps==='pointed'?14+22*r: 12+18*r
+  const pD   = 8+11*r
+
+  /* ── Tige ── */
+  const sH   = 32 + 100*r
+  const sTY  = gY - sH
+  const sMY  = gY - sH * 0.5
+  const flwY = sTY
+
+  /* ── Couleurs végétales ── */
+  const stemC = `rgba(${45+25*r},${115+65*r},${32+22*r},${0.55+0.45*r})`
+  const stemH2= `rgba(${70+30*r},${162+50*r},${50+20*r},0.28)`
+  const lC1   = `rgba(${32+22*r},${105+85*r},${28+18*r},${0.65+0.3*r})`
+  const lC2   = `rgba(${38+18*r},${115+72*r},${32+22*r},${0.6+0.35*r})`
+  const lV    = `rgba(${55+35*r},${152+55*r},${44+22*r},0.32)`
+  const rootC = `rgba(${112+28*r},${72+26*r},${38+12*r},${0.28+0.32*r})`
+
+  /* ── Ciel / Sol ── */
+  const skyT  = isDay ? (isG ? `rgba(255,${Math.round(100+70*dp)},${Math.round(10+50*dp)},0.32)` : `rgba(${28+Math.round(18*r)},${52+Math.round(28*r)},${78+Math.round(18*r)},0.14)`) : 'rgba(8,12,28,0.22)'
+  const soilT = `rgba(${55+Math.round(15*r)},${36+Math.round(10*r)},${18+Math.round(5*r)},0.94)`
+  const soilB = `rgba(${26+Math.round(8*r)},${16+Math.round(5*r)},${8+Math.round(2*r)},0.98)`
+  const sunC  = isG ? `rgba(255,${Math.round(145+50*dp)},${Math.round(30+50*dp)},1)` : 'rgba(255,218,88,1)'
+
+  /* ── Herbe ── */
+  const blades = [
+    {x:18,h:15,l:-2},{x:28,h:19,l:1},{x:38,h:14,l:-1},{x:50,h:18,l:2},
+    {x:62,h:16,l:-1},{x:74,h:20,l:1},{x:86,h:14,l:-2},{x:98,h:19,l:2},
+    {x:110,h:16,l:-1},{x:122,h:13,l:1},{x:134,h:17,l:-2},{x:146,h:21,l:1},
+    {x:158,h:15,l:-1},{x:168,h:19,l:2},{x:178,h:17,l:-1},{x:188,h:22,l:1},
+    {x:196,h:16,l:2},{x:212,h:18,l:-1},{x:220,h:22,l:2},{x:228,h:16,l:-2},
+    {x:236,h:20,l:1},{x:246,h:14,l:-1},{x:258,h:18,l:2},{x:270,h:15,l:-1},
+    {x:282,h:21,l:1},{x:294,h:16,l:-2},{x:306,h:19,l:2},{x:318,h:14,l:-1},
+    {x:330,h:17,l:1},{x:342,h:20,l:-2},{x:354,h:15,l:2},{x:366,h:18,l:-1},
+    {x:378,h:16,l:1},{x:390,h:19,l:-1},
+  ]
+  const gC = i => i%3===0 ? `rgba(${46+Math.round(32*r)},${118+Math.round(82*r)},${32+Math.round(22*r)},${0.62+0.3*r})` : i%3===1 ? `rgba(${36+Math.round(28*r)},${106+Math.round(88*r)},${26+Math.round(18*r)},${0.55+0.35*r})` : `rgba(${54+Math.round(24*r)},${130+Math.round(68*r)},${38+Math.round(20*r)},${0.52+0.36*r})`
+  const gHL  = `rgba(${68+Math.round(28*r)},${155+Math.round(60*r)},${48+Math.round(20*r)},${0.36+0.22*r})`
+
+  /* ── Petites fleurs au sol ── */
+  const gF = [
+    {x:35, y:gY-4, c1:'rgba(228,108,148,0.85)',c2:'rgba(252,176,198,0.70)',n:5,s:2.8,min:0.15},
+    {x:78, y:gY-3, c1:'rgba(178,152,238,0.80)',c2:'rgba(218,198,255,0.65)',n:6,s:2.4,min:0.25},
+    {x:128,y:gY-5, c1:'rgba(252,172,58,0.85)', c2:'rgba(255,208,108,0.70)',n:5,s:2.5,min:0.30},
+    {x:158,y:gY-3, c1:'rgba(198,218,128,0.80)',c2:'rgba(228,245,168,0.65)',n:6,s:2.2,min:0.10},
+    {x:248,y:gY-4, c1:'rgba(232,102,142,0.85)',c2:'rgba(252,168,192,0.70)',n:5,s:2.5,min:0.20},
+    {x:292,y:gY-5, c1:'rgba(108,188,238,0.80)',c2:'rgba(162,218,255,0.65)',n:6,s:2.8,min:0.35},
+    {x:336,y:gY-4, c1:'rgba(252,142,78,0.85)', c2:'rgba(255,192,128,0.70)',n:5,s:2.4,min:0.28},
+    {x:374,y:gY-3, c1:'rgba(208,128,218,0.80)',c2:'rgba(238,178,248,0.65)',n:6,s:2.6,min:0.22},
+  ]
+
+  /* ── Animations inline ── */
+  const swA = (dur, delay='0s') => ({ animation: `svgSway ${dur}s ease-in-out infinite ${delay}`, transformOrigin: 'center bottom' })
+  const plantSway = { animation: `svgPlant ${(3.5-r*0.8).toFixed(2)}s ease-in-out infinite`, transformOrigin: `${cx}px ${gY}px` }
+  const breathe1  = { animation: 'svgBreath 2.6s ease-in-out infinite' }
+  const breathe2  = { animation: 'svgBreath 3.1s ease-in-out infinite 0.5s' }
+  const rayAnim   = { animation: 'svgRay 2.8s ease-in-out infinite' }
+
+  const p1 = [0,45,90,135,180,225,270,315]
+  const p2 = [22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5]
+
+  return (
+    <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" fill="none" style={{display:'block'}}>
+      <defs>
+        <style>{`
+          @keyframes svgSway   { 0%,100%{ transform:rotate(0deg) } 35%{ transform:rotate(2deg) } 70%{ transform:rotate(-1.5deg) } }
+          @keyframes svgPlant  { 0%,100%{ transform:rotate(-1deg) } 50%{ transform:rotate(1.2deg) } }
+          @keyframes svgBreath { 0%,100%{ opacity:1 } 50%{ opacity:0.82 } }
+          @keyframes svgPollen { 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-2px) } }
+          @keyframes svgRay    { 0%,100%{ opacity:0.7 } 50%{ opacity:0.3 } }
+          @keyframes svgWind   { 0%{ transform:translateX(-8px); opacity:0 } 40%{ opacity:0.22 } 100%{ transform:translateX(28px); opacity:0 } }
+        `}</style>
+        <linearGradient id={id+'sk'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor={skyT}/>
+          <stop offset="100%" stopColor="rgba(0,0,0,0)"/>
+        </linearGradient>
+        <linearGradient id={id+'so'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor={soilT}/>
+          <stop offset="100%" stopColor={soilB}/>
+        </linearGradient>
+        <linearGradient id={id+'ss'} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stopColor="rgba(20,11,5,0.94)"/>
+          <stop offset="100%" stopColor="rgba(10,5,2,0.98)"/>
+        </linearGradient>
+        <radialGradient id={id+'sh'} cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stopColor={isG ? 'rgba(255,128,18,0.45)' : 'rgba(255,218,78,0.32)'}/>
+          <stop offset="100%" stopColor="rgba(255,190,60,0)"/>
+        </radialGradient>
+        <radialGradient id={id+'pi'} cx="40%" cy="38%" r="62%">
+          <stop offset="0%"   stopColor="rgba(255,242,98,1)"/>
+          <stop offset="100%" stopColor="rgba(218,146,46,0.92)"/>
+        </radialGradient>
+        <radialGradient id={id+'p1'} cx="50%" cy="78%" r="62%">
+          <stop offset="0%"   stopColor={pInr}/>
+          <stop offset="55%"  stopColor={pC2}/>
+          <stop offset="100%" stopColor={pC1}/>
+        </radialGradient>
+        <radialGradient id={id+'p2'} cx="50%" cy="78%" r="62%">
+          <stop offset="0%"   stopColor={pBk2}/>
+          <stop offset="100%" stopColor={pBk1}/>
+        </radialGradient>
+        <radialGradient id={id+'fg'} cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stopColor={`rgba(${r1},${g1},${b1},${0.16+0.14*r})`}/>
+          <stop offset="100%" stopColor={`rgba(${r1},${g1},${b1},0)`}/>
+        </radialGradient>
+        <filter id={id+'f1'}><feGaussianBlur stdDeviation="0.9"/></filter>
+        <filter id={id+'f2'}><feGaussianBlur stdDeviation="2.4"/></filter>
+        <filter id={id+'f3'}><feGaussianBlur stdDeviation="5"/></filter>
+        <clipPath id={id+'cl'}><rect width={W} height={H}/></clipPath>
+      </defs>
+
+      <g clipPath={`url(#${id}cl)`}>
+
+        {/* CIEL */}
+        <rect width={W} height={gY} fill={`url(#${id}sk)`}/>
+
+        {/* SOLEIL */}
+        {isDay && (
+          <g>
+            <circle cx={sunX} cy={sunY} r={isG?52:40} fill={`url(#${id}sh)`} filter={`url(#${id}f3)`}/>
+            <circle cx={sunX} cy={sunY} r={isG?13:9.5} fill={sunC} filter={`url(#${id}f1)`}/>
+            <circle cx={sunX} cy={sunY} r={isG?8.5:6} fill="rgba(255,252,222,0.95)"/>
+            <g style={rayAnim}>
+              {(isG?[0,30,60,90,120,150,180,210,240,270,300,330]:[0,45,90,135,180,225,270,315]).map((a,i) => {
+                const rad=a*Math.PI/180, ra1=isG?15:11, ra2=isG?24:17
+                return <line key={i}
+                  x1={sunX+Math.cos(rad)*ra1} y1={sunY+Math.sin(rad)*ra1}
+                  x2={sunX+Math.cos(rad)*ra2} y2={sunY+Math.sin(rad)*ra2}
+                  stroke={isG?'rgba(255,152,28,0.62)':'rgba(255,222,78,0.52)'}
+                  strokeWidth={isG?1.5:1.1} strokeLinecap="round"/>
+              })}
+            </g>
+          </g>
+        )}
+
+        {/* VENT */}
+        {r > 0.35 && (
+          <g>
+            <path d={`M14,${Math.round(gY*0.28)} Q38,${Math.round(gY*0.26)} 56,${Math.round(gY*0.30)}`} stroke="rgba(175,222,242,0.22)" strokeWidth={1.3} strokeLinecap="round" fill="none" style={{animation:`svgWind ${(2.0+r*0.7).toFixed(2)}s ease-in-out infinite`}}/>
+            <path d={`M8,${Math.round(gY*0.40)} Q32,${Math.round(gY*0.38)} 50,${Math.round(gY*0.42)}`}  stroke="rgba(175,222,242,0.16)" strokeWidth={1.0} strokeLinecap="round" fill="none" style={{animation:`svgWind ${(2.5+r*0.5).toFixed(2)}s ease-in-out infinite 0.7s`}}/>
+          </g>
+        )}
+
+        {/* SOL */}
+        <rect x={0} y={gY} width={W} height={H-gY} fill={`url(#${id}ss)`}/>
+        <path d={`M0,${gY} Q60,${gY-4} 120,${gY+2} Q200,${gY+6} 260,${gY+2} Q328,${gY-3} 400,${gY+1} L400,${gY+24} Q280,${gY+22} 160,${gY+26} L0,${gY+22} Z`} fill={`url(#${id}so)`}/>
+        {[[22,8,2.8],[60,12,1.7],[92,7,2.2],[138,10,1.5],[180,9,2.4],[224,11,1.8],[268,8,2.1],[310,13,1.6],[350,9,2.5],[386,7,1.8]].map(([dx,dy,rx],i) => (
+          <ellipse key={i} cx={dx} cy={gY+dy} rx={rx} ry={rx*0.5} fill="rgba(82,52,26,0.3)"/>
+        ))}
+
+        {/* RACINES */}
+        {r > 0.05 && (
+          <g opacity={0.55+0.25*r}>
+            <path d={`M${cx},${gY+2} C${cx-3},${gY+20} ${cx+2},${gY+34} ${cx},${gY+52}`} stroke={rootC} strokeWidth={3.2+2*r} strokeLinecap="round" fill="none"/>
+            {r > 0.18 && <path d={`M${cx},${gY+11} C${cx-22},${gY+20} ${cx-32},${gY+34} ${cx-22},${gY+48}`} stroke={rootC} strokeWidth={2.1+1.4*r} strokeLinecap="round" fill="none"/>}
+            {r > 0.24 && <path d={`M${cx},${gY+13} C${cx+20},${gY+22} ${cx+30},${gY+37} ${cx+20},${gY+50}`} stroke={rootC} strokeWidth={1.9+1.2*r} strokeLinecap="round" fill="none"/>}
+          </g>
+        )}
+
+        {/* HERBE */}
+        {blades.map((b, i) => {
+          const dur   = (i%2===0 ? 2.8+r*0.8 : 3.2+r*0.6).toFixed(2)
+          const delay = ((i*0.08)%1.5).toFixed(2) + 's'
+          return (
+            <g key={i} style={{animation:`svgSway ${dur}s ease-in-out infinite ${delay}`, transformOrigin:`${b.x}px ${gY}px`}}>
+              <path d={`M${b.x},${gY} Q${b.x+b.l*0.5},${gY-Math.round(b.h*0.58)} ${b.x+b.l-1},${gY-b.h}`}
+                stroke={gC(i)} strokeWidth={1.3} strokeLinecap="round" fill="none"/>
+              <path d={`M${b.x+1},${gY} Q${b.x+b.l*0.4+1},${gY-Math.round(b.h*0.52)} ${b.x+b.l+1},${gY-Math.round(b.h*0.84)}`}
+                stroke={gHL} strokeWidth={0.8} strokeLinecap="round" fill="none"/>
+            </g>
+          )
+        })}
+
+        {/* PETITES FLEURS */}
+        {gF.filter(f => r >= f.min).map((f, i) => {
+          const step = 360/f.n
+          return (
+            <g key={i}>
+              {Array.from({length:f.n}, (_,pi) => {
+                const a = pi*step*Math.PI/180
+                return <ellipse key={pi}
+                  cx={f.x + Math.cos(a)*f.s*1.3} cy={f.y + Math.sin(a)*f.s*0.9}
+                  rx={f.s} ry={f.s*0.6}
+                  fill={pi%2===0 ? f.c1 : f.c2}
+                  transform={`rotate(${pi*step},${f.x},${f.y})`}/>
+              })}
+              <circle cx={f.x} cy={f.y} r={f.s*0.52} fill="rgba(255,230,78,0.94)"/>
+            </g>
+          )
+        })}
+
+        {/* PLANTE */}
+        <g style={plantSway}>
+
+          {/* Tige */}
+          <path d={`M${cx},${gY} C${cx-6},${Math.round(sMY+14)} ${cx+7},${Math.round(sMY-14)} ${cx},${sTY}`}
+            stroke={stemC} strokeWidth={3.4+2.2*r} strokeLinecap="round" fill="none"/>
+          {r > 0.2 && <path d={`M${cx-1},${gY} C${cx-5},${Math.round(sMY+12)} ${cx+6},${Math.round(sMY-16)} ${cx-1},${sTY}`}
+            stroke={stemH2} strokeWidth={1.2} strokeLinecap="round" fill="none"/>}
+
+          {/* Feuille gauche */}
+          {r > 0.12 && (
+            <g>
+              <path d={`M${cx-1},${Math.round(sMY+18)} C${cx-24},${Math.round(sMY+8)} ${cx-28},${Math.round(sMY-8)} ${cx-10},${Math.round(sMY-9)} C${cx-4},${Math.round(sMY-8)} ${cx-5},${Math.round(sMY+6)} ${cx-1},${Math.round(sMY+18)} Z`} fill={lC1}/>
+              <path d={`M${cx-1},${Math.round(sMY+18)} Q${cx-16},${Math.round(sMY+5)} ${cx-10},${Math.round(sMY-9)}`} stroke={lV} strokeWidth={1.0} fill="none"/>
+            </g>
+          )}
+
+          {/* Feuille droite */}
+          {r > 0.22 && (
+            <g>
+              <path d={`M${cx+1},${Math.round(sMY-8)} C${cx+26},${Math.round(sMY-18)} ${cx+30},${Math.round(sMY-36)} ${cx+12},${Math.round(sMY-37)} C${cx+2},${Math.round(sMY-38)} ${cx+4},${Math.round(sMY-22)} ${cx+1},${Math.round(sMY-8)} Z`} fill={lC2}/>
+              <path d={`M${cx+1},${Math.round(sMY-8)} Q${cx+18},${Math.round(sMY-20)} ${cx+12},${Math.round(sMY-37)}`} stroke={lV} strokeWidth={1.0} fill="none"/>
+            </g>
+          )}
+
+          {/* Petite feuille haute */}
+          {r > 0.5 && (
+            <path d={`M${cx-1},${Math.round(flwY+26)} C${cx-18},${Math.round(flwY+18)} ${cx-19},${Math.round(flwY+5)} ${cx-6},${Math.round(flwY+9)} C${cx-1},${Math.round(flwY+14)} ${cx-1},${Math.round(flwY+20)} ${cx-1},${Math.round(flwY+26)} Z`}
+              fill={`rgba(${40+Math.round(22*r)},${122+Math.round(72*r)},${36+Math.round(22*r)},${0.54+0.28*r})`}/>
+          )}
+
+          {/* FLEUR */}
+          {r > 0.38 && (
+            <g>
+              <circle cx={cx} cy={flwY} r={pD*3.4} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
+              {/* Calice */}
+              {[-28,0,28].map((a,i) => {
+                const rad=(a-90)*Math.PI/180
+                return <path key={i} d={`M${cx},${Math.round(flwY+pRy*0.55)} Q${cx+Math.round(Math.cos(rad)*9)},${Math.round(flwY+pRy*0.55+12)} ${cx},${Math.round(flwY+pRy*0.55+14)}`} fill={lC2} opacity={0.65}/>
+              })}
+              {/* Pétales arrière */}
+              <g style={breathe2}>
+                {p2.map((angle,i) => {
+                  const rad=angle*Math.PI/180
+                  const px=cx+Math.cos(rad)*pD*0.8, py=flwY+Math.sin(rad)*pD*0.8
+                  return <ellipse key={i} cx={px} cy={py} rx={pRx*0.68} ry={pRy*0.68}
+                    fill={`url(#${id}p2)`} transform={`rotate(${angle+90},${px},${py})`} filter={`url(#${id}f1)`}/>
+                })}
+              </g>
+              {/* Pétales avant */}
+              <g style={breathe1}>
+                {p1.map((angle,i) => {
+                  const rad=angle*Math.PI/180
+                  const px=cx+Math.cos(rad)*pD, py=flwY+Math.sin(rad)*pD
+                  return <ellipse key={i} cx={px} cy={py} rx={pRx} ry={pRy}
+                    fill={`url(#${id}p1)`} transform={`rotate(${angle+90},${px},${py})`}/>
+                })}
+              </g>
+              {/* Pistil */}
+              <circle cx={cx} cy={flwY} r={7.5+5.5*r} fill={`rgba(${Math.round(r1*.80)},${Math.round(g1*.48+52)},${Math.round(b1*.58+32)},0.88)`}/>
+              <circle cx={cx} cy={flwY} r={4+3.5*r} fill={`url(#${id}pi)`}/>
+              {/* Pollen */}
+              {r > 0.52 && [0,51,103,154,205,257,308].map((a,i) => {
+                const rp=5.5+3.5*r, rad=a*Math.PI/180
+                return <circle key={i}
+                  cx={cx+Math.cos(rad)*rp} cy={flwY+Math.sin(rad)*rp}
+                  r={1.1} fill={`rgba(255,232,72,${0.68+0.24*r})`}
+                  style={{animation:`svgPollen 2.2s ease-in-out infinite ${(i*0.18).toFixed(2)}s`}}/>
+              })}
+            </g>
+          )}
+
+          {/* BOURGEON */}
+          {r <= 0.38 && r > 0.08 && (
+            <g>
+              {[-24,0,24].map((a,i) => (
+                <path key={i} d={`M${cx},${Math.round(flwY+6+8*r)} Q${cx+Math.round(Math.sin(a*Math.PI/180)*8)},${Math.round(flwY+8*r)} ${cx},${Math.round(flwY+7*r)}`} fill={lC2} opacity={0.7}/>
+              ))}
+              <ellipse cx={cx} cy={flwY} rx={4+6*r} ry={8+9*r} fill={`rgba(${r1},${g1},${b1},${0.52+0.36*r})`}/>
+              <ellipse cx={cx-1} cy={flwY-1} rx={2.5+4*r} ry={5+7*r} fill={`rgba(${r2},${g2},${b2},0.42)`}/>
+            </g>
+          )}
+
+          {/* GRAINE */}
+          {r <= 0.08 && (
+            <g>
+              <ellipse cx={cx} cy={flwY+5} rx={5} ry={3} fill="rgba(118,78,36,0.52)"/>
+              <path d={`M${cx},${flwY+3} Q${cx+3},${flwY-5} ${cx+1},${flwY-10}`} stroke="rgba(78,138,48,0.62)" strokeWidth={1.4} strokeLinecap="round" fill="none"/>
+            </g>
+          )}
+
+        </g>
+      </g>
     </svg>
   )
 }
@@ -946,39 +1425,96 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose }) {
     { field:'show_journal',      icon:'📓', label:'Journal personnel' },
   ]
 
+  const [gardenSettings, setGardenSettings] = useState(DEFAULT_GARDEN_SETTINGS)
+  const [showGardenSettings, setShowGardenSettings] = useState(false)
+
+  // Charger les settings depuis Supabase
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('garden_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) setGardenSettings({
+          sunriseH: data.sunrise_h ?? 7,
+          sunriseM: data.sunrise_m ?? 0,
+          sunsetH:  data.sunset_h  ?? 20,
+          sunsetM:  data.sunset_m  ?? 0,
+          petalColor1: data.petal_color1 ?? '#e8789a',
+          petalColor2: data.petal_color2 ?? '#f0a8be',
+          petalShape:  data.petal_shape  ?? 'round',
+        })
+      })
+  }, [userId])
+
   const doneIds = new Set(todayRituals.map(r => RITUAL_CATALOG.find(c => c.name === r.name)?.id))
-
-  if (isLoading) return (
-    <div className="mj-layout" style={{ alignItems:'center', justifyContent:'center' }}>
-      <div style={{ fontSize:13, color:'var(--text3)', letterSpacing:'.1em' }}>Votre jardin se réveille…</div>
-    </div>
-  )
-
   const today = new Date().toISOString().split('T')[0]
   const todayLabel = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(new Date())
 
+  if (isLoading) return (
+    <div className="content">
+    <div className="mj-layout" style={{ alignItems:'center', justifyContent:'center' }}>
+      <div style={{ fontSize:13, color:'var(--text3)', letterSpacing:'.1em' }}>Votre jardin se réveille…</div>
+    </div>
+    </div>
+  )
+
   return (
+    <>
+    {showGardenSettings && (
+      <GardenSettingsModal
+        settings={gardenSettings}
+        onSave={async s => {
+          setGardenSettings(s)
+          // Persiste dans Supabase
+          await supabase.from('garden_settings').upsert({
+            user_id:      userId,
+            sunrise_h:    s.sunriseH,
+            sunrise_m:    s.sunriseM,
+            sunset_h:     s.sunsetH,
+            sunset_m:     s.sunsetM,
+            petal_color1: s.petalColor1,
+            petal_color2: s.petalColor2,
+            petal_shape:  s.petalShape,
+          }, { onConflict: 'user_id' })
+        }}
+        onClose={() => setShowGardenSettings(false)}
+      />
+    )}
+    <div className="content">
     <div className="mj-layout">
       <div className="mj-left">
-        <div className="plant-hero">
-          <div className="ph-glow" />
-          <div className="ph-plant"><PlantSVG health={todayPlant?.health ?? 50} w={90} h={100} /></div>
-          <div className="ph-info">
-            <div className="ph-health">{todayPlant?.health ?? '—'} <span>%</span></div>
-            <div className="ph-label">Vitalité · {todayLabel}</div>
-            <div className="ph-zones">
-              {ZONES.map(z => {
+        {/* Carte jardin 2 colonnes */}
+        <div className="plant-hero ph-2col">
+          <div className="ph-col-flower">
+            <PlantSVG health={todayPlant?.health ?? 50} gardenSettings={gardenSettings} />
+          </div>
+          <div className="ph-col-info">
+            <div className="ph-vitality-score">
+              <div className="ph-score-number">
+                <span className="ph-score-digits">{todayPlant?.health ?? '—'}</span>
+                <span className="ph-score-pct">%</span>
+              </div>
+              <div className="ph-score-label">Vitalité</div>
+              <div className="ph-score-date">{todayLabel}</div>
+            </div>
+            <div className="ph-zones-list">
+              {ZONES.map((z, i) => {
                 const val = todayPlant?.[z.key] ?? 50
                 return (
-                  <div key={z.key} className="ph-zone-row">
-                    <div className="pzr-icon">{z.icon}</div>
-                    <div className="pzr-name">{z.name}</div>
-                    <div className="pzr-bar"><div className="pzr-fill" style={{ width:`${val}%`, background:z.color+'99' }} /></div>
-                    <div className="pzr-val">{val}%</div>
+                  <div key={z.key} className="ph-zone-row-new" style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.08) + 's' }}>
+                    <span className="ph-zone-icon-new">{z.icon}</span>
+                    <div className="ph-zone-track">
+                      <div className="ph-zone-fill-new" />
+                    </div>
+                    <span className="ph-zone-pct-new">{val}</span>
                   </div>
                 )
               })}
             </div>
+            <div className="ph-settings-btn" onClick={() => setShowGardenSettings(true)}>⚙</div>
           </div>
         </div>
 
@@ -1088,6 +1624,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose }) {
         ))}
       </div>
     </div>
+    </div>
+    </>
   )
 }
 
@@ -1376,107 +1914,301 @@ function ScreenCercles({ userId, openCreate, onCreateClose }) {
 /* ─────────────────────────────────────────
    SCREEN 4 — DÉFIS
 ───────────────────────────────────────── */
-const DEFIS_DATA = [
-  { e:'🌬️', t:'7 jours de silence matinal',  zone:'Souffle',  dur:'7 jours',  desc:"5 min de silence conscient chaque matin, avant tout écran.",    p:1847, joined:true,  fill:72, color:'#88b8e8' },
-  { e:'🌱',  t:'Semaine Racines',              zone:'Racines',  dur:'7 jours',  desc:'Centrage quotidien, repas conscient, coucher avant minuit.',     p:934,  joined:false, fill:45, color:'#96d485' },
-  { e:'💧',  t:'21 jours de gratitude',        zone:'Feuilles', dur:'21 jours', desc:'3 nouvelles gratitudes spécifiques chaque soir.',               p:3201, joined:false, fill:58, color:'#90d890' },
-  { e:'🌸',  t:'Mois sans réseaux le matin',   zone:'Souffle',  dur:'30 jours', desc:"Pas de réseaux sociaux dans la première heure du matin.",       p:612,  joined:true,  fill:81, color:'#e088a8' },
-  { e:'🧘',  t:'14 jours de respiration',      zone:'Tige',     dur:'14 jours', desc:'Cohérence cardiaque 5 min, chaque matin et chaque soir.',       p:1103, joined:false, fill:33, color:'#a8c8a0' },
-  { e:'🌙',  t:'Rituel du coucher — 30 jours', zone:'Racines',  dur:'30 jours', desc:'Téléphone coupé à 22h, décompression avant minuit.',           p:788,  joined:false, fill:19, color:'#9898d8' },
-]
+// DEFIS_DATA → now in Supabase via useDefi
 
-function ScreenDefis({ userId, openCreate, onCreateClose }) {
+function ProposeModal({ onClose, onSubmit }) {
+  const [title, setTitle]   = useState('')
+  const [desc, setDesc]     = useState('')
+  const [zone, setZone]     = useState('Souffle')
+  const [dur, setDur]       = useState(7)
+  const [emoji, setEmoji]   = useState('🌿')
+  const [sent, setSent]     = useState(false)
+  const [loading, setLoading] = useState(false)
+  const zones = ['Souffle','Racines','Feuilles','Tige','Fleurs','Toutes']
+  const durs  = [7,14,21,30]
+
+  async function handleSubmit() {
+    if (!title.trim()) return
+    setLoading(true)
+    try { await onSubmit({ title, description:desc, zone, duration_days:dur, emoji }); setSent(true); setTimeout(onClose,1800) }
+    finally { setLoading(false) }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">Proposer un défi ✨</div>
+
+        {sent ? (
+          <div style={{ textAlign:'center', padding:'28px 0' }}>
+            <div style={{ fontSize:32, marginBottom:12 }}>🌿</div>
+            <div style={{ fontSize:13, color:'rgba(150,212,133,0.9)', letterSpacing:'.04em' }}>Proposition envoyée !</div>
+            <div style={{ fontSize:11, color:'var(--text3)', marginTop:6 }}>Elle sera examinée par notre équipe.</div>
+          </div>
+        ) : (
+          <>
+            {/* Emoji picker + titre */}
+            <div style={{ display:'flex', gap:10, alignItems:'flex-end' }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <div className="modal-label">Emoji</div>
+                <div
+                  style={{ width:54, height:46, borderRadius:11, border:'1px solid var(--border)', background:'rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, cursor:'text', position:'relative' }}
+                  onClick={() => document.getElementById('pm-emoji').focus()}
+                >
+                  {emoji || '🌿'}
+                  <input
+                    id="pm-emoji"
+                    value={emoji}
+                    onChange={e => setEmoji(e.target.value)}
+                    style={{ position:'absolute', inset:0, opacity:0, width:'100%', cursor:'text' }}
+                  />
+                </div>
+              </div>
+              <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+                <div className="modal-label">Nom du défi</div>
+                <input
+                  className="modal-input"
+                  placeholder="Ex: 5 min de marche chaque matin"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  style={{ width:'100%' }}
+                />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              <div className="modal-label">Description</div>
+              <textarea
+                className="modal-input"
+                rows={3}
+                placeholder="Décris l'intention du défi…"
+                value={desc}
+                onChange={e => setDesc(e.target.value)}
+                style={{ resize:'none', width:'100%' }}
+              />
+            </div>
+
+            {/* Zone + Durée */}
+            <div style={{ display:'flex', gap:10 }}>
+              <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+                <div className="modal-label">Zone</div>
+                <select className="modal-input" value={zone} onChange={e => setZone(e.target.value)} style={{ width:'100%' }}>
+                  {zones.map(z => <option key={z} value={z}>{z}</option>)}
+                </select>
+              </div>
+              <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+                <div className="modal-label">Durée</div>
+                <select className="modal-input" value={dur} onChange={e => setDur(Number(e.target.value))} style={{ width:'100%' }}>
+                  {durs.map(d => <option key={d} value={d}>{d} jours</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="modal-cancel" onClick={onClose}>Annuler</button>
+              <button className="modal-submit" onClick={handleSubmit} disabled={!title.trim() || loading}>
+                {loading ? 'Envoi…' : 'Envoyer la proposition'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const ZONE_COLORS = { Souffle:'#88b8e8', Racines:'#96d485', Feuilles:'#90d890', Tige:'#a8c8a0', Fleurs:'#e088a8', Toutes:'#c8a8e8' }
+
+function ScreenDefis({ userId }) {
   const [cat, setCat] = useState('Tous')
+  const [showPropose, setShowPropose] = useState(false)
   const cats = ['Tous','Souffle','Racines','Feuilles','Tige','Fleurs']
-  const filtered = cat === 'Tous' ? DEFIS_DATA : DEFIS_DATA.filter(d => d.zone === cat)
+  const { defis, featured, myDefis, joinedIds, communityStats, isLoading, toggleJoin, proposeDefi } = useDefi(userId)
+  const filtered = cat === 'Tous'
+  ? defis.filter(d => !d.is_featured)
+  : defis.filter(d => d.zone === cat && !d.is_featured)
+  const featuredJoined = featured ? joinedIds.has(featured.id) : false
+
+  useEffect(() => {
+    const handler = () => setShowPropose(true)
+    document.addEventListener('openPropose', handler)
+    return () => document.removeEventListener('openPropose', handler)
+  }, [])
 
   return (
     <div className="content">
+      {showPropose && <ProposeModal onClose={() => setShowPropose(false)} onSubmit={proposeDefi} />}
       <div className="col" style={{ flex:1 }}>
         <div className="defi-featured">
           <div className="df-glow" />
-          <div className="df-tag">Défi communauté · En cours</div>
-          <div className="df-title">30 jours pour se retrouver</div>
-          <div className="df-desc">Un rituel par jour, choisi librement dans l'une des 5 zones. Pas de classement. Pas de pression. Juste la régularité et la présence à soi.</div>
-          <div className="df-meta">
-            <div className="dfm-item"><span>📅</span> 30 jours</div>
-            <div className="dfm-item"><span>🌿</span> Toutes zones</div>
-            <div className="dfm-item"><span>👥</span> 8 432 participants</div>
-          </div>
-          <div className="df-progress"><div className="dfp-fill" style={{ width:'61%' }} /></div>
-          <div className="df-progress-label"><span>Démarré le 1er fév.</span><span>61% · Jour 18/30</span></div>
-          <div className="df-actions">
-            <div className="df-join">Je rejoins</div>
-            <div className="df-learn">En savoir plus</div>
-          </div>
-        </div>
+          {featured ? (
+  <>
+    <div className="df-tag">
+      Défi communauté · {featuredJoined ? '✓ En cours' : 'Rejoins-nous'}
+    </div>
 
+    <div className="df-title">{featured.title}</div>
+
+    <div className="df-desc">{featured.description}</div>
+
+    <div className="df-meta">
+      <div className="dfm-item"><span>📅</span> {featured.duration_days} jours</div>
+      <div className="dfm-item"><span>🌿</span> {featured.zone}</div>
+      <div className="dfm-item">
+        <span>👥</span> {(featured.participantCount ?? 0).toLocaleString()} participants
+      </div>
+    </div>
+
+    {featuredJoined && (
+      <>
+        <div className="df-progress">
+          <div className="dfp-fill" style={{ width:(featured.progress ?? 0) + '%' }} />
+        </div>
+        <div className="df-progress-label">
+          <span>Progression</span>
+          <span>{featured.progress ?? 0}%</span>
+        </div>
+      </>
+    )}
+
+    <div className="df-actions">
+      <div
+        className={featuredJoined ? 'df-join df-join-active' : 'df-join'}
+        onClick={() => toggleJoin(featured.id)}
+      >
+        {featuredJoined ? '✓ En cours' : 'Je rejoins'}
+      </div>
+
+      <div className="df-learn" onClick={() => setShowPropose(true)}>
+        Proposer un défi
+      </div>
+    </div>
+  </>
+) : (
+  <>
+    {/* 🌿 CARTE INSPIRATIONNELLE */}
+
+    <div className="df-tag">
+      Inspiration du moment
+    </div>
+
+    <div className="df-title">
+      🌸 Le Rituel des 5 Minutes
+    </div>
+
+    <div className="df-desc">
+      Même sans défi officiel, votre jardin peut évoluer.
+      Aujourd’hui, prenez 5 minutes pour respirer,
+      écrire une gratitude ou simplement marcher en conscience.
+    </div>
+
+    <div className="df-meta">
+      <div className="dfm-item"><span>✨</span> Micro-rituel libre</div>
+      <div className="dfm-item"><span>🌿</span> Toutes zones</div>
+      <div className="dfm-item"><span>🕊</span> Sans engagement</div>
+    </div>
+
+    <div className="df-actions">
+      <div
+  className="df-join"
+  onClick={() => {
+    document.querySelector('.defis-grid')?.scrollIntoView({ behavior: 'smooth' })
+  }}
+>
+  🌱 Trouvez votre défi du jour
+</div>
+
+      <div className="df-learn" onClick={() => setShowPropose(true)}>
+        Proposer un défi à la communauté
+      </div>
+    </div>
+  </>
+)}
+        </div>
+        {isLoading && <div style={{ fontSize:13, color:'var(--text3)', padding:'20px 0' }}>Chargement des défis…</div>}
         <div className="cat-filter">
-          {cats.map(c => <div key={c} className={'cat-btn' + (cat===c ? ' active' : '')} onClick={() => setCat(c)}>{c}</div>)}
+          {cats.map(c => <div key={c} className={'cat-btn'+(cat===c?' active':'')} onClick={() => setCat(c)}>{c}</div>)}
         </div>
         <div className="slabel">{cat==='Tous'?'Tous les défis':`Zone ${cat}`} · {filtered.length} disponibles</div>
-
         <div className="defis-grid">
-          {filtered.map((d, i) => (
-            <div key={i} className="defi-card">
-              <div className="dc-top">
-                <div className="dc-emoji">{d.e}</div>
-                <div className="dc-info">
-                  <div className="dc-title">{d.t}</div>
-                  <div className="dc-zone">{d.zone}</div>
+          {filtered.map((d,i) => {
+            const isJoined = joinedIds.has(d.id)
+            const color = ZONE_COLORS[d.zone] ?? '#96d485'
+            return (
+              <div key={d.id??i} className="defi-card">
+                <div className="dc-top">
+                  <div className="dc-emoji">{d.emoji}</div>
+                  <div className="dc-info">
+                    <div className="dc-title">{d.title}</div>
+                    <div className="dc-zone">{d.zone}</div>
+                  </div>
+                  <div className="dc-dur">{d.duration_days} j</div>
                 </div>
-                <div className="dc-dur">{d.dur}</div>
+                <div className="dc-desc">{d.description}</div>
+                <div className="dc-foot">
+                  <div className="dc-participants">{(d.participantCount??0).toLocaleString()} pers.</div>
+                  <div className="dc-bar"><div className="dc-bar-fill" style={{ width:`${d.progress??0}%`, background:color+'88' }} /></div>
+                  {isJoined
+                    ? <div className="dc-joined" onClick={() => toggleJoin(d.id)} style={{ cursor:'pointer' }}>✓ En cours</div>
+                    : <div className="dc-join-btn" onClick={() => toggleJoin(d.id)}>Rejoindre</div>}
+                </div>
               </div>
-              <div className="dc-desc">{d.desc}</div>
-              <div className="dc-foot">
-                <div className="dc-participants">{d.p.toLocaleString()} pers.</div>
-                <div className="dc-bar"><div className="dc-bar-fill" style={{ width:`${d.fill}%`, background:d.color+'88' }} /></div>
-                {d.joined ? <div className="dc-joined">✓ En cours</div> : <div className="dc-join-btn">Rejoindre</div>}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
-        </div>
+      </div>
 
-        <div className="rpanel">
+      <div className="rpanel">
         <div className="rp-section">
           <div className="rp-slabel">Mes défis actifs</div>
-          {DEFIS_DATA.filter(d => d.joined).map((d, i) => (
+          {myDefis.length === 0 && <div style={{ fontSize:12, color:'var(--text3)', padding:'8px 0' }}>Aucun défi en cours</div>}
+          {myDefis.map((d,i) => (
             <div key={i} style={{ marginBottom:11, padding:'11px 13px', background:'var(--green3)', border:'1px solid rgba(150,212,133,0.18)', borderRadius:13 }}>
               <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:7 }}>
-                <span style={{ fontSize:17 }}>{d.e}</span>
+                <span style={{ fontSize:17 }}>{d.emoji}</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:12, color:'var(--text)' }}>{d.t}</div>
-                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{d.zone} · {d.dur}</div>
+                  <div style={{ fontSize:12, color:'var(--text)' }}>{d.title}</div>
+                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{d.zone} · {d.duration_days} j</div>
                 </div>
               </div>
               <div style={{ height:3, background:'rgba(255,255,255,0.09)', borderRadius:100, overflow:'hidden' }}>
-                <div style={{ height:'100%', width:`${d.fill}%`, background:d.color+'aa', borderRadius:100 }} />
+                <div style={{ height:'100%', width:`${d.progress??0}%`, background:(ZONE_COLORS[d.zone]??'#96d485')+'aa', borderRadius:100 }} />
               </div>
               <div style={{ fontSize:10, color:'var(--text3)', marginTop:5, display:'flex', justifyContent:'space-between' }}>
-                <span>Progression</span><span>{d.fill}%</span>
+                <span>Progression</span><span>{d.progress??0}%</span>
               </div>
             </div>
           ))}
         </div>
-        <div className="rp-section" style={{ marginTop:10 }}>
+        <div className="rp-section">
           <div className="rp-slabel">Pouls de la communauté</div>
-          <div className="community-pulse">
-            <div className="cp-title">Ce dimanche dans Mon Jardin</div>
-            {[
-              { icon:'🌿', val:'12 483', lbl:'jardins actifs' },
-              { icon:'✅', val:'47 291', lbl:'rituels complétés' },
-              { icon:'💧', val:'8 904',  lbl:'gestes de soin' },
-              { icon:'✨', val:'341',    lbl:'nouveaux défis' },
-            ].map((s, i) => (
-              <div key={i} className="cp-stat">
-                <div className="cps-icon">{s.icon}</div>
-                <div className="cps-info">
-                  <div className="cps-val">{s.val}</div>
-                  <div className="cps-lbl">{s.lbl}</div>
-                </div>
-              </div>
-            ))}
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:18 }}>🌿</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.activeGardens}</div>
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>jardins actifs</div></div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:18 }}>✅</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.completedRituals}</div>
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>rituels complétés</div></div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:18 }}>✨</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.totalDefis}</div>
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>défis actifs</div></div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <span style={{ fontSize:18 }}>👥</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.totalParticipants.toLocaleString()}</div>
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>participations</div></div>
+            </div>
+          </div>
+        </div>
+        <div className="rp-section" style={{ marginTop:'auto' }}>
+          <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>
+            "Ce dimanche dans mon jardin" · données en temps réel
           </div>
         </div>
       </div>
@@ -1484,9 +2216,7 @@ function ScreenDefis({ userId, openCreate, onCreateClose }) {
   )
 }
 
-/* ─────────────────────────────────────────
-   MAIN APP
-───────────────────────────────────────── */
+
 const SCREENS = [
   { id:'cercle',  icon:'🏠', label:'Cercle',     badge:null, Component:ScreenCercle    },
   { id:'jardin',  icon:'🌿', label:'Mon Jardin', badge:null, Component:ScreenMonJardin },
@@ -1498,18 +2228,44 @@ export default function DashboardPage() {
   const [active, setActive] = useState('cercle')
   const { user, signOut } = useAuth()
   const { todayPlant } = usePlant(user?.id)
+  const { communityStats } = useDefi(user?.id)
+  const { stats } = useCircle(user?.id)
 
   const { Component } = SCREENS.find(s => s.id === active)
 
   const [showCreateCircle, setShowCreateCircle] = useState(false)
+  const [showCommunityGarden, setShowCommunityGarden] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
 
   const topbar = {
-    cercle:  { title:<>Cercle <em>du Matin</em></>,   sub:`6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`, btn:'+ Inviter', onBtn: () => setShowInviteModal(true) },
-    jardin:  { title:<>Mon <em>Jardin</em></>,         sub:`${todayPlant?.health??'—'}% · 12 jours consécutifs`, btn:null },
-    cercles: { title:<>Mes <em>Cercles</em></>,        sub:'3 actifs · 13 membres au total',   btn:'+ Créer',    onBtn: () => setShowCreateCircle(true) },
-    defis:   { title:<>Défis & <em>Challenges</em></>, sub:'2 en cours · 8 432 participants',  btn:'Proposer',   onBtn: null },
-  }[active]
+  cercle:  {
+    title: <>Cercle <em>du Matin</em></>,
+    sub: `6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`,
+    btn:'+ Inviter',
+    onBtn: () => setShowInviteModal(true)
+  },
+
+  jardin:  {
+    title: <>Mon <em>Jardin</em></>,
+    sub: `${todayPlant?.health ?? '—'}% · 12 jours consécutifs`,
+    btn:null
+  },
+
+  cercles: {
+    title: <>Mes <em>Cercles</em></>,
+    sub: `${stats?.myCircleCount ?? 0} actifs · ${stats?.totalMembers ?? 0} membres au total`,
+    btn:'+ Créer',
+    onBtn: () => setShowCreateCircle(true)
+  },
+
+  defis: {
+    title: <>Défis & <em>Challenges</em></>,
+    sub: `${communityStats?.totalParticipants?.toLocaleString() ?? '—'} participants`,
+    btn:'Proposer',
+    onBtn: () => document.dispatchEvent(new CustomEvent('openPropose'))
+  },
+
+}[active]
 
   return (
     <div className="root">
@@ -1542,16 +2298,25 @@ export default function DashboardPage() {
         </div>
 
         {/* MAIN */}
+        {showCommunityGarden && (
+          <CommunityGarden
+            currentUserId={user?.id}
+            onClose={() => setShowCommunityGarden(false)}
+          />
+        )}
         <div className="main">
           <div className="topbar">
             <div className="tb-title">{topbar.title}</div>
             <div className="tb-subtitle">{topbar.sub}</div>
             <div style={{ flex:1 }} />
             <div className="tb-btn ghost" style={{ marginRight:5 }}>Aide</div>
+            <div className="tb-btn ghost" style={{ marginRight:5 }} onClick={() => setShowCommunityGarden(true)}>🌸 Le Champ</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
             <div className="tb-notif">🔔<div className="notif-dot" /></div>
           </div>
-          <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} openInvite={showInviteModal} onInviteClose={() => setShowInviteModal(false)} />
+          <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
+            <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} openInvite={showInviteModal} onInviteClose={() => setShowInviteModal(false)} />
+          </div>
         </div>
       </div>
     </div>
