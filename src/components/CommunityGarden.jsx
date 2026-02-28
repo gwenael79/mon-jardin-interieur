@@ -48,15 +48,6 @@ async function loadCommunityPlants() {
     result.push({ ...plant, gardenSettings: settings[u.id] || null })
   }
 
-  console.log('🌱 JARDIN COLLECTIF DEBUG', {
-    totalUsers: (usersRes.data || []).length,
-    usersError: usersRes.error?.message,
-    totalPlants: (plantsRes.data || []).length,
-    hiddenCount: hidden.size,
-    resultCount: result.length,
-    userIds: (usersRes.data || []).map(u => u.id.slice(0,8)),
-  })
-
   return result
 }
 
