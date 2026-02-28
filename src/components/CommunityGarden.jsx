@@ -7,21 +7,22 @@ import { supabase } from '../core/supabaseClient'
    Respecte privacy_settings.show_health
 ───────────────────────────────────────────────────── */
 async function loadCommunityPlants() {
-  const [plantsRes, privacyRes, settingsRes, adminRes] = await Promise.all([
-    (() => {
-      const since = new Date()
-      since.setDate(since.getDate() - 7)
-      return supabase
-        .from('plants')
-        .select('user_id, health, date')
-        .gte('date', since.toISOString().split('T')[0])
-        .order('date', { ascending: false })
-    })(),
+  const since = new Date()
+  since.setDate(since.getDate() - 7)
+
+  const [usersRes, plantsRes, privacyRes, settingsRes] = await Promise.all([
+    // Tous les membres de la communauté
+    supabase.from('users').select('id'),
+    // Plantes récentes
+    supabase
+      .from('plants')
+      .select('user_id, health, date')
+      .gte('date', since.toISOString().split('T')[0])
+      .order('date', { ascending: false }),
     supabase
       .from('privacy_settings')
       .select('user_id')
       .eq('show_health', false),
-    // Settings complets par user (pétales + horaires)
     supabase
       .from('garden_settings')
       .select('user_id, petal_color1, petal_color2, petal_shape, sunrise_h, sunrise_m, sunset_h, sunset_m'),
@@ -33,13 +34,18 @@ async function loadCommunityPlants() {
   const settings = {}
   ;(settingsRes?.data || []).forEach(s => { settings[s.user_id] = s })
 
-  const seen = new Set()
-  const result = []
+  // Dernière plante connue par user
+  const plantsByUser = {}
   for (const row of (plantsRes.data || [])) {
-    if (!seen.has(row.user_id) && !hidden.has(row.user_id)) {
-      seen.add(row.user_id)
-      result.push({ ...row, gardenSettings: settings[row.user_id] || null })
-    }
+    if (!plantsByUser[row.user_id]) plantsByUser[row.user_id] = row
+  }
+
+  // Tous les users — avec leur plante ou une graine (health=0) si pas encore de plante
+  const result = []
+  for (const u of (usersRes.data || [])) {
+    if (hidden.has(u.id)) continue
+    const plant = plantsByUser[u.id] || { user_id: u.id, health: 0, date: null }
+    result.push({ ...plant, gardenSettings: settings[u.id] || null })
   }
   return result
 }
