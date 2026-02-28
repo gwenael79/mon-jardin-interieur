@@ -562,7 +562,7 @@ export default function CommunityGarden({ currentUserId, onClose }) {
     return plants
       .map((p, i) => {
         const xNoise = (hash(p.user_id, 9) % 28) - 14
-        const yNoise = (hash(p.user_id, 8) % 16) - 8
+        const yNoise = p.user_id === currentUserId ? 10 : (hash(p.user_id, 8) % 14) - 9
         const offset = i - anchorIdx
         const baseX  = svgW / 2 + offset * W_PER
         return { ...p, x: baseX + xNoise, yOff: yNoise }
@@ -748,10 +748,10 @@ export default function CommunityGarden({ currentUserId, onClose }) {
             {/* FOND ARRIÈRE — herbes hautes floues */}
             <BackgroundFoliage svgW={svgW} groundY={groundY}/>
 
-            {/* FLEURS ARRIÈRE (profondeur yOff < 0) */}
-            {positions.filter(p => p.yOff < 0).map(p => (
+            {/* FLEURS ARRIÈRE (profondeur yOff < 0, sauf ma fleur) */}
+            {positions.filter(p => p.yOff < 0 && p.user_id !== currentUserId).map(p => (
               <FieldFlower key={p.user_id} plant={p}
-                isMine={p.user_id === currentUserId}
+                isMine={false}
                 x={p.x} groundY={groundY + p.yOff}
                 sceneH={svgH}
               />
@@ -768,11 +768,20 @@ export default function CommunityGarden({ currentUserId, onClose }) {
             {/* HERBES */}
             <GrassLayer svgW={svgW} groundY={groundY}/>
 
-            {/* FLEURS AVANT (yOff >= 0) */}
-            {positions.filter(p => p.yOff >= 0).map(p => (
+            {/* FLEURS AVANT (yOff >= 0, sauf ma fleur) */}
+            {positions.filter(p => p.yOff >= 0 && p.user_id !== currentUserId).map(p => (
               <FieldFlower key={p.user_id} plant={p}
-                isMine={p.user_id === currentUserId}
-                x={p.x} groundY={groundY + p.yOff}
+                isMine={false}
+                x={p.x} groundY={groundY}
+                sceneH={svgH}
+              />
+            ))}
+
+            {/* MA FLEUR — rendue en dernier, toujours au premier plan */}
+            {positions.filter(p => p.user_id === currentUserId).map(p => (
+              <FieldFlower key={p.user_id} plant={p}
+                isMine={true}
+                x={p.x} groundY={groundY + 6}
                 sceneH={svgH}
               />
             ))}
