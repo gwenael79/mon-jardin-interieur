@@ -110,7 +110,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   const _isDay  = _hour >= _riseH && _hour <= _setH
   const _isGold = _isDay && (Math.abs(_hour - _riseH) < 1.2 || Math.abs(_hour - _setH) < 1.2)
   // Opacité globale de la fleur : réduite la nuit, dorée à l'aube/crépuscule
-  const _opacity = _isDay ? (_isGold ? 1 : 0.95) : 0.42
+  const _opacity = _isDay ? (_isGold ? 1 : 0.95) : 0.85
   const id  = useRef('cf' + (++_n)).current
   const r   = Math.max(0, Math.min(1, (plant.health ?? 50) / 100))
 
@@ -362,7 +362,7 @@ function BackgroundFoliage({ svgW, groundY }) {
   }, [svgW])
 
   return (
-    <g filter="url(#cgBgBlur)" opacity={0.82}>
+    <g opacity={0.82}>
       {items.map((b, i) => {
         if (b.type === 'tall') {
           // Brin d'herbe haute avec courbe naturelle
@@ -483,7 +483,7 @@ function GrassLayer({ svgW, groundY }) {
 /* ─────────────────────────────────────────────────────
    COMPOSANT PRINCIPAL
 ───────────────────────────────────────────────────── */
-export default function CommunityGarden({ currentUserId, onClose }) {
+export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [plants,  setPlants]  = useState([])
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
@@ -495,24 +495,40 @@ export default function CommunityGarden({ currentUserId, onClose }) {
       .catch(e => { setErr(e.message); setLoading(false) })
   }, [])
 
-  // Auto-scroll pour centrer MA fleur dans la fenêtre
+  // Auto-scroll centré sur ma fleur — après rendu SVG
+  const scrollToMyFlower = (posArr) => {
+    if (!scrollRef.current || !currentUserId || !posArr?.length) return
+    const myPos = posArr.find(p => p.user_id === currentUserId)
+    if (!myPos) return
+    // Le SVG a une width fixe en px = svgW, le container peut être plus petit
+    requestAnimationFrame(() => {
+      const containerW = scrollRef.current?.clientWidth ?? 0
+      const scrollTo = myPos.x - containerW / 2
+      scrollRef.current?.scrollTo({ left: Math.max(0, scrollTo), behavior: 'instant' })
+    })
+  }
+
   useEffect(() => {
-    if (!plants.length || !scrollRef.current || !currentUserId) return
-    const myIndex = plants.findIndex(p => p.user_id === currentUserId)
-    if (myIndex === -1) return
-    const myX = positions.find(p => p.user_id === currentUserId)?.x ?? 0
-    const containerW = scrollRef.current.clientWidth
-    const svgRenderedW = scrollRef.current.scrollWidth
-    // Ratio pixels réels / unités SVG
-    const ratio = svgRenderedW / svgW
-    const scrollTo = myX * ratio - containerW / 2
-    scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: 'smooth' })
+    if (!plants.length || !currentUserId) return
+    // positions sera calculé lors du prochain rendu, on attend
+    setTimeout(() => {
+      if (!scrollRef.current) return
+      const myIndex = plants.findIndex(p => p.user_id === currentUserId)
+      if (myIndex === -1) return
+      const anchorIdx = myIndex
+      const W_PER_ = 42
+      const svgW_  = Math.max(2400, plants.length * W_PER_ + 220)
+      const xNoise = (hash(currentUserId, 9) % 28) - 14
+      const myX    = svgW_ / 2 + xNoise  // ma fleur est toujours à l'index anchor = centre
+      const containerW = scrollRef.current.clientWidth
+      scrollRef.current.scrollTo({ left: Math.max(0, myX - containerW / 2), behavior: 'instant' })
+    }, 50)
   }, [plants, currentUserId])
 
   const W_PER   = 42
-  const MIN_W   = 960
+  const MIN_W   = 2400  // toujours plus large que l'écran → scroll garanti
   const svgH    = 580
-  const groundY = Math.round(svgH * 0.85)
+  const groundY = svgH - 20  // sol = 20px max
   const svgW    = Math.max(MIN_W, plants.length * W_PER + 220)
 
   // Ciel global : calculé depuis les settings du user connecté
@@ -530,7 +546,7 @@ export default function CommunityGarden({ currentUserId, onClose }) {
 
   // Soleil suit un arc : gauche (lever) → zénith (midi) → droite (coucher)
   const sunX = svgW * 0.05 + dp * (svgW * 0.90)
-  const sunY = svgH * (0.62 - 0.36 * Math.sin(dp * Math.PI))  // arc modéré, visible au centre
+  const sunY = svgH * (0.40 - 0.22 * Math.sin(dp * Math.PI))  // arc milieu-haut du ciel
 
   // Couleurs ciel dépendent de dp (teinte chaude lever/coucher, froide midi)
   const skyHue = isNight ? null : Math.round(200 - dp * (1 - dp) * 4 * 60)  // plus chaud aux extrêmes
@@ -574,12 +590,16 @@ export default function CommunityGarden({ currentUserId, onClose }) {
 
   return (
     <div style={{
-      position:'fixed', inset:0, zIndex:300,
+      position: embedded ? 'relative' : 'fixed',
+      inset: embedded ? 'auto' : 0,
+      zIndex: embedded ? 'auto' : 300,
+      width: embedded ? '100%' : undefined,
+      height: embedded ? '100%' : undefined,
       background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
       overflow:'hidden',
       display:'flex', flexDirection:'column',
-      backdropFilter:'blur(10px)',
-      animation:'cgFadeIn 0.38s ease',
+      backdropFilter: embedded ? 'none' : 'blur(10px)',
+      animation: embedded ? 'none' : 'cgFadeIn 0.38s ease',
       padding:'0',
     }}>
       <style>{`
@@ -592,9 +612,9 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }
         @keyframes cgRay     { 0%,100%{opacity:0.50} 50%{opacity:0.20} }
         div[data-cg]::-webkit-scrollbar { height: 5px; }
-        div[data-cg]::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius:3px; }
-        div[data-cg]::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius:3px; }
-        div[data-cg]::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.40); }
+        div[data-cg]::-webkit-scrollbar-track { background: transparent; }
+        div[data-cg]::-webkit-scrollbar-thumb { background: rgba(120,120,120,0.30); border-radius:3px; }
+        div[data-cg]::-webkit-scrollbar-thumb:hover { background: rgba(120,120,120,0.50); }
       `}</style>
 
       {/* HEADER — overlay sur le paysage */}
@@ -602,7 +622,7 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         position:'absolute', top:0, left:0, right:0, zIndex:10,
         display:'flex', alignItems:'flex-start', justifyContent:'space-between',
         padding:'20px 24px 0',
-        pointerEvents:'none',  // le bouton a pointerEvents:auto
+        pointerEvents: embedded ? 'none' : 'auto',
       }}>
         <div>
           <div style={{fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:300, color:'rgba(238,232,218,0.95)', letterSpacing:'.01em'}}>
@@ -614,17 +634,19 @@ export default function CommunityGarden({ currentUserId, onClose }) {
               : `${plants.length} jardins en fleur · anonyme · temps réel`}
           </div>
         </div>
-        <button onClick={onClose} style={{
-          width:36, height:36, borderRadius:'50%',
-          background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)',
-          color:'rgba(238,232,218,0.62)', fontSize:17, cursor:'pointer',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          transition:'all .2s', flexShrink:0,
-          pointerEvents:'auto',
-        }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
-        >✕</button>
+        {onClose && (
+          <button onClick={onClose} style={{
+            width:36, height:36, borderRadius:'50%',
+            background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)',
+            color:'rgba(238,232,218,0.62)', fontSize:17, cursor:'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            transition:'all .2s', flexShrink:0,
+            pointerEvents:'auto',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.07)'}
+          >✕</button>
+        )}
       </div>
 
       {/* PAYSAGE — pleine largeur, plein écran */}
@@ -636,7 +658,7 @@ export default function CommunityGarden({ currentUserId, onClose }) {
           overflowX:'auto',
           overflowY:'hidden',
           scrollbarWidth:'thin',
-          scrollbarColor:'rgba(255,255,255,0.22) rgba(255,255,255,0.04)',
+          scrollbarColor:'rgba(120,120,120,0.3) transparent',
         }}
       >
 
@@ -653,7 +675,7 @@ export default function CommunityGarden({ currentUserId, onClose }) {
         )}
 
         {!loading && !err && (
-          <svg width="100%" height="100%" viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMid slice" style={{display:'block'}} fill="none">
+          <svg width={svgW} height="100%" style={{display:'block', height:'100%', minHeight:'100%'}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMinYMax slice" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={skyA}/>

@@ -8,6 +8,16 @@ import { useGestures } from '../hooks/useGestures'
 import { useJournal }  from '../hooks/useJournal'
 import { RITUAL_CATALOG } from '../services/ritual.service'
 import { supabase } from '../core/supabaseClient'
+
+// ── Appel Edge Function Supabase ─────────────────────────────
+async function callModerateCircle(payload) {
+  console.log('[moderate-circle] appel:', payload)
+  const { data, error } = await supabase.functions.invoke('Moderate-circle', { body: payload })
+  console.log('[moderate-circle] réponse:', data, 'erreur:', error)
+  if (error) throw new Error(error.message)
+  return data
+}
+
 import CommunityGarden from '../components/CommunityGarden'
 
 /* ─────────────────────────────────────────
@@ -166,18 +176,157 @@ body { background: var(--bg); }
   letter-spacing: 0.03em;
 }
 .sb-logout {
-  margin-top: 10px;
+  margin-top: 8px;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   font-size: 10px;
   letter-spacing: 0.08em;
-  color: rgba(242,237,224,0.25);
-  transition: color 0.2s;
-  padding: 4px 0;
+  color: rgba(210,110,110,0.4);
+  transition: all 0.2s;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(210,110,110,0.12);
+  background: rgba(210,110,110,0.04);
 }
-.sb-logout:hover { color: rgba(210,110,110,0.7); }
+.sb-logout:hover { color: rgba(210,110,110,0.9); border-color: rgba(210,110,110,0.35); background: rgba(210,110,110,0.09); }
+.sb-user-card {
+  margin: 10px 14px 0;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+}
+.sb-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(150,212,133,0.25), rgba(150,212,133,0.10));
+  border: 1px solid rgba(150,212,133,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; flex-shrink: 0;
+  color: #c8f0b8; font-family: 'Cormorant Garamond', serif;
+  font-weight: 400; text-transform: uppercase;
+}
+.sb-user-info { flex: 1; min-width: 0; }
+.sb-user-name {
+  font-size: 12px; font-weight: 400; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 1px;
+}
+.sb-user-email {
+  font-size: 9.5px; color: var(--text3); letter-spacing: 0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sb-user-level {
+  margin-top: 10px; padding-top: 9px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sb-user-level-label {
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text3);
+}
+.sb-user-level-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; color: #c8f0b8; font-weight: 400;
+}
+.sb-user-xp-bar {
+  margin-top: 6px; height: 2px;
+  background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden;
+}
+.sb-user-xp-fill {
+  height: 100%; border-radius: 100px;
+  background: linear-gradient(90deg, rgba(150,212,133,0.5), #96d485);
+  transition: width 0.6s ease;
+}
+.sb-footer-btns {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 14px 14px;
+}
+/* Modal profil */
+.profile-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  animation: profileFadeIn 0.25s ease;
+}
+@keyframes profileFadeIn { from { opacity:0 } to { opacity:1 } }
+.profile-modal {
+  background: #132010;
+  border: 1px solid rgba(150,212,133,0.15);
+  border-radius: 20px; width: 100%; max-width: 360px;
+  padding: 32px 30px 28px; position: relative;
+  animation: profileSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes profileSlideUp { from { opacity:0; transform:scale(0.94) translateY(20px) } to { opacity:1; transform:scale(1) translateY(0) } }
+.profile-modal-close {
+  position: absolute; top: 14px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.08); background: none;
+  color: rgba(242,237,224,0.35); cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+}
+.profile-modal-close:hover { border-color: rgba(150,212,133,0.3); color: #c8f0b8; }
+.profile-modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px; font-weight: 300; color: var(--gold);
+  margin-bottom: 4px;
+}
+.profile-modal-sub { font-size: 11px; color: var(--text3); margin-bottom: 24px; }
+.profile-field { margin-bottom: 18px; }
+.profile-label {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 7px; display: block;
+}
+.profile-input {
+  width: 100%; padding: 11px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; font-size: 13px;
+  font-family: 'Jost', sans-serif; color: var(--text);
+  outline: none; transition: border-color 0.2s;
+}
+.profile-input:focus { border-color: var(--greenT); background: rgba(150,212,133,0.04); }
+.profile-input::placeholder { color: var(--text3); }
+.profile-error {
+  font-size: 11px; color: rgba(210,110,110,0.85);
+  padding: 7px 11px; background: rgba(210,110,110,0.07);
+  border: 1px solid rgba(210,110,110,0.18); border-radius: 8px; margin-bottom: 14px;
+}
+.profile-save {
+  width: 100%; padding: 12px;
+  background: var(--green2); border: 1px solid var(--greenT);
+  border-radius: 30px; font-family: 'Jost', sans-serif;
+  font-size: 12px; letter-spacing: 0.08em; color: #c8f0b8;
+  cursor: pointer; transition: all 0.2s;
+}
+.profile-save:hover:not(:disabled) { background: rgba(150,212,133,0.32); }
+.profile-save:disabled { opacity: 0.45; cursor: default; }
+.profile-saved {
+  text-align: center; font-size: 12px;
+  color: rgba(150,212,133,0.8); margin-top: 10px;
+  letter-spacing: 0.05em;
+}
+/* rendre la user-card cliquable */
+.sb-user-card { cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+.sb-user-card:hover { border-color: rgba(150,212,133,0.2); background: rgba(150,212,133,0.06); }
+.sb-subscribe {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(150,212,133,0.55);
+  transition: all 0.2s;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(150,212,133,0.15);
+  background: rgba(150,212,133,0.05);
+}
+.sb-subscribe:hover { color: #c8f0b8; border-color: rgba(150,212,133,0.4); background: rgba(150,212,133,0.10); }
 
 /* ── MAIN ── */
 .main {
@@ -409,7 +558,7 @@ function InviteModal({ circle, onClose, onCopied }) {
   flex-shrink: 0; align-self: flex-start;
 }
 
-.rpanel { width: 260px; flex-shrink: 0; border-left: 1px solid var(--border2); overflow-y: auto; }
+.rpanel { width: 260px; flex-shrink: 0; border-left: 1px solid var(--border2); overflow-y: auto; scroll-behavior: smooth; }
 .rp-section { padding: 18px 18px 0; }
 .rp-slabel {
   font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
@@ -418,7 +567,7 @@ function InviteModal({ circle, onClose, onCopied }) {
   margin-bottom: 12px;
 }
 
-.member-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+.member-row { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; flex-wrap: wrap; }
 .mr-av {
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
   background: var(--green3); border: 1px solid rgba(150,212,133,0.22);
@@ -428,6 +577,15 @@ function InviteModal({ circle, onClose, onCopied }) {
 .mr-bar { width: 44px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 100px; overflow: hidden; flex-shrink: 0; }
 .mr-fill { height: 100%; background: var(--green); border-radius: 100px; }
 .mr-pct { font-size: 10px; color: rgba(150,212,133,0.7); width: 28px; text-align: right; flex-shrink: 0; }
+.mr-gestures { display: flex; gap: 4px; width: 100%; padding-left: 35px; margin-top: -4px; margin-bottom: 4px; }
+.mr-gesture-btn {
+  font-size: 13px; padding: 2px 7px; border-radius: 100px;
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border2);
+  cursor: pointer; transition: all .2s; line-height: 1.6;
+  user-select: none;
+}
+.mr-gesture-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.1); }
+.mr-gesture-btn.sent { opacity: 0.4; cursor: default; transform: none; }
 
 .gesture-item {
   display: flex; align-items: center; gap: 9px; margin-bottom: 9px;
@@ -1205,9 +1363,233 @@ function InviteModal({ circle, onClose, onCopied }) {
 /* ─────────────────────────────────────────
    SCREEN 1 — CERCLE
 ───────────────────────────────────────── */
+function useCollectifs(userId) {
+  const [collectifs, setCollectifs] = useState([])
+  const [joinedIds, setJoinedIds]   = useState(new Set())
+
+  async function fetchCollectifs() {
+    const { data } = await supabase
+      .from('collectifs')
+      .select(`id, emoji, title, description, starts_at, duration_min, collectif_participants(count)`)
+      .gte('starts_at', new Date().toISOString())
+      .order('starts_at', { ascending: true })
+      .limit(5)
+    setCollectifs(data ?? [])
+  }
+
+  async function fetchJoined() {
+    if (!userId) return
+    const { data } = await supabase
+      .from('collectif_participants')
+      .select('collectif_id')
+      .eq('user_id', userId)
+    setJoinedIds(new Set(data?.map(d => d.collectif_id) ?? []))
+  }
+
+  useEffect(() => { fetchCollectifs() }, [])
+  useEffect(() => { fetchJoined() }, [userId])
+
+  async function rejoindre(collectifId) {
+    await supabase
+      .from('collectif_participants')
+      .upsert({ collectif_id: collectifId, user_id: userId }, { onConflict: 'collectif_id,user_id' })
+    await Promise.all([fetchCollectifs(), fetchJoined()])
+  }
+
+  async function quitter(collectifId) {
+    await supabase
+      .from('collectif_participants')
+      .delete()
+      .eq('collectif_id', collectifId)
+      .eq('user_id', userId)
+    await Promise.all([fetchCollectifs(), fetchJoined()])
+  }
+
+  return { collectifs, joinedIds, rejoindre, quitter }
+}
+
+function useRecentActivity(circleId) {
+  const [activity, setActivity] = useState([])
+  const [loading,  setLoading]  = useState(true)
+
+  useEffect(() => {
+    if (!circleId) { setLoading(false); return }
+
+    async function load() {
+      setLoading(true)
+
+      // Récupérer les membres du cercle
+      const { data: members } = await supabase
+        .from('circle_members')
+        .select('user_id')
+        .eq('circle_id', circleId)
+
+      if (!members?.length) { setLoading(false); return }
+      const userIds = members.map(m => m.user_id)
+
+      // Rituels complétés récemment (48h)
+      const since = new Date(Date.now() - 48 * 3600000).toISOString()
+
+      const [{ data: rituals }, { data: gestures }] = await Promise.all([
+        supabase
+          .from('rituals')
+          .select('user_id, name, zone, completed_at, users:user_id(display_name, email)')
+          .in('user_id', userIds)
+          .gte('completed_at', since)
+          .order('completed_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('gestures')
+          .select('from_user_id, to_user_id, type, created_at, sender:from_user_id(display_name, email), receiver:to_user_id(display_name, email)')
+          .in('from_user_id', userIds)
+          .gte('created_at', since)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      ])
+
+      // Fusionner et trier par date
+      const items = [
+        ...(rituals ?? []).map(r => ({
+          type:   'ritual',
+          name:   r.users?.display_name ?? r.users?.email ?? '?',
+          action: 'a complété',
+          ritual: r.name,
+          zone:   r.zone,
+          t:      r.completed_at
+        })),
+        ...(gestures ?? []).map(g => {
+          const to = g.receiver?.display_name ?? g.receiver?.email ?? '?'
+          return {
+            type:   'gesture',
+            name:   g.sender?.display_name ?? g.sender?.email ?? '?',
+            action: `a envoyé ${g.type} à ${to}`,
+            ritual: '',
+            zone:   '',
+            t:      g.created_at
+          }
+        })
+      ].sort((a, b) => new Date(b.t) - new Date(a.t)).slice(0, 8)
+
+      setActivity(items)
+      setLoading(false)
+    }
+
+    load()
+  }, [circleId])
+
+  return { activity, loading }
+}
+
+/* ─────────────────────────────────────────
+   HOOK — MEMBRES PAR PROXIMITÉ (30 jours)
+   Scores :
+     geste envoyé/reçu   → +3 pts
+     même cercle actif   → +2 pts
+     même collectif      → +2 pts
+     commentaire/réaction→ +4 pts
+   Niveaux dynamiques :
+     top 10%  → 🌳 Famille
+     top 35%  → 🌿 Amis
+     reste    → 🌱 Relations
+───────────────────────────────────────── */
+function useProximityMembers(userId) {
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId) { setLoading(false); return }
+
+    async function load() {
+      setLoading(true)
+      const since = new Date(Date.now() - 30 * 86400000).toISOString()
+      const scores = {}
+
+      const ensure = (id, name, email, avatar) => {
+        if (!scores[id]) scores[id] = { userId: id, name: name ?? email ?? '?', score: 0 }
+      }
+
+      // 1. Gestes envoyés/reçus (+3 pts chacun)
+      const [{ data: sent }, { data: recv }] = await Promise.all([
+        supabase.from('gestures')
+          .select('to_user_id, receiver:to_user_id(display_name, email)')
+          .eq('from_user_id', userId)
+          .gte('created_at', since),
+        supabase.from('gestures')
+          .select('from_user_id, sender:from_user_id(display_name, email)')
+          .eq('to_user_id', userId)
+          .gte('created_at', since)
+      ])
+      ;(sent ?? []).forEach(g => {
+        const id = g.to_user_id
+        ensure(id, g.receiver?.display_name, g.receiver?.email)
+        scores[id].score += 3
+      })
+      ;(recv ?? []).forEach(g => {
+        const id = g.from_user_id
+        ensure(id, g.sender?.display_name, g.sender?.email)
+        scores[id].score += 3
+      })
+
+      // 2. Même cercle actif (+2 pts par cercle partagé)
+      const { data: myCircles } = await supabase
+        .from('circle_members')
+        .select('circle_id')
+        .eq('user_id', userId)
+      const circleIds = (myCircles ?? []).map(c => c.circle_id)
+      if (circleIds.length > 0) {
+        const { data: coMembers } = await supabase
+          .from('circle_members')
+          .select('user_id, users:user_id(display_name, email)')
+          .in('circle_id', circleIds)
+          .neq('user_id', userId)
+        ;(coMembers ?? []).forEach(m => {
+          ensure(m.user_id, m.users?.display_name, m.users?.email)
+          scores[m.user_id].score += 2
+        })
+      }
+
+      // 3. Même collectif rejoint (+2 pts)
+      const { data: myCollectifs } = await supabase
+        .from('collectif_participants')
+        .select('collectif_id')
+        .eq('user_id', userId)
+        .gte('created_at', since)
+      const collectifIds = (myCollectifs ?? []).map(c => c.collectif_id)
+      if (collectifIds.length > 0) {
+        const { data: coParticipants } = await supabase
+          .from('collectif_participants')
+          .select('user_id, users:user_id(display_name, email)')
+          .in('collectif_id', collectifIds)
+          .neq('user_id', userId)
+          .gte('created_at', since)
+        ;(coParticipants ?? []).forEach(p => {
+          ensure(p.user_id, p.users?.display_name, p.users?.email)
+          scores[p.user_id].score += 2
+        })
+      }
+
+      // Trier par score décroissant, garder les 50 premiers
+      const sorted = Object.values(scores)
+        .filter(m => m.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 50)
+
+      setMembers(sorted)
+      setLoading(false)
+    }
+
+    load()
+  }, [userId])
+
+  return { members, loading }
+}
+
 function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteClose }) {
   const { circleMembers, activeCircle } = useCircle(userId)
   const { received, send } = useGestures(userId)
+  const { activity } = useRecentActivity(activeCircle?.id)
+  const { collectifs, joinedIds, rejoindre, quitter } = useCollectifs(userId)
+  const { members: proximityMembers, loading: proximityLoading } = useProximityMembers(userId)
   const [sentGestures, setSentGestures] = useState(new Set())
   const [toast, setToast] = useState(null)
   const [showInvite, setShowInvite] = useState(false)
@@ -1231,12 +1613,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
     }
   }
 
-  const ACTIVITY = [
-    { name:'Léa',   action:'a complété', ritual:'Respiration consciente', zone:'Souffle', t: new Date(Date.now()-480000).toISOString() },
-    { name:'Marie', action:'a envoyé ☀️ à Lucas', ritual:'', zone:'', t: new Date(Date.now()-1320000).toISOString() },
-    { name:'Lucas', action:'a complété', ritual:'Bouger mon corps', zone:'Tige',    t: new Date(Date.now()-2400000).toISOString() },
-    { name:'Paul',  action:'a complété', ritual:'5 min de centrage', zone:'Racines', t: new Date(Date.now()-3600000).toISOString() },
-  ]
+
 
   return (
     <>
@@ -1250,51 +1627,56 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
       )}
       <div className="content">
         <div className="col" style={{ flex:1 }}>
-        <div className="slabel">Jardins du cercle — {activeCircle?.name ?? 'Cercle'} · Aujourd'hui</div>
-        <div className="gardens-grid">
-          {circleMembers.map(m => {
-            const name = m.user?.display_name ?? m.user?.email ?? '?'
-            const plant = m.todayPlant
-            return (
-              <div key={m.userId} className={'gcard' + (!plant ? ' gcard-absent' : '')}>
-                <div className="gcard-emoji">{memberEmoji(name)}</div>
-                <div className="gcard-name">{name}</div>
-                <div className="gcard-bar"><div className="gcard-fill" style={{ width:`${plant?.health ?? 0}%` }} /></div>
-                <div className="gcard-n">{plant ? `${plant.health}%` : 'Pas encore là'}</div>
-                {m.userId !== userId && (
-                  <div className="gcard-gestures">
-                    {['💧','☀️','🌱'].map(type => (
-                      <div key={type}
-                        className={'gcard-gesture-btn' + (sentGestures.has(`${m.userId}-${type}`) ? ' sent' : '')}
-                        onClick={() => handleSendGesture(m.userId, type)}
-                        title={`Envoyer ${type}`}
-                      >{type}</div>
-                    ))}
-                  </div>
-                )}
+        {collectifs[0] && (() => {
+          const c = collectifs[0]
+          const diff = new Date(c.starts_at) - Date.now()
+          const h = Math.floor(diff / 3600000)
+          const m = Math.floor((diff % 3600000) / 60000)
+          const heure = new Date(c.starts_at).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+          const nbPart = c.collectif_participants?.[0]?.count ?? 0
+          const timer = diff > 0 ? (h > 0 ? `dans ${h}h ${m}min` : `dans ${m} min`) : 'En cours'
+          return (
+            <div className="collective-banner">
+              <div className="cb-top">
+                <span className="cb-badge">{c.emoji} Collectif · {heure}</span>
+                <span className="cb-timer">{timer}</span>
               </div>
-            )
-          })}
-        </div>
-
-        <div className="collective-banner">
-          <div className="cb-top">
-            <span className="cb-badge">Collectif · Ce soir</span>
-            <span className="cb-timer">dans 3h 42min</span>
-          </div>
-          <div className="cb-title">Instant de silence partagé — 21h</div>
-          <div className="cb-desc">5 minutes de silence conscient, ensemble à distance. Chacun dans son jardin, chacun présent.</div>
-          <div className="cb-foot">
-            <div className="cb-avatars">
-              {['🌸','🌿','🌾','🌱'].map((e,i) => <div key={i} className="cb-av">{e}</div>)}
+              <div className="cb-title">{c.title} — {heure}</div>
+              {c.description && <div className="cb-desc">{c.description}</div>}
+              <div className="cb-foot">
+                <div className="cb-avatars">
+                  {['🌸','🌿','🌾','🌱'].map((e,i) => <div key={i} className="cb-av">{e}</div>)}
+                </div>
+                <span className="cb-count">{nbPart} participants inscrits</span>
+                <div style={{ display:'flex', gap:6 }}>
+                  <div
+                    className="cb-join"
+                    onClick={() => !joinedIds.has(c.id) && rejoindre(c.id)}
+                    style={{ opacity: joinedIds.has(c.id) ? 0.5 : 1, cursor: joinedIds.has(c.id) ? 'default' : 'pointer' }}
+                  >
+                    {joinedIds.has(c.id) ? '✓ Inscrit' : 'Rejoindre'}
+                  </div>
+                  {joinedIds.has(c.id) && (
+                    <div
+                      className="cb-join"
+                      onClick={() => quitter(c.id)}
+                      style={{ background:'rgba(210,110,110,0.12)', border:'1px solid rgba(210,110,110,0.3)', color:'rgba(210,110,110,0.85)', cursor:'pointer' }}
+                    >
+                      Se désinscrire
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
-            <span className="cb-count">14 participants inscrits</span>
-            <div className="cb-join">Rejoindre</div>
-          </div>
-        </div>
+          )
+        })()}
 
         <div className="slabel">Activité récente</div>
-        {ACTIVITY.map((a, i) => (
+        {activity.length === 0 ? (
+          <div style={{ fontSize:12, color:'var(--text3)', padding:'12px 0', fontStyle:'italic' }}>
+            Aucune activité récente dans ce cercle.
+          </div>
+        ) : activity.map((a, i) => (
           <div key={i} className="act-item">
             <div className="act-av">{memberEmoji(a.name)}</div>
             <div className="act-body">
@@ -1308,19 +1690,44 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
 
         <div className="rpanel">
         <div className="rp-section">
-          <div className="rp-slabel">Membres · {circleMembers.length}</div>
-          {circleMembers.map(m => {
-            const name = m.user?.display_name ?? '?'
-            const h = m.todayPlant?.health ?? 0
-            return (
-              <div key={m.userId} className="member-row">
-                <div className="mr-av">{memberEmoji(name)}</div>
-                <div className="mr-name">{name}</div>
-                <div className="mr-bar"><div className="mr-fill" style={{ width:`${h}%` }} /></div>
-                <div className="mr-pct">{h}%</div>
+          <div className="rp-slabel">Ma communauté · {proximityMembers.length}</div>
+
+          {proximityLoading && (
+            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>Calcul des proximités…</div>
+          )}
+
+          {!proximityLoading && proximityMembers.length === 0 && (
+            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>
+              Pas encore d'interactions ce mois-ci.
+            </div>
+          )}
+
+          <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+            {proximityMembers.slice(0, 50).map((m, i) => (
+              <div key={m.userId} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background:'rgba(255,255,255,0.04)', border:'1px solid var(--border2)', borderRadius:10 }}>
+                <div style={{ fontSize:9, color:'var(--text3)', width:16, textAlign:'right', flexShrink:0 }}>{i+1}</div>
+                <div style={{ width:24, height:24, borderRadius:'50%', background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>
+                  {memberEmoji(m.name)}
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, color:'var(--text2)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
+                  <div style={{ fontSize:9, color:'var(--text3)', marginTop:1 }}>{m.score} interactions</div>
+                </div>
+                {m.userId !== userId && (
+                  <div style={{ display:'flex', gap:3, flexShrink:0 }}>
+                    {['💧','☀️','🌱'].map(type => (
+                      <div key={type}
+                        className={'mr-gesture-btn' + (sentGestures.has(`${m.userId}-${type}`) ? ' sent' : '')}
+                        onClick={() => !sentGestures.has(`${m.userId}-${type}`) && handleSendGesture(m.userId, type)}
+                        title={`Envoyer ${type}`}
+                        style={{ fontSize:11, padding:'2px 5px' }}
+                      >{type}</div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )
-          })}
+            ))}
+          </div>
         </div>
         <div className="rp-section" style={{ marginTop:16 }}>
           <div className="rp-slabel">Gestes reçus</div>
@@ -1334,19 +1741,27 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
         </div>
         <div className="rp-section" style={{ marginTop:16 }}>
           <div className="rp-slabel">Prochains collectifs</div>
-          {[
-            { e:'🌬️', t:'Silence partagé',     d:'Ce soir 21h',    n:14 },
-            { e:'🌱',  t:'Semaine Racines',     d:'Lun. – 7 jours', n:8  },
-            { e:'🍃',  t:"5 min d'étirements", d:'Demain 7h30',    n:5  },
-          ].map((r, i) => (
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:9, marginBottom:9, padding:'8px 10px', background:'rgba(255,255,255,0.05)', borderRadius:10, border:'1px solid var(--border2)' }}>
-              <span style={{ fontSize:15 }}>{r.e}</span>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:12, color:'var(--text2)' }}>{r.t}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{r.d} · {r.n} pers.</div>
+          {collectifs.slice(0, 4).map((c, i) => {
+            const d = new Date(c.starts_at)
+            const now = new Date()
+            const isToday = d.toDateString() === now.toDateString()
+            const isTomorrow = d.toDateString() === new Date(now.getTime() + 86400000).toDateString()
+            const heure = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })
+            const label = isToday ? `Ce soir ${heure}` : isTomorrow ? `Demain ${heure}` : d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric' }) + ` ${heure}`
+            const nbPart = c.collectif_participants?.[0]?.count ?? 0
+            return (
+              <div key={c.id} style={{ display:'flex', alignItems:'center', gap:9, marginBottom:9, padding:'8px 10px', background:'rgba(255,255,255,0.05)', borderRadius:10, border:'1px solid var(--border2)' }}>
+                <span style={{ fontSize:15 }}>{c.emoji}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:12, color:'var(--text2)' }}>{c.title}</div>
+                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{label} · {nbPart} pers.</div>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
+          {collectifs.length === 0 && (
+            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Aucun collectif prévu.</div>
+          )}
         </div>
       </div>
     </div>
@@ -1637,49 +2052,205 @@ function Toast({ msg }) {
   return <div className="toast">{msg}</div>
 }
 
+const THEMES_LIST = [
+  ['🧘', 'Méditation & Souffle'],
+  ['🏃', 'Mouvement & Corps'],
+  ['🌙', 'Sommeil & Décompression'],
+  ['📓', 'Gratitude & Journaling'],
+  ['🥗', 'Alimentation consciente'],
+  ['🌿', 'Nature & Plein air'],
+  ['🎨', 'Créativité & Expression'],
+  ['🌸', 'Bien-être général'],
+]
+
+function getThemeEmoji(theme) {
+  const found = THEMES_LIST.find(([, label]) => label === theme)
+  return found ? found[0] : '🌱'
+}
+
 /* ─────────────────────────────────────────
-   MODAL CRÉER UN CERCLE
+   MODAL MODIFIER UNE GRAINE
 ───────────────────────────────────────── */
-function CreateCircleModal({ onClose, onCreate }) {
-  const [name, setName] = useState('')
-  const [theme, setTheme] = useState('')
-  const [isOpen, setIsOpen] = useState(false)
+function EditCircleModal({ circle, onClose, onSave }) {
+  const [name,        setName]       = useState(circle.name ?? '')
+  const [theme,       setTheme]      = useState(circle.theme ?? '')
+  const [description, setDescription] = useState(circle.description ?? '')
+  const [isOpen,      setIsOpen]     = useState(circle.is_open ?? false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [error,   setError]   = useState(null)
 
   async function handleSubmit() {
-    if (!name.trim()) { setError('Le nom du cercle est requis.'); return }
+    if (!name.trim()) { setError('Le nom est requis.'); return }
     setLoading(true); setError(null)
-    try {
-      await onCreate(name.trim(), theme.trim() || 'Bien-être général', isOpen)
-      onClose()
-    } catch (e) { setError(e.message) }
+    try { await onSave(name.trim(), theme.trim() || 'Bien-être général', isOpen, description.trim()) }
+    catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal">
-        <div className="modal-title">Créer un cercle 🌿</div>
+        <div className="modal-title">Modifier la graine ✏️</div>
         <div className="modal-field">
-          <label className="modal-label">Nom du cercle</label>
-          <input className="modal-input" placeholder="ex. Cercle du Matin" value={name} onChange={e => setName(e.target.value)} autoFocus />
+          <label className="modal-label">Nom de la graine</label>
+          <input className="modal-input" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </div>
         <div className="modal-field">
-          <label className="modal-label">Thème (optionnel)</label>
-          <input className="modal-input" placeholder="ex. Rituels de réveil & ancrage" value={theme} onChange={e => setTheme(e.target.value)} />
+          <label className="modal-label">Thème</label>
+          <select value={theme} onChange={e => setTheme(e.target.value)}
+            style={{ width:'100%', padding:'9px 13px', background:'#1e2e1e', border:'1px solid var(--border)', borderRadius:10, fontSize:12, color: theme ? 'var(--text2)' : 'var(--text3)', outline:'none', cursor:'pointer', appearance:'none', backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat:'no-repeat', backgroundPosition:'right 12px center' }}>
+            <option value="">— Choisir un thème —</option>
+            {THEMES_LIST.map(([emoji, label]) => (
+              <option key={label} value={label}>{emoji} {label}</option>
+            ))}
+          </select>
         </div>
-        <div className="modal-row">
-          <span className="modal-toggle-lbl">Cercle ouvert (rejoignable sans code)</span>
-          <div className={'priv-toggle ' + (isOpen ? 'on' : 'off')} onClick={() => setIsOpen(v => !v)}>
-            <div className="pt-knob" />
+        <div className="modal-field">
+          <label className="modal-label">Intention / Description</label>
+          <textarea className="modal-input" value={description} onChange={e => setDescription(e.target.value)}
+            style={{ resize:'vertical', minHeight:70, lineHeight:1.6 }} />
+        </div>
+        <div className="modal-row" style={{ flexDirection:'column', alignItems:'flex-start', gap:8 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
+            <span className="modal-toggle-lbl" style={{ fontWeight: isOpen ? 500 : 400, color: isOpen ? 'var(--text)' : 'var(--text3)' }}>
+              {isOpen ? '🌍 Graine publique' : '🔒 Sur invitation uniquement'}
+            </span>
+            <div className={'priv-toggle ' + (isOpen ? 'on' : 'off')} onClick={() => setIsOpen(v => !v)}>
+              <div className="pt-knob" />
+            </div>
+          </div>
+          <div style={{ fontSize:10, color:'var(--text3)', lineHeight:1.5 }}>
+            {isOpen
+              ? "Visible dans Découvrir — n'importe qui peut rejoindre sans code"
+              : "Invisible publiquement — accès uniquement via code d'invitation"}
           </div>
         </div>
         {error && <div className="modal-error">{error}</div>}
         <div className="modal-actions">
           <button className="modal-cancel" onClick={onClose}>Annuler</button>
           <button className="modal-submit" disabled={loading} onClick={handleSubmit}>
-            {loading ? '…' : 'Créer le cercle'}
+            {loading ? '…' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────
+   MODAL CRÉER UN CERCLE
+───────────────────────────────────────── */
+function CreateCircleModal({ onClose, onCreate }) {
+  const [name,        setName]       = useState('')
+  const [theme,       setTheme]      = useState('')
+  const [isOpen,      setIsOpen]      = useState(false)
+  const [duration,    setDuration]    = useState(null)
+  const [loading,     setLoading]     = useState(false)
+  const [aiLoading,   setAiLoading]   = useState(false)
+  const [aiDesc,      setAiDesc]      = useState('')
+  const [error,       setError]       = useState(null)
+
+  async function handleSubmit() {
+    if (!name.trim()) { setError('Le nom de la graine est requis.'); return }
+    setLoading(true); setError(null)
+    try {
+      await onCreate(name.trim(), theme.trim() || 'Bien-être général', isOpen, duration, aiDesc)
+      onClose()
+    } catch (e) { setError(e.message) }
+    finally { setLoading(false) }
+  }
+
+  const durations = [
+    { label:'1 jour',    value:1  },
+    { label:'1 semaine', value:7  },
+    { label:'15 jours',  value:15 },
+  ]
+
+  async function generateDescription() {
+    if (!name.trim() && !theme) return
+    setAiLoading(true)
+    try {
+      const data = await callModerateCircle({ action: 'generate', name: name.trim(), theme })
+      setAiDesc(data.description ?? '')
+    } catch(e) { console.error(e) }
+    finally { setAiLoading(false) }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">Nouvelle Graine 🌱</div>
+        <div className="modal-field">
+          <label className="modal-label">Nom de la graine</label>
+          <input className="modal-input" placeholder="ex. Rituels du Matin" value={name} onChange={e => setName(e.target.value)} autoFocus />
+        </div>
+        <div className="modal-field">
+          <label className="modal-label">Thème</label>
+          <select value={theme} onChange={e => setTheme(e.target.value)}
+            style={{ width:'100%', padding:'9px 13px', background:'#1e2e1e', border:'1px solid var(--border)', borderRadius:10, fontSize:12, color: theme ? 'var(--text2)' : 'var(--text3)', outline:'none', cursor:'pointer', appearance:'none', backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat:'no-repeat', backgroundPosition:'right 12px center' }}>
+            <option value="">— Choisir un thème —</option>
+            {THEMES_LIST.map(([emoji, label]) => (
+              <option key={label} value={label}>{emoji} {label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="modal-field">
+          <label className="modal-label" style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <span>Description générée par IA</span>
+            {(name.trim() || theme) && (
+              <div onClick={generateDescription}
+                style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--greenT)', color:'#c8f0b8', background:'var(--green3)', cursor: aiLoading ? 'default' : 'pointer', opacity: aiLoading ? .5 : 1 }}>
+                {aiLoading ? '✨ Génération…' : '✨ Générer'}
+              </div>
+            )}
+          </label>
+          {aiDesc
+            ? <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.8, fontStyle:'italic', padding:'10px 13px', background:'rgba(150,212,133,0.05)', borderRadius:10, border:'1px solid rgba(150,212,133,0.15)' }}>
+                "{aiDesc}"
+                <span onClick={() => setAiDesc('')} style={{ marginLeft:8, fontSize:10, color:'var(--text3)', cursor:'pointer', fontStyle:'normal' }}>✕</span>
+              </div>
+            : <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>
+                {name.trim() || theme ? "Cliquez sur ✨ Générer pour créer une description." : "Renseignez d'abord le nom et le thème."}
+              </div>
+          }
+        </div>
+        <div className="modal-field">
+          <label className="modal-label">Durée de vie</label>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:4 }}>
+            {durations.map(opt => (
+              <div key={String(opt.value)}
+                onClick={() => setDuration(opt.value)}
+                style={{
+                  padding:'6px 14px', borderRadius:100, fontSize:11, cursor:'pointer',
+                  border: duration === opt.value ? '1px solid var(--greenT)' : '1px solid var(--border)',
+                  background: duration === opt.value ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)',
+                  color: duration === opt.value ? '#c8f0b8' : 'var(--text3)',
+                  transition:'all .15s'
+                }}
+              >{opt.label}</div>
+            ))}
+          </div>
+        </div>
+        <div className="modal-row" style={{ flexDirection:'column', alignItems:'flex-start', gap:8 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
+            <span className="modal-toggle-lbl" style={{ fontWeight: isOpen ? 500 : 400, color: isOpen ? 'var(--text)' : 'var(--text3)' }}>
+              {isOpen ? '🌍 Graine publique' : '🔒 Sur invitation uniquement'}
+            </span>
+            <div className={'priv-toggle ' + (isOpen ? 'on' : 'off')} onClick={() => setIsOpen(v => !v)}>
+              <div className="pt-knob" />
+            </div>
+          </div>
+          <div style={{ fontSize:10, color:'var(--text3)', lineHeight:1.5 }}>
+            {isOpen
+              ? "Visible dans \"Découvrir\" — n'importe qui peut rejoindre sans code"
+              : "Invisible publiquement — accès uniquement via code d'invitation"}
+          </div>
+        </div>
+        {error && <div className="modal-error">{error}</div>}
+        <div className="modal-actions">
+          <button className="modal-cancel" onClick={onClose}>Annuler</button>
+          <button className="modal-submit" disabled={loading} onClick={handleSubmit}>
+            {loading ? '…' : 'Créer la graine'}
           </button>
         </div>
       </div>
@@ -1757,14 +2328,67 @@ td{padding:6px 9px;border-bottom:1px solid #eee;color:#333;vertical-align:top;li
 /* ─────────────────────────────────────────
    SCREEN 3 — CERCLES
 ───────────────────────────────────────── */
-function ScreenCercles({ userId, openCreate, onCreateClose }) {
-  const { circles, activeCircle, createCircle, joinByCode } = useCircle(userId)
-  const [joinCode, setJoinCode]       = useState('')
-  const [joinError, setJoinError]     = useState(null)
-  const [joinLoading, setJoinLoading] = useState(false)
-  const [copied, setCopied]           = useState(false)
-  const [showCreate, setShowCreate]   = useState(false)
-  const [toast, setToast]             = useState(null)
+function ScreenCercles({ userId, openCreate, onCreateClose, onReport }) {
+  const { circles, activeCircle, createCircle, joinByCode, loadCircles, selectCircle } = useCircle(userId)
+  const [joinCode, setJoinCode]           = useState('')
+  const [joinError, setJoinError]         = useState(null)
+  const [joinLoading, setJoinLoading]     = useState(false)
+  const [copied, setCopied]               = useState(false)
+  const [showCreate, setShowCreate]       = useState(false)
+  const [toast, setToast]                 = useState(null)
+  const [publicCircles, setPublicCircles]   = useState([])
+  const [editCircle, setEditCircle]         = useState(null)  // graine en cours d'édition
+  const [deleteConfirm, setDeleteConfirm]   = useState(null)  // graine à supprimer
+  const [showDetail, setShowDetail]         = useState(false) // modale détail
+  const [creatorNames, setCreatorNames]     = useState({})    // circleId → display_name du jardinier
+
+  // Charger le nom du jardinier via created_by sur circles
+  useEffect(() => {
+    if (!circles.length) return
+    const memberCircles = circles.filter(c => !c.isAdmin)
+    if (!memberCircles.length) return
+    // Récupérer created_by depuis circles
+    supabase
+      .from('circles')
+      .select('id, created_by')
+      .in('id', memberCircles.map(c => c.id))
+      .then(async ({ data: circleData }) => {
+        if (!circleData?.length) return
+        const creatorIds = [...new Set(circleData.map(r => r.created_by).filter(Boolean))]
+        if (!creatorIds.length) return
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, display_name, email')
+          .in('id', creatorIds)
+        const userMap = {}
+        ;(usersData ?? []).forEach(u => { userMap[u.id] = u.display_name ?? u.email ?? 'Jardinier(e)' })
+        const map = {}
+        circleData.forEach(r => { if (r.created_by) map[r.id] = userMap[r.created_by] ?? 'Jardinier(e)' })
+        setCreatorNames(map)
+      })
+  }, [circles])
+
+  async function fetchPublicCircles() {
+    const { data } = await supabase
+      .from('circles')
+      .select('id, name, theme, is_open, invite_code, expires_at, max_members, circle_members(count)')
+      .eq('is_open', true)
+      .order('created_at', { ascending: false })
+      .limit(100)
+    const mapped = (data ?? []).map(r => ({
+      ...r,
+      memberCount: r.circle_members?.[0]?.count ?? 0
+    }))
+    // Masquer les graines pleines et expirées
+    const filtered = mapped.filter(r => {
+      const full = r.memberCount >= (r.max_members ?? 8)
+      const expired = r.expires_at && new Date(r.expires_at) < new Date()
+      return !full && !expired
+    }).sort(() => Math.random() - 0.5).slice(0, 10)
+    setPublicCircles(filtered)
+  }
+
+  useEffect(() => { fetchPublicCircles() }, [])
   // Topbar "Créer" button also opens the modal
   const isCreateOpen = showCreate || openCreate
   const EMOJIS = ['🌸','🌿','🌾','🌱','🌺','🍃','🌼','🌷','🌻']
@@ -1776,9 +2400,21 @@ function ScreenCercles({ userId, openCreate, onCreateClose }) {
     setJoinLoading(true); setJoinError(null)
     try {
       const circle = await joinByCode(joinCode.trim())
-      setJoinCode(''); showToast(`✅ Vous avez rejoint "${circle.name}"`)
+      setJoinCode(''); showToast(`✅ Vous avez rejoint la graine "${circle.name}"`)
     } catch (e) { setJoinError(e.message) }
     finally { setJoinLoading(false) }
+  }
+
+  async function handleJoinPublic(code) {
+    if (!code) return
+    try {
+      const circle = await joinByCode(code)
+      showToast(`✅ Vous avez rejoint la graine "${circle.name}"`)
+      const { data } = await supabase.from('circles')
+        .select('id, name, theme, is_open, invite_code, expires_at, circle_members(count)')
+        .eq('is_open', true).limit(10)
+      setPublicCircles((data ?? []).map(r => ({ ...r, memberCount: r.circle_members?.[0]?.count ?? 0 })))
+    } catch (e) { showToast(`❌ ${e.message}`) }
   }
 
   function handleCopyCode(code) {
@@ -1788,80 +2424,199 @@ function ScreenCercles({ userId, openCreate, onCreateClose }) {
     })
   }
 
-  async function handleCreate(name, theme, isOpen) {
+  async function handleCreate(name, theme, isOpen, duration, description) {
+    const myOwnGraines = circles.filter(c => c.isAdmin || c.created_by === userId)
+    if (myOwnGraines.length >= 6) {
+      showToast("🌱 Maximum 6 graines actives — supprimez-en une avant d'en créer une nouvelle.")
+      return
+    }
+    // Validation IA du titre via Edge Function
+    try {
+      const modResult = await callModerateCircle({ action: 'moderate', name })
+      if (!modResult.ok) {
+        showToast('❌ Titre refusé : ' + (modResult.reason ?? 'contenu inapproprié'))
+        return
+      }
+    } catch(e) { /* si Edge Function indisponible, on laisse passer */ }
     const circle = await createCircle(name, theme, isOpen)
-    showToast(`🌱 Cercle "${circle.name}" créé !`)
+    const updates = {}
+    if (duration != null) updates.expires_at = new Date(Date.now() + duration * 86400000).toISOString()
+    if (description) updates.description = description
+    if (Object.keys(updates).length) await supabase.from('circles').update(updates).eq('id', circle.id)
+    await loadCircles?.()
+    fetchPublicCircles()
+    showToast(`🌱 Graine "${circle.name}" créée !`)
+  }
+
+  async function handleUpdate(id, name, theme, isOpen, description) {
+    try {
+      await supabase.from('circles').update({ name, theme, is_open: isOpen, description }).eq('id', id)
+      setEditCircle(null)
+      showToast('✅ Graine mise à jour')
+      loadCircles?.()
+      fetchPublicCircles()
+    } catch (e) { showToast(`❌ ${e.message}`) }
+  }
+
+  async function handleSignaler(circleId) {
+    try {
+      await supabase.from('reports').insert({ circle_id: circleId, reported_by: userId, reason: 'user_report' })
+      showToast('🚩 Signalement envoyé — merci !')
+      setShowDetail(false)
+      onReport?.()
+    } catch(e) { showToast("❌ Impossible d'envoyer le signalement") }
+  }
+
+  async function handleDelete(id) {
+    try {
+      await supabase.from('circle_members').delete().eq('circle_id', id)
+      await supabase.from('circles').delete().eq('id', id)
+      setDeleteConfirm(null)
+      showToast('🗑️ Graine supprimée')
+      loadCircles?.()
+      fetchPublicCircles()
+    } catch (e) { showToast(`❌ ${e.message}`) }
   }
 
   return (
     <>
       {isCreateOpen && <CreateCircleModal onClose={() => { setShowCreate(false); onCreateClose?.() }} onCreate={handleCreate} />}
-      <Toast msg={toast} />
-      <div className="content">
-        <div className="col" style={{ flex:1 }}>
-          <div className="slabel">Mes cercles · {circles.length} actifs</div>
-          <div className="circles-grid">
-            {circles.map(c => (
-              <div key={c.id} className={'circle-card-big' + (c.id===activeCircle?.id ? ' active-circle' : '')}>
-                <div className="ccb-top">
-                  <div className="ccb-name">{c.name}</div>
-                  <div className={'ccb-badge ' + (c.isAdmin ? 'admin' : 'member')}>{c.isAdmin?'Admin':'Membre'}</div>
+      {editCircle && (
+        <EditCircleModal
+          circle={editCircle}
+          onClose={() => setEditCircle(null)}
+          onSave={(name, theme, isOpen, description) => handleUpdate(editCircle.id, name, theme, isOpen, description)}
+        />
+      )}
+      {showDetail && activeCircle && (
+        <div className="modal-overlay" onClick={() => setShowDetail(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth:480 }}>
+            {/* Header */}
+            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16 }}>
+              <div>
+                <div className="modal-title" style={{ marginBottom:4 }}>{activeCircle.name}</div>
+                <div style={{ fontSize:11, color:'var(--text3)' }}>
+                  {getThemeEmoji(activeCircle.theme)} {activeCircle.theme} · {activeCircle.memberCount} membre{activeCircle.memberCount > 1 ? 's' : ''}
                 </div>
-                <div className="ccb-theme">{c.theme}</div>
-                <div className="ccb-members">
-                  {EMOJIS.slice(0, c.memberCount).map((e,i) => <div key={i} className="ccb-member-av">{e}</div>)}
-                  <div className="ccb-member-count">{c.memberCount} membres</div>
-                </div>
-                <div className="ccb-stats">
-                  <div className="ccbs-item"><div className="ccbs-val">—</div><div className="ccbs-lbl">rituels ce mois</div></div>
-                  <div className="ccbs-item">
-                    <div className="ccbs-val">{Math.floor((Date.now()-new Date(c.created_at??Date.now()))/86400000)}</div>
-                    <div className="ccbs-lbl">jours ensemble</div>
+              </div>
+              <div onClick={() => setShowDetail(false)} style={{ cursor:'pointer', fontSize:18, opacity:.5, marginTop:2 }}>✕</div>
+            </div>
+
+            {/* Description */}
+            {activeCircle.description && (
+              <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.8, fontStyle:'italic', marginBottom:16, padding:'10px 14px', background:'rgba(150,212,133,0.05)', borderRadius:10, border:'1px solid rgba(150,212,133,0.1)' }}>
+                "{activeCircle.description}"
+              </div>
+            )}
+
+
+
+            {/* Code invitation si privée et jardinier */}
+            {(activeCircle.isAdmin || activeCircle.created_by === userId) && !activeCircle.is_open && (
+              <div style={{ marginTop:14 }}>
+                <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:6 }}>Code d'invitation</div>
+                <div className="cd-invite">
+                  <div className="cdi-code">{activeCircle.invite_code ?? '——'}</div>
+                  <div className="cdi-copy" onClick={() => handleCopyCode(activeCircle.invite_code)}>
+                    {copied ? '✓ Copié' : 'Copier'}
                   </div>
                 </div>
               </div>
-            ))}
+            )}
+
+            <div className="modal-actions" style={{ marginTop:20, justifyContent:'space-between' }}>
+              <button onClick={() => handleSignaler(activeCircle.id)}
+                style={{ padding:'8px 14px', borderRadius:10, border:'1px solid rgba(210,80,80,0.3)', background:'rgba(210,80,80,0.08)', color:'rgba(255,140,140,0.8)', fontSize:11, cursor:'pointer' }}>
+                🚩 Signaler
+              </button>
+              <div style={{ display:'flex', gap:8 }}>
+                <button className="modal-cancel" onClick={() => setShowDetail(false)}>Fermer</button>
+                {(activeCircle.isAdmin || activeCircle.created_by === userId) && (
+                  <button className="modal-submit" onClick={() => { setShowDetail(false); setEditCircle(activeCircle) }}>Modifier</button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-title">Supprimer la graine 🗑️</div>
+            <div style={{ fontSize:13, color:'var(--text2)', marginBottom:20, lineHeight:1.6 }}>
+              Voulez-vous vraiment supprimer <b>{deleteConfirm.name}</b> ? Cette action est irréversible et supprimera tous les membres.
+            </div>
+            <div className="modal-actions">
+              <button className="modal-cancel" onClick={() => setDeleteConfirm(null)}>Annuler</button>
+              <button className="modal-submit" style={{ background:'rgba(210,80,80,0.18)', borderColor:'rgba(210,80,80,0.4)', color:'rgba(255,160,160,0.9)' }}
+                onClick={() => handleDelete(deleteConfirm.id)}>Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+      <Toast msg={toast} />
+      <div className="content">
+        <div className="col" style={{ flex:1 }}>
+          <div className="slabel">Mes graines · {circles.length} actives</div>
+          <div className="circles-grid">
+            {circles.map(c => { const creatorName = creatorNames[c.id] ?? null; const isMine = c.isAdmin || c.created_by === userId; return (
+              <div key={c.id} className={'circle-card-big' + (c.id===activeCircle?.id ? ' active-circle' : '')}
+                style={{ position:'relative', padding:'14px', gap:6 }}
+                onClick={() => { selectCircle(c.id); setShowDetail(true) }}>
+
+                {/* LIGNE 1 — 7j haut gauche + badge haut droite */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:2 }}>
+                  {c.expires_at ? (() => {
+                    const remaining = Math.ceil((new Date(c.expires_at) - Date.now()) / 86400000)
+                    return remaining > 0
+                      ? <div style={{ fontSize:10, color: remaining <= 2 ? 'rgba(255,140,100,0.85)' : 'var(--text3)', display:'flex', alignItems:'center', gap:4 }}>
+                          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:13, color: remaining <= 2 ? 'rgba(255,140,100,0.9)' : 'var(--text2)' }}>{remaining}j</span>
+                          Profitez-en !
+                        </div>
+                      : <div style={{ fontSize:10, color:'rgba(200,100,100,0.7)' }}>Expirée</div>
+                  })() : <div />}
+                  {isMine
+                    ? <div className="ccb-badge admin">Jardinier(e)</div>
+                    : <div className="ccb-badge member">🌱 {creatorName ?? '…'}</div>
+                  }
+                </div>
+
+                {/* LIGNE 2 — Nom */}
+                <div className="ccb-name">{c.name}</div>
+                <div className="ccb-theme">{getThemeEmoji(c.theme)} {c.theme}</div>
+
+                {/* LIGNE 3 — Membres + boutons bas droite */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:6 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                    {Array.from({ length: Math.min(c.memberCount, 5) }).map((_, i) => (
+                      <div key={i} className="ccb-member-av" style={{ fontSize:12 }}>👤</div>
+                    ))}
+                    {c.memberCount > 5 && <div className="ccb-member-count">+{c.memberCount - 5}</div>}
+                    <div className="ccb-member-count">{c.memberCount} membre{c.memberCount > 1 ? 's' : ''}</div>
+                  </div>
+                  {isMine && (
+                    <div style={{ display:'flex', gap:10 }}>
+                      <div title="Modifier" onClick={e => { e.stopPropagation(); setEditCircle(c) }}
+                        style={{ cursor:'pointer', fontSize:13, opacity:.5, transition:'opacity .2s' }}
+                        onMouseEnter={e=>e.currentTarget.style.opacity=1}
+                        onMouseLeave={e=>e.currentTarget.style.opacity=.5}>✏️</div>
+                      <div title="Supprimer" onClick={e => { e.stopPropagation(); setDeleteConfirm(c) }}
+                        style={{ cursor:'pointer', fontSize:13, opacity:.4, transition:'opacity .2s' }}
+                        onMouseEnter={e=>e.currentTarget.style.opacity=1}
+                        onMouseLeave={e=>e.currentTarget.style.opacity=.4}>🗑️</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )})}
             <div className="create-circle-card" onClick={() => setShowCreate(true)}>
               <div className="ccc-icon">＋</div>
-              <div className="ccc-text">Créer un cercle</div>
+              <div className="ccc-text">Créer une graine</div>
             </div>
           </div>
 
-          {activeCircle && (
-            <>
-              <div className="slabel" style={{ marginTop:4 }}>Détail — {activeCircle.name}</div>
-              <div className="circle-detail">
-                <div className="cd-header">
-                  <div className="cd-title">{activeCircle.name} · {activeCircle.isAdmin?'Admin':'Membre'}</div>
-                  <div className="cd-meta">{activeCircle.memberCount} membres · {activeCircle.theme}</div>
-                </div>
-                <div className="cd-body">
-                  {activeCircle.isAdmin && (
-                    <>
-                      <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>Code d'invitation</div>
-                      <div className="cd-invite">
-                        <div className="cdi-code">{activeCircle.invite_code??'——'}</div>
-                        <div className="cdi-copy" onClick={() => handleCopyCode(activeCircle.invite_code)}>
-                          {copied ? '✓ Copié' : 'Copier'}
-                        </div>
-                      </div>
-                      <div style={{ height:1, background:'var(--border2)', margin:'8px 0' }} />
-                    </>
-                  )}
-                  {[
-                    { l:'Thème',      v: activeCircle.theme??'—' },
-                    { l:'Visibilité', v: activeCircle.is_open?'Public':'Sur invitation' },
-                    { l:'Capacité',   v: `${activeCircle.memberCount}/${activeCircle.max_members??8}` },
-                  ].map((s,i) => (
-                    <div key={i} className="cd-setting">
-                      <div className="cds-label">{s.l}</div>
-                      <div className="cds-val">{s.v}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+
         </div>
 
         <div className="rpanel">
@@ -1882,24 +2637,23 @@ function ScreenCercles({ userId, openCreate, onCreateClose }) {
             </div>
             {joinError && <div style={{ fontSize:10, color:'rgba(210,110,110,.85)', marginBottom:12, padding:'6px 10px', background:'rgba(210,110,110,.07)', borderRadius:8, border:'1px solid rgba(210,110,110,.2)' }}>{joinError}</div>}
 
-            <div className="rp-slabel" style={{ marginTop:14 }}>Découvrir</div>
-            {[
-              { e:'🌙', n:'Rituels du Soir',  m:5, theme:'Décompression & sommeil', open:true  },
-              { e:'🧘', n:'Mindful & Souffle', m:7, theme:'Méditation profonde',    open:false },
-              { e:'🌿', n:'Nature & Corps',    m:4, theme:'Plein air & mouvement',  open:true  },
-            ].map((c, i) => (
-              <div key={i} style={{ marginBottom:11, padding:'11px 13px', background:'rgba(255,255,255,0.05)', border:'1px solid var(--border)', borderRadius:13 }}>
+            <div className="rp-slabel" style={{ marginTop:14 }}>Découvrir les Graines publiques</div>
+            {publicCircles.length === 0
+              ? <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'6px 0' }}>Aucune graine publique pour l'instant.</div>
+              : publicCircles.map((c, i) => (
+              <div key={c.id ?? i} style={{ marginBottom:11, padding:'11px 13px', background:'rgba(255,255,255,0.05)', border:'1px solid var(--border)', borderRadius:13 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:6 }}>
-                  <span style={{ fontSize:17 }}>{c.e}</span>
+                  <span style={{ fontSize:17 }}>{c.emoji ?? '🌱'}</span>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13, color:'var(--text)' }}>{c.n}</div>
-                    <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{c.theme}</div>
+                    <div style={{ fontSize:13, color:'var(--text)' }}>{c.name}</div>
+                    <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{getThemeEmoji(c.theme)} {c.theme ?? '—'}</div>
                   </div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <div style={{ fontSize:11, color:'var(--text3)' }}>{c.m} membres</div>
-                  {c.open
-                    ? <div style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--greenT)', color:'#c8f0b8', background:'var(--green3)', cursor:'pointer' }}>Rejoindre</div>
+                  <div style={{ fontSize:11, color:'var(--text3)' }}>{c.memberCount ?? '?'} membre{(c.memberCount ?? 0) > 1 ? 's' : ''}</div>
+                  {c.is_open
+                    ? <div style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--greenT)', color:'#c8f0b8', background:'var(--green3)', cursor:'pointer' }}
+                        onClick={() => handleJoinPublic(c.invite_code)}>Rejoindre</div>
                     : <div style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--border)', color:'var(--text3)' }}>Sur invitation</div>}
                 </div>
               </div>
@@ -2217,51 +2971,161 @@ function ScreenDefis({ userId }) {
 }
 
 
+function ScreenJardinCollectif({ userId }) {
+  return (
+    <div className="content" style={{ flex:1, overflow:'hidden' }}>
+      <CommunityGarden currentUserId={userId} embedded />
+    </div>
+  )
+}
+
 const SCREENS = [
-  { id:'cercle',  icon:'🏠', label:'Cercle',     badge:null, Component:ScreenCercle    },
-  { id:'jardin',  icon:'🌿', label:'Mon Jardin', badge:null, Component:ScreenMonJardin },
-  { id:'cercles', icon:'👥', label:'Cercles',    badge:'3',  Component:ScreenCercles   },
-  { id:'defis',   icon:'✨', label:'Défis',      badge:'2',  Component:ScreenDefis     },
+  { id:'jardin',  icon:'🌸', label:'Ma Fleur',           badge:null, Component:ScreenMonJardin       },
+  { id:'champ',   icon:'🌻', label:'Jardin Collectif',   badge:null, Component:ScreenJardinCollectif  },
+  { id:'cercles', icon:'🌱', label:'Graines de vie', badge:'3',  Component:ScreenCercles          },
+  { id:'cercle',  icon:'🌿', label:'Ateliers',       badge:null, Component:ScreenCercle           },
+  { id:'defis',   icon:'✨', label:'Défis',          badge:null, Component:ScreenDefis            },
 ]
 
+function ProfileModal({ user, onClose }) {
+  const [name,    setName]    = useState('')
+  const [saving,  setSaving]  = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState(null)
+  const [saved,   setSaved]   = useState(false)
+
+  // Charger le display_name depuis Supabase à l'ouverture
+  useEffect(() => {
+    supabase
+      .from('users')
+      .select('display_name')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setName(data?.display_name ?? '')
+        setLoading(false)
+      })
+  }, [user.id])
+
+  async function handleSave() {
+    if (!name.trim()) { setError('Le prénom ou pseudo ne peut pas être vide.'); return }
+    setSaving(true); setError(null)
+    const { error: err } = await supabase
+      .from('users')
+      .update({ display_name: name.trim() })
+      .eq('id', user.id)
+    setSaving(false)
+    if (err) { setError(err.message); return }
+    setSaved(true)
+    setTimeout(() => { setSaved(false); onClose() }, 1200)
+  }
+
+  return (
+    <div className="profile-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="profile-modal">
+        <button className="profile-modal-close" onClick={onClose}>✕</button>
+        <div className="profile-modal-title">Mon profil</div>
+        <div className="profile-modal-sub">Votre prénom ou pseudo visible dans les cercles.</div>
+        <div className="profile-field">
+          <label className="profile-label">Prénom ou pseudo</label>
+          <input
+            className="profile-input"
+            type="text"
+            value={loading ? '' : name}
+            onChange={e => { setName(e.target.value); setError(null) }}
+            placeholder={loading ? 'Chargement…' : 'Votre prénom ou pseudo'}
+            maxLength={40}
+            autoFocus={!loading}
+            disabled={loading}
+            onKeyDown={e => e.key === 'Enter' && !loading && handleSave()}
+          />
+        </div>
+        {error && <div className="profile-error">{error}</div>}
+        <button className="profile-save" onClick={handleSave} disabled={saving || loading || !name.trim()}>
+          {saving ? '…' : 'Sauvegarder'}
+        </button>
+        {saved && <div className="profile-saved">✓ Profil mis à jour</div>}
+      </div>
+    </div>
+  )
+}
+
+function useProfile(userId) {
+  const [profile, setProfile] = useState(null)
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('users')
+      .select('display_name, level, xp, xp_next_level, plan, email')
+      .eq('id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) console.error('useProfile error:', error.message)
+        else setProfile(data)
+      })
+  }, [userId])
+  return profile
+}
+
 export default function DashboardPage() {
-  const [active, setActive] = useState('cercle')
+  const [pendingReports, setPendingReports] = useState(0)
+  const [active, setActive] = useState('jardin')
   const { user, signOut } = useAuth()
+
+  useEffect(() => {
+    if (['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id)) {
+      supabase.from('reports').select('*', { count:'exact', head:true }).eq('resolved', false)
+        .then(({ count }) => setPendingReports(count ?? 0))
+    }
+  }, [user?.id])
+
+  function refreshPendingReports() {
+    supabase.from('reports').select('*', { count:'exact', head:true }).eq('resolved', false)
+      .then(({ count }) => setPendingReports(count ?? 0))
+  }
   const { todayPlant } = usePlant(user?.id)
   const { communityStats } = useDefi(user?.id)
   const { stats } = useCircle(user?.id)
 
+  const profile = useProfile(user?.id)
   const { Component } = SCREENS.find(s => s.id === active)
+  const { circleMembers, activeCircle } = useCircle(user?.id)
 
   const [showCreateCircle, setShowCreateCircle] = useState(false)
-  const [showCommunityGarden, setShowCommunityGarden] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   const topbar = {
-  cercle:  {
-    title: <>Cercle <em>du Matin</em></>,
-    sub: `6 membres · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`,
-    btn:'+ Inviter',
-    onBtn: () => setShowInviteModal(true)
+  jardin: {
+    title: <>Ma <em>Fleur</em></>,
+    sub: `${todayPlant?.health ?? '—'}% · 12 jours consécutifs`,
+    btn: null
   },
 
-  jardin:  {
-    title: <>Mon <em>Jardin</em></>,
-    sub: `${todayPlant?.health ?? '—'}% · 12 jours consécutifs`,
-    btn:null
+  champ: {
+    title: <>Jardin <em>Collectif</em></>,
+    sub: `${communityStats?.activeGardens?.toLocaleString() ?? '—'} jardins actifs`,
+    btn: null
   },
 
   cercles: {
-    title: <>Mes <em>Cercles</em></>,
+    title: <>Graines <em>de vie</em></>,
     sub: `${stats?.myCircleCount ?? 0} actifs · ${stats?.totalMembers ?? 0} membres au total`,
-    btn:'+ Créer',
+    btn: '+ Créer',
     onBtn: () => setShowCreateCircle(true)
   },
 
+  cercle: {
+    title: <><em>Ateliers</em></>,
+    sub: `${circleMembers.length} membre${circleMembers.length !== 1 ? 's' : ''} · ${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'short'})}`,
+    btn: '+ Inviter',
+    onBtn: () => setShowInviteModal(true)
+  },
+
   defis: {
-    title: <>Défis & <em>Challenges</em></>,
+    title: <><em>Défis</em></>,
     sub: `${communityStats?.totalParticipants?.toLocaleString() ?? '—'} participants`,
-    btn:'Proposer',
+    btn: 'Proposer',
     onBtn: () => document.dispatchEvent(new CustomEvent('openPropose'))
   },
 
@@ -2275,22 +3139,73 @@ export default function DashboardPage() {
         <div className="sidebar">
           <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
           <div className="sb-section" style={{ marginBottom:4 }}>Navigation</div>
-          {SCREENS.map(s => (
-            <div key={s.id} className={'sb-item' + (active===s.id ? ' active' : '')} onClick={() => setActive(s.id)}>
-              <span className="sb-icon">{s.icon}</span>
-              {s.label}
-              {s.badge && <div className="sb-badge">{s.badge}</div>}
-            </div>
-          ))}
+          {SCREENS.map(s => {
+            let badgeVal = null
+            if (s.id === 'jardin')  badgeVal = todayPlant?.health != null ? `${todayPlant.health}%` : null
+            if (s.id === 'champ')   badgeVal = communityStats?.activeGardens != null ? communityStats.activeGardens + 1 : null
+            if (s.id === 'cercles') badgeVal = stats?.myCircleCount > 0 ? stats.myCircleCount : null
+            if (s.id === 'cercle')  badgeVal = circleMembers?.length > 0 ? circleMembers.length : null
+            if (s.id === 'defis')   badgeVal = communityStats?.totalDefis > 0 ? communityStats.totalDefis : null
+            return (
+              <div key={s.id} className={'sb-item' + (active===s.id ? ' active' : '')} onClick={() => setActive(s.id)}>
+                <span className="sb-icon">{s.icon}</span>
+                {s.label}
+                {badgeVal != null && <div className="sb-badge">{badgeVal}</div>}
+              </div>
+            )
+          })}
           <div className="sb-divider" />
-          <div className="sb-plant-card" onClick={() => setActive('jardin')}>
-            <span className="spc-emoji">🌸</span>
-            <div className="spc-val">{todayPlant?.health??'—'}%</div>
-            <div className="spc-label">Mon jardin · aujourd'hui</div>
-          </div>
-          <div className="sb-footer">
-            {user?.display_name ?? user?.email ?? 'Jardinier'}<br />
-            Niveau 2 · 18 rituels / semaine
+          {/* USER CARD — cliquer pour modifier */}
+          {showProfileModal && (
+            <ProfileModal
+              user={user}
+              onClose={() => setShowProfileModal(false)}
+            />
+          )}
+          {(() => {
+            const name    = profile?.display_name ?? user?.display_name ?? null
+            const email   = user?.email ?? ''
+            const initial = (name ?? email).charAt(0).toUpperCase()
+            const level   = profile?.level ?? 1
+            const xp      = profile?.xp ?? 0
+            const xpNext  = profile?.xp_next_level ?? 100
+            const xpPct   = Math.min(100, Math.round((xp / xpNext) * 100))
+            const plan    = profile?.plan ?? 'free'
+            return (
+              <div className="sb-user-card" onClick={() => setShowProfileModal(true)} title="Modifier mon profil">
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <div className="sb-user-avatar">{initial}</div>
+                  <div className="sb-user-info">
+                    <div className="sb-user-name">{name ?? email}</div>
+                    {name && <div className="sb-user-email">{email}</div>}
+                  </div>
+                </div>
+                <div className="sb-user-level">
+                  <span className="sb-user-level-label">Niveau</span>
+                  <span className="sb-user-level-val">{level}</span>
+                </div>
+                <div className="sb-user-xp-bar">
+                  <div className="sb-user-xp-fill" style={{ width: xpPct + '%' }}/>
+                </div>
+              </div>
+            )
+          })()}
+          {/* BOUTONS FOOTER */}
+          <div className="sb-footer-btns">
+            <div className="sb-subscribe" onClick={() => window.openAccessModal?.()}>
+              <span>🌸</span> Abonnement
+            </div>
+            {['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id) && (
+              <div className="sb-logout" style={{ color:'rgba(255,200,100,0.7)', borderColor:'rgba(255,200,100,0.2)', position:'relative' }}
+                onClick={() => window.location.hash = 'admin'}>
+                <span>⚙️</span> Admin
+                {pendingReports > 0 && (
+                  <div style={{ position:'absolute', top:-6, right:-6, background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                    {pendingReports}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="sb-logout" onClick={signOut}>
               <span>⎋</span> Se déconnecter
             </div>
@@ -2298,24 +3213,17 @@ export default function DashboardPage() {
         </div>
 
         {/* MAIN */}
-        {showCommunityGarden && (
-          <CommunityGarden
-            currentUserId={user?.id}
-            onClose={() => setShowCommunityGarden(false)}
-          />
-        )}
         <div className="main">
           <div className="topbar">
             <div className="tb-title">{topbar.title}</div>
             <div className="tb-subtitle">{topbar.sub}</div>
             <div style={{ flex:1 }} />
             <div className="tb-btn ghost" style={{ marginRight:5 }}>Aide</div>
-            <div className="tb-btn ghost" style={{ marginRight:5 }} onClick={() => setShowCommunityGarden(true)}>🌸 Le Champ</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
             <div className="tb-notif">🔔<div className="notif-dot" /></div>
           </div>
           <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
-            <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} openInvite={showInviteModal} onInviteClose={() => setShowInviteModal(false)} />
+            <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} openInvite={showInviteModal} onInviteClose={() => setShowInviteModal(false)} onReport={refreshPendingReports} />
           </div>
         </div>
       </div>

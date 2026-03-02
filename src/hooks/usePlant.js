@@ -3,12 +3,14 @@ import { useEffect, useCallback } from 'react'
 import { usePlantStore }   from '../store/plant.store'
 import { plantService }     from '../services/plant.service'
 import { ritualService }    from '../services/ritual.service'
+import { useCircle } from '../hooks/useCircle'
 
 /**
  * Hook principal — charge et gère la plante du jour.
  * Expose toutes les actions nécessaires à PlantHero, WeekGrid, HistoryChart.
  */
 export function usePlant(userId) {
+  const { activeCircle } = useCircle(userId)
   const {
     todayPlant, history, weekGrid, todayRituals, stats, isLoading, error,
     setTodayPlant, setHistory, setWeekGrid, setTodayRituals, setStats,
@@ -57,7 +59,7 @@ export function usePlant(userId) {
     const previous = optimisticApplyDelta(catalog.delta, catalog.zone)
 
     try {
-      const { ritual, plant } = await ritualService.complete(userId, todayPlant.id, ritualId)
+      const { ritual, plant } = await ritualService.complete(userId, todayPlant.id, ritualId, activeCircle?.id )
       setTodayPlant(plant)
       addTodayRitual(ritual)
       // Rafraîchit la grille et les stats en arrière-plan (non bloquant)
@@ -67,7 +69,7 @@ export function usePlant(userId) {
       rollback(previous)
       setError(err.message)
     }
-  }, [todayPlant, userId])
+  }, [todayPlant, userId, activeCircle])
 
   return {
     todayPlant,

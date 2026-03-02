@@ -1,770 +1,305 @@
-// src/pages/AdminPage.jsx
 import { useState, useEffect } from 'react'
+import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../core/supabaseClient'
 
+// ── Votre userId admin — remplacez par le vôtre ──
+const ADMIN_IDS = ['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7']
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { height: 100%; width: 100%; }
-:root {
-  --bg:      #1a2e1a;
-  --bg2:     #213d21;
-  --bg3:     #274827;
-  --border:  rgba(255,255,255,0.14);
-  --border2: rgba(255,255,255,0.08);
-  --text:    #f2ede0;
-  --text2:   rgba(242,237,224,0.85);
-  --text3:   rgba(242,237,224,0.55);
-  --green:   #96d485;
-  --green2:  rgba(150,212,133,0.22);
-  --green3:  rgba(150,212,133,0.11);
-  --greenT:  rgba(150,212,133,0.48);
-  --gold:    #e8d4a8;
-  --rose:    rgba(210,130,130,0.7);
-  --amber:   rgba(220,180,100,0.7);
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;width:100%}
+:root{
+  --bg:#1a2e1a;--bg2:#213d21;--bg3:#274827;
+  --border:rgba(255,255,255,0.18);--border2:rgba(255,255,255,0.10);
+  --text:#f2ede0;--text2:rgba(242,237,224,0.88);--text3:rgba(242,237,224,0.60);
+  --green:#96d485;--green2:rgba(150,212,133,0.25);--green3:rgba(150,212,133,0.12);--greenT:rgba(150,212,133,0.50);
+  --gold:#e8d4a8;--red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
 }
-body { background: var(--bg); font-family: 'Jost', sans-serif; color: var(--text); }
-
-.admin-root {
-  min-height: 100vh;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-}
-
-/* ── HEADER ── */
-.admin-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 32px;
-  border-bottom: 1px solid var(--border2);
-  background: rgba(0,0,0,0.2);
-  flex-shrink: 0;
-}
-.admin-logo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px;
-  font-weight: 300;
-  color: var(--gold);
-  letter-spacing: 0.02em;
-}
-.admin-logo em { font-style: italic; color: var(--green); }
-.admin-badge {
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--amber);
-  background: rgba(220,180,100,0.12);
-  border: 1px solid rgba(220,180,100,0.3);
-  border-radius: 100px;
-  padding: 3px 10px;
-}
-.admin-header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-.admin-user { font-size: 12px; color: var(--text3); }
-.admin-back {
-  font-size: 11px;
-  color: var(--text3);
-  cursor: pointer;
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  transition: all 0.2s;
-  letter-spacing: 0.04em;
-}
-.admin-back:hover { color: var(--text); border-color: var(--border); background: rgba(255,255,255,0.05); }
-
-/* ── BODY ── */
-.admin-body {
-  flex: 1;
-  padding: 32px;
-  max-width: 960px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.admin-section-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 26px;
-  font-weight: 300;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.admin-section-title em { font-style: italic; color: var(--green); }
-.admin-section-sub {
-  font-size: 12px;
-  color: var(--text3);
-  margin-bottom: 28px;
-  letter-spacing: 0.03em;
-}
-
-/* ── STATS BAR ── */
-.admin-stats {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-.admin-stat {
-  flex: 1;
-  padding: 16px 18px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border2);
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.admin-stat-val {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px;
-  color: var(--text);
-  line-height: 1;
-}
-.admin-stat-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
-
-/* ── TABS ── */
-.admin-tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border2);
-  padding-bottom: 0;
-}
-.admin-tab {
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  padding: 8px 18px 10px;
-  cursor: pointer;
-  color: var(--text3);
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-  margin-bottom: -1px;
-}
-.admin-tab:hover { color: var(--text2); }
-.admin-tab.active { color: var(--green); border-bottom-color: var(--green); }
-.admin-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 16px;
-  background: var(--green2);
-  border-radius: 100px;
-  font-size: 9px;
-  color: var(--green);
-  margin-left: 6px;
-  padding: 0 4px;
-}
-
-/* ── CARDS ── */
-.admin-cards { display: flex; flex-direction: column; gap: 14px; }
-
-.admin-card {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border2);
-  border-radius: 16px;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-.admin-card:hover { border-color: var(--border); }
-.admin-card.editing { border-color: var(--greenT); }
-
-.admin-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 18px 20px 14px;
-}
-.admin-card-emoji {
-  font-size: 28px;
-  flex-shrink: 0;
-  line-height: 1;
-  margin-top: 2px;
-}
-.admin-card-info { flex: 1; min-width: 0; }
-.admin-card-title {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--text);
-  margin-bottom: 5px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.admin-card-desc {
-  font-size: 12px;
-  color: var(--text3);
-  line-height: 1.6;
-  margin-bottom: 8px;
-}
-.admin-card-meta {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.admin-card-tag {
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: var(--text3);
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border2);
-  border-radius: 100px;
-  padding: 2px 10px;
-}
-.admin-card-date {
-  font-size: 10px;
-  color: var(--text3);
-  margin-left: auto;
-  flex-shrink: 0;
-  align-self: flex-start;
-  margin-top: 3px;
-}
-
-/* ── EDIT FORM ── */
-.admin-edit-form {
-  padding: 0 20px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-top: 1px solid var(--border2);
-  padding-top: 14px;
-}
-.admin-edit-row { display: flex; gap: 10px; }
-.admin-edit-group { flex: 1; display: flex; flex-direction: column; gap: 5px; }
-.admin-edit-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
-.admin-edit-input {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--text);
-  font-family: 'Jost', sans-serif;
-  outline: none;
-  transition: border-color 0.2s;
-  width: 100%;
-}
-.admin-edit-input:focus { border-color: var(--greenT); }
-.admin-edit-textarea {
-  resize: none;
-  height: 72px;
-}
-.admin-edit-select {
-  background: rgba(255,255,255,0.06);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--text);
-  font-family: 'Jost', sans-serif;
-  outline: none;
-  width: 100%;
-  cursor: pointer;
-}
-.admin-edit-select option { background: #213d21; }
-
-/* ── ACTIONS ── */
-.admin-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-top: 1px solid var(--border2);
-  background: rgba(0,0,0,0.1);
-}
-.admin-featured-toggle {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  color: var(--text3);
-  cursor: pointer;
-  user-select: none;
-  margin-right: auto;
-}
-.admin-featured-toggle input { accent-color: var(--amber); cursor: pointer; }
-.admin-featured-toggle.on { color: var(--amber); }
-
-.btn {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 7px 16px;
-  border-radius: 100px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  font-family: 'Jost', sans-serif;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-edit { background: rgba(255,255,255,0.07); border-color: var(--border); color: var(--text2); }
-.btn-edit:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
-.btn-validate { background: var(--green2); border-color: var(--greenT); color: #c8f0b8; }
-.btn-validate:hover:not(:disabled) { background: rgba(150,212,133,0.35); }
-.btn-reject { background: rgba(210,130,130,0.1); border-color: rgba(210,130,130,0.3); color: var(--rose); }
-.btn-reject:hover:not(:disabled) { background: rgba(210,130,130,0.2); }
-.btn-save { background: var(--green2); border-color: var(--greenT); color: #c8f0b8; }
-.btn-save:hover:not(:disabled) { background: rgba(150,212,133,0.35); }
-.btn-cancel { background: transparent; border-color: var(--border); color: var(--text3); }
-.btn-cancel:hover:not(:disabled) { color: var(--text2); }
-
-/* ── EMPTY ── */
-
-.admin-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  background: rgba(220,180,100,0.9); /* doré plus visible */
-  border-radius: 100px;
-  font-size: 10px;
-  font-weight: 600;
-  color: #1a2e1a; /* texte foncé */
-  margin-left: 8px;
-  padding: 0 6px;
-}
-
-@keyframes pop {
-  0%   { transform: scale(0.8); opacity: 0.5; }
-  100% { transform: scale(1);   opacity: 1; }
-}
-
-.admin-empty {
-  text-align: center;
-  padding: 48px 0;
-  color: var(--text3);
-  font-size: 13px;
-  letter-spacing: 0.04em;
-}
-.admin-empty-icon { font-size: 32px; margin-bottom: 12px; }
-
-/* ── ACCESS DENIED ── */
-.admin-denied {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  color: var(--text3);
-}
-.admin-denied-icon { font-size: 40px; }
-.admin-denied-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--text2); }
-.admin-denied-sub { font-size: 12px; letter-spacing: 0.04em; }
-
-/* ── TOAST ── */
-.admin-toast {
-  position: fixed;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg3);
-  border: 1px solid var(--greenT);
-  border-radius: 100px;
-  padding: 10px 22px;
-  font-size: 12px;
-  color: #c8f0b8;
-  letter-spacing: 0.04em;
-  z-index: 999;
-  pointer-events: none;
-  animation: fadeInUp 0.3s ease;
-}
-.admin-toast.error { border-color: rgba(210,130,130,0.5); color: var(--rose); }
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--greenT); border-radius: 100px; }
+.adm-root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;width:100vw;color:var(--text);display:flex;flex-direction:column}
+.adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:rgba(20,45,20,0.97);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em;color:var(--gold)}
+.adm-logo em{font-style:italic;color:var(--green)}
+.adm-badge{font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:4px 12px;border-radius:100px;background:rgba(210,80,80,0.12);border:1px solid rgba(210,80,80,0.3);color:rgba(255,160,160,0.9)}
+.adm-body{flex:1;padding:32px 40px;width:100%}
+.adm-section{margin-bottom:32px}
+.adm-empty{font-size:12px;color:var(--text3);font-style:italic;padding:28px;text-align:center;background:rgba(255,255,255,0.02);border-radius:12px;border:1px dashed var(--border2)}
+/* STATS */
+.adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
+.adm-stat{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:14px;padding:20px 24px;display:flex;flex-direction:column;gap:6px}
+.adm-stat-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;color:var(--text);line-height:1}
+.adm-stat-lbl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+/* TABS */
+.adm-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--border2)}
+.adm-tab{padding:10px 24px;font-size:11px;letter-spacing:.08em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.adm-tab.active{color:#c8f0b8;border-bottom-color:var(--green)}
+/* TABLE */
+.adm-table{width:100%;border-collapse:collapse;background:rgba(255,255,255,0.02);border-radius:12px;overflow:hidden;border:1px solid var(--border2)}
+.adm-th{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:12px 16px;text-align:left;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border2)}
+.adm-td{font-size:12px;color:var(--text2);padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle}
+.adm-tr:last-child .adm-td{border-bottom:none}
+.adm-tr:hover .adm-td{background:rgba(255,255,255,0.02)}
+/* REPORTS */
+.adm-grid{display:grid;gap:10px}
+.adm-report-card{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:12px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px}
+.adm-report-card.resolved{opacity:.4}
+.adm-report-flag{font-size:18px;flex-shrink:0;margin-top:2px}
+.adm-report-body{flex:1}
+.adm-report-graine{font-size:13px;font-weight:400;color:var(--text);margin-bottom:3px}
+.adm-report-meta{font-size:10px;color:var(--text3);letter-spacing:.03em;margin-bottom:10px}
+.adm-report-actions{display:flex;gap:8px}
+/* BOUTONS */
+.adm-btn{padding:7px 16px;border-radius:8px;font-size:11px;letter-spacing:.06em;cursor:pointer;border:none;font-family:'Jost',sans-serif;transition:all .2s;white-space:nowrap}
+.adm-btn.danger{background:var(--red2);border:1px solid var(--redT);color:rgba(255,160,160,0.9)}
+.adm-btn.danger:hover{background:rgba(210,80,80,0.22)}
+.adm-btn.ghost{background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text2)}
+.adm-btn.ghost:hover{background:rgba(255,255,255,0.12);color:var(--text)}
+.adm-btn.success{background:var(--green3);border:1px solid var(--greenT);color:#c8f0b8}
+.adm-btn.success:hover{background:rgba(150,212,133,0.18)}
+/* TOAST */
+.adm-toast{position:fixed;bottom:24px;right:24px;background:rgba(30,60,30,0.97);border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:12px;color:#c8f0b8;z-index:999;animation:fadeInUp .3s ease}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 `
 
-const ZONES = ['Souffle', 'Racines', 'Feuilles', 'Tige', 'Fleurs', 'Toutes']
+export function AdminPage() {
+  const { user, signOut } = useAuth()
+  const [tab,       setTab]       = useState('reports')
+  const [reports,   setReports]   = useState([])
+  const [circles,   setCircles]   = useState([])
+  const [stats,     setStats]     = useState({})
+  const [loading,   setLoading]   = useState(true)
+  const [toast,     setToast]     = useState(null)
 
-// ── Edit Form inline ────────────────────────────────────
-function EditForm({ defi, onSave, onCancel, saving }) {
-  const [form, setForm] = useState({
-    title: defi.title,
-    description: defi.description || '',
-    zone: defi.zone,
-    duration_days: defi.duration_days,
-    emoji: defi.emoji || '🌿',
-  })
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const isAdmin = ADMIN_IDS.includes(user?.id)
 
-  return (
-    <div className="admin-edit-form">
-      <div className="admin-edit-row">
-        <div className="admin-edit-group" style={{ maxWidth: 70 }}>
-          <div className="admin-edit-label">Emoji</div>
-          <input className="admin-edit-input" value={form.emoji} onChange={e => set('emoji', e.target.value)} style={{ textAlign: 'center', fontSize: 18 }} />
-        </div>
-        <div className="admin-edit-group">
-          <div className="admin-edit-label">Titre</div>
-          <input className="admin-edit-input" value={form.title} onChange={e => set('title', e.target.value)} />
-        </div>
-      </div>
-      <div className="admin-edit-group">
-        <div className="admin-edit-label">Description</div>
-        <textarea className="admin-edit-input admin-edit-textarea" value={form.description} onChange={e => set('description', e.target.value)} />
-      </div>
-      <div className="admin-edit-row">
-        <div className="admin-edit-group">
-          <div className="admin-edit-label">Zone</div>
-          <select className="admin-edit-select" value={form.zone} onChange={e => set('zone', e.target.value)}>
-            {ZONES.map(z => <option key={z} value={z}>{z}</option>)}
-          </select>
-        </div>
-        <div className="admin-edit-group">
-          <div className="admin-edit-label">Durée (jours)</div>
-          <input className="admin-edit-input" type="number" min={1} max={365} value={form.duration_days} onChange={e => set('duration_days', Number(e.target.value))} />
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 4 }}>
-        <button className="btn btn-cancel" onClick={onCancel}>Annuler</button>
-        <button className="btn btn-save" onClick={() => onSave(form)} disabled={saving || !form.title.trim()}>
-          {saving ? 'Sauvegarde…' : 'Sauvegarder'}
-        </button>
-      </div>
-    </div>
-  )
-}
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
-// ── Defi Card ───────────────────────────────────────────
-function DefiCard({ defi, onValidate, onReject, onSave, isActive, onToggleFeatured }) {
-  const [editing, setEditing] = useState(false)
-  const [loading, setLoading] = useState(false)
+  useEffect(() => { if (isAdmin) { loadAll() } }, [isAdmin])
 
-  const handleSave = async (form) => {
+  async function loadAll() {
     setLoading(true)
-    await onSave(defi.id, { ...form, is_featured: defi.is_featured })
-    setEditing(false)
+    await Promise.all([loadReports(), loadCircles(), loadStats()])
     setLoading(false)
   }
 
-  const handleValidate = async () => {
-    setLoading(true)
-await onValidate(defi.id, defi.is_featured) 
-   setLoading(false)
+  async function loadReports() {
+    const { data: reps, error } = await supabase
+      .from('reports')
+      .select('id, reason, created_at, resolved, circle_id, reported_by')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (!reps?.length) { setReports([]); return }
+
+    // Charger les noms des graines
+    const circleIds = [...new Set(reps.map(r => r.circle_id).filter(Boolean))]
+    const { data: circlesData } = await supabase
+      .from('circles').select('id, name, theme').in('id', circleIds)
+    const circleMap = Object.fromEntries((circlesData ?? []).map(c => [c.id, c]))
+
+    // Charger les noms des reporters
+    const reporterIds = [...new Set(reps.map(r => r.reported_by).filter(Boolean))]
+    const { data: usersData } = await supabase
+      .from('users').select('id, display_name, email').in('id', reporterIds)
+    const userMap = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
+
+    setReports(reps.map(r => ({
+      ...r,
+      circles: circleMap[r.circle_id] ?? null,
+      reporter: userMap[r.reported_by] ?? null
+    })))
   }
 
-  const handleReject = async () => {
-    if (!confirm(`Supprimer le défi "${defi.title}" ?`)) return
-    setLoading(true)
-    await onReject(defi.id)
-    setLoading(false)
+  async function loadCircles() {
+    const { data } = await supabase
+      .from('circles')
+      .select('id, name, theme, is_open, expires_at, created_at, created_by, circle_members(count)')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    setCircles((data ?? []).map(c => ({ ...c, memberCount: c.circle_members?.[0]?.count ?? 0 })))
   }
 
-  const date = new Date(defi.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-
-  return (
-    <div className={`admin-card${editing ? ' editing' : ''}`}>
-      <div className="admin-card-top">
-        <div className="admin-card-emoji">{defi.emoji || '🌿'}</div>
-        <div className="admin-card-info">
-          <div className="admin-card-title">
-            {defi.title}
-            {defi.is_featured && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 100, background: 'rgba(220,180,100,0.15)', border: '1px solid rgba(220,180,100,0.3)', color: 'var(--amber)', letterSpacing: '0.06em' }}>★ Featured</span>}
-          </div>
-          <div className="admin-card-desc">{defi.description || <em style={{ opacity: 0.4 }}>Pas de description</em>}</div>
-          <div className="admin-card-meta">
-            <span className="admin-card-tag">📍 {defi.zone}</span>
-            <span className="admin-card-tag">📅 {defi.duration_days} jours</span>
-            {isActive && <span className="admin-card-tag">👥 {defi.participantCount ?? 0} participants</span>}
-          </div>
-        </div>
-        <div className="admin-card-date">{date}</div>
-      </div>
-
-      {editing && (
-        <EditForm
-          defi={defi}
-          onSave={handleSave}
-          onCancel={() => setEditing(false)}
-          saving={loading}
-        />
-      )}
-
-      {!editing && (
-        <div className="admin-card-actions">
-          <label className={`admin-featured-toggle${defi.is_featured ? ' on' : ''}`}>
-            <input
-  type="checkbox"
-  checked={defi.is_featured}
-  onChange={() => onToggleFeatured(defi)}
-/>
-            ★ Mettre en featured
-          </label>
-          <button className="btn btn-edit" onClick={() => setEditing(true)} disabled={loading}>Modifier</button>
-          {!isActive && (
-            <button className="btn btn-validate" onClick={handleValidate} disabled={loading}>
-              {loading ? '…' : '✓ Valider'}
-            </button>
-          )}
-          <button className="btn btn-reject" onClick={handleReject} disabled={loading}>
-            {loading ? '…' : isActive ? 'Désactiver' : 'Rejeter'}
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Main AdminPage ──────────────────────────────────────
-export default function AdminPage() {
-  const [user, setUser]             = useState(null)
-  const [isAdmin, setIsAdmin]       = useState(null) // null = loading
-  const [pending, setPending]       = useState([])
-  const [active, setActive]         = useState([])
-  const [tab, setTab]               = useState('pending')
-  const [loading, setLoading]       = useState(true)
-  const [toast, setToast]           = useState(null)
-
-  // ── Auth check ──────────────────────────────────────
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) { setIsAdmin(false); setLoading(false); return }
-      setUser(session.user)
-      checkAdmin(session.user.id)
-    })
-  }, [])
-useEffect(() => {
-  if (isAdmin !== true) return
-
-  const channel = supabase
-    .channel('admin-defis')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'defis',
-        filter: 'is_active=eq.false',
-      },
-      () => {
-        loadDefis()
-      }
-    )
-    .subscribe()
-
-  return () => {
-    supabase.removeChannel(channel)
-  }
-}, [isAdmin])
-useEffect(() => {
-  if (isAdmin !== true) return
-  if (tab !== 'pending') return
-  if (!pending.length) return
-
-  const markAsSeen = async () => {
-    await supabase
-      .from('defis')
-      .update({ is_seen_by_admin: true })
-      .eq('is_active', false)
-      .eq('is_seen_by_admin', false)
-  }
-
-  markAsSeen()
-}, [tab, pending.length, isAdmin])
-
-  async function checkAdmin(userId) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', userId)
-    .single()
-
-  if (error) {
-    console.error('checkAdmin error:', error)
-    setIsAdmin(false)
-    setLoading(false)
-    return
-  }
-
-  setIsAdmin(data?.role === 'admin')
-  setLoading(false)
-}
-
-  useEffect(() => {
-    if (isAdmin) loadDefis()
-  }, [isAdmin])
-
-  async function loadDefis() {
-    setLoading(true)
-    const [{ data: pend }, { data: act }] = await Promise.all([
-      supabase.from('defis').select('*, defi_participants(count)').eq('is_active', false).order('created_at', { ascending: false }),
-      supabase.from('defis').select('*, defi_participants(count)').eq('is_active', true).order('created_at', { ascending: false }),
+  async function loadStats() {
+    const [{ count: totalUsers }, { count: totalCircles }, { count: totalReports }] = await Promise.all([
+      supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase.from('circles').select('*', { count: 'exact', head: true }),
+      supabase.from('reports').select('*', { count: 'exact', head: true }),
     ])
-    setPending((pend ?? []).map(d => ({ ...d, participantCount: d.defi_participants?.[0]?.count ?? 0 })))
-    setActive((act ?? []).map(d => ({ ...d, participantCount: d.defi_participants?.[0]?.count ?? 0 })))
-    setLoading(false)
+    setStats({ totalUsers, totalCircles, totalReports })
   }
 
-  function showToast(msg, type = 'ok') {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
+  async function handleDeleteCircle(circleId, circleName) {
+    if (!confirm(`Supprimer la graine "${circleName}" ?`)) return
+    await supabase.from('circle_members').delete().eq('circle_id', circleId)
+    await supabase.from('circles').delete().eq('id', circleId)
+    showToast('🗑️ Graine supprimée')
+    loadAll()
   }
 
-  // ── Actions ─────────────────────────────────────────
-  async function handleValidate(id, isFeatured) {
-    const { error } = await supabase
-      .from('defis')
-      .update({ is_active: true, is_featured: isFeatured })
-      .eq('id', id)
-    if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-    showToast('Défi validé ✓')
-    await loadDefis()
+  async function handleResolveReport(reportId) {
+    await supabase.from('reports').update({ resolved: true }).eq('id', reportId)
+    showToast('✅ Signalement résolu')
+    loadReports()
   }
 
-  async function handleReject(id) {
-    const { error } = await supabase.from('defis').delete().eq('id', id)
-    if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-    showToast('Défi supprimé')
-    await loadDefis()
+  async function handleDeleteFromReport(report) {
+    if (!report.circles?.id) return
+    await handleDeleteCircle(report.circles.id, report.circles.name)
+    await supabase.from('reports').update({ resolved: true }).eq('id', report.id)
+    loadReports()
   }
 
-  async function handleSave(id, form) {
-    const { error } = await supabase
-      .from('defis')
-      .update({
-        title: form.title,
-        description: form.description,
-        zone: form.zone,
-        duration_days: form.duration_days,
-        emoji: form.emoji,
-        is_featured: form.is_featured,
-      })
-      .eq('id', id)
-    if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-    showToast('Modifications sauvegardées ✓')
-    await loadDefis()
-  }
+  if (!isAdmin) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'var(--bg)', color:'var(--text3)', fontFamily:'Jost,sans-serif', fontSize:13 }}>
+      <style>{css}</style>
+      🚫 Accès non autorisé
+    </div>
+  )
 
-  async function handleDeactivate(id) {
-    const { error } = await supabase.from('defis').update({ is_active: false }).eq('id', id)
-    if (error) { showToast('Erreur : ' + error.message, 'error'); return }
-    showToast('Défi désactivé')
-    await loadDefis()
-  }
-async function handleToggleFeatured(defi) {
-  // Si on active un nouveau featured
-  if (!defi.is_featured) {
-    await supabase
-      .from('defis')
-      .update({ is_featured: false })
-      .eq('is_featured', true)
-  }
+  const pendingReports = reports.filter(r => !r.resolved)
+  const resolvedReports = reports.filter(r => r.resolved)
 
-  const { error } = await supabase
-    .from('defis')
-    .update({ is_featured: !defi.is_featured })
-    .eq('id', defi.id)
-
-  if (error) {
-    showToast('Erreur : ' + error.message, 'error')
-    return
-  }
-
-  await loadDefis()
-}
-  // ── Render ───────────────────────────────────────────
-  const displayed = tab === 'pending' ? pending : active
-const unseenCount = pending.filter(d => !d.is_seen_by_admin).length
   return (
-    <div className="admin-root">
+    <div className="adm-root">
       <style>{css}</style>
 
-      <div className="admin-header">
-        <div className="admin-logo">Mon <em>Jardin</em> Intérieur</div>
-        <div className="admin-badge">Administration</div>
-        <div className="admin-header-right">
-          {user && <div className="admin-user">{user.email}</div>}
-          <div className="admin-back" onClick={() => window.location.href = '/'}>← Retour</div>
+      {/* TOPBAR */}
+      <div className="adm-topbar">
+        <div className="adm-logo">Mon <em>Jardin</em> — <span style={{ fontFamily:'Jost', fontSize:12, color:'var(--text3)', letterSpacing:'.2em' }}>ADMIN</span></div>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          {pendingReports.length > 0 && (
+            <div className="adm-badge">🚩 {pendingReports.length} signalement{pendingReports.length > 1 ? 's' : ''}</div>
+          )}
+          <div className="adm-btn ghost" onClick={() => window.location.hash = ''}>← Retour</div>
+          <div className="adm-btn ghost" onClick={signOut}>Déconnexion</div>
         </div>
       </div>
 
-      {isAdmin === null || (loading && isAdmin === null) ? (
-        <div className="admin-denied">
-          <div className="admin-denied-icon">⏳</div>
-          <div className="admin-denied-title">Chargement…</div>
-        </div>
-      ) : !isAdmin ? (
-        <div className="admin-denied">
-          <div className="admin-denied-icon">🔒</div>
-          <div className="admin-denied-title">Accès refusé</div>
-          <div className="admin-denied-sub">Vous n'avez pas les droits administrateur.</div>
-        </div>
-      ) : (
-        <div className="admin-body">
-          <div className="admin-section-title">Gestion des <em>Défis</em></div>
-          <div className="admin-section-sub">Valider, modifier ou rejeter les propositions de la communauté</div>
+      <div className="adm-body">
 
-          <div className="admin-stats">
-            <div className="admin-stat">
-              <div className="admin-stat-val">{pending.length}</div>
-              <div className="admin-stat-label">En attente</div>
+        {/* STATS */}
+        <div className="adm-stats">
+          {[
+            { val: stats.totalUsers ?? '—',   lbl: 'Utilisateurs' },
+            { val: stats.totalCircles ?? '—', lbl: 'Graines actives' },
+            { val: pendingReports.length,     lbl: 'Signalements en attente' },
+            { val: stats.totalReports ?? '—', lbl: 'Total signalements' },
+          ].map((s, i) => (
+            <div key={i} className="adm-stat">
+              <div className="adm-stat-val">{s.val}</div>
+              <div className="adm-stat-lbl">{s.lbl}</div>
             </div>
-            <div className="admin-stat">
-              <div className="admin-stat-val">{active.length}</div>
-              <div className="admin-stat-label">Défis actifs</div>
-            </div>
-            <div className="admin-stat">
-              <div className="admin-stat-val">{active.filter(d => d.is_featured).length}</div>
-              <div className="admin-stat-label">En featured</div>
-            </div>
-            <div className="admin-stat">
-              <div className="admin-stat-val">{active.reduce((s, d) => s + (d.participantCount ?? 0), 0).toLocaleString()}</div>
-              <div className="admin-stat-label">Participations</div>
-            </div>
+          ))}
+        </div>
+
+        {/* TABS */}
+        <div className="adm-tabs">
+          <div className={`adm-tab${tab === 'reports' ? ' active' : ''}`} onClick={() => setTab('reports')}>
+            🚩 Signalements {pendingReports.length > 0 && `(${pendingReports.length})`}
           </div>
-
-          <div className="admin-tabs">
-            <div className={`admin-tab${tab === 'pending' ? ' active' : ''}`} onClick={() => setTab('pending')}>
-              Propositions
-     {unseenCount > 0 && (
-  <span className="admin-tab-count">
-    {unseenCount}
-  </span>
-)}
-            </div>
-            <div className={`admin-tab${tab === 'active' ? ' active' : ''}`} onClick={() => setTab('active')}>
-              Défis actifs
-              {active.length > 0 && <span className="admin-tab-count">{active.length}</span>}
-            </div>
+          <div className={`adm-tab${tab === 'circles' ? ' active' : ''}`} onClick={() => setTab('circles')}>
+            🌱 Graines ({circles.length})
           </div>
-
-          {loading ? (
-            <div className="admin-empty">
-              <div className="admin-empty-icon">⏳</div>
-              Chargement…
-            </div>
-          ) : displayed.length === 0 ? (
-            <div className="admin-empty">
-              <div className="admin-empty-icon">{tab === 'pending' ? '✨' : '🌿'}</div>
-              {tab === 'pending' ? 'Aucune proposition en attente' : 'Aucun défi actif'}
-            </div>
-          ) : (
-            <div className="admin-cards">
-              {displayed.map(d => (
-               <DefiCard
-  key={d.id}
-  defi={d}
-  isActive={tab === 'active'}
-  onValidate={handleValidate}
-  onReject={tab === 'active' ? handleDeactivate : handleReject}
-  onSave={handleSave}
-  onToggleFeatured={handleToggleFeatured}
-/>
-              ))}
-            </div>
-          )}
         </div>
-      )}
 
-      {toast && <div className={`admin-toast${toast.type === 'error' ? ' error' : ''}`}>{toast.msg}</div>}
+        {/* ── SIGNALEMENTS ── */}
+        {tab === 'reports' && (
+          <div className="adm-section">
+            {loading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : pendingReports.length === 0 ? (
+              <div className="adm-empty">✅ Aucun signalement en attente</div>
+            ) : (
+              <div className="adm-grid">
+                {pendingReports.map(r => (
+                  <div key={r.id} className="adm-report-card">
+                    <div className="adm-report-flag">🚩</div>
+                    <div className="adm-report-body">
+                      <div className="adm-report-graine">
+                        {r.circles?.name ?? 'Graine inconnue'}
+                        <span style={{ marginLeft:8, fontSize:10, color:'var(--text3)' }}>{r.circles?.theme}</span>
+                      </div>
+                      <div className="adm-report-meta">
+                        Signalé par {r.reporter?.display_name ?? r.reporter?.email ?? 'anonyme'} · {new Date(r.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' })}
+                      </div>
+                      <div className="adm-report-actions">
+                        <button className="adm-btn danger" onClick={() => handleDeleteFromReport(r)}>
+                          🗑️ Supprimer la graine
+                        </button>
+                        <button className="adm-btn success" onClick={() => handleResolveReport(r.id)}>
+                          ✓ Marquer résolu
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {resolvedReports.length > 0 && (
+              <div style={{ marginTop:32 }}>
+                <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>Signalements résolus</div>
+                <div className="adm-grid">
+                  {resolvedReports.map(r => (
+                    <div key={r.id} className="adm-report-card resolved">
+                      <div className="adm-report-flag">✅</div>
+                      <div className="adm-report-body">
+                        <div className="adm-report-graine">{r.circles?.name ?? 'Graine supprimée'}</div>
+                        <div className="adm-report-meta">Résolu · {new Date(r.created_at).toLocaleDateString('fr-FR')}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── GRAINES ── */}
+        {tab === 'circles' && (
+          <div className="adm-section">
+            {loading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : (
+              <table className="adm-table">
+                <thead>
+                  <tr>
+                    <th className="adm-th">Nom</th>
+                    <th className="adm-th">Thème</th>
+                    <th className="adm-th">Membres</th>
+                    <th className="adm-th">Visibilité</th>
+                    <th className="adm-th">Expiration</th>
+                    <th className="adm-th">Créée le</th>
+                    <th className="adm-th"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {circles.map(c => {
+                    const expired = c.expires_at && new Date(c.expires_at) < new Date()
+                    const remaining = c.expires_at ? Math.ceil((new Date(c.expires_at) - Date.now()) / 86400000) : null
+                    return (
+                      <tr key={c.id} className="adm-tr">
+                        <td className="adm-td" style={{ color: expired ? 'var(--text3)' : 'var(--text)', maxWidth:200 }}>{c.name}</td>
+                        <td className="adm-td">{c.theme ?? '—'}</td>
+                        <td className="adm-td">{c.memberCount}</td>
+                        <td className="adm-td">{c.is_open ? '🌍 Public' : '🔒 Privé'}</td>
+                        <td className="adm-td" style={{ color: expired ? 'rgba(210,80,80,0.7)' : remaining !== null && remaining <= 2 ? 'rgba(255,160,100,0.8)' : 'var(--text3)' }}>
+                          {expired ? 'Expirée' : remaining !== null ? `${remaining}j` : '—'}
+                        </td>
+                        <td className="adm-td">{new Date(c.created_at).toLocaleDateString('fr-FR')}</td>
+                        <td className="adm-td">
+                          <button className="adm-btn danger" onClick={() => handleDeleteCircle(c.id, c.name)}>Supprimer</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
+
+      {toast && <div className="adm-toast">{toast}</div>}
     </div>
   )
 }

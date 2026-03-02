@@ -20,7 +20,7 @@ export const ritualService = {
    * 2. Met à jour la plante du jour (health + zone)
    * Retourne { ritual, plant } pour mise à jour optimiste.
    */
-  async complete(userId, plantId, ritualId) {
+  async complete(userId, plantId, ritualId, circleId){
     const catalog = RITUAL_CATALOG.find(r => r.id === ritualId)
     if (!catalog) throw new Error(`Rituel inconnu : ${ritualId}`)
 
@@ -61,7 +61,23 @@ export const ritualService = {
 
     // Met à jour la plante
     const plant = await plantService.applyRitualEffect(plantId, catalog.delta, catalog.zone)
+// ─── LOG ACTIVITÉ DANS LE CERCLE ───────────────────────────
+try {
 
+  if (circleId) {
+    await supabase
+      .from('activity')
+      .insert({
+        circle_id: circleId,
+        user_id: userId,
+        action: 'a complété',
+        ritual: catalog.name,
+        zone: catalog.zone ?? 'Racines'
+      })
+  }
+} catch (err) {
+  console.error('Erreur log activité:', err)
+}
     return { ritual, plant }
   },
 

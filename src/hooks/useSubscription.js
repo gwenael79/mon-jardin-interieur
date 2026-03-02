@@ -63,7 +63,7 @@ export function useSubscription() {
     if (!user) return false
     try {
       await query(
-        supabase.from('profiles').update({ plan: 'free', onboarded: true }).eq('id', user.id),
+        supabase.from('users').update({ plan: 'free', onboarded: true }).eq('id', user.id),
         'activateFree'
       )
       await fetchSubscriptions()
@@ -97,7 +97,7 @@ export function useSubscription() {
         'saveSubscriptions'
       )
       await query(
-        supabase.from('profiles').update({ plan: 'premium', onboarded: true }).eq('id', user.id),
+        supabase.from('users').update({ plan: 'premium', onboarded: true }).eq('id', user.id),
         'updateProfile'
       )
       await fetchSubscriptions()

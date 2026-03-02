@@ -71,6 +71,6 @@ export function useCircle(userId) {
   return {
     circles, activeCircle, circleMembers,
     isLoading, error, stats,
-    selectCircle, createCircle, joinByCode,
+    selectCircle, createCircle, joinByCode, loadCircles,
   }
 }
