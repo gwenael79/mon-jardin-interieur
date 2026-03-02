@@ -66,6 +66,7 @@ export function AdminPage() {
   const [tab,       setTab]       = useState('reports')
   const [reports,   setReports]   = useState([])
   const [circles,   setCircles]   = useState([])
+  const [applications, setApplications] = useState([])
   const [stats,     setStats]     = useState({})
   const [loading,   setLoading]   = useState(true)
   const [toast,     setToast]     = useState(null)
@@ -78,7 +79,7 @@ export function AdminPage() {
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadReports(), loadCircles(), loadStats()])
+    await Promise.all([loadReports(), loadCircles(), loadStats(), loadApplications()])
     setLoading(false)
   }
 
@@ -109,6 +110,22 @@ export function AdminPage() {
     })))
   }
 
+  async function loadApplications() {
+    const { data } = await supabase
+      .from('animator_applications')
+      .select('id, motivation, experience, status, created_at, user_id')
+      .order('created_at', { ascending: false })
+    // Charger noms
+    if (data?.length) {
+      const ids = data.map(a => a.user_id)
+      const { data: usersData } = await supabase.from('users').select('id, display_name, email').in('id', ids)
+      const userMap = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
+      setApplications(data.map(a => ({ ...a, user: userMap[a.user_id] ?? null })))
+    } else {
+      setApplications([])
+    }
+  }
+
   async function loadCircles() {
     const { data } = await supabase
       .from('circles')
@@ -125,6 +142,19 @@ export function AdminPage() {
       supabase.from('reports').select('*', { count: 'exact', head: true }),
     ])
     setStats({ totalUsers, totalCircles, totalReports })
+  }
+
+  async function handleApproveAnimator(appId, userId) {
+    await supabase.from('animator_applications').update({ status: 'approved' }).eq('id', appId)
+    await supabase.from('users').update({ is_animator: true }).eq('id', userId)
+    showToast('✅ Animateur validé !')
+    loadApplications()
+  }
+
+  async function handleRejectAnimator(appId) {
+    await supabase.from('animator_applications').update({ status: 'rejected' }).eq('id', appId)
+    showToast('❌ Candidature refusée')
+    loadApplications()
   }
 
   async function handleDeleteCircle(circleId, circleName) {
@@ -198,6 +228,9 @@ export function AdminPage() {
           </div>
           <div className={`adm-tab${tab === 'circles' ? ' active' : ''}`} onClick={() => setTab('circles')}>
             🌱 Graines ({circles.length})
+          </div>
+          <div className={`adm-tab${tab === 'applications' ? ' active' : ''}`} onClick={() => setTab('applications')}>
+            🌿 Animateurs {applications.filter(a=>a.status==='pending').length > 0 && `(${applications.filter(a=>a.status==='pending').length})`}
           </div>
         </div>
 
