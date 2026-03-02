@@ -67,6 +67,9 @@ export function AdminPage() {
   const [reports,   setReports]   = useState([])
   const [circles,   setCircles]   = useState([])
   const [applications, setApplications] = useState([])
+  const [lumensData,   setLumensData]   = useState([])
+  const [lumenAward,   setLumenAward]   = useState({ userId:'', amount:5, reason:'participation' })
+  const [allUsers,     setAllUsers]     = useState([])
   const [stats,     setStats]     = useState({})
   const [loading,   setLoading]   = useState(true)
   const [toast,     setToast]     = useState(null)
@@ -79,25 +82,23 @@ export function AdminPage() {
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadReports(), loadCircles(), loadStats(), loadApplications()])
+    await Promise.all([loadReports(), loadCircles(), loadStats(), loadApplications(), loadLumensData(), loadAllUsers()])
     setLoading(false)
   }
 
   async function loadReports() {
-    const { data: reps, error } = await supabase
+    const { data: reps } = await supabase
       .from('reports')
       .select('id, reason, created_at, resolved, circle_id, reported_by')
       .order('created_at', { ascending: false })
       .limit(50)
     if (!reps?.length) { setReports([]); return }
 
-    // Charger les noms des graines
     const circleIds = [...new Set(reps.map(r => r.circle_id).filter(Boolean))]
     const { data: circlesData } = await supabase
       .from('circles').select('id, name, theme').in('id', circleIds)
     const circleMap = Object.fromEntries((circlesData ?? []).map(c => [c.id, c]))
 
-    // Charger les noms des reporters
     const reporterIds = [...new Set(reps.map(r => r.reported_by).filter(Boolean))]
     const { data: usersData } = await supabase
       .from('users').select('id, display_name, email').in('id', reporterIds)
@@ -110,12 +111,37 @@ export function AdminPage() {
     })))
   }
 
+  async function loadAllUsers() {
+    const { data } = await supabase.from('users').select('id, display_name, email').order('display_name')
+    setAllUsers(data ?? [])
+  }
+
+  async function loadLumensData() {
+    const { data } = await supabase
+      .from('lumens')
+      .select('*, users:user_id(display_name, email)')
+      .order('total', { ascending: false })
+      .limit(20)
+    setLumensData(data ?? [])
+  }
+
+  async function handleAwardLumens() {
+    if (!lumenAward.userId || !lumenAward.amount) return
+    await supabase.rpc('award_lumens', {
+      p_user_id: lumenAward.userId,
+      p_amount: Number(lumenAward.amount),
+      p_reason: lumenAward.reason,
+      p_meta: null
+    })
+    showToast(`✦ ${lumenAward.amount} Lumens attribués !`)
+    loadLumensData()
+  }
+
   async function loadApplications() {
     const { data } = await supabase
       .from('animator_applications')
       .select('id, motivation, experience, status, created_at, user_id')
       .order('created_at', { ascending: false })
-    // Charger noms
     if (data?.length) {
       const ids = data.map(a => a.user_id)
       const { data: usersData } = await supabase.from('users').select('id, display_name, email').in('id', ids)
@@ -187,6 +213,7 @@ export function AdminPage() {
 
   const pendingReports = reports.filter(r => !r.resolved)
   const resolvedReports = reports.filter(r => r.resolved)
+  const pendingApplications = applications.filter(a => a.status === 'pending' || !a.status)
 
   return (
     <div className="adm-root">
@@ -230,7 +257,10 @@ export function AdminPage() {
             🌱 Graines ({circles.length})
           </div>
           <div className={`adm-tab${tab === 'applications' ? ' active' : ''}`} onClick={() => setTab('applications')}>
-            🌿 Animateurs {applications.filter(a=>a.status==='pending').length > 0 && `(${applications.filter(a=>a.status==='pending').length})`}
+            🌿 Animateurs {applications.length > 0 && `(${applications.length})`}
+          </div>
+          <div className={`adm-tab${tab === 'lumens' ? ' active' : ''}`} onClick={() => setTab('lumens')}>
+            ✦ Lumens
           </div>
         </div>
 
@@ -330,6 +360,163 @@ export function AdminPage() {
             )}
           </div>
         )}
+
+        {/* ── ANIMATEURS ── */}
+        {tab === 'applications' && (
+          <div className="adm-section">
+            {loading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : applications.length === 0 ? (
+              <div className="adm-empty">Aucune candidature pour l'instant.</div>
+            ) : (
+              <>
+                {pendingApplications.length > 0 && (
+                  <div style={{ marginBottom:24 }}>
+                    <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>
+                      En attente · {pendingApplications.length}
+                    </div>
+                    <div className="adm-grid">
+                      {pendingApplications.map(a => (
+                        <div key={a.id} className="adm-report-card">
+                          <div className="adm-report-flag">🌿</div>
+                          <div className="adm-report-body">
+                            <div className="adm-report-graine">
+                              {a.user?.display_name ?? a.user?.email ?? a.user_id?.slice(0,8)}
+                              <span style={{ marginLeft:8, fontSize:10, color:'var(--text3)' }}>{a.user?.email}</span>
+                            </div>
+                            <div className="adm-report-meta">
+                              Candidature du {new Date(a.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}
+                            </div>
+                            {a.motivation && (
+                              <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.6, marginBottom:8, fontStyle:'italic' }}>
+                                "{a.motivation}"
+                              </div>
+                            )}
+                            {a.experience && (
+                              <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.5, marginBottom:10 }}>
+                                Expérience : {a.experience}
+                              </div>
+                            )}
+                            <div className="adm-report-actions">
+                              <button className="adm-btn success" onClick={() => handleApproveAnimator(a.id, a.user_id)}>
+                                ✅ Valider
+                              </button>
+                              <button className="adm-btn danger" onClick={() => handleRejectAnimator(a.id)}>
+                                ✕ Refuser
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {applications.filter(a => a.status === 'approved' || a.status === 'rejected').length > 0 && (
+                  <div>
+                    <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>
+                      Traitées
+                    </div>
+                    <table className="adm-table">
+                      <thead>
+                        <tr>
+                          <th className="adm-th">Candidat</th>
+                          <th className="adm-th">Email</th>
+                          <th className="adm-th">Date</th>
+                          <th className="adm-th">Statut</th>
+                          <th className="adm-th">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {applications.filter(a => a.status === 'approved' || a.status === 'rejected').map(a => (
+                          <tr key={a.id} className="adm-tr">
+                            <td className="adm-td">{a.user?.display_name ?? a.user_id?.slice(0,8)}</td>
+                            <td className="adm-td" style={{ color:'var(--text3)' }}>{a.user?.email ?? '—'}</td>
+                            <td className="adm-td">{new Date(a.created_at).toLocaleDateString('fr-FR')}</td>
+                            <td className="adm-td">
+                              <span style={{
+                                fontSize:10, padding:'3px 10px', borderRadius:100,
+                                background: a.status === 'approved' ? 'var(--green3)' : 'var(--red2)',
+                                border: `1px solid ${a.status === 'approved' ? 'var(--greenT)' : 'var(--redT)'}`,
+                                color: a.status === 'approved' ? '#c8f0b8' : 'rgba(255,160,160,0.9)',
+                              }}>
+                                {a.status === 'approved' ? '✅ Validé' : '✕ Refusé'}
+                              </span>
+                            </td>
+                            <td className="adm-td">
+                              {a.status === 'approved' && (
+                                <button className="adm-btn danger" onClick={() => handleRejectAnimator(a.id)}>
+                                  Révoquer
+                                </button>
+                              )}
+                              {a.status === 'rejected' && (
+                                <button className="adm-btn success" onClick={() => handleApproveAnimator(a.id, a.user_id)}>
+                                  Valider
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── LUMENS ── */}
+        {tab === 'lumens' && (
+          <div className="adm-section">
+            {/* Attribution */}
+            <div style={{ background:'rgba(246,196,83,0.06)', border:'1px solid rgba(246,196,83,0.2)', borderRadius:12, padding:20, marginBottom:20 }}>
+              <div style={{ fontSize:13, color:'#F6C453', fontFamily:'Cormorant Garamond,serif', marginBottom:14 }}>✦ Attribuer des Lumens</div>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+                <select value={lumenAward.userId} onChange={e=>setLumenAward(p=>({...p,userId:e.target.value}))} style={{ flex:2, minWidth:160, padding:'8px 10px', background:'#1e3a1e', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:11, color:'#f2ede0', fontFamily:'Jost,sans-serif' }}>
+                  <option value="">— Choisir un utilisateur —</option>
+                  {allUsers.map(u => <option key={u.id} value={u.id}>{u.display_name ?? u.email}</option>)}
+                </select>
+                <input type="number" placeholder="Lumens" value={lumenAward.amount} onChange={e=>setLumenAward(p=>({...p,amount:e.target.value}))} style={{ width:90, padding:'8px 10px', background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:11, color:'#f2ede0', fontFamily:'Jost,sans-serif' }} />
+                <select value={lumenAward.reason} onChange={e=>setLumenAward(p=>({...p,reason:e.target.value}))} style={{ padding:'8px 10px', background:'#1e3a1e', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:11, color:'#f2ede0', fontFamily:'Jost,sans-serif' }}>
+                  <option value="participation">Participation validée (+3)</option>
+                  <option value="ritual">Rituel complété (+2)</option>
+                  <option value="questionnaire_daily">Questionnaire (+1)</option>
+                  <option value="streak_7">Streak 7 jours (+5)</option>
+                  <option value="streak_30">Streak 30 jours (+15)</option>
+                  <option value="admin_award">Attribution admin</option>
+                </select>
+                <button onClick={handleAwardLumens} style={{ padding:'8px 18px', background:'rgba(246,196,83,0.15)', border:'1px solid rgba(246,196,83,0.35)', borderRadius:8, color:'#F6C453', fontSize:12, cursor:'pointer', fontFamily:'Jost,sans-serif', whiteSpace:'nowrap' }}>
+                  ✦ Attribuer
+                </button>
+              </div>
+            </div>
+
+            {/* Classement utilisateurs */}
+            <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(242,237,224,0.4)', marginBottom:10 }}>Classement des membres</div>
+            {lumensData.length === 0 ? (
+              <div className="adm-empty">Aucun Lumen attribué pour l'instant. Utilisez le formulaire ci-dessus pour commencer.</div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {lumensData.map((l, i) => (
+                  <div key={l.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'rgba(246,196,83,0.04)', border:'1px solid rgba(246,196,83,0.12)', borderRadius:10 }}>
+                    <div style={{ fontSize:16, fontFamily:'Cormorant Garamond,serif', color:'rgba(246,196,83,0.4)', width:24, textAlign:'center' }}>{i+1}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:12, color:'#f2ede0' }}>{l.users?.display_name ?? l.users?.email ?? l.user_id?.slice(0,8)}</div>
+                      <div style={{ fontSize:9, color:'rgba(242,237,224,0.4)', textTransform:'uppercase', letterSpacing:'.05em', marginTop:2 }}>{l.level === 'faible' ? 'Lumière faible' : l.level === 'halo' ? 'Halo visible' : l.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}</div>
+                    </div>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ fontSize:16, fontFamily:'Cormorant Garamond,serif', color:'#F6C453' }}>{l.total} ✦</div>
+                      <div style={{ fontSize:9, color:'rgba(242,237,224,0.35)' }}>{l.available} disponibles</div>
+                    </div>
+                    <div style={{ width:8, height:8, borderRadius:'50%', background:'#F6C453', boxShadow:`0 0 ${l.total >= 200 ? 12 : l.total >= 80 ? 8 : l.total >= 20 ? 4 : 2}px rgba(246,196,83,0.6)` }} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       {toast && <div className="adm-toast">{toast}</div>}

@@ -231,65 +231,57 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
           />
         )}
 
-        {/* Feuilles — poussent par paires gauche/droite selon santé */}
+        {/* Feuilles — nombre et disposition aléatoires selon santé */}
         {r > 0.12 && (() => {
-          // Nombre de paires : 1 à 5 selon r (+ légère variation par user)
-          const pairCount = Math.max(1, Math.round(r * 5) - (hash(plant.user_id, 20) % 2 === 0 ? 0 : 0))
-          // Chaque côté peut avoir un nombre légèrement différent de feuilles
-          const leftCount  = pairCount + (hash(plant.user_id, 21) % 2 === 0 && r > 0.6 ? 1 : 0)
-          const rightCount = pairCount + (hash(plant.user_id, 22) % 2 === 0 && r > 0.7 ? 1 : 0)
-          const maxCount   = Math.max(leftCount, rightCount)
-
+          // Nombre de feuilles : 1 à 8 selon r, avec variation par user
+          const maxLeaves = Math.round(1 + r * 7)
+          const leafCount = Math.max(1, maxLeaves - (hash(plant.user_id, 20) % 2))
           const leaves = []
-          for (let li = 0; li < maxCount; li++) {
-            // Répartir uniformément le long de la tige (20% → 88%)
-            const tBase = 0.20 + (li / Math.max(maxCount - 1, 1)) * 0.68
-            // Décalage vertical léger entre gauche et droite pour éviter la symétrie parfaite
-            const tOffL = ((hash(plant.user_id, 30 + li) % 10) - 5) / 100
-            const tOffR = ((hash(plant.user_id, 31 + li) % 10) - 5) / 100
-
-            for (const [side, count, tOff, seedBase] of [[-1, leftCount, tOffL, 100], [1, rightCount, tOffR, 200]]) {
-              if (li >= count) continue
-              const t  = Math.min(0.92, Math.max(0.15, tBase + tOff))
-              // Point sur la tige
-              const bx = cx + curve * t
-              const by = groundY - stemH * t
-              // Taille : plus grande au milieu de la tige
-              const sizeF  = 0.55 + Math.sin(t * Math.PI) * 0.65
-              const lw     = (28 + (hash(plant.user_id, seedBase + li) % 16)) * sizeF * (0.65 + r * 0.55)
-              const lh     = (22 + (hash(plant.user_id, seedBase + 10 + li) % 14)) * sizeF * (0.65 + r * 0.55)
-              // Angle : part de la tige vers l'extérieur, légèrement vers le bas
-              const angleBase = side === -1 ? 210 : -30
-              const angleVar  = ((hash(plant.user_id, seedBase + 20 + li) % 36) - 18)
-              const angle     = angleBase + angleVar
-              const rad       = angle * Math.PI / 180
-              const tipX      = bx + Math.cos(rad) * lh
-              const tipY      = by + Math.sin(rad) * lh
-              const ctrlOff   = lw * side
-              // Couleur verte légèrement variée
-              const gr    = 98 + (hash(plant.user_id, seedBase + 30 + li) % 24)
-              const leafC = `rgba(${28 + Math.round(16*r)},${gr + Math.round(68*r)},${22 + Math.round(14*r)},${0.58 + 0.32*r})`
-              const veinC = `rgba(${52 + Math.round(24*r)},${gr + 38 + Math.round(36*r)},${36 + Math.round(14*r)},0.30)`
-
-              leaves.push(
-                <g key={`${side}-${li}`}>
-                  <path
-                    d={`M${bx},${by}
-                        C${bx + ctrlOff * 0.8},${by - lh * 0.18}
-                          ${tipX + ctrlOff * 0.4},${tipY - lh * 0.12}
-                          ${tipX},${tipY}
-                        C${tipX - ctrlOff * 0.3},${tipY + lh * 0.08}
-                          ${bx + ctrlOff * 0.3},${by + lh * 0.12}
-                          ${bx},${by} Z`}
-                    fill={leafC}
-                  />
-                  <path
-                    d={`M${bx},${by} Q${(bx + tipX) / 2 + ctrlOff * 0.15},${(by + tipY) / 2} ${tipX},${tipY}`}
-                    stroke={veinC} strokeWidth={0.65} fill="none"
-                  />
-                </g>
-              )
-            }
+          for (let li = 0; li < leafCount; li++) {
+            // Position le long de la tige : entre 15% et 90% de la hauteur
+            const tRaw  = 0.15 + (hash(plant.user_id, 30 + li) % 75) / 100
+            const t     = Math.min(0.90, tRaw)
+            // Point sur la tige (interpolation de la courbe de Bézier)
+            const bx = cx + curve * t
+            const by = groundY - stemH * t
+            // Côté : alternance gauche/droite avec variation
+            const side  = (li + (hash(plant.user_id, 40 + li) % 2)) % 2 === 0 ? -1 : 1
+            // Taille : petites en bas, plus grandes vers le milieu, petites en haut
+            const sizeF = 0.5 + Math.sin(t * Math.PI) * 0.7
+            const lw    = (14 + (hash(plant.user_id, 50 + li) % 12)) * sizeF * (0.7 + r * 0.5)
+            const lh    = (22 + (hash(plant.user_id, 60 + li) % 16)) * sizeF * (0.7 + r * 0.5)
+            // Angle de la feuille (vers le bas-côté ou le haut-côté)
+            const angleBase = side === -1 ? -140 : -40
+            const angleVar  = ((hash(plant.user_id, 70 + li) % 40) - 20)
+            const angle     = angleBase + angleVar
+            const rad       = angle * Math.PI / 180
+            // Tip de la feuille
+            const tipX = bx + Math.cos(rad) * lh * side
+            const tipY = by + Math.sin(rad) * lh
+            // Couleur légèrement variée
+            const gr    = 95 + (hash(plant.user_id, 80 + li) % 28)
+            const leafC = `rgba(${30 + Math.round(18*r)},${gr + Math.round(72*r)},${24 + Math.round(16*r)},${0.55 + 0.35*r})`
+            const veinC = `rgba(${50 + Math.round(28*r)},${gr + 40 + Math.round(40*r)},${38 + Math.round(16*r)},0.28)`
+            // Contrôle de la courbe (largeur de la feuille)
+            const ctrlOff = lw * side
+            leaves.push(
+              <g key={li}>
+                <path
+                  d={`M${bx},${by}
+                      C${bx + ctrlOff * 0.7},${by - lh * 0.2}
+                        ${bx + ctrlOff * 0.9 + Math.cos(rad) * lh * side * 0.6},${by + Math.sin(rad) * lh * 0.55}
+                        ${tipX},${tipY}
+                      C${bx + ctrlOff * 0.5},${by + Math.sin(rad) * lh * 0.7}
+                        ${bx + ctrlOff * 0.2},${by + lh * 0.1}
+                        ${bx},${by} Z`}
+                  fill={leafC}
+                />
+                <path
+                  d={`M${bx},${by} Q${bx + ctrlOff * 0.5},${(by + tipY) / 2} ${tipX},${tipY}`}
+                  stroke={veinC} strokeWidth={0.7} fill="none"
+                />
+              </g>
+            )
           }
           return leaves
         })()}
