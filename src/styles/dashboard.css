@@ -685,7 +685,7 @@ body { background: var(--bg); }
 @media (max-width: 390px) {
   .sb-item { min-width: 44px; padding: 6px 6px; font-size: 8px; }
   .sb-icon { font-size: 16px; }
-  .topbar { padding: 0 10px; height: 46px; min-height: 46px; }
+  .topbar { padding: 0 14px; height: 64px; min-height: 64px; }
   .tb-title { font-size: 15px; }
   .mj-left { padding: 10px 10px 76px; }
   .ph-col-flower { height: 170px; }

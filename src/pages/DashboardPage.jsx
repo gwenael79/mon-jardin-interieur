@@ -5120,13 +5120,18 @@ export default function DashboardPage() {
         <div className="main">
           <div className="topbar">
             {isMobile ? (
-  <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:22, fontWeight:300, color:'var(--cream)', letterSpacing:'0.01em' }}>
-    Mon <em style={{ fontStyle:'italic', color:'var(--gold)' }}>Jardin</em> Intérieur
+  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+    <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:28, fontWeight:300, color:'var(--cream)', letterSpacing:'0.01em', lineHeight:1 }}>
+      Mon <em style={{ fontStyle:'italic', color:'var(--gold)' }}>Jardin</em> Intérieur
+    </div>
+    <div style={{ fontSize:11, color:'var(--gold)', opacity:0.6, letterSpacing:'0.08em', textTransform:'uppercase' }}>
+      {topbar.title}
+    </div>
   </div>
 ) : (
   <div className="tb-title">{topbar.title}</div>
 )}
-            {active === 'jardin' && <StreakMessage streak={plantStats?.streak ?? 0} />}
+            {active === 'jardin' && !isMobile && <StreakMessage streak={plantStats?.streak ?? 0} />}
             <div style={{ flex:1 }} />
             <div className="tb-btn ghost" style={{ marginRight:5 }}>Aide</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
