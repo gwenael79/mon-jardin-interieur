@@ -4722,7 +4722,6 @@ function ApplyAnimatorModal({ onClose, onSubmit }) {
 const SCREENS = [
   { id:'jardin',  icon:'🌸', label:'Ma Fleur',           badge:null, Component:ScreenMonJardin       },
   { id:'champ',   icon:'🌻', label:'Jardin Collectif',   badge:null, Component:ScreenJardinCollectif  },
-  { id:'cercles', icon:'🌱', label:'Graines de vie', badge:'3',  Component:ScreenCercles          },
   { id:'ateliers',icon:'🌿', label:'Ateliers',        badge:null, Component:ScreenAteliers          },
   { id:'defis',   icon:'✨', label:'Défis',          badge:null, Component:ScreenDefis            },
 ]
