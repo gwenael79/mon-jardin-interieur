@@ -5120,7 +5120,7 @@ export default function DashboardPage() {
         <div className="main">
           <div className="topbar">
             {isMobile ? (
-  <div style={{ display:'flex', flexDirection:'column', gap:2, padding:'8px 0 10px' }}>
+  <div style={{ display:'flex', flexDirection:'column', gap:2, padding:'40px 0 10px' }}>
     <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:28, fontWeight:300, color:'var(--cream)', letterSpacing:'0.01em', lineHeight:1 }}>
       Mon <em style={{ fontStyle:'italic', color:'var(--gold)' }}>Jardin</em> Intérieur
     </div>
