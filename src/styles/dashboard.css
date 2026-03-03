@@ -614,7 +614,7 @@ body { background: var(--bg); }
 
   /* Colonne gauche : pleine largeur */
   .mj-left {
-    padding: 12px 14px 80px;
+    padding: 12px 14px 110px;
     gap: 12px;
     overflow-y: auto;
     overflow-x: hidden;

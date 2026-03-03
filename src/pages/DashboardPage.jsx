@@ -2964,44 +2964,6 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           todayPlant={plant}
         />
 
-        {isMobile && (
-          <LumensCard lumens={lumens} userId={userId} awardLumens={awardLumens} />
-        )}
-
-        <div className="history-chart">
-          <div className="hc-header">
-            <div className="hc-title">Évolution sur 7 jours</div>
-            <div className="hc-period">
-              {history.length >= 2
-                ? `${history[0]?.date?.slice(5).replace('-','/')} – ${history.at(-1)?.date?.slice(5).replace('-','/')}`
-                : '7 derniers jours'}
-            </div>
-          </div>
-          <div className="hc-graph">
-            {history.map((d, i) => {
-              const isToday = d.date === today
-              const lbl = new Date(d.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short'}).slice(0,1).toUpperCase()
-              return (
-                <div key={i} className="hc-bar-wrap">
-                  <div className={'hc-bar' + (isToday ? ' today' : '')} style={{ height:`${d.health}%` }} />
-                  <div className="hc-day">{lbl}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        <div className="slabel">Rituels cette semaine</div>
-        <div className="week-grid">
-          {weekGrid.map((d, i) => (
-            <div key={i} className="wday">
-              <div className={'wd-dot ' + d.status + (d.isToday ? ' today' : '')}>{d.count||'–'}</div>
-              <div className="wd-label">{d.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="slabel">Journal personnel</div>
         <JournalComposer userId={userId} plantId={plant?.id} onSaved={entry => { awardLumens?.(1, 'questionnaire_daily', { date: new Date().toISOString().split('T')[0] }) }} />
         {entries.map(e => (
           <div key={e.id} className="journal-entry">
@@ -4909,6 +4871,7 @@ function LumenOrb({ total = 0, level = 'faible', size = 18 }) {
 }
 
 export default function DashboardPage() {
+  const isMobile = useIsMobile()
   // Charger Playfair Display pour le compteur de streak
   useEffect(() => {
     if (!document.getElementById('gf-playfair')) {
@@ -4975,6 +4938,7 @@ export default function DashboardPage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [showMjRight, setShowMjRight] = useState(false)
+  const [showLumensModal, setShowLumensModal] = useState(false)
 
   const topbar = {
   jardin: {
@@ -5021,6 +4985,48 @@ export default function DashboardPage() {
   return (
     <div className="root">
       <div className="app-layout">
+
+        {/* BANDEAU LUMENS MOBILE — au dessus de la bottom nav */}
+        {isMobile && (
+          <>
+            <div
+              onClick={() => setShowLumensModal(true)}
+              style={{
+                position: 'fixed',
+                bottom: 64,
+                left: 0, right: 0,
+                zIndex: 99,
+                background: 'linear-gradient(90deg, rgba(232,192,96,0.13), rgba(232,192,96,0.08))',
+                borderTop: '1px solid rgba(232,192,96,0.28)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '7px 18px',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 16 }}>✦</span>
+              <span style={{ fontSize: 13, color: '#e8c060', fontFamily: "'Cormorant Garamond', serif", fontWeight: 600 }}>
+                {lumens?.total ?? 0} Lumens
+              </span>
+              <span style={{ fontSize: 10, color: 'rgba(232,192,96,0.55)', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                {lumens?.level === 'faible' ? 'Lumière faible' : lumens?.level === 'halo' ? 'Halo visible' : lumens?.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(232,192,96,0.45)' }}>Gérer →</span>
+            </div>
+
+            {showLumensModal && (
+              <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
+                <div style={{ position: 'relative', background: '#1a2e1a', borderRadius: '20px 20px 0 0', padding: '20px 18px 40px', maxHeight: '85vh', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.10)', borderBottom: 'none' }}>
+                  <div style={{ width: 36, height: 3, background: 'rgba(255,255,255,0.2)', borderRadius: 100, margin: '0 auto 18px' }} />
+                  <LumensCard lumens={lumens} userId={user?.id} awardLumens={awardLumens} />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
         {/* SIDEBAR */}
         <div className="sidebar">
           <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
