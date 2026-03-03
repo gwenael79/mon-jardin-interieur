@@ -839,3 +839,17 @@ body { background: var(--bg); }
   /* Topbar compact */
   .topbar .tb-subtitle { display: none !important; }
 }
+
+/* ── Fix Cercles / Defis scroll mobile ── */
+@media (max-width: 768px) {
+  .content {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  .col {
+    overflow-y: visible !important;
+    min-height: unset !important;
+    padding: 14px 14px 80px !important;
+  }
+  .col + .rpanel { display: none !important; }
+}

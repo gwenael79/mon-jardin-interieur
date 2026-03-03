@@ -4580,7 +4580,7 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
       {/* CONTENU PRINCIPAL — gauche */}
       <div className='at-main' style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 14px 80px' : '24px 28px' }}>
       {/* HEADER */}
-      {isMobile && <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}><div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:20, fontWeight:300, color:'#e8d4a8' }}>Ateliers</div><button onClick={() => setShowFilter(f => !f)} style={{ fontSize:10, padding:'6px 12px', background: showFilter ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:20, color: showFilter ? '#c8f0b8' : 'rgba(242,237,224,0.6)', cursor:'pointer' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button></div>}
+      {isMobile && <button onClick={() => setShowFilter(f => !f)} style={{ fontSize:10, padding:'6px 12px', background: showFilter ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:20, color: showFilter ? '#c8f0b8' : 'rgba(242,237,224,0.6)', cursor:'pointer', marginBottom:10, display:'block' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button>}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
         <div>
           <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:26, fontWeight:300, color:'#e8d4a8' }}>Ateliers</div>
