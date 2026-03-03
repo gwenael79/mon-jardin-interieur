@@ -535,17 +535,12 @@ body { background: var(--bg); }
     flex-direction: row;
     align-items: center;
     justify-content: space-around;
-    padding: 0 2px;
+    padding: 0 8px;
     border-right: none;
     border-top: 1px solid var(--border2);
     overflow: visible;
     flex-shrink: 0;
-    z-index: 102;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(20,36,20,0.98);
+    z-index: 100;
   }
 
   /* Cacher les éléments non nav dans la sidebar */
@@ -557,19 +552,18 @@ body { background: var(--bg); }
   .sb-lumen-bar,
   .sb-footer-btns { display: none; }
 
-  /* Items nav en icônes centrées — 6 items */
+  /* Items nav en icônes centrées */
   .sb-item {
     flex-direction: column;
-    gap: 2px;
-    padding: 5px 4px;
-    font-size: 8px;
-    letter-spacing: 0.02em;
+    gap: 3px;
+    padding: 6px 10px;
+    font-size: 9px;
+    letter-spacing: 0.04em;
     border-left: none;
     border-bottom: 2px solid transparent;
     border-radius: 10px;
     text-align: center;
-    min-width: 0;
-    flex: 1;
+    min-width: 52px;
   }
   .sb-item.active {
     background: var(--green3);
@@ -594,8 +588,8 @@ body { background: var(--bg); }
   /* ── TOPBAR ── */
   .topbar {
     padding: 0 14px;
-    height: 56px;
-    min-height: 56px;
+    height: 50px;
+    min-height: 50px;
     overflow: hidden;
   }
   .tb-title { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
@@ -620,7 +614,7 @@ body { background: var(--bg); }
 
   /* Colonne gauche : pleine largeur */
   .mj-left {
-    padding: 12px 14px 80px;
+    padding: 12px 14px 110px;
     gap: 12px;
     overflow-y: auto;
     overflow-x: hidden;
