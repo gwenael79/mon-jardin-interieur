@@ -2510,17 +2510,37 @@ function StreakMessage({ streak, userId }) {
   const cacheKey = `streak-msg-${userId ?? 'anon'}-${streak}`
 
   const FALLBACKS = [
-    [30, "Tu fais partie de ceux qui honorent vraiment leurs engagements"],
-    [21, "C'est ici que les habitudes naissent pour de bon"],
-    [14, "Une vraie transformation s'opere en toi, jour apres jour"],
-    [7,  "Tu viens de prouver que tu peux tenir sur la duree"],
-    [6,  "Demain tu franchis le cap d'une semaine entiere"],
-    [5,  "Un beau rythme est en train de se dessiner"],
-    [4,  "Ta regularite parle pour toi"],
-    [3,  "Quelque chose de solide commence a se construire"],
-    [2,  "L'habitude prend racine, continue ainsi"],
-    [1,  "Chaque grand voyage commence par un premier pas"],
-  ]
+  [30, "Tu incarnes pleinement la personne que tu choisis de devenir"],
+  [29, "Ta constance rayonne bien au-dela de ce que tu imagines"],
+  [28, "Tu as transforme un effort en nouvelle norme personnelle"],
+  [27, "Ton engagement est devenu une force tranquille"],
+  [26, "Tu avances avec une assurance profonde et stable"],
+  [25, "Ce que tu construis maintenant t'accompagnera longtemps"],
+  [24, "Ta discipline interieure est solide et inspire confiance"],
+  [23, "Tu prouves que la perseverance change vraiment les choses"],
+  [22, "Ton elan est maitrise et durable"],
+  [21, "Tu tiens avec maturite et determination"],
+  [20, "Ton implication commence a porter de vrais fruits"],
+  [19, "Tu renforces chaque jour la confiance en toi"],
+  [18, "L'habitude est bien installee et te soutient"],
+  [17, "Tu progresses avec calme et regularite"],
+  [16, "Ta constance devient naturelle"],
+  [15, "Tu es en train d'ancrer un changement profond"],
+  [14, "Tu consolides quelque chose de vraiment durable"],
+  [13, "Ton engagement devient une evidence"],
+  [12, "Tu gagnes en stabilite et en clarte"],
+  [11, "Ta motivation se transforme en discipline"],
+  [10, "Tu tiens ton cap avec determination"],
+  [9,  "Ton effort d'aujourd'hui construit ton equilibre de demain"],
+  [8,  "Tu installes une dynamique positive et solide"],
+  [7,  "Tu franchis un cap interieur important"],
+  [6,  "Tu confirmes que tu peux compter sur toi"],
+  [5,  "Ton rythme commence a s'affirmer"],
+  [4,  "Tu poses des bases saines et solides"],
+  [3,  "Quelque chose de stable prend forme en toi"],
+  [2,  "Tu avances avec courage et intention"],
+  [1,  "Tu as decide de commencer, et cela change tout"],
+]
   const getFallback = (n) => (FALLBACKS.find(([k]) => n >= k) ?? FALLBACKS[FALLBACKS.length-1])[1]
 
   useEffect(() => {
