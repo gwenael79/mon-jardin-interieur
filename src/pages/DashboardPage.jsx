@@ -9,6 +9,16 @@ import { useJournal }  from '../hooks/useJournal'
 import { supabase } from '../core/supabaseClient'
 import '../styles/dashboard.css'
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return isMobile
+}
+
 // ── Appel Edge Function Supabase ─────────────────────────────
 async function callModerateCircle(payload) {
   console.log('[moderate-circle] appel:', payload)
@@ -1518,7 +1528,7 @@ function useProximityMembers(userId) {
 }
 
 function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteClose }) {
-  const isMobile = window.innerWidth <= 768
+  const isMobile = useIsMobile()
   const { circleMembers, activeCircle } = useCircle(userId)
   const { received, send } = useGestures(userId)
   const { activity } = useRecentActivity(activeCircle?.id)
@@ -2738,6 +2748,7 @@ function LumensCard({ lumens, userId, awardLumens }) {
 }
 
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens }) {
+  const isMobile = useIsMobile()
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)
   const profile = useProfile(userId)
 
@@ -3310,6 +3321,7 @@ td{padding:6px 9px;border-bottom:1px solid #eee;color:#333;vertical-align:top;li
    SCREEN 3 — CERCLES
 ───────────────────────────────────────── */
 function ScreenCercles({ userId, openCreate, onCreateClose, onReport, awardLumens }) {
+  const isMobile = useIsMobile()
   const { circles, activeCircle, createCircle, joinByCode, loadCircles, selectCircle } = useCircle(userId)
   const [joinCode, setJoinCode]           = useState('')
   const [joinError, setJoinError]         = useState(null)
@@ -3761,6 +3773,7 @@ function ProposeModal({ onClose, onSubmit }) {
 const ZONE_COLORS = { Souffle:'#88b8e8', Racines:'#96d485', Feuilles:'#90d890', Tige:'#a8c8a0', Fleurs:'#e088a8', Toutes:'#c8a8e8' }
 
 function ScreenDefis({ userId, awardLumens }) {
+  const isMobile = useIsMobile()
   const [cat, setCat] = useState('Tous')
   const [showPropose, setShowPropose] = useState(false)
   const cats = ['Tous','Souffle','Racines','Feuilles','Tige','Fleurs']
@@ -3964,6 +3977,7 @@ function ScreenDefis({ userId, awardLumens }) {
 
 
 function ScreenJardinCollectif({ userId }) {
+  const isMobile = useIsMobile()
   return (
     <div className="content" style={{ flex:1, overflow:'hidden' }}>
       <CommunityGarden currentUserId={userId} embedded />
@@ -4266,7 +4280,7 @@ const iStyle = { width:'100%', padding:'9px 12px', background:'#1e3a1e', border:
 const btnStyle = { padding:'9px 18px', background:'linear-gradient(135deg,rgba(122,173,110,.25),rgba(122,173,110,.15))', border:'1px solid rgba(150,212,133,0.4)', borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color:'#c8f0b8', cursor:'pointer', transition:'all .2s' }
 
 function ScreenAteliers({ userId, awardLumens, lumens }) {
-  const isMobile = window.innerWidth <= 768
+  const isMobile = useIsMobile()
   const [showFilter, setShowFilter] = useState(false)
   const [ateliers,    setAteliers]    = useState([])
   const [myReg,       setMyReg]       = useState([]) // ids des ateliers où je suis inscrit

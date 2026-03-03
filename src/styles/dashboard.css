@@ -516,17 +516,6 @@ body { background: var(--bg); }
 .gcard-n { font-size: 10px; color: rgba(150,212,133,0.7); letter-spacing: 0.05em; }
 .gcard-absent { opacity: 0.45; }
 
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE — TABLET (≤ 1024px)
-═══════════════════════════════════════════════════════ */
-@media (max-width: 1024px) {
-  .sidebar { width: 180px; padding: 16px 0 14px; }
-  .sb-logo { font-size: 15px; padding: 0 14px 14px; }
-  .sb-item { padding: 9px 14px; font-size: 12px; gap: 8px; }
-  .mj-right { width: 200px; padding: 16px 12px; }
-  .ph-score-digits { font-size: 44px; }
-  .topbar { padding: 0 16px; }
-}
 
 /* ═══════════════════════════════════════════════════════
    RESPONSIVE — MOBILE (≤ 768px)
@@ -688,9 +677,6 @@ body { background: var(--bg); }
   .slabel { font-size: 9px; }
 }
 
-/* ═══════════════════════════════════════════════════════
-   RESPONSIVE — PETIT MOBILE (≤ 390px)
-═══════════════════════════════════════════════════════ */
 @media (max-width: 390px) {
   .sb-item { min-width: 44px; padding: 6px 6px; font-size: 8px; }
   .sb-icon { font-size: 16px; }
