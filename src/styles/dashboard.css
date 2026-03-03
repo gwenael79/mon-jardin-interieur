@@ -590,12 +590,12 @@ body { background: var(--bg); }
     padding: 0 14px;
     height: 50px;
     min-height: 50px;
+    overflow: hidden;
   }
-  .tb-title { font-size: 17px; }
+  .tb-title { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
   .tb-btn { padding: 6px 12px; font-size: 10px; }
-
-  /* Streak message — version compacte */
-  .topbar > div[style*="Playfair"] { display: none; }
+  .streak-phrase { display: none !important; }
+  .tb-subtitle { display: none !important; }
 
   /* ── CONTENT ── */
   .content { flex: 1; overflow: hidden; }
@@ -627,7 +627,7 @@ body { background: var(--bg); }
   }
   .ph-col-flower {
     border-radius: 16px 16px 0 0;
-    height: 200px;
+    height: 160px;
   }
   .ph-col-info {
     border-radius: 0 0 16px 16px;

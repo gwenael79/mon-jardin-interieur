@@ -2473,7 +2473,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
         )}
 
         {/* Grille des zones */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(5, 1fr)', gap:9 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap:9 }}>
           {sortedZones.map((zoneId, index) => {
             const zone      = PLANT_ZONES[zoneId]
             const rituals   = PLANT_RITUALS[zoneId] || []
@@ -2485,9 +2485,9 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
             const isFirst   = hasDegradation && index === 0 && deg >= 60
             return (
               <button key={zoneId} onClick={() => setActiveZone(zoneId)}
-                style={{ padding:'13px 14px', borderRadius:13, textAlign:'left', cursor:'pointer', border:`1px solid ${doneCnt > 0 ? zone.color+'35' : isPriority ? zone.color+'40' : 'rgba(255,255,255,0.06)'}`, background: doneCnt > 0 ? `${zone.color}08` : isPriority ? `${zone.color}06` : 'rgba(255,255,255,0.025)', transition:'all 0.25s ease' }}>
+                style={{ padding: isMobile ? '10px 10px' : '13px 14px', borderRadius:13, textAlign:'left', cursor:'pointer', border:`1px solid ${doneCnt > 0 ? zone.color+'35' : isPriority ? zone.color+'40' : 'rgba(255,255,255,0.06)'}`, background: doneCnt > 0 ? `${zone.color}08` : isPriority ? `${zone.color}06` : 'rgba(255,255,255,0.025)', transition:'all 0.25s ease' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                  <span style={{ fontSize:11, color:zone.color, fontWeight:500, letterSpacing:'0.03em' }}>{zone.name}</span>
+                  <span style={{ fontSize: isMobile ? 10 : 11, color:zone.color, fontWeight:500, letterSpacing:'0.03em' }}>{zone.name}</span>
                   <span style={{ fontSize:12, color:zone.accent, fontWeight:500 }}>{health}%</span>
                 </div>
                 <div style={{ height:2.5, borderRadius:2, background:'rgba(255,255,255,0.06)', marginBottom:6, overflow:'hidden' }}>
@@ -2516,6 +2516,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
 
 // ── Composant message d'encouragement IA ─────────────────────
 function StreakMessage({ streak }) {
+  const isMobile = useIsMobile()
   if (!streak || streak < 1) return null
 
   const PHRASES = [
@@ -2565,7 +2566,7 @@ function StreakMessage({ streak }) {
         <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:38, fontWeight:400, lineHeight:1, letterSpacing:'-1px', color, textShadow:glow }}>{streak}</span>
         <span style={{ fontSize:11, color:'rgba(238,232,218,0.34)', paddingBottom:3 }}>j.</span>
       </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
+      {!isMobile && <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
         {streak > 1 && (
           <span style={{ fontSize:11.5, color:'rgba(238,232,218,0.48)', whiteSpace:'nowrap' }}>
             Vous êtes à{' '}
@@ -2576,7 +2577,7 @@ function StreakMessage({ streak }) {
           {phrase}
         </em>
       </div>
-    </div>
+      </div>}
   )
 }
 
@@ -3979,7 +3980,7 @@ function ScreenDefis({ userId, awardLumens }) {
 function ScreenJardinCollectif({ userId }) {
   const isMobile = useIsMobile()
   return (
-    <div className="content" style={{ flex:1, overflow:'hidden' }}>
+    <div className="content" style={{ flex:1, overflow:'hidden', paddingBottom: isMobile ? 64 : 0 }}>
       <CommunityGarden currentUserId={userId} embedded />
     </div>
   )

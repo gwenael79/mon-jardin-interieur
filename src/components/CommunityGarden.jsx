@@ -796,6 +796,14 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
+  const [winH, setWinH] = useState(window.innerHeight)
+
+  useEffect(() => {
+    const fn = () => setWinH(window.innerHeight)
+    window.addEventListener('resize', fn)
+    window.addEventListener('orientationchange', () => setTimeout(fn, 100))
+    return () => { window.removeEventListener('resize', fn) }
+  }, [])
 
   useEffect(() => {
     loadCommunityPlants()
@@ -820,7 +828,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
 
   const W_PER   = 42
   const MIN_W   = 2400
-  const svgH    = 580
+  const svgH    = Math.max(380, Math.min(580, winH - (window.innerWidth < 768 ? 130 : 80)))
   const groundY = svgH - 20
   const svgW    = Math.max(MIN_W, plants.length * W_PER + 220)
 
