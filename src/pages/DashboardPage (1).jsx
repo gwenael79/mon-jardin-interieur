@@ -2674,9 +2674,11 @@ function LumensCard({ lumens, userId, awardLumens }) {
               onMouseEnter={e => e.currentTarget.style.background="rgba(232,192,96,0.09)"}
               onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.04)"}
             >
-              <div style={{ display:"grid", gridTemplateColumns:"28px 1fr", alignItems:"center", gap:10, flex:1 }}>
-                <span style={{ fontSize:20, textAlign:"center" }}>{p.icon}</span>
-                <div style={{ fontSize:11, color:"rgba(238,232,218,0.55)", fontWeight:400 }}>{p.lumens} Lumens</div>
+              <div style={{ display:"flex", alignItems:"center", gap:10, flex:1 }}>
+                <span style={{ fontSize:20, flexShrink:0 }}>{p.icon}</span>
+                <div>
+                  <div style={{ fontSize:11, color:"rgba(238,232,218,0.55)", fontWeight:400, whiteSpace:"nowrap", width:80, display:"inline-block" }}>{p.lumens} Lumens</div>
+                </div>
               </div>
               <div style={{ flexShrink:0, width:44, height:44, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:600, color:"#e8c060", background:"rgba(232,192,96,0.12)", border:"1px solid rgba(232,192,96,0.30)", whiteSpace:"nowrap" }}>{p.price} €</div>
             </div>
@@ -4954,7 +4956,6 @@ export default function DashboardPage() {
   const [showCreateCircle, setShowCreateCircle] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
-  const [showMjRight, setShowMjRight] = useState(false)
 
   const topbar = {
   jardin: {
@@ -5058,10 +5059,13 @@ export default function DashboardPage() {
           })()}
           {/* LUMENS */}
           {lumens && (
-            <div className="sb-lumen-bar">
-              <LumenOrb total={lumens.total} level={lumens.level} size={22} />
+            <div className="sb-lumen-bar" title={`${lumens.total} Lumens accumulés`}>
+              <LumenOrb total={lumens.total} level={lumens.level} />
               <div style={{ flex:1 }}>
-                <div className="sb-lumen-label">Lumens</div>
+                <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                  <div className="sb-lumen-label">Lumens</div>
+                  <LumenBadge amount={1} />
+                </div>
                 <div className="sb-lumen-level">{lumens.level === 'faible' ? 'Lumière faible' : lumens.level === 'halo' ? 'Halo visible' : lumens.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}</div>
               </div>
               <div className="sb-lumen-count">{lumens.total} ✦</div>
@@ -5103,30 +5107,6 @@ export default function DashboardPage() {
           <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
             <Component userId={user?.id} openCreate={showCreateCircle} onCreateClose={() => setShowCreateCircle(false)} openInvite={showInviteModal} onInviteClose={() => setShowInviteModal(false)} onReport={refreshPendingReports} awardLumens={awardLumens} lumens={lumens} />
           </div>
-
-          {/* Bouton flottant mobile — accès Lumens + Confidentialité */}
-          {active === 'jardin' && (
-            <>
-              <div
-                onClick={() => setShowMjRight(true)}
-                style={{ display:'none' }}
-                className="mobile-fab"
-              >
-                ✦
-              </div>
-              {showMjRight && (
-                <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-                  <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowMjRight(false)} />
-                  <div style={{ position:'relative', background:'#1a2e1a', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none' }}>
-                    <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
-                    <LumensCard lumens={lumens} userId={user?.id} awardLumens={awardLumens} />
-                    <div className="slabel" style={{ marginTop:20 }}>Confidentialité</div>
-                    <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>Souhaitez-vous apparaître dans le jardin collectif ?</div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
         </div>
       </div>
     </div>
