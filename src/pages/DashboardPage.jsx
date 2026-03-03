@@ -2423,6 +2423,7 @@ function DailyQuizModal({ onComplete, onSkip }) {
 
 // ── RitualsSection ──────────────────────────────────────────
 function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant }) {
+  const isMobile = useIsMobile()
   const [showQuiz,   setShowQuiz]   = useState(false)
   const [activeZone, setActiveZone] = useState(null)
 
@@ -2566,18 +2567,20 @@ function StreakMessage({ streak }) {
         <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:38, fontWeight:400, lineHeight:1, letterSpacing:'-1px', color, textShadow:glow }}>{streak}</span>
         <span style={{ fontSize:11, color:'rgba(238,232,218,0.34)', paddingBottom:3 }}>j.</span>
       </div>
-      {!isMobile && <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
-        {streak > 1 && (
-          <span style={{ fontSize:11.5, color:'rgba(238,232,218,0.48)', whiteSpace:'nowrap' }}>
-            Vous êtes à{' '}
-            <strong style={{ color, fontWeight:600 }}>{streak} jour{streak > 1 ? 's' : ''} consécutif{streak > 1 ? 's' : ''}</strong>
-          </span>
-        )}
-        <em style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'rgba(238,232,218,0.90)', letterSpacing:'0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:520, display:'block' }}>
-          {phrase}
-        </em>
-      </div>
-      </div>}
+      {!isMobile && (
+        <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
+          {streak > 1 && (
+            <span style={{ fontSize:11.5, color:'rgba(238,232,218,0.48)', whiteSpace:'nowrap' }}>
+              Vous êtes à{' '}
+              <strong style={{ color, fontWeight:600 }}>{streak} jour{streak > 1 ? 's' : ''} consécutifs</strong>
+            </span>
+          )}
+          <em style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'rgba(238,232,218,0.90)', className:'streak-phrase' }}>
+            {phrase}
+          </em>
+        </div>
+      )}
+    </div>
   )
 }
 
