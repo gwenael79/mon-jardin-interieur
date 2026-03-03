@@ -2504,84 +2504,72 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
 
 
 // ── Composant message d'encouragement IA ─────────────────────
-function StreakMessage({ streak, userId }) {
-  const [msg, setMsg]         = useState(null)
-  const [loading, setLoading] = useState(false)
-  const cacheKey = `streak-msg-${userId ?? 'anon'}-${streak}`
+function StreakMessage({ streak }) {
+  if (!streak || streak < 1) return null
 
-  const FALLBACKS = [
-  [30, "Tu incarnes pleinement la personne que tu choisis de devenir"],
-  [29, "Ta constance rayonne bien au-dela de ce que tu imagines"],
-  [28, "Tu as transforme un effort en nouvelle norme personnelle"],
+  const PHRASES = [
+    [30, "Tu incarnes pleinement la personne que tu choisis de devenir"],
+  [29, "Ta constance rayonne bien au-delà de ce que tu imagines"],
+  [28, "Tu as transformé un effort en nouvelle norme personnelle"],
   [27, "Ton engagement est devenu une force tranquille"],
   [26, "Tu avances avec une assurance profonde et stable"],
   [25, "Ce que tu construis maintenant t'accompagnera longtemps"],
-  [24, "Ta discipline interieure est solide et inspire confiance"],
-  [23, "Tu prouves que la perseverance change vraiment les choses"],
-  [22, "Ton elan est maitrise et durable"],
-  [21, "Tu tiens avec maturite et determination"],
-  [20, "Ton implication commence a porter de vrais fruits"],
+  [24, "Ta discipline intérieure est solide et inspire confiance"],
+  [23, "Tu prouves que la persévérance change vraiment les choses"],
+  [22, "Ton élan est maîtrisé et durable"],
+  [21, "Tu tiens avec maturité et détermination"],
+  [20, "Ton implication commence à porter de vrais fruits"],
   [19, "Tu renforces chaque jour la confiance en toi"],
-  [18, "L'habitude est bien installee et te soutient"],
-  [17, "Tu progresses avec calme et regularite"],
+  [18, "L'habitude est bien installée et te soutient"],
+  [17, "Tu progresses avec calme et régularité"],
   [16, "Ta constance devient naturelle"],
   [15, "Tu es en train d'ancrer un changement profond"],
   [14, "Tu consolides quelque chose de vraiment durable"],
-  [13, "Ton engagement devient une evidence"],
-  [12, "Tu gagnes en stabilite et en clarte"],
+  [13, "Ton engagement devient une évidence"],
+  [12, "Tu gagnes en stabilité et en clarté"],
   [11, "Ta motivation se transforme en discipline"],
-  [10, "Tu tiens ton cap avec determination"],
-  [9,  "Ton effort d'aujourd'hui construit ton equilibre de demain"],
+  [10, "Tu tiens ton cap avec détermination"],
+  [9,  "Ton effort d'aujourd'hui construit ton équilibre de demain"],
   [8,  "Tu installes une dynamique positive et solide"],
-  [7,  "Tu franchis un cap interieur important"],
+  [7,  "Tu franchis un cap intérieur important"],
   [6,  "Tu confirmes que tu peux compter sur toi"],
-  [5,  "Ton rythme commence a s'affirmer"],
+  [5,  "Ton rythme commence à s'affirmer"],
   [4,  "Tu poses des bases saines et solides"],
   [3,  "Quelque chose de stable prend forme en toi"],
   [2,  "Tu avances avec courage et intention"],
-  [1,  "Tu as decide de commencer, et cela change tout"],
-]
-  const getFallback = (n) => (FALLBACKS.find(([k]) => n >= k) ?? FALLBACKS[FALLBACKS.length-1])[1]
+  [1,  "Tu as décidé de commencer, et cela change tout"],
+  ]
+  const phrase = (PHRASES.find(([k]) => streak >= k) ?? PHRASES[PHRASES.length - 1])[1]
 
-  useEffect(() => {
-    if (!streak || streak < 1) { setMsg(null); return }
-    const cached = sessionStorage.getItem(cacheKey)
-    if (cached) { setMsg(cached); return }
-    setLoading(true)
-    supabase.functions.invoke('streak-message', { body: { streak } })
-      .then(({ data, error }) => {
-        const text = (!error && data?.message) ? data.message : getFallback(streak)
-        setMsg(text)
-        sessionStorage.setItem(cacheKey, text)
-      })
-      .catch(() => setMsg(getFallback(streak)))
-      .finally(() => setLoading(false))
-  }, [streak, cacheKey])
-
-  if (!streak || streak < 1) return null
-
-  const color = streak >= 30 ? '#e8c060' : streak >= 14 ? '#c4a7f0' : streak >= 7 ? '#82c8f0' : streak >= 3 ? '#96d48a' : '#d4ecc8'
-  const glow = streak >= 7 ? '0 0 16px ' + color + '99' : 'none'
+  const color = streak >= 30 ? '#e8c060'
+              : streak >= 14 ? '#c4a7f0'
+              : streak >= 7  ? '#82c8f0'
+              : streak >= 3  ? '#96d48a'
+              :                '#d4ecc8'
+  const glow = streak >= 7 ? '0 0 14px ' + color + 'aa' : 'none'
 
   return (
-    <div style={{ display:'flex', alignItems:'center', gap:10, marginLeft:4 }}>
-      <div style={{ display:'flex', alignItems:'baseline', gap:5, flexShrink:0 }}>
-        <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:38, fontWeight:400, lineHeight:1, letterSpacing:'-1px', color:color, textShadow:glow }}>{streak}</span>
+    <div style={{ display:'flex', alignItems:'center', gap:12, marginLeft:4 }}>
+      <div style={{ display:'flex', alignItems:'baseline', gap:4, flexShrink:0 }}>
+        <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:38, fontWeight:400, lineHeight:1, letterSpacing:'-1px', color, textShadow:glow }}>{streak}</span>
         <span style={{ fontSize:11, color:'rgba(238,232,218,0.34)', paddingBottom:3 }}>j.</span>
       </div>
-      <div style={{ display:'flex', flexDirection:'column', gap:1, overflow:'hidden', minWidth:0 }}>
+      <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
         {streak > 1 && (
-          <span style={{ fontSize:12, color:'rgba(238,232,218,0.52)', letterSpacing:'.02em' }}>
-            Vous êtes à{' '}<strong style={{ color:color, fontWeight:600 }}>{streak} jour{streak>1?'s':''} consécutif{streak>1?'s':''}</strong>
+          <span style={{ fontSize:11.5, color:'rgba(238,232,218,0.48)', whiteSpace:'nowrap' }}>
+            Vous êtes à{' '}
+            <strong style={{ color, fontWeight:600 }}>{streak} jour{streak > 1 ? 's' : ''} consécutif{streak > 1 ? 's' : ''}</strong>
           </span>
         )}
-        <span className='streak-phrase' style={{ opacity:loading?0.3:1, transition:'opacity .5s' }}>
-          {loading ? '…' : (msg ?? getFallback(streak))}
-        </span>
+        <em style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'rgba(238,232,218,0.90)', letterSpacing:'0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:520, display:'block' }}>
+          {phrase}
+        </em>
       </div>
     </div>
   )
 }
+
+
 
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens }) {
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)
@@ -2672,11 +2660,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   }, [_toggleRitual, completedRituals, plant, userId, recordToday])
 
   const PRIVACY_FIELDS = [
-    { field:'show_health',       icon:'💚', label:'Vitalité globale' },
-    { field:'show_rituals',      icon:'🌿', label:'Rituels complétés' },
-    { field:'show_zone_scores',  icon:'📊', label:'Scores par zone' },
-    { field:'show_quiz_answers', icon:'📝', label:'Réponses au quiz' },
-    { field:'show_journal',      icon:'📓', label:'Journal personnel' },
+    { field:'show_health', icon:'🌸', label:'Visibilité de ma fleur' },
   ]
 
   const [gardenSettings, setGardenSettings] = useState(DEFAULT_GARDEN_SETTINGS)
@@ -2851,7 +2835,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       <div className="mj-right">
         <div className="slabel">Confidentialité</div>
         <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>
-          Ce que vos cercles peuvent voir de vous.
+          Souhaitez-vous apparaître dans le jardin collectif ?
         </div>
         {PRIVACY_FIELDS.map(p => (
           <div key={p.field} className="privacy-item">
@@ -2863,34 +2847,6 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           </div>
         ))}
 
-        <div className="slabel" style={{ marginTop:8 }}>Statistiques</div>
-        {[
-          { label:'Jours consécutifs',   val: stats ? `${stats.streak} 🔥` : '—' },
-          { label:'Rituels ce mois',     val: stats?.ritualsThisMonth ?? '—'      },
-          { label:'Zone la plus active', val: stats?.favoriteZone ?? '—'          },
-          { label:'Cercles actifs',      val: '2'                                 },
-        ].map((s, i) => (
-          <div key={i} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-            <div style={{ fontSize:12, color:'var(--text2)', fontWeight:300 }}>{s.label}</div>
-            <div style={{ fontSize:14, color:'var(--text)', fontFamily:"'Cormorant Garamond',serif" }}>{s.val}</div>
-          </div>
-        ))}
-
-        <div className="slabel" style={{ marginTop:8 }}>Exporter</div>
-        {[
-          { label:'Journal PDF',    icon:'📄', action:() => exportPDF(history, entries, user?.display_name ?? user?.email) },
-          { label:'Vitalité CSV',   icon:'📊', action:() => exportPlantCSV(history) },
-          { label:'Journal CSV',    icon:'📝', action:() => exportJournalCSV(entries) },
-        ].map((e, i) => (
-          <div key={i}
-            onClick={e.action}
-            style={{ padding:'9px 13px', background:'rgba(255,255,255,0.05)', border:'1px solid var(--border)', borderRadius:10, fontSize:12, color:'var(--text2)', cursor:'pointer', marginBottom:7, display:'flex', alignItems:'center', gap:9, transition:'all .2s' }}
-            onMouseEnter={ev => ev.currentTarget.style.background='rgba(255,255,255,0.09)'}
-            onMouseLeave={ev => ev.currentTarget.style.background='rgba(255,255,255,0.05)'}
-          >
-            <span style={{ fontSize:14 }}>{e.icon}</span>{e.label}
-          </div>
-        ))}
       </div>
     </div>
     </div>
@@ -4793,6 +4749,22 @@ export default function DashboardPage() {
   const { communityStats } = useDefi(user?.id)
   const { stats } = useCircle(user?.id)
 
+
+  // Nombre de fleurs visibles dans le Jardin Collectif
+  const [gardenFlowerCount, setGardenFlowerCount] = useState(null)
+  useEffect(() => {
+    const since = new Date(); since.setDate(since.getDate() - 7)
+    Promise.all([
+      supabase.from('plants').select('user_id, health, date').gte('date', since.toISOString().split('T')[0]).order('date', { ascending: false }),
+      supabase.from('privacy_settings').select('user_id').eq('show_health', false),
+    ]).then(([plantsRes, privacyRes]) => {
+      if (plantsRes.error) return
+      const hidden = new Set((privacyRes.data || []).map(p => p.user_id))
+      const byUser = {}
+      for (const row of (plantsRes.data || [])) { if (!byUser[row.user_id]) byUser[row.user_id] = row }
+      setGardenFlowerCount(Object.values(byUser).filter(p => !hidden.has(p.user_id) && p.health > 0).length)
+    })
+  }, [])
   const profile = useProfile(user?.id)
   const { lumens, award: awardLumens } = useLumens(user?.id)
 
@@ -4865,7 +4837,7 @@ export default function DashboardPage() {
           {SCREENS.map(s => {
             let badgeVal = null
             if (s.id === 'jardin')  badgeVal = todayPlant?.health != null ? `${todayPlant.health}%` : null
-            if (s.id === 'champ')   badgeVal = communityStats?.activeGardens != null ? communityStats.activeGardens + 1 : null
+            if (s.id === 'champ')   badgeVal = gardenFlowerCount ?? null
             if (s.id === 'cercles') badgeVal = stats?.myCircleCount > 0 ? stats.myCircleCount : null
             if (s.id === 'cercle')  badgeVal = circleMembers?.length > 0 ? circleMembers.length : null
             if (s.id === 'defis')   badgeVal = communityStats?.totalDefis > 0 ? communityStats.totalDefis : null
@@ -4954,7 +4926,7 @@ export default function DashboardPage() {
         <div className="main">
           <div className="topbar">
             <div className="tb-title">{topbar.title}</div>
-            {active === 'jardin' && <StreakMessage streak={plantStats?.streak ?? 0} userId={user?.id} />}
+            {active === 'jardin' && <StreakMessage streak={plantStats?.streak ?? 0} />}
             <div style={{ flex:1 }} />
             <div className="tb-btn ghost" style={{ marginRight:5 }}>Aide</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
