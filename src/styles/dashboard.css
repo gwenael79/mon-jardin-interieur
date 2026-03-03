@@ -730,3 +730,112 @@ body { background: var(--bg); }
   }
   .mobile-fab:active { transform: scale(0.92); }
 }
+
+/* ═══════════════════════════════════════════════════════
+   ATELIERS — RESPONSIVE
+═══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Layout principal : colonne, filtre en haut */
+  .at-layout {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Panneau filtre : horizontal compact en haut */
+  .at-right {
+    width: 100% !important;
+    border-left: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+    padding: 12px 14px !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+    order: -1 !important;
+  }
+
+  /* "Je recherche mon atelier" → caché sur mobile, gains de place */
+  .at-right > div:first-child > div:first-child { display: none; }
+
+  /* Filtres en ligne */
+  .at-right > div:first-child > div:last-child {
+    flex-direction: row !important;
+    gap: 8px !important;
+    flex-wrap: wrap;
+  }
+  .at-right select {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Ateliers populaires → caché sur mobile */
+  .at-right > div:last-child { display: none; }
+
+  /* Contenu principal */
+  .at-main {
+    padding: 14px 14px 80px !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
+  }
+
+  /* Header ateliers */
+  .at-main > div:first-child {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .at-main > div:first-child > div:first-child > div:first-child {
+    font-size: 20px !important;
+  }
+  .at-main > div:first-child button {
+    font-size: 10px !important;
+    padding: 6px 12px !important;
+  }
+
+  /* Tabs : scroll horizontal */
+  .at-main > div[style*="borderBottom"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+  }
+  .at-main > div[style*="borderBottom"]::-webkit-scrollbar { display: none; }
+  .at-main > div[style*="borderBottom"] > div {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 8px 12px !important;
+    font-size: 10px !important;
+  }
+
+  /* Cards ateliers */
+  .atelier-card, [class*="atelier"] {
+    padding: 12px !important;
+  }
+}
+
+/* ── Corrections overflow layouts mobile ── */
+@media (max-width: 768px) {
+  .content {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    flex-direction: column !important;
+  }
+  /* Rpanel masqué sur mobile (aussi géré en JSX) */
+  .rpanel { display: none !important; }
+  /* Cercles grid : 1 colonne */
+  .circles-grid { grid-template-columns: 1fr !important; }
+  /* Cercle détail : scroll vertical */
+  .cercle-layout, [class*="cercle"] > .content {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  /* Defis : scroll vertical */
+  .defis-layout { flex-direction: column !important; overflow-y: auto !important; }
+  /* Jardins grid 2 col */
+  .gardens-grid { grid-template-columns: repeat(2,1fr) !important; }
+  /* Topbar streak hidden */
+  .streak-phrase { display: none !important; }
+  /* Topbar compact */
+  .topbar .tb-subtitle { display: none !important; }
+}

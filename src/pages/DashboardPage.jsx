@@ -1518,6 +1518,7 @@ function useProximityMembers(userId) {
 }
 
 function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteClose }) {
+  const isMobile = window.innerWidth <= 768
   const { circleMembers, activeCircle } = useCircle(userId)
   const { received, send } = useGestures(userId)
   const { activity } = useRecentActivity(activeCircle?.id)
@@ -1621,7 +1622,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
         ))}
         </div>
 
-        <div className="rpanel">
+        <div className="rpanel" style={{ display: isMobile ? "none" : undefined }}>
         <div className="rp-section">
           <div className="rp-slabel">Ma communauté · {proximityMembers.length}</div>
 
@@ -3601,7 +3602,7 @@ function ScreenCercles({ userId, openCreate, onCreateClose, onReport, awardLumen
 
         </div>
 
-        <div className="rpanel">
+        <div className="rpanel" style={{ display: isMobile ? "none" : undefined }}>
           <div className="rp-section">
             <div className="rp-slabel">Rejoindre via code</div>
             <div style={{ display:'flex', gap:7, marginBottom:6 }}>
@@ -3904,7 +3905,7 @@ function ScreenDefis({ userId, awardLumens }) {
         </div>
       </div>
 
-      <div className="rpanel">
+      <div className="rpanel" style={{ display: isMobile ? "none" : undefined }}>
         <div className="rp-section">
           <div className="rp-slabel">Mes défis actifs</div>
           {myDefis.length === 0 && <div style={{ fontSize:12, color:'var(--text3)', padding:'8px 0' }}>Aucun défi en cours</div>}
@@ -4265,6 +4266,8 @@ const iStyle = { width:'100%', padding:'9px 12px', background:'#1e3a1e', border:
 const btnStyle = { padding:'9px 18px', background:'linear-gradient(135deg,rgba(122,173,110,.25),rgba(122,173,110,.15))', border:'1px solid rgba(150,212,133,0.4)', borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color:'#c8f0b8', cursor:'pointer', transition:'all .2s' }
 
 function ScreenAteliers({ userId, awardLumens, lumens }) {
+  const isMobile = window.innerWidth <= 768
+  const [showFilter, setShowFilter] = useState(false)
   const [ateliers,    setAteliers]    = useState([])
   const [myReg,       setMyReg]       = useState([]) // ids des ateliers où je suis inscrit
   const [isAnimator,  setIsAnimator]  = useState(false)
@@ -4482,9 +4485,9 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
   const sStyle = { width:'100%', padding:'8px 10px', background:'#1a2e1a', border:'1px solid rgba(255,255,255,0.12)', borderRadius:8, fontSize:11, fontFamily:'Jost,sans-serif', color:'#f2ede0', outline:'none', colorScheme:'dark' }
 
   return (
-    <div style={{ flex:1, overflow:'hidden', display:'flex', gap:0 }}>
+    <div style={{ flex:1, overflow: isMobile ? 'auto' : 'hidden', display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:0 }} className='at-layout'>
       {/* PANNEAU DROITE */}
-      <div style={{ width:220, flexShrink:0, borderLeft:'1px solid rgba(255,255,255,0.07)', padding:'20px 14px', display:'flex', flexDirection:'column', gap:18, overflowY:'auto', order:2 }}>
+      <div className='at-right' style={{ width: isMobile ? '100%' : 220, flexShrink:0, borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.07)', borderBottom: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', padding: isMobile ? '10px 14px' : '20px 16px', overflowY: isMobile ? 'visible' : 'auto', display: isMobile && !showFilter ? 'none' : 'block' }}>
         
         {/* RECHERCHE */}
         <div>
@@ -4575,8 +4578,9 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
       </div>
 
       {/* CONTENU PRINCIPAL — gauche */}
-      <div style={{ flex:1, overflowY:'auto', padding:'24px 28px', order:1 }}>
+      <div className='at-main' style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 14px 80px' : '24px 28px', order:1 }}>
       {/* HEADER */}
+      {isMobile && <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}><div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:20, fontWeight:300, color:'#e8d4a8' }}>Ateliers</div><button onClick={() => setShowFilter(f => !f)} style={{ fontSize:10, padding:'6px 12px', background: showFilter ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:20, color: showFilter ? '#c8f0b8' : 'rgba(242,237,224,0.6)', cursor:'pointer' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button></div>}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
         <div>
           <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:26, fontWeight:300, color:'#e8d4a8' }}>Ateliers</div>
@@ -4593,15 +4597,14 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
         )}
       </div>
 
-      {/* TABS */}
-      <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,0.08)', marginBottom:20 }}>
+      <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,0.08)', marginBottom:20, overflowX: isMobile ? 'auto' : 'visible', flexWrap:'nowrap', WebkitOverflowScrolling:'touch' }}>
         {[
-          { id:'upcoming', label:`À venir (${upcoming.length})` },
+          { id:'upcoming', label:`À venir (${upcoming.length})`, short:`(${upcoming.length})` },
           { id:'mine',     label: isAnimator ? `Mes ateliers (${mine.length})` : `Mes inscriptions (${myInscriptions.length})` },
           { id:'past',     label:`Passés (${past.length})` },
           { id:'prefs', label:'⚙ Préférences' },
         ].map(t => (
-          <div key={t.id} onClick={() => setTab(t.id)} style={{ padding:'8px 20px', fontSize:11, letterSpacing:'.07em', cursor:'pointer', borderBottom:`2px solid ${tab===t.id ? '#96d485' : 'transparent'}`, color: tab===t.id ? '#c8f0b8' : 'rgba(242,237,224,0.5)', marginBottom:-1, transition:'all .2s', display:'flex', alignItems:'center', gap:6, position:'relative' }}>
+          <div key={t.id} onClick={() => setTab(t.id)} style={{ padding: isMobile ? '7px 10px' : '8px 16px', fontSize: isMobile ? 10 : 11, whiteSpace:'nowrap', letterSpacing:'.07em', cursor:'pointer', borderBottom:`2px solid ${tab===t.id ? '#96d485' : 'transparent'}`, color: tab===t.id ? '#c8f0b8' : 'rgba(242,237,224,0.5)', marginBottom:-1, transition:'all .2s', display:'flex', alignItems:'center', gap:6, position:'relative' }}>
             {t.label}
             {t.id === 'prefs' && invitations.length > 0 && (
               <div onClick={e => { e.stopPropagation(); setShowInvitePanel(p => !p) }} style={{ fontSize:9, fontWeight:600, borderRadius:100, background:'linear-gradient(135deg,#e8d4a8,#c9a84c)', color:'#1a2e1a', display:'inline-flex', alignItems:'center', padding:'2px 7px', whiteSpace:'nowrap', cursor:'pointer' }}>
