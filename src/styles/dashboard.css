@@ -540,7 +540,12 @@ body { background: var(--bg); }
     border-top: 1px solid var(--border2);
     overflow: visible;
     flex-shrink: 0;
-    z-index: 100;
+    z-index: 102;
+    position: fixed;
+    bottom: 38px;
+    left: 0;
+    right: 0;
+    background: rgba(20,36,20,0.98);
   }
 
   /* Cacher les éléments non nav dans la sidebar */
@@ -614,7 +619,7 @@ body { background: var(--bg); }
 
   /* Colonne gauche : pleine largeur */
   .mj-left {
-    padding: 12px 14px 110px;
+    padding: 12px 14px 120px;
     gap: 12px;
     overflow-y: auto;
     overflow-x: hidden;
@@ -840,7 +845,7 @@ body { background: var(--bg); }
   .col {
     overflow-y: visible !important;
     min-height: unset !important;
-    padding: 14px 14px 80px !important;
+    padding: 14px 14px 120px !important;
   }
   .col + .rpanel { display: none !important; }
 }

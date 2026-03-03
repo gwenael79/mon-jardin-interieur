@@ -4986,47 +4986,6 @@ export default function DashboardPage() {
     <div className="root">
       <div className="app-layout">
 
-        {/* BANDEAU LUMENS MOBILE — au dessus de la bottom nav */}
-        {isMobile && (
-          <>
-            <div
-              onClick={() => setShowLumensModal(true)}
-              style={{
-                position: 'fixed',
-                bottom: 64,
-                left: 0, right: 0,
-                zIndex: 99,
-                background: 'linear-gradient(90deg, rgba(232,192,96,0.13), rgba(232,192,96,0.08))',
-                borderTop: '1px solid rgba(232,192,96,0.28)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '7px 18px',
-                cursor: 'pointer',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>✦</span>
-              <span style={{ fontSize: 13, color: '#e8c060', fontFamily: "'Cormorant Garamond', serif", fontWeight: 600 }}>
-                {lumens?.total ?? 0} Lumens
-              </span>
-              <span style={{ fontSize: 10, color: 'rgba(232,192,96,0.55)', textTransform: 'uppercase', letterSpacing: '.08em' }}>
-                {lumens?.level === 'faible' ? 'Lumière faible' : lumens?.level === 'halo' ? 'Halo visible' : lumens?.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}
-              </span>
-              <span style={{ marginLeft: 'auto', fontSize: 10, color: 'rgba(232,192,96,0.45)' }}>Gérer →</span>
-            </div>
-
-            {showLumensModal && (
-              <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
-                <div style={{ position: 'relative', background: '#1a2e1a', borderRadius: '20px 20px 0 0', padding: '20px 18px 40px', maxHeight: '85vh', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.10)', borderBottom: 'none' }}>
-                  <div style={{ width: 36, height: 3, background: 'rgba(255,255,255,0.2)', borderRadius: 100, margin: '0 auto 18px' }} />
-                  <LumensCard lumens={lumens} userId={user?.id} awardLumens={awardLumens} />
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
         {/* SIDEBAR */}
         <div className="sidebar">
           <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
@@ -5115,6 +5074,47 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* BANDEAU LUMENS MOBILE — sous la bottom nav */}
+        {isMobile && (
+          <>
+            <div
+              onClick={() => setShowLumensModal(true)}
+              style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0, right: 0,
+                zIndex: 101,
+                background: 'linear-gradient(90deg, rgba(20,38,20,0.98), rgba(26,46,26,0.98))',
+                borderTop: '1px solid rgba(232,192,96,0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 18px',
+                paddingBottom: 'calc(9px + env(safe-area-inset-bottom))',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 17 }}>✦</span>
+              <span style={{ fontSize: 14, color: '#e8c060', fontFamily: "'Cormorant Garamond', serif", fontWeight: 600 }}>
+                {lumens?.total ?? 0} Lumens
+              </span>
+              <span style={{ fontSize: 10, color: 'rgba(232,192,96,0.6)', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                {lumens?.level === 'faible' ? 'Lumière faible' : lumens?.level === 'halo' ? 'Halo visible' : lumens?.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: 11, color: 'rgba(232,192,96,0.5)' }}>Gérer →</span>
+            </div>
+
+            {showLumensModal && (
+            {showLumensModal && (
+              <div style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 16px' }}>
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
+                <div style={{ position: 'relative', background: '#1a2e1a', borderRadius: 20, padding: '20px 18px 28px', width: '100%', maxWidth: 420, maxHeight: '80vh', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.10)' }}>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* MAIN */}
         <div className="main">
