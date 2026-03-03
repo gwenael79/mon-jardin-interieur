@@ -4487,7 +4487,7 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
   return (
     <div style={{ flex:1, overflow: isMobile ? 'auto' : 'hidden', display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:0 }} className='at-layout'>
       {/* PANNEAU DROITE */}
-      <div className='at-right' style={{ width: isMobile ? '100%' : 220, flexShrink:0, borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.07)', borderBottom: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', padding: isMobile ? '10px 14px' : '20px 16px', overflowY: isMobile ? 'visible' : 'auto', display: isMobile && !showFilter ? 'none' : 'block' }}>
+      <div className='at-right' style={{ width: isMobile ? '100%' : 220, flexShrink:0, borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.07)', borderBottom: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', padding: isMobile ? '10px 14px' : '20px 16px', overflowY: isMobile ? 'visible' : 'auto', display: isMobile && !showFilter ? 'none' : 'block', order: isMobile ? -1 : 2 }}>
         
         {/* RECHERCHE */}
         <div>
@@ -4578,7 +4578,7 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
       </div>
 
       {/* CONTENU PRINCIPAL — gauche */}
-      <div className='at-main' style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 14px 80px' : '24px 28px', order:1 }}>
+      <div className='at-main' style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 14px 80px' : '24px 28px' }}>
       {/* HEADER */}
       {isMobile && <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}><div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:20, fontWeight:300, color:'#e8d4a8' }}>Ateliers</div><button onClick={() => setShowFilter(f => !f)} style={{ fontSize:10, padding:'6px 12px', background: showFilter ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:20, color: showFilter ? '#c8f0b8' : 'rgba(242,237,224,0.6)', cursor:'pointer' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button></div>}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
@@ -4682,7 +4682,7 @@ function ScreenAteliers({ userId, awardLumens, lumens }) {
             {tab === 'upcoming' ? "Aucun atelier à venir pour l'instant" : tab === 'mine' ? isAnimator ? "Vous n'avez pas encore créé d'atelier" : "Vous n'êtes inscrit à aucun atelier" : 'Aucun atelier passé'}
           </div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(2, 1fr)', gap:12 }}>
+          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap:12 }}>
             {displayed.map(a => (
               <AtelierCard key={a.id} atelier={a} isInscrit={myReg.includes(a.id)} isAnimator={isAnimator} isMine={a.animator_id === userId} onInscrit={handleInscrire} onDesinscrit={handleDesinscrire} onDelete={handleDelete} userId={userId} onInvite={handleInviteMatching} onPayLumens={handlePayLumens} lumens={lumens} />
             ))}
