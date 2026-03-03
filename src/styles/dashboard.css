@@ -624,16 +624,21 @@ body { background: var(--bg); }
   .ph-2col {
     flex-direction: column;
     min-height: auto;
+    overflow: visible !important;
   }
   .ph-col-flower {
     border-radius: 16px 16px 0 0;
     height: 160px;
   }
+  .ph-zones-list { display: none; }
   .ph-col-info {
-    border-radius: 0 0 16px 16px;
     border-left: none;
     border-top: 1px solid rgba(150,212,133,0.10);
     padding: 14px 16px 12px;
+    overflow: visible !important;
+    height: auto !important;
+    justify-content: flex-start !important;
+    gap: 10px;
   }
   .ph-score-digits { font-size: 42px; }
   .ph-score-pct    { font-size: 20px; }

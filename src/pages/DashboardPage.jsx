@@ -2474,7 +2474,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
         )}
 
         {/* Grille des zones */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap:9 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
           {sortedZones.map((zoneId, index) => {
             const zone      = PLANT_ZONES[zoneId]
             const rituals   = PLANT_RITUALS[zoneId] || []
@@ -2486,25 +2486,20 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
             const isFirst   = hasDegradation && index === 0 && deg >= 60
             return (
               <button key={zoneId} onClick={() => setActiveZone(zoneId)}
-                style={{ padding: isMobile ? '10px 10px' : '13px 14px', borderRadius:13, textAlign:'left', cursor:'pointer', border:`1px solid ${doneCnt > 0 ? zone.color+'35' : isPriority ? zone.color+'40' : 'rgba(255,255,255,0.06)'}`, background: doneCnt > 0 ? `${zone.color}08` : isPriority ? `${zone.color}06` : 'rgba(255,255,255,0.025)', transition:'all 0.25s ease' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                style={{ padding: isMobile ? '7px 12px' : '13px 14px', borderRadius:13, textAlign:'left', cursor:'pointer', background: isPriority ? `${zone.color}10` : 'rgba(255,255,255,0.04)', border:`1px solid ${isPriority ? zone.color + '40' : 'rgba(255,255,255,0.09)'}`, width:'100%', display:'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? 8 : 0 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0, minWidth: isMobile ? 90 : 'auto' }}>
                   <span style={{ fontSize: isMobile ? 10 : 11, color:zone.color, fontWeight:500, letterSpacing:'0.03em' }}>{zone.name}</span>
-                  <span style={{ fontSize:12, color:zone.accent, fontWeight:500 }}>{health}%</span>
+                  <span style={{ fontSize: isMobile ? 11 : 12, color:zone.accent, fontWeight:500 }}>{health}%</span>
                 </div>
-                <div style={{ height:2.5, borderRadius:2, background:'rgba(255,255,255,0.06)', marginBottom:6, overflow:'hidden' }}>
-                  <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg,${zone.color},${zone.accent})`, borderRadius:2, transition:'width 1.2s ease' }} />
+                <div style={{ flex:1, height:2.5, borderRadius:2, background:'rgba(255,255,255,0.06)' }}>
+                  <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg,${zone.color}88,${zone.color})`, borderRadius:2, transition:'width .6s ease' }} />
                 </div>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize:10, color:'rgba(180,200,180,0.28)' }}>
-                    {doneCnt}/{rituals.length} rituel{doneCnt !== 1 ? 's' : ''}
-                    {isPriority && !isFirst ? ' · prioritaire' : ''}
-                  </span>
-                  {isPriority && (
-                    <span style={{ fontSize:9, color:zone.color, background:`${zone.color}20`, padding:'2px 7px', borderRadius:8, fontWeight:500 }}>
-                      {isFirst ? '🔴 Prioritaire' : '⚡'}
-                    </span>
-                  )}
-                </div>
+                {!isMobile && (
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:6 }}>
+                    <span style={{ fontSize:10, color:'rgba(180,200,180,0.28)' }}>{doneCnt}/{rituals.length} rituel{doneCnt !== 1 ? 's' : ''}</span>
+                    {isPriority && <span style={{ fontSize:9, color:zone.color, background:`${zone.color}20`, padding:'2px 7px', borderRadius:100 }}>{isFirst ? '🔴 Prioritaire' : '⚡'}</span>}
+                  </div>
+                )}
               </button>
             )
           })}
@@ -2575,7 +2570,7 @@ function StreakMessage({ streak }) {
               <strong style={{ color, fontWeight:600 }}>{streak} jour{streak > 1 ? 's' : ''} consécutifs</strong>
             </span>
           )}
-          <em style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'rgba(238,232,218,0.90)', className:'streak-phrase' }}>
+          <em className='streak-phrase' style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'rgba(238,232,218,0.90)' }}>
             {phrase}
           </em>
         </div>
@@ -2968,6 +2963,10 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           onQuizComplete={handleQuizComplete}
           todayPlant={plant}
         />
+
+        {isMobile && (
+          <LumensCard lumens={lumens} userId={userId} awardLumens={awardLumens} />
+        )}
 
         <div className="history-chart">
           <div className="hc-header">

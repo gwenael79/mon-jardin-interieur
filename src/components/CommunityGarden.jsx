@@ -884,7 +884,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
       inset: embedded ? 'auto' : 0,
       zIndex: embedded ? 'auto' : 300,
       width: embedded ? '100%' : undefined,
-      height: embedded ? '100%' : undefined,
+      height: embedded ? svgH : undefined,
+      minHeight: embedded ? svgH : undefined,
       background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
       overflow:'hidden',
       display:'flex', flexDirection:'column',
@@ -937,6 +938,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           position:'absolute', inset:0,
           overflowX:'auto',
           overflowY:'hidden',
+          height: svgH,
           scrollbarWidth:'thin',
           scrollbarColor:'rgba(120,120,120,0.3) transparent',
         }}
@@ -955,7 +957,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         )}
 
         {!loading && !err && (
-          <svg width={svgW} height="100%" style={{display:'block', height:'100%', minHeight:'100%'}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMinYMax slice" fill="none">
+          <svg width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={skyA}/>
