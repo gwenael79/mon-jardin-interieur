@@ -240,7 +240,9 @@ body { background: var(--bg); }
 }
 .tb-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--gold); flex: 1; }
 .tb-title em { font-style: italic; color: var(--green); }
-.tb-subtitle { font-size: 11px; color: var(--text3); letter-spacing: 0.05em; align-self: flex-end; padding-bottom: 2px; }
+.tb-subtitle { font-size: 11px; color: var(--text3); letter-spacing: 0.05em; align-self: center; padding-bottom: 0; display: flex; align-items: center; }
+.tb-subtitle span { font-style: italic; }
+.streak-phrase { font-size: 20px !important; font-style: italic !important; font-weight: 300 !important; color: rgba(238,232,218,0.88) !important; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px; }
 .tb-btn {
   padding: 7px 18px; border-radius: 100px; font-size: 11px; letter-spacing: 0.08em;
   cursor: pointer; transition: all 0.2s; border: 1px solid var(--greenT);
@@ -495,6 +497,11 @@ body { background: var(--bg); }
 .profile-save:hover:not(:disabled) { background: rgba(150,212,133,0.32); }
 .profile-save:disabled { opacity: 0.45; cursor: default; }
 .profile-saved { text-align: center; font-size: 12px; color: rgba(150,212,133,0.8); margin-top: 10px; letter-spacing: 0.05em; }
+
+/* ── ANIMATIONS RITUELS ── */
+@keyframes fadeUp  { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
+@keyframes slideUp { from { opacity:0; transform:translateY(40px) } to { opacity:1; transform:translateY(0) } }
+@keyframes pulse   { 0%,100% { transform:scale(1);    opacity:0.9 } 50% { transform:scale(1.06); opacity:1 } }
 
 /* ── GARDENS GRID ── */
 .gardens-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }

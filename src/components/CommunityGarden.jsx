@@ -132,11 +132,312 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   const pBk1 = `rgba(${Math.round(r1*.72)},${Math.round(g1*.72)},${Math.round(b1*.72)},0.48)`
   const pBk2 = `rgba(${Math.round(r1*.55)},${Math.round(g1*.55)},${Math.round(b1*.55)},0.30)`
 
-  /* ── Forme pétales (identique à PlantSVG) ── */
+  /* ── Forme pétales — système botanique complet (sync DashboardPage) ── */
   const ps  = gs.petalShape || 'round'
-  const pRx = ps==='wide' ? 8+14*r : ps==='pointed' ? 4+7*r  : 6+10*r
-  const pRy = ps==='wide' ? 9+13*r : ps==='pointed' ? 14+22*r: 12+18*r
-  const pD  = 8+11*r
+  // Taille globale de la fleur selon la santé
+  const fS = 7 + 12 * r   // flower size base
+
+  // Générateur de pétale : path SVG en coordonnées locales (0,0 = base, pointe vers -Y)
+  const petalPath = (w, h, curve=0.3) => {
+    // Bézier cubique symétrique : base large, pointe en haut
+    const hw = w/2
+    return `M 0,0 C ${-hw},${-h*curve} ${-hw*0.6},${-h*0.85} 0,${-h} C ${hw*0.6},${-h*0.85} ${hw},${-h*curve} 0,0`
+  }
+  // Pétale pointu : pointe effilée
+  const pointedPath = (w, h) => {
+    const hw = w/2
+    return `M 0,0 C ${-hw},${-h*0.25} ${-hw*0.4},${-h*0.7} 0,${-h} C ${hw*0.4},${-h*0.7} ${hw},${-h*0.25} 0,0`
+  }
+  // Pétale tulipe : haut arrondi, bords légèrement recourbés vers l'intérieur
+  const tulipPath = (w, h) => {
+    const hw = w/2
+    return `M 0,0 C ${-hw*1.1},${-h*0.2} ${-hw*1.15},${-h*0.65} ${-hw*0.7},${-h*0.85} C ${-hw*0.3},${-h} ${hw*0.3},${-h} ${hw*0.7},${-h*0.85} C ${hw*1.15},${-h*0.65} ${hw*1.1},${-h*0.2} 0,0 Z`
+  }
+  // Pétale marguerite : fin, long, spatule au bout
+  const daisyPath = (w, h) => {
+    const hw = w/2
+    return `M 0,0 C ${-hw*0.8},${-h*0.15} ${-hw},${-h*0.6} ${-hw*0.85},${-h*0.82} C ${-hw*1.1},${-h*0.88} ${-hw*0.9},${-h} 0,${-h} C ${hw*0.9},${-h} ${hw*1.1},${-h*0.88} ${hw*0.85},${-h*0.82} C ${hw},${-h*0.6} ${hw*0.8},${-h*0.15} 0,0 Z`
+  }
+  // Pétale orchidée : labelle asymétrique avec ondulation latérale
+  const orchidPath = (w, h, side=1) => {
+    const hw = w/2
+    // Pétale principal avec renflement latéral caractéristique de l'orchidée
+    return `M 0,0 C ${-hw*0.9},${-h*0.15} ${-hw*1.2*side},${-h*0.45} ${-hw*0.8},${-h*0.75} C ${-hw*0.5},${-h*0.92} ${hw*0.2},${-h} ${hw*0.3},${-h*0.9} C ${hw*1.1},${-h*0.7} ${hw*0.9},${-h*0.3} 0,0 Z`
+  }
+  // Pétale cactus-flower : bords dentelés, texture structurée
+  const cactusPath = (w, h) => {
+    const hw = w/2
+    // Pétale avec micro-ondulations sur les bords
+    return `M 0,0 C ${-hw},${-h*0.1} ${-hw*1.1},${-h*0.3} ${-hw*0.95},${-h*0.5} L ${-hw*1.05},${-h*0.55} L ${-hw*0.85},${-h*0.62} L ${-hw*0.98},${-h*0.7} L ${-hw*0.72},${-h*0.8} C ${-hw*0.4},${-h*0.92} ${hw*0.4},${-h*0.92} ${hw*0.72},${-h*0.8} L ${hw*0.98},${-h*0.7} L ${hw*0.85},${-h*0.62} L ${hw*1.05},${-h*0.55} L ${hw*0.95},${-h*0.5} C ${hw*1.1},${-h*0.3} ${hw},${-h*0.1} 0,0 Z`
+  }
+  // Pétale passiflore : fil corona + pétale aplati
+  const passionPath = (w, h) => {
+    const hw = w/2
+    return `M 0,0 C ${-hw*1.3},${-h*0.08} ${-hw*1.4},${-h*0.35} ${-hw*1.1},${-h*0.55} C ${-hw*0.85},${-h*0.72} ${-hw*0.4},${-h} 0,${-h} C ${hw*0.4},${-h} ${hw*0.85},${-h*0.72} ${hw*1.1},${-h*0.55} C ${hw*1.4},${-h*0.35} ${hw*1.3},${-h*0.08} 0,0 Z`
+  }
+  // Pétale iris : forme en chute d'eau avec renflement médian
+  const irisPath = (w, h, drooping=false) => {
+    const hw = w/2
+    if (drooping) {
+      // Tepale tombant vers le bas
+      return `M 0,0 C ${-hw*0.6},${h*0.1} ${-hw*1.1},${h*0.4} ${-hw*0.9},${h*0.75} C ${-hw*0.6},${h} ${hw*0.6},${h} ${hw*0.9},${h*0.75} C ${hw*1.1},${h*0.4} ${hw*0.6},${h*0.1} 0,0 Z`
+    }
+    // Tepal érigé vers le haut
+    return `M 0,0 C ${-hw*0.7},${-h*0.12} ${-hw*1.2},${-h*0.42} ${-hw*1.0},${-h*0.72} C ${-hw*0.7},${-h*0.9} ${-hw*0.2},${-h} 0,${-h*0.95} C ${hw*0.2},${-h} ${hw*0.7},${-h*0.9} ${hw*1.0},${-h*0.72} C ${hw*1.2},${-h*0.42} ${hw*0.7},${-h*0.12} 0,0 Z`
+  }
+  // Pétale anémone : rond, avec nervures rayonnantes
+  const anemonePath = (w, h) => {
+    const hw = w * 0.55
+    return `M 0,0 C ${-hw*1.1},${-h*0.05} ${-hw*1.3},${-h*0.5} ${-hw},${-h*0.85} C ${-hw*0.65},${-h} ${hw*0.65},${-h} ${hw},${-h*0.85} C ${hw*1.3},${-h*0.5} ${hw*1.1},${-h*0.05} 0,0 Z`
+  }
+
+  /* Render d'un pétale à angle donné autour de (ox,oy)
+     pathFn : fonction retournant la string path en coords locales
+     d      : distance du centre
+     scale  : taille (0-1)
+     angle  : degrés
+  */
+  const R = (deg) => deg * Math.PI / 180
+  const renderFlower = (ox, oy, fillUrl, blurUrl, fillUrl2) => {
+    const s = fS
+    // Fonctions communes
+    const petal = (pathStr, angle, dist, scaleX=1, scaleY=1, fill=fillUrl, blur=null, op=1) => {
+      const rad = R(angle - 90)
+      const px = ox + Math.cos(rad) * dist
+      const py = oy + Math.sin(rad) * dist
+      return <path d={pathStr}
+        transform={`translate(${px},${py}) rotate(${angle})`}
+        fill={fill} filter={blur ? `url(#${blur})` : undefined}
+        opacity={op}/>
+    }
+
+    /* ── NIVEAU 1 : ellipses classiques (rendu original) ── */
+    if (ps === 'round') {
+      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
+      return <g>
+        {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
+          const rad=a*Math.PI/180
+          const px=ox+Math.cos(rad)*pD*0.8, py=oy+Math.sin(rad)*pD*0.8
+          return <ellipse key={i} cx={px} cy={py} rx={pRx*0.68} ry={pRy*0.68}
+            fill={fillUrl2} transform={"rotate("+String(a+90)+","+px+","+py+")"}
+            filter={"url(#"+blurUrl+")"} opacity={0.85}/>
+        })}
+        {[0,45,90,135,180,225,270,315].map((a,i) => {
+          const rad=a*Math.PI/180
+          const px=ox+Math.cos(rad)*pD, py=oy+Math.sin(rad)*pD
+          return <ellipse key={i} cx={px} cy={py} rx={pRx} ry={pRy}
+            fill={fillUrl} transform={"rotate("+String(a+90)+","+px+","+py+")"}/>
+        })}
+      </g>
+    }
+    if (ps === 'wide') {
+      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
+      return <g>
+        {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
+          const rad=a*Math.PI/180
+          const px=ox+Math.cos(rad)*pD*0.8, py=oy+Math.sin(rad)*pD*0.8
+          return <ellipse key={i} cx={px} cy={py} rx={pRx*0.68} ry={pRy*0.68}
+            fill={fillUrl2} transform={"rotate("+String(a+90)+","+px+","+py+")"}
+            filter={"url(#"+blurUrl+")"} opacity={0.85}/>
+        })}
+        {[0,45,90,135,180,225,270,315].map((a,i) => {
+          const rad=a*Math.PI/180
+          const px=ox+Math.cos(rad)*pD, py=oy+Math.sin(rad)*pD
+          return <ellipse key={i} cx={px} cy={py} rx={pRx} ry={pRy}
+            fill={fillUrl} transform={"rotate("+String(a+90)+","+px+","+py+")"}/>
+        })}
+      </g>
+    }
+    if (ps === 'pointed') {
+      const pRx = 4+7*r, pRy = 14+22*r, pD = 8+11*r
+      return <g>
+        {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
+          const rad=a*Math.PI/180
+          const px=ox+Math.cos(rad)*pD*0.8, py=oy+Math.sin(rad)*pD*0.8
+          return <ellipse key={i} cx={px} cy={py} rx={pRx*0.68} ry={pRy*0.68}
+            fill={fillUrl2} transform={"rotate("+String(a+90)+","+px+","+py+")"}
+            filter={"url(#"+blurUrl+")"} opacity={0.75}/>
+        })}
+        {[0,45,90,135,180,225,270,315].map((a,i) => {
+          const rad=a*Math.PI/180
+          const px=ox+Math.cos(rad)*pD, py=oy+Math.sin(rad)*pD
+          return <ellipse key={i} cx={px} cy={py} rx={pRx} ry={pRy}
+            fill={fillUrl} transform={"rotate("+String(a+90)+","+px+","+py+")"}/>
+        })}
+      </g>
+    }
+    /* ──────── NIVEAU 2 ──────── */
+    if (ps === 'tulip') {
+      const outer = tulipPath(s*1.0, s*2.0)
+      const inner = tulipPath(s*0.75, s*1.65)
+      return <g>
+        {[0,120,240].map((a,i) =>
+          <path key={'o'+i} d={outer} transform={`translate(${ox+Math.cos(R(a-90))*s*0.65},${oy+Math.sin(R(a-90))*s*0.65}) rotate(${a})`} fill={fillUrl2} filter={`url(#${blurUrl})`} opacity={0.75}/>
+        )}
+        {[60,180,300].map((a,i) =>
+          <path key={'i'+i} d={inner} transform={`translate(${ox+Math.cos(R(a-90))*s*0.55},${oy+Math.sin(R(a-90))*s*0.55}) rotate(${a})`} fill={fillUrl} opacity={0.9}/>
+        )}
+        {[0,120,240].map((a,i) =>
+          <path key={'f'+i} d={outer} transform={`translate(${ox+Math.cos(R(a-90))*s*0.7},${oy+Math.sin(R(a-90))*s*0.7}) rotate(${a})`} fill={fillUrl}/>
+        )}
+      </g>
+    }
+    if (ps === 'daisy') {
+      // 14 pétales fins, 2 couches décalées, cœur jaune proéminent
+      const path = daisyPath(s*0.42, s*1.85)
+      const path2 = daisyPath(s*0.35, s*1.5)
+      const angles1 = Array.from({length:7},(_,i)=>i*(360/7))
+      const angles2 = Array.from({length:7},(_,i)=>i*(360/7)+360/14)
+      return <g>
+        {angles2.map((a,i) =>
+          <path key={'b'+i} d={path2} transform={`translate(${ox+Math.cos(R(a-90))*s*1.05},${oy+Math.sin(R(a-90))*s*1.05}) rotate(${a})`} fill={fillUrl2} filter={`url(#${blurUrl})`} opacity={0.6}/>
+        )}
+        {angles1.map((a,i) =>
+          <path key={'f'+i} d={path} transform={`translate(${ox+Math.cos(R(a-90))*s*1.1},${oy+Math.sin(R(a-90))*s*1.1}) rotate(${a})`} fill={fillUrl}/>
+        )}
+      </g>
+    }
+
+    /* ──────── NIVEAU 3 ──────── */
+    if (ps === 'orchid') {
+      const sepal     = pointedPath(s*0.5,  s*2.2)
+      const petal     = orchidPath(s*1.4,   s*1.9, 1)
+      const petalR    = orchidPath(s*1.4,   s*1.9, -1)
+      const labelle   = petalPath(s*1.8,    s*1.4, 0.55)
+      const labelleIn = petalPath(s*1.0,    s*0.85, 0.6)
+      return <g>
+        <path d={sepal} transform={"translate("+ox+","+(oy-s*1.1)+") rotate(0)"}          fill={fillUrl2} filter={"url(#"+blurUrl+")"} opacity={0.72}/>
+        <path d={sepal} transform={"translate("+(ox-s*0.9)+","+(oy-s*0.3)+") rotate(-42)"} fill={fillUrl2} filter={"url(#"+blurUrl+")"} opacity={0.72}/>
+        <path d={sepal} transform={"translate("+(ox+s*0.9)+","+(oy-s*0.3)+") rotate(42)"}  fill={fillUrl2} filter={"url(#"+blurUrl+")"} opacity={0.72}/>
+        <path d={petal}  transform={"translate("+(ox-s*0.6)+","+(oy-s*0.65)+") rotate(-62)"} fill={fillUrl} opacity={0.93}/>
+        <path d={petalR} transform={"translate("+(ox+s*0.6)+","+(oy-s*0.65)+") rotate(62)"}  fill={fillUrl} opacity={0.93}/>
+        <path d={labelle}   transform={"translate("+ox+","+(oy+s*0.6)+") rotate(180)"} fill={fillUrl} opacity={0.97}/>
+        <path d={labelleIn} transform={"translate("+ox+","+(oy+s*0.65)+") rotate(180)"}
+          fill={"rgba("+Math.min(255,r2+50)+","+Math.min(255,g2+25)+","+Math.min(255,b2+70)+",0.8)"}/>
+        {[-s*0.35,-s*0.18,0,s*0.18,s*0.35].map((dx,i) =>
+          <line key={i} x1={ox+dx} y1={oy+s*0.4} x2={ox+dx*0.5} y2={oy+s*1.7}
+            stroke={"rgba("+Math.round(r1*0.45)+","+Math.round(g1*0.35)+","+Math.round(b1*0.95)+",0.42)"}
+            strokeWidth={0.7} strokeLinecap="round"/>
+        )}
+        <ellipse cx={ox} cy={oy} rx={s*0.24} ry={s*0.38}
+          fill={"rgba("+Math.min(255,r2+65)+","+Math.min(255,g2+45)+","+Math.min(255,b2+85)+",0.92)"}/>
+        <ellipse cx={ox} cy={oy-s*0.14} rx={s*0.13} ry={s*0.11} fill="rgba(255,248,220,0.88)"/>
+      </g>
+    }
+        if (ps === 'cactus') {
+      // Fleur de cactus : 12 pétales dentelés, très étalés, style Echinocactus
+      const path = cactusPath(s*0.85, s*1.55)
+      const inner = cactusPath(s*0.6, s*1.1)
+      const angles = Array.from({length:12},(_,i)=>i*30)
+      const anglesI = Array.from({length:12},(_,i)=>i*30+15)
+      return <g>
+        {anglesI.map((a,i) =>
+          <path key={'i'+i} d={inner} transform={`translate(${ox+Math.cos(R(a-90))*s*0.5},${oy+Math.sin(R(a-90))*s*0.5}) rotate(${a})`} fill={fillUrl2} filter={`url(#${blurUrl})`} opacity={0.7}/>
+        )}
+        {angles.map((a,i) =>
+          <path key={'o'+i} d={path} transform={`translate(${ox+Math.cos(R(a-90))*s*0.85},${oy+Math.sin(R(a-90))*s*0.85}) rotate(${a})`} fill={fillUrl} opacity={0.9}/>
+        )}
+      </g>
+    }
+    if (ps === 'passionflower') {
+      // Passiflore : 10 pétales aplatis + 40 filaments de corona rayonnants
+      const path = passionPath(s*0.7, s*1.4)
+      const angles = Array.from({length:10},(_,i)=>i*36)
+      const coronaAngles = Array.from({length:40},(_,i)=>i*9)
+      return <g>
+        {/* Pétales de base */}
+        {angles.map((a,i) =>
+          <path key={'p'+i} d={path} transform={`translate(${ox+Math.cos(R(a-90))*s*0.7},${oy+Math.sin(R(a-90))*s*0.7}) rotate(${a})`} fill={fillUrl2} opacity={0.75}/>
+        )}
+        {angles.map((a,i) =>
+          <path key={'f'+i} d={path} transform={`translate(${ox+Math.cos(R(a+18-90))*s*0.75},${oy+Math.sin(R(a+18-90))*s*0.75}) rotate(${a+18})`} fill={fillUrl} opacity={0.85}/>
+        )}
+        {/* Corona : filaments rayonnants bicolores */}
+        {coronaAngles.map((a,i) => {
+          const rad = R(a)
+          const inner2 = s * 0.55
+          const outer2 = s * (i%2===0 ? 1.15 : 0.9)
+          const midPct = 0.45 + (i%5)*0.04
+          const mx = ox + Math.cos(rad) * s * (outer2*midPct)
+          const my = oy + Math.sin(rad) * s * (outer2*midPct)
+          return <path key={'c'+i}
+            d={`M ${ox+Math.cos(rad)*inner2} ${oy+Math.sin(rad)*inner2} Q ${mx} ${my} ${ox+Math.cos(rad)*outer2*s*0.14} ${oy+Math.sin(rad)*outer2*s*0.14}`}
+            stroke={i%3===0 ? `rgba(${r2},${g2},${b2},0.85)` : `rgba(${r1},${g1},${b1},0.65)`}
+            strokeWidth={i%2===0 ? 1.0 : 0.65} strokeLinecap="round" fill="none"/>
+        })}
+      </g>
+    }
+    if (ps === 'iris') {
+      const fallW=s*1.55, fallH=s*2.4, standW=s*1.2, standH=s*2.2
+      const fallPath  = irisPath(fallW,  fallH,  true)
+      const standPath = irisPath(standW, standH, false)
+      return <g>
+        {[0, 120, 240].map((a,i) => {
+          const baseX = ox + Math.cos(R(a)) * s * 0.22
+          const baseY = oy + Math.sin(R(a)) * s * 0.22
+          return <g key={'f'+i} transform={"translate("+baseX+","+baseY+") rotate("+(a+180)+")"}>
+            <path d={fallPath} fill={fillUrl2} opacity={0.90} filter={"url(#"+blurUrl+")"}/>
+            <line x1={0} y1={0} x2={0} y2={fallH*0.82}
+              stroke={"rgba("+r2+","+g2+","+b2+",0.48)"} strokeWidth={1.1} strokeLinecap="round"/>
+            {[fallH*0.15, fallH*0.34, fallH*0.52, fallH*0.68].map((yb,j) =>
+              <ellipse key={j} cx={0} cy={yb} rx={fallW*0.15} ry={fallW*0.05} fill="rgba(255,195,40,0.88)"/>
+            )}
+          </g>
+        })}
+        {[60, 180, 300].map((a,i) => {
+          const baseX = ox + Math.cos(R(a)) * s * 0.24
+          const baseY = oy + Math.sin(R(a)) * s * 0.24
+          return <g key={'s'+i} transform={"translate("+baseX+","+baseY+") rotate("+a+")"}>
+            <path d={standPath} fill={fillUrl} opacity={0.94}/>
+            <line x1={0} y1={0} x2={0} y2={-standH*0.85}
+              stroke={"rgba("+r1+","+g1+","+b1+",0.35)"} strokeWidth={0.9} strokeLinecap="round"/>
+          </g>
+        })}
+        <circle cx={ox} cy={oy} r={s*0.32}
+          fill={"rgba("+Math.min(255,r2+35)+","+Math.min(255,g2+22)+","+Math.min(255,b2+45)+",0.88)"}/>
+      </g>
+    }
+        if (ps === 'anemone') {
+      // Anémone : 8 pétales ronds superposés + 80+ étamines noires
+      const path = anemonePath(s*1.0, s*1.3)
+      const angles = Array.from({length:8},(_,i)=>i*45)
+      const stamenCount = 60
+      return <g>
+        {/* Pétales arrière légèrement décalés */}
+        {angles.map((a,i) =>
+          <path key={'b'+i} d={path} transform={`translate(${ox+Math.cos(R(a+22.5-90))*s*0.6},${oy+Math.sin(R(a+22.5-90))*s*0.6}) rotate(${a+22.5})`} fill={fillUrl2} filter={`url(#${blurUrl})`} opacity={0.7}/>
+        )}
+        {/* Pétales avant */}
+        {angles.map((a,i) =>
+          <path key={'f'+i} d={path} transform={`translate(${ox+Math.cos(R(a-90))*s*0.62},${oy+Math.sin(R(a-90))*s*0.62}) rotate(${a})`} fill={fillUrl} opacity={0.88}/>
+        )}
+        {/* Étamines : cercle dense d'anthères noires */}
+        {Array.from({length:stamenCount},(_,i) => {
+          const ra = R(i * 360/stamenCount)
+          const dist = s * (0.25 + (i%3)*0.06)
+          return <circle key={'st'+i}
+            cx={ox+Math.cos(ra)*dist} cy={oy+Math.sin(ra)*dist}
+            r={0.7} fill={`rgba(18,8,4,0.88)`}/>
+        })}
+        {/* Anneau d'étamines proéminent */}
+        {Array.from({length:24},(_,i) => {
+          const ra = R(i * 15)
+          const dist = s * 0.38
+          return <circle key={'sa'+i}
+            cx={ox+Math.cos(ra)*dist} cy={oy+Math.sin(ra)*dist}
+            r={1.1} fill={`rgba(12,5,2,0.92)`}/>
+        })}
+      </g>
+    }
+
+    // Fallback round
+    const path = petalPath(s*0.9, s*1.7)
+    return <g>
+      {[0,45,90,135,180,225,270,315].map((a,i) =>
+        <path key={i} d={path} transform={`translate(${ox+Math.cos(R(a-90))*s},${oy+Math.sin(R(a-90))*s}) rotate(${a})`} fill={fillUrl}/>
+      )}
+    </g>
+  }
 
   /* ── Tige — plus fine que PlantSVG (champ = distance) ── */
   const stemH = Math.min(groundY * 0.45, groundY * (0.08 + 0.38*r))  // max 45% du canvas
@@ -157,8 +458,6 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   const swayDelay = (hash(plant.user_id, 4) % 46) / 10
   const swayAmp   = (hash(plant.user_id, 1) % 2 === 0 ? 1 : -1) * (1.1 + (hash(plant.user_id,5) % 18) / 10)
 
-  const p1angles = [0,45,90,135,180,225,270,315]
-  const p2angles = [22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5]
 
   return (
     <g
@@ -315,55 +614,21 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
           <ellipse cx={cx+curve-1} cy={flwY-1} rx={2+4*r}  ry={4.5+7*r} fill={`rgba(${r2},${g2},${b2},0.40)`}/>
         </g>
       )}
-
-      {/* ── FLEUR ÉPANOUIE — identique à PlantSVG ── */}
+      {/* ── FLEUR ÉPANOUIE — sync DashboardPage ── */}
       {r > 0.38 && (
         <g>
-          <circle cx={cx+curve} cy={flwY} r={pD*3.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
-
-          {/* Calice */}
+          <circle cx={cx+curve} cy={flwY} r={fS*3.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
           {[-28,0,28].map((a,i) => {
-            const rad = (a-90)*Math.PI/180
-            return <path key={i}
-              d={`M${cx+curve},${Math.round(flwY+pRy*0.52)} Q${cx+curve+Math.round(Math.cos(rad)*8)},${Math.round(flwY+pRy*0.52+10)} ${cx+curve},${Math.round(flwY+pRy*0.52+12)}`}
-              fill={lC2} opacity={0.62}/>
+            const rad=(a-90)*Math.PI/180
+            return <path key={i} d={`M${cx+curve},${Math.round(flwY+fS*0.5)} Q${cx+curve+Math.round(Math.cos(rad)*8)},${Math.round(flwY+fS*0.5+10)} ${cx+curve},${Math.round(flwY+fS*0.5+12)}`} fill={lC2} opacity={0.62}/>
           })}
-
-          {/* Pétales arrière */}
-          <g style={{animation:`cgBreath ${(swayDur*1.1).toFixed(2)}s ease-in-out infinite ${(swayDelay+0.5).toFixed(2)}s`}}>
-            {p2angles.map((angle,i) => {
-              const rad = angle*Math.PI/180
-              const px  = cx+curve + Math.cos(rad)*pD*0.8
-              const py  = flwY    + Math.sin(rad)*pD*0.8
-              return <ellipse key={i} cx={px} cy={py}
-                rx={pRx*0.68} ry={pRy*0.68}
-                fill={`url(#${id}p2)`}
-                transform={`rotate(${angle+90},${px},${py})`}
-                filter={`url(#${id}f1)`}/>
-            })}
-          </g>
-
-          {/* Pétales avant */}
           <g style={{animation:`cgBreath ${swayDur.toFixed(2)}s ease-in-out infinite ${swayDelay.toFixed(2)}s`}}>
-            {p1angles.map((angle,i) => {
-              const rad = angle*Math.PI/180
-              const px  = cx+curve + Math.cos(rad)*pD
-              const py  = flwY    + Math.sin(rad)*pD
-              return <ellipse key={i} cx={px} cy={py}
-                rx={pRx} ry={pRy}
-                fill={`url(#${id}p1)`}
-                transform={`rotate(${angle+90},${px},${py})`}/>
-            })}
+            {renderFlower(cx+curve, flwY, `url(#${id}p1)`, id+'f1', `url(#${id}p2)`)}
           </g>
-
-          {/* Pistil */}
-          <circle cx={cx+curve} cy={flwY} r={7+5*r}   fill={`rgba(${Math.round(r1*.80)},${Math.round(g1*.48+52)},${Math.round(b1*.58+32)},0.88)`}/>
-          <circle cx={cx+curve} cy={flwY} r={3.8+3.2*r} fill={`url(#${id}pi)`}/>
-
-          {/* Pollen */}
+          <circle cx={cx+curve} cy={flwY} r={fS*0.72} fill={`rgba(${Math.round(r1*.80)},${Math.round(g1*.48+52)},${Math.round(b1*.58+32)},0.88)`}/>
+          <circle cx={cx+curve} cy={flwY} r={fS*0.40} fill={`url(#${id}pi)`}/>
           {r > 0.52 && [0,51,103,154,205,257,308].map((a,i) => {
-            const rp  = 5+3*r
-            const rad = a*Math.PI/180
+            const rp=fS*0.52, rad=a*Math.PI/180
             return <circle key={i}
               cx={cx+curve+Math.cos(rad)*rp} cy={flwY+Math.sin(rad)*rp}
               r={0.9} fill={`rgba(255,232,72,${0.65+0.24*r})`}
