@@ -1,633 +1,1239 @@
 // ─────────────────────────────────────────────────────────────────────────────
-//  ScreenClubJardiniers.jsx  —  Écran "Club des Jardiniers" (ex Graines de vie)
-//  Contient : Toast, getThemeEmoji, EditCircleModal, CreateCircleModal,
-//             helpers CSV/PDF, ScreenClubJardiniers
+//  ScreenClubJardiniers.jsx
+//  3 onglets : Égrégore · Mes Fleurs · Le Jardin
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { supabase } from '../core/supabaseClient'
-import { useCircle } from '../hooks/useCircle'
-import { useIsMobile, LumenBadge, Toast, getThemeEmoji, THEMES_LIST, callModerateCircle } from './dashboardShared'
+import { useIsMobile, Toast, timeAgo } from './dashboardShared'
 
-/* ─────────────────────────────────────────
-   MODAL MODIFIER UNE GRAINE
-───────────────────────────────────────── */
-function EditCircleModal({ circle, onClose, onSave }) {
-  const [name,        setName]       = useState(circle.name ?? '')
-  const [theme,       setTheme]      = useState(circle.theme ?? '')
-  const [description, setDescription] = useState(circle.description ?? '')
-  const [isOpen,      setIsOpen]     = useState(circle.is_open ?? false)
-  const [loading, setLoading] = useState(false)
-  const [error,   setError]   = useState(null)
+// ─────────────────────────────────────────────────────────────────────────────
+//  CONSTANTES
+// ─────────────────────────────────────────────────────────────────────────────
+const ZONES = [
+  { key: 'zone_souffle',  name: 'Souffle',  icon: '🌬️', color: '#88b8e8', angle: 90  },
+  { key: 'zone_feuilles', name: 'Feuilles', icon: '🍃', color: '#60d475', angle: 18  },
+  { key: 'zone_fleurs',   name: 'Fleurs',   icon: '🌸', color: '#e088a8', angle: 306 },
+  { key: 'zone_racines',  name: 'Racines',  icon: '🌱', color: '#96d485', angle: 234 },
+  { key: 'zone_tige',     name: 'Tige',     icon: '🌿', color: '#7ad490', angle: 162 },
+]
 
-  async function handleSubmit() {
-    if (!name.trim()) { setError('Le nom est requis.'); return }
-    setLoading(true); setError(null)
-    try { await onSave(name.trim(), theme.trim() || 'Bien-être général', isOpen, description.trim()) }
-    catch (e) { setError(e.message) }
-    finally { setLoading(false) }
+const ZONE_MAP = Object.fromEntries(ZONES.map(z => [z.key, z]))
+const FRAGILE  = 35
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function flowerName(user) {
+  if (!user) return 'Une fleur'
+  if (user.flower_name) return `${user.display_name}·${user.flower_name}`
+  return user.display_name ?? 'Une fleur'
+}
+
+function fragileZones(plant) {
+  return ZONES.filter(z => (plant?.[z.key] ?? 5) < FRAGILE)
+}
+
+function petalPath(angleDeg, pct, cx = 130, cy = 130) {
+  const minR = 22, maxR = 78
+  const r    = minR + (pct / 100) * (maxR - minR)
+  const rad  = ((angleDeg - 90) * Math.PI) / 180
+  const tip  = { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+  const w    = 18 + (pct / 100) * 14
+  const lRad = rad - Math.PI / 2
+  const c1   = { x: cx + r * .42 * Math.cos(rad) + w * Math.cos(lRad), y: cy + r * .42 * Math.sin(rad) + w * Math.sin(lRad) }
+  const c2   = { x: cx + r * .42 * Math.cos(rad) - w * Math.cos(lRad), y: cy + r * .42 * Math.sin(rad) - w * Math.sin(lRad) }
+  return `M ${cx} ${cy} Q ${c1.x} ${c1.y} ${tip.x} ${tip.y} Q ${c2.x} ${c2.y} ${cx} ${cy} Z`
+}
+
+function polarToXY(angleDeg, r, cx = 130, cy = 130) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
+}
+
+function vitality(plant) {
+  if (!plant) return 5
+  const vals = ZONES.map(z => plant[z.key] ?? 5)
+  return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  EDGE FUNCTION
+// ─────────────────────────────────────────────────────────────────────────────
+async function generateCoeurMessage({ senderName, receiverName, zone }) {
+  const zoneName = ZONE_MAP[zone]?.name ?? zone
+  try {
+    const { data, error } = await supabase.functions.invoke('Moderate-circle', {
+      body: { action: 'generate_coeur_message', senderName, receiverName, zone: zoneName }
+    })
+    if (error) throw error
+    return data?.message ?? null
+  } catch {
+    const fallbacks = [
+      `${senderName} pense à vous et vous envoie toute sa chaleur sur vos ${zoneName.toLowerCase()}.`,
+      `Un élan du cœur de ${senderName} — vos ${zoneName.toLowerCase()} méritent d'être célébrées.`,
+      `${senderName} vous voit avancer et vous envoie cette énergie pour nourrir vos ${zoneName.toLowerCase()}.`,
+    ]
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)]
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  COMPOSANT PARTICULE (copié du prototype FleurCollective)
+// ─────────────────────────────────────────────────────────────────────────────
+function Particle({ x, y, color, char, vx: initVx, vy: initVy, dur: initDur, onDone }) {
+  const [pos, setPos]   = useState({ x, y, o: 1, rot: 0 })
+  const [gone, setGone] = useState(false)
+  const frame = useRef(null)
+  const start = useRef(Date.now())
+
+  useEffect(() => {
+    const dur = initDur ?? (3200 + Math.random() * 1200)
+    const vx  = initVx  ?? (0.5 + Math.random() * 0.8)
+    const vy  = initVy  ?? -(0.5 + Math.random() * 0.7)
+    const rot = (Math.random() - 0.5) * 0.004
+    function tick() {
+      const elapsed = Date.now() - start.current
+      const p = Math.min(elapsed / dur, 1)
+      setPos({ x: x + vx * elapsed * 0.06, y: y + vy * elapsed * 0.06, o: 1 - p, rot: rot * elapsed })
+      if (p < 1) frame.current = requestAnimationFrame(tick)
+      else { setGone(true); onDone?.() }
+    }
+    frame.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame.current)
+  }, [])
+
+  if (gone) return null
+  if (char) return (
+    <div style={{
+      position: 'fixed', left: pos.x - 10, top: pos.y - 10,
+      fontSize: 18, opacity: pos.o, pointerEvents: 'none', zIndex: 9999,
+      transform: `rotate(${pos.rot}rad)`, transition: 'none', userSelect: 'none',
+    }}>{char}</div>
+  )
+  return (
+    <div style={{
+      position: 'fixed', left: pos.x - 4, top: pos.y - 4,
+      width: 8, height: 8, borderRadius: '50%',
+      background: color, opacity: pos.o, pointerEvents: 'none',
+      boxShadow: `0 0 6px ${color}`, transition: 'none',
+    }} />
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SVG FLEUR COLLECTIVE
+// ─────────────────────────────────────────────────────────────────────────────
+function FleurSVG({ zonesData, pulseKey, breathPhase, size = 260, svgRef }) {
+  const cx = 130, cy = 130
+
+  const globalVit = Math.round(
+    ZONES.reduce((s, z) => s + (zonesData[z.key] ?? 5), 0) / ZONES.length
+  )
+
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-title">Modifier la graine ✏️</div>
-        <div className="modal-field">
-          <label className="modal-label">Nom de la graine</label>
-          <input className="modal-input" value={name} onChange={e => setName(e.target.value)} autoFocus />
+    <svg ref={svgRef} viewBox="0 0 260 260" width={size} height={size} style={{ overflow: 'visible' }}>
+      <defs>
+        {ZONES.map(z => (
+          <radialGradient key={z.key} id={`pg-${z.key}`} cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor={z.color} stopOpacity={pulseKey === z.key ? '.9' : '.65'} />
+            <stop offset="100%" stopColor={z.color} stopOpacity=".05" />
+          </radialGradient>
+        ))}
+        <radialGradient id="core-g" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stopColor="#ede0c0" stopOpacity="1" />
+          <stop offset="100%" stopColor="#b88030" stopOpacity=".5" />
+        </radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow2"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+
+
+      {/* Pétales */}
+      {ZONES.map(z => {
+        const pct      = zonesData[z.key] ?? 5
+        const isPulse  = pulseKey === z.key
+        const isFragile = pct < FRAGILE
+        const breathR  = 1 + breathPhase * .022
+
+        return (
+          <g key={z.key}>
+            <g style={{ transform: `scale(${breathR})`, transformOrigin: `${cx}px ${cy}px`, transition: 'transform .15s' }}>
+              {isPulse && (
+                <path d={petalPath(z.angle, Math.min(100, pct + 10), cx, cy)}
+                  fill={z.color} opacity=".14" filter="url(#glow2)"
+                  style={{ animation: 'petal-pulse .7s ease-out forwards' }} />
+              )}
+              <path
+                d={petalPath(z.angle, pct, cx, cy)}
+                fill={`url(#pg-${z.key})`}
+                stroke={z.color}
+                strokeWidth={isPulse ? '1.4' : '0.7'}
+                strokeOpacity={isFragile ? '.4' : isPulse ? '.9' : '.5'}
+                filter={isPulse ? 'url(#glow)' : undefined}
+                style={{ transition: 'd 1s ease' }}
+              />
+            </g>
+          </g>
+        )
+      })}
+
+      {/* Cœur central — plus grand, vitalité bien visible */}
+      <circle cx={cx} cy={cy} r={18 + breathPhase * 2.5}
+        fill="url(#core-g)" filter="url(#glow)"
+        style={{ transition: 'r .12s' }} />
+      {/* % vitalité */}
+      <text x={cx} y={cy - 5} textAnchor="middle" dominantBaseline="middle"
+        fontSize="13" fontFamily="'Cormorant Garamond',serif"
+        fill="rgba(8,14,10,.92)" fontWeight="500">
+        {globalVit}%
+      </text>
+      {/* label vitalité */}
+      <text x={cx} y={cy + 8} textAnchor="middle" dominantBaseline="middle"
+        fontSize="5.5" fontFamily="Jost, sans-serif"
+        fill="rgba(8,14,10,.55)" letterSpacing=".08em">
+        VITALITÉ
+      </text>
+    </svg>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ONGLET ÉGRÉGORE
+// ─────────────────────────────────────────────────────────────────────────────
+function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }) {
+  const isMobile                      = useIsMobile()
+  const [zonesData, setZonesData]     = useState(Object.fromEntries(ZONES.map(z => [z.key, 50])))
+  const [activeCount, setActiveCount] = useState(0)
+  const [pulseKey, setPulseKey]       = useState(null)
+  const svgRef = useRef(null)
+  const [breathPhase, setBreath]      = useState(0)
+  const [intention, setIntention]     = useState(null)
+  const [joined, setJoined]           = useState(false)
+  const [resonance, setResonance]     = useState(null)
+  const [flux, setFlux]               = useState([])
+  const [myMessages, setMyMessages]   = useState([]) // cœurs reçus par moi
+  const [mercisEnvoyes, setMercisEnvoyes] = useState([])
+
+  // Respiration
+  useEffect(() => {
+    let frame
+    const start = Date.now()
+    function tick() {
+      setBreath(Math.sin(((Date.now() - start) / 3200) * Math.PI * 2) * .5 + .5)
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  // Charger données collectives
+  useEffect(() => {
+    if (!userId) return
+    loadCollectiveData()
+    loadMyMessages()
+    loadMercisEnvoyes()
+
+    // Realtime — cœurs
+    const channel = supabase
+      .channel('coeurs-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'coeurs' }, payload => {
+        const z = payload.new?.zone
+        if (z) {
+          setPulseKey(z)
+          setTimeout(() => setPulseKey(null), 1800)
+          setZonesData(prev => ({ ...prev, [z]: Math.min(100, (prev[z] ?? 50) + .5) }))
+          setActiveCount(n => n + 1)
+          // Ajouter au flux
+          const zInfo = ZONE_MAP[z]
+          setFlux(prev => [{
+            id: Date.now(), icon: '❤️',
+            text: `Une fleur vient d'envoyer de la lumière sur les ${zInfo?.name ?? z}`,
+            color: zInfo?.color ?? '#96d485', t: 'à l\'instant',
+          }, ...prev.slice(0, 8)])
+        }
+        // Si c'est pour moi
+        if (payload.new?.receiver_id === userId) {
+          loadMyMessages()
+        }
+      })
+      .subscribe()
+
+    return () => supabase.removeChannel(channel)
+  }, [userId, feedKey])
+
+  async function loadCollectiveData() {
+    // Moyenne des zones de toutes les plantes du jour
+    const today = new Date().toISOString().slice(0, 10)
+    const { data: plants } = await supabase
+      .from('plants')
+      .select('zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
+      .gte('date', today)
+
+    if (plants?.length) {
+      const sums = Object.fromEntries(ZONES.map(z => [z.key, 0]))
+      plants.forEach(p => ZONES.forEach(z => { sums[z.key] += (p[z.key] ?? 5) }))
+      const avgs = Object.fromEntries(ZONES.map(z => [z.key, Math.round(sums[z.key] / plants.length)]))
+      setZonesData(avgs)
+      setActiveCount(plants.length)
+
+      // Résonance : zone la plus proche du seuil 80%
+      const closestToSeuil = ZONES
+        .map(z => ({ ...z, pct: avgs[z.key], dist: Math.abs(80 - avgs[z.key]) }))
+        .filter(z => z.pct >= 60 && z.pct < 80)
+        .sort((a, b) => a.dist - b.dist)[0]
+      if (closestToSeuil) setResonance({ zone: closestToSeuil.key, current: closestToSeuil.pct, threshold: 80 })
+    }
+
+    // Intention du jour
+    const todayDate = new Date().toISOString().slice(0, 10)
+    const { data: int } = await supabase
+      .from('intentions')
+      .select('*')
+      .eq('date', todayDate)
+      .maybeSingle()
+    setIntention(int ?? { text: 'Paix intérieure', description: 'Chaque rituel complété, chaque ❤️ envoyé nourrit cette énergie collective.' })
+
+    // Vérifier si déjà rejoint
+    const { data: j } = await supabase
+      .from('intentions_joined')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('date', todayDate)
+      .maybeSingle()
+    setJoined(!!j)
+  }
+
+  async function loadMyMessages() {
+    // Cœurs reçus par moi, non encore remerciés
+    const { data: coeurs } = await supabase
+      .from('coeurs')
+      .select('id, sender_id, zone, message_ia, created_at, sender:sender_id(display_name, flower_name)')
+      .eq('receiver_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(20)
+    setMyMessages(coeurs ?? [])
+  }
+
+  async function loadMercisEnvoyes() {
+    const { data } = await supabase
+      .from('mercis').select('coeur_id').eq('sender_id', userId)
+    setMercisEnvoyes((data ?? []).map(m => m.coeur_id))
+  }
+
+  function spawnIntentionParticles() {
+    if (!svgRef.current) return
+    const rect   = svgRef.current.getBoundingClientRect()
+    const scaleX = rect.width  / 260
+    const scaleY = rect.height / 260
+    const newPs  = []
+    const PETALS = ['🌸','🌺','🌼','🌷','💮']
+    const STARS  = ['✨','⭐','🌟','💫','✦']
+
+    ZONES.forEach(z => {
+      const pct = zonesData[z.key] ?? 50
+      const r   = 28 + (pct / 100) * 95
+      const pos = polarToXY(z.angle, r * 0.6, 130, 130)
+      const bx  = rect.left + pos.x * scaleX
+      const by  = rect.top  + pos.y * scaleY
+
+      // 🌸 Pétales — montent lentement vers le haut à droite
+      for (let i = 0; i < 3; i++) {
+        newPs.push({
+          id:    `${z.key}-petal-${i}-${Date.now()}-${Math.random()}`,
+          x:     bx + (Math.random() - 0.5) * 20,
+          y:     by + (Math.random() - 0.5) * 20,
+          char:  PETALS[Math.floor(Math.random() * PETALS.length)],
+          vx:    0.35 + Math.random() * 0.5,
+          vy:   -(0.35 + Math.random() * 0.5),
+          dur:   3200 + Math.random() * 1400,
+          color: null,
+        })
+      }
+
+      // ✨ Étoiles — explosent dans toutes les directions, rapides
+      for (let i = 0; i < 3; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const speed = 0.9 + Math.random() * 1.1
+        newPs.push({
+          id:    `${z.key}-star-${i}-${Date.now()}-${Math.random()}`,
+          x:     bx + (Math.random() - 0.5) * 14,
+          y:     by + (Math.random() - 0.5) * 14,
+          char:  STARS[Math.floor(Math.random() * STARS.length)],
+          vx:    Math.cos(angle) * speed,
+          vy:    Math.sin(angle) * speed,
+          dur:   900 + Math.random() * 500,
+          color: null,
+        })
+      }
+    })
+
+    onParticleBurst?.(newPs)
+  }
+
+  async function handleJoinIntention() {
+    const today = new Date().toISOString().slice(0, 10)
+    if (joined) {
+      await supabase.from('intentions_joined').delete().eq('user_id', userId).eq('date', today)
+      setJoined(false)
+    } else {
+      await supabase.from('intentions_joined').insert({ user_id: userId, date: today })
+      setJoined(true)
+      // Pulse chaque pétale en cascade
+      ZONES.forEach((z, i) => {
+        setTimeout(() => {
+          setPulseKey(z.key)
+          setTimeout(() => setPulseKey(null), 1800)
+        }, i * 200)
+      })
+      // Particules style prototype
+      spawnIntentionParticles()
+    }
+  }
+
+  async function handleMerci(coeurId, senderId) {
+    try {
+      await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
+      setMercisEnvoyes(prev => [...prev, coeurId])
+      onFeedRefresh?.()
+    } catch(e) { console.error(e) }
+  }
+
+  const pendingMercis = myMessages.filter(c => !mercisEnvoyes.includes(c.id))
+
+  const globalVit = Math.round(ZONES.reduce((s, z) => s + (zonesData[z.key] ?? 5), 0) / ZONES.length)
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 40 }}>
+
+      {/* ── BLOC HAUT : Fleur gauche | Intention droite ── */}
+      {/* ── FLEUR CENTRÉE + INTENTION ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
+
+        {/* Titre compact */}
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? -20 : -30, zIndex: 1 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight: 300, color: '#e8d4a8', letterSpacing: '.04em' }}>L'Égrégore</div>
+          <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.3)', marginTop: 2, letterSpacing: '.06em' }}>
+            <span style={{ color: 'rgba(150,212,133,0.7)' }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''} active{activeCount > 1 ? 's' : ''} aujourd'hui
+          </div>
         </div>
-        <div className="modal-field">
-          <label className="modal-label">Thème</label>
-          <select value={theme} onChange={e => setTheme(e.target.value)}
-            style={{ width:'100%', padding:'9px 13px', background:'#1e2e1e', border:'1px solid var(--border)', borderRadius:10, fontSize:12, color: theme ? 'var(--text2)' : 'var(--text3)', outline:'none', cursor:'pointer', appearance:'none', backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat:'no-repeat', backgroundPosition:'right 12px center' }}>
-            <option value="">— Choisir un thème —</option>
-            {THEMES_LIST.map(([emoji, label]) => (
-              <option key={label} value={label}>{emoji} {label}</option>
-            ))}
-          </select>
+
+        {/* Fleur pleine largeur */}
+        <div style={{ marginTop: -50, marginBottom: -30 }}>
+  <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 260 : 60} svgRef={svgRef} />
+</div>
+
+        {/* Intention + Résonance sous la fleur */}
+        {intention && (
+          <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 10, marginTop: isMobile ? -10 : -20 }}>
+            <div style={{ fontSize: 9, color: 'rgba(232,196,100,0.5)', letterSpacing: '.14em', textTransform: 'uppercase', textAlign: 'center' }}>✦ Intention collective du jour</div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 32, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.1, textAlign: 'center' }}>{intention.text}</div>
+            <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.4)', lineHeight: 1.65, textAlign: 'center' }}>{intention.description}</div>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div onClick={handleJoinIntention} style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 36, padding: '0 20px', borderRadius: 100, fontSize: 11, cursor: 'pointer', background: joined ? 'rgba(232,196,100,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${joined ? 'rgba(232,196,100,0.42)' : 'rgba(255,255,255,0.1)'}`, color: joined ? '#e8d4a8' : 'rgba(238,232,218,0.4)', transition: 'all .2s', WebkitTapHighlightColor: 'transparent' }}>
+                {joined ? '✓ Vous nourrissez l\'intention' : 'Rejoindre l\'intention'}
+              </div>
+            </div>
+            {resonance && (() => {
+              const z = ZONE_MAP[resonance.zone]
+              const pct = (resonance.current / resonance.threshold) * 100
+              return (
+                <div style={{ background: `${z?.color}08`, border: `1px solid ${z?.color}22`, borderRadius: 12, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>🔥</span><div style={{ fontSize: 11, color: z?.color, fontWeight: 500 }}>Résonance {z?.name}</div></div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, color: z?.color }}>{resonance.current}%</div>
+                  </div>
+                  <div style={{ height: 3, borderRadius: 100, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 100, width: `${pct}%`, background: `linear-gradient(90deg,${z?.color}88,${z?.color})`, transition: 'width .6s ease' }} />
+                  </div>
+                  <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.25)' }}>Seuil {resonance.threshold}% · encore {resonance.threshold - resonance.current} points</div>
+                </div>
+              )
+            })()}
+          </div>
+        )}
+      </div>
+
+      {/* ── PHRASES POSITIVES — Messages reçus ── */}
+      {pendingMercis.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Messages reçus pour vous</div>
+          {pendingMercis.slice(0, 3).map(c => {
+            const z      = ZONE_MAP[c.zone]
+            const sender = flowerName(c.sender)
+            return (
+              <div key={c.id} style={{ background: 'rgba(255,100,100,0.05)', border: '1px solid rgba(255,100,100,0.14)', borderRadius: 12, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 16 }}>❤️</span>
+                  <div>
+                    <div style={{ fontSize: 12, color: 'rgba(238,232,218,0.85)', fontWeight: 500 }}>{sender}</div>
+                    <div style={{ fontSize: 9, color: z?.color ?? '#96d485', marginTop: 1 }}>{z?.icon} {z?.name} · {timeAgo(c.created_at)}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(238,232,218,0.65)', lineHeight: 1.65, fontStyle: 'italic', marginBottom: 10 }}>"{c.message_ia}"</div>
+                <div onClick={() => handleMerci(c.id, c.sender_id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 16px', borderRadius: 100, fontSize: 12, background: 'rgba(255,200,100,0.10)', border: '1px solid rgba(255,200,100,0.28)', color: 'rgba(255,220,140,0.9)', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>🙏 Remercier</div>
+              </div>
+            )
+          })}
         </div>
-        <div className="modal-field">
-          <label className="modal-label">Intention / Description</label>
-          <textarea className="modal-input" value={description} onChange={e => setDescription(e.target.value)}
-            style={{ resize:'vertical', minHeight:70, lineHeight:1.6 }} />
-        </div>
-        <div className="modal-row" style={{ flexDirection:'column', alignItems:'flex-start', gap:8 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
-            <span className="modal-toggle-lbl" style={{ fontWeight: isOpen ? 500 : 400, color: isOpen ? 'var(--text)' : 'var(--text3)' }}>
-              {isOpen ? '🌍 Graine publique' : '🔒 Sur invitation uniquement'}
-            </span>
-            <div className={'priv-toggle ' + (isOpen ? 'on' : 'off')} onClick={() => setIsOpen(v => !v)}>
-              <div className="pt-knob" />
+      )}
+
+      {/* ── FLUX ÉNERGIE ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.25)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 2 }}>Flux d'énergie</div>
+        {flux.length === 0 && (
+          <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.22)', fontStyle: 'italic' }}>Le flux s'animera dès que des fleurs interagissent…</div>
+        )}
+        {flux.map((item, i) => (
+          <div key={item.id ?? i} style={{ display: 'flex', gap: 9, padding: '8px 12px', borderRadius: 10, background: `${item.color}06`, border: `1px solid ${item.color}12` }}>
+            <span style={{ fontSize: 13, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.6)', lineHeight: 1.5 }}>{item.text}</div>
+              <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.22)', marginTop: 2 }}>{item.t}</div>
             </div>
           </div>
-          <div style={{ fontSize:10, color:'var(--text3)', lineHeight:1.5 }}>
-            {isOpen
-              ? "Visible dans Découvrir — n'importe qui peut rejoindre sans code"
-              : "Invisible publiquement — accès uniquement via code d'invitation"}
-          </div>
-        </div>
-        {error && <div className="modal-error">{error}</div>}
-        <div className="modal-actions">
-          <button className="modal-cancel" onClick={onClose}>Annuler</button>
-          <button className="modal-submit" disabled={loading} onClick={handleSubmit}>
-            {loading ? '…' : 'Enregistrer'}
-          </button>
-        </div>
+        ))}
       </div>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   MODAL CRÉER UN CERCLE
-───────────────────────────────────────── */
-function CreateCircleModal({ onClose, onCreate }) {
-  const [name,        setName]       = useState('')
-  const [theme,       setTheme]      = useState('')
-  const [isOpen,      setIsOpen]      = useState(false)
-  const [duration,    setDuration]    = useState(null)
-  const [loading,     setLoading]     = useState(false)
-  const [aiLoading,   setAiLoading]   = useState(false)
-  const [aiDesc,      setAiDesc]      = useState('')
-  const [error,       setError]       = useState(null)
+// ─────────────────────────────────────────────────────────────────────────────
+//  CARTE FLEUR — format card pour la grille
+// ─────────────────────────────────────────────────────────────────────────────
+function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badge, onBadgeClick, onCoeurSent, expanded, pendingMercisForFleur, onMerci }) {
+  const [sending, setSending] = useState(false)
+  const plant     = fleur.plant ?? {}
+  const name      = flowerName(fleur)
+  const vit       = vitality(plant)
+  const fragile   = fragileZones(plant)
+  const isFragile = fragile.length > 0
+  const weakest   = fragile[0] ?? ZONES[0]
 
-  async function handleSubmit() {
-    if (!name.trim()) { setError('Le nom de la graine est requis.'); return }
-    setLoading(true); setError(null)
+  async function handleSend() {
+    if (alreadySent || sending) return
+    setSending(true)
     try {
-      await onCreate(name.trim(), theme.trim() || 'Bien-être général', isOpen, duration, aiDesc)
-      onClose()
-    } catch (e) { setError(e.message) }
-    finally { setLoading(false) }
-  }
-
-  const durations = [
-    { label:'1 jour',    value:1  },
-    { label:'1 semaine', value:7  },
-    { label:'15 jours',  value:15 },
-  ]
-
-  async function generateDescription() {
-    if (!name.trim() && !theme) return
-    setAiLoading(true)
-    try {
-      const data = await callModerateCircle({ action: 'generate', name: name.trim(), theme })
-      setAiDesc(data.description ?? '')
+      const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
+      await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
+      onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
     } catch(e) { console.error(e) }
-    finally { setAiLoading(false) }
+    finally { setSending(false) }
   }
 
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="modal">
-        <div className="modal-title">Nouvelle Graine 🌱</div>
-        <div className="modal-field">
-          <label className="modal-label">Nom de la graine</label>
-          <input className="modal-input" placeholder="ex. Rituels du Matin" value={name} onChange={e => setName(e.target.value)} autoFocus />
+    <div style={{
+      background: isFragile ? 'rgba(255,120,60,.05)' : 'rgba(255,255,255,.025)',
+      border: `1px solid ${isFragile ? 'rgba(255,140,80,.18)' : 'rgba(255,255,255,.07)'}`,
+      borderRadius: 14, padding: 'clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+      position: 'relative', transition: 'border-color .2s',
+    }}>
+
+      {/* Badge bouquet */}
+      {bouquetMember && (
+        <div style={{ position: 'absolute', top: 8, left: 8, fontSize: 10 }}>💚</div>
+      )}
+
+      {/* Badge merci */}
+      {badge > 0 && (
+        <div onClick={onBadgeClick} style={{
+          position: 'absolute', top: 8, right: 8,
+          fontSize: 9, cursor: 'pointer',
+          background: 'rgba(255,200,100,.15)', border: '1px solid rgba(255,200,100,.3)',
+          borderRadius: 100, padding: '2px 6px', color: 'rgba(255,220,140,.9)',
+          WebkitTapHighlightColor: 'transparent',
+        }}>🙏{badge}</div>
+      )}
+
+      {/* Anneau vitalité */}
+      <div style={{
+        width: 'clamp(40px, 8vw, 52px)', height: 'clamp(40px, 8vw, 52px)', borderRadius: '50%', flexShrink: 0,
+        background: `conic-gradient(${isFragile ? 'rgba(255,140,60,.85)' : '#96d485'} ${vit * 3.6}deg, rgba(255,255,255,.07) 0deg)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{
+          width: 'clamp(30px, 6vw, 40px)', height: 'clamp(30px, 6vw, 40px)', borderRadius: '50%',
+          background: 'linear-gradient(160deg,#0d1f0d,#0a130a)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: "'Cormorant Garamond',serif", fontSize: 12,
+          color: isFragile ? 'rgba(255,160,80,.9)' : 'rgba(200,240,184,.8)',
+        }}>{vit}%</div>
+      </div>
+
+      {/* Nom */}
+      <div style={{
+        fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(11px, 2.8vw, 13px)',
+        color: isFragile ? '#e8c8a0' : '#e8d4a8', textAlign: 'center',
+        lineHeight: 1.3, width: '100%',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+      }}>{name}</div>
+
+      {/* Zones fragiles */}
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center', minHeight: 18 }}>
+        {fragile.length > 0
+          ? fragile.map(z => (
+              <span key={z.key} style={{ fontSize: 13 }} title={`${z.name} : ${Math.round(plant[z.key]??0)}%`}>{z.icon}</span>
+            ))
+          : <span style={{ fontSize: 9, color: 'rgba(150,212,133,.35)' }}>✓ bonne santé</span>
+        }
+      </div>
+
+      {/* Bouton ❤️ */}
+      <div
+        onClick={handleSend}
+        style={{
+          width: 'clamp(38px, 8vw, 36px)', height: 'clamp(38px, 8vw, 36px)', borderRadius: '50%',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: alreadySent || sending ? 'default' : 'pointer',
+          background: alreadySent ? 'rgba(255,255,255,.04)' : 'rgba(232,136,168,.12)',
+          border: `1px solid ${alreadySent ? 'rgba(255,255,255,.07)' : 'rgba(232,136,168,.3)'}`,
+          fontSize: 16, opacity: sending ? .5 : 1,
+          transition: 'transform .15s, background .2s',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        onMouseEnter={e => { if (!alreadySent && !sending) e.currentTarget.style.transform = 'scale(1.15)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+      >
+        {sending ? '…' : alreadySent ? '✓' : '❤️'}
+      </div>
+
+      {/* Messages dépliés */}
+      {expanded && badge > 0 && (
+        <div style={{ width: '100%', borderTop: '1px solid rgba(255,200,100,.12)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {(pendingMercisForFleur ?? []).map(c => {
+            const z = ZONE_MAP[c.zone]
+            return (
+              <div key={c.id} style={{ fontSize: 10, color: 'rgba(238,232,218,.55)', fontStyle: 'italic', lineHeight: 1.5 }}>
+                "{c.message_ia}"
+                <div style={{ fontSize: 9, color: z?.color, marginTop: 2, fontStyle: 'normal' }}>{z?.icon} {z?.name}</div>
+                <div onClick={() => onMerci?.(c.id, c.sender_id)} style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 100, fontSize: 9, background: 'rgba(255,200,100,.1)', border: '1px solid rgba(255,200,100,.22)', color: 'rgba(255,220,140,.9)', cursor: 'pointer' }}>🙏 Merci</div>
+              </div>
+            )
+          })}
         </div>
-        <div className="modal-field">
-          <label className="modal-label">Thème</label>
-          <select value={theme} onChange={e => setTheme(e.target.value)}
-            style={{ width:'100%', padding:'9px 13px', background:'#1e2e1e', border:'1px solid var(--border)', borderRadius:10, fontSize:12, color: theme ? 'var(--text2)' : 'var(--text3)', outline:'none', cursor:'pointer', appearance:'none', backgroundImage:"url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat:'no-repeat', backgroundPosition:'right 12px center' }}>
-            <option value="">— Choisir un thème —</option>
-            {THEMES_LIST.map(([emoji, label]) => (
-              <option key={label} value={label}>{emoji} {label}</option>
-            ))}
-          </select>
-        </div>
-        <div className="modal-field">
-          <label className="modal-label" style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <span>Description générée par IA</span>
-            {(name.trim() || theme) && (
-              <div onClick={generateDescription}
-                style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--greenT)', color:'#c8f0b8', background:'var(--green3)', cursor: aiLoading ? 'default' : 'pointer', opacity: aiLoading ? .5 : 1 }}>
-                {aiLoading ? '✨ Génération…' : '✨ Générer'}
-              </div>
-            )}
-          </label>
-          {aiDesc
-            ? <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.8, fontStyle:'italic', padding:'10px 13px', background:'rgba(150,212,133,0.05)', borderRadius:10, border:'1px solid rgba(150,212,133,0.15)' }}>
-                "{aiDesc}"
-                <span onClick={() => setAiDesc('')} style={{ marginLeft:8, fontSize:10, color:'var(--text3)', cursor:'pointer', fontStyle:'normal' }}>✕</span>
-              </div>
-            : <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>
-                {name.trim() || theme ? "Cliquez sur ✨ Générer pour créer une description." : "Renseignez d'abord le nom et le thème."}
-              </div>
+      )}
+    </div>
+  )
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  BOUQUET CARD — colonne droite, format vertical compact
+// ─────────────────────────────────────────────────────────────────────────────
+function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badge, onBadgeClick, expanded, pendingMercisForFleur, onMerci }) {
+  const [sending, setSending] = useState(false)
+  const [sentAt, setSentAt]   = useState(alreadySent ? Date.now() : null)
+  const [cooldown, setCooldown] = useState(null) // texte "Xh" restant
+  const plant     = fleur.plant ?? {}
+  const name      = flowerName(fleur)
+  const vit       = vitality(plant)
+  const fragile   = fragileZones(plant)
+  const isFragile = fragile.length > 0
+  const weakest   = fragile[0] ?? ZONES[0]
+
+  // Calcul cooldown toutes les minutes
+  useEffect(() => {
+    if (!alreadySent) return
+    function update() {
+      const msLeft = (24 * 60 * 60 * 1000) - (Date.now() - (sentAt ?? Date.now()))
+      if (msLeft <= 0) { setCooldown(null); return }
+      const h = Math.floor(msLeft / 3600000)
+      const m = Math.floor((msLeft % 3600000) / 60000)
+      setCooldown(h > 0 ? `${h}h` : `${m}m`)
+    }
+    update()
+    const t = setInterval(update, 60000)
+    return () => clearInterval(t)
+  }, [alreadySent, sentAt])
+
+  async function handleSend() {
+    if (alreadySent || sending) return
+    setSending(true)
+    try {
+      const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
+      await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
+      setSentAt(Date.now())
+      onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
+    } catch(e) { console.error(e) }
+    finally { setSending(false) }
+  }
+
+  const isSent = alreadySent || sentAt !== null
+
+  return (
+    <div style={{
+      background: isFragile ? 'rgba(255,120,60,.05)' : 'rgba(255,255,255,.02)',
+      border: `1px solid ${isFragile ? 'rgba(255,140,80,.16)' : 'rgba(255,255,255,.06)'}`,
+      borderRadius: 12, padding: '10px 12px',
+      display: 'flex', alignItems: 'center', gap: 10,
+    }}>
+      {/* Anneau vitalité */}
+      <div style={{
+        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+        background: `conic-gradient(${isFragile ? 'rgba(255,140,60,.85)' : '#96d485'} ${vit * 3.6}deg, rgba(255,255,255,.07) 0deg)`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{
+          width: 27, height: 27, borderRadius: '50%',
+          background: 'linear-gradient(160deg,#0d1f0d,#0a130a)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 9, fontFamily: "'Cormorant Garamond',serif",
+          color: isFragile ? 'rgba(255,160,80,.9)' : 'rgba(200,240,184,.7)',
+        }}>{vit}%</div>
+      </div>
+
+      {/* Nom + zones fragiles */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily: "'Cormorant Garamond',serif", fontSize: 13,
+          color: isFragile ? '#e8c8a0' : '#e8d4a8',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>{name}</div>
+        <div style={{ display: 'flex', gap: 3, marginTop: 2 }}>
+          {fragile.length > 0
+            ? fragile.slice(0, 3).map(z => <span key={z.key} style={{ fontSize: 11 }}>{z.icon}</span>)
+            : <span style={{ fontSize: 9, color: 'rgba(150,212,133,.35)' }}>✓</span>
           }
         </div>
-        <div className="modal-field">
-          <label className="modal-label">Durée de vie</label>
-          <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:4 }}>
-            {durations.map(opt => (
-              <div key={String(opt.value)}
-                onClick={() => setDuration(opt.value)}
-                style={{
-                  padding:'6px 14px', borderRadius:100, fontSize:11, cursor:'pointer',
-                  border: duration === opt.value ? '1px solid var(--greenT)' : '1px solid var(--border)',
-                  background: duration === opt.value ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)',
-                  color: duration === opt.value ? '#c8f0b8' : 'var(--text3)',
-                  transition:'all .15s'
-                }}
-              >{opt.label}</div>
-            ))}
-          </div>
+      </div>
+
+      {/* Badge merci */}
+      {badge > 0 && (
+        <div onClick={onBadgeClick} style={{ fontSize: 10, cursor: 'pointer', background: 'rgba(255,200,100,.12)', border: '1px solid rgba(255,200,100,.25)', borderRadius: 100, padding: '2px 6px', color: 'rgba(255,220,140,.85)', flexShrink: 0, WebkitTapHighlightColor: 'transparent' }}>🙏{badge}</div>
+      )}
+
+      {/* Bouton ❤️ */}
+      <div
+        onClick={handleSend}
+        style={{
+          width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          cursor: isSent || sending ? 'default' : 'pointer',
+          background: isSent ? 'rgba(255,255,255,.04)' : 'rgba(232,80,80,.15)',
+          border: `1px solid ${isSent ? 'rgba(255,255,255,.07)' : 'rgba(232,80,80,.4)'}`,
+          boxShadow: isSent ? 'none' : '0 0 8px rgba(232,80,80,.25)',
+          opacity: sending ? .5 : 1, transition: 'all .2s',
+          WebkitTapHighlightColor: 'transparent', position: 'relative',
+          gap: 1,
+        }}
+        onMouseEnter={e => { if (!isSent && !sending) e.currentTarget.style.transform = 'scale(1.12)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+        title={isSent ? `Disponible dans ${cooldown ?? '…'}` : `Envoyer ❤️ sur ${weakest.name}`}
+      >
+        <div style={{ fontSize: isSent ? 13 : 15, filter: isSent ? 'none' : 'drop-shadow(0 0 4px rgba(255,80,80,.5))', opacity: isSent ? .25 : 1, lineHeight: 1 }}>
+          {sending ? '…' : '❤️'}
         </div>
-        <div className="modal-row" style={{ flexDirection:'column', alignItems:'flex-start', gap:8 }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
-            <span className="modal-toggle-lbl" style={{ fontWeight: isOpen ? 500 : 400, color: isOpen ? 'var(--text)' : 'var(--text3)' }}>
-              {isOpen ? '🌍 Graine publique' : '🔒 Sur invitation uniquement'}
-            </span>
-            <div className={'priv-toggle ' + (isOpen ? 'on' : 'off')} onClick={() => setIsOpen(v => !v)}>
-              <div className="pt-knob" />
+        {isSent && cooldown && null}
+      </div>
+
+      {/* Messages dépliés */}
+      {expanded && badge > 0 && (
+        <div style={{ width: '100%', borderTop: '1px solid rgba(255,200,100,.1)', paddingTop: 8, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {(pendingMercisForFleur ?? []).map(c => {
+            const z = ZONE_MAP[c.zone]
+            return (
+              <div key={c.id}>
+                <div style={{ fontSize: 10, color: 'rgba(238,232,218,.55)', fontStyle: 'italic', lineHeight: 1.5 }}>"{c.message_ia}"</div>
+                <div onClick={() => onMerci?.(c.id, c.sender_id)} style={{ marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 8px', borderRadius: 100, fontSize: 9, background: 'rgba(255,200,100,.1)', border: '1px solid rgba(255,200,100,.2)', color: 'rgba(255,220,140,.9)', cursor: 'pointer' }}>🙏 Merci</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MODAL ÉGRÉGORE
+// ─────────────────────────────────────────────────────────────────────────────
+function ModalEgregore({ userId, myName, onClose, onParticleBurst }) {
+  const isMobile = useIsMobile()
+  // Réutilise toute la logique de TabEgregore
+  const [zonesData, setZonesData]   = useState(Object.fromEntries(ZONES.map(z => [z.key, 50])))
+  const [activeCount, setActiveCount] = useState(0)
+  const [intention, setIntention]   = useState(null)
+  const [joined, setJoined]         = useState(false)
+  const [resonance, setResonance]   = useState(null)
+  const [pulseKey, setPulseKey]     = useState(null)
+  const [breathPhase, setBreath]    = useState(0)
+  const svgRef = useRef(null)
+
+  // Respiration
+  useEffect(() => {
+    let frame, start = Date.now()
+    function tick() { setBreath(Math.sin(((Date.now() - start) / 3200) * Math.PI * 2) * .5 + .5); frame = requestAnimationFrame(tick) }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [])
+
+  useEffect(() => {
+    if (!userId) return
+    setJoined(false) // reset d'abord, puis vérifier
+    loadData()
+    const today = new Date().toISOString().slice(0, 10)
+    supabase.from('intentions_joined').select('id').eq('user_id', userId).eq('date', today).maybeSingle()
+      .then(({ data }) => setJoined(!!data))
+  }, [userId])
+
+  async function loadData() {
+    const today = new Date().toISOString().slice(0, 10)
+    const [{ data: plants }, { data: intent }] = await Promise.all([
+      supabase.from('plants').select('zone_racines,zone_tige,zone_feuilles,zone_fleurs,zone_souffle').gte('date', today),
+      supabase.from('intentions').select('text,description').eq('date', today).maybeSingle(),
+    ])
+    if (plants?.length) {
+      const sums = Object.fromEntries(ZONES.map(z => [z.key, 0]))
+      plants.forEach(p => ZONES.forEach(z => { sums[z.key] += (p[z.key] ?? 5) }))
+      const avgs = Object.fromEntries(ZONES.map(z => [z.key, Math.round(sums[z.key] / plants.length)]))
+      setZonesData(avgs); setActiveCount(plants.length)
+      const r = ZONES.map(z => ({ ...z, pct: avgs[z.key], dist: Math.abs(80 - avgs[z.key]) }))
+        .filter(z => z.pct >= 60 && z.pct < 80).sort((a, b) => a.dist - b.dist)[0]
+      if (r) setResonance({ zone: r.key, current: r.pct, threshold: 80 })
+    }
+    if (intent) setIntention(intent)
+  }
+
+  function spawnParticles() {
+    if (!svgRef.current) return
+    const rect = svgRef.current.getBoundingClientRect()
+    const scaleX = rect.width / 260, scaleY = rect.height / 260
+    const PETALS = ['🌸','🌺','🌼','🌷','💮'], STARS = ['✨','⭐','🌟','💫','✦']
+    const ps = []
+    ZONES.forEach(z => {
+      const pct = zonesData[z.key] ?? 50
+      const pos = polarToXY(z.angle, (28 + (pct/100)*95) * .6, 130, 130)
+      const bx = rect.left + pos.x * scaleX, by = rect.top + pos.y * scaleY
+      for (let i = 0; i < 3; i++) ps.push({ id: `${z.key}-p-${i}-${Date.now()}-${Math.random()}`, x: bx + (Math.random()-.5)*20, y: by + (Math.random()-.5)*20, char: PETALS[Math.floor(Math.random()*PETALS.length)], vx: .35+Math.random()*.5, vy: -(.35+Math.random()*.5), dur: 3200+Math.random()*1400, color: null })
+      for (let i = 0; i < 2; i++) { const a = Math.random()*Math.PI*2, s = .9+Math.random()*1.1; ps.push({ id: `${z.key}-s-${i}-${Date.now()}-${Math.random()}`, x: bx+(Math.random()-.5)*14, y: by+(Math.random()-.5)*14, char: STARS[Math.floor(Math.random()*STARS.length)], vx: Math.cos(a)*s, vy: Math.sin(a)*s, dur: 900+Math.random()*500, color: null }) }
+    })
+    onParticleBurst?.(ps)
+  }
+
+  async function handleJoin() {
+    const today = new Date().toISOString().slice(0, 10)
+    if (joined) {
+      await supabase.from('intentions_joined').delete().eq('user_id', userId).eq('date', today)
+      setJoined(false)
+    } else {
+      await supabase.from('intentions_joined').insert({ user_id: userId, date: today })
+      setJoined(true)
+      ZONES.forEach((z, i) => setTimeout(() => { setPulseKey(z.key); setTimeout(() => setPulseKey(null), 1800) }, i * 160))
+      spawnParticles()
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 400, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(160deg,#0d200d,#091209)', border: '1px solid rgba(150,212,133,.15)', borderRadius: isMobile ? '20px 20px 0 0' : 20, padding: isMobile ? '24px 20px 36px' : '36px 40px', width: '100%', maxWidth: isMobile ? '100%' : 320, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        {isMobile && <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.15)', marginBottom: 4 }} />}
+
+        {/* Fleur */}
+        <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 260 : 560} svgRef={svgRef} />
+
+        <div style={{ fontSize: 9, color: 'rgba(238,232,218,.3)', letterSpacing: '.1em', marginTop: -175}}>
+          <span style={{ color: 'rgba(150,212,133,.7)' }}>{activeCount}</span> fleurs actives aujourd'hui
+        </div>
+
+        {intention && (<>
+          <div style={{ fontSize: 9, color: 'rgba(232,196,100,.5)', letterSpacing: '.14em', textTransform: 'uppercase' }}>✦ Intention collective du jour</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.1, textAlign: 'center' }}>{intention.text}</div>
+          <div style={{ fontSize: 11, color: 'rgba(238,232,218,.4)', lineHeight: 1.65, textAlign: 'center', maxWidth: 380 }}>{intention.description}</div>
+        </>)}
+
+        <div onClick={handleJoin} style={{ display: 'flex', alignItems: 'center', gap: 7, minHeight: 42, padding: '0 24px', borderRadius: 100, fontSize: 12, cursor: 'pointer', background: joined ? 'rgba(232,196,100,.14)' : 'rgba(150,212,133,.1)', border: `1px solid ${joined ? 'rgba(232,196,100,.42)' : 'rgba(150,212,133,.3)'}`, color: joined ? '#e8d4a8' : '#c8f0b8', transition: 'all .2s', WebkitTapHighlightColor: 'transparent' }}>
+          {joined ? '✓ Vous nourrissez l\'intention' : '🌸 Rejoindre l\'intention collective'}
+        </div>
+
+        {resonance && (() => {
+          const z = ZONE_MAP[resonance.zone]
+          const pct = (resonance.current / resonance.threshold) * 100
+          return (
+            <div style={{ width: '100%', background: `${z?.color}08`, border: `1px solid ${z?.color}22`, borderRadius: 12, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span>🔥</span><div style={{ fontSize: 11, color: z?.color }}>Résonance {z?.name}</div></div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: z?.color }}>{resonance.current}%</div>
+              </div>
+              <div style={{ height: 3, borderRadius: 100, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 100, width: `${pct}%`, background: `linear-gradient(90deg,${z?.color}88,${z?.color})` }} />
+              </div>
+              <div style={{ fontSize: 9, color: 'rgba(238,232,218,.25)' }}>Seuil {resonance.threshold}% · encore {resonance.threshold - resonance.current} pts</div>
             </div>
-          </div>
-          <div style={{ fontSize:10, color:'var(--text3)', lineHeight:1.5 }}>
-            {isOpen
-              ? "Visible dans \"Découvrir\" — n'importe qui peut rejoindre sans code"
-              : "Invisible publiquement — accès uniquement via code d'invitation"}
-          </div>
-        </div>
-        {error && <div className="modal-error">{error}</div>}
-        <div className="modal-actions">
-          <button className="modal-cancel" onClick={onClose}>Annuler</button>
-          <button className="modal-submit" disabled={loading} onClick={handleSubmit}>
-            {loading ? '…' : 'Créer la graine'}
-          </button>
-        </div>
+          )
+        })()}
+
+        <div onClick={onClose} style={{ fontSize: 11, color: 'rgba(238,232,218,.3)', cursor: 'pointer', marginTop: 4 }}>Fermer</div>
       </div>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   EXPORT HELPERS
-───────────────────────────────────────── */
-function downloadCSV(rows, filename) {
-  if (!rows.length) return
-  const headers = Object.keys(rows[0])
-  const csv = [headers.join(','), ...rows.map(r => headers.map(h => JSON.stringify(r[h] ?? '')).join(','))].join('\n')
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }))
-  a.download = filename; a.click(); URL.revokeObjectURL(a.href)
-}
-
-function exportPlantCSV(history) {
-  downloadCSV((history ?? []).map(p => ({
-    Date: p.date,
-    'Vitalité (%)': p.health,
-    'Racines (%)': p.zone_racines ?? '',
-    'Tige (%)': p.zone_tige ?? '',
-    'Feuilles (%)': p.zone_feuilles ?? '',
-    'Fleurs (%)': p.zone_fleurs ?? '',
-    'Souffle (%)': p.zone_souffle ?? '',
-  })), `jardin-vitalite-${new Date().toISOString().slice(0,10)}.csv`)
-}
-
-function exportJournalCSV(entries) {
-  downloadCSV((entries ?? []).map(e => ({
-    Date: new Date(e.created_at).toLocaleDateString('fr-FR'),
-    Contenu: e.content,
-    Zones: (e.zone_tags ?? []).join(' | '),
-  })), `jardin-journal-${new Date().toISOString().slice(0,10)}.csv`)
-}
-
-function exportPDF(history, entries, userName) {
-  const w = window.open('', '_blank')
-  const today = new Date().toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
-  const plantRows = (history ?? []).map(p =>
-    `<tr><td>${p.date}</td><td>${p.health}%</td><td>${p.zone_racines??'—'}%</td><td>${p.zone_tige??'—'}%</td><td>${p.zone_feuilles??'—'}%</td><td>${p.zone_fleurs??'—'}%</td><td>${p.zone_souffle??'—'}%</td></tr>`
-  ).join('')
-  const journalRows = (entries ?? []).map(e =>
-    `<tr><td>${new Date(e.created_at).toLocaleDateString('fr-FR')}</td><td>${e.content ?? ''}</td><td>${(e.zone_tags??[]).join(', ')}</td></tr>`
-  ).join('')
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"/>
-<title>Mon Jardin Intérieur — Bilan</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Georgia,serif;color:#1a1a1a;padding:40px 48px;max-width:860px;margin:0 auto}
-h1{font-size:26px;font-weight:300;color:#2d5a27;margin-bottom:4px}
-.sub{font-size:12px;color:#888;margin-bottom:28px}
-h2{font-size:14px;font-weight:500;color:#2d5a27;border-bottom:1px solid #ddd;padding-bottom:6px;margin:24px 0 12px}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th{background:#f0f7ee;text-align:left;padding:7px 9px;color:#2d5a27;font-weight:500}
-td{padding:6px 9px;border-bottom:1px solid #eee;color:#333;vertical-align:top;line-height:1.5}
-@media print{body{padding:20px}}
-</style></head><body>
-<h1>Mon Jardin Intérieur</h1>
-<div class="sub">Bilan de ${userName ?? 'votre jardin'} — ${today}</div>
-<h2>Historique de vitalité</h2>
-<table><thead><tr><th>Date</th><th>Vitalité</th><th>Racines</th><th>Tige</th><th>Feuilles</th><th>Fleurs</th><th>Souffle</th></tr></thead>
-<tbody>${plantRows || '<tr><td colspan="7" style="color:#999;font-style:italic">Aucune donnée</td></tr>'}</tbody></table>
-<h2>Journal personnel</h2>
-<table><thead><tr><th>Date</th><th>Entrée</th><th>Zones</th></tr></thead>
-<tbody>${journalRows || '<tr><td colspan="3" style="color:#999;font-style:italic">Aucune entrée</td></tr>'}</tbody></table>
-<script>window.onload=()=>window.print()<\/script>
-</body></html>`)
-  w.document.close()
-}
-
-/* ─────────────────────────────────────────
-   SCREEN 5 — CLUB DES JARDINIERS (ex Graines de vie)
-───────────────────────────────────────── */
-function ScreenClubJardiniers({ userId, openCreate, onCreateClose, onReport, awardLumens }) {
+// ─────────────────────────────────────────────────────────────────────────────
+//  SCREEN PRINCIPAL — 2 colonnes 80/20
+// ─────────────────────────────────────────────────────────────────────────────
+function ScreenClubJardiniers({ userId, awardLumens }) {
   const isMobile = useIsMobile()
-  const { circles, activeCircle, createCircle, joinByCode, loadCircles, selectCircle } = useCircle(userId)
-  const [joinCode, setJoinCode]           = useState('')
-  const [joinError, setJoinError]         = useState(null)
-  const [joinLoading, setJoinLoading]     = useState(false)
-  const [copied, setCopied]               = useState(false)
-  const [showCreate, setShowCreate]       = useState(false)
-  const [toast, setToast]                 = useState(null)
-  const [publicCircles, setPublicCircles]   = useState([])
-  const [editCircle, setEditCircle]         = useState(null)  // graine en cours d'édition
-  const [deleteConfirm, setDeleteConfirm]   = useState(null)  // graine à supprimer
-  const [showDetail, setShowDetail]         = useState(false) // modale détail
-  const [creatorNames, setCreatorNames]     = useState({})    // circleId → display_name du jardinier
 
-  // Charger le nom du jardinier via created_by sur circles
+  // ── State global ──
+  const [myName, setMyName]             = useState('Vous')
+  const [toast, setToast]               = useState(null)
+  const [particles, setParticles]       = useState([])
+  const [showEgregore, setShowEgregore] = useState(false)
+
+  // ── Jardin (colonne gauche) ──
+  const [list, setList]                   = useState([])
+  const [loadingJardin, setLoadingJardin] = useState(true)
+  const [readyJardin, setReadyJardin]     = useState(false)
+  const [excluded, setExcluded]           = useState(new Set())
+  const [pendingMercis, setPendingMercis] = useState([])
+  const [mercisEnvoyes, setMercisEnvoyes] = useState(new Set())
+  const [expandedId, setExpandedId]       = useState(null)
+
+  // ── Bouquet (colonne droite) ──
+  const [bouquet, setBouquet]               = useState([])
+  const [bouquetIds, setBouquetIds]         = useState(new Set())
+  const [loadingBouquet, setLoadingBouquet] = useState(true)
+  const [excludedBouquet, setExcludedBouquet] = useState(new Set())
+  const [pendingBouquet, setPendingBouquet] = useState([])
+  const [expandedBouquet, setExpandedBouquet] = useState(null)
+
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
+  // ── Init user ──
   useEffect(() => {
-    if (!circles.length) return
-    const memberCircles = circles.filter(c => !c.isAdmin)
-    if (!memberCircles.length) return
-    // Récupérer created_by depuis circles
-    supabase
-      .from('circles')
-      .select('id, created_by')
-      .in('id', memberCircles.map(c => c.id))
-      .then(async ({ data: circleData }) => {
-        if (!circleData?.length) return
-        const creatorIds = [...new Set(circleData.map(r => r.created_by).filter(Boolean))]
-        if (!creatorIds.length) return
-        const { data: usersData } = await supabase
-          .from('users')
-          .select('id, display_name, email')
-          .in('id', creatorIds)
-        const userMap = {}
-        ;(usersData ?? []).forEach(u => { userMap[u.id] = u.display_name ?? u.email ?? 'Jardinier(e)' })
-        const map = {}
-        circleData.forEach(r => { if (r.created_by) map[r.id] = userMap[r.created_by] ?? 'Jardinier(e)' })
-        setCreatorNames(map)
-      })
-  }, [circles])
+    if (!userId) return
+    supabase.from('users').select('display_name, flower_name').eq('id', userId).maybeSingle()
+      .then(({ data }) => { if (data) setMyName(flowerName(data)) })
+    initJardin()
+    initBouquet()
+  }, [userId])
 
-  async function fetchPublicCircles() {
-    const { data } = await supabase
-      .from('circles')
-      .select('id, name, theme, is_open, invite_code, expires_at, max_members, circle_members(count)')
-      .eq('is_open', true)
-      .order('created_at', { ascending: false })
-      .limit(100)
-    const mapped = (data ?? []).map(r => ({
-      ...r,
-      memberCount: r.circle_members?.[0]?.count ?? 0
-    }))
-    // Masquer les graines pleines et expirées
-    const filtered = mapped.filter(r => {
-      const full = r.memberCount >= (r.max_members ?? 8)
-      const expired = r.expires_at && new Date(r.expires_at) < new Date()
-      return !full && !expired
-    }).sort(() => Math.random() - 0.5).slice(0, 10)
-    setPublicCircles(filtered)
-  }
-
-  useEffect(() => { fetchPublicCircles() }, [])
-  // Topbar "Créer" button also opens the modal
-  const isCreateOpen = showCreate || openCreate
-  const EMOJIS = ['🌸','🌿','🌾','🌱','🌺','🍃','🌼','🌷','🌻']
-
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2500) }
-
-  async function handleJoin() {
-    if (!joinCode.trim()) return
-    setJoinLoading(true); setJoinError(null)
+  // ── JARDIN ──
+  async function initJardin() {
+    setLoadingJardin(true)
     try {
-      const circle = await joinByCode(joinCode.trim())
-      setJoinCode(''); showToast(`✅ Vous avez rejoint la graine "${circle.name}"`)
-      awardLumens?.(2, 'join_graine', { circle_id: circle.id })
-    } catch (e) { setJoinError(e.message) }
-    finally { setJoinLoading(false) }
+      const today = new Date().toISOString().slice(0, 10)
+      const { data: sentToday } = await supabase.from('coeurs').select('receiver_id').eq('sender_id', userId).gte('created_at', today + 'T00:00:00')
+      const alreadySent = new Set((sentToday ?? []).map(c => c.receiver_id))
+      setExcluded(alreadySent)
+
+      const [{ data: coeurs }, { data: mercis }] = await Promise.all([
+        supabase.from('coeurs').select('id, sender_id, zone, message_ia, created_at').eq('receiver_id', userId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('mercis').select('coeur_id').eq('sender_id', userId),
+      ])
+      const done = new Set((mercis ?? []).map(m => m.coeur_id))
+      setMercisEnvoyes(done)
+      setPendingMercis((coeurs ?? []).filter(c => !done.has(c.id)))
+
+      await loadJardinList(alreadySent)
+      setReadyJardin(true)
+    } catch(e) { console.error(e) } finally { setLoadingJardin(false) }
   }
 
-  async function handleJoinPublic(code) {
-    if (!code) return
+  async function loadJardinList(excludeSet) {
+    const exIds = [...(excludeSet ?? excluded), userId].filter(Boolean)
+    let q = supabase.from('users').select('id, display_name, flower_name, level')
+    exIds.forEach(id => { q = q.neq('id', id) })
+    const { data: users } = await q
+    if (!users?.length) { setList([]); return }
+    const { data: plants } = await supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', users.map(u => u.id)).order('date', { ascending: false })
+    const plantMap = {}
+    ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
+    setList(users.map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).filter(u => u.display_name).sort((a, b) => vitality(a.plant) - vitality(b.plant)).slice(0, 20))
+  }
+
+  async function handleJardinCoeur({ receiverName, zone, receiverId }) {
+    setList(prev => prev.filter(f => f.id !== receiverId))
+    const newEx = new Set([...excluded, receiverId])
+    setExcluded(newEx)
+    showToast(`❤️ Envoyé à ${receiverName} !`)
+    awardLumens?.(1, 'coeur_envoye', { zone })
+
+    // Remplaçant
+    const currentIds = list.filter(f => f.id !== receiverId).map(f => f.id)
+    const exIds = [...newEx, userId, ...currentIds].filter(Boolean)
+    let q = supabase.from('users').select('id, display_name, flower_name, level')
+    exIds.forEach(id => { q = q.neq('id', id) })
+    const { data: users } = await q
+    if (!users?.length) return
+    const { data: plants } = await supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', users.map(u => u.id)).order('date', { ascending: false })
+    const plantMap = {}
+    ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
+    const next = users.map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).filter(u => u.display_name).sort((a, b) => vitality(a.plant) - vitality(b.plant))[0]
+    if (next) setList(prev => [...prev, next])
+  }
+
+  async function handleMerci(coeurId, senderId) {
     try {
-      const circle = await joinByCode(code)
-      showToast(`✅ Vous avez rejoint la graine "${circle.name}"`)
-      awardLumens?.(2, 'join_graine', { circle_id: circle.id })
-      const { data } = await supabase.from('circles')
-        .select('id, name, theme, is_open, invite_code, expires_at, circle_members(count)')
-        .eq('is_open', true).limit(10)
-      setPublicCircles((data ?? []).map(r => ({ ...r, memberCount: r.circle_members?.[0]?.count ?? 0 })))
-    } catch (e) { showToast(`❌ ${e.message}`) }
+      await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
+      setMercisEnvoyes(prev => new Set([...prev, coeurId]))
+      setPendingMercis(prev => prev.filter(c => c.id !== coeurId))
+    } catch(e) { console.error(e) }
   }
 
-  function handleCopyCode(code) {
-    navigator.clipboard?.writeText(code ?? '').then(() => {
-      setCopied(true); showToast('🌿 Code copié dans le presse-papier !')
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
-
-  async function handleCreate(name, theme, isOpen, duration, description) {
-    const myOwnGraines = circles.filter(c => c.isAdmin || c.created_by === userId)
-    if (myOwnGraines.length >= 6) {
-      showToast("🌱 Maximum 6 graines actives — supprimez-en une avant d'en créer une nouvelle.")
-      return
-    }
-    // Validation IA du titre via Edge Function
+  // ── BOUQUET ──
+  async function initBouquet() {
+    setLoadingBouquet(true)
     try {
-      const modResult = await callModerateCircle({ action: 'moderate', name })
-      if (!modResult.ok) {
-        showToast('❌ Titre refusé : ' + (modResult.reason ?? 'contenu inapproprié'))
-        return
-      }
-    } catch(e) { /* si Edge Function indisponible, on laisse passer */ }
-    const circle = await createCircle(name, theme, isOpen)
-    const updates = {}
-    if (duration != null) updates.expires_at = new Date(Date.now() + duration * 86400000).toISOString()
-    if (description) updates.description = description
-    if (Object.keys(updates).length) await supabase.from('circles').update(updates).eq('id', circle.id)
-    await loadCircles?.()
-    fetchPublicCircles()
-    showToast(`🌱 Graine "${circle.name}" créée !`)
+      const [{ data: sent }, { data: recv }] = await Promise.all([
+        supabase.from('coeurs').select('receiver_id').eq('sender_id', userId),
+        supabase.from('mercis').select('sender_id').eq('receiver_id', userId),
+      ])
+      const sentIds  = new Set((sent  ?? []).map(c => c.receiver_id))
+      const recvIds  = new Set((recv  ?? []).map(m => m.sender_id))
+      const ids      = [...sentIds].filter(id => recvIds.has(id))
+      setBouquetIds(new Set(ids))
+      if (!ids.length) { setBouquet([]); setLoadingBouquet(false); return }
+
+      const today = new Date().toISOString().slice(0, 10)
+      const [{ data: users }, { data: plants }, { data: sentToday }] = await Promise.all([
+        supabase.from('users').select('id, display_name, flower_name, level').in('id', ids),
+        supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', ids).order('date', { ascending: false }),
+        supabase.from('coeurs').select('receiver_id').eq('sender_id', userId).gte('created_at', today + 'T00:00:00'),
+      ])
+      const plantMap = {}
+      ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
+      setExcludedBouquet(new Set((sentToday ?? []).map(c => c.receiver_id)))
+      setBouquet((users ?? []).map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).sort((a, b) => vitality(a.plant) - vitality(b.plant)))
+
+      const [{ data: coeurs }, { data: mercis }] = await Promise.all([
+        supabase.from('coeurs').select('id, sender_id, zone, message_ia, created_at').eq('receiver_id', userId).in('sender_id', ids).order('created_at', { ascending: false }),
+        supabase.from('mercis').select('coeur_id').eq('sender_id', userId),
+      ])
+      const done = new Set((mercis ?? []).map(m => m.coeur_id))
+      setPendingBouquet((coeurs ?? []).filter(c => !done.has(c.id)))
+    } finally { setLoadingBouquet(false) }
   }
 
-  async function handleUpdate(id, name, theme, isOpen, description) {
-    try {
-      await supabase.from('circles').update({ name, theme, is_open: isOpen, description }).eq('id', id)
-      setEditCircle(null)
-      showToast('✅ Graine mise à jour')
-      loadCircles?.()
-      fetchPublicCircles()
-    } catch (e) { showToast(`❌ ${e.message}`) }
+  async function handleBouquetCoeur({ receiverId }) {
+    setExcludedBouquet(prev => new Set([...prev, receiverId]))
   }
 
-  async function handleSignaler(circleId) {
+  async function handleBouquetMerci(coeurId, senderId) {
     try {
-      await supabase.from('reports').insert({ circle_id: circleId, reported_by: userId, reason: 'user_report' })
-      showToast('🚩 Signalement envoyé — merci !')
-      setShowDetail(false)
-      onReport?.()
-    } catch(e) { showToast("❌ Impossible d'envoyer le signalement") }
+      await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
+      setPendingBouquet(prev => prev.filter(c => c.id !== coeurId))
+    } catch(e) { console.error(e) }
   }
 
-  async function handleDelete(id) {
-    try {
-      await supabase.from('circle_members').delete().eq('circle_id', id)
-      await supabase.from('circles').delete().eq('id', id)
-      setDeleteConfirm(null)
-      showToast('🗑️ Graine supprimée')
-      loadCircles?.()
-      fetchPublicCircles()
-    } catch (e) { showToast(`❌ ${e.message}`) }
-  }
+  // ── RENDER ──
+  const todayStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <>
-      {isCreateOpen && <CreateCircleModal onClose={() => { setShowCreate(false); onCreateClose?.() }} onCreate={handleCreate} />}
-      {editCircle && (
-        <EditCircleModal
-          circle={editCircle}
-          onClose={() => setEditCircle(null)}
-          onSave={(name, theme, isOpen, description) => handleUpdate(editCircle.id, name, theme, isOpen, description)}
+      <style>{`
+        @keyframes petal-pulse { 0%{transform:scale(.85);opacity:.9} 100%{transform:scale(2.2);opacity:0} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+      `}</style>
+      <Toast msg={toast} />
+
+      {showEgregore && (
+        <ModalEgregore
+          userId={userId} myName={myName}
+          onClose={() => setShowEgregore(false)}
+          onParticleBurst={ps => setParticles(prev => [...prev, ...ps])}
         />
       )}
-      {showDetail && activeCircle && (
-        <div className="modal-overlay" onClick={() => setShowDetail(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth:480 }}>
-            {/* Header */}
-            <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:16 }}>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 12px' : '24px 28px' }}>
+        <div style={{ display: 'flex', gap: isMobile ? 16 : 24, alignItems: 'flex-start', maxWidth: 1400, margin: '0 auto' }}>
+
+          {/* ══ COLONNE GAUCHE 80% ══ */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Grand titre + bouton Égrégore */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: 50 }}>
               <div>
-                <div className="modal-title" style={{ marginBottom:4 }}>{activeCircle.name}</div>
-                <div style={{ fontSize:11, color:'var(--text3)' }}>
-                  {getThemeEmoji(activeCircle.theme)} {activeCircle.theme} · {activeCircle.memberCount} membre{activeCircle.memberCount > 1 ? 's' : ''}
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 32 : 44, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.05, letterSpacing: '.02em' }}>
+                  Le Jardin<br /><em style={{ color: 'rgba(150,212,133,.8)' }}>du Monde</em>
                 </div>
+                <div style={{ fontSize: 10, color: 'rgba(238,232,218,.28)', marginTop: 6 }}>{todayStr}</div>
               </div>
-              <div onClick={() => setShowDetail(false)} style={{ cursor:'pointer', fontSize:18, opacity:.5, marginTop:2 }}>✕</div>
-            </div>
 
-            {/* Description */}
-            {activeCircle.description && (
-              <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.8, fontStyle:'italic', marginBottom:16, padding:'10px 14px', background:'rgba(150,212,133,0.05)', borderRadius:10, border:'1px solid rgba(150,212,133,0.1)' }}>
-                "{activeCircle.description}"
-              </div>
-            )}
-
-
-
-            {/* Code invitation si privée et jardinier */}
-            {(activeCircle.isAdmin || activeCircle.created_by === userId) && !activeCircle.is_open && (
-              <div style={{ marginTop:14 }}>
-                <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:6 }}>Code d'invitation</div>
-                <div className="cd-invite">
-                  <div className="cdi-code">{activeCircle.invite_code ?? '——'}</div>
-                  <div className="cdi-copy" onClick={() => handleCopyCode(activeCircle.invite_code)}>
-                    {copied ? '✓ Copié' : 'Copier'}
+              {/* Bouton Égrégore + texte explicatif */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, paddingTop: 6 }}>
+                <div
+                  onClick={() => setShowEgregore(true)}
+                  style={{
+                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                    padding: '12px 16px', borderRadius: 16, cursor: 'pointer',
+                    background: 'linear-gradient(135deg, rgba(232,196,100,.18), rgba(150,212,133,.12))',
+                    border: '1px solid rgba(232,196,100,.45)',
+                    boxShadow: '0 0 18px rgba(232,196,100,.2), 0 0 40px rgba(150,212,133,.08)',
+                    transition: 'all .2s',
+                    WebkitTapHighlightColor: 'transparent',
+                    maxWidth: isMobile ? 110 : 140,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 28px rgba(232,196,100,.4), 0 0 60px rgba(150,212,133,.15)'; e.currentTarget.style.borderColor = 'rgba(232,196,100,.7)' }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 18px rgba(232,196,100,.2), 0 0 40px rgba(150,212,133,.08)'; e.currentTarget.style.borderColor = 'rgba(232,196,100,.45)' }}
+                >
+                  <div style={{ fontSize: isMobile ? 22 : 26, lineHeight: 1, filter: 'drop-shadow(0 0 8px rgba(232,196,100,.6))' }}>✦</div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 12 : 13, color: '#e8d4a8', textAlign: 'center', lineHeight: 1.2 }}>L'Égrégore</div>
+                  <div style={{ fontSize: 9, color: 'rgba(232,196,100,.6)', textAlign: 'center', lineHeight: 1.4 }}>
+                    {isMobile ? 'Fleur collective' : 'La fleur vivante\ndu groupe'}
                   </div>
                 </div>
-              </div>
-            )}
 
-            <div className="modal-actions" style={{ marginTop:20, justifyContent:'space-between' }}>
-              <button onClick={() => handleSignaler(activeCircle.id)}
-                style={{ padding:'8px 14px', borderRadius:10, border:'1px solid rgba(210,80,80,0.3)', background:'rgba(210,80,80,0.08)', color:'rgba(255,140,140,0.8)', fontSize:11, cursor:'pointer' }}>
-                🚩 Signaler
-              </button>
-              <div style={{ display:'flex', gap:8 }}>
-                <button className="modal-cancel" onClick={() => setShowDetail(false)}>Fermer</button>
-                {(activeCircle.isAdmin || activeCircle.created_by === userId) && (
-                  <button className="modal-submit" onClick={() => { setShowDetail(false); setEditCircle(activeCircle) }}>Modifier</button>
+                {!isMobile && (
+                  <div style={{ maxWidth: 220, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: 'rgba(232,196,100,.8)', letterSpacing: '.03em' }}>Qu'est-ce que l'Égrégore ?</div>
+                    <div style={{ fontSize: 11, color: 'rgba(238,232,218,.42)', lineHeight: 1.7 }}>
+                      Une entité vivante née de l'énergie collective du groupe. Plus les membres prennent soin d'eux et s'entraident, plus la fleur commune s'épanouit — et cette beauté partagée renforce chacun en retour.
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {deleteConfirm && (
-        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-title">Supprimer la graine 🗑️</div>
-            <div style={{ fontSize:13, color:'var(--text2)', marginBottom:20, lineHeight:1.6 }}>
-              Voulez-vous vraiment supprimer <b>{deleteConfirm.name}</b> ? Cette action est irréversible et supprimera tous les membres.
-            </div>
-            <div className="modal-actions">
-              <button className="modal-cancel" onClick={() => setDeleteConfirm(null)}>Annuler</button>
-              <button className="modal-submit" style={{ background:'rgba(210,80,80,0.18)', borderColor:'rgba(210,80,80,0.4)', color:'rgba(255,160,160,0.9)' }}
-                onClick={() => handleDelete(deleteConfirm.id)}>Supprimer</button>
-            </div>
-          </div>
-        </div>
-      )}
-      <Toast msg={toast} />
-      <div className="content">
-        {/* ── En-tête Club des Jardiniers ── */}
-        <div style={{ gridColumn:'1/-1', marginBottom:0 }}>
-          <div style={{
-            display:'flex', alignItems:'center', gap:14, padding:'14px 18px',
-            background:'linear-gradient(135deg, rgba(120,80,30,0.18), rgba(80,140,60,0.12))',
-            border:'1px solid rgba(180,130,60,0.22)', borderRadius:14, marginBottom:16,
-          }}>
-            <span style={{ fontSize:28 }}>🪴</span>
-            <div>
-              <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:18, fontWeight:400, color:'rgba(238,220,170,0.92)', letterSpacing:'.03em' }}>
-                Club des Jardiniers
-              </div>
-              <div style={{ fontSize:10, color:'rgba(238,220,170,0.42)', letterSpacing:'.07em', marginTop:2 }}>
-                Anciennement <em>Graines de vie</em> · Vos cercles de partage
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col" style={{ flex:1 }}>
-          <div className="slabel">Mes graines · {circles.length} actives</div>
-          <div className="circles-grid">
-            {circles.map(c => { const creatorName = creatorNames[c.id] ?? null; const isMine = c.isAdmin || c.created_by === userId; return (
-              <div key={c.id} className={'circle-card-big' + (c.id===activeCircle?.id ? ' active-circle' : '')}
-                style={{ position:'relative', padding:'14px', gap:6 }}
-                onClick={() => { selectCircle(c.id); setShowDetail(true) }}>
-
-                {/* LIGNE 1 — 7j haut gauche + badge haut droite */}
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:2 }}>
-                  {c.expires_at ? (() => {
-                    const remaining = Math.ceil((new Date(c.expires_at) - Date.now()) / 86400000)
-                    return remaining > 0
-                      ? <div style={{ fontSize:10, color: remaining <= 2 ? 'rgba(255,140,100,0.85)' : 'var(--text3)', display:'flex', alignItems:'center', gap:4 }}>
-                          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:13, color: remaining <= 2 ? 'rgba(255,140,100,0.9)' : 'var(--text2)' }}>{remaining}j</span>
-                          Profitez-en !
-                        </div>
-                      : <div style={{ fontSize:10, color:'rgba(200,100,100,0.7)' }}>Expirée</div>
-                  })() : <div />}
-                  {isMine
-                    ? <div className="ccb-badge admin">Jardinier(e)</div>
-                    : <div className="ccb-badge member">🌱 {creatorName ?? '…'}</div>
-                  }
-                </div>
-
-                {/* LIGNE 2 — Nom */}
-                <div className="ccb-name">{c.name}</div>
-                <div className="ccb-theme">{getThemeEmoji(c.theme)} {c.theme}</div>
-
-                {/* LIGNE 3 — Membres + boutons bas droite */}
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:6 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                    {Array.from({ length: Math.min(c.memberCount, 5) }).map((_, i) => (
-                      <div key={i} className="ccb-member-av" style={{ fontSize:12 }}>👤</div>
-                    ))}
-                    {c.memberCount > 5 && <div className="ccb-member-count">+{c.memberCount - 5}</div>}
-                    <div className="ccb-member-count">{c.memberCount} membre{c.memberCount > 1 ? 's' : ''}</div>
-                  </div>
-                  {isMine && (
-                    <div style={{ display:'flex', gap:10 }}>
-                      <div title="Modifier" onClick={e => { e.stopPropagation(); setEditCircle(c) }}
-                        style={{ cursor:'pointer', fontSize:13, opacity:.5, transition:'opacity .2s' }}
-                        onMouseEnter={e=>e.currentTarget.style.opacity=1}
-                        onMouseLeave={e=>e.currentTarget.style.opacity=.5}>✏️</div>
-                      <div title="Supprimer" onClick={e => { e.stopPropagation(); setDeleteConfirm(c) }}
-                        style={{ cursor:'pointer', fontSize:13, opacity:.4, transition:'opacity .2s' }}
-                        onMouseEnter={e=>e.currentTarget.style.opacity=1}
-                        onMouseLeave={e=>e.currentTarget.style.opacity=.4}>🗑️</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )})}
-            <div className="create-circle-card" onClick={() => setShowCreate(true)}>
-              <div className="ccc-icon">＋</div>
-              <div className="ccc-text">Créer une graine</div>
-            </div>
-          </div>
-
-
-        </div>
-
-        <div className="rpanel" style={{ display: isMobile ? "none" : undefined }}>
-          <div className="rp-section">
-            <div className="rp-slabel">Rejoindre via code</div>
-            <div style={{ display:'flex', gap:7, marginBottom:6 }}>
-              <input
-                value={joinCode}
-                onChange={e => { setJoinCode(e.target.value.toUpperCase()); setJoinError(null) }}
-                onKeyDown={e => e.key === 'Enter' && handleJoin()}
-                placeholder="CODE…"
-                style={{ flex:1, padding:'9px 13px', background:'rgba(255,255,255,0.06)', border:'1px solid var(--border)', borderRadius:10, fontSize:12, color:'var(--text2)', letterSpacing:'.1em', outline:'none' }}
-              />
-              <div
-                onClick={handleJoin}
-                style={{ padding:'9px 16px', background: joinLoading?'transparent':'var(--green2)', border:'1px solid var(--greenT)', borderRadius:10, fontSize:14, color:'#c8f0b8', cursor:'pointer', opacity: joinLoading?.6:1, transition:'all .2s' }}
-              >{joinLoading ? '…' : '→'}</div>
-            </div>
-            {joinError && <div style={{ fontSize:10, color:'rgba(210,110,110,.85)', marginBottom:12, padding:'6px 10px', background:'rgba(210,110,110,.07)', borderRadius:8, border:'1px solid rgba(210,110,110,.2)' }}>{joinError}</div>}
-
-            <div className="rp-slabel" style={{ marginTop:14 }}>Découvrir les Graines publiques</div>
-            {publicCircles.length === 0
-              ? <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'6px 0' }}>Aucune graine publique pour l'instant.</div>
-              : publicCircles.map((c, i) => (
-              <div key={c.id ?? i} style={{ marginBottom:11, padding:'11px 13px', background:'rgba(255,255,255,0.05)', border:'1px solid var(--border)', borderRadius:13 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:6 }}>
-                  <span style={{ fontSize:17 }}>{c.emoji ?? '🌱'}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13, color:'var(--text)' }}>{c.name}</div>
-                    <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{getThemeEmoji(c.theme)} {c.theme ?? '—'}</div>
-                  </div>
-                </div>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <div style={{ fontSize:11, color:'var(--text3)' }}>{c.memberCount ?? '?'} membre{(c.memberCount ?? 0) > 1 ? 's' : ''}</div>
-                  {c.is_open
-                    ? <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                        <LumenBadge amount={2} />
-                        <div style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--greenT)', color:'#c8f0b8', background:'var(--green3)', cursor:'pointer' }}
-                          onClick={() => handleJoinPublic(c.invite_code)}>Rejoindre</div>
+            {/* Messages positifs reçus */}
+            {pendingMercis.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ fontSize: 9, color: 'rgba(238,232,218,.28)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Cœurs reçus pour vous</div>
+                {pendingMercis.slice(0, 5).map(c => {
+                  const z = ZONE_MAP[c.zone]
+                  const already = mercisEnvoyes.has(c.id)
+                  return (
+                    <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,100,100,.04)', border: '1px solid rgba(255,100,100,.1)', borderRadius: 12, animation: 'fadeInUp .3s ease' }}>
+                      <span style={{ fontSize: 18, flexShrink: 0 }}>❤️</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11, color: 'rgba(238,232,218,.65)', fontStyle: 'italic', lineHeight: 1.55 }}>"{c.message_ia}"</div>
+                        <div style={{ fontSize: 9, color: z?.color ?? '#96d485', marginTop: 2 }}>{z?.icon} {z?.name} · {timeAgo(c.created_at)}</div>
                       </div>
-                    : <div style={{ fontSize:10, padding:'3px 10px', borderRadius:100, border:'1px solid var(--border)', color:'var(--text3)' }}>Sur invitation</div>}
+                      {!already
+                        ? <div onClick={() => handleMerci(c.id, c.sender_id)} style={{ flexShrink: 0, minHeight: 30, padding: '0 12px', borderRadius: 100, fontSize: 10, background: 'rgba(255,200,100,.1)', border: '1px solid rgba(255,200,100,.25)', color: 'rgba(255,220,140,.9)', cursor: 'pointer', display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}>🙏 Merci</div>
+                        : <span style={{ fontSize: 9, color: 'rgba(238,232,218,.2)', flexShrink: 0 }}>🙏</span>
+                      }
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Section 20 fleurs fragiles */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight: 300, color: '#e8d4a8' }}>Fleurs qui ont besoin de soutien</div>
+                <div style={{ fontSize: 9, color: 'rgba(238,232,218,.25)' }}>{list.length} / 20 · renouvelé à minuit</div>
+              </div>
+
+              {!readyJardin ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, calc(50% - 6px)), 1fr))', gap: 10 }}>
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} style={{ borderRadius: 14, padding: '14px 12px', background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, opacity: 1 - i * 0.05 }}>
+                      <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,.06)' }} />
+                      <div style={{ width: '70%', height: 10, borderRadius: 4, background: 'rgba(255,255,255,.06)' }} />
+                      <div style={{ width: '40%', height: 8, borderRadius: 4, background: 'rgba(255,255,255,.04)' }} />
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,.04)' }} />
+                    </div>
+                  ))}
+                </div>
+              ) : list.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 40, color: 'rgba(238,232,218,.2)', fontSize: 12 }}>Toutes les fleurs sont en bonne santé 🌿</div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, calc(50% - 6px)), 1fr))', gap: 10 }}>
+                  {list.map(fleur => {
+                    const badge = pendingMercis.filter(c => c.sender_id === fleur.id).length
+                    return (
+                      <FleurCard
+                        key={fleur.id}
+                        fleur={fleur}
+                        userId={userId}
+                        senderName={myName}
+                        alreadySent={excluded.has(fleur.id)}
+                        bouquetMember={bouquetIds.has(fleur.id)}
+                        badge={badge}
+                        onBadgeClick={() => setExpandedId(expandedId === fleur.id ? null : fleur.id)}
+                        onCoeurSent={handleJardinCoeur}
+                        expanded={expandedId === fleur.id}
+                        pendingMercisForFleur={pendingMercis.filter(c => c.sender_id === fleur.id)}
+                        onMerci={handleMerci}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ══ COLONNE DROITE 20% — MON BOUQUET ══ */}
+          {!isMobile && (
+            <div style={{ width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: '#e8d4a8' }}>Mon Bouquet</div>
+                <div style={{ fontSize: 9, color: 'rgba(238,232,218,.28)', marginTop: 3 }}>
+                  {bouquet.length} lien{bouquet.length !== 1 ? 's' : ''} · échanges mutuels
                 </div>
               </div>
-            ))}
-          </div>
+
+              {loadingBouquet ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} style={{ height: 58, borderRadius: 12, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)', opacity: 1 - i * 0.15 }} />
+                ))
+              ) : bouquet.length === 0 ? (
+                <div style={{ background: 'rgba(150,212,133,.03)', border: '1px solid rgba(150,212,133,.1)', borderRadius: 14, padding: '20px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontSize: 22 }}>🌱</div>
+                  <div style={{ fontSize: 11, color: 'rgba(238,232,218,.35)', lineHeight: 1.6 }}>Envoyez des ❤️ dans le jardin — quand une fleur vous remercie, elle rejoint votre bouquet.</div>
+                </div>
+              ) : (
+                bouquet.map(fleur => {
+                  const badge = pendingBouquet.filter(c => c.sender_id === fleur.id).length
+                  return (
+                    <BouquetCard
+                      key={fleur.id}
+                      fleur={fleur}
+                      userId={userId}
+                      senderName={myName}
+                      alreadySent={excludedBouquet.has(fleur.id)}
+                      badge={badge}
+                      onBadgeClick={() => setExpandedBouquet(expandedBouquet === fleur.id ? null : fleur.id)}
+                      onCoeurSent={handleBouquetCoeur}
+                      expanded={expandedBouquet === fleur.id}
+                      pendingMercisForFleur={pendingBouquet.filter(c => c.sender_id === fleur.id)}
+                      onMerci={handleBouquetMerci}
+                    />
+                  )
+                })
+              )}
+            </div>
+          )}
+
+          {/* Bouquet mobile — sous la liste */}
+          {isMobile && bouquet.length > 0 && (
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: '#e8d4a8' }}>Mon Bouquet</div>
+              {bouquet.map(fleur => {
+                const badge = pendingBouquet.filter(c => c.sender_id === fleur.id).length
+                return (
+                  <BouquetCard
+                    key={fleur.id}
+                    fleur={fleur}
+                    userId={userId}
+                    senderName={myName}
+                    alreadySent={excludedBouquet.has(fleur.id)}
+                    badge={badge}
+                    onBadgeClick={() => setExpandedBouquet(expandedBouquet === fleur.id ? null : fleur.id)}
+                    onCoeurSent={handleBouquetCoeur}
+                    expanded={expandedBouquet === fleur.id}
+                    pendingMercisForFleur={pendingBouquet.filter(c => c.sender_id === fleur.id)}
+                    onMerci={handleBouquetMerci}
+                  />
+                )
+              })}
+            </div>
+          )}
+
         </div>
       </div>
+
+      {/* Particules */}
+      {particles.map(p => (
+        <Particle key={p.id} x={p.x} y={p.y} color={p.color} char={p.char}
+          vx={p.vx} vy={p.vy} dur={p.dur}
+          onDone={() => setParticles(prev => prev.filter(q => q.id !== p.id))} />
+      ))}
     </>
   )
 }
-
 
 export { ScreenClubJardiniers }

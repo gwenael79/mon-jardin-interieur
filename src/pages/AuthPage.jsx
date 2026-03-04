@@ -54,6 +54,40 @@ html,body,#root{height:100%;width:100%}
 .as-text{font-size:13px;font-weight:300;color:var(--text2);line-height:1.7}
 .as-email{color:#c8f0b8}
 .auth-footer{margin-top:32px;font-size:9px;color:var(--text3);text-align:center;line-height:1.8}
+
+@media(max-width:700px){
+  .auth-root{flex-direction:column;min-height:100vh;height:auto;overflow-y:auto}
+
+  /* Gauche — hero compact en haut */
+  .auth-left{
+    padding:36px 28px 28px;
+    flex-shrink:0;
+    justify-content:flex-start;
+  }
+  .auth-left-bg{
+    background:radial-gradient(ellipse at 50% 80%,rgba(150,212,133,0.10),transparent 60%);
+  }
+  .auth-logo{margin-bottom:24px;font-size:11px}
+  .auth-hero-title{font-size:36px;margin-bottom:14px}
+  .auth-hero-desc{font-size:13px;margin-bottom:28px;max-width:100%}
+  .auth-features{display:none}
+  .auth-tagline{margin-top:0;font-size:10px}
+  .deco-plant{display:none}
+
+  /* Droite — formulaire prend tout l'espace restant */
+  .auth-right{
+    width:100%;
+    flex:1;
+    border-left:none;
+    border-top:1px solid var(--border2);
+    padding:32px 28px 48px;
+    background:rgba(14,28,14,0.98);
+    border-radius:0;
+  }
+  .auth-form-title{font-size:24px}
+  .auth-submit{padding:15px;font-size:13px}
+  .auth-input{font-size:14px;padding:13px 14px}
+}
 `
 
 export function AuthPage() {

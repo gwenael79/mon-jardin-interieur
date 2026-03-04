@@ -29,6 +29,8 @@ const SCREENS = [
 function ProfileModal({ user, onClose }) {
   const [name,        setName]        = useState('')
   const [profession,  setProfession]  = useState('')
+  const [flowerName,  setFlowerName]  = useState('')
+  const [visibility,  setVisibility]  = useState(false)
   const [isAnimator,  setIsAnimator]  = useState(false)
   const [saving,      setSaving]      = useState(false)
   const [loading,     setLoading]     = useState(true)
@@ -36,26 +38,29 @@ function ProfileModal({ user, onClose }) {
   const [saved,       setSaved]       = useState(false)
 
   useEffect(() => {
-    supabase
-      .from('users')
-      .select('display_name, profession, is_animator')
-      .eq('id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setName(data?.display_name ?? '')
-        setProfession(data?.profession ?? '')
-        setIsAnimator(data?.is_animator === true)
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('users').select('display_name, profession, is_animator, flower_name').eq('id', user.id).maybeSingle(),
+      supabase.from('user_privacy').select('visibility_flower').eq('user_id', user.id).maybeSingle(),
+    ]).then(([{ data: u }, { data: priv }]) => {
+      setName(u?.display_name ?? '')
+      setProfession(u?.profession ?? '')
+      setFlowerName(u?.flower_name ?? '')
+      setIsAnimator(u?.is_animator === true)
+      setVisibility(priv?.visibility_flower ?? false)
+      setLoading(false)
+    })
   }, [user.id])
 
   async function handleSave() {
     if (!name.trim()) { setError('Le prénom ou pseudo ne peut pas être vide.'); return }
     setSaving(true); setError(null)
-    const { error: err } = await supabase
-      .from('users')
-      .update({ display_name: name.trim(), profession: profession.trim() })
-      .eq('id', user.id)
+    const [{ error: err }] = await Promise.all([
+      supabase.from('users')
+        .update({ display_name: name.trim(), profession: profession.trim(), flower_name: flowerName.trim() || null })
+        .eq('id', user.id),
+      supabase.from('user_privacy')
+        .upsert({ user_id: user.id, visibility_flower: visibility }, { onConflict: 'user_id' }),
+    ])
     setSaving(false)
     if (err) { setError(err.message); return }
     setSaved(true)
@@ -82,6 +87,54 @@ function ProfileModal({ user, onClose }) {
             onKeyDown={e => e.key === 'Enter' && !loading && handleSave()}
           />
         </div>
+        {/* Nom de fleur */}
+        <div className="profile-field" style={{ marginTop:12 }}>
+          <label className="profile-label">Nom de fleur</label>
+          <input
+            className="profile-input"
+            type="text"
+            value={loading ? '' : flowerName}
+            onChange={e => setFlowerName(e.target.value)}
+            placeholder="ex. Aubépine, Pivoine, Cèdre…"
+            maxLength={30}
+            disabled={loading}
+          />
+          <div style={{ fontSize:10, color:'rgba(242,237,224,0.3)', marginTop:4 }}>
+            Votre identité dans la communauté · {name && flowerName ? `${name}·${flowerName}` : 'Prénom·NomDeFleur'}
+          </div>
+        </div>
+
+        {/* Toggle visibilité Le Jardin */}
+        <div style={{
+          marginTop:16, padding:'12px 14px',
+          background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)',
+          borderRadius:10, display:'flex', alignItems:'center', justifyContent:'space-between', gap:12
+        }}>
+          <div>
+            <div style={{ fontSize:12, color:'rgba(242,237,224,0.8)' }}>🌿 Visible dans Le Jardin</div>
+            <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:3 }}>
+              Les autres personnes peuvent vous envoyer un ❤️
+            </div>
+          </div>
+          <div
+            onClick={() => !loading && setVisibility(v => !v)}
+            style={{
+              width:44, height:24, borderRadius:100, flexShrink:0, cursor:'pointer',
+              background: visibility ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${visibility ? 'rgba(150,212,133,0.5)' : 'rgba(255,255,255,0.12)'}`,
+              position:'relative', transition:'all .25s',
+              WebkitTapHighlightColor:'transparent',
+            }}
+          >
+            <div style={{
+              position:'absolute', top:3, left: visibility ? 22 : 3,
+              width:16, height:16, borderRadius:'50%',
+              background: visibility ? '#96d485' : 'rgba(255,255,255,0.25)',
+              transition:'left .25s, background .25s',
+            }} />
+          </div>
+        </div>
+
         {isAnimator && (
           <div className="profile-field" style={{ marginTop:12 }}>
             <label className="profile-label">Profession</label>
@@ -206,8 +259,7 @@ export default function DashboardPage() {
     },
     club: {
       title: <>Club des <em>Jardiniers</em></>,
-      btn: '+ Créer une graine',
-      onBtn: () => setShowCreateCircle(true),
+      btn: null,
     },
     ateliers: {
       title: <><em>Ateliers</em></>,

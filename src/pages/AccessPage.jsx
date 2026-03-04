@@ -272,27 +272,123 @@ const css = `
 
 /* Toast */
 .ap-toast {
-  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-  background: #0e1a0c; border: 1px solid rgba(168,224,64,0.28);
-  border-radius: 30px; padding: 12px 22px;
-  font-size: 13.5px; color: #e2ddd3;
-  display: flex; align-items: center; gap: 10px;
-  z-index: 9999; white-space: nowrap;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
-  animation: ap-toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(4, 10, 5, 0.92);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  animation: ap-toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  pointer-events: none;
+}
+.ap-toast-icon {
+  font-size: 80px; margin-bottom: 28px;
+  animation: ap-toastBounce 0.7s 0.1s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.ap-toast-msg {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(32px, 5vw, 56px); font-weight: 300;
+  color: #e8d4a8; letter-spacing: .02em; text-align: center; line-height: 1.2;
+  animation: ap-fadeUp 0.6s 0.2s ease both;
+}
+.ap-toast-sub {
+  font-size: 14px; color: rgba(226,221,211,0.4); margin-top: 14px; letter-spacing: .1em;
+  animation: ap-fadeUp 0.6s 0.35s ease both;
 }
 
 @keyframes ap-fadeUp  { from { opacity:0; transform:translateY(22px) } to { opacity:1; transform:translateY(0) } }
 @keyframes ap-fadeIn  { from { opacity:0 } to { opacity:1 } }
 @keyframes ap-slideUp { from { opacity:0; transform:scale(0.93) translateY(18px) } to { opacity:1; transform:scale(1) translateY(0) } }
-@keyframes ap-toastIn { from { opacity:0; transform:translateX(-50%) translateY(14px) } to { opacity:1; transform:translateX(-50%) translateY(0) } }
+@keyframes ap-toastIn { from { opacity:0 } to { opacity:1 } }
+@keyframes ap-toastBounce { from { opacity:0; transform:scale(0.3) } to { opacity:1; transform:scale(1) } }
+
+/* Modal flower name */
+.ap-flower-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  max-height: 260px; overflow-y: auto; margin-bottom: 22px;
+  scrollbar-width: thin; scrollbar-color: rgba(168,224,64,0.2) transparent;
+}
+.ap-flower-pill {
+  padding: 8px 6px; border-radius: 20px; font-size: 12px; text-align: center;
+  border: 1px solid rgba(255,255,255,0.07); cursor: pointer;
+  color: rgba(226,221,211,0.5); transition: all 0.18s;
+  background: rgba(255,255,255,0.03);
+}
+.ap-flower-pill:hover { border-color: rgba(168,224,64,0.3); color: rgba(226,221,211,0.85); background: rgba(168,224,64,0.05); }
+.ap-flower-pill.ap-sel { border-color: rgba(168,224,64,0.55); background: rgba(168,224,64,0.10); color: #a8e040; }
+.ap-flower-preview {
+  text-align: center; padding: 10px; margin-bottom: 16px;
+  font-family: 'Cormorant Garamond', serif; font-size: 18px;
+  color: rgba(226,221,211,0.55); letter-spacing: .04em;
+  min-height: 40px; transition: all .3s;
+}
+.ap-flower-preview span { color: #e2ddd3; }
 
 @media (max-width: 768px) {
-  .ap-root { grid-template-columns: 1fr; height: auto; min-height: 100vh; overflow-y: auto; }
-  .ap-col  { padding: 36px 28px 48px; height: auto; overflow: visible; }
+  /* Layout — scroll vertical, 1 colonne */
+  .ap-root {
+    grid-template-columns: 1fr;
+    height: auto; min-height: 100vh;
+    overflow-y: auto; overflow-x: hidden;
+  }
   .ap-root::before { display: none; }
+
+  /* Colonnes */
+  .ap-col { padding: 40px 24px 52px; height: auto; overflow: visible; }
+
+  /* Masquer Entreprise sur mobile — trop loin du CTA */
+  .ap-col-ent { display: none; }
+
+  /* Tags + titres */
+  .ap-tag  { font-size: 9px; letter-spacing: 2px; }
+  .ap-icon { font-size: 28px; }
+  .ap-col-h2 { font-size: 28px; }
+  .ap-col-desc { font-size: 12px; max-width: 100%; }
+
+  /* Features — plus compact */
+  .ap-features li { font-size: 12px; padding: 7px 0; }
+
+  /* Boutons — plus grands pour le touch */
+  .ap-btn { padding: 16px 24px; font-size: 14px; border-radius: 32px; }
+
+  /* Branding bas — repositionné */
+  .ap-brand {
+    position: relative; bottom: auto; left: auto; transform: none;
+    justify-content: center; margin: 0 auto 24px;
+  }
+
+  /* Modal */
+  .ap-modal {
+    border-radius: 24px 24px 0 0;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    max-width: 100%; max-height: 90vh;
+    padding: 28px 24px 40px;
+  }
+  .ap-overlay { align-items: flex-end; padding: 0; }
+  .ap-flower-grid { grid-template-columns: repeat(3, 1fr); max-height: 220px; }
+  .ap-flower-pill { font-size: 11px; padding: 9px 4px; }
+  .ap-modal-h2 { font-size: 26px; }
+  .ap-plans { gap: 8px; }
+  .ap-plan { padding: 12px 14px; }
+  .ap-plan-label { font-size: 16px; }
+
+  /* Toast plein écran — inchangé, déjà bien */
+  .ap-toast-msg { font-size: 30px; padding: 0 24px; }
+  .ap-toast-icon { font-size: 70px; }
+
+  /* Accent line */
+  .ap-accent-line { left: 24px; right: 24px; }
+
+  /* Bouton retour */
+  .ap-back { top: 14px; left: 16px; font-size: 10px; }
 }
 `
+
+const FLOWER_NAMES = [
+  'Aubépine','Cèdre','Pivoine','Iris','Verveine','Jasmin','Glycine',
+  'Lilas','Noisetier','Pervenche','Sauge','Lavande','Magnolia','Acacia',
+  'Clématite','Bruyère','Capucine','Gentiane','Muguet','Orchidée','Tilleul',
+  'Violette','Camélia','Renoncule','Mimosa','Angélique','Bouleau','Eglantine',
+  'Chèvrefeuille','Coquelicot',
+]
 
 const PLANS = [
   { id: '1m',  label: '1 mois',  desc: 'Sans engagement',            price: '5,00 €',  note: '/ mois',   popular: false },
@@ -318,10 +414,13 @@ function FleurLogoTiny() {
 }
 
 export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
-  const [modalOpen,    setModalOpen]    = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null)
-  const [paying,       setPaying]       = useState(false)
-  const [toast,        setToast]        = useState(null)
+  const [modalOpen,     setModalOpen]     = useState(false)
+  const [selectedPlan,  setSelectedPlan]  = useState(null)
+  const [paying,        setPaying]        = useState(false)
+  const [toast,         setToast]         = useState(null)
+  const [flowerModal,   setFlowerModal]   = useState(false)
+  const [selectedFlower, setSelectedFlower] = useState(null)
+  const [savingFlower,  setSavingFlower]  = useState(false)
   const toastTimer = useRef(null)
 
   useEffect(() => {
@@ -336,9 +435,29 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
     toastTimer.current = setTimeout(() => setToast(null), 3400)
   }
 
-  const handleFree = async () => {
-    showToast('🌱', 'Accès Ma Fleur activé !')
-    onActivateFree?.()
+  const handleFree = () => {
+    setFlowerModal(true)
+  }
+
+  const handleConfirmFlower = async () => {
+    if (!selectedFlower || savingFlower) return
+    setSavingFlower(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('users')
+          .update({ flower_name: selectedFlower })
+          .eq('id', user.id)
+      }
+      setFlowerModal(false)
+      showToast('🌸', `Bienvenue, votre fleur est née !`)
+      setFlowerModal(false)
+      setTimeout(() => onActivateFree?.(), 2400)
+    } catch {
+      showToast('⚠️', 'Une erreur est survenue.')
+    } finally {
+      setSavingFlower(false)
+    }
   }
 
   const handlePay = async () => {
@@ -477,11 +596,53 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
         </div>
       )}
 
+      {/* ── MODAL FLEUR ── */}
+      {flowerModal && (
+        <div className="ap-overlay" onClick={e => e.target === e.currentTarget && setFlowerModal(false)}>
+          <div className="ap-modal">
+            <button className="ap-modal-close" onClick={() => setFlowerModal(false)}>✕</button>
+            <p className="ap-modal-eyebrow">Votre identité</p>
+            <h2 className="ap-modal-h2">Choisissez<br/>votre fleur</h2>
+            <p className="ap-modal-sub">Ce nom vous identifiera dans la communauté. Vous serez reconnu·e comme <em style={{color:'rgba(226,221,211,0.65)'}}>Prénom·{selectedFlower ?? '...'}</em></p>
+
+            {/* Aperçu */}
+            <div className="ap-flower-preview">
+              {selectedFlower
+                ? <><span>🌸</span> Votre nom · <span>{selectedFlower}</span></>
+                : 'Sélectionnez un mot ci-dessous'}
+            </div>
+
+            {/* Grille */}
+            <div className="ap-flower-grid">
+              {FLOWER_NAMES.map(name => (
+                <div
+                  key={name}
+                  className={`ap-flower-pill${selectedFlower === name ? ' ap-sel' : ''}`}
+                  onClick={() => setSelectedFlower(name)}
+                >
+                  {name}
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="ap-modal-cta"
+              onClick={handleConfirmFlower}
+              disabled={!selectedFlower || savingFlower}
+            >
+              {savingFlower ? 'Enregistrement…' : selectedFlower ? `Commencer en tant que ·${selectedFlower} →` : 'Choisissez un nom'}
+            </button>
+            <p className="ap-modal-note"><span>🌿</span><span>Vous pourrez le modifier dans vos paramètres</span></p>
+          </div>
+        </div>
+      )}
+
       {/* ── TOAST ── */}
       {toast && (
         <div className="ap-toast">
-          <span>{toast.icon}</span>
-          <span>{toast.msg}</span>
+          <div className="ap-toast-icon">{toast.icon}</div>
+          <div className="ap-toast-msg">{toast.msg}</div>
+          <div className="ap-toast-sub">Votre jardin vous attend…</div>
         </div>
       )}
     </>
