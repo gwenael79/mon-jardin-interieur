@@ -15,6 +15,7 @@ import { ScreenMonJardin }      from './ScreenMonJardin'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
 import { ScreenAteliers }       from './ScreenAteliers'
+import { HelpModal }            from './HelpModal'
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 const SCREENS = [
@@ -246,6 +247,7 @@ export default function DashboardPage() {
   const [showMjRight,        setShowMjRight]        = useState(false)
   const [showLumensModal,    setShowLumensModal]    = useState(false)
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
+  const [showHelp,           setShowHelp]           = useState(false)
 
   const { Component } = SCREENS.find(s => s.id === active)
 
@@ -311,6 +313,8 @@ export default function DashboardPage() {
             )}
           </>
         )}
+
+        {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
 
         {/* ── SIDEBAR ── */}
         <div className="sidebar">
@@ -415,7 +419,7 @@ export default function DashboardPage() {
             )}
             {active === 'jardin' && !isMobile && <StreakMessage streak={plantStats?.streak ?? 0} />}
             <div style={{ flex:1 }} />
-            <div className="tb-btn ghost" style={{ marginRight:5 }}>Aide</div>
+            <div className="tb-btn ghost" style={{ marginRight:5 }} onClick={() => setShowHelp(true)}>Aide</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
             {isMobile ? (
               <div
