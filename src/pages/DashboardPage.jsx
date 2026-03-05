@@ -574,6 +574,30 @@ export default function DashboardPage() {
                     <span style={{ fontSize:12, color:'rgba(232,192,96,0.30)' }}>›</span>
                   </div>
 
+                  {/* Administration (admin uniquement) */}
+                  {['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id) && (
+                    <div
+                      onClick={() => { setShowSettingsDrawer(false); window.location.hash = 'admin' }}
+                      style={{
+                        display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
+                        background:'rgba(255,200,100,0.07)', border:'1px solid rgba(255,200,100,0.20)',
+                        borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
+                        position:'relative',
+                      }}
+                    >
+                      <span style={{ fontSize:18 }}>⚙️</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:13, color:'rgba(255,200,100,0.85)', fontWeight:500 }}>Administration</div>
+                        <div style={{ fontSize:10, color:'rgba(255,200,100,0.40)', marginTop:1 }}>Gestion de la plateforme</div>
+                      </div>
+                      {pendingReports > 0 && (
+                        <div style={{ background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                          {pendingReports}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Se déconnecter */}
                   <div
                     onClick={() => { setShowSettingsDrawer(false); signOut() }}
