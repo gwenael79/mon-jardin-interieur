@@ -33,13 +33,29 @@ export function usePlant(userId) {
         ritualService.getWeekGrid(userId),
         plantService.getStats(userId),
       ])
-      setTodayPlant(plant)
+      // ── Reset plante jamais initialisée (valeurs DB par défaut = 50) → 5% ──
+      const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
+      const isUninitialised = (p) =>
+        p && p.health === 50 && ZONE_KEYS.every(k => (p[k] ?? 50) === 50)
+
+      let resolvedPlant = plant
+      if (isUninitialised(plant)) {
+        const zeros = Object.fromEntries(ZONE_KEYS.map(k => [k, 5]))
+        const patch = { health: 5, ...zeros }
+        resolvedPlant = { ...plant, ...patch }
+        // Persiste en DB (fire & forget)
+        import('../core/supabaseClient').then(({ supabase }) =>
+          supabase.from('plants').update(patch).eq('id', plant.id)
+        )
+      }
+
+      setTodayPlant(resolvedPlant)
       setHistory(hist)
       setWeekGrid(grid)
       setStats(stats_)
 
-      if (plant) {
-        const rituals = await ritualService.getTodayRituals(userId, plant.id)
+      if (resolvedPlant) {
+        const rituals = await ritualService.getTodayRituals(userId, resolvedPlant.id)
         setTodayRituals(rituals)
       }
     } catch (err) {

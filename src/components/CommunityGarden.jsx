@@ -8,12 +8,12 @@ import { supabase } from '../core/supabaseClient'
 ───────────────────────────────────────────────────── */
 async function loadCommunityPlants() {
   const since = new Date()
-  since.setDate(since.getDate() - 7)
+  since.setDate(since.getDate() - 30)
 
   const [usersRes, plantsRes, privacyRes, settingsRes] = await Promise.all([
     // Tous les membres de la communauté
     supabase.from('users').select('id'),
-    // Plantes récentes
+    // Dernière plante connue par user (30 jours)
     supabase
       .from('plants')
       .select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date')
@@ -40,11 +40,20 @@ async function loadCommunityPlants() {
     if (!plantsByUser[row.user_id]) plantsByUser[row.user_id] = row
   }
 
-  // Tous les users — avec leur plante ou une graine (health=0) si pas encore de plante
+  // Tous les users — avec leur plante ou une graine si pas encore de plante
+  const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
+  const isUninitialised = (p) =>
+    p.health === 50 && ZONE_KEYS.every(k => (p[k] ?? 50) === 50)
+
   const result = []
   for (const u of (usersRes.data || [])) {
     if (hidden.has(u.id)) continue
-    const plant = plantsByUser[u.id] || { user_id: u.id, health: 0, date: null }
+    let plant = plantsByUser[u.id] || { user_id: u.id, health: 0, date: null }
+    // Plante jamais initialisée (valeurs DB par défaut 50) → afficher comme graine à 5%
+    if (isUninitialised(plant)) {
+      const zeros = Object.fromEntries(ZONE_KEYS.map(k => [k, 5]))
+      plant = { ...plant, health: 5, ...zeros }
+    }
     result.push({ ...plant, gardenSettings: settings[u.id] || null })
   }
 
@@ -112,18 +121,15 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   // Opacité globale de la fleur : réduite la nuit, dorée à l'aube/crépuscule
   const _opacity = _isDay ? (_isGold ? 1 : 0.95) : 0.85
   const id  = useRef('cf' + (++_n)).current
+  const r   = Math.max(0, Math.min(1, (plant.health ?? 50) / 100))
 
-  // Identique à PlantSVG — uniquement health pour le stade visuel
-  const r = Math.max(0, Math.min(1, (plant.health ?? 5) / 100))
-
-  // Résoudre les couleurs — identique aux defaults de PlantSVG
+  // Résoudre les couleurs : settings perso > défaut déterministe
   const gs = useMemo(() => {
     const s = plant.gardenSettings
-    return {
-      petalColor1: s?.petal_color1 ?? '#e8789a',
-      petalColor2: s?.petal_color2 ?? '#f0a8be',
-      petalShape:  s?.petal_shape  ?? 'round',
+    if (s && s.petal_color1) {
+      return { petalColor1: s.petal_color1, petalColor2: s.petal_color2 || s.petal_color1, petalShape: s.petal_shape || 'round' }
     }
+    return defaultPetalColors(plant.user_id)
   }, [plant])
 
   /* ── Couleurs pétales (identique à PlantSVG) ── */
@@ -137,8 +143,8 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
 
   /* ── Forme pétales — système botanique complet (sync DashboardPage) ── */
   const ps  = gs.petalShape || 'round'
-  // Taille fleur selon zone_fleurs, opacité glow selon zone_souffle
-  const fS = 7 + 12 * r
+  // Taille globale de la fleur selon la santé
+  const fS = 7 + 12 * r   // flower size base
 
   // Générateur de pétale : path SVG en coordonnées locales (0,0 = base, pointe vers -Y)
   const petalPath = (w, h, curve=0.3) => {
@@ -442,12 +448,12 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
     </g>
   }
 
-  /* ── Tige — hauteur selon zone_tige ── */
-  const stemH = Math.min(groundY * 0.45, groundY * (0.08 + 0.38*r))
+  /* ── Tige — plus fine que PlantSVG (champ = distance) ── */
+  const stemH = Math.min(groundY * 0.45, groundY * (0.08 + 0.38*r))  // max 45% du canvas
   const cx    = x
   const sTY   = groundY - stemH
   const sMY   = groundY - stemH * 0.50
-  const curve = ((hash(plant.user_id,7) % 20) - 10) * 0.7
+  const curve = ((hash(plant.user_id,7) % 20) - 10) * 0.7   // légère courbure naturelle
   const flwY  = sTY
 
   const stemC = `rgba(${45+25*r},${115+65*r},${32+22*r},${0.55+0.42*r})`
@@ -504,38 +510,41 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
         )}
       </defs>
 
-      {/* ── MON MARQUEUR — visible même à 5% ── */}
+      {/* ── POINT LUMINEUX IDENTIFIANT ──
+          Fixe dans le sol, seule l'opacité pulse — pas de mouvement */}
       {isMine && (
-        <g>
-          {/* Halo au sol pulsant */}
-          <g style={{ animation: 'cgPulse 2s ease-in-out infinite' }}>
-            <ellipse cx={cx} cy={groundY + 2} rx={28} ry={8} fill={`url(#${id}gl)`}/>
-            <ellipse cx={cx} cy={groundY + 1} rx={14} ry={4} fill="rgba(148,242,115,0.35)"/>
-          </g>
-          {/* Point central */}
-          <g style={{ animation: 'cgPulse 2.2s ease-in-out infinite' }}>
-            <circle cx={cx} cy={groundY} r={5}   fill="rgba(148,242,115,0.4)"/>
-            <circle cx={cx} cy={groundY} r={3.2} fill="rgba(158,248,125,0.97)"/>
-            <circle cx={cx} cy={groundY} r={1.5} fill="rgba(255,255,255,0.90)"/>
-          </g>
-          {/* Flèche + étiquette — disparaît au-dessus de 30% */}
-          {r < 0.30 && (
-          <g style={{ animation: 'cgFloat 2.4s ease-in-out infinite' }}>
-            <line x1={cx} y1={sTY - 34} x2={cx} y2={sTY - 8}
-              stroke="rgba(148,242,115,0.7)" strokeWidth={1.5} strokeLinecap="round"
-              strokeDasharray="3 3"/>
-            <polygon points={`${cx},${sTY-4} ${cx-5},${sTY-12} ${cx+5},${sTY-12}`}
-              fill="rgba(148,242,115,0.85)"/>
-            <rect x={cx-28} y={sTY-58} width={56} height={20} rx={10}
-              fill="rgba(10,32,10,0.82)" stroke="rgba(148,242,115,0.55)" strokeWidth={1}/>
-            <text x={cx} y={sTY-44} textAnchor="middle"
-              fill="rgba(148,242,115,0.95)" fontSize={9} fontFamily="sans-serif" letterSpacing="0.05em">
+        <g style={{ animation: 'cgPulse 2.2s ease-in-out infinite' }}>
+          <ellipse cx={cx} cy={groundY + 2} rx={14} ry={4.5} fill={`url(#${id}gl)`}/>
+          <circle  cx={cx} cy={groundY}     r={3.2}           fill="rgba(158,248,125,0.97)"/>
+          <circle  cx={cx} cy={groundY}     r={1.5}           fill="rgba(255,255,255,0.90)"/>
+        </g>
+      )}
+
+      {/* ── FLÈCHE + LABEL "Ma fleur" au-dessus de la fleur ── */}
+      {isMine && (() => {
+        const tipY = sTY - 18
+        const labelY = tipY - 20
+        return (
+          <g>
+            {/* Ligne verticale */}
+            <line x1={cx+curve} y1={tipY + 2} x2={cx+curve} y2={labelY + 12}
+              stroke="rgba(158,248,125,0.70)" strokeWidth={1} strokeDasharray="3,2"/>
+            {/* Pointe de flèche */}
+            <polygon
+              points={`${cx+curve},${tipY} ${cx+curve-4},${tipY+7} ${cx+curve+4},${tipY+7}`}
+              fill="rgba(158,248,125,0.85)"/>
+            {/* Fond label */}
+            <rect x={cx+curve-22} y={labelY - 10} width={44} height={14} rx={7}
+              fill="rgba(8,22,10,0.82)" stroke="rgba(158,248,125,0.40)" strokeWidth={0.8}/>
+            {/* Texte */}
+            <text x={cx+curve} y={labelY} textAnchor="middle" dominantBaseline="middle"
+              fontSize={8} fill="rgba(188,255,168,0.95)" fontFamily="Jost,sans-serif"
+              letterSpacing="0.08em">
               Ma fleur
             </text>
           </g>
-          )}
-        </g>
-      )}
+        )
+      })()}
 
       {/* ── TIGE ── */}
       {r > 0.04 && <>
@@ -556,9 +565,11 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
           />
         )}
 
-        {/* Feuilles — selon zone_feuilles */}
+        {/* Feuilles — poussent par paires gauche/droite selon santé */}
         {r > 0.12 && (() => {
-          const pairCount = Math.max(1, Math.round(r * 5))
+          // Nombre de paires : 1 à 5 selon r (+ légère variation par user)
+          const pairCount = Math.max(1, Math.round(r * 5) - (hash(plant.user_id, 20) % 2 === 0 ? 0 : 0))
+          // Chaque côté peut avoir un nombre légèrement différent de feuilles
           const leftCount  = pairCount + (hash(plant.user_id, 21) % 2 === 0 && r > 0.6 ? 1 : 0)
           const rightCount = pairCount + (hash(plant.user_id, 22) % 2 === 0 && r > 0.7 ? 1 : 0)
           const maxCount   = Math.max(leftCount, rightCount)
@@ -589,7 +600,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
               const tipX      = bx + Math.cos(rad) * lh
               const tipY      = by + Math.sin(rad) * lh
               const ctrlOff   = lw * side
-              // Couleur verte selon zone_feuilles
+              // Couleur verte légèrement variée
               const gr    = 98 + (hash(plant.user_id, seedBase + 30 + li) % 24)
               const leafC = `rgba(${28 + Math.round(16*r)},${gr + Math.round(68*r)},${22 + Math.round(14*r)},${0.58 + 0.32*r})`
               const veinC = `rgba(${52 + Math.round(24*r)},${gr + 38 + Math.round(36*r)},${36 + Math.round(14*r)},0.30)`
@@ -626,8 +637,24 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
         </g>
       )}
 
-      {/* ── BOURGEON ── */}
-      {r > 0.08 && r <= 0.38 && (
+      {/* ── PETIT BOURGEON — 8–25% ── */}
+      {r > 0.08 && r <= 0.25 && (() => {
+        const t = (r - 0.08) / 0.17
+        return (
+          <g>
+            {[-18,0,18].map((a,i) => (
+              <path key={i}
+                d={`M${cx+curve},${Math.round(flwY+4+5*r)} Q${cx+curve+Math.round(Math.sin(a*Math.PI/180)*5)},${Math.round(flwY+5*r)} ${cx+curve},${Math.round(flwY+4*r)}`}
+                fill={lC2} opacity={0.60}/>
+            ))}
+            <ellipse cx={cx+curve} cy={flwY}     rx={2+2.5*t} ry={4+4*t} fill={`rgba(${r1},${g1},${b1},${0.22+0.22*t})`}/>
+            <ellipse cx={cx+curve-0.5} cy={flwY-0.5} rx={1.2+1.5*t} ry={2.5+2.5*t} fill={`rgba(${r2},${g2},${b2},0.25)`}/>
+          </g>
+        )
+      })()}
+
+      {/* ── BOURGEON FERMÉ — 25–45% ── */}
+      {r > 0.25 && r <= 0.45 && (
         <g>
           {[-22,0,22].map((a,i) => (
             <path key={i}
@@ -638,8 +665,23 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
           <ellipse cx={cx+curve-1} cy={flwY-1} rx={2+4*r}  ry={4.5+7*r} fill={`rgba(${r2},${g2},${b2},0.40)`}/>
         </g>
       )}
-      {/* ── FLEUR ÉPANOUIE ── */}
-      {r > 0.38 && (
+      {/* ── PETITE FLEUR — 45–65% ── */}
+      {r > 0.45 && r <= 0.65 && (
+        <g>
+          <circle cx={cx+curve} cy={flwY} r={fS*2.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
+          {[-28,0,28].map((a,i) => {
+            const rad=(a-90)*Math.PI/180
+            return <path key={i} d={`M${cx+curve},${Math.round(flwY+fS*0.4)} Q${cx+curve+Math.round(Math.cos(rad)*7)},${Math.round(flwY+fS*0.4+9)} ${cx+curve},${Math.round(flwY+fS*0.4+12)}`} fill={lC2} opacity={0.65}/>
+          })}
+          <g style={{animation:`cgBreath ${swayDur.toFixed(2)}s ease-in-out infinite ${swayDelay.toFixed(2)}s`}}>
+            {renderFlower(cx+curve, flwY, `url(#${id}p1)`, id+'f1', `url(#${id}p2)`)}
+          </g>
+          <circle cx={cx+curve} cy={flwY} r={fS*0.60} fill={`rgba(${Math.round(r1*.80)},${Math.round(g1*.48+52)},${Math.round(b1*.58+32)},0.88)`}/>
+          <circle cx={cx+curve} cy={flwY} r={fS*0.34} fill={`url(#${id}pi)`}/>
+        </g>
+      )}
+      {/* ── FLEUR ÉPANOUIE — 65%+ ── */}
+      {r > 0.65 && (
         <g>
           <circle cx={cx+curve} cy={flwY} r={fS*3.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
           {[-28,0,28].map((a,i) => {
@@ -922,7 +964,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         @keyframes cgSway    { 0%,100%{transform:rotate(0deg)} 40%{transform:rotate(var(--sa,2deg))} 75%{transform:rotate(calc(var(--sa,2deg)*-0.68))} }
         @keyframes cgBreath  { 0%,100%{opacity:1} 50%{opacity:0.80} }
         @keyframes cgPulse   { 0%,100%{opacity:1} 50%{opacity:0.25} }
-        @keyframes cgFloat   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
         @keyframes cgPollen  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
         @keyframes cgGrass   { 0%,100%{transform:rotate(0deg)} 38%{transform:rotate(2.2deg)} 72%{transform:rotate(-1.6deg)} }
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }

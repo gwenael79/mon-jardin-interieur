@@ -934,27 +934,17 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               Petite tige + 2 cotylédons (feuilles embryonnaires rondes) */}
           {stage === 'sprout' && (() => {
             const t = (r - 0.08) / 0.17   // 0→1 dans ce stade
-            const sy = gY - sH
-            const my = gY - sH * 0.55
-            const cR = 3 + t * 5           // rayon des cotylédons grandit avec t
             return (
               <g>
-                {/* tige fine et courte */}
-                <path d={`M${cx},${gY} Q${cx+3*t},${my} ${cx},${sy}`}
-                  stroke={stemC} strokeWidth={1.6+0.8*t} strokeLinecap="round" fill="none"/>
-                {/* cotylédon gauche */}
-                <ellipse cx={cx - 5 - t*4} cy={my+4} rx={cR} ry={cR*0.65}
-                  fill={`rgba(${72+20*t},${168+40*t},${48+18*t},${0.65+0.2*t})`}
-                  transform={`rotate(-30,${cx-5-t*4},${my+4})`}/>
-                {/* cotylédon droit */}
-                <ellipse cx={cx + 5 + t*4} cy={my+4} rx={cR} ry={cR*0.65}
-                  fill={`rgba(${68+22*t},${162+42*t},${44+20*t},${0.60+0.22*t})`}
-                  transform={`rotate(30,${cx+5+t*4},${my+4})`}/>
-                {/* germe minuscule au sommet */}
-                {t > 0.4 && (
-                  <ellipse cx={cx} cy={sy-2} rx={2+t*2} ry={3+t*3}
-                    fill={`rgba(${r1},${g1},${b1},${0.2+t*0.3})`}/>
-                )}
+                {/* Tige fine */}
+                <path d={`M${cx},${gY} Q${cx+2*t},${sMY} ${cx},${sTY}`}
+                  stroke={stemC} strokeWidth={1.4+0.6*t} strokeLinecap="round" fill="none"/>
+                {/* Petit bourgeon fermé — grandit avec t */}
+                {[-18,0,18].map((a,i) => (
+                  <path key={i} d={`M${cx},${Math.round(flwY+4+5*r)} Q${cx+Math.round(Math.sin(a*Math.PI/180)*5)},${Math.round(flwY+5*r)} ${cx},${Math.round(flwY+4*r)}`} fill={lC2} opacity={0.60}/>
+                ))}
+                <ellipse cx={cx} cy={flwY} rx={2+2.5*t} ry={4+4*t} fill={`rgba(${r1},${g1},${b1},${0.22+0.22*t})`}/>
+                <ellipse cx={cx-0.5} cy={flwY-0.5} rx={1.2+1.5*t} ry={2.5+2.5*t} fill={`rgba(${r2},${g2},${b2},0.25)`}/>
               </g>
             )
           })()}
@@ -1140,14 +1130,29 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                 return leaves
               })()}
 
-              {/* BOURGEON — stade 'young' (25%) à 'bud' (65%) */}
-              {stage !== 'flower' && (
+              {/* BOURGEON FERMÉ — stade 'young' (25–45%) — plus gros que sprout */}
+              {stage === 'young' && (
                 <g>
                   {[-24,0,24].map((a,i) => (
                     <path key={i} d={`M${cx},${Math.round(flwY+6+8*r)} Q${cx+Math.round(Math.sin(a*Math.PI/180)*8)},${Math.round(flwY+8*r)} ${cx},${Math.round(flwY+7*r)}`} fill={lC2} opacity={0.7}/>
                   ))}
                   <ellipse cx={cx} cy={flwY} rx={4+6*r} ry={8+9*r} fill={`rgba(${r1},${g1},${b1},${0.30+0.36*r})`}/>
                   <ellipse cx={cx-1} cy={flwY-1} rx={2.5+4*r} ry={5+7*r} fill={`rgba(${r2},${g2},${b2},0.32)`}/>
+                </g>
+              )}
+              {/* PETITE FLEUR — stade 'bud' (45–65%) */}
+              {stage === 'bud' && (
+                <g>
+                  <circle cx={cx} cy={flwY} r={fS*2.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
+                  {[-28,0,28].map((a,i) => {
+                    const rad=(a-90)*Math.PI/180
+                    return <path key={i} d={`M${cx},${Math.round(flwY+fS*0.4)} Q${cx+Math.round(Math.cos(rad)*7)},${Math.round(flwY+fS*0.4+9)} ${cx},${Math.round(flwY+fS*0.4+12)}`} fill={lC2} opacity={0.65}/>
+                  })}
+                  <g style={breathe1}>
+                    {renderFlower(cx, flwY, `url(#${id}p1)`, id+'f1', `url(#${id}p2)`)}
+                  </g>
+                  <circle cx={cx} cy={flwY} r={fS*0.60} fill={`rgba(${Math.round(r1*.80)},${Math.round(g1*.48+52)},${Math.round(b1*.58+32)},0.88)`}/>
+                  <circle cx={cx} cy={flwY} r={fS*0.34} fill={`url(#${id}pi)`}/>
                 </g>
               )}
               {/* FLEUR — à partir de 65% */}
@@ -2111,28 +2116,34 @@ function useRitualsState(userId) {
   const [completedRituals, setCompletedRituals] = useState({})
   const [showQuiz,         setShowQuiz]         = useState(false)
 
-  const STORAGE_KEY = userId ? `mafleur-rituels-v1-${userId}` : 'mafleur-rituels-v1'
-  const todayKey    = new Date().toISOString().slice(0, 10)
+  const todayKey = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
     if (!userId) return
-    // Dégradation depuis localStorage
-    try {
-      const raw  = localStorage.getItem(STORAGE_KEY)
-      const data = raw ? JSON.parse(raw) : {}
-      if (data.date === todayKey && data.degradation) setDegradation(data.degradation)
-      else setShowQuiz(true)
-    } catch (e) { setShowQuiz(true) }
-    // Rituels cochés depuis Supabase — source de vérité
+
+    // 1. Dégradation du jour — source de vérité = Supabase (table daily_quiz)
+    supabase
+      .from('daily_quiz')
+      .select('degradation')
+      .eq('user_id', userId)
+      .eq('date', todayKey)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.degradation) setDegradation(data.degradation)
+        else setShowQuiz(true)
+      })
+
+    // 2. Rituels complétés aujourd'hui — source de vérité = Supabase
     supabase
       .from('rituals')
       .select('ritual_id')
       .eq('user_id', userId)
       .gte('completed_at', todayKey + 'T00:00:00')
+      .not('ritual_id', 'is', null)
       .then(({ data }) => {
         if (data?.length) {
           const completed = {}
-          data.forEach(r => { if (r.ritual_id) completed[r.ritual_id] = true })
+          data.forEach(r => { completed[r.ritual_id] = true })
           setCompletedRituals(completed)
         }
       })
@@ -2141,46 +2152,21 @@ function useRitualsState(userId) {
   const handleQuizComplete = (deg) => {
     setDegradation(deg)
     setShowQuiz(false)
-    try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, date: todayKey, degradation: deg }))
-    } catch (e) {}
+    // Persiste dans Supabase
+    supabase
+      .from('daily_quiz')
+      .upsert({ user_id: userId, date: todayKey, degradation: deg }, { onConflict: 'user_id,date' })
   }
 
   const handleToggleRitual = (ritualId) => {
     setCompletedRituals(prev => {
-      const updated = { ...prev, [ritualId]: !prev[ritualId] }
-      try {
-        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, date: todayKey, completed: updated }))
-      } catch (e) {}
-      return updated
+      if (prev[ritualId]) return prev  // déjà fait — immuable
+      return { ...prev, [ritualId]: true }
     })
   }
 
   return { degradation, completedRituals, showQuiz, setShowQuiz, handleQuizComplete, handleToggleRitual }
 }
-
-  const handleQuizComplete = (deg) => {
-    setDegradation(deg)
-    setShowQuiz(false)
-    try {
-      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, date: todayKey, degradation: deg }))
-    } catch (e) {}
-  }
-
-  const handleToggleRitual = (ritualId) => {
-    setCompletedRituals(prev => {
-      const updated = { ...prev, [ritualId]: !prev[ritualId] }
-      try {
-        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, completed: updated }))
-      } catch (e) {}
-      return updated
-    })
-  }
-
 
 // ── ExerciseDetail ──────────────────────────────────────────
 function ExerciseDetail({ exercise, zone, onDone, onBack }) {
@@ -2312,8 +2298,8 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
               {rituals.map(r => {
                 const isDone = !!completed[r.id]
                 return (
-                  <button key={r.id} onClick={() => { if (!isDone) setActiveRitual(r); else onToggle(r.id) }}
-                    style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 15px', borderRadius:12, border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.06)'}`, background: isDone ? `${zone.color}10` : 'rgba(255,255,255,0.025)', cursor:'pointer', textAlign:'left', transition:'all 0.22s' }}>
+                  <button key={r.id} onClick={() => { if (!isDone) setActiveRitual(r) }}
+                    style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 15px', borderRadius:12, border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.06)'}`, background: isDone ? `${zone.color}10` : 'rgba(255,255,255,0.025)', cursor: isDone ? 'default' : 'pointer', textAlign:'left', transition:'all 0.22s', opacity: isDone ? 0.75 : 1 }}>
                     <span style={{ fontSize:18, flexShrink:0 }}>{r.icon}</span>
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:13, color: isDone ? '#D8EED8' : 'rgba(180,200,180,0.58)', fontWeight: isDone ? 500 : 300, lineHeight:1.3 }}>{r.text}</div>
@@ -2903,19 +2889,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [plantOverride, setPlantOverride] = useState(null)
   const plant = plantOverride ?? todayPlant   // ← utilisé partout à la place de todayPlant
 
-  // ── Réinitialise la plante à 5% UNIQUEMENT si elle vient d'être créée (< 2 min) ──
+  // ── Réinitialise la plante à 5% si elle vient d'être créée avec les défauts DB (50) ──
   useEffect(() => {
     if (!todayPlant?.id) return
-    const createdAt = new Date(todayPlant.created_at)
-    const ageMs = Date.now() - createdAt.getTime()
-    const justCreated = ageMs < 2 * 60 * 1000  // moins de 2 minutes
+    const createdToday = todayPlant.created_at?.slice(0, 10) === new Date().toISOString().slice(0, 10)
     const isDefaultValues = todayPlant.health === 50 &&
       Object.values(ZONE_DB_KEY).every(k => (todayPlant[k] ?? 50) === 50)
-    if (justCreated && isDefaultValues) {
+    if (createdToday && isDefaultValues && todayRituals?.length === 0) {
       const resetValues = Object.fromEntries(Object.values(ZONE_DB_KEY).map(k => [k, 5]))
-      setPlantOverride({ ...todayPlant, health: 5, ...resetValues })
       supabase.from('plants').update({ health: 5, ...resetValues }).eq('id', todayPlant.id)
-        .then(({ error }) => { if (error) console.error('reset plant error:', error) })
+      setPlantOverride({ ...todayPlant, health: 5, ...resetValues })
     }
   }, [todayPlant?.id])
   const { settings, toggle } = usePrivacy(userId)
@@ -2934,9 +2917,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
   const handleToggleRitual = useCallback(async (ritualId) => {
     const alreadyDone = !!completedRituals[ritualId]
+
+    // Un rituel complété ne peut pas être décoché — 1 seul par jour
+    if (alreadyDone) return
+
     _toggleRitual(ritualId)
 
-    if (alreadyDone || !plant?.id) return
+    if (!plant?.id) return
 
     // Trouve le rituel dans PLANT_RITUALS
     let ritualName = ritualId, ritualZoneStr = 'Racines', ritualZoneId = 'roots'
@@ -2968,14 +2955,14 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     setPlantOverride(prev => ({ ...(prev ?? plant), [dbKey]: newZoneVal, health: newHealth }))
 
     try {
-      await supabase.from('rituals').insert({
+      await supabase.from('rituals').upsert({
         user_id:      userId,
         plant_id:     plant.id,
         name:         ritualName,
         zone:         ritualZoneStr,
         health_delta: delta,
         ritual_id:    ritualId,
-      })
+      }, { onConflict: 'user_id,ritual_id,plant_id' })
       await supabase
         .from('plants')
         .update({ [dbKey]: newZoneVal, health: newHealth })
