@@ -159,6 +159,7 @@ function ProfileModal({ user, onClose }) {
   )
 }
 
+
 // ── Composant StreakMessage (utilisé dans la topbar) ─────────────────────────
 function StreakMessage({ streak }) {
   if (!streak || streak < 2) return null
@@ -239,11 +240,12 @@ export default function DashboardPage() {
     }
   }, [user?.id])
 
-  const [showCreateCircle, setShowCreateCircle] = useState(false)
-  const [showInviteModal,  setShowInviteModal]  = useState(false)
-  const [showProfileModal, setShowProfileModal] = useState(false)
-  const [showMjRight,      setShowMjRight]      = useState(false)
-  const [showLumensModal,  setShowLumensModal]  = useState(false)
+  const [showCreateCircle,   setShowCreateCircle]   = useState(false)
+  const [showInviteModal,    setShowInviteModal]    = useState(false)
+  const [showProfileModal,   setShowProfileModal]   = useState(false)
+  const [showMjRight,        setShowMjRight]        = useState(false)
+  const [showLumensModal,    setShowLumensModal]    = useState(false)
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
 
   const { Component } = SCREENS.find(s => s.id === active)
 
@@ -415,7 +417,18 @@ export default function DashboardPage() {
             <div style={{ flex:1 }} />
             <div className="tb-btn ghost" style={{ marginRight:5 }}>Aide</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}
-            <div className="tb-notif">🔔<div className="notif-dot" /></div>
+            {isMobile ? (
+              <div
+                onClick={() => setShowSettingsDrawer(true)}
+                style={{
+                  width:36, height:36, borderRadius:'50%', flexShrink:0,
+                  display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
+                  background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.10)',
+                  fontSize:17, WebkitTapHighlightColor:'transparent',
+                  transition:'background .2s',
+                }}
+              >⚙️</div>
+            ) : null}
           </div>
 
           <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
@@ -454,9 +467,125 @@ export default function DashboardPage() {
               )}
             </>
           )}
-        </div>
+          {/* ── DRAWER PARAMÈTRES MOBILE ── */}
+          {isMobile && showSettingsDrawer && (
+            <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+              {/* Backdrop */}
+              <div
+                style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.60)', backdropFilter:'blur(4px)' }}
+                onClick={() => setShowSettingsDrawer(false)}
+              />
+              {/* Panel */}
+              <div style={{
+                position:'relative', background:'#16261a',
+                borderRadius:'22px 22px 0 0', padding:'0 0 40px',
+                border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none',
+                maxHeight:'90vh', overflowY:'auto',
+              }}>
+                {/* Handle */}
+                <div style={{ width:36, height:3, background:'rgba(255,255,255,0.18)', borderRadius:100, margin:'14px auto 0' }} />
 
-      </div>
-    </div>
-  )
-}
+                {/* ─ Carte profil ─ */}
+                {(() => {
+                  const name    = profile?.display_name ?? user?.display_name ?? null
+                  const email   = user?.email ?? ''
+                  const initial = (name ?? email).charAt(0).toUpperCase()
+                  const level   = profile?.level ?? 1
+                  const xp      = profile?.xp ?? 0
+                  const xpNext  = profile?.xp_next_level ?? 100
+                  const xpPct   = Math.min(100, Math.round((xp / xpNext) * 100))
+                  const flowerName = profile?.flower_name ?? null
+                  return (
+                    <div style={{ margin:'18px 18px 0', padding:'14px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                        {/* Avatar */}
+                        <div style={{
+                          width:46, height:46, borderRadius:'50%', flexShrink:0,
+                          background:'linear-gradient(135deg,rgba(232,192,96,0.25),rgba(150,212,133,0.15))',
+                          border:'1px solid rgba(232,192,96,0.30)',
+                          display:'flex', alignItems:'center', justifyContent:'center',
+                          fontSize:20, color:'var(--gold)', fontWeight:600,
+                        }}>{initial}</div>
+                        {/* Infos */}
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:15, color:'var(--cream)', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                            {name ?? email}
+                          </div>
+                          {flowerName && (
+                            <div style={{ fontSize:11, color:'rgba(232,192,96,0.60)', marginTop:1 }}>🌸 {flowerName}</div>
+                          )}
+                          {name && (
+                            <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', marginTop:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{email}</div>
+                          )}
+                        </div>
+                        {/* Niveau */}
+                        <div style={{ textAlign:'center', flexShrink:0 }}>
+                          <div style={{ fontSize:18, fontWeight:600, color:'var(--gold)', lineHeight:1 }}>{level}</div>
+                          <div style={{ fontSize:9, color:'rgba(242,237,224,0.35)', textTransform:'uppercase', letterSpacing:'.06em' }}>Niveau</div>
+                        </div>
+                      </div>
+                      {/* Barre XP */}
+                      <div style={{ marginTop:10, height:3, background:'rgba(255,255,255,0.07)', borderRadius:100, overflow:'hidden' }}>
+                        <div style={{ height:'100%', width: xpPct + '%', background:'linear-gradient(90deg,#96d485,#e8c060)', borderRadius:100, transition:'width .4s' }} />
+                      </div>
+                      <div style={{ fontSize:9, color:'rgba(242,237,224,0.25)', marginTop:3, textAlign:'right' }}>{xp} / {xpNext} XP</div>
+                    </div>
+                  )
+                })()}
+
+                {/* ─ Actions ─ */}
+                <div style={{ margin:'14px 18px 0', display:'flex', flexDirection:'column', gap:10 }}>
+
+                  {/* Modifier le profil */}
+                  <div
+                    onClick={() => { setShowSettingsDrawer(false); setTimeout(() => setShowProfileModal(true), 180) }}
+                    style={{
+                      display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
+                      background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                      borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
+                    }}
+                  >
+                    <span style={{ fontSize:18 }}>✏️</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, color:'var(--cream)', fontWeight:500 }}>Modifier mon profil</div>
+                      <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:1 }}>Nom, fleur, visibilité…</div>
+                    </div>
+                    <span style={{ fontSize:12, color:'rgba(242,237,224,0.25)' }}>›</span>
+                  </div>
+
+                  {/* Abonnement */}
+                  <div
+                    onClick={() => { setShowSettingsDrawer(false); window.openAccessModal?.() }}
+                    style={{
+                      display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
+                      background:'rgba(232,192,96,0.07)', border:'1px solid rgba(232,192,96,0.18)',
+                      borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
+                    }}
+                  >
+                    <span style={{ fontSize:18 }}>🌸</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, color:'#e8c060', fontWeight:500 }}>Abonnement</div>
+                      <div style={{ fontSize:10, color:'rgba(232,192,96,0.45)', marginTop:1 }}>Gérer votre accès</div>
+                    </div>
+                    <span style={{ fontSize:12, color:'rgba(232,192,96,0.30)' }}>›</span>
+                  </div>
+
+                  {/* Se déconnecter */}
+                  <div
+                    onClick={() => { setShowSettingsDrawer(false); signOut() }}
+                    style={{
+                      display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
+                      background:'rgba(210,80,80,0.06)', border:'1px solid rgba(210,80,80,0.15)',
+                      borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
+                    }}
+                  >
+                    <span style={{ fontSize:18 }}>⎋</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, color:'rgba(242,100,100,0.80)', fontWeight:500 }}>Se déconnecter</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
