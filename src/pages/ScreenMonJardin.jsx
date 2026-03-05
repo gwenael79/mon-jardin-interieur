@@ -302,7 +302,7 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
   )
 }
 let _svgN = 0
-function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0 }) {
+function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
   const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
@@ -787,34 +787,33 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
 
         {/* HALO LUMENS */}
         {lumensLevel !== 'faible' && (() => {
-          // Progression fine basée sur le total — seuils : halo=10, aura=50, rayonnement=200
           const total = typeof lumensTotal === 'number' ? lumensTotal : 0
           const t = lumensLevel === 'rayonnement'
-            ? Math.min(1, (total - 200) / 300)   // 200→500 = 0→1
+            ? Math.min(1, (total - 200) / 300)
             : lumensLevel === 'aura'
-            ? Math.min(1, (total - 50)  / 150)   // 50→200  = 0→1
-            : Math.min(1, (total - 10)  / 40)    // 10→50   = 0→1
+            ? Math.min(1, (total - 50)  / 150)
+            : Math.min(1, (total - 10)  / 40)
           const progress = Math.max(0, t)
 
           const sH = 32 + 100*r
           const fy = gY - sH
 
-          // Taille de base par niveau + progression fine
-          const rXbase = lumensLevel === 'rayonnement' ? 80 : lumensLevel === 'aura' ? 58 : 38
-          const rYbase = lumensLevel === 'rayonnement' ? 68 : lumensLevel === 'aura' ? 48 : 30
-          const rXmax  = lumensLevel === 'rayonnement' ? 120 : lumensLevel === 'aura' ? 80 : 58
-          const rYmax  = lumensLevel === 'rayonnement' ? 105 : lumensLevel === 'aura' ? 68 : 48
+          // Facteur de réduction pour mobile compact
+          const sf = compact ? 0.38 : 1.0
+
+          const rXbase = (lumensLevel === 'rayonnement' ? 80 : lumensLevel === 'aura' ? 58 : 38) * sf
+          const rYbase = (lumensLevel === 'rayonnement' ? 68 : lumensLevel === 'aura' ? 48 : 30) * sf
+          const rXmax  = (lumensLevel === 'rayonnement' ? 120 : lumensLevel === 'aura' ? 80 : 58) * sf
+          const rYmax  = (lumensLevel === 'rayonnement' ? 105 : lumensLevel === 'aura' ? 68 : 48) * sf
           const rX = rXbase + (rXmax - rXbase) * progress
           const rY = rYbase + (rYmax - rYbase) * progress
 
-          // Opacité progressive
           const opBase = lumensLevel === 'rayonnement' ? 0.55 : lumensLevel === 'aura' ? 0.35 : 0.18
           const opMax  = lumensLevel === 'rayonnement' ? 0.90 : lumensLevel === 'aura' ? 0.55 : 0.35
           const op = opBase + (opMax - opBase) * progress
 
           return (
             <>
-              {/* Contour lumineux */}
               <ellipse cx={cx} cy={fy} rx={rX * 0.82} ry={rY * 0.82}
                 fill="none"
                 stroke={`rgba(246,196,83,${(op * 0.35).toFixed(3)})`}
@@ -822,10 +821,9 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                 style={{ animation:'lumenGlow 4s ease-in-out infinite' }}>
                 <animate attributeName="opacity" values={`${(op*0.3).toFixed(2)};${(op*0.7).toFixed(2)};${(op*0.3).toFixed(2)}`} dur="4s" repeatCount="indefinite"/>
               </ellipse>
-              {/* Lueur diffuse */}
               <ellipse cx={cx} cy={fy} rx={rX} ry={rY}
                 fill="rgba(246,196,83,0)"
-                style={{ filter:`blur(${20 + progress * 14}px)` }}>
+                style={{ filter:`blur(${compact ? 10 + progress * 6 : 20 + progress * 14}px)` }}>
                 <animate attributeName="fill"
                   values={`rgba(246,196,83,${(op*0.4).toFixed(3)});rgba(246,196,83,${op.toFixed(3)});rgba(246,196,83,${(op*0.4).toFixed(3)})`}
                   dur="4s" repeatCount="indefinite"/>
@@ -3060,7 +3058,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         {/* Carte jardin 2 colonnes */}
         <div className="plant-hero ph-2col">
           <div className="ph-col-flower">
-            <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+            <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
           </div>
           <div className="ph-col-info">
             <div className="ph-vitality-score">
