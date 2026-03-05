@@ -419,9 +419,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }
         </div>
 
         {/* Fleur pleine largeur */}
-        <div style={{ marginTop: -50, marginBottom: -30 }}>
-  <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 260 : 60} svgRef={svgRef} />
-</div>
+        <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 300 : 380} svgRef={svgRef} />
 
         {/* Intention + Résonance sous la fleur */}
         {intention && (
@@ -748,104 +746,122 @@ function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badg
 // ─────────────────────────────────────────────────────────────────────────────
 //  MODAL ÉGRÉGORE
 // ─────────────────────────────────────────────────────────────────────────────
-function ModalEgregore({ userId, myName, onClose, onParticleBurst }) {
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MODAL BASE
+// ─────────────────────────────────────────────────────────────────────────────
+function Modal({ onClose, children, maxWidth = 480 }) {
   const isMobile = useIsMobile()
-  // Réutilise toute la logique de TabEgregore
-  const [zonesData, setZonesData]   = useState(Object.fromEntries(ZONES.map(z => [z.key, 50])))
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.78)', zIndex: 400, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(160deg,#0d200d,#091209)', border: '1px solid rgba(150,212,133,.15)', borderRadius: isMobile ? '20px 20px 0 0' : 20, width: '100%', maxWidth: isMobile ? '100%' : maxWidth, maxHeight: isMobile ? '92vh' : '88vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        {isMobile && <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 2px' }}><div style={{ width: 36, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.18)' }} /></div>}
+        {children}
+        <div onClick={onClose} style={{ textAlign: 'center', padding: '10px 0 18px', fontSize: 11, color: 'rgba(238,232,218,.25)', cursor: 'pointer' }}>Fermer</div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MODAL 1 — EGREGORE
+// ─────────────────────────────────────────────────────────────────────────────
+function ModalEgregore({ userId, onClose, onParticleBurst }) {
+  const isMobile = useIsMobile()
+  const [zonesData, setZonesData]     = useState(Object.fromEntries(ZONES.map(z => [z.key, 50])))
   const [activeCount, setActiveCount] = useState(0)
-  const [intention, setIntention]   = useState(null)
-  const [joined, setJoined]         = useState(false)
-  const [resonance, setResonance]   = useState(null)
-  const [pulseKey, setPulseKey]     = useState(null)
-  const [breathPhase, setBreath]    = useState(0)
+  const [intention, setIntention]     = useState(null)
+  const [joined, setJoined]           = useState(false)
+  const [resonance, setResonance]     = useState(null)
+  const [pulseKey, setPulseKey]       = useState(null)
+  const [breathPhase, setBreath]      = useState(0)
   const svgRef = useRef(null)
 
-  // Respiration
   useEffect(() => {
     let frame, start = Date.now()
-    function tick() { setBreath(Math.sin(((Date.now() - start) / 3200) * Math.PI * 2) * .5 + .5); frame = requestAnimationFrame(tick) }
+    const tick = () => { setBreath(Math.sin(((Date.now()-start)/3200)*Math.PI*2)*.5+.5); frame = requestAnimationFrame(tick) }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
   }, [])
 
   useEffect(() => {
     if (!userId) return
-    setJoined(false) // reset d'abord, puis vérifier
+    setJoined(false)
     loadData()
-    const today = new Date().toISOString().slice(0, 10)
+    const today = new Date().toISOString().slice(0,10)
     supabase.from('intentions_joined').select('id').eq('user_id', userId).eq('date', today).maybeSingle()
       .then(({ data }) => setJoined(!!data))
   }, [userId])
 
   async function loadData() {
-    const today = new Date().toISOString().slice(0, 10)
-    const [{ data: plants }, { data: intent }] = await Promise.all([
-      supabase.from('plants').select('zone_racines,zone_tige,zone_feuilles,zone_fleurs,zone_souffle').gte('date', today),
-      supabase.from('intentions').select('text,description').eq('date', today).maybeSingle(),
+    const today = new Date().toISOString().slice(0,10)
+    const [{ data: allPlants }, { data: intentions, error: intentErr }] = await Promise.all([
+      supabase.from('plants').select('user_id, zone_racines,zone_tige,zone_feuilles,zone_fleurs,zone_souffle, date').order('date', { ascending: false }),
+      supabase.from('intentions').select('text,description,date').order('date', { ascending: false }).limit(1),
     ])
-    if (plants?.length) {
+    const intent = intentions?.[0] ?? null
+    if (allPlants?.length) {
+      const latestByUser = {}
+      allPlants.forEach(p => { if (!latestByUser[p.user_id]) latestByUser[p.user_id] = p })
+      const plants = Object.values(latestByUser)
       const sums = Object.fromEntries(ZONES.map(z => [z.key, 0]))
       plants.forEach(p => ZONES.forEach(z => { sums[z.key] += (p[z.key] ?? 5) }))
       const avgs = Object.fromEntries(ZONES.map(z => [z.key, Math.round(sums[z.key] / plants.length)]))
       setZonesData(avgs); setActiveCount(plants.length)
-      const r = ZONES.map(z => ({ ...z, pct: avgs[z.key], dist: Math.abs(80 - avgs[z.key]) }))
-        .filter(z => z.pct >= 60 && z.pct < 80).sort((a, b) => a.dist - b.dist)[0]
+      const r = ZONES.map(z => ({ ...z, pct: avgs[z.key], dist: Math.abs(80-avgs[z.key]) }))
+        .filter(z => z.pct >= 60 && z.pct < 80).sort((a,b) => a.dist-b.dist)[0]
       if (r) setResonance({ zone: r.key, current: r.pct, threshold: 80 })
     }
     if (intent) setIntention(intent)
+    else setIntention({ text: 'Prendre soin de soi', description: 'Chaque rituel complété, chaque ❤️ envoyé nourrit cette énergie collective et renforce le groupe.' })
   }
 
   function spawnParticles() {
     if (!svgRef.current) return
     const rect = svgRef.current.getBoundingClientRect()
-    const scaleX = rect.width / 260, scaleY = rect.height / 260
+    const scaleX = rect.width/260, scaleY = rect.height/260
     const PETALS = ['🌸','🌺','🌼','🌷','💮'], STARS = ['✨','⭐','🌟','💫','✦']
     const ps = []
     ZONES.forEach(z => {
       const pct = zonesData[z.key] ?? 50
-      const pos = polarToXY(z.angle, (28 + (pct/100)*95) * .6, 130, 130)
-      const bx = rect.left + pos.x * scaleX, by = rect.top + pos.y * scaleY
-      for (let i = 0; i < 3; i++) ps.push({ id: `${z.key}-p-${i}-${Date.now()}-${Math.random()}`, x: bx + (Math.random()-.5)*20, y: by + (Math.random()-.5)*20, char: PETALS[Math.floor(Math.random()*PETALS.length)], vx: .35+Math.random()*.5, vy: -(.35+Math.random()*.5), dur: 3200+Math.random()*1400, color: null })
-      for (let i = 0; i < 2; i++) { const a = Math.random()*Math.PI*2, s = .9+Math.random()*1.1; ps.push({ id: `${z.key}-s-${i}-${Date.now()}-${Math.random()}`, x: bx+(Math.random()-.5)*14, y: by+(Math.random()-.5)*14, char: STARS[Math.floor(Math.random()*STARS.length)], vx: Math.cos(a)*s, vy: Math.sin(a)*s, dur: 900+Math.random()*500, color: null }) }
+      const pos = polarToXY(z.angle, (28+(pct/100)*95)*.6, 130, 130)
+      const bx = rect.left+pos.x*scaleX, by = rect.top+pos.y*scaleY
+      for (let i=0;i<3;i++) ps.push({ id:`${z.key}-p-${i}-${Date.now()}-${Math.random()}`, x:bx+(Math.random()-.5)*20, y:by+(Math.random()-.5)*20, char:PETALS[Math.floor(Math.random()*PETALS.length)], vx:.35+Math.random()*.5, vy:-(.35+Math.random()*.5), dur:3200+Math.random()*1400, color:null })
+      for (let i=0;i<2;i++) { const a=Math.random()*Math.PI*2, s=.9+Math.random()*1.1; ps.push({ id:`${z.key}-s-${i}-${Date.now()}-${Math.random()}`, x:bx+(Math.random()-.5)*14, y:by+(Math.random()-.5)*14, char:STARS[Math.floor(Math.random()*STARS.length)], vx:Math.cos(a)*s, vy:Math.sin(a)*s, dur:900+Math.random()*500, color:null }) }
     })
     onParticleBurst?.(ps)
   }
 
   async function handleJoin() {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = new Date().toISOString().slice(0,10)
     if (joined) {
       await supabase.from('intentions_joined').delete().eq('user_id', userId).eq('date', today)
       setJoined(false)
     } else {
       await supabase.from('intentions_joined').insert({ user_id: userId, date: today })
       setJoined(true)
-      ZONES.forEach((z, i) => setTimeout(() => { setPulseKey(z.key); setTimeout(() => setPulseKey(null), 1800) }, i * 160))
+      ZONES.forEach((z,i) => setTimeout(() => { setPulseKey(z.key); setTimeout(() => setPulseKey(null), 1800) }, i*160))
       spawnParticles()
     }
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 400, display: 'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent: 'center', padding: isMobile ? 0 : 20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(160deg,#0d200d,#091209)', border: '1px solid rgba(150,212,133,.15)', borderRadius: isMobile ? '20px 20px 0 0' : 20, padding: isMobile ? '24px 20px 36px' : '36px 40px', width: '100%', maxWidth: isMobile ? '100%' : 320, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        {isMobile && <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.15)', marginBottom: 4 }} />}
-
-        {/* Fleur */}
-        <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 260 : 560} svgRef={svgRef} />
-
-        <div style={{ fontSize: 9, color: 'rgba(238,232,218,.3)', letterSpacing: '.1em', marginTop: -175}}>
-          <span style={{ color: 'rgba(150,212,133,.7)' }}>{activeCount}</span> fleurs actives aujourd'hui
+    <Modal onClose={onClose} maxWidth={500}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '0 24px 8px' }}>
+        <div style={{ marginTop: -15, marginBottom: -10 }}>
+          <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 280 : 380} svgRef={svgRef} />
         </div>
-
+        <div style={{ fontSize: 9, color: 'rgba(238,232,218,.3)', letterSpacing: '.1em' }}>
+          Collectif de <span style={{ color: 'rgba(150,212,133,.7)' }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''}
+        </div>
         {intention && (<>
           <div style={{ fontSize: 9, color: 'rgba(232,196,100,.5)', letterSpacing: '.14em', textTransform: 'uppercase' }}>✦ Intention collective du jour</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.1, textAlign: 'center' }}>{intention.text}</div>
-          <div style={{ fontSize: 11, color: 'rgba(238,232,218,.4)', lineHeight: 1.65, textAlign: 'center', maxWidth: 380 }}>{intention.description}</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.1, textAlign: 'center' }}>{intention.text}</div>
+          <div style={{ fontSize: 11, color: 'rgba(238,232,218,.38)', lineHeight: 1.65, textAlign: 'center' }}>{intention.description}</div>
         </>)}
-
         <div onClick={handleJoin} style={{ display: 'flex', alignItems: 'center', gap: 7, minHeight: 42, padding: '0 24px', borderRadius: 100, fontSize: 12, cursor: 'pointer', background: joined ? 'rgba(232,196,100,.14)' : 'rgba(150,212,133,.1)', border: `1px solid ${joined ? 'rgba(232,196,100,.42)' : 'rgba(150,212,133,.3)'}`, color: joined ? '#e8d4a8' : '#c8f0b8', transition: 'all .2s', WebkitTapHighlightColor: 'transparent' }}>
           {joined ? '✓ Vous nourrissez l\'intention' : '🌸 Rejoindre l\'intention collective'}
         </div>
-
         {resonance && (() => {
           const z = ZONE_MAP[resonance.zone]
           const pct = (resonance.current / resonance.threshold) * 100
@@ -856,82 +872,37 @@ function ModalEgregore({ userId, myName, onClose, onParticleBurst }) {
                 <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: z?.color }}>{resonance.current}%</div>
               </div>
               <div style={{ height: 3, borderRadius: 100, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 100, width: `${pct}%`, background: `linear-gradient(90deg,${z?.color}88,${z?.color})` }} />
+                <div style={{ height: '100%', width: `${pct}%`, borderRadius: 100, background: `linear-gradient(90deg,${z?.color}88,${z?.color})` }} />
               </div>
               <div style={{ fontSize: 9, color: 'rgba(238,232,218,.25)' }}>Seuil {resonance.threshold}% · encore {resonance.threshold - resonance.current} pts</div>
             </div>
           )
         })()}
-
-        <div onClick={onClose} style={{ fontSize: 11, color: 'rgba(238,232,218,.3)', cursor: 'pointer', marginTop: 4 }}>Fermer</div>
       </div>
-    </div>
+    </Modal>
   )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SCREEN PRINCIPAL — 2 colonnes 80/20
+//  MODAL 2 — JARDIN (fleurs fragiles, 1 colonne)
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenClubJardiniers({ userId, awardLumens }) {
-  const isMobile = useIsMobile()
+function ModalJardin({ userId, myName, bouquetIds, onClose, onCoeurSent }) {
+  const [list, setList]     = useState([])
+  const [ready, setReady]   = useState(false)
+  const [excluded, setExcluded] = useState(new Set())
 
-  // ── State global ──
-  const [myName, setMyName]             = useState('Vous')
-  const [toast, setToast]               = useState(null)
-  const [particles, setParticles]       = useState([])
-  const [showEgregore, setShowEgregore] = useState(false)
+  useEffect(() => { if (userId) init() }, [userId])
 
-  // ── Jardin (colonne gauche) ──
-  const [list, setList]                   = useState([])
-  const [loadingJardin, setLoadingJardin] = useState(true)
-  const [readyJardin, setReadyJardin]     = useState(false)
-  const [excluded, setExcluded]           = useState(new Set())
-  const [pendingMercis, setPendingMercis] = useState([])
-  const [mercisEnvoyes, setMercisEnvoyes] = useState(new Set())
-  const [expandedId, setExpandedId]       = useState(null)
-
-  // ── Bouquet (colonne droite) ──
-  const [bouquet, setBouquet]               = useState([])
-  const [bouquetIds, setBouquetIds]         = useState(new Set())
-  const [loadingBouquet, setLoadingBouquet] = useState(true)
-  const [excludedBouquet, setExcludedBouquet] = useState(new Set())
-  const [pendingBouquet, setPendingBouquet] = useState([])
-  const [expandedBouquet, setExpandedBouquet] = useState(null)
-
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 3000) }
-
-  // ── Init user ──
-  useEffect(() => {
-    if (!userId) return
-    supabase.from('users').select('display_name, flower_name').eq('id', userId).maybeSingle()
-      .then(({ data }) => { if (data) setMyName(flowerName(data)) })
-    initJardin()
-    initBouquet()
-  }, [userId])
-
-  // ── JARDIN ──
-  async function initJardin() {
-    setLoadingJardin(true)
-    try {
-      const today = new Date().toISOString().slice(0, 10)
-      const { data: sentToday } = await supabase.from('coeurs').select('receiver_id').eq('sender_id', userId).gte('created_at', today + 'T00:00:00')
-      const alreadySent = new Set((sentToday ?? []).map(c => c.receiver_id))
-      setExcluded(alreadySent)
-
-      const [{ data: coeurs }, { data: mercis }] = await Promise.all([
-        supabase.from('coeurs').select('id, sender_id, zone, message_ia, created_at').eq('receiver_id', userId).order('created_at', { ascending: false }).limit(20),
-        supabase.from('mercis').select('coeur_id').eq('sender_id', userId),
-      ])
-      const done = new Set((mercis ?? []).map(m => m.coeur_id))
-      setMercisEnvoyes(done)
-      setPendingMercis((coeurs ?? []).filter(c => !done.has(c.id)))
-
-      await loadJardinList(alreadySent)
-      setReadyJardin(true)
-    } catch(e) { console.error(e) } finally { setLoadingJardin(false) }
+  async function init() {
+    const today = new Date().toISOString().slice(0,10)
+    const { data: sentToday } = await supabase.from('coeurs').select('receiver_id').eq('sender_id', userId).gte('created_at', today+'T00:00:00')
+    const alreadySent = new Set((sentToday ?? []).map(c => c.receiver_id))
+    setExcluded(alreadySent)
+    await loadList(alreadySent)
+    setReady(true)
   }
 
-  async function loadJardinList(excludeSet) {
+  async function loadList(excludeSet) {
     const exIds = [...(excludeSet ?? excluded), userId].filter(Boolean)
     let q = supabase.from('users').select('id, display_name, flower_name, level')
     exIds.forEach(id => { q = q.neq('id', id) })
@@ -940,284 +911,246 @@ function ScreenClubJardiniers({ userId, awardLumens }) {
     const { data: plants } = await supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', users.map(u => u.id)).order('date', { ascending: false })
     const plantMap = {}
     ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
-    setList(users.map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).filter(u => u.display_name).sort((a, b) => vitality(a.plant) - vitality(b.plant)).slice(0, 20))
+    setList(users.map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).filter(u => u.display_name).sort((a,b) => vitality(a.plant)-vitality(b.plant)).slice(0,20))
   }
 
-  async function handleJardinCoeur({ receiverName, zone, receiverId }) {
-    setList(prev => prev.filter(f => f.id !== receiverId))
+  async function handleCoeurSent({ receiverName, zone, receiverId }) {
+    // Marquer comme envoyé sans retirer la card — juste griser le bouton
     const newEx = new Set([...excluded, receiverId])
     setExcluded(newEx)
-    showToast(`❤️ Envoyé à ${receiverName} !`)
-    awardLumens?.(1, 'coeur_envoye', { zone })
+    onCoeurSent?.({ receiverName, zone, receiverId })
+  }
 
-    // Remplaçant
-    const currentIds = list.filter(f => f.id !== receiverId).map(f => f.id)
-    const exIds = [...newEx, userId, ...currentIds].filter(Boolean)
-    let q = supabase.from('users').select('id, display_name, flower_name, level')
-    exIds.forEach(id => { q = q.neq('id', id) })
-    const { data: users } = await q
-    if (!users?.length) return
-    const { data: plants } = await supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', users.map(u => u.id)).order('date', { ascending: false })
-    const plantMap = {}
-    ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
-    const next = users.map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).filter(u => u.display_name).sort((a, b) => vitality(a.plant) - vitality(b.plant))[0]
-    if (next) setList(prev => [...prev, next])
+  return (
+    <Modal onClose={onClose} maxWidth={440}>
+      <div style={{ padding: '16px 20px 4px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: '#e8d4a8' }}>Fleurs qui ont besoin de soutien</div>
+        <div style={{ fontSize: 9, color: 'rgba(238,232,218,.25)', flexShrink: 0, marginLeft: 8 }}>{list.length}/20</div>
+      </div>
+      <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {!ready
+          ? Array.from({ length: 6 }).map((_, i) => <div key={i} style={{ height: 62, borderRadius: 12, background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.06)', opacity: 1 - i * 0.12 }} />)
+          : list.length === 0
+            ? <div style={{ textAlign: 'center', padding: 32, color: 'rgba(238,232,218,.2)', fontSize: 12 }}>Toutes les fleurs sont en bonne santé 🌿</div>
+            : list.map(fleur => (
+                <BouquetCard
+                  key={fleur.id}
+                  fleur={fleur}
+                  userId={userId}
+                  senderName={myName}
+                  alreadySent={excluded.has(fleur.id)}
+                  bouquetMember={bouquetIds?.has(fleur.id)}
+                  badge={0}
+                  onCoeurSent={handleCoeurSent}
+                />
+              ))
+        }
+      </div>
+    </Modal>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  MODAL 3 — MON BOUQUET (1 colonne)
+// ─────────────────────────────────────────────────────────────────────────────
+function ModalBouquet({ userId, myName, onClose }) {
+  const [bouquet, setBouquet] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [excluded, setExcluded] = useState(new Set())
+
+  useEffect(() => { if (userId) init() }, [userId])
+
+  async function init() {
+    setLoading(true)
+    try {
+      const [{ data: sent }, { data: recv }] = await Promise.all([
+        supabase.from('coeurs').select('receiver_id').eq('sender_id', userId),
+        supabase.from('mercis').select('sender_id').eq('receiver_id', userId),
+      ])
+      const sentIds = new Set((sent ?? []).map(c => c.receiver_id))
+      const recvIds = new Set((recv ?? []).map(m => m.sender_id))
+      const ids = [...sentIds].filter(id => recvIds.has(id))
+      if (!ids.length) { setBouquet([]); setLoading(false); return }
+      const today = new Date().toISOString().slice(0,10)
+      const [{ data: users }, { data: plants }, { data: sentToday }] = await Promise.all([
+        supabase.from('users').select('id, display_name, flower_name, level').in('id', ids),
+        supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', ids).order('date', { ascending: false }),
+        supabase.from('coeurs').select('receiver_id').eq('sender_id', userId).gte('created_at', today+'T00:00:00'),
+      ])
+      const plantMap = {}
+      ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
+      setExcluded(new Set((sentToday ?? []).map(c => c.receiver_id)))
+      setBouquet((users ?? []).map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).sort((a,b) => vitality(a.plant)-vitality(b.plant)))
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <Modal onClose={onClose} maxWidth={400}>
+      <div style={{ padding: '16px 20px 4px' }}>
+        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: '#e8d4a8' }}>Mon Bouquet</div>
+        <div style={{ fontSize: 9, color: 'rgba(238,232,218,.28)', marginTop: 2 }}>{bouquet.length} lien{bouquet.length !== 1 ? 's' : ''} · échanges mutuels</div>
+      </div>
+      <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => <div key={i} style={{ height: 54, borderRadius: 12, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)', opacity: 1 - i * 0.18 }} />)
+          : bouquet.length === 0
+            ? (
+              <div style={{ background: 'rgba(150,212,133,.03)', border: '1px solid rgba(150,212,133,.1)', borderRadius: 14, padding: '28px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                <div style={{ fontSize: 26 }}>🌱</div>
+                <div style={{ fontSize: 11, color: 'rgba(238,232,218,.35)', lineHeight: 1.65 }}>Envoyez des ❤️ dans le jardin — quand une fleur vous remercie, elle rejoint votre bouquet.</div>
+              </div>
+            )
+            : bouquet.map(fleur => (
+                <BouquetCard
+                  key={fleur.id}
+                  fleur={fleur}
+                  userId={userId}
+                  senderName={myName}
+                  alreadySent={excluded.has(fleur.id)}
+                  badge={0}
+                  onCoeurSent={() => setExcluded(prev => new Set([...prev, fleur.id]))}
+                />
+              ))
+        }
+      </div>
+    </Modal>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SCREEN PRINCIPAL — 3 boutons + messages
+// ─────────────────────────────────────────────────────────────────────────────
+function ScreenClubJardiniers({ userId, awardLumens }) {
+  const isMobile = useIsMobile()
+  const [myName, setMyName]           = useState('Vous')
+  const [toast, setToast]             = useState(null)
+  const [particles, setParticles]     = useState([])
+  const [bouquetIds, setBouquetIds]   = useState(new Set())
+  const [showEgregore, setShowEgregore] = useState(false)
+  const [showJardin, setShowJardin]     = useState(false)
+  const [showBouquet, setShowBouquet]   = useState(false)
+  const [messages, setMessages]         = useState([])
+  const [mercisEnvoyes, setMercisEnvoyes] = useState(new Set())
+
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('users').select('display_name, flower_name').eq('id', userId).maybeSingle()
+      .then(({ data }) => { if (data) setMyName(flowerName(data)) })
+    loadMessages()
+    loadBouquetIds()
+  }, [userId])
+
+  async function loadMessages() {
+    const [{ data: coeurs }, { data: mercis }] = await Promise.all([
+      supabase.from('coeurs').select('id, sender_id, zone, message_ia, created_at, sender:sender_id(display_name, flower_name)').eq('receiver_id', userId).order('created_at', { ascending: false }).limit(10),
+      supabase.from('mercis').select('coeur_id').eq('sender_id', userId),
+    ])
+    const done = new Set((mercis ?? []).map(m => m.coeur_id))
+    setMercisEnvoyes(done)
+    setMessages((coeurs ?? []).filter(c => !done.has(c.id)).slice(0, 5))
+  }
+
+  async function loadBouquetIds() {
+    const [{ data: sent }, { data: recv }] = await Promise.all([
+      supabase.from('coeurs').select('receiver_id').eq('sender_id', userId),
+      supabase.from('mercis').select('sender_id').eq('receiver_id', userId),
+    ])
+    const sentIds = new Set((sent ?? []).map(c => c.receiver_id))
+    const recvIds = new Set((recv ?? []).map(m => m.sender_id))
+    setBouquetIds(new Set([...sentIds].filter(id => recvIds.has(id))))
   }
 
   async function handleMerci(coeurId, senderId) {
     try {
       await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
       setMercisEnvoyes(prev => new Set([...prev, coeurId]))
-      setPendingMercis(prev => prev.filter(c => c.id !== coeurId))
+      setMessages(prev => prev.filter(c => c.id !== coeurId))
     } catch(e) { console.error(e) }
   }
 
-  // ── BOUQUET ──
-  async function initBouquet() {
-    setLoadingBouquet(true)
-    try {
-      const [{ data: sent }, { data: recv }] = await Promise.all([
-        supabase.from('coeurs').select('receiver_id').eq('sender_id', userId),
-        supabase.from('mercis').select('sender_id').eq('receiver_id', userId),
-      ])
-      const sentIds  = new Set((sent  ?? []).map(c => c.receiver_id))
-      const recvIds  = new Set((recv  ?? []).map(m => m.sender_id))
-      const ids      = [...sentIds].filter(id => recvIds.has(id))
-      setBouquetIds(new Set(ids))
-      if (!ids.length) { setBouquet([]); setLoadingBouquet(false); return }
-
-      const today = new Date().toISOString().slice(0, 10)
-      const [{ data: users }, { data: plants }, { data: sentToday }] = await Promise.all([
-        supabase.from('users').select('id, display_name, flower_name, level').in('id', ids),
-        supabase.from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date').in('user_id', ids).order('date', { ascending: false }),
-        supabase.from('coeurs').select('receiver_id').eq('sender_id', userId).gte('created_at', today + 'T00:00:00'),
-      ])
-      const plantMap = {}
-      ;(plants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
-      setExcludedBouquet(new Set((sentToday ?? []).map(c => c.receiver_id)))
-      setBouquet((users ?? []).map(u => ({ ...u, plant: plantMap[u.id] ?? {} })).sort((a, b) => vitality(a.plant) - vitality(b.plant)))
-
-      const [{ data: coeurs }, { data: mercis }] = await Promise.all([
-        supabase.from('coeurs').select('id, sender_id, zone, message_ia, created_at').eq('receiver_id', userId).in('sender_id', ids).order('created_at', { ascending: false }),
-        supabase.from('mercis').select('coeur_id').eq('sender_id', userId),
-      ])
-      const done = new Set((mercis ?? []).map(m => m.coeur_id))
-      setPendingBouquet((coeurs ?? []).filter(c => !done.has(c.id)))
-    } finally { setLoadingBouquet(false) }
-  }
-
-  async function handleBouquetCoeur({ receiverId }) {
-    setExcludedBouquet(prev => new Set([...prev, receiverId]))
-  }
-
-  async function handleBouquetMerci(coeurId, senderId) {
-    try {
-      await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
-      setPendingBouquet(prev => prev.filter(c => c.id !== coeurId))
-    } catch(e) { console.error(e) }
-  }
-
-  // ── RENDER ──
   const todayStr = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  const BTN_DATA = [
+    {
+      emoji: '✦', label: "L'Égrégore", sub: 'Fleur collective du groupe',
+      glow: true, onClick: () => setShowEgregore(true),
+    },
+    {
+      emoji: '🌿', label: 'Le Jardin', sub: '20 fleurs à soutenir',
+      glow: false, onClick: () => setShowJardin(true),
+    },
+    {
+      emoji: '💚', label: 'Mon Bouquet', sub: `${bouquetIds.size} lien${bouquetIds.size !== 1 ? 's' : ''}`,
+      glow: false, onClick: () => setShowBouquet(true),
+    },
+  ]
 
   return (
     <>
       <style>{`
         @keyframes petal-pulse { 0%{transform:scale(.85);opacity:.9} 100%{transform:scale(2.2);opacity:0} }
-        @keyframes fadeInUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
       <Toast msg={toast} />
 
-      {showEgregore && (
-        <ModalEgregore
-          userId={userId} myName={myName}
-          onClose={() => setShowEgregore(false)}
-          onParticleBurst={ps => setParticles(prev => [...prev, ...ps])}
-        />
-      )}
+      {showEgregore && <ModalEgregore userId={userId} onClose={() => setShowEgregore(false)} onParticleBurst={ps => setParticles(prev => [...prev, ...ps])} />}
+      {showJardin   && <ModalJardin userId={userId} myName={myName} bouquetIds={bouquetIds} onClose={() => { setShowJardin(false); loadMessages() }} onCoeurSent={({ receiverName, zone }) => { showToast(`❤️ Envoyé à ${receiverName} !`); awardLumens?.(1, 'coeur_envoye', { zone }); loadMessages() }} />}
+      {showBouquet  && <ModalBouquet userId={userId} myName={myName} onClose={() => { setShowBouquet(false); loadMessages() }} />}
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 12px' : '24px 28px' }}>
-        <div style={{ display: 'flex', gap: isMobile ? 16 : 24, alignItems: 'flex-start', maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '20px 14px' : '36px 40px' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 32 }}>
 
-          {/* ══ COLONNE GAUCHE 80% ══ */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-            {/* Grand titre + bouton Égrégore */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', gap: 50 }}>
-              <div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 32 : 44, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.05, letterSpacing: '.02em' }}>
-                  Le Jardin<br /><em style={{ color: 'rgba(150,212,133,.8)' }}>du Monde</em>
-                </div>
-                <div style={{ fontSize: 10, color: 'rgba(238,232,218,.28)', marginTop: 6 }}>{todayStr}</div>
-              </div>
-
-              {/* Bouton Égrégore + texte explicatif */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, paddingTop: 6 }}>
-                <div
-                  onClick={() => setShowEgregore(true)}
-                  style={{
-                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    padding: '12px 16px', borderRadius: 16, cursor: 'pointer',
-                    background: 'linear-gradient(135deg, rgba(232,196,100,.18), rgba(150,212,133,.12))',
-                    border: '1px solid rgba(232,196,100,.45)',
-                    boxShadow: '0 0 18px rgba(232,196,100,.2), 0 0 40px rgba(150,212,133,.08)',
-                    transition: 'all .2s',
-                    WebkitTapHighlightColor: 'transparent',
-                    maxWidth: isMobile ? 110 : 140,
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 28px rgba(232,196,100,.4), 0 0 60px rgba(150,212,133,.15)'; e.currentTarget.style.borderColor = 'rgba(232,196,100,.7)' }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 0 18px rgba(232,196,100,.2), 0 0 40px rgba(150,212,133,.08)'; e.currentTarget.style.borderColor = 'rgba(232,196,100,.45)' }}
-                >
-                  <div style={{ fontSize: isMobile ? 22 : 26, lineHeight: 1, filter: 'drop-shadow(0 0 8px rgba(232,196,100,.6))' }}>✦</div>
-                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 12 : 13, color: '#e8d4a8', textAlign: 'center', lineHeight: 1.2 }}>L'Égrégore</div>
-                  <div style={{ fontSize: 9, color: 'rgba(232,196,100,.6)', textAlign: 'center', lineHeight: 1.4 }}>
-                    {isMobile ? 'Fleur collective' : 'La fleur vivante\ndu groupe'}
-                  </div>
-                </div>
-
-                {!isMobile && (
-                  <div style={{ maxWidth: 220, paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: 'rgba(232,196,100,.8)', letterSpacing: '.03em' }}>Qu'est-ce que l'Égrégore ?</div>
-                    <div style={{ fontSize: 11, color: 'rgba(238,232,218,.42)', lineHeight: 1.7 }}>
-                      Une entité vivante née de l'énergie collective du groupe. Plus les membres prennent soin d'eux et s'entraident, plus la fleur commune s'épanouit — et cette beauté partagée renforce chacun en retour.
-                    </div>
-                  </div>
-                )}
-              </div>
+          {/* Titre */}
+          <div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 34 : 50, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.0, letterSpacing: '.02em' }}>
+              Club des<br /><em style={{ color: 'rgba(150,212,133,.85)' }}>Jardiniers</em>
             </div>
-
-            {/* Messages positifs reçus */}
-            {pendingMercis.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ fontSize: 9, color: 'rgba(238,232,218,.28)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Cœurs reçus pour vous</div>
-                {pendingMercis.slice(0, 5).map(c => {
-                  const z = ZONE_MAP[c.zone]
-                  const already = mercisEnvoyes.has(c.id)
-                  return (
-                    <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,100,100,.04)', border: '1px solid rgba(255,100,100,.1)', borderRadius: 12, animation: 'fadeInUp .3s ease' }}>
-                      <span style={{ fontSize: 18, flexShrink: 0 }}>❤️</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 11, color: 'rgba(238,232,218,.65)', fontStyle: 'italic', lineHeight: 1.55 }}>"{c.message_ia}"</div>
-                        <div style={{ fontSize: 9, color: z?.color ?? '#96d485', marginTop: 2 }}>{z?.icon} {z?.name} · {timeAgo(c.created_at)}</div>
-                      </div>
-                      {!already
-                        ? <div onClick={() => handleMerci(c.id, c.sender_id)} style={{ flexShrink: 0, minHeight: 30, padding: '0 12px', borderRadius: 100, fontSize: 10, background: 'rgba(255,200,100,.1)', border: '1px solid rgba(255,200,100,.25)', color: 'rgba(255,220,140,.9)', cursor: 'pointer', display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}>🙏 Merci</div>
-                        : <span style={{ fontSize: 9, color: 'rgba(238,232,218,.2)', flexShrink: 0 }}>🙏</span>
-                      }
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Section 20 fleurs fragiles */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight: 300, color: '#e8d4a8' }}>Fleurs qui ont besoin de soutien</div>
-                <div style={{ fontSize: 9, color: 'rgba(238,232,218,.25)' }}>{list.length} / 20 · renouvelé à minuit</div>
-              </div>
-
-              {!readyJardin ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, calc(50% - 6px)), 1fr))', gap: 10 }}>
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} style={{ borderRadius: 14, padding: '14px 12px', background: 'rgba(255,255,255,.025)', border: '1px solid rgba(255,255,255,.06)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, opacity: 1 - i * 0.05 }}>
-                      <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(255,255,255,.06)' }} />
-                      <div style={{ width: '70%', height: 10, borderRadius: 4, background: 'rgba(255,255,255,.06)' }} />
-                      <div style={{ width: '40%', height: 8, borderRadius: 4, background: 'rgba(255,255,255,.04)' }} />
-                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,.04)' }} />
-                    </div>
-                  ))}
-                </div>
-              ) : list.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: 40, color: 'rgba(238,232,218,.2)', fontSize: 12 }}>Toutes les fleurs sont en bonne santé 🌿</div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, calc(50% - 6px)), 1fr))', gap: 10 }}>
-                  {list.map(fleur => {
-                    const badge = pendingMercis.filter(c => c.sender_id === fleur.id).length
-                    return (
-                      <FleurCard
-                        key={fleur.id}
-                        fleur={fleur}
-                        userId={userId}
-                        senderName={myName}
-                        alreadySent={excluded.has(fleur.id)}
-                        bouquetMember={bouquetIds.has(fleur.id)}
-                        badge={badge}
-                        onBadgeClick={() => setExpandedId(expandedId === fleur.id ? null : fleur.id)}
-                        onCoeurSent={handleJardinCoeur}
-                        expanded={expandedId === fleur.id}
-                        pendingMercisForFleur={pendingMercis.filter(c => c.sender_id === fleur.id)}
-                        onMerci={handleMerci}
-                      />
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+            <div style={{ fontSize: 10, color: 'rgba(238,232,218,.28)', marginTop: 7 }}>{todayStr}</div>
           </div>
 
-          {/* ══ COLONNE DROITE 20% — MON BOUQUET ══ */}
-          {!isMobile && (
-            <div style={{ width: 240, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: '#e8d4a8' }}>Mon Bouquet</div>
-                <div style={{ fontSize: 9, color: 'rgba(238,232,218,.28)', marginTop: 3 }}>
-                  {bouquet.length} lien{bouquet.length !== 1 ? 's' : ''} · échanges mutuels
-                </div>
+          {/* 3 boutons */}
+          <div style={{ display: 'flex', gap: isMobile ? 10 : 14 }}>
+            {BTN_DATA.map(b => (
+              <div
+                key={b.label}
+                onClick={b.onClick}
+                style={{
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                  padding: isMobile ? '16px 8px' : '22px 14px', borderRadius: 18, cursor: 'pointer',
+                  background: b.glow ? 'linear-gradient(135deg, rgba(232,196,100,.16), rgba(150,212,133,.1))' : 'rgba(255,255,255,.025)',
+                  border: `1px solid ${b.glow ? 'rgba(232,196,100,.42)' : 'rgba(255,255,255,.07)'}`,
+                  boxShadow: b.glow ? '0 0 22px rgba(232,196,100,.2), 0 0 50px rgba(150,212,133,.07)' : 'none',
+                  transition: 'all .2s', WebkitTapHighlightColor: 'transparent',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = b.glow ? 'rgba(232,196,100,.7)' : 'rgba(255,255,255,.18)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = b.glow ? 'rgba(232,196,100,.42)' : 'rgba(255,255,255,.07)' }}
+              >
+                <div style={{ fontSize: isMobile ? 28 : 34, lineHeight: 1, filter: b.glow ? 'drop-shadow(0 0 10px rgba(232,196,100,.65))' : 'none' }}>{b.emoji}</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 14 : 17, color: b.glow ? '#e8d4a8' : 'rgba(238,232,218,.7)', textAlign: 'center', lineHeight: 1.2 }}>{b.label}</div>
+                <div style={{ fontSize: 9, color: b.glow ? 'rgba(232,196,100,.6)' : 'rgba(238,232,218,.28)', textAlign: 'center' }}>{b.sub}</div>
               </div>
+            ))}
+          </div>
 
-              {loadingBouquet ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} style={{ height: 58, borderRadius: 12, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.05)', opacity: 1 - i * 0.15 }} />
-                ))
-              ) : bouquet.length === 0 ? (
-                <div style={{ background: 'rgba(150,212,133,.03)', border: '1px solid rgba(150,212,133,.1)', borderRadius: 14, padding: '20px 16px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ fontSize: 22 }}>🌱</div>
-                  <div style={{ fontSize: 11, color: 'rgba(238,232,218,.35)', lineHeight: 1.6 }}>Envoyez des ❤️ dans le jardin — quand une fleur vous remercie, elle rejoint votre bouquet.</div>
-                </div>
-              ) : (
-                bouquet.map(fleur => {
-                  const badge = pendingBouquet.filter(c => c.sender_id === fleur.id).length
-                  return (
-                    <BouquetCard
-                      key={fleur.id}
-                      fleur={fleur}
-                      userId={userId}
-                      senderName={myName}
-                      alreadySent={excludedBouquet.has(fleur.id)}
-                      badge={badge}
-                      onBadgeClick={() => setExpandedBouquet(expandedBouquet === fleur.id ? null : fleur.id)}
-                      onCoeurSent={handleBouquetCoeur}
-                      expanded={expandedBouquet === fleur.id}
-                      pendingMercisForFleur={pendingBouquet.filter(c => c.sender_id === fleur.id)}
-                      onMerci={handleBouquetMerci}
-                    />
-                  )
-                })
-              )}
-            </div>
-          )}
-
-          {/* Bouquet mobile — sous la liste */}
-          {isMobile && bouquet.length > 0 && (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: '#e8d4a8' }}>Mon Bouquet</div>
-              {bouquet.map(fleur => {
-                const badge = pendingBouquet.filter(c => c.sender_id === fleur.id).length
+          {/* Messages éphémères */}
+          {messages.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ fontSize: 9, color: 'rgba(238,232,218,.28)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Cœurs reçus pour vous</div>
+              {messages.map((c, i) => {
+                const z = ZONE_MAP[c.zone]
+                const sender = flowerName(c.sender)
                 return (
-                  <BouquetCard
-                    key={fleur.id}
-                    fleur={fleur}
-                    userId={userId}
-                    senderName={myName}
-                    alreadySent={excludedBouquet.has(fleur.id)}
-                    badge={badge}
-                    onBadgeClick={() => setExpandedBouquet(expandedBouquet === fleur.id ? null : fleur.id)}
-                    onCoeurSent={handleBouquetCoeur}
-                    expanded={expandedBouquet === fleur.id}
-                    pendingMercisForFleur={pendingBouquet.filter(c => c.sender_id === fleur.id)}
-                    onMerci={handleBouquetMerci}
-                  />
+                  <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'rgba(255,100,100,.04)', border: '1px solid rgba(255,100,100,.1)', borderRadius: 14, animation: `fadeInUp .3s ease ${i * 0.05}s both` }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>❤️</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, color: 'rgba(238,232,218,.5)', marginBottom: 2 }}>{sender}</div>
+                      <div style={{ fontSize: 11, color: 'rgba(238,232,218,.6)', fontStyle: 'italic', lineHeight: 1.55 }}>"{c.message_ia}"</div>
+                      <div style={{ fontSize: 9, color: z?.color ?? '#96d485', marginTop: 3 }}>{z?.icon} {z?.name} · {timeAgo(c.created_at)}</div>
+                    </div>
+                    <div onClick={() => handleMerci(c.id, c.sender_id)} style={{ flexShrink: 0, minHeight: 32, padding: '0 14px', borderRadius: 100, fontSize: 10, background: 'rgba(255,200,100,.1)', border: '1px solid rgba(255,200,100,.25)', color: 'rgba(255,220,140,.9)', cursor: 'pointer', display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}>🙏 Merci</div>
+                  </div>
                 )
               })}
             </div>
@@ -1226,10 +1159,8 @@ function ScreenClubJardiniers({ userId, awardLumens }) {
         </div>
       </div>
 
-      {/* Particules */}
       {particles.map(p => (
-        <Particle key={p.id} x={p.x} y={p.y} color={p.color} char={p.char}
-          vx={p.vx} vy={p.vy} dur={p.dur}
+        <Particle key={p.id} x={p.x} y={p.y} color={p.color} char={p.char} vx={p.vx} vy={p.vy} dur={p.dur}
           onDone={() => setParticles(prev => prev.filter(q => q.id !== p.id))} />
       ))}
     </>

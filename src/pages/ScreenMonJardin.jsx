@@ -2115,21 +2115,51 @@ function useRitualsState(userId) {
   const todayKey    = new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
+    if (!userId) return
+    // Dégradation depuis localStorage
     try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const data = JSON.parse(raw)
-        if (data.date === todayKey) {
-          if (data.degradation) setDegradation(data.degradation)
-          if (data.completed)   setCompletedRituals(data.completed)
-          return
+      const raw  = localStorage.getItem(STORAGE_KEY)
+      const data = raw ? JSON.parse(raw) : {}
+      if (data.date === todayKey && data.degradation) setDegradation(data.degradation)
+      else setShowQuiz(true)
+    } catch (e) { setShowQuiz(true) }
+    // Rituels cochés depuis Supabase — source de vérité
+    supabase
+      .from('rituals')
+      .select('ritual_id')
+      .eq('user_id', userId)
+      .gte('completed_at', todayKey + 'T00:00:00')
+      .then(({ data }) => {
+        if (data?.length) {
+          const completed = {}
+          data.forEach(r => { if (r.ritual_id) completed[r.ritual_id] = true })
+          setCompletedRituals(completed)
         }
-      }
-      setShowQuiz(true)
-    } catch (e) {
-      setShowQuiz(true)
-    }
+      })
   }, [userId])
+
+  const handleQuizComplete = (deg) => {
+    setDegradation(deg)
+    setShowQuiz(false)
+    try {
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, date: todayKey, degradation: deg }))
+    } catch (e) {}
+  }
+
+  const handleToggleRitual = (ritualId) => {
+    setCompletedRituals(prev => {
+      const updated = { ...prev, [ritualId]: !prev[ritualId] }
+      try {
+        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, date: todayKey, completed: updated }))
+      } catch (e) {}
+      return updated
+    })
+  }
+
+  return { degradation, completedRituals, showQuiz, setShowQuiz, handleQuizComplete, handleToggleRitual }
+}
 
   const handleQuizComplete = (deg) => {
     setDegradation(deg)
@@ -2151,8 +2181,6 @@ function useRitualsState(userId) {
     })
   }
 
-  return { degradation, completedRituals, showQuiz, setShowQuiz, handleQuizComplete, handleToggleRitual }
-}
 
 // ── ExerciseDetail ──────────────────────────────────────────
 function ExerciseDetail({ exercise, zone, onDone, onBack }) {
@@ -2875,16 +2903,19 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [plantOverride, setPlantOverride] = useState(null)
   const plant = plantOverride ?? todayPlant   // ← utilisé partout à la place de todayPlant
 
-  // ── Réinitialise la plante à 5% si elle vient d'être créée avec les défauts DB (50) ──
+  // ── Réinitialise la plante à 5% UNIQUEMENT si elle vient d'être créée (< 2 min) ──
   useEffect(() => {
     if (!todayPlant?.id) return
-    const createdToday = todayPlant.created_at?.slice(0, 10) === new Date().toISOString().slice(0, 10)
+    const createdAt = new Date(todayPlant.created_at)
+    const ageMs = Date.now() - createdAt.getTime()
+    const justCreated = ageMs < 2 * 60 * 1000  // moins de 2 minutes
     const isDefaultValues = todayPlant.health === 50 &&
       Object.values(ZONE_DB_KEY).every(k => (todayPlant[k] ?? 50) === 50)
-    if (createdToday && isDefaultValues && todayRituals?.length === 0) {
+    if (justCreated && isDefaultValues) {
       const resetValues = Object.fromEntries(Object.values(ZONE_DB_KEY).map(k => [k, 5]))
-      supabase.from('plants').update({ health: 5, ...resetValues }).eq('id', todayPlant.id)
       setPlantOverride({ ...todayPlant, health: 5, ...resetValues })
+      supabase.from('plants').update({ health: 5, ...resetValues }).eq('id', todayPlant.id)
+        .then(({ error }) => { if (error) console.error('reset plant error:', error) })
     }
   }, [todayPlant?.id])
   const { settings, toggle } = usePrivacy(userId)
@@ -2943,6 +2974,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         name:         ritualName,
         zone:         ritualZoneStr,
         health_delta: delta,
+        ritual_id:    ritualId,
       })
       await supabase
         .from('plants')
