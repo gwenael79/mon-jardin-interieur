@@ -47,10 +47,36 @@ export function useProfile(userId) {
 // ── Hook Lumens ──────────────────────────────────────────────────────────────
 export function useLumens(userId) {
   const [lumens, setLumens] = useState(null)
+
+  // fetchLumens défini une seule fois via useEffect + ref
+  async function fetchLumens() {
+    if (!userId) return
+    const { data } = await supabase
+      .from('lumens')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (data) setLumens(data)
+  }
+
+  // Chargement initial
   useEffect(() => {
     if (!userId) return
-    supabase.from('lumens').select('*').eq('user_id', userId).maybeSingle()
-      .then(({ data }) => setLumens(data))
+    fetchLumens()
+  }, [userId])
+
+  // Polling toutes les 4s — closure stable via userId dans deps
+  useEffect(() => {
+    if (!userId) return
+    const id = setInterval(() => {
+      supabase
+        .from('lumens')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
+        .then(({ data }) => { if (data) setLumens(data) })
+    }, 4000)
+    return () => clearInterval(id)
   }, [userId])
 
   async function award(amount, reason, meta = null) {
@@ -61,11 +87,19 @@ export function useLumens(userId) {
       p_reason: reason,
       p_meta: meta
     })
-    const { data } = await supabase.from('lumens').select('*').eq('user_id', userId).maybeSingle()
-    setLumens(data)
+    // Forcer refresh immédiat après award
+    const { data } = await supabase
+      .from('lumens').select('*').eq('user_id', userId).maybeSingle()
+    if (data) setLumens(data)
   }
 
-  return { lumens, award }
+  async function refresh() {
+    const { data } = await supabase
+      .from('lumens').select('*').eq('user_id', userId).maybeSingle()
+    if (data) setLumens(data)
+  }
+
+  return { lumens, award, refresh }
 }
 
 // ── Composant Toast ──────────────────────────────────────────────────────────
@@ -138,7 +172,7 @@ const LUMEN_PACKS = [
   { lumens: 150, price: 80, label: 'Rayonnement', icon: '✦'  },
 ]
 
-export function LumensCard({ lumens, userId, awardLumens }) {
+export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
   const [tab, setTab]               = useState('history')
   const [history, setHistory]       = useState([])
   const [loadingH, setLoadingH]     = useState(false)
@@ -147,35 +181,56 @@ export function LumensCard({ lumens, userId, awardLumens }) {
   const [importInput, setImportInput] = useState('')
   const [importStatus, setImportStatus] = useState(null)
   const [loading, setLoading]       = useState(false)
+  const [refreshTick, setRefreshTick] = useState(0)
 
-  const total = lumens?.total ?? 0
-  const level = lumens?.level ?? 'faible'
+  const total     = lumens?.total     ?? 0
+  const available  = lumens?.available  ?? 0
+  const level      = lumens?.level      ?? 'faible'
 
   const LEVEL_LABELS = { faible:'Lumière faible', halo:'Halo visible', aura:'Aura douce', rayonnement:'Rayonnement actif' }
   const LEVEL_COLOR  = { faible:'#aaaaaa', halo:'#d4c060', aura:'#e8c060', rayonnement:'#f8e090' }
 
-  // Charge l'historique quand on arrive sur l'onglet
-  useEffect(() => {
-    if (tab !== 'history' || !userId) return
-    setLoadingH(true)
+  // Charge l'historique quand on arrive sur l'onglet ou sur refresh
+  function loadHistory() {
+    if (!userId) return
     supabase
-      .from('lumens_history')
+      .from('lumen_transactions')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(20)
       .then(({ data }) => { setHistory(data ?? []); setLoadingH(false) })
+  }
+
+  useEffect(() => {
+    if (tab !== 'history' || !userId) return
+    setLoadingH(true)
+    loadHistory()
+  }, [tab, userId, refreshTick])
+
+  // Polling historique toutes les 5s quand l'onglet est actif
+  useEffect(() => {
+    if (tab !== 'history' || !userId) return
+    const id = setInterval(loadHistory, 5000)
+    return () => clearInterval(id)
   }, [tab, userId])
 
   // Génère un code de transfert sortant
   async function handleExport() {
-    if (transferAmt < 1 || transferAmt > total) return
+    if (transferAmt < 1 || transferAmt > available) return
     setLoading(true)
+    setExportCode(null)
     try {
-      const { data } = await supabase.rpc('create_lumen_transfer', {
+      const { data, error } = await supabase.rpc('create_lumen_transfer', {
         p_user_id: userId, p_amount: transferAmt
       })
-      setExportCode(data?.code ?? null)
+      if (error) { console.error('[handleExport]', error.message); return }
+      // Le RPC retourne soit la string directement, soit un objet { code }
+      const code = typeof data === 'string' ? data : (data?.code ?? null)
+      setExportCode(code)
+      // Rafraîchir le compteur immédiatement après le débit
+      if (onRefresh) onRefresh()
+      setRefreshTick(t => t + 1)
     } catch(e) { console.error(e) }
     finally { setLoading(false) }
   }
@@ -186,11 +241,28 @@ export function LumensCard({ lumens, userId, awardLumens }) {
     if (!code) return
     setLoading(true); setImportStatus(null)
     try {
-      const { data } = await supabase.rpc('redeem_lumen_transfer', {
+      const { data, error } = await supabase.rpc('redeem_lumen_transfer', {
         p_user_id: userId, p_code: code
       })
-      if (data?.ok) { setImportStatus('success'); setImportInput('') }
-      else setImportStatus('error')
+      if (error) { setImportStatus('error'); return }
+      // Le RPC retourne soit true/false directement, soit { ok: true }
+      const ok = data === true || data?.ok === true
+      if (ok) {
+        setImportStatus('success')
+        setImportInput('')
+        // Recharge l'historique et le compteur
+        const { data: newHistory } = await supabase
+          .from('lumen_transactions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20)
+        setHistory(newHistory ?? [])
+        if (onRefresh) onRefresh()
+        setRefreshTick(t => t + 1)
+      } else {
+        setImportStatus('error')
+      }
     } catch { setImportStatus('error') }
     finally { setLoading(false) }
   }
@@ -215,13 +287,16 @@ export function LumensCard({ lumens, userId, awardLumens }) {
 
       {/* ── En-tête orbe + total ── */}
       <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px', background:'rgba(232,192,96,0.07)', borderRadius:12, border:'1px solid rgba(232,192,96,0.18)' }}>
-        <LumenOrb total={total} level={level} size={36} />
+        <LumenOrb total={available} level={level} size={36} />
         <div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'#e8c060', lineHeight:1 }}>
-            {total} <span style={{ fontSize:14 }}>✦</span>
+            {available} <span style={{ fontSize:14 }}>✦</span>
           </div>
           <div style={{ fontSize:10, color: LEVEL_COLOR[level] ?? '#e8c060', marginTop:3, letterSpacing:'.06em' }}>
             {LEVEL_LABELS[level] ?? level}
+          </div>
+          <div style={{ fontSize:9, color:'rgba(232,192,96,0.35)', marginTop:2 }}>
+            {total} ✦ total
           </div>
         </div>
       </div>
@@ -242,17 +317,22 @@ export function LumensCard({ lumens, userId, awardLumens }) {
           {!loadingH && history.length === 0 && (
             <div style={{ fontSize:11, color:'rgba(238,232,218,0.3)', fontStyle:'italic', padding:'8px 0' }}>Aucune activité pour l'instant</div>
           )}
-          {history.map((h, i) => (
-            <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(255,255,255,0.03)', borderRadius:9, border:'1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: h.amount > 0 ? '#96d485' : 'rgba(255,140,140,0.8)' }}>
-                {h.amount > 0 ? `+${h.amount}` : h.amount} ✦
-              </span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:11, color:'rgba(238,232,218,0.7)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{h.reason ?? '—'}</div>
-                <div style={{ fontSize:9, color:'rgba(238,232,218,0.28)', marginTop:2 }}>{timeAgo(h.created_at)}</div>
+          {history.map((h, i) => {
+            const amt  = h.amount ?? h.delta ?? h.lumens ?? 0
+            const why  = h.reason ?? h.label ?? h.type ?? h.description ?? '—'
+            const date = h.created_at ?? h.inserted_at ?? h.date ?? null
+            return (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(255,255,255,0.03)', borderRadius:9, border:'1px solid rgba(255,255,255,0.05)' }}>
+                <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: amt > 0 ? '#96d485' : 'rgba(255,140,140,0.8)' }}>
+                  {amt > 0 ? `+${amt}` : amt} ✦
+                </span>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:11, color:'rgba(238,232,218,0.7)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{why}</div>
+                  {date && <div style={{ fontSize:9, color:'rgba(238,232,218,0.28)', marginTop:2 }}>{timeAgo(date)}</div>}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
@@ -294,7 +374,7 @@ export function LumensCard({ lumens, userId, awardLumens }) {
             <div style={{ fontSize:11, color:'rgba(238,232,218,0.5)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Envoyer des Lumens</div>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
               <input
-                type="number" min={1} max={total} value={transferAmt}
+                type="number" min={1} max={available} value={transferAmt}
                 onChange={e => setTransferAmt(Number(e.target.value))}
                 style={{ ...inputStyle, flex:1 }}
               />
@@ -310,7 +390,7 @@ export function LumensCard({ lumens, userId, awardLumens }) {
               </div>
             ) : (
               <div onClick={!loading ? handleExport : undefined}
-                style={{ textAlign:'center', padding:'8px', background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.25)', borderRadius:8, fontSize:12, color:'#e8c060', cursor:loading?'default':'pointer', opacity: transferAmt > total ? 0.4 : 1 }}>
+                style={{ textAlign:'center', padding:'8px', background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.25)', borderRadius:8, fontSize:12, color:'#e8c060', cursor:loading?'default':'pointer', opacity: transferAmt > available ? 0.4 : 1 }}>
                 {loading ? '…' : 'Générer un code'}
               </div>
             )}

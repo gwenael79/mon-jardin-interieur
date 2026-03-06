@@ -844,3 +844,27 @@ body { background: var(--bg); }
   }
   .col + .rpanel { display: none !important; }
 }
+
+/* ── NAVIGATION HUB MOBILE ─────────────────────────────────────── */
+/* Cache le bandeau lumens fixé en bas sur mobile */
+@media (max-width: 768px) {
+  /* La sidebar devient une barre avec 1 seul bouton centré */
+  .sidebar {
+    justify-content: center;
+    gap: 0;
+  }
+  /* Cache logo, section label, divider, user card, lumens, footer */
+  .sb-logo,
+  .sb-section,
+  .sb-divider,
+  .sb-user-card,
+  .sb-lumen-bar,
+  .sb-footer-btns,
+  .sb-footer { display: none !important; }
+}
+
+/* ── NAVHUB pulse animation ── */
+@keyframes navPulse {
+  0%, 100% { opacity: 0.75; }
+  50%       { opacity: 1; }
+}

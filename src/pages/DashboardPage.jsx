@@ -11,7 +11,7 @@ import { supabase }  from '../core/supabaseClient'
 import '../styles/dashboard.css'
 
 import { useIsMobile, useProfile, useLumens, LumenBadge, LumenOrb, LumensCard } from './dashboardShared'
-import { ScreenMonJardin }      from './ScreenMonJardin'
+import { ScreenMonJardin, DailyQuizModal } from './ScreenMonJardin'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
 import { ScreenAteliers }       from './ScreenAteliers'
@@ -25,6 +25,115 @@ const SCREENS = [
   { id:'ateliers', icon:'🌿', label:'Ateliers',            Component: ScreenAteliers           },
   { id:'defis',    icon:'✨', label:'Défis',               Component: ScreenDefis             },
 ]
+
+// ── NavHub mobile ────────────────────────────────────────────────────────────
+function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, stats, communityStats, gardenFlowerCount, hasDegradation, unreadMessages, pendingInvitations }) {
+  const bilanDone = hasDegradation
+  const NAV_ITEMS = [
+    { id:'bilan',    icon:'🌹', label:'Bilan du matin',     sub: bilanDone ? 'Demain nous ferons le point ensemble ✦' : 'Prendre soin de soi commence ici', action:'bilan',   color: bilanDone ? 'rgba(255,255,255,0.02)' : 'rgba(200,168,130,0.15)', border: bilanDone ? 'rgba(255,255,255,0.06)' : 'rgba(200,168,130,0.35)', done: bilanDone },
+    { id:'jardin',   icon:'🌸', label:'Ma Fleur',           sub: todayPlant?.health != null ? `Vitalité ${todayPlant.health}%` : 'Votre plante du jour', action:'screen', color:'rgba(150,212,133,0.10)', border:'rgba(150,212,133,0.25)' },
+    { id:'champ',    icon:'🌻', label:'Jardin Collectif',   sub: gardenFlowerCount != null ? `${gardenFlowerCount} fleurs actives` : 'La communauté',     action:'screen', color:'rgba(255,200,80,0.08)',  border:'rgba(255,200,80,0.20)'  },
+    { id:'club',     icon:'🪴', label:'Club des Jardiniers',sub: stats?.myCircleCount > 0 ? `${stats.myCircleCount} cercles` : 'Vos cercles',             action:'screen', color:'rgba(130,200,160,0.08)', border:'rgba(130,200,160,0.20)' },
+    { id:'ateliers', icon:'🌿', label:'Ateliers',           sub:'Pratiques & exercices',       action:'screen', color:'rgba(100,180,140,0.08)', border:'rgba(100,180,140,0.20)' },
+    { id:'defis',    icon:'✨', label:'Défis',              sub: communityStats?.totalDefis > 0 ? `${communityStats.totalDefis} défis` : 'Challenges',     action:'screen', color:'rgba(180,140,255,0.08)', border:'rgba(180,140,255,0.20)' },
+    { id:'lumens',   icon:'✦',  label:'Lumens',             sub: lumens ? `${lumens.available} disponibles · ${lumens.level}` : 'Votre lumière',          action:'lumens', color:'rgba(232,192,96,0.10)',  border:'rgba(232,192,96,0.28)'  },
+  ]
+
+  // Badge value par item
+  const badges = {
+    jardin:   todayPlant?.health != null ? `${todayPlant.health}%` : null,
+    champ:    gardenFlowerCount != null ? `${gardenFlowerCount}` : null,
+    club:     unreadMessages > 0 ? `${unreadMessages} 💌` : null,
+    ateliers: pendingInvitations > 0 ? `${pendingInvitations} invitation${pendingInvitations > 1 ? 's' : ''}` : null,
+    defis:    communityStats?.totalDefis > 0 ? `${communityStats.totalDefis}` : null,
+    lumens:   lumens ? `${lumens.available} ✦` : null,
+  }
+
+  return (
+    <div style={{
+      flex:1, padding:'10px 16px 12px',
+      display:'flex', flexDirection:'column', justifyContent:'space-between',
+      overflow:'hidden',
+    }}>
+      {/* 7 boutons — remplissent toute la hauteur */}
+      {NAV_ITEMS.map(item => {
+        const badge = badges[item.id]
+        return (
+          <div
+            key={item.id}
+            onClick={() => {
+              if (item.done) return
+              if (item.action === 'bilan')  { onBilan() }
+              if (item.action === 'lumens') { onLumens() }
+              if (item.action === 'screen') { onNavigate(item.id) }
+            }}
+            style={{
+              display:'flex', alignItems:'center', gap:14,
+              padding:'0 16px',
+              flex:1,
+              background: item.id === active && item.action === 'screen' ? item.color.replace('0.10','0.20').replace('0.08','0.18').replace('0.15','0.25') : item.color,
+              border:`1px solid ${item.border}`,
+              borderRadius:14, cursor: item.done ? 'default' : 'pointer',
+              WebkitTapHighlightColor:'transparent',
+              transition:'all .18s',
+              opacity: item.done ? 0.5 : 1,
+              minHeight:0,
+            }}
+          >
+            {/* Icône */}
+            <div style={{
+              width:56, height:56, borderRadius:16, flexShrink:0,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              fontSize: item.id === 'lumens' ? 26 : 32,
+              background:'rgba(255,255,255,0.04)',
+              border:`1px solid ${item.border}`,
+              color: item.id === 'lumens' ? '#e8c060' : 'inherit',
+              filter: item.done ? 'grayscale(1)' : 'none',
+            }}>
+              {item.icon}
+            </div>
+            {/* Texte */}
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{
+                fontSize:17, fontWeight:600,
+                fontFamily:"'Jost', 'Inter', sans-serif",
+                color: item.done ? 'rgba(242,237,224,0.30)' : 'var(--cream)',
+                marginBottom:3, letterSpacing:'-0.01em',
+              }}>{item.label}</div>
+              {item.id === 'bilan' && !item.done ? (
+                <div style={{
+                  fontSize:11, color:'rgba(200,168,130,0.80)',
+                  animation:'navPulse 2.5s ease-in-out infinite',
+                  fontStyle:'italic',
+                }}>{item.sub}</div>
+              ) : (
+                <div style={{ fontSize:11, color: item.done ? 'rgba(242,237,224,0.20)' : 'rgba(242,237,224,0.42)', letterSpacing:'0.01em' }}>{item.sub}</div>
+              )}
+            </div>
+            {/* Badge compteur */}
+            {badge && !item.done && (
+              <div style={{
+                flexShrink:0,
+                padding:'5px 13px', borderRadius:100,
+                background: item.id === 'lumens' || item.id === 'ateliers' ? 'rgba(232,192,96,0.15)' : item.id === 'club' ? 'rgba(210,80,80,0.15)' : 'rgba(150,212,133,0.15)',
+                border: `1px solid ${item.id === 'lumens' || item.id === 'ateliers' ? 'rgba(232,192,96,0.38)' : item.id === 'club' ? 'rgba(210,80,80,0.38)' : 'rgba(150,212,133,0.32)'}`,
+                fontSize:13, fontWeight:700,
+                color: item.id === 'lumens' || item.id === 'ateliers' ? '#e8c060' : item.id === 'club' ? 'rgba(255,110,110,0.95)' : '#96d485',
+                fontFamily:"'Jost', 'Inter', sans-serif",
+                letterSpacing:'-0.01em',
+                whiteSpace:'nowrap',
+              }}>
+                {badge}
+              </div>
+            )}
+            {item.done && <div style={{ fontSize:18, color:'rgba(150,212,133,0.35)', flexShrink:0 }}>✓</div>}
+            {!badge && !item.done && <div style={{ fontSize:18, color:'rgba(242,237,224,0.15)', flexShrink:0 }}>›</div>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 // ── Modal Profil ─────────────────────────────────────────────────────────────
 function ProfileModal({ user, onClose }) {
@@ -192,17 +301,23 @@ export default function DashboardPage() {
   }, [])
 
   const [pendingReports, setPendingReports] = useState(0)
-  const [active, setActive]                 = useState('jardin')
+  const [active, setActive]                 = useState('nav')
+  const [showNavHub,         setShowNavHub]         = useState(false)
+  const [showBilanModal,     setShowBilanModal]     = useState(false)
+  const [bilanCompleted,     setBilanCompleted]     = useState(false)
   const { user, signOut }                   = useAuth()
   const { todayPlant, stats: plantStats }   = usePlant(user?.id)
   const { communityStats }                  = useDefi(user?.id)
   const { stats, circleMembers, activeCircle } = useCircle(user?.id)
 
   const profile                       = useProfile(user?.id)
-  const { lumens, award: awardLumens} = useLumens(user?.id)
+  const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
 
   // Nombre de fleurs visibles dans le Jardin Collectif
   const [gardenFlowerCount, setGardenFlowerCount] = useState(null)
+  const [bilanDoneToday,    setBilanDoneToday]    = useState(false)
+  const [pendingInvitations, setPendingInvitations] = useState(0)
+  const [unreadCoeurs,       setUnreadCoeurs]       = useState(0)
   useEffect(() => {
     const since = new Date(); since.setDate(since.getDate() - 7)
     Promise.all([
@@ -216,6 +331,31 @@ export default function DashboardPage() {
       setGardenFlowerCount(Object.values(byUser).filter(p => !hidden.has(p.user_id) && p.health > 0).length)
     })
   }, [])
+
+  // Coeurs non vus — rechargé à chaque fois qu'on revient sur le NavHub
+  function refreshCoeurs() {
+    if (!user?.id) return
+    supabase.from('coeurs').select('id', { count:'exact', head:true })
+      .eq('receiver_id', user.id).eq('seen', false)
+      .then(({ count }) => setUnreadCoeurs(count ?? 0))
+  }
+  useEffect(() => { refreshCoeurs() }, [user?.id])
+
+  // Invitations ateliers non vues
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('atelier_invitations').select('id', { count:'exact', head:true })
+      .eq('user_id', user.id).eq('seen', false)
+      .then(({ count }) => setPendingInvitations(count ?? 0))
+  }, [user?.id])
+
+  // Vérifie si le bilan a été fait aujourd'hui
+  useEffect(() => {
+    if (!user?.id) return
+    const today = new Date().toISOString().split('T')[0]
+    supabase.from('daily_quiz').select('id').eq('user_id', user.id).eq('date', today).maybeSingle()
+      .then(({ data }) => setBilanDoneToday(!!data))
+  }, [user?.id])
 
   // Rapports admin
   useEffect(() => {
@@ -249,10 +389,21 @@ export default function DashboardPage() {
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
   const [showHelp,           setShowHelp]           = useState(false)
 
-  const { Component } = SCREENS.find(s => s.id === active)
+  // Sur desktop, 'nav' n'existe pas — rediriger vers jardin
+  const effectiveActive = (!isMobile && active === 'nav') ? 'jardin' : active
+  // Recharge le compteur coeurs quand on revient sur le NavHub
+  useEffect(() => { if (effectiveActive === 'nav') refreshCoeurs() }, [effectiveActive])
+
+
+  const screenData = SCREENS.find(s => s.id === effectiveActive)
+  const Component = screenData?.Component ?? null
 
   // ── Config topbar par écran ──────────────────────────────────────────────
   const topbar = {
+    nav: {
+      title: <><em>Navigation</em></>,
+      btn: null,
+    },
     jardin: {
       title: <>Ma <em>Fleur</em></>,
       btn: null,
@@ -274,66 +425,79 @@ export default function DashboardPage() {
       btn: 'Proposer',
       onBtn: () => document.dispatchEvent(new CustomEvent('openPropose')),
     },
-  }[active]
+  }[effectiveActive] ?? { title: <><em>Navigation</em></>, btn: null }
 
   return (
     <div className="root">
       <div className="app-layout">
 
-        {/* ── BANDEAU LUMENS MOBILE ── */}
-        {isMobile && (
-          <>
-            <div
-              onClick={() => setShowLumensModal(true)}
-              style={{
-                position:'fixed', bottom:64, left:0, right:0, zIndex:99,
-                background:'linear-gradient(90deg, rgba(232,192,96,0.13), rgba(232,192,96,0.08))',
-                borderTop:'1px solid rgba(232,192,96,0.28)',
-                display:'flex', alignItems:'center', gap:10, padding:'7px 18px', cursor:'pointer',
-              }}
-            >
-              <span style={{ fontSize:16 }}>✦</span>
-              <span style={{ fontSize:13, color:'#e8c060', fontFamily:"'Cormorant Garamond', serif", fontWeight:600 }}>
-                {lumens?.total ?? 0} Lumens
-              </span>
-              <span style={{ fontSize:10, color:'rgba(232,192,96,0.55)', textTransform:'uppercase', letterSpacing:'.08em' }}>
-                {lumens?.level === 'faible' ? 'Lumière faible' : lumens?.level === 'halo' ? 'Halo visible' : lumens?.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}
-              </span>
-              <span style={{ marginLeft:'auto', fontSize:10, color:'rgba(232,192,96,0.45)' }}>Gérer →</span>
+        {/* ── MODAL LUMENS (accessible via NavHub) ── */}
+        {showLumensModal && (
+          <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
+            <div style={{ position:'relative', background:'#1a2e1a', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none' }}>
+              <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
+              <LumensCard
+                lumens={lumens}
+                userId={user?.id}
+                awardLumens={awardLumens}
+                onRefresh={refresh}
+              />
             </div>
-
-            {showLumensModal && (
-              <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-                <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
-                <div style={{ position:'relative', background:'#1a2e1a', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none' }}>
-                  <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
-                  <LumensCard lumens={lumens} userId={user?.id} awardLumens={awardLumens} />
-                </div>
-              </div>
-            )}
-          </>
+          </div>
         )}
 
         {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+        {/* ── BILAN MODAL — rendu directement ici pour fonctionner depuis NavHub ── */}
+        {showBilanModal && (
+          <DailyQuizModal
+            onComplete={(deg) => {
+              setShowBilanModal(false)
+              setBilanDoneToday(true)
+              // Transmettre au ScreenMonJardin via event custom
+              window.dispatchEvent(new CustomEvent('bilanComplete', { detail: deg }))
+            }}
+            onSkip={() => {
+              setShowBilanModal(false)
+              window.dispatchEvent(new CustomEvent('bilanComplete', { detail: { roots:50, stem:50, leaves:50, flowers:50, breath:50 } }))
+            }}
+          />
+        )}
 
         {/* ── SIDEBAR ── */}
         <div className="sidebar">
           <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
           <div className="sb-section" style={{ marginBottom:4 }}>Navigation</div>
-          {SCREENS.map(s => {
-            let badgeVal = null
-            if (s.id === 'jardin')   badgeVal = todayPlant?.health != null ? `${todayPlant.health}%` : null
-            if (s.id === 'champ')    badgeVal = gardenFlowerCount ?? null
-            if (s.id === 'club')     badgeVal = stats?.myCircleCount > 0 ? stats.myCircleCount : null
-            if (s.id === 'defis')    badgeVal = communityStats?.totalDefis > 0 ? communityStats.totalDefis : null
-            return (
-              <div key={s.id} className={'sb-item' + (active===s.id ? ' active' : '')} onClick={() => setActive(s.id)}>
-                <span className="sb-icon">{s.icon}</span>
-                {s.label}
-                {badgeVal != null && <div className="sb-badge">{badgeVal}</div>}
+          {isMobile ? (
+            /* ── Mobile : bouton Navigation (caché sur le NavHub) ── */
+            effectiveActive !== 'nav' ? (
+              <div
+                className="sb-item"
+                onClick={() => setActive('nav')}
+                style={{ flexDirection:'column', gap:4, padding:'8px 18px', fontSize:11, minWidth:72, letterSpacing:'0.04em' }}
+              >
+                <span style={{ fontSize:22 }}>🧭</span>
+                Navigation
               </div>
-            )
-          })}
+            ) : null
+          ) : (
+            /* ── Desktop : tous les écrans ── */
+            SCREENS.map(s => {
+              let badgeVal = null
+              if (s.id === 'jardin')   badgeVal = todayPlant?.health != null ? `${todayPlant.health}%` : null
+              if (s.id === 'champ')    badgeVal = gardenFlowerCount ?? null
+              if (s.id === 'club')     badgeVal = stats?.myCircleCount > 0 ? stats.myCircleCount : null
+              if (s.id === 'defis')    badgeVal = communityStats?.totalDefis > 0 ? communityStats.totalDefis : null
+              return (
+                <div key={s.id} className={'sb-item' + (effectiveActive===s.id ? ' active' : '')} onClick={() => setActive(s.id)}>
+                  <span className="sb-icon">{s.icon}</span>
+                  {s.label}
+                  {badgeVal != null && <div className="sb-badge">{badgeVal}</div>}
+                </div>
+              )
+            })
+          )}
           <div className="sb-divider" />
 
           {/* ── USER CARD ── */}
@@ -370,13 +534,29 @@ export default function DashboardPage() {
 
           {/* ── LUMENS ── */}
           {lumens && (
-            <div className="sb-lumen-bar">
-              <LumenOrb total={lumens.total} level={lumens.level} size={22} />
+            <div className="sb-lumen-bar" onClick={() => setShowLumensModal(true)} style={{ cursor:'pointer' }}>
+              <LumenOrb total={lumens.available} level={lumens.level} size={22} />
               <div style={{ flex:1 }}>
                 <div className="sb-lumen-label">Lumens</div>
                 <div className="sb-lumen-level">{lumens.level === 'faible' ? 'Lumière faible' : lumens.level === 'halo' ? 'Halo visible' : lumens.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}</div>
               </div>
-              <div className="sb-lumen-count">{lumens.total} ✦</div>
+              <div className="sb-lumen-count">{lumens.available} ✦</div>
+            </div>
+          )}
+
+          {/* ── MODAL LUMENS DESKTOP ── */}
+          {!isMobile && showLumensModal && (
+            <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
+              <div style={{ position:'relative', background:'#1a2e1a', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
+                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:16, background:'none', border:'none', color:'rgba(242,237,224,0.4)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
+                <LumensCard
+                  lumens={lumens}
+                  userId={user?.id}
+                  awardLumens={awardLumens}
+                  onRefresh={refresh}
+                />
+              </div>
             </div>
           )}
 
@@ -410,9 +590,11 @@ export default function DashboardPage() {
                 <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:28, fontWeight:300, color:'var(--cream)', letterSpacing:'0.01em', lineHeight:1 }}>
                   Mon <em style={{ fontStyle:'italic', color:'var(--gold)' }}>Jardin</em> Intérieur
                 </div>
-                <div style={{ fontSize:11, color:'var(--gold)', opacity:0.6, letterSpacing:'0.08em', textTransform:'uppercase' }}>
-                  {topbar.title}
-                </div>
+                {effectiveActive !== 'nav' && (
+                  <div style={{ fontSize:11, color:'var(--gold)', opacity:0.6, letterSpacing:'0.08em', textTransform:'uppercase' }}>
+                    {topbar.title}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="tb-title">{topbar.title}</div>
@@ -436,16 +618,36 @@ export default function DashboardPage() {
           </div>
 
           <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
-            <Component
-              userId={user?.id}
-              openCreate={showCreateCircle}
-              onCreateClose={() => setShowCreateCircle(false)}
-              openInvite={showInviteModal}
-              onInviteClose={() => setShowInviteModal(false)}
-              onReport={refreshPendingReports}
-              awardLumens={awardLumens}
-              lumens={lumens}
-            />
+            {(isMobile && effectiveActive === 'nav') ? (
+              <NavHub
+                active={active}
+                onNavigate={id => setActive(id)}
+                onBilan={() => setShowBilanModal(true)}
+                onLumens={() => setShowLumensModal(true)}
+                lumens={lumens}
+                todayPlant={todayPlant}
+                stats={stats}
+                communityStats={communityStats}
+                gardenFlowerCount={gardenFlowerCount}
+                hasDegradation={bilanDoneToday}
+                unreadMessages={unreadCoeurs}
+                pendingInvitations={pendingInvitations}
+              />
+            ) : Component ? (
+              <Component
+                userId={user?.id}
+                openCreate={showCreateCircle}
+                onCreateClose={() => setShowCreateCircle(false)}
+                openInvite={showInviteModal}
+                onInviteClose={() => setShowInviteModal(false)}
+                onReport={refreshPendingReports}
+                awardLumens={awardLumens}
+                lumens={lumens}
+                onCoeurSeen={() => setUnreadCoeurs(n => Math.max(0, n - 1))}
+                bilanDoneToday={bilanDoneToday}
+                onOpenBilan={() => setShowBilanModal(true)}
+              />
+            ) : null}
           </div>
 
           {/* ── FAB mobile — accès Lumens (écran Ma Fleur) ── */}
@@ -463,7 +665,12 @@ export default function DashboardPage() {
                   <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowMjRight(false)} />
                   <div style={{ position:'relative', background:'#1a2e1a', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none' }}>
                     <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
-                    <LumensCard lumens={lumens} userId={user?.id} awardLumens={awardLumens} />
+                    <LumensCard
+                      lumens={lumens}
+                      userId={user?.id}
+                      awardLumens={awardLumens}
+                      onRefresh={refresh}
+                    />
                     <div className="slabel" style={{ marginTop:20 }}>Confidentialité</div>
                     <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>Souhaitez-vous apparaître dans le jardin collectif ?</div>
                   </div>

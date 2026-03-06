@@ -1020,7 +1020,7 @@ function ModalBouquet({ userId, myName, onClose }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SCREEN PRINCIPAL — 3 boutons + messages
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenClubJardiniers({ userId, awardLumens }) {
+function ScreenClubJardiniers({ userId, awardLumens, onCoeurSeen }) {
   const isMobile = useIsMobile()
   const [myName, setMyName]           = useState('Vous')
   const [toast, setToast]             = useState(null)
@@ -1065,8 +1065,11 @@ function ScreenClubJardiniers({ userId, awardLumens }) {
   async function handleMerci(coeurId, senderId) {
     try {
       await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
+      // Marque le coeur comme vu (interaction effectuée)
+      await supabase.from('coeurs').update({ seen: true }).eq('id', coeurId)
       setMercisEnvoyes(prev => new Set([...prev, coeurId]))
       setMessages(prev => prev.filter(c => c.id !== coeurId))
+      if (onCoeurSeen) onCoeurSeen()
     } catch(e) { console.error(e) }
   }
 

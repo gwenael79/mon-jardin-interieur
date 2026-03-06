@@ -2,7 +2,7 @@
 //  ScreenMonJardin.jsx  —  Écran "Ma Fleur"
 //  Contient : PlantSVG, GardenSettingsModal, rituels, journal, ScreenMonJardin
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { supabase } from '../core/supabaseClient'
 import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
@@ -785,50 +785,71 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
         {/* CIEL — pleine hauteur comme jardin collectif */}
         <rect width={W} height={H} fill={`url(#${id}sk)`}/>
 
-        {/* HALO LUMENS */}
+        {/* AURA LUMENS — lueur organique diffuse, sans contour */}
         {lumensLevel !== 'faible' && (() => {
-          const total = typeof lumensTotal === 'number' ? lumensTotal : 0
-          const t = lumensLevel === 'rayonnement'
-            ? Math.min(1, (total - 200) / 300)
-            : lumensLevel === 'aura'
-            ? Math.min(1, (total - 50)  / 150)
-            : Math.min(1, (total - 10)  / 40)
-          const progress = Math.max(0, t)
+          const sf = compact ? 0.45 : 1.0
+          // Centre de l'aura : sur le bourgeon/fleur = sommet de la tige (sTY)
+          const ay = sTY
 
-          const sH = 32 + 100*r
-          const fy = gY - sH
+          // Taille et opacité selon le niveau
+          const cfg = {
+            halo:        { rX: 55,  rY: 38,  op1: 0.28, op2: 0.16, op3: 0.08, blur1: 18, blur2: 35, blur3: 60  },
+            aura:        { rX: 85,  rY: 58,  op1: 0.42, op2: 0.24, op3: 0.12, blur1: 22, blur2: 45, blur3: 80  },
+            rayonnement: { rX: 120, rY: 82,  op1: 0.55, op2: 0.32, op3: 0.16, blur1: 28, blur2: 55, blur3: 100 },
+          }[lumensLevel] ?? { rX: 55, rY: 38, op1: 0.10, op2: 0.06, op3: 0.03, blur1: 18, blur2: 35, blur3: 60 }
 
-          // Facteur de réduction pour mobile compact
-          const sf = compact ? 0.38 : 1.0
+          const rX1 = cfg.rX * sf
+          const rY1 = cfg.rY * sf
+          // Couches de plus en plus larges et de moins en moins opaques
+          const rX2 = rX1 * 1.6
+          const rY2 = rY1 * 1.5
+          const rX3 = rX1 * 2.4
+          const rY3 = rY1 * 2.2
 
-          const rXbase = (lumensLevel === 'rayonnement' ? 80 : lumensLevel === 'aura' ? 58 : 38) * sf
-          const rYbase = (lumensLevel === 'rayonnement' ? 68 : lumensLevel === 'aura' ? 48 : 30) * sf
-          const rXmax  = (lumensLevel === 'rayonnement' ? 120 : lumensLevel === 'aura' ? 80 : 58) * sf
-          const rYmax  = (lumensLevel === 'rayonnement' ? 105 : lumensLevel === 'aura' ? 68 : 48) * sf
-          const rX = rXbase + (rXmax - rXbase) * progress
-          const rY = rYbase + (rYmax - rYbase) * progress
+          const b1 = (compact ? cfg.blur1 * 0.5 : cfg.blur1)
+          const b2 = (compact ? cfg.blur2 * 0.5 : cfg.blur2)
+          const b3 = (compact ? cfg.blur3 * 0.5 : cfg.blur3)
 
-          const opBase = lumensLevel === 'rayonnement' ? 0.55 : lumensLevel === 'aura' ? 0.35 : 0.18
-          const opMax  = lumensLevel === 'rayonnement' ? 0.90 : lumensLevel === 'aura' ? 0.55 : 0.35
-          const op = opBase + (opMax - opBase) * progress
+          // Couleur chaude dorée avec légère teinte ambrée
+          const col1 = `rgba(252,210,80,${cfg.op1})`
+          const col2 = `rgba(246,185,60,${cfg.op2})`
+          const col3 = `rgba(240,160,40,${cfg.op3})`
 
           return (
-            <>
-              <ellipse cx={cx} cy={fy} rx={rX * 0.82} ry={rY * 0.82}
-                fill="none"
-                stroke={`rgba(246,196,83,${(op * 0.35).toFixed(3)})`}
-                strokeWidth={lumensLevel === 'rayonnement' ? 1.5 : 1}
-                style={{ animation:'lumenGlow 4s ease-in-out infinite' }}>
-                <animate attributeName="opacity" values={`${(op*0.3).toFixed(2)};${(op*0.7).toFixed(2)};${(op*0.3).toFixed(2)}`} dur="4s" repeatCount="indefinite"/>
+            <g>
+              {/* Couche 3 — halo très diffus, large */}
+              <ellipse cx={cx} cy={ay} rx={rX3} ry={rY3}
+                fill={col3}
+                style={{ filter:`blur(${b3}px)` }}>
+                <animate attributeName="opacity"
+                  values={`${cfg.op3};${(cfg.op3*1.6).toFixed(3)};${cfg.op3}`}
+                  dur="7s" repeatCount="indefinite"/>
               </ellipse>
-              <ellipse cx={cx} cy={fy} rx={rX} ry={rY}
-                fill="rgba(246,196,83,0)"
-                style={{ filter:`blur(${compact ? 10 + progress * 6 : 20 + progress * 14}px)` }}>
-                <animate attributeName="fill"
-                  values={`rgba(246,196,83,${(op*0.4).toFixed(3)});rgba(246,196,83,${op.toFixed(3)});rgba(246,196,83,${(op*0.4).toFixed(3)})`}
+              {/* Couche 2 — halo intermédiaire */}
+              <ellipse cx={cx} cy={ay} rx={rX2} ry={rY2}
+                fill={col2}
+                style={{ filter:`blur(${b2}px)` }}>
+                <animate attributeName="opacity"
+                  values={`${cfg.op2};${(cfg.op2*1.5).toFixed(3)};${cfg.op2}`}
+                  dur="5s" repeatCount="indefinite"/>
+              </ellipse>
+              {/* Couche 1 — cœur de la lueur, plus concentré */}
+              <ellipse cx={cx} cy={ay} rx={rX1} ry={rY1}
+                fill={col1}
+                style={{ filter:`blur(${b1}px)` }}>
+                <animate attributeName="opacity"
+                  values={`${cfg.op1};${(cfg.op1*1.4).toFixed(3)};${cfg.op1}`}
                   dur="4s" repeatCount="indefinite"/>
               </ellipse>
-            </>
+              {/* Reflet chaud sur le sol */}
+              <ellipse cx={cx} cy={gY} rx={rX1 * 0.9} ry={rY1 * 0.25}
+                fill={`rgba(246,196,60,${(cfg.op1 * 0.5).toFixed(3)})`}
+                style={{ filter:`blur(${b1 * 0.8}px)` }}>
+                <animate attributeName="opacity"
+                  values={`${cfg.op1*0.4};${cfg.op1*0.7};${cfg.op1*0.4}`}
+                  dur="4s" repeatCount="indefinite"/>
+              </ellipse>
+            </g>
           )
         })()}
 
@@ -2125,7 +2146,7 @@ function useStreak(userId) {
 }
 
 
-function useRitualsState(userId) {
+function useRitualsState(userId, awardLumens) {
   const [degradation,      setDegradation]      = useState(null)
   const [completedRituals, setCompletedRituals] = useState({})
   const [showQuiz,         setShowQuiz]         = useState(false)
@@ -2170,6 +2191,22 @@ function useRitualsState(userId) {
     supabase
       .from('daily_quiz')
       .upsert({ user_id: userId, date: todayKey, degradation: deg }, { onConflict: 'user_id,date' })
+      .then(async ({ error }) => {
+        if (!error && awardLumens) {
+          // Vérifie si les lumens ont déjà été accordés aujourd'hui
+          // en cherchant une transaction existante dans lumen_transactions
+          const { data: existing } = await supabase
+            .from('lumen_transactions')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('reason', 'bilan_matin')
+            .gte('created_at', todayKey + 'T00:00:00.000Z')
+            .maybeSingle()
+          if (!existing) {
+            awardLumens(3, 'bilan_matin', { date: todayKey })
+          }
+        }
+      })
   }
 
   const handleToggleRitual = (ritualId) => {
@@ -2437,7 +2474,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
 
   return (
     <>
-      {showQuiz && <DailyQuizModal onComplete={handleQuizComplete} onSkip={handleQuizSkip} />}
+      {/* DailyQuizModal géré dans DashboardPage */}
       {activeZone && <RitualZoneModal zoneId={activeZone} completed={completedRituals} onToggle={onToggleRitual} onClose={() => setActiveZone(null)} />}
 
       <div style={{ width:'100%' }}>
@@ -2452,23 +2489,13 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
             </p>
           </div>
           {hasDegradation && (
-            <button onClick={() => setShowQuiz(true)} style={{ fontSize:10, color:'rgba(180,200,180,0.3)', background:'none', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:'5px 12px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif" }}>
+            <button onClick={() => onOpenBilan?.()} style={{ fontSize:10, color:'rgba(180,200,180,0.3)', background:'none', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:'5px 12px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif" }}>
               ↺ Refaire le bilan
             </button>
           )}
         </div>
 
-        {/* Bouton bilan si pas encore fait */}
-        {!hasDegradation && (
-          <button onClick={() => setShowQuiz(true)} style={{ width:'100%', padding:'18px 20px', borderRadius:16, marginBottom:16, border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)', cursor:'pointer', display:'flex', alignItems:'center', gap:14, textAlign:'left' }}>
-            <span style={{ fontSize:28 }}>🌹</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, color:'#C8A882', fontWeight:500, marginBottom:3 }}>Faire mon bilan du jour</div>
-              <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)' }}>10 questions · 2 minutes · révèle vos zones prioritaires</div>
-            </div>
-            <span style={{ color:'rgba(200,168,130,0.4)', fontSize:16 }}>→</span>
-          </button>
-        )}
+
 
         {/* Grille des zones */}
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
@@ -2894,7 +2921,7 @@ function BoiteAGraines({ userId }) {
   )
 }
 
-function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens }) {
+function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan }) {
   const isMobile = useIsMobile()
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)
   const profile = useProfile(userId)
@@ -2925,7 +2952,14 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     setShowQuiz,
     handleQuizComplete,
     handleToggleRitual: _toggleRitual,
-  } = useRitualsState(userId)
+  } = useRitualsState(userId, awardLumens)
+
+  // Reçoit le résultat du bilan lancé depuis le NavHub
+  useEffect(() => {
+    const handler = (e) => handleQuizComplete(e.detail)
+    window.addEventListener('bilanComplete', handler)
+    return () => window.removeEventListener('bilanComplete', handler)
+  }, [handleQuizComplete])
 
   const { getStreak, recordToday } = useStreak(userId)
 
@@ -3108,6 +3142,29 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           </div>
         </div>
 
+        {/* Bouton bilan — miroir du NavHub */}
+        {!bilanDoneToday ? (
+          <button onClick={() => onOpenBilan?.()} style={{ width:'100%', padding:'16px 18px', borderRadius:16, marginBottom:8, border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)', cursor:'pointer', display:'flex', alignItems:'center', gap:14, textAlign:'left', position:'relative' }}>
+            <span style={{ fontSize:26 }}>🌹</span>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:13, color:'#C8A882', fontWeight:500, marginBottom:3 }}>Faire mon bilan du jour</div>
+              <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)', fontStyle:'italic', animation:'navPulse 2.5s ease-in-out infinite' }}>Prendre soin de soi commence ici</div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 9px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
+              +3 ✦
+            </div>
+          </button>
+        ) : (
+          <div style={{ width:'100%', padding:'14px 18px', borderRadius:16, marginBottom:8, border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)', display:'flex', alignItems:'center', gap:14 }}>
+            <span style={{ fontSize:26, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:2 }}>Bilan du matin</div>
+              <div style={{ fontSize:11, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ensemble ✦</div>
+            </div>
+            <div style={{ fontSize:16, color:'rgba(150,212,133,0.35)' }}>✓</div>
+          </div>
+        )}
+
         <RitualsSection
           degradation={degradation}
           completedRituals={completedRituals}
@@ -3146,4 +3203,4 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   )
 }
 
-export { ScreenMonJardin }
+export { ScreenMonJardin, DailyQuizModal }
