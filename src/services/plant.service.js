@@ -33,7 +33,8 @@ export const plantService = {
 
     if (existing) return existing
 
-    return query(
+    // ignoreDuplicates: true ne retourne rien → on refait un select après
+    await query(
       supabase
         .from('plants')
         .upsert(
@@ -49,9 +50,12 @@ export const plantService = {
           },
           { onConflict: 'user_id,date', ignoreDuplicates: true }
         )
-        .select()
-        .single(),
+        .select(),
       'createTodayPlant'
+    )
+    return query(
+      supabase.from('plants').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
+      'createTodayPlant/refetch'
     )
   },
 

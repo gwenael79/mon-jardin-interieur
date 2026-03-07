@@ -1,4 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
+import { useAnalytics } from '../hooks/useAnalytics'
 //  ScreenDefis.jsx  —  Écran "Défis"
 //  Contient : ProposeModal, ScreenDefis, ScreenJardinCollectif
 // ─────────────────────────────────────────────────────────────────────────────
@@ -117,6 +118,7 @@ function ProposeModal({ onClose, onSubmit }) {
 const ZONE_COLORS = { Souffle:'#88b8e8', Racines:'#96d485', Feuilles:'#90d890', Tige:'#a8c8a0', Fleurs:'#e088a8', Toutes:'#c8a8e8' }
 
 function ScreenDefis({ userId, awardLumens }) {
+  const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
   const [cat, setCat] = useState('Tous')
   const [showPropose, setShowPropose] = useState(false)
@@ -174,7 +176,7 @@ function ScreenDefis({ userId, awardLumens }) {
         {!featuredJoined && <LumenBadge amount={2} />}
         <div
           className={featuredJoined ? 'df-join df-join-active' : 'df-join'}
-          onClick={() => { toggleJoin(featured.id); if (!joinedIds.has(featured.id)) awardLumens?.(2, 'join_defi', { defi_id: featured.id }); else awardLumens?.(-2, 'leave_defi', { defi_id: featured.id }) }}
+          onClick={() => { const joining = !joinedIds.has(featured.id); toggleJoin(featured.id); if (joining) { awardLumens?.(2, 'join_defi', { defi_id: featured.id }); track('defi_join', { defi_id: featured.id }, 'defis', 'defis') } else { awardLumens?.(-2, 'leave_defi', { defi_id: featured.id }) } }}
         >
           {featuredJoined ? '✓ En cours' : 'Je rejoins'}
         </div>
@@ -253,7 +255,7 @@ function ScreenDefis({ userId, awardLumens }) {
                     ? <div className="dc-joined" onClick={() => { toggleJoin(d.id); awardLumens?.(-2, 'leave_defi', { defi_id: d.id }) }} style={{ cursor:'pointer' }}>✓ En cours</div>
                     : <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                         <LumenBadge amount={2} />
-                        <div className="dc-join-btn" onClick={() => { toggleJoin(d.id); if (!joinedIds.has(d.id)) awardLumens?.(2, 'join_defi', { defi_id: d.id }) }}>Rejoindre</div>
+                        <div className="dc-join-btn" onClick={() => { toggleJoin(d.id); if (!joinedIds.has(d.id)) { awardLumens?.(2, 'join_defi', { defi_id: d.id }); track('defi_join', { defi_id: d.id }, 'defis', 'defis') } }}>Rejoindre</div>
                       </div>}
                 </div>
               </div>

@@ -1,4 +1,5 @@
 /**
+import { useAnalytics } from '../hooks/useAnalytics'
  * ─────────────────────────────────────────────────────────────
  *  FICHIER D'INTÉGRATION — ScreenMonJardin · Section Rituels
  *  Basé sur plantself_v3 : zones, rituels, exercices quick/deep
@@ -669,6 +670,7 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
   const [activeRitual, setActiveRitual] = useState(null);
 
   const handleComplete = (ritualId) => {
+    track('ritual_complete', { ritual_id: ritualId }, 'jardin', 'engagement')
     onToggle(ritualId);
     setActiveRitual(null);
   };

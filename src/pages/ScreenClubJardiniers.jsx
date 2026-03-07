@@ -3,7 +3,9 @@
 //  3 onglets : Égrégore · Mes Fleurs · Le Jardin
 // ─────────────────────────────────────────────────────────────────────────────
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
+import { logActivity } from '../utils/logActivity'
 import { useIsMobile, Toast, timeAgo } from './dashboardShared'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,7 +32,9 @@ function flowerName(user) {
 }
 
 function fragileZones(plant) {
-  return ZONES.filter(z => (plant?.[z.key] ?? 5) < FRAGILE)
+  return ZONES
+    .filter(z => (plant?.[z.key] ?? 5) < FRAGILE)
+    .sort((a, b) => (plant?.[a.key] ?? 5) - (plant?.[b.key] ?? 5))
 }
 
 function petalPath(angleDeg, pct, cx = 130, cy = 130) {
@@ -377,6 +381,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }
       await supabase.from('intentions_joined').delete().eq('user_id', userId).eq('date', today)
       setJoined(false)
     } else {
+      window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'intention_join', props: {}, page: 'club', cat: 'social' } }))
       await supabase.from('intentions_joined').insert({ user_id: userId, date: today })
       setJoined(true)
       // Pulse chaque pétale en cascade
@@ -394,6 +399,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }
   async function handleMerci(coeurId, senderId) {
     try {
       await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
+      logActivity({ userId, action: 'merci' })
       setMercisEnvoyes(prev => [...prev, coeurId])
       onFeedRefresh?.()
     } catch(e) { console.error(e) }
@@ -514,6 +520,8 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
     try {
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
+      logActivity({ userId, action: 'coeur', zone: weakest.key })
+      window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'coeur_sent', props: { receiver_id: fleur.id, zone: weakest.key }, page: 'club', cat: 'social' } }))
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
     } catch(e) { console.error(e) }
     finally { setSending(false) }
@@ -651,6 +659,7 @@ function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badg
     try {
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
+      logActivity({ userId, action: 'coeur', zone: weakest.key })
       setSentAt(Date.now())
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
     } catch(e) { console.error(e) }
@@ -1065,6 +1074,7 @@ function ScreenClubJardiniers({ userId, awardLumens, onCoeurSeen }) {
   async function handleMerci(coeurId, senderId) {
     try {
       await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
+      logActivity({ userId, action: 'merci' })
       // Marque le coeur comme vu (interaction effectuée)
       await supabase.from('coeurs').update({ seen: true }).eq('id', coeurId)
       setMercisEnvoyes(prev => new Set([...prev, coeurId]))

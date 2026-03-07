@@ -3,7 +3,9 @@
 //  Contient : PlantSVG, GardenSettingsModal, rituels, journal, ScreenMonJardin
 // ─────────────────────────────────────────────────────────────────────────────
 import { useState, useEffect, useCallback, useRef } from "react"
+import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
+import { logActivity } from '../utils/logActivity'
 import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
@@ -620,7 +622,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
         {angles.map((a,i) =>
           <path key={'f'+i} d={path} transform={`translate(${ox+Math.cos(R(a-90))*s*0.62},${oy+Math.sin(R(a-90))*s*0.62}) rotate(${a})`} fill={fillUrl} opacity={0.88}/>
         )}
-        {/* Étamines : cercle dense d'anthères noires */}
+        {/* Étamines : groupe dense d'anthères noires */}
         {Array.from({length:stamenCount},(_,i) => {
           const ra = R(i * 360/stamenCount)
           const dist = s * (0.25 + (i%3)*0.06)
@@ -1261,7 +1263,7 @@ const ZONES = [
 function InviteModal({ circle, onClose, onCopied }) {
   const [copied, setCopied] = useState(false)
   const code = circle?.invite_code ?? '——'
-  const shareText = 'Rejoins mon cercle "' + (circle?.name ?? '') + '" sur Mon Jardin Intérieur 🌿 - Code : ' + code
+  const shareText = 'Rejoins mon groupe "' + (circle?.name ?? '') + '" sur Mon Jardin Intérieur 🌿 - Code : ' + code
 
   function handleCopy() {
     navigator.clipboard?.writeText(code).then(() => {
@@ -1283,7 +1285,7 @@ function InviteModal({ circle, onClose, onCopied }) {
         <div className="modal-title">Inviter dans {circle?.name} 🌿</div>
 
         <div style={{ fontSize:12, color:'var(--text3)', lineHeight:1.6 }}>
-          Partagez ce code avec les personnes que vous souhaitez inviter dans votre cercle.
+          Partagez ce code avec les personnes que vous souhaitez inviter dans votre groupe.
         </div>
 
         <div style={{ background:'rgba(150,212,133,0.08)', border:'1px solid var(--greenT)', borderRadius:14, padding:'18px 20px', textAlign:'center' }}>
@@ -1301,7 +1303,7 @@ function InviteModal({ circle, onClose, onCopied }) {
         </div>
 
         <div style={{ fontSize:10, color:'var(--text3)', textAlign:'center', lineHeight:1.6 }}>
-          {circle?.memberCount ?? 0}/{circle?.max_members ?? 8} membres · {circle?.is_open ? 'Cercle ouvert' : 'Sur invitation uniquement'}
+          {circle?.memberCount ?? 0}/{circle?.max_members ?? 8} membres · {circle?.is_open ? 'Groupe ouvert' : 'Sur invitation uniquement'}
         </div>
 
         <div className="modal-actions">
@@ -1370,7 +1372,7 @@ function useRecentActivity(circleId) {
     async function load() {
       setLoading(true)
 
-      // Récupérer les membres du cercle
+      // Récupérer les membres du groupe
       const { data: members } = await supabase
         .from('circle_members')
         .select('user_id')
@@ -1436,7 +1438,7 @@ function useRecentActivity(circleId) {
    HOOK — MEMBRES PAR PROXIMITÉ (30 jours)
    Scores :
      geste envoyé/reçu   → +3 pts
-     même cercle actif   → +2 pts
+     même groupe actif   → +2 pts
      même collectif      → +2 pts
      commentaire/réaction→ +4 pts
    Niveaux dynamiques :
@@ -1482,7 +1484,7 @@ function useProximityMembers(userId) {
         scores[id].score += 3
       })
 
-      // 2. Même cercle actif (+2 pts par cercle partagé)
+      // 2. Même groupe actif (+2 pts par groupe partagé)
       const { data: myCircles } = await supabase
         .from('circle_members')
         .select('circle_id')
@@ -1627,7 +1629,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
         <div className="slabel">Activité récente</div>
         {activity.length === 0 ? (
           <div style={{ fontSize:12, color:'var(--text3)', padding:'12px 0', fontStyle:'italic' }}>
-            Aucune activité récente dans ce cercle.
+            Aucune activité récente dans ce groupe.
           </div>
         ) : activity.map((a, i) => (
           <div key={i} className="act-item">
@@ -1889,7 +1891,7 @@ const PLANT_RITUALS = {
       ],
       deep:[
         { title:'Séquence yoga du dos', dur:'20 min', icon:'🌱', desc:'3 minutes chacune : (1) Chat-Vache. (2) Chien tête en bas. (3) Cobra. (4) Pigeon. (5) Demi-bridge. (6) Savasana 5 min.' },
-        { title:'Automassage guidé', dur:'15 min', icon:'✋', desc:'Commencez par les pieds (roulez sur une balle). Remontez vers les mollets, cuisses, ventre (cercles horaires), épaules, crâne. Réduit le cortisol.' },
+        { title:'Automassage guidé', dur:'15 min', icon:'✋', desc:'Commencez par les pieds (roulez sur une balle). Remontez vers les mollets, cuisses, ventre (groupes horaires), épaules, crâne. Réduit le cortisol.' },
         { title:'Marche nordique ou Qi gong', dur:'25–30 min', icon:'🌿', desc:'Marchez en oscillant les bras en opposition aux jambes. Ou cherchez une vidéo Qi gong débutant de 20 min. Libère les tensions accumulées.' },
       ],
     },
@@ -2922,6 +2924,7 @@ function BoiteAGraines({ userId }) {
 }
 
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan }) {
+  const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)
   const profile = useProfile(userId)
@@ -2930,18 +2933,22 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [plantOverride, setPlantOverride] = useState(null)
   const plant = plantOverride ?? todayPlant   // ← utilisé partout à la place de todayPlant
 
-  // ── Réinitialise la plante à 5% si elle vient d'être créée avec les défauts DB (50) ──
+  // ── Réinitialise la plante à 5% UNIQUEMENT si créée aujourd'hui avec valeurs par défaut
+  // et que les rituels ont bien fini de charger (évite le faux reset au premier render)
   useEffect(() => {
     if (!todayPlant?.id) return
+    if (isLoading) return
+    if (todayRituals === undefined || todayRituals === null) return
     const createdToday = todayPlant.created_at?.slice(0, 10) === new Date().toISOString().slice(0, 10)
+    if (!createdToday) return
     const isDefaultValues = todayPlant.health === 50 &&
       Object.values(ZONE_DB_KEY).every(k => (todayPlant[k] ?? 50) === 50)
-    if (createdToday && isDefaultValues && todayRituals?.length === 0) {
+    if (isDefaultValues && todayRituals.length === 0) {
       const resetValues = Object.fromEntries(Object.values(ZONE_DB_KEY).map(k => [k, 5]))
       supabase.from('plants').update({ health: 5, ...resetValues }).eq('id', todayPlant.id)
       setPlantOverride({ ...todayPlant, health: 5, ...resetValues })
     }
-  }, [todayPlant?.id])
+  }, [todayPlant?.id, isLoading, todayRituals])
   const { settings, toggle } = usePrivacy(userId)
 
   // ── Nouveau système rituels ──────────────────────────────
@@ -2964,6 +2971,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const { getStreak, recordToday } = useStreak(userId)
 
   const handleToggleRitual = useCallback(async (ritualId) => {
+    track('ritual_complete', { ritual_id: ritualId }, 'jardin', 'engagement')
     const alreadyDone = !!completedRituals[ritualId]
 
     // Un rituel complété ne peut pas être décoché — 1 seul par jour
@@ -3011,6 +3019,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         health_delta: delta,
         ritual_id:    ritualId,
       }, { onConflict: 'user_id,ritual_id,plant_id' })
+      logActivity({ userId, action: 'ritual', ritual: ritualName, zone: ritualZoneStr })
       await supabase
         .from('plants')
         .update({ [dbKey]: newZoneVal, health: newHealth })

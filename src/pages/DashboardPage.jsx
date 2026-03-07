@@ -11,6 +11,8 @@ import { supabase }  from '../core/supabaseClient'
 import '../styles/dashboard.css'
 
 import { useIsMobile, useProfile, useLumens, LumenBadge, LumenOrb, LumensCard } from './dashboardShared'
+import { useAnalytics } from '../hooks/useAnalytics'
+import { logActivity } from '../utils/logActivity'
 import { ScreenMonJardin, DailyQuizModal } from './ScreenMonJardin'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
@@ -21,25 +23,32 @@ import { HelpModal }            from './HelpModal'
 const SCREENS = [
   { id:'jardin',   icon:'🌸', label:'Ma Fleur',            Component: ScreenMonJardin        },
   { id:'champ',    icon:'🌻', label:'Jardin Collectif',    Component: ScreenJardinCollectif   },
-  { id:'club',     icon:'🪴', label:'Club des Jardiniers', Component: ScreenClubJardiniers    },
-  { id:'ateliers', icon:'🌿', label:'Ateliers',            Component: ScreenAteliers           },
+  { id:'club',     icon:'👨‍👩‍👧‍👦', label:'Club des Jardiniers', Component: ScreenClubJardiniers    },
+  { id:'ateliers', icon:'📖', label:'Ateliers',            Component: ScreenAteliers           },
   { id:'defis',    icon:'✨', label:'Défis',               Component: ScreenDefis             },
 ]
 
 // ── NavHub mobile ────────────────────────────────────────────────────────────
 function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, stats, communityStats, gardenFlowerCount, hasDegradation, unreadMessages, pendingInvitations }) {
   const bilanDone = hasDegradation
+
   const NAV_ITEMS = [
-    { id:'bilan',    icon:'🌹', label:'Bilan du matin',     sub: bilanDone ? 'Demain nous ferons le point ensemble ✦' : 'Prendre soin de soi commence ici', action:'bilan',   color: bilanDone ? 'rgba(255,255,255,0.02)' : 'rgba(200,168,130,0.15)', border: bilanDone ? 'rgba(255,255,255,0.06)' : 'rgba(200,168,130,0.35)', done: bilanDone },
-    { id:'jardin',   icon:'🌸', label:'Ma Fleur',           sub: todayPlant?.health != null ? `Vitalité ${todayPlant.health}%` : 'Votre plante du jour', action:'screen', color:'rgba(150,212,133,0.10)', border:'rgba(150,212,133,0.25)' },
-    { id:'champ',    icon:'🌻', label:'Jardin Collectif',   sub: gardenFlowerCount != null ? `${gardenFlowerCount} fleurs actives` : 'La communauté',     action:'screen', color:'rgba(255,200,80,0.08)',  border:'rgba(255,200,80,0.20)'  },
-    { id:'club',     icon:'🪴', label:'Club des Jardiniers',sub: stats?.myCircleCount > 0 ? `${stats.myCircleCount} cercles` : 'Vos cercles',             action:'screen', color:'rgba(130,200,160,0.08)', border:'rgba(130,200,160,0.20)' },
-    { id:'ateliers', icon:'🌿', label:'Ateliers',           sub:'Pratiques & exercices',       action:'screen', color:'rgba(100,180,140,0.08)', border:'rgba(100,180,140,0.20)' },
-    { id:'defis',    icon:'✨', label:'Défis',              sub: communityStats?.totalDefis > 0 ? `${communityStats.totalDefis} défis` : 'Challenges',     action:'screen', color:'rgba(180,140,255,0.08)', border:'rgba(180,140,255,0.20)' },
-    { id:'lumens',   icon:'✦',  label:'Lumens',             sub: lumens ? `${lumens.available} disponibles · ${lumens.level}` : 'Votre lumière',          action:'lumens', color:'rgba(232,192,96,0.10)',  border:'rgba(232,192,96,0.28)'  },
+    { id:'bilan',    icon:'🌹', label:'Bilan du matin',      sub: bilanDone ? `Complété aujourd'hui ✦` : 'Prendre soin de soi commence ici', action:'bilan',
+      accent:'#C8A882', accentBg:'rgba(200,168,130,0.12)', done: bilanDone },
+    { id:'jardin',   icon:'🌸', label:'Ma Fleur',             sub: todayPlant?.health != null ? `Vitalité ${todayPlant.health}%` : 'Votre plante du jour', action:'screen',
+      accent:'#96d485', accentBg:'rgba(150,212,133,0.10)' },
+    { id:'champ',    icon:'🌻', label:'Jardin Collectif',     sub: gardenFlowerCount != null ? `${gardenFlowerCount} fleurs actives` : 'La communauté', action:'screen',
+      accent:'#e8c060', accentBg:'rgba(255,200,80,0.09)' },
+    { id:'club',     icon:'👨‍👩‍👧‍👦', label:'Club des Jardiniers',  sub: stats?.myCircleCount > 0 ? `${stats.myCircleCount} groupes` : 'Vos groupes', action:'screen',
+      accent:'#82c8a0', accentBg:'rgba(130,200,160,0.10)' },
+    { id:'ateliers', icon:'📖', label:'Ateliers',             sub: 'Pratiques & exercices', action:'screen',
+      accent:'#78c4a0', accentBg:'rgba(100,180,140,0.09)' },
+    { id:'defis',    icon:'✨', label:'Défis',                sub: communityStats?.totalDefis > 0 ? `${communityStats.totalDefis} défis actifs` : 'Challenges du moment', action:'screen',
+      accent:'#b4a0f0', accentBg:'rgba(180,140,255,0.09)' },
+    { id:'lumens',   icon:'✦',  label:'Lumens',               sub: lumens ? `${lumens.available} disponibles` : 'Votre lumière', action:'lumens',
+      accent:'#e8c060', accentBg:'rgba(232,192,96,0.10)' },
   ]
 
-  // Badge value par item
   const badges = {
     jardin:   todayPlant?.health != null ? `${todayPlant.health}%` : null,
     champ:    gardenFlowerCount != null ? `${gardenFlowerCount}` : null,
@@ -51,83 +60,115 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
 
   return (
     <div style={{
-      flex:1, padding:'10px 16px 12px',
-      display:'flex', flexDirection:'column', justifyContent:'space-between',
+      flex:1,
+      display:'flex', flexDirection:'column',
+      padding:'6px 14px 10px',
+      gap:5,
       overflow:'hidden',
     }}>
-      {/* 7 boutons — remplissent toute la hauteur */}
-      {NAV_ITEMS.map(item => {
+      {/* Titre discret */}
+      <div style={{
+        fontSize:9, letterSpacing:'0.18em', color:'rgba(242,237,224,0.20)',
+        fontFamily:"'Jost', sans-serif", textTransform:'uppercase',
+        paddingLeft:4, paddingBottom:2, flexShrink:0,
+      }}>Mon Jardin</div>
+
+      {NAV_ITEMS.map((item, idx) => {
         const badge = badges[item.id]
+        const isActive = item.id === active && item.action === 'screen'
         return (
           <div
             key={item.id}
             onClick={() => {
               if (item.done) return
-              if (item.action === 'bilan')  { onBilan() }
-              if (item.action === 'lumens') { onLumens() }
-              if (item.action === 'screen') { onNavigate(item.id) }
+              if (item.action === 'bilan')  onBilan()
+              if (item.action === 'lumens') onLumens()
+              if (item.action === 'screen') onNavigate(item.id)
             }}
             style={{
-              display:'flex', alignItems:'center', gap:14,
-              padding:'0 16px',
-              flex:1,
-              background: item.id === active && item.action === 'screen' ? item.color.replace('0.10','0.20').replace('0.08','0.18').replace('0.15','0.25') : item.color,
-              border:`1px solid ${item.border}`,
-              borderRadius:14, cursor: item.done ? 'default' : 'pointer',
+              flex:1, minHeight:0,
+              display:'flex', alignItems:'center', gap:12,
+              padding:'0 14px 0 12px',
+              borderRadius:13,
+              background: isActive
+                ? `${item.accentBg.replace(/[\d.]+\)$/, '0.22)')} `
+                : item.done ? 'rgba(255,255,255,0.015)' : item.accentBg,
+              border: `1px solid ${isActive ? item.accent + '55' : item.done ? 'rgba(255,255,255,0.05)' : item.accent + '33'}`,
+              cursor: item.done ? 'default' : 'pointer',
               WebkitTapHighlightColor:'transparent',
-              transition:'all .18s',
-              opacity: item.done ? 0.5 : 1,
-              minHeight:0,
+              transition:'all .15s ease',
+              position:'relative',
+              overflow:'hidden',
             }}
           >
-            {/* Icône */}
+            {/* Accent bar gauche */}
             <div style={{
-              width:56, height:56, borderRadius:16, flexShrink:0,
+              position:'absolute', left:0, top:'18%', bottom:'18%', width:2,
+              borderRadius:2,
+              background: item.done ? 'transparent' : isActive ? item.accent : item.accent + '60',
+              transition:'all .15s',
+            }}/>
+
+            {/* Emoji */}
+            <div style={{
+              flexShrink:0,
+              fontSize: item.id === 'lumens' ? 22 : 26,
+              width:36, height:36,
               display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize: item.id === 'lumens' ? 26 : 32,
-              background:'rgba(255,255,255,0.04)',
-              border:`1px solid ${item.border}`,
-              color: item.id === 'lumens' ? '#e8c060' : 'inherit',
-              filter: item.done ? 'grayscale(1)' : 'none',
+              color: item.id === 'lumens' ? item.accent : 'inherit',
+              filter: item.done ? 'grayscale(1) opacity(0.35)' : 'none',
+              transition:'filter .15s',
             }}>
               {item.icon}
             </div>
+
             {/* Texte */}
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{
-                fontSize:17, fontWeight:600,
-                fontFamily:"'Jost', 'Inter', sans-serif",
-                color: item.done ? 'rgba(242,237,224,0.30)' : 'var(--cream)',
-                marginBottom:3, letterSpacing:'-0.01em',
+                fontSize:15, fontWeight:600,
+                fontFamily:"'Cormorant Garamond', 'Georgia', serif",
+                letterSpacing:'0.01em',
+                color: item.done ? 'rgba(242,237,224,0.25)' : isActive ? 'var(--cream)' : 'rgba(242,237,224,0.88)',
+                lineHeight:1.2,
+                marginBottom:1,
               }}>{item.label}</div>
-              {item.id === 'bilan' && !item.done ? (
-                <div style={{
-                  fontSize:11, color:'rgba(200,168,130,0.80)',
-                  animation:'navPulse 2.5s ease-in-out infinite',
-                  fontStyle:'italic',
-                }}>{item.sub}</div>
-              ) : (
-                <div style={{ fontSize:11, color: item.done ? 'rgba(242,237,224,0.20)' : 'rgba(242,237,224,0.42)', letterSpacing:'0.01em' }}>{item.sub}</div>
-              )}
+              <div style={{
+                fontSize:10,
+                fontFamily:"'Jost', sans-serif",
+                color: item.done ? 'rgba(242,237,224,0.18)' : 'rgba(242,237,224,0.38)',
+                letterSpacing:'0.02em',
+                animation: item.id === 'bilan' && !item.done ? 'navPulse 2.5s ease-in-out infinite' : 'none',
+                fontStyle: item.id === 'bilan' && !item.done ? 'italic' : 'normal',
+                overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+              }}>{item.sub}</div>
             </div>
-            {/* Badge compteur */}
+
+            {/* Badge */}
             {badge && !item.done && (
               <div style={{
                 flexShrink:0,
-                padding:'5px 13px', borderRadius:100,
-                background: item.id === 'lumens' || item.id === 'ateliers' ? 'rgba(232,192,96,0.15)' : item.id === 'club' ? 'rgba(210,80,80,0.15)' : 'rgba(150,212,133,0.15)',
-                border: `1px solid ${item.id === 'lumens' || item.id === 'ateliers' ? 'rgba(232,192,96,0.38)' : item.id === 'club' ? 'rgba(210,80,80,0.38)' : 'rgba(150,212,133,0.32)'}`,
-                fontSize:13, fontWeight:700,
-                color: item.id === 'lumens' || item.id === 'ateliers' ? '#e8c060' : item.id === 'club' ? 'rgba(255,110,110,0.95)' : '#96d485',
-                fontFamily:"'Jost', 'Inter', sans-serif",
+                padding:'3px 9px', borderRadius:100,
+                background: `${item.accent}18`,
+                border:`1px solid ${item.accent}50`,
+                fontSize:11, fontWeight:700,
+                color: item.accent,
+                fontFamily:"'Jost', sans-serif",
                 letterSpacing:'-0.01em',
                 whiteSpace:'nowrap',
-              }}>
-                {badge}
-              </div>
+              }}>{badge}</div>
             )}
-            {item.done && <div style={{ fontSize:18, color:'rgba(150,212,133,0.35)', flexShrink:0 }}>✓</div>}
-            {!badge && !item.done && <div style={{ fontSize:18, color:'rgba(242,237,224,0.15)', flexShrink:0 }}>›</div>}
+            {item.done && (
+              <div style={{
+                flexShrink:0, width:20, height:20, borderRadius:'50%',
+                background:'rgba(150,212,133,0.12)',
+                border:'1px solid rgba(150,212,133,0.30)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontSize:10, color:'rgba(150,212,133,0.60)',
+              }}>✓</div>
+            )}
+            {!badge && !item.done && (
+              <div style={{ flexShrink:0, fontSize:14, color:`${item.accent}40` }}>›</div>
+            )}
           </div>
         )
       })}
@@ -182,7 +223,7 @@ function ProfileModal({ user, onClose }) {
       <div className="profile-modal">
         <button className="profile-modal-close" onClick={onClose}>✕</button>
         <div className="profile-modal-title">Mon profil</div>
-        <div className="profile-modal-sub">Votre prénom ou pseudo visible dans les cercles.</div>
+        <div className="profile-modal-sub">Votre prénom ou pseudo visible dans les groupes.</div>
         <div className="profile-field">
           <label className="profile-label">Prénom ou pseudo</label>
           <input
@@ -312,6 +353,7 @@ export default function DashboardPage() {
 
   const profile                       = useProfile(user?.id)
   const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
+  const { track } = useAnalytics(user?.id)
 
   // Nombre de fleurs visibles dans le Jardin Collectif
   const [gardenFlowerCount, setGardenFlowerCount] = useState(null)
@@ -394,6 +436,21 @@ export default function DashboardPage() {
   // Recharge le compteur coeurs quand on revient sur le NavHub
   useEffect(() => { if (effectiveActive === 'nav') refreshCoeurs() }, [effectiveActive])
 
+  // Track navigation
+  useEffect(() => {
+    if (effectiveActive && effectiveActive !== 'nav') track('page_view', {}, effectiveActive, 'navigation')
+  }, [effectiveActive])
+
+  // Écoute les events analytics des sous-composants (FleurCard, etc.)
+  useEffect(() => {
+    const handler = (e) => {
+      const { event, props, page, cat } = e.detail ?? {}
+      if (event) track(event, props ?? {}, page, cat)
+    }
+    window.addEventListener('analytics_track', handler)
+    return () => window.removeEventListener('analytics_track', handler)
+  }, [track])
+
 
   const screenData = SCREENS.find(s => s.id === effectiveActive)
   const Component = screenData?.Component ?? null
@@ -455,11 +512,13 @@ export default function DashboardPage() {
             onComplete={(deg) => {
               setShowBilanModal(false)
               setBilanDoneToday(true)
-              // Transmettre au ScreenMonJardin via event custom
+              track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
+              logActivity({ userId: user?.id, action: 'bilan' })
               window.dispatchEvent(new CustomEvent('bilanComplete', { detail: deg }))
             }}
             onSkip={() => {
               setShowBilanModal(false)
+              track('bilan_skip', {}, 'jardin', 'engagement')
               window.dispatchEvent(new CustomEvent('bilanComplete', { detail: { roots:50, stem:50, leaves:50, flowers:50, breath:50 } }))
             }}
           />
@@ -487,7 +546,7 @@ export default function DashboardPage() {
               let badgeVal = null
               if (s.id === 'jardin')   badgeVal = todayPlant?.health != null ? `${todayPlant.health}%` : null
               if (s.id === 'champ')    badgeVal = gardenFlowerCount ?? null
-              if (s.id === 'club')     badgeVal = stats?.myCircleCount > 0 ? stats.myCircleCount : null
+              if (s.id === 'club')     badgeVal = unreadCoeurs > 0 ? unreadCoeurs : null
               if (s.id === 'defis')    badgeVal = communityStats?.totalDefis > 0 ? communityStats.totalDefis : null
               return (
                 <div key={s.id} className={'sb-item' + (effectiveActive===s.id ? ' active' : '')} onClick={() => setActive(s.id)}>

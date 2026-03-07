@@ -59,17 +59,58 @@ html,body,#root{height:100%;width:100%}
 /* TOAST */
 .adm-toast{position:fixed;bottom:24px;right:24px;background:rgba(30,60,30,0.97);border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:12px;color:#c8f0b8;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:700px){
+  /* Topbar */
+  .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
+  .adm-logo{font-size:15px;flex:1}
+  .adm-topbar > div:last-child{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .adm-badge{font-size:8px;padding:3px 8px}
+  .adm-btn{padding:6px 10px;font-size:10px}
+
+  /* Body */
+  .adm-body{padding:16px 14px}
+
+  /* Stats — 2 colonnes sur mobile */
+  .adm-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+  .adm-stat{padding:14px 16px}
+  .adm-stat-val{font-size:28px}
+  .adm-stat-lbl{font-size:9px}
+
+  /* Tabs — scrollables */
+  .adm-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;gap:0;padding-bottom:0;scrollbar-width:none}
+  .adm-tabs::-webkit-scrollbar{display:none}
+  .adm-tab{padding:10px 14px;font-size:10px;white-space:nowrap;flex-shrink:0}
+
+  /* Table — scroll horizontal */
+  .adm-section{overflow-x:auto}
+  .adm-table{min-width:540px}
+  .adm-th,.adm-td{padding:10px 12px;font-size:11px}
+
+  /* Report cards */
+  .adm-report-card{padding:12px 14px;gap:10px}
+  .adm-report-graine{font-size:12px}
+  .adm-report-actions{flex-wrap:wrap;gap:6px}
+  .adm-report-actions .adm-btn{flex:1;text-align:center;padding:8px 10px;font-size:10px}
+
+  /* Toast */
+  .adm-toast{bottom:16px;right:12px;left:12px;text-align:center}
+}
 `
 
 export function AdminPage() {
   const { user, signOut } = useAuth()
   const [tab,       setTab]       = useState('reports')
+  const [pendingReviews, setPendingReviews] = useState([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
   const [reports,   setReports]   = useState([])
   const [circles,   setCircles]   = useState([])
   const [applications, setApplications] = useState([])
   const [lumensData,   setLumensData]   = useState([])
   const [lumenAward,   setLumenAward]   = useState({ userId:'', amount:5, reason:'participation' })
   const [allUsers,     setAllUsers]     = useState([])
+  const [attendance,   setAttendance]   = useState(null)
+  const [palmares,     setPalmares]     = useState([])
   const [stats,     setStats]     = useState({})
   const [loading,   setLoading]   = useState(true)
   const [toast,     setToast]     = useState(null)
@@ -78,11 +119,43 @@ export function AdminPage() {
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
+  async function loadPendingReviews() {
+    setReviewsLoading(true)
+    const { data, error } = await supabase
+      .from('atelier_reviews')
+      .select('*')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    if (!error && data) {
+      const atelierIds = [...new Set(data.map(r => r.atelier_id))]
+      const userIds    = [...new Set(data.map(r => r.user_id))]
+      const [{ data: atelierData }, { data: userData }] = await Promise.all([
+        supabase.from('ateliers').select('id, title').in('id', atelierIds),
+        supabase.from('users').select('id, display_name').in('id', userIds),
+      ])
+      const atelierMap = Object.fromEntries((atelierData ?? []).map(a => [a.id, a]))
+      const userMap    = Object.fromEntries((userData ?? []).map(u => [u.id, u]))
+      setPendingReviews(data.map(r => ({
+        ...r,
+        atelierTitle: atelierMap[r.atelier_id]?.title ?? '—',
+        reviewerName: userMap[r.user_id]?.display_name ?? 'Inconnu',
+      })))
+    }
+    setReviewsLoading(false)
+  }
+
+  async function handleModerateReview(reviewId, status) {
+    await supabase.from('atelier_reviews').update({ status }).eq('id', reviewId)
+    setPendingReviews(prev => prev.filter(r => r.id !== reviewId))
+    showToast(status === 'approved' ? '✅ Avis approuvé' : '🗑 Avis refusé')
+  }
+
   useEffect(() => { if (isAdmin) { loadAll() } }, [isAdmin])
+  useEffect(() => { if (tab === 'reviews') loadPendingReviews() }, [tab])
 
   async function loadAll() {
     setLoading(true)
-    await Promise.all([loadReports(), loadCircles(), loadStats(), loadApplications(), loadLumensData(), loadAllUsers()])
+    await Promise.all([loadReports(), loadCircles(), loadStats(), loadApplications(), loadLumensData(), loadAllUsers(), loadAttendance()])
     setLoading(false)
   }
 
@@ -114,6 +187,63 @@ export function AdminPage() {
   async function loadAllUsers() {
     const { data } = await supabase.from('users').select('id, display_name, email').order('display_name')
     setAllUsers(data ?? [])
+  }
+
+  async function loadAttendance() {
+    try {
+      const { data: att, error: e1 } = await supabase.rpc('get_admin_attendance_stats')
+      console.log('[admin] attendance:', JSON.stringify(att), 'err:', e1?.message)
+      if (att !== null && att !== undefined) {
+        const parsed = typeof att === 'string' ? JSON.parse(att) : att
+        setAttendance(parsed)
+      } else {
+        // Fallback : calcul direct via daily_quiz
+        const today = new Date().toISOString().slice(0,10)
+        const week  = new Date(Date.now() - 6*86400000).toISOString().slice(0,10)
+        const ago13 = new Date(Date.now() - 13*86400000).toISOString().slice(0,10)
+        const month = new Date(Date.now() - 29*86400000).toISOString().slice(0,10)
+        const ADMIN = 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+        const { data: rows } = await supabase.from('daily_quiz').select('user_id, date').gte('date', ago13).neq('user_id', ADMIN)
+        const dayMap = {}, todaySet = new Set(), weekSet = new Set(), monthSet = new Set()
+        ;(rows ?? []).forEach(r => {
+          dayMap[r.date] = (dayMap[r.date] ?? new Set())
+          dayMap[r.date].add(r.user_id)
+          if (r.date === today) todaySet.add(r.user_id)
+          if (r.date >= week)  weekSet.add(r.user_id)
+          if (r.date >= month) monthSet.add(r.user_id)
+        })
+        const daily_active = Object.entries(dayMap).map(([date, set]) => ({ date, count: set.size })).sort((a,b) => a.date.localeCompare(b.date))
+        setAttendance({ active_today: todaySet.size, active_week: weekSet.size, active_month: monthSet.size, daily_active })
+      }
+    } catch(e) { console.error('[admin] attendance error:', e) }
+
+    try {
+      const { data: pal, error: e2 } = await supabase.rpc('get_admin_connexion_palmares')
+      console.log('[admin] palmares:', Array.isArray(pal) ? pal.length + ' items' : JSON.stringify(pal), 'err:', e2?.message)
+      if (pal !== null && pal !== undefined) {
+        const parsed = typeof pal === 'string' ? JSON.parse(pal) : pal
+        setPalmares(Array.isArray(parsed) ? parsed : [])
+      } else {
+        // Fallback direct via daily_quiz
+        const ADMIN2 = 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+        const { data: users } = await supabase.from('users').select('id, display_name, email').neq('id', ADMIN2)
+        const { data: quizRows } = await supabase.from('daily_quiz').select('user_id, date').neq('user_id', ADMIN2)
+        const { data: lumensRows } = await supabase.from('lumens').select('user_id, streak_days').neq('user_id', ADMIN2)
+        const countMap = {}, lastMap = {}, streakMap = {}
+        ;(quizRows ?? []).forEach(q => {
+          countMap[q.user_id] = (countMap[q.user_id] ?? 0) + 1
+          if (!lastMap[q.user_id] || q.date > lastMap[q.user_id]) lastMap[q.user_id] = q.date
+        })
+        ;(lumensRows ?? []).forEach(l => { streakMap[l.user_id] = l.streak_days ?? 0 })
+        const palmares = (users ?? []).map(u => ({
+          id: u.id, display_name: u.display_name, email: u.email,
+          connexions: countMap[u.id] ?? 0,
+          last_active: lastMap[u.id] ?? null,
+          streak_days: streakMap[u.id] ?? 0,
+        })).sort((a,b) => b.connexions - a.connexions).slice(0, 20)
+        setPalmares(palmares)
+      }
+    } catch(e) { console.error('[admin] palmares error:', e) }
   }
 
   async function loadLumensData() {
@@ -163,7 +293,7 @@ export function AdminPage() {
 
   async function loadStats() {
     const [{ count: totalUsers }, { count: totalCircles }, { count: totalReports }] = await Promise.all([
-      supabase.from('users').select('*', { count: 'exact', head: true }),
+      supabase.from('users').select('*', { count: 'exact', head: true }).neq('id', 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'),
       supabase.from('circles').select('*', { count: 'exact', head: true }),
       supabase.from('reports').select('*', { count: 'exact', head: true }),
     ])
@@ -237,7 +367,6 @@ export function AdminPage() {
         <div className="adm-stats">
           {[
             { val: stats.totalUsers ?? '—',   lbl: 'Utilisateurs' },
-            { val: stats.totalCircles ?? '—', lbl: 'Graines actives' },
             { val: pendingReports.length,     lbl: 'Signalements en attente' },
             { val: stats.totalReports ?? '—', lbl: 'Total signalements' },
           ].map((s, i) => (
@@ -253,14 +382,21 @@ export function AdminPage() {
           <div className={`adm-tab${tab === 'reports' ? ' active' : ''}`} onClick={() => setTab('reports')}>
             🚩 Signalements {pendingReports.length > 0 && `(${pendingReports.length})`}
           </div>
-          <div className={`adm-tab${tab === 'circles' ? ' active' : ''}`} onClick={() => setTab('circles')}>
-            🌱 Graines ({circles.length})
-          </div>
+
           <div className={`adm-tab${tab === 'applications' ? ' active' : ''}`} onClick={() => setTab('applications')}>
             🌿 Animateurs {applications.length > 0 && `(${applications.length})`}
           </div>
           <div className={`adm-tab${tab === 'lumens' ? ' active' : ''}`} onClick={() => setTab('lumens')}>
             ✦ Lumens
+          </div>
+          <div className={`adm-tab${tab === 'frequentation' ? ' active' : ''}`} onClick={() => setTab('frequentation')}>
+            📊 Fréquentation
+          </div>
+          <div className={`adm-tab${tab === 'reviews' ? ' active' : ''}`} onClick={() => setTab('reviews')} style={{ position:'relative' }}>
+            ⭐ Avis
+            {pendingReviews.length > 0 && (
+              <span style={{ position:'absolute', top:2, right:2, background:'rgba(246,196,83,0.35)', border:'1px solid rgba(246,196,83,0.5)', borderRadius:100, fontSize:8, padding:'1px 5px', color:'#F6C453', lineHeight:1.4 }}>{pendingReviews.length}</span>
+            )}
           </div>
         </div>
 
@@ -317,49 +453,7 @@ export function AdminPage() {
           </div>
         )}
 
-        {/* ── GRAINES ── */}
-        {tab === 'circles' && (
-          <div className="adm-section">
-            {loading ? (
-              <div className="adm-empty">Chargement…</div>
-            ) : (
-              <table className="adm-table">
-                <thead>
-                  <tr>
-                    <th className="adm-th">Nom</th>
-                    <th className="adm-th">Thème</th>
-                    <th className="adm-th">Membres</th>
-                    <th className="adm-th">Visibilité</th>
-                    <th className="adm-th">Expiration</th>
-                    <th className="adm-th">Créée le</th>
-                    <th className="adm-th"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {circles.map(c => {
-                    const expired = c.expires_at && new Date(c.expires_at) < new Date()
-                    const remaining = c.expires_at ? Math.ceil((new Date(c.expires_at) - Date.now()) / 86400000) : null
-                    return (
-                      <tr key={c.id} className="adm-tr">
-                        <td className="adm-td" style={{ color: expired ? 'var(--text3)' : 'var(--text)', maxWidth:200 }}>{c.name}</td>
-                        <td className="adm-td">{c.theme ?? '—'}</td>
-                        <td className="adm-td">{c.memberCount}</td>
-                        <td className="adm-td">{c.is_open ? '🌍 Public' : '🔒 Privé'}</td>
-                        <td className="adm-td" style={{ color: expired ? 'rgba(210,80,80,0.7)' : remaining !== null && remaining <= 2 ? 'rgba(255,160,100,0.8)' : 'var(--text3)' }}>
-                          {expired ? 'Expirée' : remaining !== null ? `${remaining}j` : '—'}
-                        </td>
-                        <td className="adm-td">{new Date(c.created_at).toLocaleDateString('fr-FR')}</td>
-                        <td className="adm-td">
-                          <button className="adm-btn danger" onClick={() => handleDeleteCircle(c.id, c.name)}>Supprimer</button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        )}
+
 
         {/* ── ANIMATEURS ── */}
         {tab === 'applications' && (
@@ -472,22 +566,24 @@ export function AdminPage() {
             {/* Attribution */}
             <div style={{ background:'rgba(246,196,83,0.06)', border:'1px solid rgba(246,196,83,0.2)', borderRadius:12, padding:20, marginBottom:20 }}>
               <div style={{ fontSize:13, color:'#F6C453', fontFamily:'Cormorant Garamond,serif', marginBottom:14 }}>✦ Attribuer des Lumens</div>
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
-                <select value={lumenAward.userId} onChange={e=>setLumenAward(p=>({...p,userId:e.target.value}))} style={{ flex:2, minWidth:160, padding:'8px 10px', background:'#1e3a1e', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:11, color:'#f2ede0', fontFamily:'Jost,sans-serif' }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                <select value={lumenAward.userId} onChange={e=>setLumenAward(p=>({...p,userId:e.target.value}))} style={{ width:'100%', padding:'10px 12px', background:'#1e3a1e', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:12, color:'#f2ede0', fontFamily:'Jost,sans-serif' }}>
                   <option value="">— Choisir un utilisateur —</option>
                   {allUsers.map(u => <option key={u.id} value={u.id}>{u.display_name ?? u.email}</option>)}
                 </select>
-                <input type="number" placeholder="Lumens" value={lumenAward.amount} onChange={e=>setLumenAward(p=>({...p,amount:e.target.value}))} style={{ width:90, padding:'8px 10px', background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:11, color:'#f2ede0', fontFamily:'Jost,sans-serif' }} />
-                <select value={lumenAward.reason} onChange={e=>setLumenAward(p=>({...p,reason:e.target.value}))} style={{ padding:'8px 10px', background:'#1e3a1e', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:11, color:'#f2ede0', fontFamily:'Jost,sans-serif' }}>
-                  <option value="participation">Participation validée (+3)</option>
-                  <option value="ritual">Rituel complété (+2)</option>
-                  <option value="questionnaire_daily">Questionnaire (+1)</option>
-                  <option value="streak_7">Streak 7 jours (+5)</option>
-                  <option value="streak_30">Streak 30 jours (+15)</option>
-                  <option value="admin_award">Attribution admin</option>
-                </select>
-                <button onClick={handleAwardLumens} style={{ padding:'8px 18px', background:'rgba(246,196,83,0.15)', border:'1px solid rgba(246,196,83,0.35)', borderRadius:8, color:'#F6C453', fontSize:12, cursor:'pointer', fontFamily:'Jost,sans-serif', whiteSpace:'nowrap' }}>
-                  ✦ Attribuer
+                <div style={{ display:'flex', gap:8 }}>
+                  <input type="number" placeholder="Lumens" value={lumenAward.amount} onChange={e=>setLumenAward(p=>({...p,amount:e.target.value}))} style={{ width:90, flexShrink:0, padding:'10px 12px', background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:12, color:'#f2ede0', fontFamily:'Jost,sans-serif' }} />
+                  <select value={lumenAward.reason} onChange={e=>setLumenAward(p=>({...p,reason:e.target.value}))} style={{ flex:1, padding:'10px 12px', background:'#1e3a1e', border:'1px solid rgba(255,255,255,0.15)', borderRadius:8, fontSize:12, color:'#f2ede0', fontFamily:'Jost,sans-serif' }}>
+                    <option value="participation">Participation (+3)</option>
+                    <option value="ritual">Rituel (+2)</option>
+                    <option value="questionnaire_daily">Questionnaire (+1)</option>
+                    <option value="streak_7">Streak 7j (+5)</option>
+                    <option value="streak_30">Streak 30j (+15)</option>
+                    <option value="admin_award">Attribution admin</option>
+                  </select>
+                </div>
+                <button onClick={handleAwardLumens} style={{ width:'100%', padding:'11px', background:'rgba(246,196,83,0.15)', border:'1px solid rgba(246,196,83,0.35)', borderRadius:8, color:'#F6C453', fontSize:13, cursor:'pointer', fontFamily:'Jost,sans-serif', fontWeight:500 }}>
+                  ✦ Attribuer les Lumens
                 </button>
               </div>
             </div>
@@ -518,6 +614,154 @@ export function AdminPage() {
         )}
 
       </div>
+
+        {/* ── FRÉQUENTATION ── */}
+        {tab === 'frequentation' && (
+          <div className="adm-section">
+
+            {/* Cards stats rapides */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:24 }}>
+              {[
+                { val: attendance?.active_today ?? '—', lbl: "Actifs aujourd'hui", icon:'🌱' },
+                { val: attendance?.active_week  ?? '—', lbl: 'Actifs cette semaine', icon:'🌿' },
+                { val: attendance?.active_month ?? '—', lbl: 'Actifs ce mois', icon:'🌳' },
+              ].map((s,i) => (
+                <div key={i} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid var(--border2)', borderRadius:14, padding:'16px 18px', display:'flex', flexDirection:'column', gap:6 }}>
+                  <div style={{ fontSize:22 }}>{s.icon}</div>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:34, fontWeight:300, color:'var(--text)', lineHeight:1 }}>{s.val}</div>
+                  <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase' }}>{s.lbl}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Graphe 14 jours */}
+            {attendance?.daily_active?.length > 0 && (
+              <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid var(--border2)', borderRadius:14, padding:20, marginBottom:24 }}>
+                <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>Activité quotidienne — 14 derniers jours</div>
+                <div style={{ display:'flex', alignItems:'flex-end', gap:4, height:80 }}>
+                  {(() => {
+                    const days = attendance.daily_active
+                    const max = Math.max(...days.map(d => d.count), 1)
+                    const allDays = []
+                    for (let i = 13; i >= 0; i--) {
+                      const d = new Date(); d.setDate(d.getDate() - i)
+                      const key = d.toISOString().slice(0,10)
+                      const found = days.find(x => x.date === key)
+                      allDays.push({ date: key, count: found?.count ?? 0 })
+                    }
+                    return allDays.map((d, i) => {
+                      const pct = Math.max(4, Math.round((d.count / max) * 100))
+                      const isToday = d.date === new Date().toISOString().slice(0,10)
+                      const label = new Date(d.date).toLocaleDateString('fr-FR', { weekday:'short' })
+                      return (
+                        <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                          <div title={`${d.count} actifs`} style={{
+                            width:'100%', height:`${pct}%`,
+                            background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)',
+                            borderRadius:4, minHeight:4,
+                            boxShadow: isToday ? '0 0 8px rgba(150,212,133,0.4)' : 'none',
+                            transition:'height .3s',
+                          }}/>
+                          {d.count > 0 && <div style={{ fontSize:8, color:'var(--text3)' }}>{d.count}</div>}
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', marginTop:6 }}>
+                  <div style={{ fontSize:8, color:'var(--text3)' }}>il y a 13 jours</div>
+                  <div style={{ fontSize:8, color:'var(--green)' }}>aujourd'hui</div>
+                </div>
+              </div>
+            )}
+
+            {/* Palmarès connexions */}
+            <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>
+              🏆 Palmarès — jours actifs
+            </div>
+            {palmares.length === 0 ? (
+              <div className="adm-empty">Aucune donnée disponible</div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                {palmares.map((p, i) => (
+                  <div key={p.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'rgba(255,255,255,0.03)', border:'1px solid var(--border2)', borderRadius:10 }}>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'var(--text3)', width:24, textAlign:'center', flexShrink:0 }}>
+                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                        {p.display_name ?? p.email ?? p.id?.slice(0,8)}
+                      </div>
+                      <div style={{ fontSize:9, color:'var(--text3)', marginTop:2 }}>
+                        Dernière activité : {p.last_active ? new Date(p.last_active).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) : '—'}
+                        {p.streak_days > 0 && ` · 🔥 ${p.streak_days}j de streak`}
+                      </div>
+                    </div>
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:'var(--green)', lineHeight:1 }}>{p.connexions}</div>
+                      <div style={{ fontSize:9, color:'var(--text3)' }}>jours actifs</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'reviews' && (
+          <div className="adm-section">
+            <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>
+              ⭐ Avis en attente de modération ({pendingReviews.length})
+            </div>
+
+            {reviewsLoading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : pendingReviews.length === 0 ? (
+              <div className="adm-empty">Aucun avis en attente 🎉</div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {pendingReviews.map(r => (
+                  <div key={r.id} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid var(--border2)', borderRadius:12, padding:'14px 16px' }}>
+                    {/* Header */}
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, marginBottom:10 }}>
+                      <div>
+                        <div style={{ fontSize:12, color:'var(--text)', marginBottom:2 }}>{r.atelierTitle}</div>
+                        <div style={{ fontSize:10, color:'var(--text3)' }}>
+                          Par <strong style={{ color:'var(--text2)' }}>{r.reviewerName}</strong> · {new Date(r.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}
+                        </div>
+                      </div>
+                      {/* Étoiles */}
+                      <div style={{ display:'flex', gap:2, flexShrink:0 }}>
+                        {[1,2,3,4,5].map(s => (
+                          <span key={s} style={{ fontSize:14, color: s <= r.rating ? '#F6C453' : 'rgba(242,237,224,0.15)' }}>★</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Commentaire */}
+                    {r.comment ? (
+                      <div style={{ fontSize:11, color:'rgba(242,237,224,0.65)', lineHeight:1.6, fontStyle:'italic', padding:'8px 12px', background:'rgba(255,255,255,0.02)', borderRadius:8, marginBottom:12 }}>
+                        « {r.comment} »
+                      </div>
+                    ) : (
+                      <div style={{ fontSize:10, color:'var(--text3)', fontStyle:'italic', marginBottom:12 }}>Note sans commentaire</div>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display:'flex', gap:8 }}>
+                      <button onClick={() => handleModerateReview(r.id, 'approved')} style={{ flex:1, padding:'7px', background:'rgba(150,212,133,0.1)', border:'1px solid rgba(150,212,133,0.3)', borderRadius:8, fontSize:11, fontFamily:'Jost,sans-serif', color:'#96d485', cursor:'pointer' }}>
+                        ✅ Approuver
+                      </button>
+                      <button onClick={() => handleModerateReview(r.id, 'rejected')} style={{ flex:1, padding:'7px', background:'rgba(210,80,80,0.07)', border:'1px solid rgba(210,80,80,0.2)', borderRadius:8, fontSize:11, fontFamily:'Jost,sans-serif', color:'rgba(255,130,130,0.65)', cursor:'pointer' }}>
+                        🗑 Refuser
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
       {toast && <div className="adm-toast">{toast}</div>}
     </div>
