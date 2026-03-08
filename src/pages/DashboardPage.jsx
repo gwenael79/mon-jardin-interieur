@@ -890,14 +890,16 @@ export default function DashboardPage() {
                     <span style={{ fontSize:12, color:'rgba(242,237,224,0.25)' }}>›</span>
                   </div>
 
-                  {/* Notifications push */}
-                  <div style={{
-                    padding:'13px 16px',
-                    background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
-                    borderRadius:12,
-                  }}>
-                    <PushNotificationButton userId={user?.id} />
-                  </div>
+                  {/* Notifications push — masqué sur iOS hors PWA */}
+                  {!(/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches) && (
+                    <div style={{
+                      padding:'13px 16px',
+                      background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                      borderRadius:12,
+                    }}>
+                      <PushNotificationButton userId={user?.id} />
+                    </div>
+                  )}
 
                   {/* Abonnement */}
                   <div
