@@ -526,9 +526,9 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       // Notifier le receveur
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_JWT}` },
         body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
-      }).catch(() => {})
+      }).then(r => console.log('[push] coeur notif status:', r.status)).catch(e => console.error('[push] coeur notif error:', e))
     } catch(e) { console.error(e) }
     finally { setSending(false) }
   }
@@ -668,9 +668,9 @@ function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badg
       // Notifier le receveur
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_JWT}` },
         body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
-      }).catch(() => {})
+      }).then(r => console.log('[push] coeur notif status:', r.status)).catch(e => console.error('[push] coeur notif error:', e))
       logActivity({ userId, action: 'coeur', zone: weakest.key })
       setSentAt(Date.now())
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
