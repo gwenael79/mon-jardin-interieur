@@ -165,6 +165,14 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   if (req.method !== 'POST')    return new Response('Method not allowed', { status: 405 })
 
+  // Vérification auth par secret partagé
+  const token      = (req.headers.get('Authorization') ?? '').replace('Bearer ', '').trim()
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const anonKey    = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+  if (token !== serviceKey && token !== anonKey) {
+    return new Response('Unauthorized', { status: 401, headers: CORS })
+  }
+
   const { type, userId, userIds, data } = await req.json().catch(() => ({}))
 
   if (userIds?.length) {

@@ -523,6 +523,12 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       logActivity({ userId, action: 'coeur', zone: weakest.key })
       window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'coeur_sent', props: { receiver_id: fleur.id, zone: weakest.key }, page: 'club', cat: 'social' } }))
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
+      // Notifier le receveur
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
+      }).catch(() => {})
     } catch(e) { console.error(e) }
     finally { setSending(false) }
   }
@@ -659,6 +665,12 @@ function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badg
     try {
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
+      // Notifier le receveur
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
+      }).catch(() => {})
       logActivity({ userId, action: 'coeur', zone: weakest.key })
       setSentAt(Date.now())
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })

@@ -1,94 +1,63 @@
 // supabase/functions/push-cron/index.ts
-// Cron quotidien — envoie les push selon l'état de chaque jardin
-//
-// Deploy   : supabase functions deploy push-cron
-// Schedule : dans Supabase Dashboard > Edge Functions > push-cron > Schedule
-//            Cron expression : 0 18 * * *   (tous les jours à 18h UTC)
+// Appelé quotidiennement par pg_cron — envoie les rappels selon les horaires
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+const SUPABASE_URL      = Deno.env.get('SUPABASE_URL')!
+const SUPABASE_SERVICE  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const SEND_PUSH_URL     = `${SUPABASE_URL}/functions/v1/send-push`
 
-const ADMIN_ID = 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-)
-
-const SEND_PUSH_URL = `${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push`
-const SERVICE_KEY   = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-
-async function callSendPush(payload: object) {
-  const res = await fetch(SEND_PUSH_URL, {
-    method:  'POST',
+async function dbQuery(query: string) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/exec_sql`, {
+    method: 'POST',
     headers: {
+      'apikey':        SUPABASE_SERVICE,
+      'Authorization': `Bearer ${SUPABASE_SERVICE}`,
       'Content-Type':  'application/json',
-      'Authorization': `Bearer ${SERVICE_KEY}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ query })
   })
   return res.json()
 }
 
 Deno.serve(async (req) => {
-  // Vérification sécurité
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.includes(SERVICE_KEY)) {
-    return new Response('Unauthorized', { status: 401 })
-  }
+  const hour = new Date().getUTCHours()
+  
+  // Déterminer l'horaire selon l'heure UTC (France = UTC+1 ou UTC+2)
+  let horaire = ''
+  if (hour === 7 || hour === 6)  horaire = 'matin'   // 8h France
+  if (hour === 11 || hour === 10) horaire = 'midi'   // 12h France
+  if (hour === 19 || hour === 18) horaire = 'soir'   // 20h France
 
-  // ── 1. Récupère tous les users avec une subscription push ─────────────────
-  const { data: subs } = await supabase
-    .from('push_subscriptions')
-    .select('user_id')
-    .neq('user_id', ADMIN_ID)
+  console.log('[cron] UTC hour:', hour, 'horaire:', horaire || 'none')
+  if (!horaire) return Response.json({ ok: true, skipped: true, hour })
 
-  if (!subs?.length) return Response.json({ ok: true, sent: 0, reason: 'no subscriptions' })
+  // Récupérer les users abonnés à cet horaire
+  const url = new URL(`${SUPABASE_URL}/rest/v1/push_subscriptions`)
+  url.searchParams.set('select', 'user_id')
+  url.searchParams.set('horaires', `cs.{"${horaire}"}`)
 
-  const userIds = [...new Set(subs.map(s => s.user_id))]
-
-  // ── 2. Calcule les jours d'absence via la vue user_last_activity ──────────
-  const { data: activities } = await supabase
-    .from('user_last_activity')
-    .select('user_id, days_since')
-    .in('user_id', userIds)
-
-  const activityMap: Record<string, number> = {}
-  ;(activities ?? []).forEach(a => { activityMap[a.user_id] = a.days_since ?? 999 })
-
-  // ── 3. Groupe par type de notification à envoyer ──────────────────────────
-  const groups: Record<string, string[]> = {
-    ritual_reminder: [],
-    degradation_1:   [],
-    degradation_3:   [],
-    degradation_7:   [],
-  }
-
-  for (const userId of userIds) {
-    const days = activityMap[userId] ?? 999
-
-    if (days === 0) {
-      // Actif aujourd'hui → rappel rituel du soir (si pas encore fait)
-      groups['ritual_reminder'].push(userId)
-    } else if (days === 1) {
-      groups['degradation_1'].push(userId)
-    } else if (days >= 3 && days <= 6) {
-      groups['degradation_3'].push(userId)
-    } else if (days >= 7) {
-      groups['degradation_7'].push(userId)
+  const res = await fetch(url.toString(), {
+    headers: {
+      'apikey':        SUPABASE_SERVICE,
+      'Authorization': `Bearer ${SUPABASE_SERVICE}`,
     }
-  }
+  })
+  const subs = await res.json()
+  console.log('[cron] subs for', horaire, ':', subs?.length ?? 0)
 
-  // ── 4. Envoie chaque groupe ───────────────────────────────────────────────
-  let totalSent = 0
-  const results: Record<string, number> = {}
+  if (!subs?.length) return Response.json({ ok: true, sent: 0, horaire })
 
-  for (const [type, ids] of Object.entries(groups)) {
-    if (!ids.length) continue
-    const res = await callSendPush({ type, userIds: ids })
-    results[type] = res.sent ?? 0
-    totalSent += results[type]
-  }
+  const userIds = [...new Set(subs.map((s: { user_id: string }) => s.user_id))]
 
-  console.log('[push-cron] results:', results, 'total:', totalSent)
-  return Response.json({ ok: true, sent: totalSent, breakdown: results })
+  const sendRes = await fetch(SEND_PUSH_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_SERVICE}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({ type: 'ritual_reminder', userIds }),
+  })
+  const result = await sendRes.json()
+  console.log('[cron] result:', result)
+
+  return Response.json({ ok: true, horaire, userIds: userIds.length, ...result })
 })
