@@ -1,12 +1,8 @@
 // hooks/usePushNotification.js
-// Gère l'abonnement aux push notifications Web
-// → Demande la permission, s'abonne au service worker, enregistre en base
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../core/supabaseClient'
 
-// ⚠️ Remplacez par votre clé publique VAPID générée
-const VAPID_PUBLIC_KEY = 'BCdr2M4QaVxarPh-AdSoQXbJ1WseRvL4tnZVvy5kHZk7YqgAkXLqtYNNAjzSBiDTfOCoQbIDoykIcNqODVU1nxQ'
+const VAPID_PUBLIC_KEY = 'BHoBRIRxT_0pQzgRMVn2BG9lgFbQ3au8aa7FFGn3Ab-O_V5N0ZXBZ0bLObr1t0SYKXwogXdJnAfqvAJuGf69INo'
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
@@ -16,18 +12,15 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export function usePushNotification(userId) {
-  const [permission,    setPermission]    = useState(Notification.permission)
-  const [subscription,  setSubscription]  = useState(null)
-  const [isSupported,   setIsSupported]   = useState(false)
-  const [isLoading,     setIsLoading]     = useState(false)
+  const [permission,   setPermission]   = useState(Notification.permission)
+  const [subscription, setSubscription] = useState(null)
+  const [isSupported,  setIsSupported]  = useState(false)
+  const [isLoading,    setIsLoading]    = useState(false)
 
-  // Vérifie le support PWA + push
   useEffect(() => {
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window
-    setIsSupported(supported)
+    setIsSupported('serviceWorker' in navigator && 'PushManager' in window)
   }, [])
 
-  // Récupère l'abonnement existant au montage
   useEffect(() => {
     if (!isSupported) return
     navigator.serviceWorker.ready.then(reg => {
@@ -37,29 +30,24 @@ export function usePushNotification(userId) {
     })
   }, [isSupported])
 
-  // Demande la permission + s'abonne
   const subscribe = useCallback(async () => {
     if (!isSupported || !userId) return
     setIsLoading(true)
     try {
-      const reg = await navigator.serviceWorker.ready
-
-      // Demande la permission si pas encore accordée
+      const reg  = await navigator.serviceWorker.ready
       const perm = await Notification.requestPermission()
       setPermission(perm)
       if (perm !== 'granted') { setIsLoading(false); return }
 
-      // Crée l'abonnement push
-      const sub = await reg.pushManager.subscribe({
+      const sub  = await reg.pushManager.subscribe({
         userVisibleOnly:      true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       })
       setSubscription(sub)
 
-      // Enregistre en base Supabase
-      const json  = sub.toJSON()
+      const json = sub.toJSON()
       await supabase.from('push_subscriptions').upsert({
-        user_id: userId,
+        user_id:  userId,
         endpoint: json.endpoint,
         p256dh:   json.keys.p256dh,
         auth:     json.keys.auth,
@@ -71,7 +59,6 @@ export function usePushNotification(userId) {
     setIsLoading(false)
   }, [isSupported, userId])
 
-  // Se désabonne
   const unsubscribe = useCallback(async () => {
     if (!subscription) return
     await subscription.unsubscribe()
@@ -82,12 +69,5 @@ export function usePushNotification(userId) {
     setSubscription(null)
   }, [subscription, userId])
 
-  return {
-    isSupported,
-    permission,
-    isSubscribed: !!subscription,
-    isLoading,
-    subscribe,
-    unsubscribe,
-  }
+  return { isSupported, permission, isSubscribed: !!subscription, isLoading, subscribe, unsubscribe }
 }
