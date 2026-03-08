@@ -61,12 +61,14 @@ export function usePushNotification(userId) {
       setFcmToken(token)
       console.log('[push] FCM token:', token.slice(0, 30))
 
-      await supabase.from('push_subscriptions').upsert({
+      // Supprimer l'ancien abonnement et insérer le nouveau
+      await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+      await supabase.from('push_subscriptions').insert({
         user_id:  userId,
-        endpoint: `https://fcm.googleapis.com/fcm/send/${token}`,
-        p256dh:   token,
+        endpoint: `fcm:${token}`,
+        p256dh:   token.slice(0, 87),
         auth:     token.slice(0, 22),
-      }, { onConflict: 'user_id' })
+      })
 
       setIsSubscribed(true)
     } catch (e) {
