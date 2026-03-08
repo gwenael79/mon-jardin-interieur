@@ -21,7 +21,7 @@ function getFirebaseApp() {
 }
 
 export function usePushNotification(userId) {
-  const [permission,   setPermission]   = useState(Notification.permission)
+  const [permission,   setPermission]   = useState(typeof Notification !== 'undefined' ? Notification.permission : 'default')
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isSupported,  setIsSupported]  = useState(false)
   const [isLoading,    setIsLoading]    = useState(false)
