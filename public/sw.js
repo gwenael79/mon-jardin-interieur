@@ -1,20 +1,19 @@
 // public/sw.js
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js'
-import { getMessaging, onBackgroundMessage } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-sw.js'
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js')
 
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey:            "AIzaSyCk9B399pkq6exTKGh5FEVaqx9a_Tv2iv4",
   authDomain:        "mon-jardin-interieur.firebaseapp.com",
   projectId:         "mon-jardin-interieur",
   storageBucket:     "mon-jardin-interieur.firebasestorage.app",
   messagingSenderId: "470084583376",
   appId:             "1:470084583376:web:c21bbfbd9d89f678d483d5",
-}
+})
 
-const app       = initializeApp(firebaseConfig)
-const messaging = getMessaging(app)
+const messaging = firebase.messaging()
 
-onBackgroundMessage(messaging, (payload) => {
+messaging.onBackgroundMessage((payload) => {
   const { title, body, tag, icon } = payload.notification ?? payload.data ?? {}
   self.registration.showNotification(title ?? '🌿 Mon Jardin', {
     body:  body  ?? 'Un moment pour vous.',
