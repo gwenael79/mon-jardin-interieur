@@ -74,6 +74,11 @@ export default function PushNotificationButton({ userId, compact = false }) {
     setShowModal(false)
   }
 
+  // iOS Safari ne supporte pas les push en dehors de la PWA installée
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+  if (isIOS && !isStandalone) return null
+
   if (!isSupported) return null
   if (permission === 'denied') return null
 
