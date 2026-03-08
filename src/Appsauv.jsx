@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuthInit, useAuth } from './hooks/useAuth'
 import { AuthPage } from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
@@ -6,12 +6,6 @@ import AccessPage from './pages/AccessPage'
 import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { query, supabase } from './core/supabaseClient'
-
-// ── Notifications jardin ──────────────────────────────────
-import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
-import { useLastVisit }          from './hooks/useLastVisit'
-import GardenNotificationBanner  from './components/GardenNotificationBanner'
-import PlantIcon                 from './components/PlantIcon'
 
 const ADMIN_IDS = ['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7']
 
@@ -21,31 +15,20 @@ export default function App() {
   const { user, isLoading: authLoading } = useAuth()
 
   // ── Abonnements ──────────────────────────────────────────
-  const { activateFree, saveSubscriptions, refresh } = useSubscription()
+  const {
+    activateFree,
+    saveSubscriptions,
+    refresh
+  } = useSubscription()
 
   // ── État onboarding ──────────────────────────────────────
-  const [onboarded,       setOnboarded]       = useState(null)
+  // null = on ne sait pas encore / false = pas encore onboardé / true = déjà fait
+  const [onboarded,   setOnboarded]   = useState(null)
   const [checkingOnboard, setCheckingOnboard] = useState(false)
 
-  const [toast,    setToast]    = useState(null)
-  const [hash,     setHash]     = useState(window.location.hash)
-  const toastTimer              = useRef(null)
-
-  // ── État notifications jardin ────────────────────────────
-  const [banner,     setBanner]     = useState(null)   // message bannière | null
-  const [plantState, setPlantState] = useState(0)      // 0 → 3
-  const [badge,      setBadge]      = useState(false)
-
-  // ── Dernière visite Supabase (seulement si connecté et onboardé) ──────────
-  const { daysSince } = useLastVisit(onboarded === true ? user?.id : null)
-
-  // ── Séquence de notifications (son + plante + bannière + badge + onglet) ──
-  useGardenNotification({
-    daysSince,
-    onShowBanner: useCallback((msg) => setBanner(msg), []),
-    onSetBadge:   useCallback((v)   => setBadge(v),   []),
-    onSetPlant:   useCallback((idx) => setPlantState(idx), []),
-  })
+  const [toast,       setToast]       = useState(null)
+  const [hash,        setHash]        = useState(window.location.hash)
+  const toastTimer                    = useRef(null)
 
   // ── Vérifier le profil dès que l'user est connu ──────────
   useEffect(() => {
@@ -70,6 +53,7 @@ export default function App() {
   }, [])
 
   // ── Exposer openAccessModal globalement ─────────────────
+  // Appelé depuis le bouton "Abonnement" de la sidebar
   useEffect(() => {
     window.openAccessModal = () => setOnboarded(false)
     return () => { delete window.openAccessModal }
@@ -90,10 +74,12 @@ export default function App() {
     await activateFree()
     showToast('🌱', 'Bienvenue dans votre jardin !')
     await refresh()
-    setOnboarded(true)
+    setOnboarded(true)   // → passe au Dashboard
   }
 
   const handlePaySuccess = async ({ plan }) => {
+    // En prod : déclenché par webhook Stripe
+    // Ici on marque juste onboarded pour passer au dashboard
     await query(
       supabase.from('users')
         .update({ onboarded: true, plan: 'premium' })
@@ -113,11 +99,10 @@ export default function App() {
   )
 
   // ── Routing ──────────────────────────────────────────────
-
-  // 1. Non connecté → AuthPage (pas de notifications)
+  // 1. Non connecté → AuthPage
   if (!user) return <AuthPage />
 
-  // 2. Pas encore onboardé → AccessPage
+  // 2. Connecté mais pas encore onboardé → AccessPage (1ère connexion ou via sidebar)
   if (onboarded === false) return (
     <>
       <AccessPage
@@ -129,50 +114,18 @@ export default function App() {
     </>
   )
 
-  // 3. Admin
+  // 3. Admin → AdminPage
   if (ADMIN_IDS.includes(user?.id) && hash === '#admin') return <AdminPage />
 
-  // 4. Dashboard normal + notifications jardin
+  // 4. Onboardé → Dashboard normal
   return (
     <>
       <DashboardPage />
-
-      {/* ── Bannière de notification jardin ── */}
-      <GardenNotificationBanner
-        message={banner}
-        onClose={() => setBanner(null)}
-      />
-
-      {/* ── Icône plante flottante (coin bas-gauche) ── */}
-      {plantState > 0 && (
-        <div style={styles.plantFloat}>
-          <PlantIcon
-            stateIndex={plantState}
-            showBadge={badge}
-            size={36}
-          />
-          <span style={styles.plantLabel}>
-            {PLANT_STATES[plantState].label}
-          </span>
-        </div>
-      )}
-
-      {/* ── Toast existant ── */}
-      {toast && (
-        <div style={styles.toast}>
-          <span>{toast.icon}</span>
-          <span>{toast.msg}</span>
-        </div>
-      )}
-
+      {toast && <div style={styles.toast}><span>{toast.icon}</span><span>{toast.msg}</span></div>}
       <style>{`
         @keyframes toastIn {
           from { opacity:0; transform:translateX(-50%) translateY(16px); }
           to   { opacity:1; transform:translateX(-50%) translateY(0); }
-        }
-        @keyframes plantFloatIn {
-          from { opacity:0; transform:translateY(20px); }
-          to   { opacity:1; transform:translateY(0); }
         }
       `}</style>
     </>
@@ -195,15 +148,5 @@ const styles = {
     boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
     zIndex: 9998, whiteSpace: 'nowrap',
     animation: 'toastIn .4s cubic-bezier(0.34,1.56,0.64,1) both',
-  },
-  plantFloat: {
-    position: 'fixed', bottom: 80, right: 24,
-    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-    animation: 'plantFloatIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both',
-    zIndex: 9000,
-  },
-  plantLabel: {
-    fontSize: 9, letterSpacing: 1.5, textTransform: 'uppercase',
-    color: 'rgba(226,221,211,0.45)', fontWeight: 300,
   }
 }

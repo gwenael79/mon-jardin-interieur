@@ -112,12 +112,140 @@ export function AdminPage() {
   const [attendance,   setAttendance]   = useState(null)
   const [palmares,     setPalmares]     = useState([])
   const [stats,     setStats]     = useState({})
+  const [fullStats, setFullStats] = useState(null)
+  const [statsPeriod, setStatsPeriod] = useState('week') // day|week|month|year
   const [loading,   setLoading]   = useState(true)
   const [toast,     setToast]     = useState(null)
 
   const isAdmin = ADMIN_IDS.includes(user?.id)
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2800) }
+
+  async function loadFullStats() {
+    const ADMIN_ID = 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+    const now   = new Date()
+    const ymd   = d => d.toISOString().slice(0,10)
+    const ago   = n => ymd(new Date(Date.now() - n * 86400000))
+    const periods = { day: ago(0), week: ago(6), month: ago(29), year: ago(364) }
+
+    // ── Inscriptions (nouveaux users) ─────────────────────────────────────────
+    const { data: usersData } = await supabase
+      .from('users').select('id, created_at').neq('id', ADMIN_ID)
+    const usersByDate = {}
+    ;(usersData ?? []).forEach(u => {
+      const d = u.created_at?.slice(0,10)
+      if (d) usersByDate[d] = (usersByDate[d] ?? 0) + 1
+    })
+
+    // ── Connexions (sessions dans analytics_events) ───────────────────────────
+    const { data: sessData } = await supabase
+      .from('analytics_events')
+      .select('user_id, created_at')
+      .eq('event_type', 'session_start')
+      .neq('user_id', ADMIN_ID)
+      .gte('created_at', ago(364))
+    const sessByDate = {}
+    const sessUsersByDate = {}
+    ;(sessData ?? []).forEach(s => {
+      const d = s.created_at?.slice(0,10)
+      if (!d) return
+      sessByDate[d] = (sessByDate[d] ?? 0) + 1
+      if (!sessUsersByDate[d]) sessUsersByDate[d] = new Set()
+      sessUsersByDate[d].add(s.user_id)
+    })
+
+    // ── Activity table ────────────────────────────────────────────────────────
+    const { data: actData } = await supabase
+      .from('activity')
+      .select('user_id, action, zone, created_at')
+      .neq('user_id', ADMIN_ID)
+      .gte('created_at', ago(364))
+    const actByDateAction = {}
+    ;(actData ?? []).forEach(a => {
+      const d = a.created_at?.slice(0,10)
+      if (!d) return
+      const key = `${d}__${a.action}`
+      actByDateAction[key] = (actByDateAction[key] ?? 0) + 1
+    })
+
+    // ── Ateliers créés ────────────────────────────────────────────────────────
+    const { data: atelierData } = await supabase
+      .from('ateliers').select('id, created_at').neq('animator_id', ADMIN_ID).gte('created_at', ago(364))
+    const ateliersByDate = {}
+    ;(atelierData ?? []).forEach(a => {
+      const d = a.created_at?.slice(0,10)
+      if (d) ateliersByDate[d] = (ateliersByDate[d] ?? 0) + 1
+    })
+
+    // ── Inscriptions ateliers ─────────────────────────────────────────────────
+    const { data: regData } = await supabase
+      .from('atelier_registrations').select('user_id, created_at').neq('user_id', ADMIN_ID).gte('created_at', ago(364))
+    const regsByDate = {}
+    ;(regData ?? []).forEach(r => {
+      const d = r.created_at?.slice(0,10)
+      if (d) regsByDate[d] = (regsByDate[d] ?? 0) + 1
+    })
+
+    // ── Défis rejoints ────────────────────────────────────────────────────────
+    const { data: defiData } = await supabase
+      .from('analytics_events').select('created_at').eq('event_type', 'defi_join').neq('user_id', ADMIN_ID).gte('created_at', ago(364))
+    const defisByDate = {}
+    ;(defiData ?? []).forEach(d => {
+      const day = d.created_at?.slice(0,10)
+      if (day) defisByDate[day] = (defisByDate[day] ?? 0) + 1
+    })
+
+    // ── Calcul totaux par période ─────────────────────────────────────────────
+    const sumFrom = (map, from) => Object.entries(map).filter(([d]) => d >= from).reduce((s,[,v]) => s + v, 0)
+    const uniqUsersFrom = (map, from) => new Set(Object.entries(map).filter(([d]) => d >= from).flatMap(([,s]) => [...s])).size
+
+    const build = (map) => ({
+      day:   sumFrom(map, periods.day),
+      week:  sumFrom(map, periods.week),
+      month: sumFrom(map, periods.month),
+      year:  sumFrom(map, periods.year),
+    })
+
+    // Connexions uniques par période
+    const connUniq = {
+      day:   uniqUsersFrom(sessUsersByDate, periods.day),
+      week:  uniqUsersFrom(sessUsersByDate, periods.week),
+      month: uniqUsersFrom(sessUsersByDate, periods.month),
+      year:  uniqUsersFrom(sessUsersByDate, periods.year),
+    }
+
+    // Extraire actions depuis actByDateAction
+    const actMap = (action) => {
+      const m = {}
+      Object.entries(actByDateAction).forEach(([key, v]) => {
+        const [d, a] = key.split('__')
+        if (a === action) m[d] = (m[d] ?? 0) + v
+      })
+      return m
+    }
+
+    // Graphe 30 jours pour chaque métrique
+    const chart30 = (map) => {
+      const days = []
+      for (let i = 29; i >= 0; i--) {
+        const d = ago(i)
+        days.push({ date: d, count: map[d] ?? 0 })
+      }
+      return days
+    }
+
+    setFullStats({
+      inscriptions:   { ...build(usersByDate),   chart: chart30(usersByDate) },
+      connexions:     { ...connUniq,             chart: chart30(Object.fromEntries(Object.entries(sessUsersByDate).map(([d,s]) => [d, s.size]))) },
+      bilans:         { ...build(actMap('bilan')), chart: chart30(actMap('bilan')) },
+      rituels:        { ...build(actMap('ritual')), chart: chart30(actMap('ritual')) },
+      coeurs:         { ...build(actMap('coeur')), chart: chart30(actMap('coeur')) },
+      ateliers_crees: { ...build(ateliersByDate), chart: chart30(ateliersByDate) },
+      ateliers_inscrits: { ...build(regsByDate), chart: chart30(regsByDate) },
+      defis:          { ...build(defisByDate),   chart: chart30(defisByDate) },
+    })
+  }
+
 
   async function loadPendingReviews() {
     setReviewsLoading(true)
@@ -151,6 +279,7 @@ export function AdminPage() {
   }
 
   useEffect(() => { if (isAdmin) { loadAll() } }, [isAdmin])
+  useEffect(() => { if (tab === 'statistiques') loadFullStats() }, [tab])
   useEffect(() => { if (tab === 'reviews') loadPendingReviews() }, [tab])
 
   async function loadAll() {
@@ -392,6 +521,9 @@ export function AdminPage() {
           <div className={`adm-tab${tab === 'frequentation' ? ' active' : ''}`} onClick={() => setTab('frequentation')}>
             📊 Fréquentation
           </div>
+          <div className={`adm-tab${tab === 'statistiques' ? ' active' : ''}`} onClick={() => setTab('statistiques')}>
+            📈 Statistiques
+          </div>
           <div className={`adm-tab${tab === 'reviews' ? ' active' : ''}`} onClick={() => setTab('reviews')} style={{ position:'relative' }}>
             ⭐ Avis
             {pendingReviews.length > 0 && (
@@ -616,6 +748,130 @@ export function AdminPage() {
       </div>
 
         {/* ── FRÉQUENTATION ── */}
+
+        {tab === 'statistiques' && (() => {
+          const P = statsPeriod
+          const pLabel = { day: "Aujourd'hui", week: '7 derniers jours', month: '30 derniers jours', year: '365 derniers jours' }
+          const METRICS = fullStats ? [
+            { key:'inscriptions',      icon:'🌱', label:'Inscriptions',         color:'#96d485' },
+            { key:'connexions',        icon:'🔗', label:'Connexions uniques',    color:'#7ab5f5' },
+            { key:'bilans',            icon:'🌹', label:'Bilans complétés',      color:'#e8d4a8' },
+            { key:'rituels',           icon:'✨', label:'Rituels effectués',     color:'#c8a882' },
+            { key:'coeurs',            icon:'💚', label:'Cœurs envoyés',         color:'#96d485' },
+            { key:'ateliers_crees',    icon:'📖', label:'Ateliers créés',        color:'#b8a0d8' },
+            { key:'ateliers_inscrits', icon:'✓',  label:'Inscriptions ateliers', color:'#7ab5f5' },
+            { key:'defis',             icon:'🏅', label:'Défis rejoints',        color:'#F6C453' },
+          ] : []
+
+          return (
+            <div className="adm-section">
+              {/* Sélecteur période */}
+              <div style={{ display:'flex', gap:6, marginBottom:24, flexWrap:'wrap' }}>
+                {['day','week','month','year'].map(p => (
+                  <button key={p} onClick={() => setStatsPeriod(p)} style={{ padding:'6px 16px', borderRadius:100, fontSize:10, letterSpacing:'.08em', fontFamily:'Jost,sans-serif', cursor:'pointer', background: P===p ? 'rgba(150,212,133,0.2)' : 'rgba(255,255,255,0.04)', border:`1px solid ${P===p ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.1)'}`, color: P===p ? '#c8f0b8' : 'var(--text3)', transition:'all .2s' }}>
+                    {p==='day'?"Jour":p==='week'?"Semaine":p==='month'?"Mois":"Année"}
+                  </button>
+                ))}
+                <span style={{ fontSize:10, color:'var(--text3)', alignSelf:'center', marginLeft:4, fontStyle:'italic' }}>{pLabel[P]}</span>
+              </div>
+
+              {!fullStats ? (
+                <div className="adm-empty">Chargement…</div>
+              ) : (
+                <>
+                  {/* Grille des métriques */}
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))', gap:10, marginBottom:32 }}>
+                    {METRICS.map(m => (
+                      <div key={m.key} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid var(--border2)', borderRadius:14, padding:'16px 18px' }}>
+                        <div style={{ fontSize:18, marginBottom:6 }}>{m.icon}</div>
+                        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:36, fontWeight:300, color:m.color, lineHeight:1 }}>
+                          {fullStats[m.key]?.[P] ?? 0}
+                        </div>
+                        <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginTop:6 }}>{m.label}</div>
+                        {/* Mini sparkline */}
+                        {fullStats[m.key]?.chart && (() => {
+                          const data = fullStats[m.key].chart.slice(-14)
+                          const max = Math.max(...data.map(d=>d.count), 1)
+                          return (
+                            <div style={{ display:'flex', alignItems:'flex-end', gap:2, height:24, marginTop:10 }}>
+                              {data.map((d,i) => (
+                                <div key={i} title={`${d.date}: ${d.count}`} style={{ flex:1, height:`${Math.max(2, Math.round(d.count/max*100))}%`, background:m.color, opacity:0.4, borderRadius:2, minHeight:2 }} />
+                              ))}
+                            </div>
+                          )
+                        })()}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Graphe détaillé — courbe 30 jours pour la métrique sélectionnée */}
+                  <div style={{ background:'rgba(255,255,255,0.02)', border:'1px solid var(--border2)', borderRadius:14, padding:20, marginBottom:24 }}>
+                    <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>
+                      Activité quotidienne — 30 derniers jours
+                    </div>
+                    {/* Légende sélectable */}
+                    <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:14 }}>
+                      {METRICS.map(m => (
+                        <div key={m.key} style={{ fontSize:9, padding:'3px 8px', borderRadius:100, background:`${m.color}22`, border:`1px solid ${m.color}44`, color:m.color, cursor:'default' }}>
+                          {m.icon} {m.label}
+                        </div>
+                      ))}
+                    </div>
+                    {/* Graphe empilé */}
+                    <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:100 }}>
+                      {fullStats.connexions.chart.map((d, i) => {
+                        const vals = METRICS.map(m => fullStats[m.key].chart[i]?.count ?? 0)
+                        const total = vals.reduce((a,b)=>a+b,0)
+                        const maxTotal = Math.max(...fullStats.connexions.chart.map((_,j) => METRICS.map(m => fullStats[m.key].chart[j]?.count??0).reduce((a,b)=>a+b,0)), 1)
+                        const pct = Math.max(3, Math.round(total/maxTotal*100))
+                        const isToday = d.date === new Date().toISOString().slice(0,10)
+                        return (
+                          <div key={i} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+                            <div title={`${d.date}\n${METRICS.map((m,j)=>`${m.label}: ${vals[j]}`).join('\n')}`}
+                              style={{ width:'100%', height:`${pct}%`, background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)', borderRadius:3, minHeight:3, boxShadow: isToday ? '0 0 6px rgba(150,212,133,0.4)' : 'none', transition:'height .3s' }} />
+                            {total > 0 && <div style={{ fontSize:7, color:'var(--text3)' }}>{total}</div>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:6 }}>
+                      <div style={{ fontSize:8, color:'var(--text3)' }}>il y a 29 jours</div>
+                      <div style={{ fontSize:8, color:'var(--green)' }}>aujourd'hui</div>
+                    </div>
+                  </div>
+
+                  {/* Tableau récap */}
+                  <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>Récapitulatif</div>
+                  <div style={{ overflowX:'auto' }}>
+                    <table className="adm-table">
+                      <thead>
+                        <tr>
+                          <th style={{ padding:'10px 14px', textAlign:'left', fontSize:9, letterSpacing:'.1em', color:'var(--text3)', fontWeight:400 }}>MÉTRIQUE</th>
+                          <th style={{ padding:'10px 14px', textAlign:'center', fontSize:9, letterSpacing:'.1em', color:'var(--text3)', fontWeight:400 }}>JOUR</th>
+                          <th style={{ padding:'10px 14px', textAlign:'center', fontSize:9, letterSpacing:'.1em', color:'var(--text3)', fontWeight:400 }}>7J</th>
+                          <th style={{ padding:'10px 14px', textAlign:'center', fontSize:9, letterSpacing:'.1em', color:'var(--text3)', fontWeight:400 }}>30J</th>
+                          <th style={{ padding:'10px 14px', textAlign:'center', fontSize:9, letterSpacing:'.1em', color:'var(--text3)', fontWeight:400 }}>365J</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {METRICS.map((m, i) => (
+                          <tr key={m.key} style={{ background: i%2===0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+                            <td style={{ padding:'10px 14px', fontSize:11, color:'var(--text)' }}>{m.icon} {m.label}</td>
+                            <td style={{ padding:'10px 14px', textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:m.color }}>{fullStats[m.key]?.day ?? 0}</td>
+                            <td style={{ padding:'10px 14px', textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:m.color }}>{fullStats[m.key]?.week ?? 0}</td>
+                            <td style={{ padding:'10px 14px', textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:m.color }}>{fullStats[m.key]?.month ?? 0}</td>
+                            <td style={{ padding:'10px 14px', textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:m.color }}>{fullStats[m.key]?.year ?? 0}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          )
+        })()}
+
         {tab === 'frequentation' && (
           <div className="adm-section">
 

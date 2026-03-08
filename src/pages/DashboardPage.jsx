@@ -13,6 +13,7 @@ import '../styles/dashboard.css'
 import { useIsMobile, useProfile, useLumens, LumenBadge, LumenOrb, LumensCard } from './dashboardShared'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { logActivity } from '../utils/logActivity'
+import PushNotificationButton from '../components/PushNotificationButton'
 import { ScreenMonJardin, DailyQuizModal } from './ScreenMonJardin'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
@@ -426,6 +427,7 @@ export default function DashboardPage() {
   const [showCreateCircle,   setShowCreateCircle]   = useState(false)
   const [showInviteModal,    setShowInviteModal]    = useState(false)
   const [showProfileModal,   setShowProfileModal]   = useState(false)
+  const [showPrefsAccordion, setShowPrefsAccordion] = useState(false)
   const [showMjRight,        setShowMjRight]        = useState(false)
   const [showLumensModal,    setShowLumensModal]    = useState(false)
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
@@ -621,23 +623,88 @@ export default function DashboardPage() {
 
           {/* ── FOOTER BUTTONS ── */}
           <div className="sb-footer-btns">
-            <div className="sb-subscribe" onClick={() => window.openAccessModal?.()}>
-              <span>🌸</span> Abonnement
+
+            {/* Bouton accordéon */}
+            <div
+              onClick={() => setShowPrefsAccordion(p => !p)}
+              style={{
+                display:'flex', alignItems:'center', justifyContent:'space-between',
+                padding:'9px 14px', borderRadius:10, cursor:'pointer',
+                background: showPrefsAccordion ? 'rgba(255,255,255,0.06)' : 'transparent',
+                border:'1px solid rgba(255,255,255,0.07)',
+                transition:'all .2s', WebkitTapHighlightColor:'transparent',
+              }}
+            >
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:13 }}>⚙️</span>
+                <span style={{ fontSize:10, color:'rgba(242,237,224,0.5)', letterSpacing:'.05em', fontFamily:'Jost,sans-serif' }}>Gérer mes préférences</span>
+              </div>
+              <span style={{ fontSize:10, color:'rgba(242,237,224,0.25)', transition:'transform .2s', display:'inline-block', transform: showPrefsAccordion ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </div>
-            {['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id) && (
-              <div className="sb-logout" style={{ color:'rgba(255,200,100,0.7)', borderColor:'rgba(255,200,100,0.2)', position:'relative' }}
-                onClick={() => window.location.hash = 'admin'}>
-                <span>⚙️</span> Admin
-                {pendingReports > 0 && (
-                  <div style={{ position:'absolute', top:-6, right:-6, background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
-                    {pendingReports}
+
+            {/* Contenu accordéon */}
+            {showPrefsAccordion && (
+              <div style={{ display:'flex', flexDirection:'column', gap:2, paddingLeft:8, borderLeft:'1px solid rgba(255,255,255,0.06)', marginLeft:6 }}>
+
+                {/* Modifier profil */}
+                <div
+                  onClick={() => { setShowPrefsAccordion(false); setShowProfileModal(true) }}
+                  style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                >
+                  <span style={{ fontSize:12 }}>✏️</span>
+                  <span style={{ fontSize:10, color:'rgba(242,237,224,0.5)', fontFamily:'Jost,sans-serif' }}>Modifier mon profil</span>
+                </div>
+
+                {/* Abonnement */}
+                <div
+                  onClick={() => { setShowPrefsAccordion(false); window.openAccessModal?.() }}
+                  style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                >
+                  <span style={{ fontSize:12 }}>🌸</span>
+                  <span style={{ fontSize:10, color:'rgba(242,237,224,0.5)', fontFamily:'Jost,sans-serif' }}>Abonnement</span>
+                </div>
+
+                {/* Notifications */}
+                <div style={{ padding:'4px 10px' }}>
+                  <PushNotificationButton userId={user?.id} compact />
+                </div>
+
+                {/* Admin */}
+                {['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id) && (
+                  <div
+                    onClick={() => { setShowPrefsAccordion(false); window.location.hash = 'admin' }}
+                    style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', position:'relative', WebkitTapHighlightColor:'transparent' }}
+                    onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                    onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                  >
+                    <span style={{ fontSize:12 }}>🛡️</span>
+                    <span style={{ fontSize:10, color:'rgba(255,200,100,0.6)', fontFamily:'Jost,sans-serif' }}>Administration</span>
+                    {pendingReports > 0 && (
+                      <div style={{ background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                        {pendingReports}
+                      </div>
+                    )}
                   </div>
                 )}
+
+                {/* Déconnexion */}
+                <div
+                  onClick={signOut}
+                  style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseLeave={e => e.currentTarget.style.background='transparent'}
+                >
+                  <span style={{ fontSize:12 }}>⎋</span>
+                  <span style={{ fontSize:10, color:'rgba(242,237,224,0.3)', fontFamily:'Jost,sans-serif' }}>Se déconnecter</span>
+                </div>
+
               </div>
             )}
-            <div className="sb-logout" onClick={signOut}>
-              <span>⎋</span> Se déconnecter
-            </div>
+
           </div>
         </div>
 
@@ -821,6 +888,15 @@ export default function DashboardPage() {
                       <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:1 }}>Nom, fleur, visibilité…</div>
                     </div>
                     <span style={{ fontSize:12, color:'rgba(242,237,224,0.25)' }}>›</span>
+                  </div>
+
+                  {/* Notifications push */}
+                  <div style={{
+                    padding:'13px 16px',
+                    background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                    borderRadius:12,
+                  }}>
+                    <PushNotificationButton userId={user?.id} />
                   </div>
 
                   {/* Abonnement */}
