@@ -480,7 +480,10 @@ export function AdminPage() {
 
       {/* TOPBAR */}
       <div className="adm-topbar">
-        <div className="adm-logo">Mon <em>Jardin</em> — <span style={{ fontFamily:'Jost', fontSize:12, color:'var(--text3)', letterSpacing:'.2em' }}>ADMIN</span></div>
+        <div className="adm-logo" style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <img src="/icons/icon-192.png" alt="logo" style={{ width:28, height:28, borderRadius:'50%' }} />
+            Mon <em>Jardin</em> — <span style={{ fontFamily:'Jost', fontSize:12, color:'var(--text3)', letterSpacing:'.2em' }}>ADMIN</span>
+          </div>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           {pendingReports.length > 0 && (
             <div className="adm-badge">🚩 {pendingReports.length} signalement{pendingReports.length > 1 ? 's' : ''}</div>

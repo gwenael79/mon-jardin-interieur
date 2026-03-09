@@ -398,19 +398,7 @@ const PLANS = [
 ]
 
 function FleurLogoTiny() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 52 52" fill="none">
-      {[0,60,120,180,240,300].map((deg,i) => (
-        <ellipse key={deg} cx="26" cy="14" rx="5" ry="11"
-          fill={i<3 ? 'rgba(168,224,64,0.15)' : 'rgba(168,224,64,0.07)'}
-          stroke={i<3 ? '#a8e040' : 'rgba(168,224,64,0.35)'} strokeWidth="1"
-          transform={deg ? `rotate(${deg} 26 26)` : undefined}
-        />
-      ))}
-      <circle cx="26" cy="26" r="5" fill="#a8e040"/>
-      <line x1="26" y1="31" x2="26" y2="46" stroke="#a8e040" strokeWidth="1.2" strokeLinecap="round"/>
-    </svg>
-  )
+  return <img src="/icons/icon-192.png" alt="logo" style={{ width:24, height:24, borderRadius:'50%' }} />
 }
 
 export default function AccessPage({ onActivateFree, onSuccess, onBack }) {

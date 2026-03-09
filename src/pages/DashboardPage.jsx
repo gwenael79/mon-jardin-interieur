@@ -528,7 +528,10 @@ export default function DashboardPage() {
 
         {/* ── SIDEBAR ── */}
         <div className="sidebar">
-          <div className="sb-logo">Mon <em>Jardin</em><br />Intérieur</div>
+          <div className="sb-logo" style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <img src="/icons/icon-192.png" alt="logo" style={{ width:36, height:36, borderRadius:'50%' }} />
+            <span>Mon <em>Jardin</em><br />Intérieur</span>
+          </div>
           <div className="sb-section" style={{ marginBottom:4 }}>Navigation</div>
           {isMobile ? (
             /* ── Mobile : bouton Navigation (caché sur le NavHub) ── */
