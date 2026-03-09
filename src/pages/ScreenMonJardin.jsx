@@ -2165,9 +2165,21 @@ function useRitualsState(userId, awardLumens) {
       .eq('user_id', userId)
       .eq('date', todayKey)
       .maybeSingle()
-      .then(({ data }) => {
-        if (data?.degradation) setDegradation(data.degradation)
-        else setShowQuiz(true)
+      .then(async ({ data }) => {
+        if (data?.degradation) {
+          setDegradation(data.degradation)
+        } else {
+          // Pas de bilan aujourd'hui — chercher le dernier bilan connu
+          const { data: last } = await supabase
+            .from('daily_quiz')
+            .select('degradation')
+            .eq('user_id', userId)
+            .order('date', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+          if (last?.degradation) setDegradation(last.degradation)
+          setShowQuiz(true)
+        }
       })
 
     // 2. Rituels complétés aujourd'hui — source de vérité = Supabase

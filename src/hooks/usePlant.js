@@ -33,20 +33,31 @@ export function usePlant(userId) {
         ritualService.getWeekGrid(userId),
         plantService.getStats(userId),
       ])
-      // ── Reset plante jamais initialisée (valeurs DB par défaut = 50) → 5% ──
+      // ── Plante du jour jamais initialisée (valeurs DB par défaut = 50) ──
+      // → copier les valeurs du dernier jour connu plutôt que repartir à 5
       const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
       const isUninitialised = (p) =>
         p && p.health === 50 && ZONE_KEYS.every(k => (p[k] ?? 50) === 50)
 
       let resolvedPlant = plant
       if (isUninitialised(plant)) {
-        const zeros = Object.fromEntries(ZONE_KEYS.map(k => [k, 5]))
-        const patch = { health: 5, ...zeros }
+        const todayKey = new Date().toISOString().slice(0, 10)
+        const { supabase } = await import('../core/supabaseClient')
+        const { data: lastPlant } = await supabase
+          .from('plants')
+          .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
+          .eq('user_id', userId)
+          .lt('date', todayKey)
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        const patch = lastPlant
+          ? { health: lastPlant.health, ...Object.fromEntries(ZONE_KEYS.map(k => [k, lastPlant[k] ?? 5])) }
+          : { health: 5, ...Object.fromEntries(ZONE_KEYS.map(k => [k, 5])) }
+
         resolvedPlant = { ...plant, ...patch }
-        // Persiste en DB (fire & forget)
-        import('../core/supabaseClient').then(({ supabase }) =>
-          supabase.from('plants').update(patch).eq('id', plant.id)
-        )
+        supabase.from('plants').update(patch).eq('id', plant.id)
       }
 
       setTodayPlant(resolvedPlant)
