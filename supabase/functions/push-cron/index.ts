@@ -19,13 +19,16 @@ async function dbQuery(query: string) {
 }
 
 Deno.serve(async (req) => {
+  const body = await req.json().catch(() => ({}))
   const hour = new Date().getUTCHours()
   
   // Déterminer l'horaire selon l'heure UTC (France = UTC+1 ou UTC+2)
-  let horaire = ''
-  if (hour === 7 || hour === 6)  horaire = 'matin'   // 8h France
-  if (hour === 11 || hour === 10) horaire = 'midi'   // 12h France
-  if (hour === 19 || hour === 18) horaire = 'soir'   // 20h France
+  let horaire = body.forceHoraire ?? ''
+  if (!horaire) {
+    if (hour === 7 || hour === 6)   horaire = 'matin'
+    if (hour === 11 || hour === 10) horaire = 'midi'
+    if (hour === 19 || hour === 18) horaire = 'soir'
+  }
 
   console.log('[cron] UTC hour:', hour, 'horaire:', horaire || 'none')
   if (!horaire) return Response.json({ ok: true, skipped: true, hour })
@@ -50,9 +53,9 @@ Deno.serve(async (req) => {
 
   const sendRes = await fetch(SEND_PUSH_URL, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${SUPABASE_SERVICE}`,
+    headers: { 
       'Content-Type':  'application/json',
+      'Authorization': `Bearer ${Deno.env.get('ANON_JWT')}`,
     },
     body: JSON.stringify({ type: 'ritual_reminder', userIds }),
   })
