@@ -2568,6 +2568,104 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   )
 }
 
+
+// ── BilanInsightCard — texte IA parallèle plante / personne ──
+const SUPABASE_FN_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/Moderate-circle'
+
+function BilanInsightCard({ degradation }) {
+  const [insight,  setInsight]  = useState(null)
+  const [loading,  setLoading]  = useState(false)
+  const [error,    setError]    = useState(false)
+
+  // Clé de cache basée sur la dégradation + la date du jour
+  const cacheKey = 'bilan-insight-' + new Date().toISOString().slice(0, 10) + '-' + JSON.stringify(degradation)
+
+  useEffect(() => {
+    if (!degradation) return
+
+    // Vérification cache sessionStorage
+    try {
+      const cached = sessionStorage.getItem(cacheKey)
+      if (cached) { setInsight(cached); return }
+    } catch {}
+
+    setLoading(true)
+    setError(false)
+
+    fetch(SUPABASE_FN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'generate_bilan_insight', degradation }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.insight) {
+          setInsight(data.insight)
+          try { sessionStorage.setItem(cacheKey, data.insight) } catch {}
+        } else {
+          setError(true)
+        }
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }, [cacheKey])
+
+  const rec          = getBilanRecommendation(degradation)
+  const ZONE_COLORS  = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
+  const ZONE_NAMES   = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
+  const primaryColor = rec.zones.length > 0 ? (ZONE_COLORS[rec.zones[0]] ?? '#96d48a') : '#96d48a'
+  const isGood       = rec.type === 'good'
+
+  return (
+    <div style={{ marginBottom:14, padding:'14px 16px', borderRadius:12, background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`, border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`, animation:'fadeUp 0.4s ease both' }}>
+
+      {/* En-tête */}
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 10 : 0 }}>
+        <span style={{ fontSize:16 }}>{isGood ? '✨' : '🌿'}</span>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:11, color: isGood ? 'rgba(150,212,133,0.85)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
+            {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin vous parle'}
+          </div>
+        </div>
+        {/* Badges zones prioritaires */}
+        {!isGood && rec.zones.length > 0 && (
+          <div style={{ display:'flex', gap:5, flexShrink:0 }}>
+            {rec.zones.map(zoneId => (
+              <span key={zoneId} style={{ fontSize:9, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
+                {ZONE_NAMES[zoneId]}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Texte IA */}
+      {loading && (
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ display:'flex', gap:3 }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ width:4, height:4, borderRadius:'50%', background: isGood ? 'rgba(150,212,133,0.5)' : primaryColor + '80', animation:'navPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.2) + 's' }} />
+            ))}
+          </div>
+          <span style={{ fontSize:11, color:'rgba(180,200,180,0.35)', fontStyle:'italic' }}>Lecture de votre jardin…</span>
+        </div>
+      )}
+
+      {!loading && insight && (
+        <p style={{ fontSize:12, color:'rgba(220,235,220,0.70)', lineHeight:1.75, margin:0, fontStyle:'italic' }}>
+          {insight}
+        </p>
+      )}
+
+      {!loading && error && (
+        <p style={{ fontSize:11, color:'rgba(180,200,180,0.30)', lineHeight:1.6, margin:0, fontStyle:'italic' }}>
+          Votre jardin a été entendu. Explorez les rituels qui vous appellent aujourd'hui.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── RitualsSection ──────────────────────────────────────────
 function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant, onOpenBilan, bilanDoneToday }) {
   const isMobile = useIsMobile()
@@ -2611,38 +2709,10 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
           )}
         </div>
 
-        {/* ── Bannière de recommandation post-bilan ── */}
-        {bilanDoneToday && hasDegradation && (() => {
-          const rec = getBilanRecommendation(degradation)
-          const ZONE_COLORS = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
-          const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
-          if (rec.type === 'good') return (
-            <div style={{ marginBottom:14, padding:'12px 16px', borderRadius:12, background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.18)', display:'flex', gap:10, alignItems:'flex-start' }}>
-              <span style={{ fontSize:18, flexShrink:0 }}>✨</span>
-              <div>
-                <div style={{ fontSize:12, color:'rgba(150,212,133,0.85)', fontWeight:500, marginBottom:3 }}>Bel équilibre ce matin</div>
-                <div style={{ fontSize:11, color:'rgba(180,200,180,0.45)', lineHeight:1.6 }}>{rec.sub}</div>
-              </div>
-            </div>
-          )
-          const primaryColor = ZONE_COLORS[rec.zones[0]] ?? '#C8A882'
-          return (
-            <div style={{ marginBottom:14, padding:'12px 16px', borderRadius:12, background:`${primaryColor}08`, border:`1px solid ${primaryColor}30`, display:'flex', gap:10, alignItems:'flex-start' }}>
-              <span style={{ fontSize:18, flexShrink:0 }}>🌿</span>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:12, color:primaryColor, fontWeight:500, marginBottom:3 }}>Priorité du jour</div>
-                <div style={{ fontSize:11, color:'rgba(180,200,180,0.55)', lineHeight:1.7 }}>{rec.message}</div>
-                <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap' }}>
-                  {rec.zones.map(zoneId => (
-                    <span key={zoneId} style={{ fontSize:10, padding:'3px 10px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
-                      {ZONE_NAMES[zoneId]}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )
-        })()}
+        {/* ── Bannière insight IA post-bilan ── */}
+        {bilanDoneToday && hasDegradation && (
+          <BilanInsightCard degradation={degradation} />
+        )}
 
         {/* Grille des zones */}
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
