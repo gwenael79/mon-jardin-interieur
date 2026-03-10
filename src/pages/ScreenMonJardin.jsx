@@ -2569,7 +2569,7 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
 }
 
 // ── RitualsSection ──────────────────────────────────────────
-function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant, onOpenBilan }) {
+function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant, onOpenBilan, bilanDoneToday }) {
   const isMobile = useIsMobile()
   const [showQuiz,   setShowQuiz]   = useState(false)
   const [activeZone, setActiveZone] = useState(null)
@@ -2609,7 +2609,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
         </div>
 
         {/* ── Bannière de recommandation post-bilan ── */}
-        {hasDegradation && (() => {
+        {bilanDoneToday && hasDegradation && (() => {
           const rec = getBilanRecommendation(degradation)
           const ZONE_COLORS = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
           const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
@@ -3323,6 +3323,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           onQuizComplete={handleQuizComplete}
           todayPlant={plant}
           onOpenBilan={onOpenBilan}
+          bilanDoneToday={bilanDoneToday}
         />
 
         <BoiteAGraines userId={userId} />
