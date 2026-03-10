@@ -2569,7 +2569,7 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
 }
 
 // ── RitualsSection ──────────────────────────────────────────
-function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant }) {
+function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant, onOpenBilan }) {
   const isMobile = useIsMobile()
   const [showQuiz,   setShowQuiz]   = useState(false)
   const [activeZone, setActiveZone] = useState(null)
@@ -3322,6 +3322,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           onToggleRitual={handleToggleRitual}
           onQuizComplete={handleQuizComplete}
           todayPlant={plant}
+          onOpenBilan={onOpenBilan}
         />
 
         <BoiteAGraines userId={userId} />
