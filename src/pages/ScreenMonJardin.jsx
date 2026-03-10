@@ -307,7 +307,7 @@ let _svgN = 0
 function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
-  const W = 400, H = 340, cx = 200, gY = 252   // gY = groundY — plus de ciel au-dessus
+  const W = 400, H = 340, cx = 200, gY = 236   // gY = groundY — sol remonté pour voir la base
   const id  = 'g' + (++_svgN)   // unique prefix per instance, no hooks needed
 
   /* ── Soleil ── */
@@ -3351,14 +3351,14 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                     <div key={z.key}
                       className="ph-zone-row-new"
                       style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.07) + 's',
-                               display:'flex', flexDirection:'column', gap:4, minWidth:52, flex:'1 1 52px', maxWidth:90 }}>
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                        <span style={{ fontSize:8, color:'rgba(238,232,218,0.40)', letterSpacing:'.05em', textTransform:'uppercase' }}>
+                               display:'flex', flexDirection:'column', gap:5, minWidth:58, flex:'1 1 58px', maxWidth:110 }}>
+                      <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:4 }}>
+                        <span style={{ fontSize:7.5, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', textTransform:'uppercase', whiteSpace:'nowrap' }}>
                           {z.icon} {z.name}
                         </span>
-                        <span style={{ fontSize:8, fontFamily:"'Cormorant Garamond',serif", color: z.color, opacity:0.85 }}>{val}</span>
+                        <span style={{ fontSize:10, fontFamily:"'Cormorant Garamond',serif", color: z.color, fontWeight:400, lineHeight:1, flexShrink:0 }}>{val}<span style={{ fontSize:7, opacity:0.6 }}>%</span></span>
                       </div>
-                      <div className="ph-zone-track" style={{ height:2 }}>
+                      <div className="ph-zone-track" style={{ height:2.5 }}>
                         <div className="ph-zone-fill-new" />
                       </div>
                     </div>
