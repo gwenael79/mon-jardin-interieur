@@ -3388,8 +3388,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
             {/* Personnalisation */}
             <div className="ph-full-bottom">
-              <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
-                <span style={{ fontSize: isMobile ? 10 : 8, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', whiteSpace:'nowrap' }}>✦ Personnalisez votre fleur :</span>
+              <div style={{ display:'flex', alignItems:'center', gap: isMobile ? 4 : 6, flexWrap:'nowrap' }}>
+                <span style={{ fontSize: isMobile ? 8 : 8, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez votre fleur :</span>
                 {[
                   { lv:1, label:'Basique', badge:'🌱', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
                   { lv:2, label:'Cool',    badge:'🌿', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
@@ -3402,15 +3402,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                     <div key={cfg.lv}
                       onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
                       onTouchEnd={isUnlocked ? (e) => { e.preventDefault(); setGardenTier(cfg.lv); setShowGardenSettings(true) } : null}
-                      style={{ display:'flex', alignItems:'center', gap:3, padding: isMobile ? '5px 9px 5px 7px' : '3px 7px 3px 5px', borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default',
+                      style={{ display:'flex', alignItems:'center', gap: isMobile ? 2 : 3,
+                        padding: isMobile ? '2px 5px 2px 4px' : '3px 7px 3px 5px',
+                        borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default', flexShrink:0,
                         background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
                         border:`1px solid ${isPast ? 'rgba(255,255,255,0.05)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.07)'}`,
                         opacity: isPast ? 0.28 : isUnlocked ? 1 : 0.48,
-                        boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none', transition:'all .15s',
-                        minHeight: isMobile ? 36 : 'auto' }}>
-                      <span style={{ fontSize: isMobile ? 11 : 9 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
-                      <span style={{ fontSize: isMobile ? 9 : 7.5, color: isPast ? 'rgba(255,255,255,0.16)' : cfg.colorU }}>{cfg.label}</span>
-                      {!isUnlocked && <span style={{ fontSize: isMobile ? 8 : 6.5 }}>🔒</span>}
+                        boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none', transition:'all .15s' }}>
+                      <span style={{ fontSize: isMobile ? 8 : 9 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
+                      <span style={{ fontSize: isMobile ? 7 : 7.5, color: isPast ? 'rgba(255,255,255,0.16)' : cfg.colorU }}>{cfg.label}</span>
+                      {!isUnlocked && <span style={{ fontSize: 6 }}>🔒</span>}
                     </div>
                   )
                 })}
