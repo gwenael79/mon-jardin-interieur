@@ -3339,69 +3339,67 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             </div>
           </div>
 
-          {/* Zones + Personnalisation — sous la fleur, layout 2 colonnes */}
+          {/* Zones + Personnalisation — sous la fleur */}
           <div className="ph-full-bottom">
-            <div style={{ display:'flex', gap:14, alignItems:'flex-start' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
 
-              {/* Colonne gauche — zones en grille 2×3 */}
-              <div style={{ flex:'1 1 0', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'5px 10px' }}>
+              {/* Zones — ligne horizontale compacte */}
+              <div style={{ display:'flex', gap:10, flex:'1 1 0', minWidth:0, flexWrap:'wrap' }}>
                 {ZONES.map((z, i) => {
                   const val = plant?.[z.key] ?? 5
                   return (
                     <div key={z.key}
                       className="ph-zone-row-new"
                       style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.07) + 's',
-                               display:'flex', alignItems:'center', gap:5 }}>
-                      <span style={{ fontSize:9, opacity:0.7, flexShrink:0 }}>{z.icon}</span>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:7, color:'rgba(238,232,218,0.35)', letterSpacing:'.06em', marginBottom:2, textTransform:'uppercase' }}>{z.name}</div>
-                        <div className="ph-zone-track" style={{ height:2 }}>
-                          <div className="ph-zone-fill-new" />
-                        </div>
+                               display:'flex', flexDirection:'column', gap:4, minWidth:52, flex:'1 1 52px', maxWidth:90 }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <span style={{ fontSize:8, color:'rgba(238,232,218,0.40)', letterSpacing:'.05em', textTransform:'uppercase' }}>
+                          {z.icon} {z.name}
+                        </span>
+                        <span style={{ fontSize:8, fontFamily:"'Cormorant Garamond',serif", color: z.color, opacity:0.85 }}>{val}</span>
                       </div>
-                      <span style={{ fontSize:9, fontFamily:"'Cormorant Garamond',serif", color:'rgba(255,255,255,0.38)', width:18, textAlign:'right', flexShrink:0 }}>{val}</span>
+                      <div className="ph-zone-track" style={{ height:2 }}>
+                        <div className="ph-zone-fill-new" />
+                      </div>
                     </div>
                   )
                 })}
               </div>
 
-              {/* Séparateur vertical */}
-              <div style={{ width:1, alignSelf:'stretch', background:'rgba(255,255,255,0.07)', flexShrink:0 }} />
+              {/* Séparateur */}
+              <div style={{ width:1, height:32, background:'rgba(255,255,255,0.07)', flexShrink:0 }} />
 
-              {/* Colonne droite — personnalisation compacte */}
-              <div style={{ flexShrink:0, display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
-                <div style={{ fontSize:7, color:'rgba(238,232,218,0.28)', letterSpacing:'.10em', textTransform:'uppercase', whiteSpace:'nowrap' }}>✦ Ma fleur</div>
-                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
-                  {[
-                    { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ',                            colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',   bdU:'rgba(100,180,80,0.30)'  },
-                    { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2 — 8 couleurs et 5 formes',      colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)',  bdU:'rgba(80,160,220,0.30)'  },
-                    { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3 — 15 couleurs et 10 formes',    colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)',  bdU:'rgba(220,180,60,0.30)'  },
-                  ].map(cfg => {
-                    const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                    const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                    const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                    return (
-                      <div
-                        key={cfg.lv}
-                        onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
-                        style={{
-                          display:'flex', alignItems:'center', gap:5,
-                          padding:'4px 9px 4px 7px', borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default',
-                          background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${isPast ? 'rgba(255,255,255,0.06)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.08)'}`,
-                          opacity: isPast ? 0.35 : isUnlocked ? 1 : 0.55,
-                          boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none',
-                          transition:'all .15s',
-                        }}
-                      >
-                        <span style={{ fontSize:11 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
-                        <span style={{ fontSize:8, color: isPast ? 'rgba(255,255,255,0.20)' : isUnlocked ? cfg.colorU : 'rgba(255,255,255,0.22)', letterSpacing:'.04em' }}>{cfg.label}</span>
-                        {!isUnlocked && <span style={{ fontSize:7, opacity:0.5 }}>🔒</span>}
-                        {isCurrent  && <span style={{ fontSize:7, color:cfg.colorU, opacity:0.7 }}>✦</span>}
-                      </div>
-                    )
-                  })}
-                </div>
+              {/* Personnalisation — 3 pilules horizontales */}
+              <div style={{ display:'flex', alignItems:'center', gap:5, flexShrink:0 }}>
+                <span style={{ fontSize:7, color:'rgba(238,232,218,0.25)', letterSpacing:'.08em', textTransform:'uppercase', marginRight:2 }}>✦</span>
+                {[
+                  { lv:1, label:'Basique', badge:'🌱', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
+                  { lv:2, label:'Cool',    badge:'🌿', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
+                  { lv:3, label:'Extra',   badge:'🌟', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
+                ].map(cfg => {
+                  const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                  const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                  const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                  return (
+                    <div key={cfg.lv}
+                      onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
+                      onTouchEnd={isUnlocked ? (e) => { e.preventDefault(); setGardenTier(cfg.lv); setShowGardenSettings(true) } : null}
+                      style={{
+                        display:'flex', alignItems:'center', gap:4,
+                        padding:'3px 8px 3px 6px', borderRadius:20,
+                        cursor: isUnlocked ? 'pointer' : 'default',
+                        background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
+                        border:`1px solid ${isPast ? 'rgba(255,255,255,0.05)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.07)'}`,
+                        opacity: isPast ? 0.30 : isUnlocked ? 1 : 0.50,
+                        boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none',
+                        transition:'all .15s',
+                      }}>
+                      <span style={{ fontSize:10 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
+                      <span style={{ fontSize:8, color: isPast ? 'rgba(255,255,255,0.18)' : cfg.colorU, letterSpacing:'.03em' }}>{cfg.label}</span>
+                      {!isUnlocked && <span style={{ fontSize:7 }}>🔒</span>}
+                    </div>
+                  )
+                })}
               </div>
 
             </div>

@@ -325,7 +325,7 @@ body { background: var(--bg); }
 .ph-full-overlay .ph-score-pct   { font-size: 22px; color: rgba(242,237,224,0.55); }
 .ph-full-overlay .ph-score-label { color: rgba(242,237,224,0.40); }
 .ph-full-overlay .ph-score-date  { color: rgba(242,237,224,0.28); }
-.ph-full-bottom { padding: 10px 14px 12px; background: linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99)); border-radius: 0 0 16px 16px; border-top: 1px solid rgba(150,212,133,0.08); }
+.ph-full-bottom { padding: 9px 14px 11px; background: linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99)); border-radius: 0 0 16px 16px; border-top: 1px solid rgba(150,212,133,0.08); }
 
 .ph-vitality-score { display: flex; flex-direction: column; gap: 2px; }
 .ph-score-number { display: flex; align-items: baseline; gap: 3px; line-height: 1; }
