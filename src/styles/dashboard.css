@@ -315,6 +315,18 @@ body { background: var(--bg); }
 .ph-col-flower svg { display: block; width: 100%; height: 100%; }
 .ph-col-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 22px 16px; background: linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99)); border-left: 1px solid rgba(150,212,133,0.10); border-radius: 0 20px 20px 0; position: relative; overflow: hidden; }
 .ph-col-info::before { content:''; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; background: radial-gradient(circle, rgba(150,212,133,0.07), transparent 70%); pointer-events:none; }
+
+/* ── PLANT HERO : nouveau layout pleine largeur ── */
+.ph-full { padding: 0; overflow: hidden; flex-shrink: 0; }
+.ph-full-flower { position: relative; width: 100%; height: 420px; overflow: hidden; background: rgba(14,28,14,0.95); border-radius: 16px 16px 0 0; }
+.ph-full-flower svg { display: block; width: 100%; height: 100%; }
+.ph-full-overlay { position: absolute; top: 16px; left: 18px; z-index: 10; pointer-events: none; }
+.ph-full-overlay .ph-score-digits { font-size: 54px; }
+.ph-full-overlay .ph-score-pct   { font-size: 22px; color: rgba(242,237,224,0.55); }
+.ph-full-overlay .ph-score-label { color: rgba(242,237,224,0.40); }
+.ph-full-overlay .ph-score-date  { color: rgba(242,237,224,0.28); }
+.ph-full-bottom { padding: 10px 14px 12px; background: linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99)); border-radius: 0 0 16px 16px; border-top: 1px solid rgba(150,212,133,0.08); }
+
 .ph-vitality-score { display: flex; flex-direction: column; gap: 2px; }
 .ph-score-number { display: flex; align-items: baseline; gap: 3px; line-height: 1; }
 .ph-score-digits { font-family: 'Cormorant Garamond', serif; font-size: 58px; font-weight: 300; color: #e8f5e0; letter-spacing: -2px; line-height: 1; }
@@ -642,6 +654,8 @@ body { background: var(--bg); }
   }
   .ph-score-digits { font-size: 42px; }
   .ph-score-pct    { font-size: 20px; }
+  /* ── PLANT HERO full-width mobile ── */
+  .ph-full-flower { height: 300px; }
 
   /* ── HISTORIQUE ── */
   .history-chart { padding: 12px; }
@@ -689,6 +703,7 @@ body { background: var(--bg); }
   .tb-title { font-size: 15px; }
   .mj-left { padding: 10px 10px 76px; }
   .ph-col-flower { height: 170px; }
+  .ph-full-flower { height: 260px; }
   .ph-score-digits { font-size: 36px; }
   .week-grid { gap: 3px; }
   .wd-dot { width: 24px; height: 24px; font-size: 9px; }

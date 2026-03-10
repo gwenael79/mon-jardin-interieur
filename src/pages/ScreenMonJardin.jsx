@@ -307,7 +307,7 @@ let _svgN = 0
 function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
-  const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
+  const W = 400, H = 340, cx = 200, gY = 252   // gY = groundY — plus de ciel au-dessus
   const id  = 'g' + (++_svgN)   // unique prefix per instance, no hooks needed
 
   /* ── Soleil ── */
@@ -319,7 +319,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const isDay = nowH >= riseH && nowH <= setH
   const isG   = isDay && (Math.abs(nowH - riseH) < 1.2 || Math.abs(nowH - setH) < 1.2)
   const sunX  = 30 + dp * (W - 60)
-  const sunY  = 18 + 58 * (1 - Math.sin(dp * Math.PI))
+  const sunY  = 10 + 95 * (1 - Math.sin(dp * Math.PI))   // arc plus ample dans le ciel agrandi
 
   /* ── Couleurs pétales personnalisées ── */
   const h2r = h => { const v = parseInt((h || '#e8789a').replace('#',''), 16); return [(v>>16)&255,(v>>8)&255,v&255] }
@@ -726,7 +726,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const rayAnim   = { animation: 'svgRay 2.8s ease-in-out infinite' }
 
   return (
-    <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" fill="none" style={{display:'block'}}>
+    <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMin slice" fill="none" style={{display:'block'}}>
       <defs>
         <style>{`
           @keyframes svgSway   { 0%,100%{ transform:rotate(0deg) } 35%{ transform:rotate(2deg) } 70%{ transform:rotate(-1.5deg) } }
@@ -2624,17 +2624,22 @@ function BilanInsightCard({ degradation }) {
         <span style={{ fontSize:16 }}>{isGood ? '✨' : '🌿'}</span>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:11, color: isGood ? 'rgba(150,212,133,0.85)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
-            {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin vous parle'}
+            {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin intérieur vous parle'}
           </div>
         </div>
         {/* Badges zones prioritaires */}
         {!isGood && rec.zones.length > 0 && (
-          <div style={{ display:'flex', gap:5, flexShrink:0 }}>
-            {rec.zones.map(zoneId => (
-              <span key={zoneId} style={{ fontSize:9, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
-                {ZONE_NAMES[zoneId]}
-              </span>
-            ))}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
+            <div style={{ fontSize:8, color:'rgba(238,232,218,0.38)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
+              Aujourd'hui, zone(s) à prendre soin&nbsp;:
+            </div>
+            <div style={{ display:'flex', gap:5 }}>
+              {rec.zones.map(zoneId => (
+                <span key={zoneId} style={{ fontSize:9, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
+                  {ZONE_NAMES[zoneId]}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -2702,7 +2707,8 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
           {bilanDoneToday && hasDegradation && (
             <button
               onClick={() => onOpenBilan?.()}
-              style={{ fontSize:10, color:'rgba(180,200,180,0.5)', background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:36, touchAction:'manipulation' }}
+              onTouchEnd={(e) => { e.preventDefault(); onOpenBilan?.(); }}
+              style={{ fontSize:10, color:'rgba(180,200,180,0.5)', background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:44, touchAction:'manipulation' }}
             >
               ↺ Refaire le bilan
             </button>
@@ -3313,57 +3319,94 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     <div className="content">
     <div className="mj-layout">
       <div className="mj-left">
-        {/* Carte jardin 2 colonnes */}
-        <div className="plant-hero ph-2col">
-          <div className="ph-col-flower">
+        {/* Carte jardin — fleur pleine largeur */}
+        <div className="plant-hero ph-full">
+
+          {/* Fleur pleine largeur avec overlay vitalité */}
+          <div className="ph-full-flower">
             <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
-          </div>
-          <div className="ph-col-info">
-            <div className="ph-vitality-score">
-              <div className="ph-score-number">
-                <span className="ph-score-digits">{plant?.health ?? 5}</span>
-                <span className="ph-score-pct">%</span>
+
+            {/* Score vitalité — overlay haut-gauche */}
+            <div className="ph-full-overlay">
+              <div className="ph-vitality-score">
+                <div className="ph-score-number">
+                  <span className="ph-score-digits">{plant?.health ?? 5}</span>
+                  <span className="ph-score-pct">%</span>
+                </div>
+                <div className="ph-score-label">Vitalité</div>
+                <div className="ph-score-date">{todayLabel}</div>
               </div>
-              <div className="ph-score-label">Vitalité</div>
-              <div className="ph-score-date">{todayLabel}</div>
             </div>
-            <div className="ph-zones-list">
-              {ZONES.map((z, i) => {
-                const val = plant?.[z.key] ?? 5
-                return (
-                  <div key={z.key} className="ph-zone-row-new" style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.08) + 's' }}>
-                    <span className="ph-zone-icon-new">{z.icon}</span>
-                    <div className="ph-zone-track">
-                      <div className="ph-zone-fill-new" />
+          </div>
+
+          {/* Zones + Personnalisation — sous la fleur, layout 2 colonnes */}
+          <div className="ph-full-bottom">
+            <div style={{ display:'flex', gap:14, alignItems:'flex-start' }}>
+
+              {/* Colonne gauche — zones en grille 2×3 */}
+              <div style={{ flex:'1 1 0', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'5px 10px' }}>
+                {ZONES.map((z, i) => {
+                  const val = plant?.[z.key] ?? 5
+                  return (
+                    <div key={z.key}
+                      className="ph-zone-row-new"
+                      style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.07) + 's',
+                               display:'flex', alignItems:'center', gap:5 }}>
+                      <span style={{ fontSize:9, opacity:0.7, flexShrink:0 }}>{z.icon}</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:7, color:'rgba(238,232,218,0.35)', letterSpacing:'.06em', marginBottom:2, textTransform:'uppercase' }}>{z.name}</div>
+                        <div className="ph-zone-track" style={{ height:2 }}>
+                          <div className="ph-zone-fill-new" />
+                        </div>
+                      </div>
+                      <span style={{ fontSize:9, fontFamily:"'Cormorant Garamond',serif", color:'rgba(255,255,255,0.38)', width:18, textAlign:'right', flexShrink:0 }}>{val}</span>
                     </div>
-                    <span className="ph-zone-pct-new">{val}</span>
-                  </div>
-                )
-              })}
-            </div>
-            {/* ── Personnalisation fleur ── */}
-            <div style={{ marginTop:12 }}>
-              <div style={{ fontSize:9, color:'rgba(238,232,218,0.38)', letterSpacing:'.12em', textTransform:'uppercase', marginBottom:8 }}>
-                ✦ Personnalisez votre fleur
+                  )
+                })}
               </div>
-              <div style={{ display:'flex', gap:6 }}>
-                {[
-                  { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
-                  { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2 — 8 couleurs et 5 formes', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
-                  { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3 — 15 couleurs et 10 formes', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
-                ].map(cfg => (
-                  <LevelBadge
-                    key={cfg.lv}
-                    {...cfg}
-                    unlocked={(profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                    isCurrent={(profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                    isPast={(profile?.level ?? 1) > cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                    onOpen={() => { setGardenTier(cfg.lv); setShowGardenSettings(true) }}
-                  />
-                ))}
+
+              {/* Séparateur vertical */}
+              <div style={{ width:1, alignSelf:'stretch', background:'rgba(255,255,255,0.07)', flexShrink:0 }} />
+
+              {/* Colonne droite — personnalisation compacte */}
+              <div style={{ flexShrink:0, display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
+                <div style={{ fontSize:7, color:'rgba(238,232,218,0.28)', letterSpacing:'.10em', textTransform:'uppercase', whiteSpace:'nowrap' }}>✦ Ma fleur</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                  {[
+                    { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ',                            colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',   bdU:'rgba(100,180,80,0.30)'  },
+                    { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2 — 8 couleurs et 5 formes',      colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)',  bdU:'rgba(80,160,220,0.30)'  },
+                    { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3 — 15 couleurs et 10 formes',    colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)',  bdU:'rgba(220,180,60,0.30)'  },
+                  ].map(cfg => {
+                    const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                    const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                    const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                    return (
+                      <div
+                        key={cfg.lv}
+                        onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
+                        style={{
+                          display:'flex', alignItems:'center', gap:5,
+                          padding:'4px 9px 4px 7px', borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default',
+                          background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${isPast ? 'rgba(255,255,255,0.06)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.08)'}`,
+                          opacity: isPast ? 0.35 : isUnlocked ? 1 : 0.55,
+                          boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none',
+                          transition:'all .15s',
+                        }}
+                      >
+                        <span style={{ fontSize:11 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
+                        <span style={{ fontSize:8, color: isPast ? 'rgba(255,255,255,0.20)' : isUnlocked ? cfg.colorU : 'rgba(255,255,255,0.22)', letterSpacing:'.04em' }}>{cfg.label}</span>
+                        {!isUnlocked && <span style={{ fontSize:7, opacity:0.5 }}>🔒</span>}
+                        {isCurrent  && <span style={{ fontSize:7, color:cfg.colorU, opacity:0.7 }}>✦</span>}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
+
             </div>
           </div>
+
         </div>
 
         {/* Bouton bilan — miroir du NavHub */}
