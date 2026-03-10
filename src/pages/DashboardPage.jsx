@@ -343,7 +343,7 @@ export default function DashboardPage() {
   }, [])
 
   const [pendingReports, setPendingReports] = useState(0)
-  const [active, setActive]                 = useState('nav')
+  const [active, setActive]                 = useState('jardin')
   const [showNavHub,         setShowNavHub]         = useState(false)
   const [showBilanModal,     setShowBilanModal]     = useState(false)
   const [bilanCompleted,     setBilanCompleted]     = useState(false)

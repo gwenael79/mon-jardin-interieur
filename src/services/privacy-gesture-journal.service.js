@@ -29,14 +29,60 @@ export const privacyService = {
 // ─── src/services/gesture.service.js ──────────────────────
 import { supabase as sb, query as q } from '../core/supabaseClient'
 
+const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
+
+/**
+ * Trouve la zone la plus faible d'un utilisateur en lisant son plant du jour.
+ * En cas d'égalité, prend la première zone de la liste (priorité aux racines).
+ * Retourne null si aucun plant trouvé.
+ */
+async function getWeakestZone(userId) {
+  const today = new Date().toISOString().slice(0, 10)
+
+  // Cherche le plant du jour, ou le plus récent si absent
+  const { data: plant } = await sb
+    .from('plants')
+    .select('zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (!plant) return null
+
+  // Trouve la clé avec la valeur minimale (première en cas d'égalité)
+  let weakestKey = ZONE_KEYS[0]
+  let weakestVal = plant[ZONE_KEYS[0]] ?? 100
+
+  for (const key of ZONE_KEYS) {
+    const val = plant[key] ?? 100
+    if (val < weakestVal) {
+      weakestVal = val
+      weakestKey = key
+    }
+  }
+
+  return weakestKey
+}
+
 export const gestureService = {
   /**
    * Envoie un geste de soin à un membre du cercle.
+   * Calcule automatiquement la zone la plus faible du destinataire
+   * et l'enregistre dans target_zone.
    */
   async send(fromUserId, toUserId, circleId, type) {
+    const target_zone = await getWeakestZone(toUserId)
+
     return q(
       sb.from('gestures')
-        .insert({ from_user_id: fromUserId, to_user_id: toUserId, circle_id: circleId, type })
+        .insert({
+          from_user_id: fromUserId,
+          to_user_id:   toUserId,
+          circle_id:    circleId,
+          type,
+          target_zone,          // zone la plus faible du destinataire
+        })
         .select()
         .single(),
       'sendGesture'
@@ -50,7 +96,7 @@ export const gestureService = {
     return q(
       sb.from('gestures')
         .select(`
-          id, type, created_at,
+          id, type, target_zone, created_at,
           users!from_user_id ( id, display_name, email, avatar_url )
         `)
         .eq('to_user_id', userId)

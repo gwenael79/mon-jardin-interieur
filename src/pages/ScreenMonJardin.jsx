@@ -1231,6 +1231,13 @@ const MEMBER_EMOJIS = { Marie:'🌸', Lucas:'🌿', Sofia:'🌾', Paul:'🌱', L
 const memberEmoji = n => MEMBER_EMOJIS[n] ?? '🌿'
 const GESTURE_EMOJI = { water:'💧', sun:'☀️', seed:'🌱' }
 const GESTURE_LABEL = { water:'une goutte', sun:'un rayon', seed:'une graine' }
+const ZONE_DISPLAY  = {
+  zone_racines:  { name:'Racines',  icon:'🌱', color:'#C8894A' },
+  zone_tige:     { name:'Tige',     icon:'🌿', color:'#5AAF78' },
+  zone_feuilles: { name:'Feuilles', icon:'🍃', color:'#4A9E5C' },
+  zone_fleurs:   { name:'Fleurs',   icon:'🌸', color:'#D4779A' },
+  zone_souffle:  { name:'Souffle',  icon:'🌬️', color:'#6ABBE4' },
+}
 
 function timeAgo(iso) {
   const m = Math.floor((Date.now() - new Date(iso)) / 60000)
@@ -1683,7 +1690,17 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
           {received.map(g => (
             <div key={g.id} className="gesture-item">
               <div className="gi-emoji">{GESTURE_EMOJI[g.type]}</div>
-              <div className="gi-text"><b>{g.users?.display_name ?? '?'}</b> t'a envoyé {GESTURE_LABEL[g.type]}</div>
+              <div className="gi-text" style={{ flex:1 }}>
+                <b>{g.users?.display_name ?? '?'}</b> t'a envoyé {GESTURE_LABEL[g.type]}
+                {g.target_zone && ZONE_DISPLAY[g.target_zone] && (
+                  <span style={{ marginLeft:6, fontSize:9, padding:'1px 6px', borderRadius:10,
+                    background:`${ZONE_DISPLAY[g.target_zone].color}20`,
+                    border:`1px solid ${ZONE_DISPLAY[g.target_zone].color}45`,
+                    color:ZONE_DISPLAY[g.target_zone].color }}>
+                    {ZONE_DISPLAY[g.target_zone].icon} {ZONE_DISPLAY[g.target_zone].name}
+                  </span>
+                )}
+              </div>
               <div className="gi-time">{timeAgo(g.created_at)}</div>
             </div>
           ))}
@@ -2747,7 +2764,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
         {/* ── Bannière insight IA post-bilan — rendue dans mj-right ── */}
 
         {/* Grille des zones */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: isMobile ? 8 : 9 }}>
           {sortedZones.map((zoneId, index) => {
             const zone      = PLANT_ZONES[zoneId]
             const rituals   = PLANT_RITUALS[zoneId] || []
@@ -2756,23 +2773,66 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
             const dbKey     = ZONE_DB_KEY[zoneId]
             const health    = todayPlant?.[dbKey] ?? Math.max(5, 100 - deg)
             const isPriority= hasDegradation && deg >= 65 && doneCnt === 0
-            const isFirst   = hasDegradation && index === 0 && deg >= 60
+            const allDone   = doneCnt === rituals.length && rituals.length > 0
+            const zoneIcons = { roots:'🌱', stem:'🌿', leaves:'🍃', flowers:'🌸', breath:'🌬️' }
+
             return (
               <button key={zoneId} onClick={() => setActiveZone(zoneId)}
-                style={{ padding: isMobile ? '7px 12px' : '13px 14px', borderRadius:13, textAlign:'left', cursor:'pointer', background: isPriority ? `${zone.color}10` : 'rgba(255,255,255,0.04)', border:`1px solid ${isPriority ? zone.color + '40' : 'rgba(255,255,255,0.09)'}`, width:'100%', display:'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? 8 : 0 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0, minWidth: isMobile ? 90 : 'auto' }}>
-                  <span style={{ fontSize: isMobile ? 10 : 11, color:zone.color, fontWeight:500, letterSpacing:'0.03em' }}>{zone.name}</span>
-                  <span style={{ fontSize: isMobile ? 11 : 12, color:zone.accent, fontWeight:500 }}>{health}%</span>
-                </div>
-                <div style={{ flex:1, height:2.5, borderRadius:2, background:'rgba(255,255,255,0.06)' }}>
-                  <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg,${zone.color}88,${zone.color})`, borderRadius:2, transition:'width .6s ease' }} />
-                </div>
-                {!isMobile && (
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:6 }}>
-                    <span style={{ fontSize:10, color:'rgba(180,200,180,0.28)' }}>{doneCnt}/{rituals.length} rituel{doneCnt !== 1 ? 's' : ''}</span>
-                    {isPriority && <span style={{ fontSize:9, color:zone.color, background:`${zone.color}20`, padding:'2px 7px', borderRadius:100 }}>{isFirst ? '🔴 Prioritaire' : '⚡'}</span>}
-                  </div>
+                style={{
+                  position:'relative', overflow:'hidden',
+                  padding: isMobile ? '12px 12px 10px' : '14px 14px 12px',
+                  borderRadius:14, textAlign:'left', cursor:'pointer',
+                  background: `linear-gradient(145deg, ${zone.color}12 0%, ${zone.bg} 60%)`,
+                  border:`1px solid ${isPriority ? zone.color + '50' : allDone ? zone.color + '35' : 'rgba(255,255,255,0.07)'}`,
+                  boxShadow: isPriority ? `0 0 18px ${zone.color}22, inset 0 1px 0 ${zone.color}18` : allDone ? `0 0 12px ${zone.color}18` : 'none',
+                  width:'100%', display:'flex', flexDirection:'column', gap:0,
+                  transition:'all .2s ease',
+                }}>
+
+                {/* Lueur de fond sur priorité */}
+                {isPriority && (
+                  <div style={{ position:'absolute', inset:0, background:`radial-gradient(ellipse at 50% 0%, ${zone.color}18 0%, transparent 70%)`, pointerEvents:'none' }} />
                 )}
+
+                {/* Ligne haute : icône + nom + badge */}
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
+                    <span style={{ fontSize: isMobile ? 16 : 18, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
+                    <span style={{ fontSize: isMobile ? 9 : 10, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:4 }}>{zone.name.toUpperCase()}</span>
+                    {!isMobile && <span style={{ fontSize:8.5, color:'rgba(255,255,255,0.22)', letterSpacing:'0.03em', marginTop:1 }}>{zone.subtitle}</span>}
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
+                    <span style={{ fontSize: isMobile ? 13 : 15, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize: isMobile ? 8 : 9, opacity:0.6 }}>%</span></span>
+                    {isPriority && !allDone && (
+                      <span style={{ fontSize:7, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>
+                    )}
+                    {allDone && (
+                      <span style={{ fontSize:9, color: zone.accent }}>✓</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Barre de progression */}
+                <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:6 }}>
+                  <div style={{
+                    height:'100%', width:`${health}%`,
+                    background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`,
+                    borderRadius:3, transition:'width .6s ease',
+                    boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none',
+                  }} />
+                </div>
+
+                {/* Compteur rituels */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <span style={{ fontSize: isMobile ? 8 : 8.5, color:'rgba(255,255,255,0.20)' }}>
+                    {doneCnt > 0
+                      ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span>
+                      : <span>{doneCnt}</span>
+                    }
+                    <span style={{ color:'rgba(255,255,255,0.15)' }}>/{rituals.length} rituels</span>
+                  </span>
+                  <span style={{ fontSize:9, color:'rgba(255,255,255,0.14)' }}>›</span>
+                </div>
               </button>
             )
           })}
