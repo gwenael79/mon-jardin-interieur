@@ -946,6 +946,99 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           })}
         </g>
 
+        {/* RACINES — fixes, clippées sous le sol, développement progressif */}
+        {r > 0.10 && (() => {
+          const rc1 = `rgba(${115+26*r},${72+22*r},${34+10*r},${0.38+0.20*r})`
+          const rc2 = `rgba(${92+20*r}, ${56+16*r},${26+8*r}, ${0.22+0.14*r})`
+          const rc3 = `rgba(${74+12*r}, ${44+10*r},${20+6*r}, ${0.12+0.08*r})`
+
+          // Seuils progressifs : 10 15 20 30 40 50 65 75 85
+          const depth    = r > 0.85 ? 90 : r > 0.75 ? 78 : r > 0.65 ? 66 : r > 0.50 ? 54 : r > 0.40 ? 42 : r > 0.30 ? 32 : r > 0.20 ? 22 : r > 0.15 ? 14 : 8
+          const maxLevel = r > 0.75 ? 4  : r > 0.50 ? 3  : r > 0.30 ? 2  : 1
+
+          const rng = s => { let v = Math.sin(s * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v) }
+
+          const buildRoot = (x0, y0, angle, len, width, level, seed) => {
+            if (level > maxLevel || len < 2.8 || width < 0.13) return []
+            const paths = []
+            const curveX = (rng(seed * 5.1) - 0.5) * len * 0.44
+            const curveY = rng(seed * 2.9) * len * 0.18
+            const rad    = angle * Math.PI / 180
+            const x1     = x0 + Math.cos(rad) * len
+            const y1     = y0 + Math.sin(rad) * len
+            const cpx    = (x0 + x1) / 2 + curveX
+            const cpy    = (y0 + y1) / 2 + curveY
+            const col    = level === 0 ? rc1 : level <= 2 ? rc2 : rc3
+            const sw     = Math.max(0.15, width * (1 - level * 0.16))
+            // Opacité douce — varie par graine, s'estompe en profondeur
+            const op     = Math.min(0.72, 0.28 + r * 0.24 - level * 0.06 + rng(seed * 9.3) * 0.10)
+            paths.push({ d:`M${x0.toFixed(1)},${y0.toFixed(1)} Q${cpx.toFixed(1)},${cpy.toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`, sw, col, op })
+
+            const nBranch = level < maxLevel ? (rng(seed * 7.7 + level) > 0.38 ? 2 : 1) : 0
+            for (let b = 0; b < nBranch; b++) {
+              const sign = b === 0 ? 1 : -1
+              const dAng = (14 + rng(seed * 11.3 + b + level * 3) * 40) * sign * (0.65 + rng(seed * 2.1 + b) * 0.7)
+              const cLen = len * (0.46 + rng(seed * 4.7 + b) * 0.28)
+              const cW   = width * (0.48 + rng(seed * 6.1 + b) * 0.18)
+              paths.push(...buildRoot(x1, y1, angle + dAng, cLen, cW, level + 1, seed * 29.3 + b * 19 + level * 11))
+            }
+            return paths
+          }
+
+          const rootDefs = [
+            { angle: 92,  len: depth * 0.90, w: 1.9 + r * 1.1, s: 1.0 },
+            ...(r > 0.15 ? [{ angle: 116, len: depth * 0.74, w: 1.5 + r * 0.9, s: 2.4 }] : []),
+            ...(r > 0.20 ? [{ angle: 71,  len: depth * 0.78, w: 1.6 + r * 0.9, s: 3.8 }] : []),
+            ...(r > 0.30 ? [{ angle: 136, len: depth * 0.62, w: 1.2 + r * 0.7, s: 5.2 }, { angle: 57, len: depth * 0.65, w: 1.3 + r * 0.7, s: 6.9 }] : []),
+            ...(r > 0.40 ? [{ angle: 151, len: depth * 0.52, w: 1.0 + r * 0.5, s: 8.1 }] : []),
+            ...(r > 0.50 ? [{ angle: 43,  len: depth * 0.54, w: 1.0 + r * 0.5, s: 9.6 }] : []),
+            ...(r > 0.65 ? [{ angle: 161, len: depth * 0.44, w: 0.8 + r * 0.3, s: 11.0 }, { angle: 33, len: depth * 0.46, w: 0.8 + r * 0.3, s: 12.3 }] : []),
+            ...(r > 0.75 ? [{ angle: 103, len: depth * 0.38, w: 0.7 + r * 0.3, s: 13.5 }] : []),
+            ...(r > 0.85 ? [{ angle: 83,  len: depth * 0.42, w: 0.7 + r * 0.2, s: 14.8 }, { angle: 129, len: depth * 0.36, w: 0.6 + r * 0.2, s: 15.9 }] : []),
+          ]
+
+          // Origine légèrement sous la surface pour cacher la jonction avec la tige animée
+          const originY = gY + 10
+          const allPaths = rootDefs.flatMap(({ angle, len, w, s }) => buildRoot(cx, originY, angle, len, w, 0, s))
+
+          const hairs = r > 0.65 ? Array.from({ length: Math.round(r * 16) }, (_, i) => {
+            const hx = cx + (rng(i * 3.3 + 0.5) - 0.5) * depth * 1.0
+            const hy = gY + 14 + rng(i * 5.7 + 1.3) * depth * 0.78
+            const ha = 72 + rng(i * 8.1 + 2.7) * 136
+            const hl = 2 + rng(i * 11.9 + 0.7) * 5.5
+            const hr = ha * Math.PI / 180
+            return { x0:hx, y0:hy, x1:hx+Math.cos(hr)*hl, y1:hy+Math.sin(hr)*hl, op: 0.10 + rng(i*7.3)*0.14 }
+          }) : []
+
+          const blurId = id + 'rb'
+          const clipId = id + 'rc'
+
+          return (
+            <g>
+              <defs>
+                {/* clipPath : cache tout ce qui dépasse au-dessus du sol */}
+                <clipPath id={clipId}>
+                  <rect x={0} y={gY + 2} width={W} height={H} />
+                </clipPath>
+                {/* Flou doux pour diffuser les contours */}
+                <filter id={blurId} x="-30%" y="-10%" width="160%" height="120%">
+                  <feGaussianBlur stdDeviation="0.9"/>
+                </filter>
+              </defs>
+              <g clipPath={`url(#${clipId})`} filter={`url(#${blurId})`}>
+                {allPaths.map((p, i) => (
+                  <path key={i} d={p.d} stroke={p.col} strokeWidth={p.sw}
+                    strokeLinecap="round" strokeLinejoin="round" fill="none" opacity={p.op} />
+                ))}
+                {hairs.map((h, i) => (
+                  <line key={'h'+i} x1={h.x0} y1={h.y0} x2={h.x1} y2={h.y1}
+                    stroke={rc3} strokeWidth={0.25} strokeLinecap="round" opacity={h.op} />
+                ))}
+              </g>
+            </g>
+          )
+        })()}
+
         {/* PLANTE */}
         <g style={plantSway}>
 
@@ -990,105 +1083,6 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               Tige + premières vraies feuilles, pas encore de fleur */}
           {(stage === 'young' || stage === 'bud' || stage === 'flower') && (
             <>
-              {/* Racines — système racinaire progressif et fin */}
-              {r > 0.10 && (() => {
-                // Racine pivot centrale
-                const pivotD = r > 0.55 ? 58 : r > 0.42 ? 44 : r > 0.25 ? 30 : 16
-                // Racines latérales principales (paires gauche/droite)
-                const lateralCount = r < 0.20 ? 0 : r < 0.36 ? 1 : r < 0.50 ? 2 : r < 0.68 ? 3 : 4
-                // Capillaires visibles à partir de 50%
-                const showCapillary = r > 0.50
-
-                return (
-                  <g opacity={0.38+0.30*r}>
-                    {/* Pivot central — racine principale */}
-                    <path
-                      d={`M${cx},${gY+2} C${cx-2},${gY+pivotD*0.45} ${cx+2},${gY+pivotD*0.72} ${cx},${gY+pivotD}`}
-                      stroke={rootC} strokeWidth={2.2+1.4*r} strokeLinecap="round" fill="none"
-                    />
-                    {/* Radicelle centrale fine */}
-                    {r > 0.38 && (
-                      <path
-                        d={`M${cx},${gY+pivotD*0.55} C${cx-1},${gY+pivotD*0.75} ${cx+1},${gY+pivotD*0.90} ${cx},${gY+pivotD+10}`}
-                        stroke={rootC} strokeWidth={0.7} strokeLinecap="round" fill="none" opacity={0.5}
-                      />
-                    )}
-
-                    {/* Racines latérales par paires */}
-                    {Array.from({ length: lateralCount }, (_, i) => {
-                      const t = 0.18 + (i / Math.max(lateralCount - 1, 1)) * 0.52
-                      const baseY = gY + pivotD * t
-                      const spread = 14 + i * 10 + r * 12
-                      const dropL  = 12 + i * 6 + r * 10
-                      const dropR  = 10 + i * 7 + r * 9
-                      const ctrlL  = spread * 0.6
-                      const ctrlR  = spread * 0.55
-                      // Épaisseur décroissante selon profondeur
-                      const sw = 1.2 + (1 - i / lateralCount) * 0.9 * r
-
-                      return (
-                        <g key={i}>
-                          {/* Gauche */}
-                          <path
-                            d={`M${cx},${baseY} C${cx-ctrlL},${baseY+4} ${cx-spread},${baseY+dropL*0.6} ${cx-spread+4},${baseY+dropL}`}
-                            stroke={rootC} strokeWidth={sw} strokeLinecap="round" fill="none"
-                          />
-                          {/* Droite */}
-                          <path
-                            d={`M${cx},${baseY} C${cx+ctrlR},${baseY+3} ${cx+spread-2},${baseY+dropR*0.55} ${cx+spread-6},${baseY+dropR}`}
-                            stroke={rootC} strokeWidth={sw * 0.9} strokeLinecap="round" fill="none"
-                          />
-                          {/* Capillaires gauche */}
-                          {showCapillary && i >= 1 && (
-                            <path
-                              d={`M${cx-spread*0.55},${baseY+dropL*0.45} C${cx-spread*0.8},${baseY+dropL*0.5} ${cx-spread*0.9+3},${baseY+dropL*0.65} ${cx-spread*0.85},${baseY+dropL*0.80}`}
-                              stroke={rootC} strokeWidth={0.5} strokeLinecap="round" fill="none" opacity={0.55}
-                            />
-                          )}
-                          {/* Capillaires droite */}
-                          {showCapillary && i >= 1 && (
-                            <path
-                              d={`M${cx+spread*0.50},${baseY+dropR*0.40} C${cx+spread*0.75},${baseY+dropR*0.48} ${cx+spread*0.85-2},${baseY+dropR*0.62} ${cx+spread*0.80},${baseY+dropR*0.78}`}
-                              stroke={rootC} strokeWidth={0.5} strokeLinecap="round" fill="none" opacity={0.50}
-                            />
-                          )}
-                        </g>
-                      )
-                    })}
-
-                    {/* Radicelles fines en réseau — à partir de 60% */}
-                    {r > 0.60 && [
-                      [cx - 8,  gY + pivotD * 0.30, -12, 8],
-                      [cx + 6,  gY + pivotD * 0.42,  10, 7],
-                      [cx - 4,  gY + pivotD * 0.62,  -8, 9],
-                      [cx + 10, gY + pivotD * 0.70,   9, 8],
-                    ].map(([bx, by, dx, dy], i) => (
-                      <path key={i}
-                        d={`M${bx},${by} Q${bx + dx * 0.5},${by + dy * 0.4} ${bx + dx},${by + dy}`}
-                        stroke={rootC} strokeWidth={0.4} strokeLinecap="round" fill="none" opacity={0.40 + 0.18 * r}
-                      />
-                    ))}
-
-                    {/* Poils absorbants — présence fine à 75%+ */}
-                    {r > 0.75 && [
-                      [cx - 22, gY + 22, -3, 5],
-                      [cx - 18, gY + 30,  2, 4],
-                      [cx - 28, gY + 34, -2, 6],
-                      [cx + 20, gY + 24,  3, 5],
-                      [cx + 16, gY + 32, -2, 4],
-                      [cx + 26, gY + 36,  2, 5],
-                      [cx - 6,  gY + 48, -3, 4],
-                      [cx + 4,  gY + 50,  2, 5],
-                    ].map(([bx, by, dx, dy], i) => (
-                      <path key={i}
-                        d={`M${bx},${by} L${bx + dx},${by + dy}`}
-                        stroke={rootC} strokeWidth={0.35} strokeLinecap="round" fill="none" opacity={0.35}
-                      />
-                    ))}
-                  </g>
-                )
-              })()}
-
               {/* Tige principale */}
               <path d={`M${cx},${gY} C${cx-6},${Math.round(sMY+14)} ${cx+7},${Math.round(sMY-14)} ${cx},${sTY}`}
                 stroke={stemC} strokeWidth={2.2+2*r} strokeLinecap="round" fill="none"/>
@@ -3371,52 +3365,34 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               </div>
             </div>
 
-            {/* Zones + Personnalisation */}
+            {/* Personnalisation */}
             <div className="ph-full-bottom">
-              <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-                <div style={{ display:'flex', gap: isMobile ? 6 : 8, flex:'1 1 0', minWidth:0, flexWrap:'wrap' }}>
-                  {ZONES.map((z, i) => {
-                    const val = plant?.[z.key] ?? 5
-                    return (
-                      <div key={z.key} className="ph-zone-row-new"
-                        style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.07) + 's',
-                                 display:'flex', flexDirection:'column', gap:4, minWidth:44, flex:'1 1 44px' }}>
-                        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:3 }}>
-                          <span style={{ fontSize: isMobile ? 8 : 7, color:'rgba(238,232,218,0.36)', letterSpacing:'.05em', textTransform:'uppercase', whiteSpace:'nowrap' }}>{z.icon} {z.name}</span>
-                          <span style={{ fontSize: isMobile ? 10 : 9, fontFamily:"'Cormorant Garamond',serif", color: z.color, flexShrink:0 }}>{val}<span style={{ fontSize: isMobile ? 7 : 6.5, opacity:0.6 }}>%</span></span>
-                        </div>
-                        <div className="ph-zone-track" style={{ height:2 }}><div className="ph-zone-fill-new" /></div>
-                      </div>
-                    )
-                  })}
-                </div>
-                <div style={{ width:1, height:28, background:'rgba(255,255,255,0.07)', flexShrink:0 }} />
-                <div style={{ display:'flex', gap:4, flexShrink:0 }}>
-                  {[
-                    { lv:1, label:'Basique', badge:'🌱', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
-                    { lv:2, label:'Cool',    badge:'🌿', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
-                    { lv:3, label:'Extra',   badge:'🌟', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
-                  ].map(cfg => {
-                    const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                    const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                    const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                    return (
-                      <div key={cfg.lv}
-                        onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
-                        onTouchEnd={isUnlocked ? (e) => { e.preventDefault(); setGardenTier(cfg.lv); setShowGardenSettings(true) } : null}
-                        style={{ display:'flex', alignItems:'center', gap:3, padding: isMobile ? '5px 9px 5px 7px' : '3px 7px 3px 5px', borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default',
-                          background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
-                          border:`1px solid ${isPast ? 'rgba(255,255,255,0.05)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.07)'}`,
-                          opacity: isPast ? 0.28 : isUnlocked ? 1 : 0.48,
-                          boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none', transition:'all .15s',
-                          minHeight: isMobile ? 36 : 'auto' }}>
-                        <span style={{ fontSize: isMobile ? 11 : 9 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
-                        <span style={{ fontSize: isMobile ? 9 : 7.5, color: isPast ? 'rgba(255,255,255,0.16)' : cfg.colorU }}>{cfg.label}</span>
-                        {!isUnlocked && <span style={{ fontSize: isMobile ? 8 : 6.5 }}>🔒</span>}
-                      </div>
-                    )
-                  })}
-                </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                <span style={{ fontSize: isMobile ? 10 : 8, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', whiteSpace:'nowrap' }}>✦ Personnalisez votre fleur :</span>
+                {[
+                  { lv:1, label:'Basique', badge:'🌱', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
+                  { lv:2, label:'Cool',    badge:'🌿', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
+                  { lv:3, label:'Extra',   badge:'🌟', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
+                ].map(cfg => {
+                  const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                  const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                  const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                  return (
+                    <div key={cfg.lv}
+                      onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
+                      onTouchEnd={isUnlocked ? (e) => { e.preventDefault(); setGardenTier(cfg.lv); setShowGardenSettings(true) } : null}
+                      style={{ display:'flex', alignItems:'center', gap:3, padding: isMobile ? '5px 9px 5px 7px' : '3px 7px 3px 5px', borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default',
+                        background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
+                        border:`1px solid ${isPast ? 'rgba(255,255,255,0.05)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.07)'}`,
+                        opacity: isPast ? 0.28 : isUnlocked ? 1 : 0.48,
+                        boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none', transition:'all .15s',
+                        minHeight: isMobile ? 36 : 'auto' }}>
+                      <span style={{ fontSize: isMobile ? 11 : 9 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
+                      <span style={{ fontSize: isMobile ? 9 : 7.5, color: isPast ? 'rgba(255,255,255,0.16)' : cfg.colorU }}>{cfg.label}</span>
+                      {!isUnlocked && <span style={{ fontSize: isMobile ? 8 : 6.5 }}>🔒</span>}
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
