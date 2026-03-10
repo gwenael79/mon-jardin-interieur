@@ -2388,12 +2388,46 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
 }
 
 // ── DailyQuizModal ──────────────────────────────────────────
+// ── Calcule les zones prioritaires depuis la dégradation ──────────────────────
+function getBilanRecommendation(degradation) {
+  const ZONE_LABELS = {
+    roots:   { name:'les Racines',  emoji:'🌿', desc:'ancrage et énergie vitale' },
+    stem:    { name:'la Tige',      emoji:'🌱', desc:'flexibilité et corps' },
+    leaves:  { name:'les Feuilles', emoji:'🍃', desc:'lien aux autres et humeur' },
+    flowers: { name:'les Fleurs',   emoji:'🌸', desc:'rapport à soi' },
+    breath:  { name:'le Souffle',   emoji:'🌬️', desc:'stress et présence' },
+  }
+  // Trie les zones par dégradation décroissante
+  const sorted = Object.entries(degradation)
+    .sort((a, b) => b[1] - a[1])
+  const top = sorted.slice(0, 2).filter(([, v]) => v >= 40)
+  const allGood = sorted[0][1] < 30
+
+  if (allGood) return {
+    type: 'good',
+    message: "Votre jardin intérieur est dans un bel équilibre ce matin.",
+    sub: "Tous vos rituels méritent votre attention aujourd'hui — choisissez celui qui vous attire.",
+    zones: [],
+  }
+
+  const zones = top.map(([id]) => ZONE_LABELS[id]).filter(Boolean)
+  const zoneNames = zones.map(z => z.name).join(' et ')
+
+  return {
+    type: 'focus',
+    message: `D'après votre bilan, ${zoneNames} ${zones.length > 1 ? 'semblent' : 'semble'} avoir besoin de votre attention aujourd'hui.`,
+    sub: "Nous vous suggérons de commencer par les rituels de " + zones.map(z => `${z.emoji} ${z.desc}`).join(', ') + ".",
+    zones: top.map(([id]) => id),
+  }
+}
+
 function DailyQuizModal({ onComplete, onSkip }) {
   const [step,          setStep]          = useState(-1)
   const [answers,       setAnswers]       = useState({})
   const [selected,      setSelected]      = useState(null)
   const [transitioning, setTransitioning] = useState(false)
   const [visible,       setVisible]       = useState(true)
+  const [result,        setResult]        = useState(null)  // écran de résultat
 
   const startQuiz = () => { setVisible(false); setTimeout(() => { setStep(0); setVisible(true) }, 250) }
   const choose    = (idx) => { if (!transitioning) setSelected(idx) }
@@ -2407,9 +2441,74 @@ function DailyQuizModal({ onComplete, onSkip }) {
       if (step < PLANT_QUESTIONS.length - 1) {
         setStep(step + 1); setAnswers(newAnswers); setSelected(null); setTransitioning(false); setVisible(true)
       } else {
-        onComplete(computeDegradation(newAnswers), newAnswers)
+        // Affiche l'écran de résultat avant de fermer
+        const deg = computeDegradation(newAnswers)
+        setResult({ deg, recommendation: getBilanRecommendation(deg) })
       }
     }, 280)
+  }
+
+  // ── Écran de résultat ────────────────────────────────────────────────────────
+  if (result) {
+    const { deg, recommendation } = result
+    const ZONE_COLORS = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
+    const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
+    return (
+      <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(6,14,7,0.97)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
+        <div style={{ textAlign:'center', maxWidth:380, width:'100%', animation:'fadeUp 0.5s ease both' }}>
+
+          {/* Icône */}
+          <div style={{ fontSize:48, marginBottom:20 }}>
+            {recommendation.type === 'good' ? '✨' : '🌿'}
+          </div>
+
+          {/* Message principal */}
+          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:26, color:'#EEF0E8', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
+            {recommendation.message}
+          </h2>
+
+          <div style={{ width:40, height:1, background:'rgba(200,168,130,0.3)', margin:'16px auto' }} />
+
+          {/* Suggestion */}
+          <p style={{ color:'rgba(180,200,180,0.6)', fontSize:13, lineHeight:1.8, marginBottom:28, fontStyle:'italic' }}>
+            {recommendation.sub}
+          </p>
+
+          {/* Zones prioritaires */}
+          {recommendation.zones.length > 0 && (
+            <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:32, flexWrap:'wrap' }}>
+              {recommendation.zones.map(zoneId => {
+                const color = ZONE_COLORS[zoneId] ?? '#96d48a'
+                const name  = ZONE_NAMES[zoneId] ?? zoneId
+                const degVal = deg[zoneId] ?? 50
+                return (
+                  <div key={zoneId} style={{ padding:'8px 16px', borderRadius:50, background:`${color}15`, border:`1px solid ${color}50`, display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ width:28, height:4, borderRadius:2, background:'rgba(255,255,255,0.1)', overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${100 - degVal}%`, background:color, borderRadius:2 }} />
+                    </div>
+                    <span style={{ fontSize:12, color, fontWeight:500 }}>{name}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* CTA */}
+          <button
+            onClick={() => onComplete(result.deg, {})}
+            style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.1)', color:'#96d48a', fontSize:13, cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, fontFamily:"'Jost',sans-serif" }}
+          >
+            Voir mes rituels du jour →
+          </button>
+          <button
+            onClick={onSkip}
+            style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(180,200,180,0.3)', fontSize:12, cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // Écran d'accueil
@@ -2509,7 +2608,38 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
           )}
         </div>
 
-
+        {/* ── Bannière de recommandation post-bilan ── */}
+        {hasDegradation && (() => {
+          const rec = getBilanRecommendation(degradation)
+          const ZONE_COLORS = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
+          const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
+          if (rec.type === 'good') return (
+            <div style={{ marginBottom:14, padding:'12px 16px', borderRadius:12, background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.18)', display:'flex', gap:10, alignItems:'flex-start' }}>
+              <span style={{ fontSize:18, flexShrink:0 }}>✨</span>
+              <div>
+                <div style={{ fontSize:12, color:'rgba(150,212,133,0.85)', fontWeight:500, marginBottom:3 }}>Bel équilibre ce matin</div>
+                <div style={{ fontSize:11, color:'rgba(180,200,180,0.45)', lineHeight:1.6 }}>{rec.sub}</div>
+              </div>
+            </div>
+          )
+          const primaryColor = ZONE_COLORS[rec.zones[0]] ?? '#C8A882'
+          return (
+            <div style={{ marginBottom:14, padding:'12px 16px', borderRadius:12, background:`${primaryColor}08`, border:`1px solid ${primaryColor}30`, display:'flex', gap:10, alignItems:'flex-start' }}>
+              <span style={{ fontSize:18, flexShrink:0 }}>🌿</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:12, color:primaryColor, fontWeight:500, marginBottom:3 }}>Priorité du jour</div>
+                <div style={{ fontSize:11, color:'rgba(180,200,180,0.55)', lineHeight:1.7 }}>{rec.message}</div>
+                <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap' }}>
+                  {rec.zones.map(zoneId => (
+                    <span key={zoneId} style={{ fontSize:10, padding:'3px 10px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
+                      {ZONE_NAMES[zoneId]}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Grille des zones */}
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
