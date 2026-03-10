@@ -675,7 +675,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const rootC = `rgba(${112+28*r},${72+26*r},${38+12*r},${0.28+0.32*r})`
 
   /* ── Ciel bleu — identique au jardin collectif ── */
-  const skyHue = isDay ? Math.round(200 - dp * (1 - dp) * 4 * 60) : null
+  const skyHue = isDay ? Math.round(215 - dp * (1 - dp) * 4 * 12) : null   // reste dans les bleus (203–215)
   const skyA = isDay ? (isG ? '#1a0a04' : '#0b1e3a') : '#020510'
   const skyB = isDay ? (isG ? `hsl(${skyHue},72%,22%)` : '#1e4e8a') : '#060c1e'
   const skyC = isDay ? (isG ? '#d96418' : `hsl(${skyHue},60%,46%)`) : '#0a1228'
@@ -2384,6 +2384,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
 // ── DailyQuizModal ──────────────────────────────────────────
 // ── Calcule les zones prioritaires depuis la dégradation ──────────────────────
 function getBilanRecommendation(degradation) {
+  if (!degradation || typeof degradation !== 'object') return { type:'good', message:'', sub:'', zones:[] }
   const ZONE_LABELS = {
     roots:   { name:'les Racines',  emoji:'🌿', desc:'ancrage et énergie vitale' },
     stem:    { name:'la Tige',      emoji:'🌱', desc:'flexibilité et corps' },
@@ -3177,24 +3178,44 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
   // Optimistic override : mis à jour immédiatement quand un rituel est coché
   const [plantOverride, setPlantOverride] = useState(null)
+
+  // ── Carry-over / initialisation ──────────────────────────
+  // • Première création (aucun historique) → graine à 5%
+  // • Reconnexion jour suivant (historique existe) → reprend les % de la dernière session
+  useEffect(() => {
+    if (!todayPlant?.id || isLoading || plantOverride) return
+    const ZONE_KEYS = Object.values(ZONE_DB_KEY)
+    const isDefault = (todayPlant.health === 50 || todayPlant.health === null) &&
+      ZONE_KEYS.every(k => (todayPlant[k] ?? 50) === 50 || todayPlant[k] === null)
+    if (!isDefault) return
+
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const prev = Array.isArray(history)
+      ? history.find(p => p.id !== todayPlant.id && p.created_at?.slice(0, 10) !== todayStr)
+      : null
+
+    if (prev) {
+      // Reconnexion — reprend l'état de la dernière session
+      const carried = {
+        ...todayPlant,
+        health: prev.health ?? todayPlant.health,
+        ...Object.fromEntries(ZONE_KEYS.map(k => [k, prev[k] ?? todayPlant[k]]))
+      }
+      setPlantOverride(carried)
+      supabase.from('plants').update({
+        health: carried.health,
+        ...Object.fromEntries(ZONE_KEYS.map(k => [k, carried[k]]))
+      }).eq('id', todayPlant.id)
+    } else {
+      // Toute première création — graine à 5%
+      const seed = { ...todayPlant, health: 5, ...Object.fromEntries(ZONE_KEYS.map(k => [k, 5])) }
+      setPlantOverride(seed)
+      supabase.from('plants').update({ health: 5, ...Object.fromEntries(ZONE_KEYS.map(k => [k, 5])) }).eq('id', todayPlant.id)
+    }
+  }, [todayPlant?.id, isLoading, history])
+
   const plant = plantOverride ?? todayPlant   // ← utilisé partout à la place de todayPlant
 
-  // ── Réinitialise la plante à 5% UNIQUEMENT si créée aujourd'hui avec valeurs par défaut
-  // et que les rituels ont bien fini de charger (évite le faux reset au premier render)
-  useEffect(() => {
-    if (!todayPlant?.id) return
-    if (isLoading) return
-    if (todayRituals === undefined || todayRituals === null) return
-    const createdToday = todayPlant.created_at?.slice(0, 10) === new Date().toISOString().slice(0, 10)
-    if (!createdToday) return
-    const isDefaultValues = todayPlant.health === 50 &&
-      Object.values(ZONE_DB_KEY).every(k => (todayPlant[k] ?? 50) === 50)
-    if (isDefaultValues && todayRituals.length === 0) {
-      const resetValues = Object.fromEntries(Object.values(ZONE_DB_KEY).map(k => [k, 5]))
-      supabase.from('plants').update({ health: 5, ...resetValues }).eq('id', todayPlant.id)
-      setPlantOverride({ ...todayPlant, health: 5, ...resetValues })
-    }
-  }, [todayPlant?.id, isLoading, todayRituals])
   const { settings, toggle } = usePrivacy(userId)
 
   // ── Nouveau système rituels ──────────────────────────────
@@ -3437,7 +3458,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             )}
 
             {/* Jardin intérieur vous parle */}
-            {bilanDoneToday && <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />}
+            {bilanDoneToday && degradation && <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />}
 
           </div>
 
