@@ -2601,8 +2601,11 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
                 : 'Prenez votre bilan intérieur'}
             </p>
           </div>
-          {hasDegradation && (
-            <button onClick={() => onOpenBilan?.()} style={{ fontSize:10, color:'rgba(180,200,180,0.3)', background:'none', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, padding:'5px 12px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif" }}>
+          {bilanDoneToday && hasDegradation && (
+            <button
+              onClick={() => onOpenBilan?.()}
+              style={{ fontSize:10, color:'rgba(180,200,180,0.5)', background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:36, touchAction:'manipulation' }}
+            >
               ↺ Refaire le bilan
             </button>
           )}
