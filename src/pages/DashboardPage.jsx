@@ -512,12 +512,14 @@ export default function DashboardPage() {
         {showBilanModal && (
           <DailyQuizModal
             onComplete={(deg) => {
-              setShowBilanModal(false)
+              // Sauvegarde SANS fermer — l'écran résultat s'affiche d'abord
+              // La fermeture se fait via onDismiss depuis le bouton "Voir mes rituels"
               setBilanDoneToday(true)
               track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
               logActivity({ userId: user?.id, action: 'bilan' })
               window.dispatchEvent(new CustomEvent('bilanComplete', { detail: deg }))
             }}
+            onDismiss={() => setShowBilanModal(false)}
             onSkip={() => {
               setShowBilanModal(false)
               track('bilan_skip', {}, 'jardin', 'engagement')

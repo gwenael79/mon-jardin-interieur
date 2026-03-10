@@ -2421,7 +2421,7 @@ function getBilanRecommendation(degradation) {
   }
 }
 
-function DailyQuizModal({ onComplete, onSkip }) {
+function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   const [step,          setStep]          = useState(-1)
   const [answers,       setAnswers]       = useState({})
   const [selected,      setSelected]      = useState(null)
@@ -2495,7 +2495,7 @@ function DailyQuizModal({ onComplete, onSkip }) {
 
           {/* CTA */}
           <button
-            onClick={() => onComplete(result.deg, {})}
+            onClick={() => { onComplete(result.deg, {}); onDismiss?.() }}
             style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.1)', color:'#96d48a', fontSize:13, cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, fontFamily:"'Jost',sans-serif" }}
           >
             Voir mes rituels du jour →
