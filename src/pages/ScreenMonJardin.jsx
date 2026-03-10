@@ -2572,26 +2572,23 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
 // ── BilanInsightCard — texte IA parallèle plante / personne ──
 const SUPABASE_FN_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/Moderate-circle'
 
-function BilanInsightCard({ degradation }) {
+function BilanInsightCard({ degradation, fillHeight = false }) {
   const [insight,  setInsight]  = useState(null)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState(false)
+  const containerRef = useRef(null)
+  const textRef      = useRef(null)
 
-  // Clé de cache basée sur la dégradation + la date du jour
   const cacheKey = 'bilan-insight-' + new Date().toISOString().slice(0, 10) + '-' + JSON.stringify(degradation)
 
   useEffect(() => {
     if (!degradation) return
-
-    // Vérification cache sessionStorage
     try {
       const cached = sessionStorage.getItem(cacheKey)
       if (cached) { setInsight(cached); return }
     } catch {}
-
     setLoading(true)
     setError(false)
-
     fetch(SUPABASE_FN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2602,13 +2599,46 @@ function BilanInsightCard({ degradation }) {
         if (data.insight) {
           setInsight(data.insight)
           try { sessionStorage.setItem(cacheKey, data.insight) } catch {}
-        } else {
-          setError(true)
-        }
+        } else { setError(true) }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [cacheKey])
+
+  // Adapte la taille de police pour remplir la hauteur disponible
+  useEffect(() => {
+    if (!fillHeight || !insight || !containerRef.current || !textRef.current) return
+    const container = containerRef.current
+    const text      = textRef.current
+
+    const fit = () => {
+      const headerEl  = container.querySelector('.bic-header')
+      const headerH   = headerEl ? headerEl.offsetHeight : 50
+      const available = container.clientHeight - headerH - 28
+      if (available <= 0) return
+
+      let lo = 9, hi = 28
+      // Reset pour mesurer proprement
+      text.style.fontSize   = hi + 'px'
+      text.style.lineHeight = '1.55'
+
+      while (hi - lo > 0.4) {
+        const mid = (lo + hi) / 2
+        text.style.fontSize   = mid + 'px'
+        text.style.lineHeight = mid <= 13 ? '1.72' : '1.55'
+        if (text.scrollHeight <= available) lo = mid
+        else hi = mid
+      }
+      text.style.fontSize   = lo + 'px'
+      text.style.lineHeight = lo <= 13 ? '1.72' : '1.55'
+    }
+
+    // Double rAF pour s'assurer que le layout est stabilisé
+    const raf = requestAnimationFrame(() => requestAnimationFrame(fit))
+    const ro = new ResizeObserver(() => requestAnimationFrame(fit))
+    ro.observe(container)
+    return () => { cancelAnimationFrame(raf); ro.disconnect() }
+  }, [fillHeight, insight, error])
 
   const rec          = getBilanRecommendation(degradation)
   const ZONE_COLORS  = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
@@ -2617,17 +2647,22 @@ function BilanInsightCard({ degradation }) {
   const isGood       = rec.type === 'good'
 
   return (
-    <div style={{ marginBottom:14, padding:'14px 16px', borderRadius:12, background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`, border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`, animation:'fadeUp 0.4s ease both' }}>
+    <div ref={containerRef}
+      style={{ padding:'14px 16px', borderRadius:12,
+        background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`,
+        border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`,
+        animation:'fadeUp 0.4s ease both',
+        ...(fillHeight ? { flex:'1 1 0', display:'flex', flexDirection:'column', minHeight:0, overflow:'hidden' } : { marginBottom:14 })
+      }}>
 
       {/* En-tête */}
-      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 10 : 0 }}>
+      <div className="bic-header" style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 10 : 0 }}>
         <span style={{ fontSize:16 }}>{isGood ? '✨' : '🌿'}</span>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:11, color: isGood ? 'rgba(150,212,133,0.85)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
             {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin intérieur vous parle'}
           </div>
         </div>
-        {/* Badges zones prioritaires */}
         {!isGood && rec.zones.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
             <div style={{ fontSize:8, color:'rgba(238,232,218,0.38)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
@@ -2657,13 +2692,21 @@ function BilanInsightCard({ degradation }) {
       )}
 
       {!loading && insight && (
-        <p style={{ fontSize:12, color:'rgba(220,235,220,0.70)', lineHeight:1.75, margin:0, fontStyle:'italic' }}>
+        <p ref={textRef}
+          style={{ fontSize: fillHeight ? '12px' : '12px',
+            lineHeight: '1.65',
+            color:'rgba(220,235,220,0.70)', margin:0, fontStyle:'italic',
+            ...(fillHeight ? { flex:'1 1 0', overflow:'hidden' } : {})
+          }}>
           {insight}
         </p>
       )}
 
       {!loading && error && (
-        <p style={{ fontSize:11, color:'rgba(180,200,180,0.30)', lineHeight:1.6, margin:0, fontStyle:'italic' }}>
+        <p ref={textRef}
+          style={{ fontSize:'11px', color:'rgba(180,200,180,0.30)', lineHeight:'1.6', margin:0, fontStyle:'italic',
+            ...(fillHeight ? { flex:'1 1 0', overflow:'hidden' } : {})
+          }}>
           Votre jardin a été entendu. Explorez les rituels qui vous appellent aujourd'hui.
         </p>
       )}
@@ -2704,21 +2747,9 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
                 : 'Prenez votre bilan intérieur'}
             </p>
           </div>
-          {bilanDoneToday && hasDegradation && (
-            <button
-              onClick={() => onOpenBilan?.()}
-              onTouchEnd={(e) => { e.preventDefault(); onOpenBilan?.(); }}
-              style={{ fontSize:10, color:'rgba(180,200,180,0.5)', background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:44, touchAction:'manipulation' }}
-            >
-              ↺ Refaire le bilan
-            </button>
-          )}
         </div>
 
-        {/* ── Bannière insight IA post-bilan ── */}
-        {bilanDoneToday && hasDegradation && (
-          <BilanInsightCard degradation={degradation} />
-        )}
+        {/* ── Bannière insight IA post-bilan — rendue dans mj-right ── */}
 
         {/* Grille des zones */}
         <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
@@ -3319,116 +3350,122 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     <div className="content">
     <div className="mj-layout">
       <div className="mj-left">
-        {/* Carte jardin — fleur pleine largeur */}
-        <div className="plant-hero ph-full">
+        {/* ── Layout fleur + panneau ── */}
+        <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:12, alignItems:'stretch', width:'100%' }}>
 
-          {/* Fleur pleine largeur avec overlay vitalité */}
-          <div className="ph-full-flower">
-            <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+          {/* Fleur */}
+          <div className="plant-hero ph-full" style={ isMobile ? { width:'100%' } : { flex:'1 1 0', minWidth:0 }}>
 
-            {/* Score vitalité — overlay haut-gauche */}
-            <div className="ph-full-overlay">
-              <div className="ph-vitality-score">
-                <div className="ph-score-number">
-                  <span className="ph-score-digits">{plant?.health ?? 5}</span>
-                  <span className="ph-score-pct">%</span>
+            {/* Image fleur */}
+            <div className="ph-full-flower">
+              <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+              <div className="ph-full-overlay">
+                <div className="ph-vitality-score">
+                  <div className="ph-score-number">
+                    <span className="ph-score-digits">{plant?.health ?? 5}</span>
+                    <span className="ph-score-pct">%</span>
+                  </div>
+                  <div className="ph-score-label">Vitalité</div>
+                  <div className="ph-score-date">{todayLabel}</div>
                 </div>
-                <div className="ph-score-label">Vitalité</div>
-                <div className="ph-score-date">{todayLabel}</div>
               </div>
             </div>
+
+            {/* Zones + Personnalisation */}
+            <div className="ph-full-bottom">
+              <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
+                <div style={{ display:'flex', gap: isMobile ? 6 : 8, flex:'1 1 0', minWidth:0, flexWrap:'wrap' }}>
+                  {ZONES.map((z, i) => {
+                    const val = plant?.[z.key] ?? 5
+                    return (
+                      <div key={z.key} className="ph-zone-row-new"
+                        style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.07) + 's',
+                                 display:'flex', flexDirection:'column', gap:4, minWidth:44, flex:'1 1 44px' }}>
+                        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:3 }}>
+                          <span style={{ fontSize: isMobile ? 8 : 7, color:'rgba(238,232,218,0.36)', letterSpacing:'.05em', textTransform:'uppercase', whiteSpace:'nowrap' }}>{z.icon} {z.name}</span>
+                          <span style={{ fontSize: isMobile ? 10 : 9, fontFamily:"'Cormorant Garamond',serif", color: z.color, flexShrink:0 }}>{val}<span style={{ fontSize: isMobile ? 7 : 6.5, opacity:0.6 }}>%</span></span>
+                        </div>
+                        <div className="ph-zone-track" style={{ height:2 }}><div className="ph-zone-fill-new" /></div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ width:1, height:28, background:'rgba(255,255,255,0.07)', flexShrink:0 }} />
+                <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                  {[
+                    { lv:1, label:'Basique', badge:'🌱', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
+                    { lv:2, label:'Cool',    badge:'🌿', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
+                    { lv:3, label:'Extra',   badge:'🌟', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
+                  ].map(cfg => {
+                    const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                    const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                    const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
+                    return (
+                      <div key={cfg.lv}
+                        onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
+                        onTouchEnd={isUnlocked ? (e) => { e.preventDefault(); setGardenTier(cfg.lv); setShowGardenSettings(true) } : null}
+                        style={{ display:'flex', alignItems:'center', gap:3, padding: isMobile ? '5px 9px 5px 7px' : '3px 7px 3px 5px', borderRadius:20, cursor: isUnlocked ? 'pointer' : 'default',
+                          background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
+                          border:`1px solid ${isPast ? 'rgba(255,255,255,0.05)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.07)'}`,
+                          opacity: isPast ? 0.28 : isUnlocked ? 1 : 0.48,
+                          boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none', transition:'all .15s',
+                          minHeight: isMobile ? 36 : 'auto' }}>
+                        <span style={{ fontSize: isMobile ? 11 : 9 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
+                        <span style={{ fontSize: isMobile ? 9 : 7.5, color: isPast ? 'rgba(255,255,255,0.16)' : cfg.colorU }}>{cfg.label}</span>
+                        {!isUnlocked && <span style={{ fontSize: isMobile ? 8 : 6.5 }}>🔒</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          {/* Zones + Personnalisation — sous la fleur */}
-          <div className="ph-full-bottom">
-            <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+          {/* Panneau bilan + jardin (desktop: colonne droite / mobile: bloc plein largeur) */}
+          <div style={{ flex: isMobile ? 'none' : '1 1 0', minWidth:0, display:'flex', flexDirection:'column', gap:10 }}>
 
-              {/* Zones — ligne horizontale compacte */}
-              <div style={{ display:'flex', gap:10, flex:'1 1 0', minWidth:0, flexWrap:'wrap' }}>
-                {ZONES.map((z, i) => {
-                  const val = plant?.[z.key] ?? 5
-                  return (
-                    <div key={z.key}
-                      className="ph-zone-row-new"
-                      style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.07) + 's',
-                               display:'flex', flexDirection:'column', gap:5, minWidth:58, flex:'1 1 58px', maxWidth:110 }}>
-                      <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:4 }}>
-                        <span style={{ fontSize:7.5, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', textTransform:'uppercase', whiteSpace:'nowrap' }}>
-                          {z.icon} {z.name}
-                        </span>
-                        <span style={{ fontSize:10, fontFamily:"'Cormorant Garamond',serif", color: z.color, fontWeight:400, lineHeight:1, flexShrink:0 }}>{val}<span style={{ fontSize:7, opacity:0.6 }}>%</span></span>
-                      </div>
-                      <div className="ph-zone-track" style={{ height:2.5 }}>
-                        <div className="ph-zone-fill-new" />
-                      </div>
-                    </div>
-                  )
-                })}
+            {/* Bilan */}
+            {!bilanDoneToday ? (
+              <button
+                onClick={() => onOpenBilan?.()}
+                onTouchEnd={(e) => { e.preventDefault(); onOpenBilan?.() }}
+                style={{ width:'100%', padding: isMobile ? '16px 18px' : '14px 16px', borderRadius:14, border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)', cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left', touchAction:'manipulation', WebkitTapHighlightColor:'transparent', minHeight: isMobile ? 64 : 'auto' }}>
+                <span style={{ fontSize: isMobile ? 28 : 22 }}>🌹</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize: isMobile ? 14 : 12, color:'#C8A882', fontWeight:500, marginBottom:3 }}>Faire mon bilan du jour</div>
+                  <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(180,200,180,0.4)', fontStyle:'italic', animation:'navPulse 2.5s ease-in-out infinite' }}>Prendre soin de soi commence ici</div>
+                </div>
+                <div style={{ fontSize: isMobile ? 11 : 10, color:'#e8c060', fontWeight:600, padding:'4px 10px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.28)', flexShrink:0 }}>+3 ✦</div>
+              </button>
+            ) : (
+              <div style={{ width:'100%', padding: isMobile ? '14px 16px' : '12px 14px', borderRadius:14, border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)', display:'flex', alignItems:'center', gap:12 }}>
+                <span style={{ fontSize: isMobile ? 26 : 22, filter:'grayscale(1)', opacity:0.35 }}>🌹</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize: isMobile ? 13 : 12, color:'rgba(242,237,224,0.28)', fontWeight:500, marginBottom:2 }}>Bilan du matin</div>
+                  <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(242,237,224,0.18)', fontStyle:'italic' }}>Demain nous ferons le point ensemble ✦</div>
+                </div>
+                <div style={{ fontSize: isMobile ? 16 : 14, color:'rgba(150,212,133,0.35)' }}>✓</div>
               </div>
+            )}
 
-              {/* Séparateur */}
-              <div style={{ width:1, height:32, background:'rgba(255,255,255,0.07)', flexShrink:0 }} />
+            {/* Refaire le bilan */}
+            {bilanDoneToday && (
+              <button
+                onClick={() => onOpenBilan?.()}
+                onTouchEnd={(e) => { e.preventDefault(); onOpenBilan?.() }}
+                style={{ alignSelf:'flex-start', fontSize: isMobile ? 11 : 10, color:'rgba(180,200,180,0.55)', background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding: isMobile ? '8px 16px' : '6px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight: isMobile ? 40 : 32, touchAction:'manipulation' }}
+              >
+                ↺ Refaire le bilan
+              </button>
+            )}
 
-              {/* Personnalisation — 3 pilules horizontales */}
-              <div style={{ display:'flex', alignItems:'center', gap:5, flexShrink:0 }}>
-                <span style={{ fontSize:7, color:'rgba(238,232,218,0.25)', letterSpacing:'.08em', textTransform:'uppercase', marginRight:2 }}>✦</span>
-                {[
-                  { lv:1, label:'Basique', badge:'🌱', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
-                  { lv:2, label:'Cool',    badge:'🌿', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
-                  { lv:3, label:'Extra',   badge:'🌟', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
-                ].map(cfg => {
-                  const isUnlocked = (profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                  const isCurrent  = (profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                  const isPast     = (profile?.level ?? 1) > cfg.lv  && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'
-                  return (
-                    <div key={cfg.lv}
-                      onClick={() => isUnlocked ? (setGardenTier(cfg.lv), setShowGardenSettings(true)) : null}
-                      onTouchEnd={isUnlocked ? (e) => { e.preventDefault(); setGardenTier(cfg.lv); setShowGardenSettings(true) } : null}
-                      style={{
-                        display:'flex', alignItems:'center', gap:4,
-                        padding:'3px 8px 3px 6px', borderRadius:20,
-                        cursor: isUnlocked ? 'pointer' : 'default',
-                        background: isPast ? 'rgba(255,255,255,0.02)' : isUnlocked ? cfg.bgU : 'rgba(255,255,255,0.03)',
-                        border:`1px solid ${isPast ? 'rgba(255,255,255,0.05)' : isUnlocked ? cfg.bdU : 'rgba(255,255,255,0.07)'}`,
-                        opacity: isPast ? 0.30 : isUnlocked ? 1 : 0.50,
-                        boxShadow: isCurrent ? `0 0 0 1.5px ${cfg.colorU}44` : 'none',
-                        transition:'all .15s',
-                      }}>
-                      <span style={{ fontSize:10 }}>{isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{cfg.badge}</span> : cfg.badge}</span>
-                      <span style={{ fontSize:8, color: isPast ? 'rgba(255,255,255,0.18)' : cfg.colorU, letterSpacing:'.03em' }}>{cfg.label}</span>
-                      {!isUnlocked && <span style={{ fontSize:7 }}>🔒</span>}
-                    </div>
-                  )
-                })}
-              </div>
+            {/* Jardin intérieur vous parle */}
+            {bilanDoneToday && <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />}
 
-            </div>
           </div>
 
         </div>
-
-        {/* Bouton bilan — miroir du NavHub */}
-        {!bilanDoneToday ? (
-          <button onClick={() => onOpenBilan?.()} style={{ width:'100%', padding:'16px 18px', borderRadius:16, marginBottom:8, border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)', cursor:'pointer', display:'flex', alignItems:'center', gap:14, textAlign:'left', position:'relative' }}>
-            <span style={{ fontSize:26 }}>🌹</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, color:'#C8A882', fontWeight:500, marginBottom:3 }}>Faire mon bilan du jour</div>
-              <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)', fontStyle:'italic', animation:'navPulse 2.5s ease-in-out infinite' }}>Prendre soin de soi commence ici</div>
-            </div>
-            <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 9px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
-              +3 ✦
-            </div>
-          </button>
-        ) : (
-          <div style={{ width:'100%', padding:'14px 18px', borderRadius:16, marginBottom:8, border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)', display:'flex', alignItems:'center', gap:14 }}>
-            <span style={{ fontSize:26, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:2 }}>Bilan du matin</div>
-              <div style={{ fontSize:11, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ensemble ✦</div>
-            </div>
-            <div style={{ fontSize:16, color:'rgba(150,212,133,0.35)' }}>✓</div>
-          </div>
-        )}
 
         <RitualsSection
           degradation={degradation}

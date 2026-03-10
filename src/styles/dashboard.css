@@ -655,7 +655,9 @@ body { background: var(--bg); }
   .ph-score-digits { font-size: 42px; }
   .ph-score-pct    { font-size: 20px; }
   /* ── PLANT HERO full-width mobile ── */
-  .ph-full-flower { height: 300px; }
+  .ph-full-flower { height: 260px; }
+  .ph-full-overlay .ph-score-digits { font-size: 38px; }
+  .ph-full-overlay .ph-score-pct    { font-size: 18px; }
 
   /* ── HISTORIQUE ── */
   .history-chart { padding: 12px; }
@@ -703,7 +705,7 @@ body { background: var(--bg); }
   .tb-title { font-size: 15px; }
   .mj-left { padding: 10px 10px 76px; }
   .ph-col-flower { height: 170px; }
-  .ph-full-flower { height: 260px; }
+  .ph-full-flower { height: 220px; }
   .ph-score-digits { font-size: 36px; }
   .week-grid { gap: 3px; }
   .wd-dot { width: 24px; height: 24px; font-size: 9px; }
