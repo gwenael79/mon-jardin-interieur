@@ -412,45 +412,68 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 40 }}>
 
-      {/* ── BLOC HAUT : Fleur gauche | Intention droite ── */}
-      {/* ── FLEUR CENTRÉE + INTENTION ── */}
+      {/* ── ÉGRÉGORE — layout redesigné ── */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0 }}>
 
-        {/* Titre compact */}
-        <div style={{ textAlign: 'center', marginBottom: isMobile ? -20 : -30, zIndex: 1 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight: 300, color: '#e8d4a8', letterSpacing: '.04em' }}>L'Égrégore</div>
-          <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.3)', marginTop: 2, letterSpacing: '.06em' }}>
-            <span style={{ color: 'rgba(150,212,133,0.7)' }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''} active{activeCount > 1 ? 's' : ''} aujourd'hui
+        {/* Titre — bien visible */}
+        <div style={{ textAlign: 'center', marginBottom: isMobile ? -16 : -24, zIndex: 1 }}>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 36, fontWeight: 300, color: '#e8d4a8', letterSpacing: '.04em', lineHeight: 1 }}>L'Égrégore</div>
+          <div style={{ fontSize: isMobile ? 13 : 14, color: 'rgba(238,232,218,0.50)', marginTop: 6, letterSpacing: '.04em' }}>
+            <span style={{ color: 'rgba(150,212,133,0.85)', fontWeight: 500 }}>{activeCount}</span>
+            {' '}fleur{activeCount > 1 ? 's' : ''} active{activeCount > 1 ? 's' : ''} aujourd'hui
           </div>
         </div>
 
-        {/* Fleur pleine largeur */}
+        {/* Fleur */}
         <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 300 : 380} svgRef={svgRef} />
 
-        {/* Intention + Résonance sous la fleur */}
+        {/* Intention + bouton + résonance */}
         {intention && (
-          <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 10, marginTop: isMobile ? -10 : -20 }}>
-            <div style={{ fontSize: 9, color: 'rgba(232,196,100,0.5)', letterSpacing: '.14em', textTransform: 'uppercase', textAlign: 'center' }}>✦ Intention collective du jour</div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 32, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.1, textAlign: 'center' }}>{intention.text}</div>
-            <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.4)', lineHeight: 1.65, textAlign: 'center' }}>{intention.description}</div>
+          <div style={{ width: '100%', maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 14, marginTop: isMobile ? -8 : -16 }}>
+
+            {/* Label */}
+            <div style={{ fontSize: isMobile ? 11 : 12, color: 'rgba(232,196,100,0.65)', letterSpacing: '.12em', textTransform: 'uppercase', textAlign: 'center' }}>✦ Intention collective du jour</div>
+
+            {/* Texte de l'intention — hero */}
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 36, fontWeight: 300, color: '#f0e8d0', lineHeight: 1.15, textAlign: 'center', letterSpacing: '-.01em' }}>{intention.text}</div>
+
+            {/* Description */}
+            <div style={{ fontSize: isMobile ? 14 : 15, color: 'rgba(238,232,218,0.60)', lineHeight: 1.7, textAlign: 'center' }}>{intention.description}</div>
+
+            {/* Bouton rejoindre */}
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <div onClick={handleJoinIntention} style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 36, padding: '0 20px', borderRadius: 100, fontSize: 11, cursor: 'pointer', background: joined ? 'rgba(232,196,100,0.14)' : 'rgba(255,255,255,0.05)', border: `1px solid ${joined ? 'rgba(232,196,100,0.42)' : 'rgba(255,255,255,0.1)'}`, color: joined ? '#e8d4a8' : 'rgba(238,232,218,0.4)', transition: 'all .2s', WebkitTapHighlightColor: 'transparent' }}>
-                {joined ? '✓ Vous nourrissez l\'intention' : 'Rejoindre l\'intention'}
+              <div onClick={handleJoinIntention} style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                minHeight: isMobile ? 44 : 40, padding: '0 28px',
+                borderRadius: 100, fontSize: isMobile ? 14 : 13,
+                cursor: 'pointer',
+                background: joined ? 'rgba(232,196,100,0.14)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${joined ? 'rgba(232,196,100,0.45)' : 'rgba(255,255,255,0.14)'}`,
+                color: joined ? '#e8d4a8' : 'rgba(238,232,218,0.60)',
+                transition: 'all .2s', WebkitTapHighlightColor: 'transparent',
+                fontWeight: joined ? 500 : 300,
+              }}>
+                {joined ? '✓ Vous nourrissez l\'intention' : '🌿 Rejoindre l\'intention'}
               </div>
             </div>
+
+            {/* Résonance */}
             {resonance && (() => {
               const z = ZONE_MAP[resonance.zone]
               const pct = (resonance.current / resonance.threshold) * 100
               return (
-                <div style={{ background: `${z?.color}08`, border: `1px solid ${z?.color}22`, borderRadius: 12, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+                <div style={{ background: `${z?.color}0a`, border: `1px solid ${z?.color}28`, borderRadius: 14, padding: isMobile ? '14px 16px' : '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 15 }}>🔥</span><div style={{ fontSize: 11, color: z?.color, fontWeight: 500 }}>Résonance {z?.name}</div></div>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, color: z?.color }}>{resonance.current}%</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 18 }}>🔥</span>
+                      <div style={{ fontSize: isMobile ? 14 : 13, color: z?.color, fontWeight: 500 }}>Résonance {z?.name}</div>
+                    </div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 20, color: z?.color, fontWeight: 300 }}>{resonance.current}<span style={{ fontSize: 12, opacity: .6 }}>%</span></div>
                   </div>
-                  <div style={{ height: 3, borderRadius: 100, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                  <div style={{ height: 4, borderRadius: 100, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 100, width: `${pct}%`, background: `linear-gradient(90deg,${z?.color}88,${z?.color})`, transition: 'width .6s ease' }} />
                   </div>
-                  <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.25)' }}>Seuil {resonance.threshold}% · encore {resonance.threshold - resonance.current} points</div>
+                  <div style={{ fontSize: isMobile ? 12 : 11, color: 'rgba(238,232,218,0.38)' }}>Seuil {resonance.threshold}% · encore <strong style={{ color: z?.color }}>{resonance.threshold - resonance.current} points</strong></div>
                 </div>
               )
             })()}
@@ -458,24 +481,24 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }
         )}
       </div>
 
-      {/* ── PHRASES POSITIVES — Messages reçus ── */}
+      {/* ── MESSAGES REÇUS ── */}
       {pendingMercis.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Messages reçus pour vous</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontSize: isMobile ? 12 : 11, color: 'rgba(238,232,218,0.45)', letterSpacing: '.10em', textTransform: 'uppercase' }}>✦ Messages reçus pour vous</div>
           {pendingMercis.slice(0, 3).map(c => {
             const z      = ZONE_MAP[c.zone]
             const sender = flowerName(c.sender)
             return (
-              <div key={c.id} style={{ background: 'rgba(255,100,100,0.05)', border: '1px solid rgba(255,100,100,0.14)', borderRadius: 12, padding: '12px 14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <span style={{ fontSize: 16 }}>❤️</span>
+              <div key={c.id} style={{ background: 'rgba(255,100,100,0.05)', border: '1px solid rgba(255,100,100,0.16)', borderRadius: 14, padding: isMobile ? '16px' : '14px 16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <span style={{ fontSize: 20 }}>❤️</span>
                   <div>
-                    <div style={{ fontSize: 12, color: 'rgba(238,232,218,0.85)', fontWeight: 500 }}>{sender}</div>
-                    <div style={{ fontSize: 9, color: z?.color ?? '#96d485', marginTop: 1 }}>{z?.icon} {z?.name} · {timeAgo(c.created_at)}</div>
+                    <div style={{ fontSize: isMobile ? 15 : 14, color: 'rgba(238,232,218,0.90)', fontWeight: 500 }}>{sender}</div>
+                    <div style={{ fontSize: isMobile ? 12 : 11, color: z?.color ?? '#96d485', marginTop: 2 }}>{z?.icon} {z?.name} · {timeAgo(c.created_at)}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(238,232,218,0.65)', lineHeight: 1.65, fontStyle: 'italic', marginBottom: 10 }}>"{c.message_ia}"</div>
-                <div onClick={() => handleMerci(c.id, c.sender_id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 16px', borderRadius: 100, fontSize: 12, background: 'rgba(255,200,100,0.10)', border: '1px solid rgba(255,200,100,0.28)', color: 'rgba(255,220,140,0.9)', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>🙏 Remercier</div>
+                <div style={{ fontSize: isMobile ? 14 : 13, color: 'rgba(238,232,218,0.70)', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 12 }}>"{c.message_ia}"</div>
+                <div onClick={() => handleMerci(c.id, c.sender_id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: isMobile ? '8px 20px' : '7px 18px', borderRadius: 100, fontSize: isMobile ? 14 : 13, background: 'rgba(255,200,100,0.10)', border: '1px solid rgba(255,200,100,0.30)', color: 'rgba(255,220,140,0.9)', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>🙏 Remercier</div>
               </div>
             )
           })}
@@ -483,17 +506,17 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst }
       )}
 
       {/* ── FLUX ÉNERGIE ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.25)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 2 }}>Flux d'énergie</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ fontSize: isMobile ? 12 : 11, color: 'rgba(238,232,218,0.38)', letterSpacing: '.10em', textTransform: 'uppercase', marginBottom: 2 }}>Flux d'énergie</div>
         {flux.length === 0 && (
-          <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.22)', fontStyle: 'italic' }}>Le flux s'animera dès que des fleurs interagissent…</div>
+          <div style={{ fontSize: isMobile ? 14 : 13, color: 'rgba(238,232,218,0.30)', fontStyle: 'italic' }}>Le flux s'animera dès que des fleurs interagissent…</div>
         )}
         {flux.map((item, i) => (
-          <div key={item.id ?? i} style={{ display: 'flex', gap: 9, padding: '8px 12px', borderRadius: 10, background: `${item.color}06`, border: `1px solid ${item.color}12` }}>
-            <span style={{ fontSize: 13, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
+          <div key={item.id ?? i} style={{ display: 'flex', gap: 12, padding: isMobile ? '12px 14px' : '10px 14px', borderRadius: 12, background: `${item.color}07`, border: `1px solid ${item.color}15` }}>
+            <span style={{ fontSize: isMobile ? 18 : 16, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.6)', lineHeight: 1.5 }}>{item.text}</div>
-              <div style={{ fontSize: 9, color: 'rgba(238,232,218,0.22)', marginTop: 2 }}>{item.t}</div>
+              <div style={{ fontSize: isMobile ? 14 : 13, color: 'rgba(238,232,218,0.72)', lineHeight: 1.55 }}>{item.text}</div>
+              <div style={{ fontSize: isMobile ? 12 : 11, color: 'rgba(238,232,218,0.30)', marginTop: 3 }}>{item.t}</div>
             </div>
           </div>
         ))}
@@ -778,7 +801,7 @@ function Modal({ onClose, children, maxWidth = 480 }) {
       <div onClick={e => e.stopPropagation()} style={{ background: 'linear-gradient(160deg,#0d200d,#091209)', border: '1px solid rgba(150,212,133,.15)', borderRadius: isMobile ? '20px 20px 0 0' : 20, width: '100%', maxWidth: isMobile ? '100%' : maxWidth, maxHeight: isMobile ? '92vh' : '88vh', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         {isMobile && <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 2px' }}><div style={{ width: 36, height: 3, borderRadius: 2, background: 'rgba(255,255,255,.18)' }} /></div>}
         {children}
-        <div onClick={onClose} style={{ textAlign: 'center', padding: '10px 0 18px', fontSize: 11, color: 'rgba(238,232,218,.25)', cursor: 'pointer' }}>Fermer</div>
+        <div onClick={onClose} style={{ textAlign: 'center', padding: '12px 0 20px', fontSize: isMobile ? 14 : 13, color: 'rgba(238,232,218,.45)', cursor: 'pointer', letterSpacing: '.04em' }}>Fermer</div>
       </div>
     </div>
   )
@@ -868,34 +891,66 @@ function ModalEgregore({ userId, onClose, onParticleBurst }) {
 
   return (
     <Modal onClose={onClose} maxWidth={500}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '0 24px 8px' }}>
-        <div style={{ marginTop: -15, marginBottom: -10 }}>
-          <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 280 : 380} svgRef={svgRef} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '8px 24px 16px' }}>
+
+        {/* Fleur — grand format, sans vide */}
+        <div style={{ marginTop: -20, marginBottom: -28 }}>
+          <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 340 : 420} svgRef={svgRef} />
         </div>
-        <div style={{ fontSize: 9, color: 'rgba(238,232,218,.3)', letterSpacing: '.1em' }}>
-          Collectif de <span style={{ color: 'rgba(150,212,133,.7)' }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''}
+
+        {/* Compteur fleurs */}
+        <div style={{ fontSize: isMobile ? 13 : 13, color: 'rgba(238,232,218,.55)', letterSpacing: '.06em' }}>
+          Collectif de <span style={{ color: 'rgba(150,212,133,.95)', fontWeight: 600 }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''} actives
         </div>
+
         {intention && (<>
-          <div style={{ fontSize: 9, color: 'rgba(232,196,100,.5)', letterSpacing: '.14em', textTransform: 'uppercase' }}>✦ Intention collective du jour</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, fontWeight: 300, color: '#e8d4a8', lineHeight: 1.1, textAlign: 'center' }}>{intention.text}</div>
-          <div style={{ fontSize: 11, color: 'rgba(238,232,218,.38)', lineHeight: 1.65, textAlign: 'center' }}>{intention.description}</div>
+          {/* Label */}
+          <div style={{ fontSize: isMobile ? 11 : 11, color: 'rgba(232,196,100,.70)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Intention collective du jour</div>
+
+          {/* Titre de l'intention — hero */}
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 32 : 36, fontWeight: 300, color: '#f0e8d0', lineHeight: 1.1, textAlign: 'center', letterSpacing: '-.01em' }}>{intention.text}</div>
+
+          {/* Description */}
+          <div style={{ fontSize: isMobile ? 14 : 14, color: 'rgba(238,232,218,.62)', lineHeight: 1.7, textAlign: 'center' }}>{intention.description}</div>
         </>)}
-        <div onClick={handleJoin} style={{ display: 'flex', alignItems: 'center', gap: 7, minHeight: 42, padding: '0 24px', borderRadius: 100, fontSize: 12, cursor: 'pointer', background: joined ? 'rgba(232,196,100,.14)' : 'rgba(150,212,133,.1)', border: `1px solid ${joined ? 'rgba(232,196,100,.42)' : 'rgba(150,212,133,.3)'}`, color: joined ? '#e8d4a8' : '#c8f0b8', transition: 'all .2s', WebkitTapHighlightColor: 'transparent' }}>
+
+        {/* Bouton rejoindre */}
+        <div onClick={handleJoin} style={{
+          display: 'flex', alignItems: 'center', gap: 8,
+          minHeight: isMobile ? 48 : 44, padding: '0 28px',
+          borderRadius: 100, fontSize: isMobile ? 15 : 14,
+          cursor: 'pointer',
+          background: joined ? 'rgba(232,196,100,.15)' : 'rgba(150,212,133,.10)',
+          border: `1px solid ${joined ? 'rgba(232,196,100,.50)' : 'rgba(150,212,133,.35)'}`,
+          color: joined ? '#e8d4a8' : '#c8f0b8',
+          fontWeight: joined ? 500 : 300,
+          transition: 'all .2s', WebkitTapHighlightColor: 'transparent',
+          width: '100%', justifyContent: 'center',
+        }}>
           {joined ? '✓ Vous nourrissez l\'intention' : '🌸 Rejoindre l\'intention collective'}
         </div>
+
+        {/* Résonance */}
         {resonance && (() => {
           const z = ZONE_MAP[resonance.zone]
           const pct = (resonance.current / resonance.threshold) * 100
           return (
-            <div style={{ width: '100%', background: `${z?.color}08`, border: `1px solid ${z?.color}22`, borderRadius: 12, padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ width: '100%', background: `${z?.color}0a`, border: `1px solid ${z?.color}28`, borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}><span>🔥</span><div style={{ fontSize: 11, color: z?.color }}>Résonance {z?.name}</div></div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 14, color: z?.color }}>{resonance.current}%</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 18 }}>🔥</span>
+                  <div style={{ fontSize: isMobile ? 14 : 13, color: z?.color, fontWeight: 500 }}>Résonance {z?.name}</div>
+                </div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 20, color: z?.color }}>
+                  {resonance.current}<span style={{ fontSize: 12, opacity: .6 }}>%</span>
+                </div>
               </div>
-              <div style={{ height: 3, borderRadius: 100, background: 'rgba(255,255,255,.07)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${pct}%`, borderRadius: 100, background: `linear-gradient(90deg,${z?.color}88,${z?.color})` }} />
+              <div style={{ height: 4, borderRadius: 100, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${pct}%`, borderRadius: 100, background: `linear-gradient(90deg,${z?.color}88,${z?.color})`, transition: 'width .6s ease' }} />
               </div>
-              <div style={{ fontSize: 9, color: 'rgba(238,232,218,.25)' }}>Seuil {resonance.threshold}% · encore {resonance.threshold - resonance.current} pts</div>
+              <div style={{ fontSize: isMobile ? 12 : 12, color: 'rgba(238,232,218,.40)' }}>
+                Seuil {resonance.threshold}% · encore <strong style={{ color: z?.color }}>{resonance.threshold - resonance.current} pts</strong>
+              </div>
             </div>
           )
         })()}
