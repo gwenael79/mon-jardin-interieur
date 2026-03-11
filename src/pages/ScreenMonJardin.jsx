@@ -33,25 +33,25 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
   const op  = isPast ? 0.35 : unlocked ? 1 : 0.65
 
   return (
-    <div style={{ position:'relative', flex:1 }}>
+    <div style={{ position:'relative', display:'inline-flex' }}>
       <div
         onClick={() => unlocked ? onOpen() : setTooltip(t => !t)}
         style={{
-          display:'flex', flexDirection:'row', alignItems:'center', gap:3,
-          padding:'3px 7px', borderRadius:20, cursor: unlocked ? 'pointer' : 'default',
+          display:'inline-flex', flexDirection:'row', alignItems:'center', gap:2,
+          padding:'2px 6px 2px 4px', borderRadius:20, cursor: unlocked ? 'pointer' : 'default',
           background: bg, border: `1px solid ${bd}`,
           transition:'all .2s', opacity: op, userSelect:'none',
-          boxShadow: isCurrent ? `0 0 0 2px ${colorU}55` : 'none',
+          boxShadow: isCurrent ? `0 0 0 1.5px ${colorU}55` : 'none',
           whiteSpace:'nowrap',
         }}
         onMouseEnter={e => { if (unlocked && !isPast) e.currentTarget.style.background = bgU.replace('0.14','0.24') }}
         onMouseLeave={e => { e.currentTarget.style.background = bg }}
       >
-        <span style={{ fontSize:10, position:'relative', lineHeight:1 }}>
+        <span style={{ fontSize:9, position:'relative', lineHeight:1 }}>
           {isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{badge}</span> : badge}
-          {!unlocked && <span style={{ position:'absolute', top:-3, right:-5, fontSize:7 }}>🔒</span>}
+          {!unlocked && <span style={{ position:'absolute', top:-2, right:-4, fontSize:6 }}>🔒</span>}
         </span>
-        <span style={{ fontSize:8, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
+        <span style={{ fontSize:7, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
       </div>
 
       {tooltip && !unlocked && (
@@ -2378,7 +2378,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
-      <div style={{ width:'100%', maxWidth:440, borderRadius:22, padding:'28px 24px 36px', border:'1px solid rgba(255,255,255,0.07)', background:`linear-gradient(175deg,${zone.bg} 0%,#080E0A 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid rgba(255,255,255,0.07)', background:`linear-gradient(175deg,${zone.bg} 0%,#080E0A 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
         {activeRitual ? (
           <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} />
         ) : (
@@ -2396,25 +2396,42 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
             <div style={{ height:3, borderRadius:2, background:'rgba(255,255,255,0.07)', marginBottom:22, overflow:'hidden' }}>
               <div style={{ height:'100%', borderRadius:2, background:`linear-gradient(90deg,${zone.color},${zone.accent})`, width:`${pct}%`, transition:'width 0.7s ease' }} />
             </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {rituals.map(r => {
                 const isDone = !!completed[r.id]
+                const fs = r.text.length > 32 ? 22 : r.text.length > 24 ? 25 : 28
                 return (
                   <button key={r.id} onClick={() => { if (!isDone) setActiveRitual(r) }}
-                    style={{ display:'flex', alignItems:'center', gap:12, padding:'16px 15px', borderRadius:12, border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.06)'}`, background: isDone ? `${zone.color}10` : 'rgba(255,255,255,0.025)', cursor: isDone ? 'default' : 'pointer', textAlign:'left', transition:'all 0.22s', opacity: isDone ? 0.75 : 1 }}>
-                    <span style={{ fontSize:22, flexShrink:0 }}>{r.icon}</span>
-                    <div style={{ flex:1, minWidth:0 }}>
+                    style={{ display:'flex', alignItems:'stretch', gap:0, padding:0, borderRadius:14,
+                      border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.08)'}`,
+                      background: isDone ? `${zone.color}0e` : 'rgba(255,255,255,0.03)',
+                      cursor: isDone ? 'default' : 'pointer', textAlign:'left',
+                      transition:'all 0.22s', opacity: isDone ? 0.7 : 1, overflow:'hidden' }}>
+
+                    {/* Bande couleur gauche */}
+                    <div style={{ width:4, flexShrink:0, background: isDone ? zone.color+'60' : zone.color+'25', borderRadius:'14px 0 0 14px' }} />
+
+                    {/* Contenu */}
+                    <div style={{ flex:1, padding:'22px 18px 18px', display:'flex', flexDirection:'column', gap:10, minWidth:0 }}>
                       <div style={{
-                        fontSize: r.text.length > 28 ? 14 : r.text.length > 20 ? 16 : 18,
-                        color: isDone ? '#D8EED8' : 'rgba(200,220,200,0.80)',
-                        fontWeight: isDone ? 500 : 400,
-                        lineHeight: 1.35,
-                        letterSpacing: '-0.01em',
+                        fontSize: fs,
+                        color: isDone ? 'rgba(200,230,200,0.70)' : '#EEF0E8',
+                        fontWeight: 300,
+                        lineHeight: 1.3,
+                        letterSpacing: fs >= 20 ? '-0.02em' : '-0.01em',
+                        fontFamily: "'Jost', sans-serif",
                       }}>{r.text}</div>
-                      {!isDone && <div style={{ fontSize:10, color:'rgba(180,200,180,0.28)', marginTop:4, letterSpacing:'0.03em' }}>Toucher pour explorer →</div>}
-                    </div>
-                    <div style={{ width:22, height:22, borderRadius:'50%', border:`1.5px solid ${isDone ? zone.color : 'rgba(255,255,255,0.18)'}`, background: isDone ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s', flexShrink:0 }}>
-                      {isDone && <span style={{ fontSize:10, color:zone.accent, fontWeight:700 }}>✓</span>}
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                        <span style={{ fontSize:10, color: isDone ? zone.color+'aa' : 'rgba(180,200,180,0.25)', letterSpacing:'0.04em' }}>
+                          {isDone ? '✓ Complété' : `${r.icon}  Explorer →`}
+                        </span>
+                        <div style={{ width:20, height:20, borderRadius:'50%',
+                          border:`1.5px solid ${isDone ? zone.color : 'rgba(255,255,255,0.15)'}`,
+                          background: isDone ? `${zone.color}30` : 'transparent',
+                          display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                          {isDone && <span style={{ fontSize:9, color:zone.accent, fontWeight:700 }}>✓</span>}
+                        </div>
+                      </div>
                     </div>
                   </button>
                 )
@@ -2832,19 +2849,19 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
                 )}
 
                 {/* Ligne haute : icône + nom + badge */}
-                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
-                  <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
-                    <span style={{ fontSize: isMobile ? 16 : 18, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
-                    <span style={{ fontSize: isMobile ? 9 : 10, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:4 }}>{zone.name.toUpperCase()}</span>
-                    {!isMobile && <span style={{ fontSize:8.5, color:'rgba(255,255,255,0.22)', letterSpacing:'0.03em', marginTop:1 }}>{zone.subtitle}</span>}
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                    <span style={{ fontSize: isMobile ? 18 : 22, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
+                    <span style={{ fontSize: isMobile ? 11 : 13, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
+                    {!isMobile && <span style={{ fontSize:11, color:'rgba(255,255,255,0.30)', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>}
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
-                    <span style={{ fontSize: isMobile ? 13 : 15, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize: isMobile ? 8 : 9, opacity:0.6 }}>%</span></span>
+                    <span style={{ fontSize: isMobile ? 16 : 20, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize: isMobile ? 9 : 11, opacity:0.6 }}>%</span></span>
                     {isPriority && !allDone && (
-                      <span style={{ fontSize:7, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>
+                      <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>
                     )}
                     {allDone && (
-                      <span style={{ fontSize:9, color: zone.accent }}>✓</span>
+                      <span style={{ fontSize:11, color: zone.accent }}>✓</span>
                     )}
                   </div>
                 </div>
@@ -2861,14 +2878,14 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
 
                 {/* Compteur rituels */}
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize: isMobile ? 8 : 8.5, color:'rgba(255,255,255,0.20)' }}>
+                  <span style={{ fontSize: isMobile ? 10 : 11, color:'rgba(255,255,255,0.25)' }}>
                     {doneCnt > 0
                       ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span>
                       : <span>{doneCnt}</span>
                     }
-                    <span style={{ color:'rgba(255,255,255,0.15)' }}>/{rituals.length} rituels</span>
+                    <span style={{ color:'rgba(255,255,255,0.18)' }}>/{rituals.length} rituels</span>
                   </span>
-                  <span style={{ fontSize:9, color:'rgba(255,255,255,0.14)' }}>›</span>
+                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.18)' }}>›</span>
                 </div>
               </button>
             )
@@ -3510,7 +3527,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               background:'rgba(10,22,12,0.6)',
               flexShrink:0,
             }}>
-              <span style={{ fontSize:9, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez votre fleur :</span>
+              <span style={{ fontSize:8, color:'rgba(238,232,218,0.30)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
               {[
                 { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
                 { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
