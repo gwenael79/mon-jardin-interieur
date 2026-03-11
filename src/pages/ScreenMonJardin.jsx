@@ -37,22 +37,21 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
       <div
         onClick={() => unlocked ? onOpen() : setTooltip(t => !t)}
         style={{
-          display:'flex', flexDirection:'column', alignItems:'center', gap:3,
-          padding:'7px 6px', borderRadius:10, cursor: unlocked ? 'pointer' : 'default',
+          display:'flex', flexDirection:'row', alignItems:'center', gap:3,
+          padding:'3px 7px', borderRadius:20, cursor: unlocked ? 'pointer' : 'default',
           background: bg, border: `1px solid ${bd}`,
           transition:'all .2s', opacity: op, userSelect:'none',
           boxShadow: isCurrent ? `0 0 0 2px ${colorU}55` : 'none',
+          whiteSpace:'nowrap',
         }}
         onMouseEnter={e => { if (unlocked && !isPast) e.currentTarget.style.background = bgU.replace('0.14','0.24') }}
         onMouseLeave={e => { e.currentTarget.style.background = bg }}
       >
-        <div style={{ fontSize:15, position:'relative' }}>
+        <span style={{ fontSize:10, position:'relative', lineHeight:1 }}>
           {isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{badge}</span> : badge}
-          {!unlocked && <span style={{ position:'absolute', top:-4, right:-7, fontSize:9 }}>🔒</span>}
-          {isCurrent && <span style={{ position:'absolute', top:-5, right:-8, fontSize:8, lineHeight:1 }}>✦</span>}
-        </div>
-        <div style={{ fontSize:8, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.04em' }}>{label}</div>
-        <div style={{ fontSize:7, color: isPast ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.22)' }}>Niv.{lv}</div>
+          {!unlocked && <span style={{ position:'absolute', top:-3, right:-5, fontSize:7 }}>🔒</span>}
+        </span>
+        <span style={{ fontSize:8, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
       </div>
 
       {tooltip && !unlocked && (
@@ -675,7 +674,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const rootC = `rgba(${112+28*r},${72+26*r},${38+12*r},${0.28+0.32*r})`
 
   /* ── Ciel bleu — identique au jardin collectif ── */
-  const skyHue = isDay ? Math.round(200 - dp * (1 - dp) * 4 * 60) : null
+  const skyHue = isDay ? Math.round(215 - dp * (1 - dp) * 4 * 12) : null   // reste dans les bleus (203–215)
   const skyA = isDay ? (isG ? '#1a0a04' : '#0b1e3a') : '#020510'
   const skyB = isDay ? (isG ? `hsl(${skyHue},72%,22%)` : '#1e4e8a') : '#060c1e'
   const skyC = isDay ? (isG ? '#d96418' : `hsl(${skyHue},60%,46%)`) : '#0a1228'
@@ -946,6 +945,126 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           })}
         </g>
 
+        {/* ── RACINES : fixes, hors plantSway, organiques ── */}
+        {r > 0.10 && (() => {
+          // Hash déterministe pour asymétrie stable
+          const rh = (a, b = 0) => {
+            let h = (2166136261 ^ b) >>> 0
+            const s = String(a)
+            for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0 }
+            return h
+          }
+          const rn = (seed, lo, hi) => lo + ((rh(seed) % 1000) / 1000) * (hi - lo)
+
+          // Profondeur pivot selon seuils progressifs
+          const pivotD = r < 0.15 ? 10
+                       : r < 0.20 ? 16
+                       : r < 0.30 ? 22
+                       : r < 0.40 ? 32
+                       : r < 0.50 ? 44
+                       : r < 0.65 ? 54
+                       : r < 0.75 ? 62
+                       : r < 0.85 ? 68 : 74
+
+          // Couleurs selon profondeur — plus sombre et transparent en profondeur
+          const cRoot0 = `rgba(${138+20*r},${88+18*r},${48+10*r},${0.22+0.28*r})`  // surface
+          const cRoot1 = `rgba(${118+15*r},${72+14*r},${36+8*r},${0.16+0.22*r})`   // intermédiaire
+          const cRoot2 = `rgba(${98+10*r},${58+10*r},${28+6*r},${0.10+0.16*r})`    // profond
+
+          // Branches : angle de départ asymétriques
+          const branches = [
+            { ang:-105, len: pivotD*0.82, sw:1.6+0.7*r, col:cRoot0, seed:'aL' },
+            { ang:-130, len: pivotD*0.65, sw:1.2+0.5*r, col:cRoot1, seed:'bL' },
+            { ang: -80, len: pivotD*0.52, sw:0.9+0.4*r, col:cRoot1, seed:'cL' },
+            { ang: 112, len: pivotD*0.78, sw:1.5+0.6*r, col:cRoot0, seed:'aR' },
+            { ang: 145, len: pivotD*0.60, sw:1.1+0.4*r, col:cRoot1, seed:'bR' },
+            { ang:  95, len: pivotD*0.48, sw:0.8+0.35*r, col:cRoot1, seed:'cR' },
+          ]
+
+          // Filtre blur pour diffusion
+          const fid = id + 'rf'
+
+          return (
+            <g clipPath={`url(#${id+'rc'})`} opacity={0.30+0.42*r}>
+              <defs>
+                <filter id={fid}><feGaussianBlur stdDeviation="1.2"/></filter>
+                <clipPath id={id+'rc'}><rect x={0} y={gY+2} width={W} height={H}/></clipPath>
+              </defs>
+
+              {/* Pivot central — légèrement courbé */}
+              {r > 0.10 && (
+                <path
+                  d={`M${cx},${gY+8} C${cx+rn('pv1',-3,3)},${gY+pivotD*0.4} ${cx+rn('pv2',-2,2)},${gY+pivotD*0.7} ${cx+rn('pv3',-2,3)},${gY+pivotD}`}
+                  stroke={cRoot0} strokeWidth={2.0+1.2*r} strokeLinecap="round" fill="none"
+                  filter={`url(#${fid})`}
+                />
+              )}
+
+              {/* Branches latérales organiques */}
+              {r > 0.15 && branches.slice(0, r < 0.20 ? 2 : r < 0.30 ? 3 : r < 0.40 ? 4 : r < 0.50 ? 5 : 6).map((b, i) => {
+                const rad = b.ang * Math.PI / 180
+                const wobble = rn(b.seed+'w', -8, 8)
+                const ex = cx + Math.cos(rad) * b.len
+                const ey = gY + 8 + Math.abs(Math.sin(rad)) * b.len
+                const mx = cx + Math.cos(rad) * b.len * 0.5 + wobble
+                const my = gY + 8 + Math.abs(Math.sin(rad)) * b.len * 0.45 + rn(b.seed+'m', -4, 4)
+                return (
+                  <g key={i}>
+                    <path
+                      d={`M${cx},${gY+8} Q${mx},${my} ${ex},${ey}`}
+                      stroke={b.col} strokeWidth={b.sw} strokeLinecap="round" fill="none"
+                      filter={`url(#${fid})`}
+                    />
+                    {/* Sous-branche — visible à partir de 40% */}
+                    {r > 0.40 && (() => {
+                      const rad2 = (b.ang + rn(b.seed+'a2',-22,22)) * Math.PI / 180
+                      const l2 = b.len * (0.38 + rn(b.seed+'l2',0,0.22))
+                      const ex2 = ex + Math.cos(rad2) * l2
+                      const ey2 = ey + Math.abs(Math.sin(rad2)) * l2 * 0.6
+                      return (
+                        <path
+                          d={`M${ex},${ey} Q${(ex+ex2)/2+rn(b.seed+'cx',-5,5)},${(ey+ey2)/2+rn(b.seed+'cy',-3,3)} ${ex2},${ey2}`}
+                          stroke={cRoot1} strokeWidth={b.sw*0.58} strokeLinecap="round" fill="none"
+                          filter={`url(#${fid})`}
+                        />
+                      )
+                    })()}
+                    {/* Radicelles fines — à partir de 65% */}
+                    {r > 0.65 && [0,1].map(k => {
+                      const rad3 = (b.ang + rn(b.seed+'r'+k,-35,35)) * Math.PI / 180
+                      const l3 = b.len * (0.18 + rn(b.seed+'l3'+k,0,0.12))
+                      const bx = ex + Math.cos(rad3) * l3 * 0.4
+                      const by = ey + Math.abs(Math.sin(rad3)) * l3 * 0.3
+                      return (
+                        <path key={k}
+                          d={`M${ex},${ey} L${bx},${by}`}
+                          stroke={cRoot2} strokeWidth={0.45} strokeLinecap="round" fill="none"
+                          filter={`url(#${fid})`}
+                        />
+                      )
+                    })}
+                  </g>
+                )
+              })}
+
+              {/* Poils absorbants — réseau fin à partir de 75% */}
+              {r > 0.75 && Array.from({ length: 10 }, (_, i) => {
+                const bx = cx + rn('ha'+i,-30,30)
+                const by = gY + 10 + rn('hb'+i,8,pivotD*0.85)
+                const dx = rn('hc'+i,-5,5)
+                const dy = rn('hd'+i,3,8)
+                return (
+                  <line key={i}
+                    x1={bx} y1={by} x2={bx+dx} y2={by+dy}
+                    stroke={cRoot2} strokeWidth={0.3} strokeLinecap="round"
+                    opacity={0.40+0.18*r}
+                  />
+                )
+              })}
+            </g>
+          )
+        })()}
+
         {/* PLANTE */}
         <g style={plantSway}>
 
@@ -990,105 +1109,6 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               Tige + premières vraies feuilles, pas encore de fleur */}
           {(stage === 'young' || stage === 'bud' || stage === 'flower') && (
             <>
-              {/* Racines — système racinaire progressif et fin */}
-              {r > 0.10 && (() => {
-                // Racine pivot centrale
-                const pivotD = r > 0.55 ? 58 : r > 0.42 ? 44 : r > 0.25 ? 30 : 16
-                // Racines latérales principales (paires gauche/droite)
-                const lateralCount = r < 0.20 ? 0 : r < 0.36 ? 1 : r < 0.50 ? 2 : r < 0.68 ? 3 : 4
-                // Capillaires visibles à partir de 50%
-                const showCapillary = r > 0.50
-
-                return (
-                  <g opacity={0.38+0.30*r}>
-                    {/* Pivot central — racine principale */}
-                    <path
-                      d={`M${cx},${gY+2} C${cx-2},${gY+pivotD*0.45} ${cx+2},${gY+pivotD*0.72} ${cx},${gY+pivotD}`}
-                      stroke={rootC} strokeWidth={2.2+1.4*r} strokeLinecap="round" fill="none"
-                    />
-                    {/* Radicelle centrale fine */}
-                    {r > 0.38 && (
-                      <path
-                        d={`M${cx},${gY+pivotD*0.55} C${cx-1},${gY+pivotD*0.75} ${cx+1},${gY+pivotD*0.90} ${cx},${gY+pivotD+10}`}
-                        stroke={rootC} strokeWidth={0.7} strokeLinecap="round" fill="none" opacity={0.5}
-                      />
-                    )}
-
-                    {/* Racines latérales par paires */}
-                    {Array.from({ length: lateralCount }, (_, i) => {
-                      const t = 0.18 + (i / Math.max(lateralCount - 1, 1)) * 0.52
-                      const baseY = gY + pivotD * t
-                      const spread = 14 + i * 10 + r * 12
-                      const dropL  = 12 + i * 6 + r * 10
-                      const dropR  = 10 + i * 7 + r * 9
-                      const ctrlL  = spread * 0.6
-                      const ctrlR  = spread * 0.55
-                      // Épaisseur décroissante selon profondeur
-                      const sw = 1.2 + (1 - i / lateralCount) * 0.9 * r
-
-                      return (
-                        <g key={i}>
-                          {/* Gauche */}
-                          <path
-                            d={`M${cx},${baseY} C${cx-ctrlL},${baseY+4} ${cx-spread},${baseY+dropL*0.6} ${cx-spread+4},${baseY+dropL}`}
-                            stroke={rootC} strokeWidth={sw} strokeLinecap="round" fill="none"
-                          />
-                          {/* Droite */}
-                          <path
-                            d={`M${cx},${baseY} C${cx+ctrlR},${baseY+3} ${cx+spread-2},${baseY+dropR*0.55} ${cx+spread-6},${baseY+dropR}`}
-                            stroke={rootC} strokeWidth={sw * 0.9} strokeLinecap="round" fill="none"
-                          />
-                          {/* Capillaires gauche */}
-                          {showCapillary && i >= 1 && (
-                            <path
-                              d={`M${cx-spread*0.55},${baseY+dropL*0.45} C${cx-spread*0.8},${baseY+dropL*0.5} ${cx-spread*0.9+3},${baseY+dropL*0.65} ${cx-spread*0.85},${baseY+dropL*0.80}`}
-                              stroke={rootC} strokeWidth={0.5} strokeLinecap="round" fill="none" opacity={0.55}
-                            />
-                          )}
-                          {/* Capillaires droite */}
-                          {showCapillary && i >= 1 && (
-                            <path
-                              d={`M${cx+spread*0.50},${baseY+dropR*0.40} C${cx+spread*0.75},${baseY+dropR*0.48} ${cx+spread*0.85-2},${baseY+dropR*0.62} ${cx+spread*0.80},${baseY+dropR*0.78}`}
-                              stroke={rootC} strokeWidth={0.5} strokeLinecap="round" fill="none" opacity={0.50}
-                            />
-                          )}
-                        </g>
-                      )
-                    })}
-
-                    {/* Radicelles fines en réseau — à partir de 60% */}
-                    {r > 0.60 && [
-                      [cx - 8,  gY + pivotD * 0.30, -12, 8],
-                      [cx + 6,  gY + pivotD * 0.42,  10, 7],
-                      [cx - 4,  gY + pivotD * 0.62,  -8, 9],
-                      [cx + 10, gY + pivotD * 0.70,   9, 8],
-                    ].map(([bx, by, dx, dy], i) => (
-                      <path key={i}
-                        d={`M${bx},${by} Q${bx + dx * 0.5},${by + dy * 0.4} ${bx + dx},${by + dy}`}
-                        stroke={rootC} strokeWidth={0.4} strokeLinecap="round" fill="none" opacity={0.40 + 0.18 * r}
-                      />
-                    ))}
-
-                    {/* Poils absorbants — présence fine à 75%+ */}
-                    {r > 0.75 && [
-                      [cx - 22, gY + 22, -3, 5],
-                      [cx - 18, gY + 30,  2, 4],
-                      [cx - 28, gY + 34, -2, 6],
-                      [cx + 20, gY + 24,  3, 5],
-                      [cx + 16, gY + 32, -2, 4],
-                      [cx + 26, gY + 36,  2, 5],
-                      [cx - 6,  gY + 48, -3, 4],
-                      [cx + 4,  gY + 50,  2, 5],
-                    ].map(([bx, by, dx, dy], i) => (
-                      <path key={i}
-                        d={`M${bx},${by} L${bx + dx},${by + dy}`}
-                        stroke={rootC} strokeWidth={0.35} strokeLinecap="round" fill="none" opacity={0.35}
-                      />
-                    ))}
-                  </g>
-                )
-              })()}
-
               {/* Tige principale */}
               <path d={`M${cx},${gY} C${cx-6},${Math.round(sMY+14)} ${cx+7},${Math.round(sMY-14)} ${cx},${sTY}`}
                 stroke={stemC} strokeWidth={2.2+2*r} strokeLinecap="round" fill="none"/>
@@ -2381,14 +2401,20 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
                 const isDone = !!completed[r.id]
                 return (
                   <button key={r.id} onClick={() => { if (!isDone) setActiveRitual(r) }}
-                    style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 15px', borderRadius:12, border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.06)'}`, background: isDone ? `${zone.color}10` : 'rgba(255,255,255,0.025)', cursor: isDone ? 'default' : 'pointer', textAlign:'left', transition:'all 0.22s', opacity: isDone ? 0.75 : 1 }}>
-                    <span style={{ fontSize:18, flexShrink:0 }}>{r.icon}</span>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color: isDone ? '#D8EED8' : 'rgba(180,200,180,0.58)', fontWeight: isDone ? 500 : 300, lineHeight:1.3 }}>{r.text}</div>
-                      {!isDone && <div style={{ fontSize:10, color:'rgba(180,200,180,0.28)', marginTop:2 }}>Toucher pour explorer →</div>}
+                    style={{ display:'flex', alignItems:'center', gap:12, padding:'16px 15px', borderRadius:12, border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.06)'}`, background: isDone ? `${zone.color}10` : 'rgba(255,255,255,0.025)', cursor: isDone ? 'default' : 'pointer', textAlign:'left', transition:'all 0.22s', opacity: isDone ? 0.75 : 1 }}>
+                    <span style={{ fontSize:22, flexShrink:0 }}>{r.icon}</span>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{
+                        fontSize: r.text.length > 28 ? 14 : r.text.length > 20 ? 16 : 18,
+                        color: isDone ? '#D8EED8' : 'rgba(200,220,200,0.80)',
+                        fontWeight: isDone ? 500 : 400,
+                        lineHeight: 1.35,
+                        letterSpacing: '-0.01em',
+                      }}>{r.text}</div>
+                      {!isDone && <div style={{ fontSize:10, color:'rgba(180,200,180,0.28)', marginTop:4, letterSpacing:'0.03em' }}>Toucher pour explorer →</div>}
                     </div>
-                    <div style={{ width:20, height:20, borderRadius:'50%', border:`1.5px solid ${isDone ? zone.color : 'rgba(255,255,255,0.18)'}`, background: isDone ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s', flexShrink:0 }}>
-                      {isDone && <span style={{ fontSize:9, color:zone.accent, fontWeight:700 }}>✓</span>}
+                    <div style={{ width:22, height:22, borderRadius:'50%', border:`1.5px solid ${isDone ? zone.color : 'rgba(255,255,255,0.18)'}`, background: isDone ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s', flexShrink:0 }}>
+                      {isDone && <span style={{ fontSize:10, color:zone.accent, fontWeight:700 }}>✓</span>}
                     </div>
                   </button>
                 )
@@ -2407,6 +2433,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
 // ── DailyQuizModal ──────────────────────────────────────────
 // ── Calcule les zones prioritaires depuis la dégradation ──────────────────────
 function getBilanRecommendation(degradation) {
+  if (!degradation || typeof degradation !== 'object') return { type:'good', message:'', sub:'', zones:[] }
   const ZONE_LABELS = {
     roots:   { name:'les Racines',  emoji:'🌿', desc:'ancrage et énergie vitale' },
     stem:    { name:'la Tige',      emoji:'🌱', desc:'flexibilité et corps' },
@@ -2589,26 +2616,23 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
 // ── BilanInsightCard — texte IA parallèle plante / personne ──
 const SUPABASE_FN_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/Moderate-circle'
 
-function BilanInsightCard({ degradation }) {
+function BilanInsightCard({ degradation, fillHeight = false }) {
   const [insight,  setInsight]  = useState(null)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState(false)
+  const containerRef = useRef(null)
+  const textRef      = useRef(null)
 
-  // Clé de cache basée sur la dégradation + la date du jour
   const cacheKey = 'bilan-insight-' + new Date().toISOString().slice(0, 10) + '-' + JSON.stringify(degradation)
 
   useEffect(() => {
     if (!degradation) return
-
-    // Vérification cache sessionStorage
     try {
       const cached = sessionStorage.getItem(cacheKey)
       if (cached) { setInsight(cached); return }
     } catch {}
-
     setLoading(true)
     setError(false)
-
     fetch(SUPABASE_FN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2619,13 +2643,45 @@ function BilanInsightCard({ degradation }) {
         if (data.insight) {
           setInsight(data.insight)
           try { sessionStorage.setItem(cacheKey, data.insight) } catch {}
-        } else {
-          setError(true)
-        }
+        } else { setError(true) }
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [cacheKey])
+
+  // Adapte la taille de police directement sur le DOM — pas de useState
+  useEffect(() => {
+    if (!fillHeight || !insight || !containerRef.current || !textRef.current) return
+    const container = containerRef.current
+    const text      = textRef.current
+
+    const fit = () => {
+      const headerEl  = container.querySelector('.bic-header')
+      const headerH   = headerEl ? headerEl.offsetHeight : 50
+      const available = container.clientHeight - headerH - 28
+      if (available <= 0) return
+
+      let lo = 9, hi = 28
+      text.style.fontSize   = hi + 'px'
+      text.style.lineHeight = '1.55'
+
+      while (hi - lo > 0.4) {
+        const mid = (lo + hi) / 2
+        text.style.fontSize   = mid + 'px'
+        text.style.lineHeight = mid <= 13 ? '1.72' : '1.55'
+        if (text.scrollHeight <= available) lo = mid
+        else hi = mid
+      }
+      text.style.fontSize   = lo + 'px'
+      text.style.lineHeight = lo <= 13 ? '1.72' : '1.55'
+    }
+
+    // Double rAF pour attendre la stabilisation du layout React
+    const raf = requestAnimationFrame(() => requestAnimationFrame(fit))
+    const ro = new ResizeObserver(() => requestAnimationFrame(fit))
+    ro.observe(container)
+    return () => { cancelAnimationFrame(raf); ro.disconnect() }
+  }, [fillHeight, insight, error])
 
   const rec          = getBilanRecommendation(degradation)
   const ZONE_COLORS  = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
@@ -2634,24 +2690,38 @@ function BilanInsightCard({ degradation }) {
   const isGood       = rec.type === 'good'
 
   return (
-    <div style={{ marginBottom:14, padding:'14px 16px', borderRadius:12, background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`, border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`, animation:'fadeUp 0.4s ease both' }}>
+    <div ref={containerRef}
+      style={{
+        padding:'14px 16px', borderRadius:12,
+        background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`,
+        border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`,
+        animation:'fadeUp 0.4s ease both',
+        ...(fillHeight
+          ? { flex:'1 1 0', display:'flex', flexDirection:'column', minHeight:0, overflow:'hidden' }
+          : {}
+        ),
+      }}>
 
       {/* En-tête */}
-      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 10 : 0 }}>
+      <div className="bic-header" style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 10 : 0, flexShrink:0 }}>
         <span style={{ fontSize:16 }}>{isGood ? '✨' : '🌿'}</span>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:11, color: isGood ? 'rgba(150,212,133,0.85)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
-            {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin vous parle'}
+            {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin intérieur vous parle'}
           </div>
         </div>
-        {/* Badges zones prioritaires */}
         {!isGood && rec.zones.length > 0 && (
-          <div style={{ display:'flex', gap:5, flexShrink:0 }}>
-            {rec.zones.map(zoneId => (
-              <span key={zoneId} style={{ fontSize:9, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
-                {ZONE_NAMES[zoneId]}
-              </span>
-            ))}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
+            <div style={{ fontSize:8, color:'rgba(238,232,218,0.38)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
+              Zone(s) à prendre soin :
+            </div>
+            <div style={{ display:'flex', gap:5 }}>
+              {rec.zones.map(zoneId => (
+                <span key={zoneId} style={{ fontSize:9, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
+                  {ZONE_NAMES[zoneId]}
+                </span>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -2669,7 +2739,11 @@ function BilanInsightCard({ degradation }) {
       )}
 
       {!loading && insight && (
-        <p style={{ fontSize:12, color:'rgba(220,235,220,0.70)', lineHeight:1.75, margin:0, fontStyle:'italic' }}>
+        <p ref={textRef}
+          style={{
+            fontSize:12, color:'rgba(220,235,220,0.70)', lineHeight:1.75, margin:0, fontStyle:'italic',
+            ...(fillHeight ? { flex:'1 1 0', overflow:'hidden' } : {}),
+          }}>
           {insight}
         </p>
       )}
@@ -2726,13 +2800,8 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
           )}
         </div>
 
-        {/* ── Bannière insight IA post-bilan ── */}
-        {bilanDoneToday && hasDegradation && (
-          <BilanInsightCard degradation={degradation} />
-        )}
-
         {/* Grille des zones */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap:9 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: isMobile ? 8 : 9 }}>
           {sortedZones.map((zoneId, index) => {
             const zone      = PLANT_ZONES[zoneId]
             const rituals   = PLANT_RITUALS[zoneId] || []
@@ -2741,23 +2810,66 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
             const dbKey     = ZONE_DB_KEY[zoneId]
             const health    = todayPlant?.[dbKey] ?? Math.max(5, 100 - deg)
             const isPriority= hasDegradation && deg >= 65 && doneCnt === 0
-            const isFirst   = hasDegradation && index === 0 && deg >= 60
+            const allDone   = doneCnt === rituals.length && rituals.length > 0
+            const zoneIcons = { roots:'🌱', stem:'🌿', leaves:'🍃', flowers:'🌸', breath:'🌬️' }
+
             return (
               <button key={zoneId} onClick={() => setActiveZone(zoneId)}
-                style={{ padding: isMobile ? '7px 12px' : '13px 14px', borderRadius:13, textAlign:'left', cursor:'pointer', background: isPriority ? `${zone.color}10` : 'rgba(255,255,255,0.04)', border:`1px solid ${isPriority ? zone.color + '40' : 'rgba(255,255,255,0.09)'}`, width:'100%', display:'flex', flexDirection: isMobile ? 'row' : 'column', alignItems: isMobile ? 'center' : 'stretch', gap: isMobile ? 8 : 0 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:4, flexShrink:0, minWidth: isMobile ? 90 : 'auto' }}>
-                  <span style={{ fontSize: isMobile ? 10 : 11, color:zone.color, fontWeight:500, letterSpacing:'0.03em' }}>{zone.name}</span>
-                  <span style={{ fontSize: isMobile ? 11 : 12, color:zone.accent, fontWeight:500 }}>{health}%</span>
-                </div>
-                <div style={{ flex:1, height:2.5, borderRadius:2, background:'rgba(255,255,255,0.06)' }}>
-                  <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg,${zone.color}88,${zone.color})`, borderRadius:2, transition:'width .6s ease' }} />
-                </div>
-                {!isMobile && (
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:6 }}>
-                    <span style={{ fontSize:10, color:'rgba(180,200,180,0.28)' }}>{doneCnt}/{rituals.length} rituel{doneCnt !== 1 ? 's' : ''}</span>
-                    {isPriority && <span style={{ fontSize:9, color:zone.color, background:`${zone.color}20`, padding:'2px 7px', borderRadius:100 }}>{isFirst ? '🔴 Prioritaire' : '⚡'}</span>}
-                  </div>
+                style={{
+                  position:'relative', overflow:'hidden',
+                  padding: isMobile ? '12px 12px 10px' : '14px 14px 12px',
+                  borderRadius:14, textAlign:'left', cursor:'pointer',
+                  background: `linear-gradient(145deg, ${zone.color}12 0%, ${zone.bg} 60%)`,
+                  border:`1px solid ${isPriority ? zone.color + '50' : allDone ? zone.color + '35' : 'rgba(255,255,255,0.07)'}`,
+                  boxShadow: isPriority ? `0 0 18px ${zone.color}22, inset 0 1px 0 ${zone.color}18` : allDone ? `0 0 12px ${zone.color}18` : 'none',
+                  width:'100%', display:'flex', flexDirection:'column', gap:0,
+                  transition:'all .2s ease',
+                }}>
+
+                {/* Lueur de fond sur priorité */}
+                {isPriority && (
+                  <div style={{ position:'absolute', inset:0, background:`radial-gradient(ellipse at 50% 0%, ${zone.color}18 0%, transparent 70%)`, pointerEvents:'none' }} />
                 )}
+
+                {/* Ligne haute : icône + nom + badge */}
+                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap:1 }}>
+                    <span style={{ fontSize: isMobile ? 16 : 18, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
+                    <span style={{ fontSize: isMobile ? 9 : 10, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:4 }}>{zone.name.toUpperCase()}</span>
+                    {!isMobile && <span style={{ fontSize:8.5, color:'rgba(255,255,255,0.22)', letterSpacing:'0.03em', marginTop:1 }}>{zone.subtitle}</span>}
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
+                    <span style={{ fontSize: isMobile ? 13 : 15, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize: isMobile ? 8 : 9, opacity:0.6 }}>%</span></span>
+                    {isPriority && !allDone && (
+                      <span style={{ fontSize:7, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>
+                    )}
+                    {allDone && (
+                      <span style={{ fontSize:9, color: zone.accent }}>✓</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Barre de progression */}
+                <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:6 }}>
+                  <div style={{
+                    height:'100%', width:`${health}%`,
+                    background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`,
+                    borderRadius:3, transition:'width .6s ease',
+                    boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none',
+                  }} />
+                </div>
+
+                {/* Compteur rituels */}
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <span style={{ fontSize: isMobile ? 8 : 8.5, color:'rgba(255,255,255,0.20)' }}>
+                    {doneCnt > 0
+                      ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span>
+                      : <span>{doneCnt}</span>
+                    }
+                    <span style={{ color:'rgba(255,255,255,0.15)' }}>/{rituals.length} rituels</span>
+                  </span>
+                  <span style={{ fontSize:9, color:'rgba(255,255,255,0.14)' }}>›</span>
+                </div>
               </button>
             )
           })}
@@ -3199,8 +3311,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       const lastPlant = history[0]  // history est trié par date DESC
       if (!lastPlant) return
 
-      const carryValues = Object.fromEntries(ZONE_KEYS.map(k => [k, lastPlant[k] ?? 5]))
-      const carryHealth = lastPlant.health ?? 5
+      const carryValues = Object.fromEntries(ZONE_KEYS.map(k => [k, Math.max(5, Math.floor((lastPlant[k] ?? 5) * 0.97))]))
+      const carryHealth = Math.max(5, Math.floor((lastPlant.health ?? 5) * 0.97))
 
       // Ne carry-over que si les valeurs d'hier sont meilleures que ce qu'on a aujourd'hui
       if (carryHealth > (todayPlant.health ?? 5)) {
@@ -3359,81 +3471,115 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     <div className="content">
     <div className="mj-layout">
       <div className="mj-left">
-        {/* Carte jardin 2 colonnes */}
-        <div className="plant-hero ph-2col">
-          <div className="ph-col-flower">
-            <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+        {/* ── Nouveau layout 50/50 : fleur | bilan + insight ── */}
+        <div style={{
+          display:'flex', flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 0 : 0, alignItems:'stretch',
+          borderRadius:16, overflow:'hidden',
+          border:'1px solid rgba(150,212,133,0.08)',
+          background:'rgba(14,28,14,0.95)',
+          flexShrink:0,
+          minHeight: isMobile ? 'auto' : 360,
+        }}>
+
+          {/* ── Colonne gauche : fleur + badges personnalisation ── */}
+          <div style={{
+            flex:'1 1 0', minWidth:0,
+            display:'flex', flexDirection:'column',
+            borderRight: isMobile ? 'none' : '1px solid rgba(150,212,133,0.06)',
+            borderBottom: isMobile ? '1px solid rgba(150,212,133,0.06)' : 'none',
+          }}>
+            {/* Fleur */}
+            <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
+              <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+              {/* Score overlay */}
+              <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
+                <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
+                  <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
+                  <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'rgba(242,237,224,0.55)', marginBottom:4 }}>%</span>
+                </div>
+                <div style={{ fontSize:8, letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(150,212,133,0.55)', fontWeight:500 }}>Vitalité</div>
+                <div style={{ fontSize:9, letterSpacing:'0.08em', color:'rgba(255,255,255,0.28)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
+              </div>
+            </div>
+            {/* ── Badges personnalisation — sous la fleur ── */}
+            <div style={{
+              display:'flex', alignItems:'center', gap:4, flexWrap:'wrap',
+              padding:'6px 10px 7px',
+              borderTop:'1px solid rgba(150,212,133,0.06)',
+              background:'rgba(10,22,12,0.6)',
+              flexShrink:0,
+            }}>
+              <span style={{ fontSize:9, color:'rgba(238,232,218,0.38)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez votre fleur :</span>
+              {[
+                { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
+                { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
+                { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3',    colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
+              ].map(cfg => (
+                <LevelBadge key={cfg.lv} {...cfg}
+                  unlocked={(profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
+                  isCurrent={(profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
+                  isPast={(profile?.level ?? 1) > cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
+                  onOpen={() => { setGardenTier(cfg.lv); setShowGardenSettings(true) }}
+                />
+              ))}
+            </div>
           </div>
-          <div className="ph-col-info">
-            <div className="ph-vitality-score">
-              <div className="ph-score-number">
-                <span className="ph-score-digits">{plant?.health ?? 5}</span>
-                <span className="ph-score-pct">%</span>
-              </div>
-              <div className="ph-score-label">Vitalité</div>
-              <div className="ph-score-date">{todayLabel}</div>
-            </div>
-            <div className="ph-zones-list">
-              {ZONES.map((z, i) => {
-                const val = plant?.[z.key] ?? 5
-                return (
-                  <div key={z.key} className="ph-zone-row-new" style={{ '--zone-color': z.color, '--zone-val': val + '%', animationDelay: (i * 0.08) + 's' }}>
-                    <span className="ph-zone-icon-new">{z.icon}</span>
-                    <div className="ph-zone-track">
-                      <div className="ph-zone-fill-new" />
-                    </div>
-                    <span className="ph-zone-pct-new">{val}</span>
+
+          {/* ── Colonne droite : bilan + insight ── */}
+          <div style={{
+            flex:'1 1 0', minWidth:0,
+            display:'flex', flexDirection:'column',
+            padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
+            background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+            gap:10,
+          }}>
+
+            {/* Bouton bilan */}
+            {!bilanDoneToday ? (
+              <button onClick={() => onOpenBilan?.()}
+                style={{ width:'100%', padding: isMobile ? '14px 16px' : '14px 18px', borderRadius:14,
+                  border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)',
+                  cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left',
+                  minHeight: isMobile ? 56 : 'auto', flexShrink:0 }}>
+                <span style={{ fontSize: isMobile ? 26 : 24 }}>🌹</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize: isMobile ? 14 : 13, color:'#C8A882', fontWeight:500, marginBottom:2 }}>Faire mon bilan du jour</div>
+                  <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(180,200,180,0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
+                  +3 ✦
+                </div>
+              </button>
+            ) : (
+              <div>
+                <div style={{ width:'100%', padding: isMobile ? '12px 16px' : '12px 16px', borderRadius:14,
+                  border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)',
+                  display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
+                  <span style={{ fontSize:22, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
+                    <div style={{ fontSize:10, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
                   </div>
-                )
-              })}
-            </div>
-            {/* ── Personnalisation fleur ── */}
-            <div style={{ marginTop:12 }}>
-              <div style={{ fontSize:9, color:'rgba(238,232,218,0.38)', letterSpacing:'.12em', textTransform:'uppercase', marginBottom:8 }}>
-                ✦ Personnalisez votre fleur
+                  <div style={{ fontSize:14, color:'rgba(150,212,133,0.35)' }}>✓</div>
+                </div>
+                {/* ↺ Refaire le bilan */}
+                <button onClick={() => onOpenBilan?.()}
+                  style={{ fontSize:10, color:'rgba(180,200,180,0.28)', background:'none', border:'none',
+                    cursor:'pointer', letterSpacing:'0.05em', padding:'2px 4px', fontFamily:"'Jost',sans-serif" }}>
+                  ↺ Refaire le bilan
+                </button>
               </div>
-              <div style={{ display:'flex', gap:6 }}>
-                {[
-                  { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
-                  { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2 — 8 couleurs et 5 formes', colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
-                  { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3 — 15 couleurs et 10 formes', colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
-                ].map(cfg => (
-                  <LevelBadge
-                    key={cfg.lv}
-                    {...cfg}
-                    unlocked={(profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                    isCurrent={(profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                    isPast={(profile?.level ?? 1) > cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                    onOpen={() => { setGardenTier(cfg.lv); setShowGardenSettings(true) }}
-                  />
-                ))}
-              </div>
-            </div>
+            )}
+
+            {/* BilanInsightCard — prend toute la hauteur restante */}
+            {bilanDoneToday && degradation && (
+              <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
+            )}
+
           </div>
         </div>
 
-        {/* Bouton bilan — miroir du NavHub */}
-        {!bilanDoneToday ? (
-          <button onClick={() => onOpenBilan?.()} style={{ width:'100%', padding:'16px 18px', borderRadius:16, marginBottom:8, border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)', cursor:'pointer', display:'flex', alignItems:'center', gap:14, textAlign:'left', position:'relative' }}>
-            <span style={{ fontSize:26 }}>🌹</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, color:'#C8A882', fontWeight:500, marginBottom:3 }}>Faire mon bilan du jour</div>
-              <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)', fontStyle:'italic', animation:'navPulse 2.5s ease-in-out infinite' }}>Prendre soin de soi commence ici</div>
-            </div>
-            <div style={{ display:'flex', alignItems:'center', gap:4, padding:'4px 9px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
-              +3 ✦
-            </div>
-          </button>
-        ) : (
-          <div style={{ width:'100%', padding:'14px 18px', borderRadius:16, marginBottom:8, border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)', display:'flex', alignItems:'center', gap:14 }}>
-            <span style={{ fontSize:26, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:2 }}>Bilan du matin</div>
-              <div style={{ fontSize:11, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ensemble ✦</div>
-            </div>
-            <div style={{ fontSize:16, color:'rgba(150,212,133,0.35)' }}>✓</div>
-          </div>
-        )}
 
         <RitualsSection
           degradation={degradation}
