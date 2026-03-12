@@ -2980,11 +2980,11 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                   <>
                     {/* Ligne haute : icône + nom + % alignés */}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <span style={{ fontSize:22, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
-                        <span style={{ fontSize:13, color: zone.accent, fontWeight:700, letterSpacing:'0.04em' }}>{zone.name}</span>
+                      <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, minWidth:0 }}>
+                        <span style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>{zoneIcons[zoneId]}</span>
+                        <span style={{ fontSize:13, color: zone.accent, fontWeight:700, letterSpacing:'0.04em', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{zone.name}</span>
                       </div>
-                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2, flexShrink:0, paddingLeft:8 }}>
                         <span style={{ fontSize:18, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:10, opacity:0.6 }}>%</span></span>
                         {allDone && <span style={{ fontSize:12, color: zone.accent }}>✓</span>}
                         {isPriority && !allDone && <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 6px', borderRadius:10, whiteSpace:'nowrap' }}>⚡ priorité</span>}
