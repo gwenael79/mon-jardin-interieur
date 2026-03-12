@@ -2666,7 +2666,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
   const containerRef = useRef(null)
   const textRef      = useRef(null)
 
-  const cacheKey = 'bilan-insight-' + new Date().toISOString().slice(0, 10) + '-' + JSON.stringify(degradation)
+  const cacheKey = 'bilan-insight-v2-' + new Date().toISOString().slice(0, 10) + '-' + JSON.stringify(degradation)
 
   useEffect(() => {
     if (!degradation) return
@@ -2692,39 +2692,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
       .finally(() => setLoading(false))
   }, [cacheKey])
 
-  // Adapte la taille de police directement sur le DOM — pas de useState
-  useEffect(() => {
-    if (!fillHeight || !insight || !containerRef.current || !textRef.current) return
-    const container = containerRef.current
-    const text      = textRef.current
-
-    const fit = () => {
-      const headerEl  = container.querySelector('.bic-header')
-      const headerH   = headerEl ? headerEl.offsetHeight : 50
-      const available = container.clientHeight - headerH - 28
-      if (available <= 0) return
-
-      let lo = 9, hi = 28
-      text.style.fontSize   = hi + 'px'
-      text.style.lineHeight = '1.55'
-
-      while (hi - lo > 0.4) {
-        const mid = (lo + hi) / 2
-        text.style.fontSize   = mid + 'px'
-        text.style.lineHeight = mid <= 13 ? '1.72' : '1.55'
-        if (text.scrollHeight <= available) lo = mid
-        else hi = mid
-      }
-      text.style.fontSize   = lo + 'px'
-      text.style.lineHeight = lo <= 13 ? '1.72' : '1.55'
-    }
-
-    // Double rAF pour attendre la stabilisation du layout React
-    const raf = requestAnimationFrame(() => requestAnimationFrame(fit))
-    const ro = new ResizeObserver(() => requestAnimationFrame(fit))
-    ro.observe(container)
-    return () => { cancelAnimationFrame(raf); ro.disconnect() }
-  }, [fillHeight, insight, error])
+  // Supprime l'ancien algo de fit — remplacé par CSS clamp + fondu
 
   const rec          = getBilanRecommendation(degradation)
   const ZONE_COLORS  = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
@@ -2735,7 +2703,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
   return (
     <div ref={containerRef}
       style={{
-        padding:'14px 16px', borderRadius:12,
+        padding:'10px 14px', borderRadius:12,
         background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`,
         border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`,
         animation:'fadeUp 0.4s ease both',
@@ -2746,21 +2714,21 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
       }}>
 
       {/* En-tête */}
-      <div className="bic-header" style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 10 : 0, flexShrink:0 }}>
-        <span style={{ fontSize:16 }}>{isGood ? '✨' : '🌿'}</span>
+      <div className="bic-header" style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 8 : 0, flexShrink:0 }}>
+        <span style={{ fontSize:18 }}>{isGood ? '✨' : '🌿'}</span>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:11, color: isGood ? 'rgba(150,212,133,0.85)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
+          <div style={{ fontSize:13, color: isGood ? 'rgba(150,212,133,0.90)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
             {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin intérieur vous parle'}
           </div>
         </div>
         {!isGood && rec.zones.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
-            <div style={{ fontSize:8, color:'rgba(238,232,218,0.38)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
+            <div style={{ fontSize:9, color:'rgba(238,232,218,0.38)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
               Zone(s) à prendre soin :
             </div>
             <div style={{ display:'flex', gap:5 }}>
               {rec.zones.map(zoneId => (
-                <span key={zoneId} style={{ fontSize:9, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
+                <span key={zoneId} style={{ fontSize:10, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
                   {ZONE_NAMES[zoneId]}
                 </span>
               ))}
@@ -2782,13 +2750,21 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
       )}
 
       {!loading && insight && (
-        <p ref={textRef}
-          style={{
-            fontSize:12, color:'rgba(220,235,220,0.70)', lineHeight:1.75, margin:0, fontStyle:'italic',
-            ...(fillHeight ? { flex:'1 1 0', overflow:'hidden' } : {}),
-          }}>
-          {insight}
-        </p>
+        <div style={{
+          ...(fillHeight ? { flex:'1 1 0', minHeight:0, overflow:'hidden' } : {}),
+        }}>
+          <p ref={textRef}
+            style={{
+              fontSize:'clamp(13px, 1.2vw, 16px)',
+              color:'rgba(220,235,220,0.75)',
+              lineHeight:1.65,
+              margin:0,
+              fontStyle:'italic',
+              ...(fillHeight ? { height:'100%', overflow:'hidden' } : {}),
+            }}>
+            {insight}
+          </p>
+        </div>
       )}
 
       {!loading && error && (
