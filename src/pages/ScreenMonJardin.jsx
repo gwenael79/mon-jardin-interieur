@@ -2367,6 +2367,29 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
 }
 
 // ── RitualZoneModal ─────────────────────────────────────────
+// ── QuickExerciseModal — affiche uniquement l'exercice final quick[0] ────────
+function QuickExerciseModal({ quickRitual, onClose, onToggleRitual }) {
+  if (!quickRitual?.quick?.[0]) return null
+  const zone = PLANT_ZONES[quickRitual.zoneId]
+  const exercise = quickRitual.quick[0]
+
+  return (
+    <div
+      style={{ position:'fixed', inset:0, zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.70)', backdropFilter:'blur(10px)', padding:20 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ width:'100%', maxWidth:480, background:'linear-gradient(160deg,#0e1a0f 0%,#060d07 100%)', border:'1px solid rgba(150,212,133,0.13)', borderRadius:22, padding:'28px 26px', animation:'fadeUp 0.28s ease' }}>
+        <ExerciseDetail
+          exercise={exercise}
+          zone={zone}
+          onDone={() => { onToggleRitual?.(quickRitual.ritualId); onClose() }}
+          onBack={onClose}
+        />
+      </div>
+    </div>
+  )
+}
+
 function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId, initialMode }) {
   const zone    = PLANT_ZONES[zoneId]
   const rituals = PLANT_RITUALS[zoneId] || []
@@ -2838,6 +2861,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
   // Exclut les zones dont le rituel quick a déjà été complété aujourd'hui
   const [quickRitual, setQuickRitual] = useState(null)
   const [quickLoading, setQuickLoading] = useState(false)  // pas de spinner — affichage immediat
+  const [showQuickModal, setShowQuickModal] = useState(false)
 
   // Nombre de zones déjà accomplies via action rapide (1 par zone, 5 zones max)
   const quickZonesDone = Object.entries(ZONE_DB_KEY).filter(([zoneId]) => {
@@ -2877,6 +2901,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         ritualId:   firstRitual.id,
         ritualText: firstRitual.text,
         ritualIcon: firstRitual.icon,
+        quick:      firstRitual.quick ?? [],
       })
     }
 
@@ -2897,6 +2922,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
           ritualId:   bestRitual.id,
           ritualText: bestRitual.text,
           ritualIcon: bestRitual.icon,
+          quick:      bestRitual.quick ?? [],
         } : null)
       }
     }
@@ -3016,99 +3042,61 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
           })}
           {/* ── 6ème card inline : Rituel rapide ── */}
           {!quickLoading && (quickRitual ? (
-            <button
-              onClick={() => {
-                setActiveZone(quickRitual.zoneId)
-                setActiveInitialRitualId(quickRitual.ritualId)
-                setActiveInitialMode('quick')
-              }}
-              style={{
-                position:'relative', overflow:'hidden',
-                padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
-                borderRadius:14, textAlign:'left', cursor:'pointer',
-                background:'linear-gradient(160deg, rgba(44,34,8,0.97) 0%, rgba(28,22,6,0.99) 100%)',
-                border:'1px solid rgba(232,196,100,0.45)',
-                boxShadow:'0 2px 24px rgba(232,196,100,0.14), 0 1px 0 rgba(255,230,120,0.12) inset',
-                width:'100%', display:'flex', flexDirection:'column', gap:0,
-                transition:'all .25s ease',
-              }}
-            >
-              {/* Lueur dorée radiale de fond */}
-              <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 0%, rgba(232,196,100,0.14) 0%, transparent 65%)', pointerEvents:'none' }} />
-              <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, transparent, rgba(255,222,100,0.35), transparent)', pointerEvents:'none' }} />
+            <>
+              <button
+                onClick={() => setShowQuickModal(true)}
+                style={{
+                  position:'relative', overflow:'hidden',
+                  padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
+                  borderRadius:14, textAlign:'left', cursor:'pointer',
+                  background:'linear-gradient(160deg, rgba(44,34,8,0.97) 0%, rgba(28,22,6,0.99) 100%)',
+                  border:'1px solid rgba(232,196,100,0.45)',
+                  boxShadow:'0 2px 24px rgba(232,196,100,0.14), 0 1px 0 rgba(255,230,120,0.12) inset',
+                  width:'100%', display:'flex', flexDirection:'column', gap:0,
+                  transition:'all .25s ease',
+                }}
+              >
+                <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 0%, rgba(232,196,100,0.14) 0%, transparent 65%)', pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, transparent, rgba(255,222,100,0.35), transparent)', pointerEvents:'none' }} />
 
-              {/* Ligne haute : icône horloge SVG + compteur */}
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                {/* Icône horloge SVG premium */}
-                <div style={{
-                  width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius:'50%', flexShrink:0,
-                  background:'rgba(232,196,100,0.14)',
-                  border:'1px solid rgba(232,196,100,0.40)',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  boxShadow:'0 0 12px rgba(232,196,100,0.22)',
-                }}>
-                  <svg width={isMobile ? 17 : 19} height={isMobile ? 17 : 19} viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
-                    <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
-                    <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
-                    <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
-                    <line x1="10" y1="2" x2="10" y2="3.2" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                    <line x1="10" y1="16.8" x2="10" y2="18" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                    <line x1="2" y1="10" x2="3.2" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                    <line x1="16.8" y1="10" x2="18" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                  </svg>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                  <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius:'50%', flexShrink:0, background:'rgba(232,196,100,0.14)', border:'1px solid rgba(232,196,100,0.40)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 12px rgba(232,196,100,0.22)' }}>
+                    <svg width={isMobile ? 17 : 19} height={isMobile ? 17 : 19} viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
+                      <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
+                      <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
+                      <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="10" y1="2" x2="10" y2="3.2" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="10" y1="16.8" x2="10" y2="18" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="2" y1="10" x2="3.2" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="16.8" y1="10" x2="18" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
+                    <span style={{ fontSize:9, color:'rgba(255,200,60,0.88)', fontWeight:600, background:'rgba(232,196,100,0.12)', border:'1px solid rgba(232,196,100,0.28)', padding:'3px 8px', borderRadius:20, letterSpacing:'0.06em', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4 }}>
+                      <span style={{ fontSize:11 }}>{quickRitual.ritualIcon}</span>
+                      <span>1–3 min</span>
+                    </span>
+                    <span style={{ fontSize:8, color:'rgba(232,196,100,0.40)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
+                  </div>
                 </div>
 
-                {/* Compteur restant */}
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
-                  <span style={{
-                    fontSize:9, color:'rgba(255,200,60,0.88)', fontWeight:600,
-                    background:'rgba(232,196,100,0.12)', border:'1px solid rgba(232,196,100,0.28)',
-                    padding:'3px 8px', borderRadius:20, letterSpacing:'0.06em', whiteSpace:'nowrap',
-                    display:'flex', alignItems:'center', gap:4,
-                  }}>
-                    <span style={{ fontSize:11 }}>{quickRitual.ritualIcon}</span>
-                    <span>1–3 min</span>
-                  </span>
-                  <span style={{ fontSize:8, color:'rgba(232,196,100,0.40)', letterSpacing:'0.04em' }}>
-                    {quickZonesRemaining}/5 restantes
-                  </span>
+                <div style={{ marginBottom:8 }}>
+                  <div style={{ fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(255,222,100,0.95)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
+                  <div style={{ fontSize: isMobile ? 12 : 13, fontWeight:600, letterSpacing:'0.01em', color:'rgba(255,222,100,0.70)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
                 </div>
-              </div>
 
-              {/* Titre + zone */}
-              <div style={{ marginBottom: 8 }}>
-                <div style={{
-                  fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase',
-                  color:'rgba(255,222,100,0.95)', marginBottom:3, lineHeight:1.2,
-                }}>
-                  Une action rapide
-                </div>
-                <div style={{
-                  fontSize: isMobile ? 12 : 13, fontWeight:600, letterSpacing:'0.01em',
-                  color:'rgba(255,222,100,0.70)', lineHeight:1.3,
-                }}>
-                  {quickRitual.zoneName}
-                </div>
-              </div>
+                <div style={{ height:1, background:'rgba(232,196,100,0.18)', borderRadius:1 }} />
+              </button>
 
-              {/* Séparateur fin doré */}
-              <div style={{ height:1, background:'rgba(232,196,100,0.18)', marginBottom:8, borderRadius:1 }} />
-
-              {/* Nom du rituel + flèche */}
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
-                <span style={{
-                  fontSize: isMobile ? 10 : 11, lineHeight:1.4,
-                  color:'rgba(255,222,100,0.78)',
-                  overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1,
-                }}>
-                  {quickRitual.ritualText}
-                </span>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink:0, opacity:0.6 }}>
-                  <path d="M5 3L9 7L5 11" stroke="rgba(255,222,100,1)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-            </button>
+              {showQuickModal && (
+                <QuickExerciseModal
+                  quickRitual={quickRitual}
+                  onClose={() => setShowQuickModal(false)}
+                  onToggleRitual={onToggleRitual}
+                />
+              )}
+            </>
           ) : quickZonesDone >= 5 ? (
             /* Toutes les zones accomplies aujourd'hui */
             <div style={{
@@ -3687,7 +3675,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
 
     if (!availableZones.length) {
       // Toutes les zones accomplies → rituel coché
-      markDone('ritual')
+      markDone('ritual', true)
     } else {
       const sorted  = [...availableZones].sort((a, b) => (plant[a.dbKey] ?? 5) - (plant[b.dbKey] ?? 5))
       const weakest = sorted[0]
@@ -3733,9 +3721,9 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
         })
         .sort((a, b) => a.vitalite - b.vitalite) // les plus fragiles en premier
       setWeakestPeople(withVit.slice(0, 3))
-      if (withVit.length === 0) { setFlowersExhausted(true); markDone('flowers') }
+      if (withVit.length === 0) { setFlowersExhausted(true); markDone('flowers', true) }
     } else {
-      setFlowersExhausted(true); markDone('flowers') // tout le monde a deja recu un coeur aujourd'hui
+      setFlowersExhausted(true); markDone('flowers', true) // tout le monde a deja recu un coeur aujourd'hui
     }
 
     // ── Belle pensee : source = onglet 'Mes Amis' (echanges mutuels) ──────────
@@ -3779,18 +3767,20 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
     const { data: int } = await supabase.from('intentions').select('*').eq('date', todayKey).maybeSingle()
     setIntention(int ?? { text: 'Prendre soin de soi', description: "Chaque rituel nourrit l'energie collective." })
     const { data: joined } = await supabase.from('intentions_joined').select('id').eq('user_id', userId).eq('date', todayKey).maybeSingle()
-    if (joined) { setIntentionJoined(true); markDone('egregore') }
+    if (joined) { setIntentionJoined(true); markDone('egregore', true) }
     } catch(e) {
       console.error('[WakeUpModal] init error:', e)
       // En cas d'erreur, laisser les actions disponibles sans les pre-cocher
     }
   }
 
-  function markDone(key) {
+  // silent=true : pré-cochage init (pas de fermeture auto), silent=false : action user
+  function markDone(key, silent = false) {
     setProgress(prev => {
       if (prev[key]) return prev
       const next = { ...prev, [key]: true }
-      if (Object.values(next).every(Boolean)) {
+      // Fermeture auto uniquement si l'user a activement accompli quelque chose
+      if (!silent && Object.values(next).every(Boolean)) {
         setConfetti(true)
         setTimeout(() => { setClosing(true); setTimeout(onClose, 700) }, 2400)
       }
