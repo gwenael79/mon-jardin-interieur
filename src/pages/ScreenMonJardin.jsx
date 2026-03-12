@@ -735,6 +735,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           @keyframes svgRay    { 0%,100%{ opacity:0.7 } 50%{ opacity:0.3 } }
           @keyframes svgWind   { 0%{ transform:translateX(-8px); opacity:0 } 40%{ opacity:0.22 } 100%{ transform:translateX(28px); opacity:0 } }
           @keyframes lumenGlow  { 0%,100%{ opacity:0.25 } 50%{ opacity:0.55 } }
+          @keyframes pulse      { 0%,100%{ transform:scale(1); opacity:0.30 } 50%{ transform:scale(1.12); opacity:0.45 } }
         `}</style>
         <linearGradient id={id+'sk'} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor={skyA}/>
@@ -4413,8 +4414,78 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               </div>
             )}
 
-            {/* BilanInsightCard — prend toute la hauteur restante */}
-            {bilanDoneToday && degradation && (
+            {/* Message de bienvenue — visible avant le bilan, remplacé par l'insight après */}
+            {!bilanDoneToday ? (
+              (() => {
+                const firstName = (profile?.display_name ?? '').split(' ')[0] || 'ami(e)'
+                const PHRASES = [
+                  '{p}, votre jardin est prêt pour aujourd\'hui.',
+                  '{p}, un petit geste aujourd\'hui fera grandir votre jardin.',
+                  '{p}, votre jardin vous attend.',
+                  '{p}, prêt à nourrir votre jardin intérieur ?',
+                  '{p}, une nouvelle journée pour faire pousser l\'essentiel.',
+                  '{p}, votre jardin grandit avec vous.',
+                  '{p}, une minute suffit pour prendre soin de votre jardin.',
+                  '{p}, continuons à faire fleurir ce jardin.',
+                  '{p}, votre présence fait grandir votre jardin.',
+                  '{p}, plantons une belle graine aujourd\'hui.',
+                  '{p}, votre jardin n\'attend que vous.',
+                  '{p}, un nouveau jour commence dans votre jardin.',
+                  '{p}, prêt à faire grandir quelque chose de beau ?',
+                  '{p}, chaque action nourrit votre jardin.',
+                  '{p}, votre jardin avance avec vous.',
+                  '{p}, prenons soin de ce qui compte aujourd\'hui.',
+                  '{p}, votre jardin mérite ce moment.',
+                  '{p}, une nouvelle pousse commence aujourd\'hui.',
+                  '{p}, votre jardin évolue un peu plus chaque jour.',
+                  '{p}, faisons fleurir cette journée.',
+                  '{p}, votre jardin a besoin de votre présence.',
+                  '{p}, une graine aujourd\'hui, une fleur demain.',
+                  '{p}, cultivons un peu de calme aujourd\'hui.',
+                  '{p}, votre jardin intérieur se construit pas à pas.',
+                  '{p}, un instant pour vous, un pas pour votre jardin.',
+                  '{p}, votre jardin continue de grandir.',
+                  '{p}, faisons pousser quelque chose de beau aujourd\'hui.',
+                  '{p}, chaque jour compte dans votre jardin.',
+                  '{p}, votre jardin avance avec chaque attention.',
+                  '{p}, prêt à faire fleurir cette journée ?',
+                ]
+                // Phrase stable dans la journée, change chaque nouveau jour
+                const dayIndex = new Date().toISOString().slice(0,10).replace(/-/g,'')
+                const idx = parseInt(dayIndex) % PHRASES.length
+                const phrase = PHRASES[idx].replace('{p}', firstName)
+                // Séparer le prénom du reste pour le colorier
+                const colonIdx = phrase.indexOf(',')
+                const namePart = phrase.slice(0, colonIdx + 1)
+                const restPart = phrase.slice(colonIdx + 1)
+                return (
+                  <div style={{
+                    flex:'1 1 0', display:'flex', flexDirection:'column',
+                    alignItems:'center', justifyContent:'center',
+                    padding:'24px 16px', textAlign:'center',
+                    animation:'fadeUp 0.5s ease both',
+                  }}>
+                    {/* Logo */}
+                    <div style={{ marginBottom:24, animation:'pulse 3s ease-in-out infinite' }}>
+                      <img src="/icons/icon-192.png" alt="logo" style={{ width:96, height:96, borderRadius:'50%', mixBlendMode:'screen' }} />
+                    </div>
+                    {/* Phrase du jour */}
+                    <div style={{
+                      fontFamily:"'Cormorant Garamond','Georgia',serif",
+                      fontSize: isMobile ? 26 : 30,
+                      fontWeight:700,
+                      fontStyle:'italic',
+                      lineHeight:1.35,
+                      maxWidth:320,
+                      letterSpacing:'0.01em',
+                    }}>
+                      <span style={{ color:'#96d485' }}>{namePart}</span>
+                      <span style={{ color:'rgba(242,237,224,0.90)' }}>{restPart}</span>
+                    </div>
+                  </div>
+                )
+              })()
+            ) : degradation && (
               <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
             )}
 
