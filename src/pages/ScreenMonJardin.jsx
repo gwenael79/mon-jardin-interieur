@@ -2296,8 +2296,8 @@ function ExerciseDetail({ exercise, zone, onDone, onBack }) {
 }
 
 // ── RitualExercises ─────────────────────────────────────────
-function RitualExercises({ ritual, zone, onComplete, onBack }) {
-  const [mode,     setMode]     = useState(null)
+function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
+  const [mode,     setMode]     = useState(initialMode ?? null)
   const [activeEx, setActiveEx] = useState(null)
 
   if (activeEx) return <ExerciseDetail exercise={activeEx} zone={zone} onDone={onComplete} onBack={() => setActiveEx(null)} />
@@ -2367,7 +2367,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
 }
 
 // ── RitualZoneModal ─────────────────────────────────────────
-function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId }) {
+function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId, initialMode }) {
   const zone    = PLANT_ZONES[zoneId]
   const rituals = PLANT_RITUALS[zoneId] || []
   const done    = rituals.filter(r => completed[r.id]).length
@@ -2382,7 +2382,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
       <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid rgba(255,255,255,0.07)', background:`linear-gradient(175deg,${zone.bg} 0%,#080E0A 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
         {activeRitual ? (
-          <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} />
+          <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} initialMode={initialMode} zoneAlreadyDone={rituals.some(r => completed[r.id])} />
         ) : (
           <>
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18 }}>
@@ -2832,19 +2832,36 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
   const [showQuiz,   setShowQuiz]   = useState(false)
   const [activeZone, setActiveZone] = useState(null)
   const [activeInitialRitualId, setActiveInitialRitualId] = useState(null)
+  const [activeInitialMode, setActiveInitialMode] = useState(null)
 
   // ── Rituel rapide : calcul synchrone immédiat + affinage async ─────────────
+  // Exclut les zones dont le rituel quick a déjà été complété aujourd'hui
   const [quickRitual, setQuickRitual] = useState(null)
   const [quickLoading, setQuickLoading] = useState(false)  // pas de spinner — affichage immediat
+
+  // Nombre de zones déjà accomplies via action rapide (1 par zone, 5 zones max)
+  const quickZonesDone = Object.entries(ZONE_DB_KEY).filter(([zoneId]) => {
+    const rituals = PLANT_RITUALS[zoneId] ?? []
+    return rituals.some(r => completedRituals[r.id])
+  }).length
+  const quickZonesRemaining = 5 - quickZonesDone
 
   useEffect(() => {
     if (!userId || !todayPlant) return
     let cancelled = false
 
-    // ── PHASE 1 : synchrone — affiche immédiatement la zone la plus faible ────
+    // ── PHASE 1 : synchrone — zone la plus faible parmi celles non encore accomplies ────
     const entries = Object.entries(ZONE_DB_KEY)
-      .map(([zoneId, dbKey]) => ({ zoneId, dbKey, val: todayPlant[dbKey] ?? 5 }))
+      .map(([zoneId, dbKey]) => ({
+        zoneId, dbKey, val: todayPlant[dbKey] ?? 5,
+        // Zone "faite" si au moins un de ses rituels est complété
+        done: (PLANT_RITUALS[zoneId] ?? []).some(r => completedRituals[r.id]),
+      }))
+      .filter(e => !e.done)   // exclure les zones déjà accomplies
       .sort((a, b) => a.val - b.val)
+
+    if (!entries.length) { setQuickRitual(null); return }  // toutes les zones faites
+
     const weakest = entries[0]
     const zone    = PLANT_ZONES[weakest.zoneId]
     const defs    = PLANT_RITUALS[weakest.zoneId] ?? []
@@ -2885,10 +2902,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
     }
     refine()
     return () => { cancelled = true }
-  }, [userId, todayPlant?.id])
-
-  // Mise à jour isDone en temps réel si le rituel vient d'être coché
-  const quickIsDone = quickRitual ? !!completedRituals[quickRitual.ritualId] : false
+  }, [userId, todayPlant?.id, completedRituals])
 
   const hasDegradation = degradation !== null && degradation !== undefined
 
@@ -2904,7 +2918,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
   return (
     <>
       {/* DailyQuizModal géré dans DashboardPage */}
-      {activeZone && <RitualZoneModal zoneId={activeZone} completed={completedRituals} onToggle={onToggleRitual} onClose={() => { setActiveZone(null); setActiveInitialRitualId(null) }} initialRitualId={activeInitialRitualId} />}
+      {activeZone && <RitualZoneModal zoneId={activeZone} completed={completedRituals} onToggle={onToggleRitual} onClose={() => { setActiveZone(null); setActiveInitialRitualId(null); setActiveInitialMode(null) }} initialRitualId={activeInitialRitualId} initialMode={activeInitialMode} />}
 
       <div style={{ width:'100%' }}>
         {/* En-tête section */}
@@ -3001,76 +3015,132 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
             )
           })}
           {/* ── 6ème card inline : Rituel rapide ── */}
-          {!quickLoading && quickRitual && (
+          {!quickLoading && (quickRitual ? (
             <button
-              onClick={() => { setActiveZone(quickRitual.zoneId); setActiveInitialRitualId(quickRitual.ritualId) }}
+              onClick={() => {
+                setActiveZone(quickRitual.zoneId)
+                setActiveInitialRitualId(quickRitual.ritualId)
+                setActiveInitialMode('quick')
+              }}
               style={{
                 position:'relative', overflow:'hidden',
-                padding: isMobile ? '12px 12px 10px' : '14px 14px 12px',
+                padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
                 borderRadius:14, textAlign:'left', cursor:'pointer',
-                background: quickIsDone
-                  ? 'linear-gradient(145deg, rgba(232,196,100,0.04) 0%, rgba(0,0,0,0) 100%)'
-                  : 'linear-gradient(145deg, rgba(232,196,100,0.18) 0%, rgba(180,140,40,0.08) 100%)',
-                border: quickIsDone
-                  ? '1px solid rgba(232,196,100,0.18)'
-                  : '1px solid rgba(232,196,100,0.55)',
-                boxShadow: quickIsDone ? 'none' : '0 0 18px rgba(232,196,100,0.18), inset 0 1px 0 rgba(255,230,120,0.15)',
+                background:'linear-gradient(160deg, rgba(44,34,8,0.97) 0%, rgba(28,22,6,0.99) 100%)',
+                border:'1px solid rgba(232,196,100,0.45)',
+                boxShadow:'0 2px 24px rgba(232,196,100,0.14), 0 1px 0 rgba(255,230,120,0.12) inset',
                 width:'100%', display:'flex', flexDirection:'column', gap:0,
-                transition:'all .2s ease',
+                transition:'all .25s ease',
               }}
             >
-              {/* Lueur dorée de fond */}
-              {!quickIsDone && (
-                <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 0%, rgba(232,196,100,0.18) 0%, transparent 70%)', pointerEvents:'none' }} />
-              )}
+              {/* Lueur dorée radiale de fond */}
+              <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 0%, rgba(232,196,100,0.14) 0%, transparent 65%)', pointerEvents:'none' }} />
+              <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, transparent, rgba(255,222,100,0.35), transparent)', pointerEvents:'none' }} />
 
-              {/* Ligne haute : icône horloge + label */}
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
-                <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                  <span style={{ fontSize: isMobile ? 18 : 22, lineHeight:1 }}>
-                    {quickIsDone ? '✓' : '⏱'}
-                  </span>
-                  <span style={{ fontSize: isMobile ? 11 : 13, color: quickIsDone ? 'rgba(232,196,100,0.35)' : 'rgba(255,222,100,0.90)', fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>
-                    {isMobile ? 'RAPIDE' : 'SI PEU DE TEMPS'}
-                  </span>
-                  {!isMobile && (
-                    <span style={{ fontSize:11, color:'rgba(232,196,100,0.40)', letterSpacing:'0.02em', marginTop:2 }}>
-                      {quickRitual.zoneName}
-                    </span>
-                  )}
-                </div>
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
-                  <span style={{ fontSize: isMobile ? 16 : 20, fontFamily:"'Cormorant Garamond',serif", color: quickIsDone ? 'rgba(232,196,100,0.35)' : 'rgba(255,222,100,0.90)', fontWeight:600, lineHeight:1 }}>
-                    {quickRitual.zoneValue}<span style={{ fontSize: isMobile ? 9 : 11, opacity:0.6 }}>%</span>
-                  </span>
-                  {!quickIsDone && (
-                    <span style={{ fontSize:8, color:'rgba(232,196,100,0.80)', background:'rgba(232,196,100,0.14)', padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>⚡ priorité</span>
-                  )}
-                  {quickIsDone && (
-                    <span style={{ fontSize:11, color:'rgba(232,196,100,0.55)' }}>✓</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Barre de progression dorée */}
-              <div style={{ height:3, borderRadius:3, background:'rgba(232,196,100,0.10)', overflow:'hidden', marginBottom:6 }}>
+              {/* Ligne haute : icône horloge SVG + compteur */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                {/* Icône horloge SVG premium */}
                 <div style={{
-                  height:'100%', width:`${quickRitual.zoneValue}%`,
-                  background: quickIsDone ? 'rgba(232,196,100,0.30)' : 'linear-gradient(90deg, rgba(200,160,40,0.80), rgba(255,222,100,1))',
-                  borderRadius:3, transition:'width .6s ease',
-                  boxShadow: quickIsDone ? 'none' : '0 0 6px rgba(255,210,60,0.70)',
-                }} />
+                  width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius:'50%', flexShrink:0,
+                  background:'rgba(232,196,100,0.14)',
+                  border:'1px solid rgba(232,196,100,0.40)',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  boxShadow:'0 0 12px rgba(232,196,100,0.22)',
+                }}>
+                  <svg width={isMobile ? 17 : 19} height={isMobile ? 17 : 19} viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
+                    <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
+                    <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
+                    <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
+                    <line x1="10" y1="2" x2="10" y2="3.2" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                    <line x1="10" y1="16.8" x2="10" y2="18" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                    <line x1="2" y1="10" x2="3.2" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                    <line x1="16.8" y1="10" x2="18" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+
+                {/* Compteur restant */}
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
+                  <span style={{
+                    fontSize:9, color:'rgba(255,200,60,0.88)', fontWeight:600,
+                    background:'rgba(232,196,100,0.12)', border:'1px solid rgba(232,196,100,0.28)',
+                    padding:'3px 8px', borderRadius:20, letterSpacing:'0.06em', whiteSpace:'nowrap',
+                    display:'flex', alignItems:'center', gap:4,
+                  }}>
+                    <span style={{ fontSize:11 }}>{quickRitual.ritualIcon}</span>
+                    <span>1–3 min</span>
+                  </span>
+                  <span style={{ fontSize:8, color:'rgba(232,196,100,0.40)', letterSpacing:'0.04em' }}>
+                    {quickZonesRemaining}/5 restantes
+                  </span>
+                </div>
               </div>
 
-              {/* Nom du rituel tronqué */}
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize: isMobile ? 10 : 11, color: quickIsDone ? 'rgba(232,196,100,0.30)' : 'rgba(255,222,100,0.65)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
-                  {quickIsDone ? 'Accompli ✓' : quickRitual.ritualText}
+              {/* Titre + zone */}
+              <div style={{ marginBottom: 8 }}>
+                <div style={{
+                  fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase',
+                  color:'rgba(255,222,100,0.95)', marginBottom:3, lineHeight:1.2,
+                }}>
+                  Une action rapide
+                </div>
+                <div style={{
+                  fontSize: isMobile ? 12 : 13, fontWeight:600, letterSpacing:'0.01em',
+                  color:'rgba(255,222,100,0.70)', lineHeight:1.3,
+                }}>
+                  {quickRitual.zoneName}
+                </div>
+              </div>
+
+              {/* Séparateur fin doré */}
+              <div style={{ height:1, background:'rgba(232,196,100,0.18)', marginBottom:8, borderRadius:1 }} />
+
+              {/* Nom du rituel + flèche */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:6 }}>
+                <span style={{
+                  fontSize: isMobile ? 10 : 11, lineHeight:1.4,
+                  color:'rgba(255,222,100,0.78)',
+                  overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1,
+                }}>
+                  {quickRitual.ritualText}
                 </span>
-                <span style={{ fontSize:11, color: quickIsDone ? 'rgba(232,196,100,0.20)' : 'rgba(232,196,100,0.50)', flexShrink:0 }}>›</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink:0, opacity:0.6 }}>
+                  <path d="M5 3L9 7L5 11" stroke="rgba(255,222,100,1)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
             </button>
-          )}
+          ) : quickZonesDone >= 5 ? (
+            /* Toutes les zones accomplies aujourd'hui */
+            <div style={{
+              position:'relative', overflow:'hidden',
+              padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
+              borderRadius:14, textAlign:'left',
+              background:'linear-gradient(160deg, rgba(20,32,14,0.97) 0%, rgba(12,20,10,0.99) 100%)',
+              border:'1px solid rgba(150,212,133,0.20)',
+              width:'100%', display:'flex', flexDirection:'column', gap:0,
+            }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                <div style={{
+                  width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius:'50%',
+                  background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.30)',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                }}>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <circle cx="9" cy="9" r="7.5" stroke="rgba(150,212,133,0.70)" strokeWidth="1.3"/>
+                    <path d="M5.5 9.2L7.8 11.5L12.5 6.5" stroke="rgba(150,212,133,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <span style={{ fontSize:9, color:'rgba(150,212,133,0.55)', letterSpacing:'0.06em' }}>5/5</span>
+              </div>
+              <div style={{ fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(150,212,133,0.60)', marginBottom:3 }}>
+                Actions du jour
+              </div>
+              <div style={{ height:1, background:'rgba(150,212,133,0.10)', marginBottom:8, borderRadius:1 }} />
+              <div style={{ fontSize: isMobile ? 10 : 11, color:'rgba(150,212,133,0.45)', lineHeight:1.4, fontStyle:'italic' }}>
+                Toutes les zones accomplies ✦
+              </div>
+            </div>
+          ) : null)}
         </div>
 
       </div>
@@ -3602,7 +3672,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
     setProgress({ ritual:false, flowers:false, thought:false, egregore:false })
     try {
 
-    // ── Rituel : zone la plus faible + rituel le plus souvent fait ────────────
+    // ── Rituel : zone la plus faible non encore accomplie aujourd'hui ────────────
     const zoneMap = [
       { id:'roots',   dbKey:'zone_racines',  ...PLANT_ZONES.roots   },
       { id:'stem',    dbKey:'zone_tige',     ...PLANT_ZONES.stem    },
@@ -3610,20 +3680,28 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
       { id:'flowers', dbKey:'zone_fleurs',   ...PLANT_ZONES.flowers },
       { id:'breath',  dbKey:'zone_souffle',  ...PLANT_ZONES.breath  },
     ]
-    const sorted  = [...zoneMap].sort((a, b) => (plant[a.dbKey] ?? 5) - (plant[b.dbKey] ?? 5))
-    const weakest = sorted[0]
-    const { data: hist } = await supabase.from('rituals').select('ritual_id').eq('user_id', userId).eq('zone', weakest.name).not('ritual_id', 'is', null).order('completed_at', { ascending: false }).limit(50)
-    let bestId = null
-    if (hist?.length) {
-      const counts = {}
-      hist.forEach(r => { counts[r.ritual_id] = (counts[r.ritual_id] ?? 0) + 1 })
-      bestId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+    // Exclure les zones dont au moins un rituel a été complété aujourd'hui
+    const availableZones = zoneMap.filter(z =>
+      !(PLANT_RITUALS[z.id] ?? []).some(r => completedRituals?.[r.id])
+    )
+
+    if (!availableZones.length) {
+      // Toutes les zones accomplies → rituel coché
+      markDone('ritual')
+    } else {
+      const sorted  = [...availableZones].sort((a, b) => (plant[a.dbKey] ?? 5) - (plant[b.dbKey] ?? 5))
+      const weakest = sorted[0]
+      const { data: hist } = await supabase.from('rituals').select('ritual_id').eq('user_id', userId).eq('zone', weakest.name).not('ritual_id', 'is', null).order('completed_at', { ascending: false }).limit(50)
+      let bestId = null
+      if (hist?.length) {
+        const counts = {}
+        hist.forEach(r => { counts[r.ritual_id] = (counts[r.ritual_id] ?? 0) + 1 })
+        bestId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+      }
+      const defs   = PLANT_RITUALS[weakest.id] ?? []
+      const ritual = (bestId ? defs.find(r => r.id === bestId) : null) ?? defs[0]
+      if (ritual) setSuggestedRitual({ ...ritual, zoneId: weakest.id, zoneName: weakest.name, zoneColor: weakest.color, zoneValue: plant[weakest.dbKey] ?? 5 })
     }
-    const defs   = PLANT_RITUALS[weakest.id] ?? []
-    const ritual = (bestId ? defs.find(r => r.id === bestId) : null) ?? defs[0]
-    if (ritual) setSuggestedRitual({ ...ritual, zoneId: weakest.id, zoneName: weakest.name, zoneColor: weakest.color, zoneValue: plant[weakest.dbKey] ?? 5 })
-    if (ritual && completedRituals?.[ritual.id]) markDone('ritual')
-    else if (Object.keys(completedRituals ?? {}).length > 0) markDone('ritual')
 
     // ── Cœurs deja envoyes aujourd'hui (partage entre fleurs + pensee) ─────────
     const { data: sentToday } = await supabase
@@ -3727,6 +3805,8 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
     if (!suggestedRitual) return
     onToggleRitual?.(suggestedRitual.id)
     setExerciseActive(false)
+    // Désactiver le bouton jusqu'à la prochaine ouverture du modal
+    // (init() rechargera automatiquement la prochaine zone disponible)
     markDone('ritual')
   }
   async function handleSendFlower(personId) {
@@ -3800,13 +3880,25 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
         <div style={{ padding: isMobile ? '12px 20px 24px' : '14px 28px 28px', display:'flex', flexDirection:'column', gap:10 }}>
 
           {/* 1 Rituel */}
+          {(() => {
+            const zoneMap = ['roots','stem','leaves','flowers','breath']
+            const doneZones = zoneMap.filter(zId => (PLANT_RITUALS[zId] ?? []).some(r => completedRituals?.[r.id])).length
+            const remainingZones = 5 - doneZones
+            return (
           <div style={{ borderRadius:16, border:`1px solid ${progress.ritual ? zColor+'35' : 'rgba(255,255,255,0.07)'}`, background: progress.ritual ? `${zColor}08` : 'rgba(255,255,255,0.02)', overflow:'hidden', transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ width:42, height:42, borderRadius:13, background:`${zColor}18`, border:`1px solid ${zColor}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
                 {progress.ritual ? '✓' : (suggestedRitual?.icon ?? '🌱')}
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Mon rituel rapide</div>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <span style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Mon rituel rapide</span>
+                  {!progress.ritual && (
+                    <span style={{ fontSize:9, color:'rgba(238,232,218,0.35)', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'1px 7px', whiteSpace:'nowrap', flexShrink:0 }}>
+                      {remainingZones}/5
+                    </span>
+                  )}
+                </div>
                 {suggestedRitual && (
                   <div style={{ fontSize: isMobile ? 12 : 11, color:zColor, marginTop:2, lineHeight:1.3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                     {suggestedRitual.text}
@@ -3834,6 +3926,8 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
               </div>
             )}
           </div>
+            )
+          })()}
 
           {/* 2 Fleurs */}
           <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? '#e088a835' : flowersExhausted ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)'}`, background: progress.flowers ? 'rgba(224,136,168,0.05)' : flowersExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
@@ -3919,53 +4013,49 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
 
 function useWakeUpTrigger({ userId, plant, isLoading }) {
   const [showWakeUp, setShowWakeUp] = useState(false)
-  const shownRef   = useRef(false)   // true = deja affiche dans cette session
-  const FOUR_HOURS = 4 * 60 * 60 * 1000
+  const checkingRef = useRef(false)  // évite double-check concurrent
 
-  // Reset complet quand l'utilisateur change de compte
+  const todayKey = new Date().toISOString().slice(0, 10)
+
+  // Reset complet à chaque changement de userId
   useEffect(() => {
-    shownRef.current = false
+    checkingRef.current = false
     setShowWakeUp(false)
   }, [userId])
 
-  // Declenchement initial — des que le plant est charge, toujours afficher
-  // (1 seule fois par session grace a shownRef)
+  // Déclenchement — vérifie en DB si déjà vu aujourd'hui sur n'importe quel appareil
   useEffect(() => {
     if (isLoading || !plant?.id || !userId) return
-    if (shownRef.current) return
-    shownRef.current = true
-    setShowWakeUp(true)
+    if (checkingRef.current) return
+    checkingRef.current = true
+
+    async function check() {
+      try {
+        const { data } = await supabase
+          .from('wakeup_seen')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('date', todayKey)
+          .maybeSingle()
+        if (!data) setShowWakeUp(true)  // pas encore vu aujourd'hui → afficher
+      } catch(e) {
+        // Si la table n'existe pas encore ou erreur réseau → afficher par défaut
+        setShowWakeUp(true)
+      }
+    }
+    check()
   }, [isLoading, plant?.id, userId])
 
-  // Retour sur l'onglet / focus fenetre — re-afficher si > 4h
-  useEffect(() => {
-    if (!userId) return
-    const tryShow = () => {
-      if (!plant?.id) return
-      if (document.visibilityState !== 'visible') return
-      try {
-        const lastShown = parseInt(localStorage.getItem('wakeup_shown_' + userId) ?? '0')
-        if ((Date.now() - lastShown) > FOUR_HOURS) {
-          shownRef.current = true
-          localStorage.setItem('wakeup_shown_' + userId, Date.now().toString())
-          setShowWakeUp(true)
-        }
-      } catch(e) { setShowWakeUp(true) }
-    }
-    const onFocus = () => tryShow()
-    document.addEventListener('visibilitychange', tryShow)
-    window.addEventListener('focus', onFocus)
-    return () => {
-      document.removeEventListener('visibilitychange', tryShow)
-      window.removeEventListener('focus', onFocus)
-    }
-  }, [userId, plant?.id])
-
-  function closeModal() {
-    // Enregistre l'heure de fermeture pour le cooldown 4h sur retour onglet
-    try { localStorage.setItem('wakeup_shown_' + userId, Date.now().toString()) } catch(e) {}
-    shownRef.current = false
+  async function closeModal() {
     setShowWakeUp(false)
+    if (!userId) return
+    try {
+      await supabase
+        .from('wakeup_seen')
+        .upsert({ user_id: userId, date: todayKey }, { onConflict: 'user_id,date' })
+    } catch(e) {
+      console.warn('[wakeup_seen] upsert failed', e)
+    }
   }
 
   return { showWakeUp, setShowWakeUp: closeModal }
