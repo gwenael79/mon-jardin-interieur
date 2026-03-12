@@ -4013,23 +4013,20 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
 
 function useWakeUpTrigger({ userId, plant, isLoading }) {
   const [showWakeUp, setShowWakeUp] = useState(false)
-  const checkingRef = useRef(false)  // évite double-check concurrent
+  // Clé composite : on retrace dès que userId ou plant change
+  const [checkedFor, setCheckedFor] = useState(null)
 
   const todayKey = new Date().toISOString().slice(0, 10)
+  const checkKey = userId && plant?.id ? `${userId}__${plant.id}` : null
 
-  // Reset complet à chaque changement de userId
   useEffect(() => {
-    checkingRef.current = false
-    setShowWakeUp(false)
-  }, [userId])
-
-  // Déclenchement — vérifie en DB si déjà vu aujourd'hui sur n'importe quel appareil
-  useEffect(() => {
-    if (isLoading || !plant?.id || !userId) return
-    if (checkingRef.current) return
-    checkingRef.current = true
+    // Rien à faire si pas connecté, pas de plante, encore en chargement
+    if (isLoading || !checkKey || !userId) return
+    // Déjà vérifié pour cette combinaison userId+plant → skip
+    if (checkedFor === checkKey) return
 
     async function check() {
+      setCheckedFor(checkKey)  // marquer immédiatement pour éviter double appel
       try {
         const { data } = await supabase
           .from('wakeup_seen')
@@ -4037,14 +4034,22 @@ function useWakeUpTrigger({ userId, plant, isLoading }) {
           .eq('user_id', userId)
           .eq('date', todayKey)
           .maybeSingle()
-        if (!data) setShowWakeUp(true)  // pas encore vu aujourd'hui → afficher
+        if (!data) setShowWakeUp(true)
       } catch(e) {
-        // Si la table n'existe pas encore ou erreur réseau → afficher par défaut
+        // Table inexistante ou erreur réseau → afficher par défaut
         setShowWakeUp(true)
       }
     }
     check()
-  }, [isLoading, plant?.id, userId])
+  }, [isLoading, checkKey])
+
+  // Reset quand userId disparaît (déconnexion)
+  useEffect(() => {
+    if (!userId) {
+      setShowWakeUp(false)
+      setCheckedFor(null)  // forcer re-vérification à la prochaine connexion
+    }
+  }, [userId])
 
   async function closeModal() {
     setShowWakeUp(false)
