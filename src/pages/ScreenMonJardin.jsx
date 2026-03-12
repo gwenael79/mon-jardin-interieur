@@ -2367,12 +2367,14 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
 }
 
 // ── RitualZoneModal ─────────────────────────────────────────
-function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
+function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId }) {
   const zone    = PLANT_ZONES[zoneId]
   const rituals = PLANT_RITUALS[zoneId] || []
   const done    = rituals.filter(r => completed[r.id]).length
   const pct     = rituals.length > 0 ? done / rituals.length * 100 : 0
-  const [activeRitual, setActiveRitual] = useState(null)
+  const [activeRitual, setActiveRitual] = useState(
+    initialRitualId ? (rituals.find(r => r.id === initialRitualId) ?? null) : null
+  )
 
   const handleComplete = (ritualId) => { onToggle(ritualId); setActiveRitual(null) }
 
@@ -2774,11 +2776,119 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
   )
 }
 
+// ── useQuickRitual — zone la plus faible + rituel le plus fréquent ──────────────
+function useQuickRitual(userId, todayPlant, completedRituals) {
+  const [quickRitual, setQuickRitual] = useState(null)
+  const [loadingQuick, setLoading]    = useState(true)
+
+  useEffect(() => {
+    if (!userId || !todayPlant) { setLoading(false); return }
+    let cancelled = false
+
+    async function compute() {
+      setLoading(true)
+      const zoneEntries = Object.entries(ZONE_DB_KEY).map(([zoneId, dbKey]) => ({
+        zoneId,
+        value: todayPlant[dbKey] ?? 5,
+        allDone: (PLANT_RITUALS[zoneId] ?? []).every(r => completedRituals[r.id]),
+      }))
+      const available = zoneEntries.filter(z => !z.allDone)
+      if (!available.length) { if (!cancelled) { setQuickRitual(null); setLoading(false) }; return }
+      const weakest = available.sort((a, b) => a.value - b.value)[0]
+
+      const since = new Date(Date.now() - 60 * 86400000).toISOString()
+      const { data: hist } = await supabase
+        .from('rituals').select('ritual_id').eq('user_id', userId)
+        .eq('zone', PLANT_ZONES[weakest.zoneId].name)
+        .not('ritual_id', 'is', null).gte('completed_at', since)
+
+      let bestId = null
+      if (hist?.length) {
+        const counts = {}
+        hist.forEach(r => { counts[r.ritual_id] = (counts[r.ritual_id] ?? 0) + 1 })
+        bestId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+      }
+
+      const defs = PLANT_RITUALS[weakest.zoneId] ?? []
+      const ritual =
+        (bestId ? defs.find(r => r.id === bestId && !completedRituals[r.id]) : null) ??
+        defs.find(r => !completedRituals[r.id]) ??
+        defs[0]
+
+      if (!cancelled && ritual) setQuickRitual({ zoneId: weakest.zoneId, ritual })
+      if (!cancelled) setLoading(false)
+    }
+
+    compute()
+    return () => { cancelled = true }
+  }, [userId, todayPlant?.id, JSON.stringify(completedRituals)])
+
+  return { quickRitual, loadingQuick }
+}
+
 // ── RitualsSection ──────────────────────────────────────────
-function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant, onOpenBilan, bilanDoneToday }) {
+function RitualsSection({ userId, degradation, completedRituals, onToggleRitual, onQuizComplete, todayPlant, onOpenBilan, bilanDoneToday }) {
   const isMobile = useIsMobile()
   const [showQuiz,   setShowQuiz]   = useState(false)
   const [activeZone, setActiveZone] = useState(null)
+  const [activeInitialRitualId, setActiveInitialRitualId] = useState(null)
+
+  // ── Rituel rapide : calcul synchrone immédiat + affinage async ─────────────
+  const [quickRitual, setQuickRitual] = useState(null)
+  const [quickLoading, setQuickLoading] = useState(false)  // pas de spinner — affichage immediat
+
+  useEffect(() => {
+    if (!userId || !todayPlant) return
+    let cancelled = false
+
+    // ── PHASE 1 : synchrone — affiche immédiatement la zone la plus faible ────
+    const entries = Object.entries(ZONE_DB_KEY)
+      .map(([zoneId, dbKey]) => ({ zoneId, dbKey, val: todayPlant[dbKey] ?? 5 }))
+      .sort((a, b) => a.val - b.val)
+    const weakest = entries[0]
+    const zone    = PLANT_ZONES[weakest.zoneId]
+    const defs    = PLANT_RITUALS[weakest.zoneId] ?? []
+    const firstRitual = defs[0]
+    if (firstRitual) {
+      setQuickRitual({
+        zoneId:     weakest.zoneId,
+        zoneName:   zone.name,
+        zoneColor:  zone.color,
+        zoneAccent: zone.accent,
+        zoneBg:     zone.bg,
+        zoneValue:  weakest.val,
+        ritualId:   firstRitual.id,
+        ritualText: firstRitual.text,
+        ritualIcon: firstRitual.icon,
+      })
+    }
+
+    // ── PHASE 2 : async — affine vers le rituel le plus souvent pratiqué ──────
+    async function refine() {
+      const { data: hist } = await supabase
+        .from('rituals').select('ritual_id')
+        .eq('user_id', userId).eq('zone', zone.name)
+        .not('ritual_id', 'is', null).limit(100)
+      if (cancelled || !hist?.length) return
+      const counts = {}
+      hist.forEach(r => { counts[r.ritual_id] = (counts[r.ritual_id] ?? 0) + 1 })
+      const bestId  = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+      const bestRitual = (bestId ? defs.find(r => r.id === bestId) : null) ?? firstRitual
+      if (!cancelled && bestRitual) {
+        setQuickRitual(prev => prev ? {
+          ...prev,
+          ritualId:   bestRitual.id,
+          ritualText: bestRitual.text,
+          ritualIcon: bestRitual.icon,
+        } : null)
+      }
+    }
+    refine()
+    return () => { cancelled = true }
+  }, [userId, todayPlant?.id])
+
+  // Mise à jour isDone en temps réel si le rituel vient d'être coché
+  const quickIsDone = quickRitual ? !!completedRituals[quickRitual.ritualId] : false
 
   const hasDegradation = degradation !== null && degradation !== undefined
 
@@ -2794,7 +2904,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
   return (
     <>
       {/* DailyQuizModal géré dans DashboardPage */}
-      {activeZone && <RitualZoneModal zoneId={activeZone} completed={completedRituals} onToggle={onToggleRitual} onClose={() => setActiveZone(null)} />}
+      {activeZone && <RitualZoneModal zoneId={activeZone} completed={completedRituals} onToggle={onToggleRitual} onClose={() => { setActiveZone(null); setActiveInitialRitualId(null) }} initialRitualId={activeInitialRitualId} />}
 
       <div style={{ width:'100%' }}>
         {/* En-tête section */}
@@ -2818,7 +2928,7 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
         </div>
 
         {/* Grille des zones */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: isMobile ? 8 : 9 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)', gap: isMobile ? 8 : 9 }}>
           {sortedZones.map((zoneId, index) => {
             const zone      = PLANT_ZONES[zoneId]
             const rituals   = PLANT_RITUALS[zoneId] || []
@@ -2890,7 +3000,79 @@ function RitualsSection({ degradation, completedRituals, onToggleRitual, onQuizC
               </button>
             )
           })}
+          {/* ── 6ème card inline : Rituel rapide ── */}
+          {!quickLoading && quickRitual && (
+            <button
+              onClick={() => { setActiveZone(quickRitual.zoneId); setActiveInitialRitualId(quickRitual.ritualId) }}
+              style={{
+                position:'relative', overflow:'hidden',
+                padding: isMobile ? '12px 12px 10px' : '14px 14px 12px',
+                borderRadius:14, textAlign:'left', cursor:'pointer',
+                background: quickIsDone
+                  ? 'linear-gradient(145deg, rgba(232,196,100,0.04) 0%, rgba(0,0,0,0) 100%)'
+                  : 'linear-gradient(145deg, rgba(232,196,100,0.18) 0%, rgba(180,140,40,0.08) 100%)',
+                border: quickIsDone
+                  ? '1px solid rgba(232,196,100,0.18)'
+                  : '1px solid rgba(232,196,100,0.55)',
+                boxShadow: quickIsDone ? 'none' : '0 0 18px rgba(232,196,100,0.18), inset 0 1px 0 rgba(255,230,120,0.15)',
+                width:'100%', display:'flex', flexDirection:'column', gap:0,
+                transition:'all .2s ease',
+              }}
+            >
+              {/* Lueur dorée de fond */}
+              {!quickIsDone && (
+                <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 0%, rgba(232,196,100,0.18) 0%, transparent 70%)', pointerEvents:'none' }} />
+              )}
+
+              {/* Ligne haute : icône horloge + label */}
+              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
+                <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                  <span style={{ fontSize: isMobile ? 18 : 22, lineHeight:1 }}>
+                    {quickIsDone ? '✓' : '⏱'}
+                  </span>
+                  <span style={{ fontSize: isMobile ? 11 : 13, color: quickIsDone ? 'rgba(232,196,100,0.35)' : 'rgba(255,222,100,0.90)', fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>
+                    {isMobile ? 'RAPIDE' : 'SI PEU DE TEMPS'}
+                  </span>
+                  {!isMobile && (
+                    <span style={{ fontSize:11, color:'rgba(232,196,100,0.40)', letterSpacing:'0.02em', marginTop:2 }}>
+                      {quickRitual.zoneName}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
+                  <span style={{ fontSize: isMobile ? 16 : 20, fontFamily:"'Cormorant Garamond',serif", color: quickIsDone ? 'rgba(232,196,100,0.35)' : 'rgba(255,222,100,0.90)', fontWeight:600, lineHeight:1 }}>
+                    {quickRitual.zoneValue}<span style={{ fontSize: isMobile ? 9 : 11, opacity:0.6 }}>%</span>
+                  </span>
+                  {!quickIsDone && (
+                    <span style={{ fontSize:8, color:'rgba(232,196,100,0.80)', background:'rgba(232,196,100,0.14)', padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>⚡ priorité</span>
+                  )}
+                  {quickIsDone && (
+                    <span style={{ fontSize:11, color:'rgba(232,196,100,0.55)' }}>✓</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Barre de progression dorée */}
+              <div style={{ height:3, borderRadius:3, background:'rgba(232,196,100,0.10)', overflow:'hidden', marginBottom:6 }}>
+                <div style={{
+                  height:'100%', width:`${quickRitual.zoneValue}%`,
+                  background: quickIsDone ? 'rgba(232,196,100,0.30)' : 'linear-gradient(90deg, rgba(200,160,40,0.80), rgba(255,222,100,1))',
+                  borderRadius:3, transition:'width .6s ease',
+                  boxShadow: quickIsDone ? 'none' : '0 0 6px rgba(255,210,60,0.70)',
+                }} />
+              </div>
+
+              {/* Nom du rituel tronqué */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <span style={{ fontSize: isMobile ? 10 : 11, color: quickIsDone ? 'rgba(232,196,100,0.30)' : 'rgba(255,222,100,0.65)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                  {quickIsDone ? 'Accompli ✓' : quickRitual.ritualText}
+                </span>
+                <span style={{ fontSize:11, color: quickIsDone ? 'rgba(232,196,100,0.20)' : 'rgba(232,196,100,0.50)', flexShrink:0 }}>›</span>
+              </div>
+            </button>
+          )}
         </div>
+
       </div>
     </>
   )
@@ -3284,6 +3466,511 @@ function BoiteAGraines({ userId }) {
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  WAKEUP MODAL  "Le Réveil du Jardin"
+// ─────────────────────────────────────────────────────────────────────────────
+// ── EgregoreCard (accordéon) ─────────────────────────────────────────────────
+function EgregoreCard({ intention, progress, isMobile, onJoin }) {
+  const [open, setOpen] = useState(false)
+  const isDone = progress.egregore
+
+  return (
+    <div style={{
+      borderRadius:16,
+      border:`1px solid ${isDone ? 'rgba(232,196,100,0.30)' : 'rgba(232,196,100,0.18)'}`,
+      background: isDone ? 'rgba(232,196,100,0.06)' : 'rgba(232,196,100,0.03)',
+      transition:'all .3s',
+      overflow:'hidden',
+    }}>
+      {/* Header row */}
+      <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+        <div style={{
+          width:42, height:42, borderRadius:13,
+          background:'rgba(232,196,100,0.15)',
+          border:'1px solid rgba(232,196,100,0.32)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          fontSize:20, flexShrink:0,
+        }}>
+          {isDone ? '✓' : '🌸'}
+        </div>
+
+        <div style={{ flex:1, minWidth:0 }}>
+          {/* Titre de l'intention en doré, police généreuse */}
+          <div style={{
+            fontSize: isMobile ? 16 : 15,
+            fontFamily:"'Cormorant Garamond',serif",
+            fontWeight:600,
+            color: isDone ? 'rgba(232,196,100,0.45)' : 'rgba(232,196,100,1)',
+            lineHeight:1.3,
+            letterSpacing:'0.01em',
+          }}>
+            {intention?.text ?? 'Intention du jour'}
+          </div>
+          <div style={{
+            fontSize: isMobile ? 12 : 11,
+            color: isDone ? 'rgba(136,184,232,0.35)' : 'rgba(136,184,232,0.65)',
+            marginTop:3,
+          }}>
+            Je participe à la pensée collective (égregore)
+          </div>
+        </div>
+
+        {/* Bouton accordéon */}
+        {intention?.description && (
+          <button
+            onClick={() => setOpen(o => !o)}
+            style={{
+              background:'rgba(232,196,100,0.08)',
+              border:'1px solid rgba(232,196,100,0.20)',
+              borderRadius:100,
+              width:32, height:32,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              cursor:'pointer', flexShrink:0,
+              fontSize:14,
+              color:'rgba(232,196,100,0.70)',
+              transition:'transform .25s',
+              transform: open ? 'rotate(180deg)' : 'none',
+            }}
+            aria-label={open ? 'Fermer' : 'Lire la pensée'}
+          >▾</button>
+        )}
+
+        {/* Rejoindre / checkmark */}
+        {!isDone && (
+          <button onClick={onJoin} style={{
+            background:'rgba(136,184,232,0.10)',
+            border:'1px solid rgba(136,184,232,0.28)',
+            borderRadius:100, padding:'7px 14px',
+            fontSize: isMobile ? 13 : 12,
+            color:'rgba(176,222,250,0.90)',
+            cursor:'pointer', flexShrink:0, fontWeight:500,
+            whiteSpace:'nowrap',
+          }}>Rejoindre</button>
+        )}
+        {isDone && <span style={{ fontSize:18, color:'rgba(232,196,100,0.80)' }}>✓</span>}
+      </div>
+
+      {/* Accordéon — description complète */}
+      {intention?.description && open && (
+        <div style={{
+          margin:'0 16px 14px',
+          padding:'14px 16px',
+          borderRadius:12,
+          background:'rgba(232,196,100,0.05)',
+          border:'1px solid rgba(232,196,100,0.14)',
+          animation:'fadeUp 0.22s ease',
+        }}>
+          <div style={{
+            fontSize: isMobile ? 14 : 13,
+            color:'rgba(238,232,218,0.75)',
+            lineHeight:1.75,
+            fontStyle:'italic',
+            fontFamily:"'Cormorant Garamond',serif",
+          }}>
+            {intention.description}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose, profile }) {
+  const isMobile = useIsMobile()
+  const [closing, setClosing]                 = useState(false)
+  const [confetti, setConfetti]               = useState(false)
+  const [progress, setProgress]               = useState({ ritual:false, flowers:false, thought:false, egregore:false })
+  const [suggestedRitual, setSuggestedRitual] = useState(null)
+  const [exerciseActive, setExerciseActive]   = useState(false)
+  const [weakestPeople, setWeakestPeople]     = useState([])
+  const [flowersSent, setFlowersSent]         = useState(new Set())
+  const [closestFriend, setClosestFriend]     = useState(null)
+  const [thoughtSent, setThoughtSent]         = useState(false)
+  const [intention, setIntention]             = useState(null)
+  const [intentionJoined, setIntentionJoined] = useState(false)
+  const [flowersExhausted, setFlowersExhausted] = useState(false)  // plus personne a contacter
+  const [thoughtExhausted, setThoughtExhausted] = useState(false)  // aucun ami disponible
+  const todayKey  = new Date().toISOString().slice(0, 10)
+  const firstName = (profile?.display_name ?? '').split(' ')[0] || 'vous'
+  const doneCount = Object.values(progress).filter(Boolean).length
+
+  useEffect(() => { if (userId && plant?.id) init() }, [userId, plant?.id])
+
+  async function init() {
+    // Reset a chaque apparition pour proposer de nouvelles suggestions
+    setFlowersSent(new Set())
+    setProgress({ ritual:false, flowers:false, thought:false, egregore:false })
+    try {
+
+    // ── Rituel : zone la plus faible + rituel le plus souvent fait ────────────
+    const zoneMap = [
+      { id:'roots',   dbKey:'zone_racines',  ...PLANT_ZONES.roots   },
+      { id:'stem',    dbKey:'zone_tige',     ...PLANT_ZONES.stem    },
+      { id:'leaves',  dbKey:'zone_feuilles', ...PLANT_ZONES.leaves  },
+      { id:'flowers', dbKey:'zone_fleurs',   ...PLANT_ZONES.flowers },
+      { id:'breath',  dbKey:'zone_souffle',  ...PLANT_ZONES.breath  },
+    ]
+    const sorted  = [...zoneMap].sort((a, b) => (plant[a.dbKey] ?? 5) - (plant[b.dbKey] ?? 5))
+    const weakest = sorted[0]
+    const { data: hist } = await supabase.from('rituals').select('ritual_id').eq('user_id', userId).eq('zone', weakest.name).not('ritual_id', 'is', null).order('completed_at', { ascending: false }).limit(50)
+    let bestId = null
+    if (hist?.length) {
+      const counts = {}
+      hist.forEach(r => { counts[r.ritual_id] = (counts[r.ritual_id] ?? 0) + 1 })
+      bestId = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0]
+    }
+    const defs   = PLANT_RITUALS[weakest.id] ?? []
+    const ritual = (bestId ? defs.find(r => r.id === bestId) : null) ?? defs[0]
+    if (ritual) setSuggestedRitual({ ...ritual, zoneId: weakest.id, zoneName: weakest.name, zoneColor: weakest.color, zoneValue: plant[weakest.dbKey] ?? 5 })
+    if (ritual && completedRituals?.[ritual.id]) markDone('ritual')
+    else if (Object.keys(completedRituals ?? {}).length > 0) markDone('ritual')
+
+    // ── Cœurs deja envoyes aujourd'hui (partage entre fleurs + pensee) ─────────
+    const { data: sentToday } = await supabase
+      .from('coeurs').select('receiver_id').eq('sender_id', userId)
+      .gte('created_at', todayKey + 'T00:00:00')
+    const alreadySentIds = new Set((sentToday ?? []).map(c => c.receiver_id))
+
+    // ── Bouquet de fleurs : source = onglet 'Le Jardin' ───────────────────────
+    // Tous les users (sauf soi + deja envoye) tries par vitalite ascendante
+    const { data: allUsers } = await supabase
+      .from('users').select('id, display_name, flower_name')
+      .neq('id', userId)
+    const otherIds = (allUsers ?? []).filter(u => !alreadySentIds.has(u.id)).map(u => u.id)
+    if (otherIds.length) {
+      const { data: allPlants } = await supabase
+        .from('plants').select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
+        .in('user_id', otherIds).order('date', { ascending: false })
+      // Garder le plant le plus recent par user
+      const plantMap = {}
+      ;(allPlants ?? []).forEach(p => { if (!plantMap[p.user_id]) plantMap[p.user_id] = p })
+      // Calcul vitalite = moyenne des 5 zones (identique a ModalJardin)
+      const withVit = (allUsers ?? [])
+        .filter(u => !alreadySentIds.has(u.id) && u.id !== userId)
+        .map(u => {
+          const p = plantMap[u.id] ?? {}
+          const zones = ['zone_racines','zone_tige','zone_feuilles','zone_fleurs','zone_souffle']
+          const vit = Math.round(zones.reduce((s, k) => s + (p[k] ?? 5), 0) / zones.length)
+          return { ...u, plant: p, vitalite: vit }
+        })
+        .sort((a, b) => a.vitalite - b.vitalite) // les plus fragiles en premier
+      setWeakestPeople(withVit.slice(0, 3))
+      if (withVit.length === 0) { setFlowersExhausted(true); markDone('flowers') }
+    } else {
+      setFlowersExhausted(true); markDone('flowers') // tout le monde a deja recu un coeur aujourd'hui
+    }
+
+    // ── Belle pensee : source = onglet 'Mes Amis' (echanges mutuels) ──────────
+    // Logique identique a ModalBouquet : j'ai envoye un coeur + ils m'ont remercie
+    const [{ data: sentAll }, { data: recvMercis }] = await Promise.all([
+      supabase.from('coeurs').select('receiver_id').eq('sender_id', userId),
+      supabase.from('mercis').select('sender_id').eq('receiver_id', userId),
+    ])
+    const sentAllIds = new Set((sentAll ?? []).map(c => c.receiver_id))
+    const recvIds    = new Set((recvMercis ?? []).map(m => m.sender_id))
+    // Echanges mutuels = j'ai envoye ET j'ai recu un merci en retour
+    const amisIds = [...sentAllIds].filter(id => recvIds.has(id))
+    if (amisIds.length) {
+      const { data: amisUsers } = await supabase
+        .from('users').select('id, display_name, flower_name').in('id', amisIds)
+      // Exclure ceux deja contactes aujourd'hui, puis prioriser le moins recemment contacte
+      const { data: recentCoeurs } = await supabase
+        .from('coeurs').select('receiver_id').eq('sender_id', userId)
+        .order('created_at', { ascending: false }).limit(10)
+      const recentIds = (recentCoeurs ?? []).map(c => c.receiver_id)
+      const amisFiltered = (amisUsers ?? [])
+        .filter(a => !alreadySentIds.has(a.id))
+        .sort((a, b) => {
+          const ia = recentIds.indexOf(a.id)
+          const ib = recentIds.indexOf(b.id)
+          // Ceux pas dans recentIds (-1) en premier, sinon le moins recent (index le plus grand)
+          if (ia === -1 && ib === -1) return 0
+          if (ia === -1) return -1
+          if (ib === -1) return 1
+          return ib - ia
+        })
+      const chosenAmi = amisFiltered[0] ?? (amisUsers ?? [])[0]
+      if (chosenAmi) setClosestFriend(chosenAmi)
+      else setThoughtExhausted(true)
+    } else {
+      setThoughtExhausted(true) // aucun ami (echanges mutuels) disponible
+    }
+    // NE PAS pre-cocher thought si pas d'ami trouve
+
+    // ── Egregore : intention du jour ───────────────────────────────────────────
+    const { data: int } = await supabase.from('intentions').select('*').eq('date', todayKey).maybeSingle()
+    setIntention(int ?? { text: 'Prendre soin de soi', description: "Chaque rituel nourrit l'energie collective." })
+    const { data: joined } = await supabase.from('intentions_joined').select('id').eq('user_id', userId).eq('date', todayKey).maybeSingle()
+    if (joined) { setIntentionJoined(true); markDone('egregore') }
+    } catch(e) {
+      console.error('[WakeUpModal] init error:', e)
+      // En cas d'erreur, laisser les actions disponibles sans les pre-cocher
+    }
+  }
+
+  function markDone(key) {
+    setProgress(prev => {
+      if (prev[key]) return prev
+      const next = { ...prev, [key]: true }
+      if (Object.values(next).every(Boolean)) {
+        setConfetti(true)
+        setTimeout(() => { setClosing(true); setTimeout(onClose, 700) }, 2400)
+      }
+      return next
+    })
+  }
+
+  function doClose() { setClosing(true); setTimeout(onClose, 300) }
+
+  function handleStartRitual() { setExerciseActive(true) }
+  function handleCompleteRitual() {
+    if (!suggestedRitual) return
+    onToggleRitual?.(suggestedRitual.id)
+    setExerciseActive(false)
+    markDone('ritual')
+  }
+  async function handleSendFlower(personId) {
+    if (flowersSent.has(personId)) return
+    const zoneName = suggestedRitual?.zoneId ? ZONE_DB_KEY[suggestedRitual.zoneId].replace('zone_', '') : 'racines'
+    try {
+      await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: personId, zone: zoneName, message_ia: 'Un coeur depuis le jardin' })
+      const next = new Set([...flowersSent, personId])
+      setFlowersSent(next)
+      if (next.size >= Math.min(3, weakestPeople.length)) markDone('flowers')
+    } catch(e) { console.warn('coeur', e) }
+  }
+  async function handleSendThought() {
+    if (!closestFriend || thoughtSent) return
+    try {
+      // Envoie un coeur a l'ami jardinier selectionne
+      const zoneName = suggestedRitual?.zoneId ? ZONE_DB_KEY[suggestedRitual.zoneId].replace('zone_', '') : 'racines'
+      await supabase.from('coeurs').insert({
+        sender_id:  userId,
+        receiver_id: closestFriend.id,
+        zone: zoneName,
+        message_ia: 'Une belle pensee pour toi, de la part de ton jardinier'
+      })
+      setThoughtSent(true)
+      markDone('thought')
+    } catch(e) { console.warn('thought coeur', e) }
+  }
+  async function handleJoinEgregore() {
+    if (intentionJoined) return
+    try {
+      await supabase.from('intentions_joined').insert({ user_id: userId, date: todayKey })
+      setIntentionJoined(true)
+      markDone('egregore')
+    } catch(e) { console.warn('egregore', e) }
+  }
+
+  const zColor = suggestedRitual?.zoneColor ?? '#96d485'
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,0.80)', backdropFilter: isMobile ? 'none' : 'blur(10px)', display:'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent:'center', padding: isMobile ? 0 : 20 }} onClick={e => { if (e.target === e.currentTarget) doClose() }}>
+      <div style={{ width:'100%', maxWidth: isMobile ? '100%' : 560, maxHeight: isMobile ? '94vh' : '88vh', overflowY:'auto', background:'linear-gradient(170deg,#0d1f0e 0%,#060d07 100%)', border:'1px solid rgba(150,212,133,0.13)', borderRadius: isMobile ? '22px 22px 0 0' : 24, borderBottom: isMobile ? 'none' : undefined, opacity: closing ? 0 : 1, transition:'opacity .3s, transform .3s', transform: closing ? (isMobile ? 'translateY(30px)' : 'scale(.97)') : 'none', animation: closing ? 'none' : 'fadeUp 0.35s cubic-bezier(0.34,1.3,0.64,1)' }}>
+
+        {isMobile && <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 0' }}><div style={{ width:36, height:3, borderRadius:2, background:'rgba(255,255,255,.18)' }}/></div>}
+
+        {/* Header */}
+        <div style={{ padding: isMobile ? '14px 20px 0' : '26px 28px 0' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight:300, color:'#f0e8d0', lineHeight:1.1 }}>
+                Bonjour, {firstName} 🌿
+              </div>
+              <div style={{ fontSize: isMobile ? 14 : 13, color:'rgba(238,232,218,0.65)', marginTop:6, lineHeight:1.4 }}>
+                2 minutes pour prendre soin de votre jardin intérieur
+              </div>
+            </div>
+            <button onClick={doClose} style={{ background:'none', border:'none', color:'rgba(238,232,218,0.28)', fontSize:22, cursor:'pointer', padding:'2px 0 0 14px', lineHeight:1, flexShrink:0 }}>x</button>
+          </div>
+          <div style={{ marginBottom:6 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+              <span style={{ fontSize:10, color:'rgba(238,232,218,0.28)', letterSpacing:'.08em', textTransform:'uppercase' }}>Progression</span>
+              <span style={{ fontSize:11, fontWeight:500, color: doneCount===4 ? '#96d485' : 'rgba(238,232,218,0.50)' }}>{doneCount===4 ? 'Tout accompli !' : `${doneCount} / 4`}</span>
+            </div>
+            <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.07)', overflow:'hidden' }}>
+              <div style={{ height:'100%', borderRadius:3, width:`${(doneCount/4)*100}%`, background:'linear-gradient(90deg,#5aaf78,#96d485)', transition:'width .5s ease' }}/>
+            </div>
+          </div>
+          {confetti && <div style={{ textAlign:'center', padding:'8px 0 2px', fontSize:14, color:'#96d485', fontStyle:'italic' }}>Magnifique — votre jardin rayonne aujourd'hui.</div>}
+        </div>
+
+        {/* Actions */}
+        <div style={{ padding: isMobile ? '12px 20px 24px' : '14px 28px 28px', display:'flex', flexDirection:'column', gap:10 }}>
+
+          {/* 1 Rituel */}
+          <div style={{ borderRadius:16, border:`1px solid ${progress.ritual ? zColor+'35' : 'rgba(255,255,255,0.07)'}`, background: progress.ritual ? `${zColor}08` : 'rgba(255,255,255,0.02)', overflow:'hidden', transition:'all .3s' }}>
+            <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background:`${zColor}18`, border:`1px solid ${zColor}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+                {progress.ritual ? '✓' : (suggestedRitual?.icon ?? '🌱')}
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Mon rituel rapide</div>
+                {suggestedRitual && (
+                  <div style={{ fontSize: isMobile ? 12 : 11, color:zColor, marginTop:2, lineHeight:1.3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    {suggestedRitual.text}
+                    <span style={{ color:'rgba(238,232,218,0.30)' }}> · {suggestedRitual.zoneName} {suggestedRitual.zoneValue}%</span>
+                  </div>
+                )}
+              </div>
+              {!progress.ritual && (
+                <button onClick={exerciseActive ? handleCompleteRitual : handleStartRitual} style={{ background: exerciseActive ? `${zColor}22` : `${zColor}12`, border:`1px solid ${zColor}${exerciseActive ? '55' : '28'}`, borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color: exerciseActive ? '#fff' : '#c8f0b8', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
+                  {exerciseActive ? 'Terminer' : 'Demarrer'}
+                </button>
+              )}
+              {progress.ritual && <span style={{ fontSize:18, color:zColor }}>✓</span>}
+            </div>
+            {exerciseActive && suggestedRitual?.quick?.[0] && (
+              <div style={{ margin:'0 16px 14px', padding:'14px 16px', borderRadius:12, background:`${zColor}0c`, border:`1px solid ${zColor}20` }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                  <span style={{ fontSize:18 }}>{suggestedRitual.quick[0].icon}</span>
+                  <div>
+                    <div style={{ fontSize: isMobile ? 14 : 13, color:'rgba(238,232,218,0.90)', fontWeight:500 }}>{suggestedRitual.quick[0].title}</div>
+                    <div style={{ fontSize:11, color:zColor }}>{suggestedRitual.quick[0].dur}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: isMobile ? 13 : 12, color:'rgba(238,232,218,0.60)', lineHeight:1.65 }}>{suggestedRitual.quick[0].desc}</div>
+              </div>
+            )}
+          </div>
+
+          {/* 2 Fleurs */}
+          <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? '#e088a835' : flowersExhausted ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)'}`, background: progress.flowers ? 'rgba(224,136,168,0.05)' : flowersExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
+            <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background: flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.04)' : 'rgba(224,136,168,0.15)', border:`1px solid ${flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.08)' : 'rgba(224,136,168,0.28)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+                {progress.flowers ? '✓' : flowersExhausted ? '🚫' : '💚'}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.flowers || flowersExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>J'envoie une attention avec un bouquet</div>
+                <div style={{ fontSize: isMobile ? 12 : 11, color: flowersExhausted && !progress.flowers ? 'rgba(238,232,218,0.25)' : 'rgba(224,136,168,0.70)', marginTop:2, fontStyle: flowersExhausted && !progress.flowers ? 'italic' : 'normal' }}>
+                  {progress.flowers
+                    ? weakestPeople.map(p => [p.display_name?.split(' ')[0], p.flower_name].filter(Boolean).join(' · ')).join(', ')
+                    : flowersExhausted
+                      ? `Tout le monde a déjà reçu un bouquet aujourd'hui`
+                      : weakestPeople.length ? weakestPeople.map(p => [p.display_name?.split(' ')[0], p.flower_name].filter(Boolean).join(' · ')).join(', ') : '3 fleurs fragiles'}
+                </div>
+              </div>
+              {progress.flowers && <span style={{ fontSize:18, color:'#e088a8' }}>✓</span>}
+            </div>
+            {!progress.flowers && !flowersExhausted && weakestPeople.length > 0 && (
+              <div style={{ padding:'0 16px 14px', display:'flex', gap:8 }}>
+                {weakestPeople.map(p => {
+                  const sent = flowersSent.has(p.id)
+                  return (
+                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'rgba(224,136,168,0.14)' : 'rgba(255,255,255,0.04)', border:`1px solid ${sent ? 'rgba(224,136,168,0.40)' : 'rgba(255,255,255,0.08)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+                      <span style={{ fontSize:22 }}>{sent ? '💚' : '🌸'}</span>
+                      <span style={{ fontSize: isMobile ? 11 : 10, color: sent ? 'rgba(224,136,168,0.85)' : 'rgba(238,232,218,0.55)', lineHeight:1.2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>
+                        {p.display_name?.split(' ')[0] ?? '?'}
+                        {p.flower_name && <span style={{color:'rgba(224,136,168,0.55)', display:'block', fontSize:9}}>{p.flower_name}</span>}
+                      </span>
+                      <span style={{ fontSize:9, color: sent ? 'rgba(224,136,168,0.55)' : 'rgba(238,232,218,0.25)' }}>{sent ? 'envoyé' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 3 Pensee */}
+          <div style={{ borderRadius:16, border:`1px solid ${progress.thought ? '#f0c07035' : thoughtExhausted ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)'}`, background: progress.thought ? 'rgba(240,192,112,0.05)' : thoughtExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: thoughtExhausted && !progress.thought ? 0.45 : 1, transition:'all .3s' }}>
+            <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background: thoughtExhausted && !progress.thought ? 'rgba(255,255,255,0.04)' : 'rgba(240,192,112,0.15)', border:`1px solid ${thoughtExhausted && !progress.thought ? 'rgba(255,255,255,0.08)' : 'rgba(240,192,112,0.28)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+                {progress.thought ? '✓' : thoughtExhausted ? '🚫' : '💌'}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.thought || thoughtExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>J'envoie une belle pensée à un(e) ami(e)</div>
+                <div style={{ fontSize: isMobile ? 12 : 11, color: thoughtExhausted && !progress.thought ? 'rgba(238,232,218,0.25)' : 'rgba(240,192,112,0.70)', marginTop:2, fontStyle: thoughtExhausted && !progress.thought ? 'italic' : 'normal' }}>
+                  {progress.thought
+                    ? <span>Envoyé à <strong style={{color:'rgba(255,220,140,0.65)'}}>{[closestFriend?.display_name?.split(' ')[0], closestFriend?.flower_name].filter(Boolean).join(' · ')}</strong></span>
+                    : thoughtExhausted
+                      ? `Tous vos amis ont déjà reçu un cœur aujourd'hui`
+                      : closestFriend
+                        ? <span>Pour <strong style={{color:'rgba(255,220,140,0.85)'}}>{[closestFriend.display_name?.split(' ')[0], closestFriend.flower_name].filter(Boolean).join(' · ')}</strong></span>
+                        : 'Aucun ami disponible'}
+                </div>
+              </div>
+              {!progress.thought && !thoughtExhausted && closestFriend && (
+                <button onClick={handleSendThought} style={{ background:'rgba(240,192,112,0.10)', border:'1px solid rgba(240,192,112,0.28)', borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color:'rgba(255,220,140,0.90)', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
+                  Envoyer ❤️
+                </button>
+              )}
+              {progress.thought && <span style={{ fontSize:18, color:'#f0c070' }}>✓</span>}
+            </div>
+          </div>
+
+          {/* 4 Egregore */}
+          <EgregoreCard
+            intention={intention}
+            progress={progress}
+            isMobile={isMobile}
+            onJoin={handleJoinEgregore}
+          />
+
+          {/* Passer */}
+          <div onClick={doClose} style={{ textAlign:'center', paddingTop:4, fontSize: isMobile ? 13 : 12, color:'rgba(238,232,218,0.28)', cursor:'pointer', letterSpacing:'.04em', userSelect:'none' }}>
+            Passer pour l'instant
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function useWakeUpTrigger({ userId, plant, isLoading }) {
+  const [showWakeUp, setShowWakeUp] = useState(false)
+  const shownRef   = useRef(false)   // true = deja affiche dans cette session
+  const FOUR_HOURS = 4 * 60 * 60 * 1000
+
+  // Reset complet quand l'utilisateur change de compte
+  useEffect(() => {
+    shownRef.current = false
+    setShowWakeUp(false)
+  }, [userId])
+
+  // Declenchement initial — des que le plant est charge, toujours afficher
+  // (1 seule fois par session grace a shownRef)
+  useEffect(() => {
+    if (isLoading || !plant?.id || !userId) return
+    if (shownRef.current) return
+    shownRef.current = true
+    setShowWakeUp(true)
+  }, [isLoading, plant?.id, userId])
+
+  // Retour sur l'onglet / focus fenetre — re-afficher si > 4h
+  useEffect(() => {
+    if (!userId) return
+    const tryShow = () => {
+      if (!plant?.id) return
+      if (document.visibilityState !== 'visible') return
+      try {
+        const lastShown = parseInt(localStorage.getItem('wakeup_shown_' + userId) ?? '0')
+        if ((Date.now() - lastShown) > FOUR_HOURS) {
+          shownRef.current = true
+          localStorage.setItem('wakeup_shown_' + userId, Date.now().toString())
+          setShowWakeUp(true)
+        }
+      } catch(e) { setShowWakeUp(true) }
+    }
+    const onFocus = () => tryShow()
+    document.addEventListener('visibilitychange', tryShow)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', tryShow)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [userId, plant?.id])
+
+  function closeModal() {
+    // Enregistre l'heure de fermeture pour le cooldown 4h sur retour onglet
+    try { localStorage.setItem('wakeup_shown_' + userId, Date.now().toString()) } catch(e) {}
+    shownRef.current = false
+    setShowWakeUp(false)
+  }
+
+  return { showWakeUp, setShowWakeUp: closeModal }
+}
+
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan }) {
   const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
@@ -3293,6 +3980,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   // Optimistic override : mis à jour immédiatement quand un rituel est coché
   const [plantOverride, setPlantOverride] = useState(null)
   const plant = plantOverride ?? todayPlant   // ← utilisé partout à la place de todayPlant
+  const { showWakeUp, setShowWakeUp } = useWakeUpTrigger({ userId, plant, isLoading })
 
   // ── Initialisation / carry-over du plant du jour ──────────────────────────────
   // Règle métier fondamentale : une plante ne revient JAMAIS à 5% une fois qu'elle
@@ -3462,6 +4150,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
   return (
     <>
+    {showWakeUp && (
+      <WakeUpModal
+        userId={userId}
+        plant={plant}
+        completedRituals={completedRituals}
+        onToggleRitual={handleToggleRitual}
+        profile={profile}
+        onClose={setShowWakeUp}
+      />
+    )}
     {showGardenSettings && (
       <GardenSettingsModal
         settings={gardenSettings}
@@ -3599,6 +4297,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
 
         <RitualsSection
+          userId={userId}
           degradation={degradation}
           completedRituals={completedRituals}
           onToggleRitual={handleToggleRitual}
