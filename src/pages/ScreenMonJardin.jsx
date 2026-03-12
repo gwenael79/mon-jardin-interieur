@@ -2968,7 +2968,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         </div>
 
         {/* Grille des zones */}
-        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)', gap: isMobile ? 8 : 9 }}>
+        <div style={{ display:'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(6, 1fr)', gap: isMobile ? 10 : 9 }}>
           {sortedZones.map((zoneId, index) => {
             const zone      = PLANT_ZONES[zoneId]
             const rituals   = PLANT_RITUALS[zoneId] || []
@@ -2998,45 +2998,61 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                   <div style={{ position:'absolute', inset:0, background:`radial-gradient(ellipse at 50% 0%, ${zone.color}18 0%, transparent 70%)`, pointerEvents:'none' }} />
                 )}
 
-                {/* Ligne haute : icône + nom + badge */}
-                <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
-                  <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                    <span style={{ fontSize: isMobile ? 18 : 22, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
-                    <span style={{ fontSize: isMobile ? 11 : 13, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
-                    {!isMobile && <span style={{ fontSize:11, color:'rgba(255,255,255,0.30)', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>}
-                  </div>
-                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
-                    <span style={{ fontSize: isMobile ? 16 : 20, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize: isMobile ? 9 : 11, opacity:0.6 }}>%</span></span>
-                    {isPriority && !allDone && (
-                      <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>
-                    )}
-                    {allDone && (
-                      <span style={{ fontSize:11, color: zone.accent }}>✓</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Barre de progression */}
-                <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:6 }}>
-                  <div style={{
-                    height:'100%', width:`${health}%`,
-                    background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`,
-                    borderRadius:3, transition:'width .6s ease',
-                    boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none',
-                  }} />
-                </div>
-
-                {/* Compteur rituels */}
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <span style={{ fontSize: isMobile ? 10 : 11, color:'rgba(255,255,255,0.25)' }}>
-                    {doneCnt > 0
-                      ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span>
-                      : <span>{doneCnt}</span>
-                    }
-                    <span style={{ color:'rgba(255,255,255,0.18)' }}>/{rituals.length} rituels</span>
-                  </span>
-                  <span style={{ fontSize:11, color:'rgba(255,255,255,0.18)' }}>›</span>
-                </div>
+                {/* Mobile : layout horizontal icône + contenu / Desktop : colonne */}
+                {isMobile ? (
+                  <>
+                    {/* Ligne haute : icône + nom + % alignés */}
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                        <span style={{ fontSize:22, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
+                        <span style={{ fontSize:13, color: zone.accent, fontWeight:700, letterSpacing:'0.04em' }}>{zone.name}</span>
+                      </div>
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
+                        <span style={{ fontSize:18, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:10, opacity:0.6 }}>%</span></span>
+                        {allDone && <span style={{ fontSize:12, color: zone.accent }}>✓</span>}
+                        {isPriority && !allDone && <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 6px', borderRadius:10, whiteSpace:'nowrap' }}>⚡ priorité</span>}
+                      </div>
+                    </div>
+                    {/* Barre */}
+                    <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:7 }}>
+                      <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`, borderRadius:3, transition:'width .6s ease', boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none' }} />
+                    </div>
+                    {/* Compteur + flèche */}
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)' }}>
+                        {doneCnt > 0 ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span> : <span>{doneCnt}</span>}
+                        <span style={{ color:'rgba(255,255,255,0.18)' }}>/{rituals.length}</span>
+                      </span>
+                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.20)' }}>›</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Desktop — layout colonne original */}
+                    <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
+                      <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+                        <span style={{ fontSize:22, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
+                        <span style={{ fontSize:13, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
+                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.30)', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>
+                      </div>
+                      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
+                        <span style={{ fontSize:20, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:11, opacity:0.6 }}>%</span></span>
+                        {isPriority && !allDone && <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>}
+                        {allDone && <span style={{ fontSize:11, color: zone.accent }}>✓</span>}
+                      </div>
+                    </div>
+                    <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:6 }}>
+                      <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`, borderRadius:3, transition:'width .6s ease', boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none' }} />
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>
+                        {doneCnt > 0 ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span> : <span>{doneCnt}</span>}
+                        <span style={{ color:'rgba(255,255,255,0.18)' }}>/{rituals.length} rituels</span>
+                      </span>
+                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.18)' }}>›</span>
+                    </div>
+                  </>
+                )}
               </button>
             )
           })}
@@ -3047,7 +3063,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                 onClick={() => setShowQuickModal(true)}
                 style={{
                   position:'relative', overflow:'hidden',
-                  padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
+                  padding: isMobile ? '14px 14px 12px' : '16px 16px 14px',
                   borderRadius:14, textAlign:'left', cursor:'pointer',
                   background:'linear-gradient(160deg, rgba(44,34,8,0.97) 0%, rgba(28,22,6,0.99) 100%)',
                   border:'1px solid rgba(232,196,100,0.45)',
@@ -3059,9 +3075,11 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                 <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 0%, rgba(232,196,100,0.14) 0%, transparent 65%)', pointerEvents:'none' }} />
                 <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, transparent, rgba(255,222,100,0.35), transparent)', pointerEvents:'none' }} />
 
+                {/* Ligne haute icône + badge : desktop uniquement */}
+                {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <div style={{ width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius:'50%', flexShrink:0, background:'rgba(232,196,100,0.14)', border:'1px solid rgba(232,196,100,0.40)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 12px rgba(232,196,100,0.22)' }}>
-                    <svg width={isMobile ? 17 : 19} height={isMobile ? 17 : 19} viewBox="0 0 20 20" fill="none">
+                  <div style={{ width:36, height:36, borderRadius:'50%', flexShrink:0, background:'rgba(232,196,100,0.14)', border:'1px solid rgba(232,196,100,0.40)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 12px rgba(232,196,100,0.22)' }}>
+                    <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
                       <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
                       <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
                       <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
@@ -3080,11 +3098,34 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                     <span style={{ fontSize:8, color:'rgba(232,196,100,0.40)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
                   </div>
                 </div>
+                )}
 
-                <div style={{ marginBottom:8 }}>
-                  <div style={{ fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(255,222,100,0.95)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
-                  <div style={{ fontSize: isMobile ? 12 : 13, fontWeight:600, letterSpacing:'0.01em', color:'rgba(255,222,100,0.70)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
-                </div>
+                {isMobile ? (
+                  /* Mobile : horloge + titre sur ligne 1, zone + restantes sur ligne 2 */
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                      <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'rgba(232,196,100,0.14)', border:'1px solid rgba(232,196,100,0.40)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                          <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
+                          <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
+                          <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
+                          <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
+                        </svg>
+                      </div>
+                      <span style={{ fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'rgba(255,222,100,0.95)', lineHeight:1.2 }}>Une action rapide</span>
+                    </div>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                      <span style={{ fontSize:12, fontWeight:600, color:'rgba(255,222,100,0.70)' }}>{quickRitual.zoneName}</span>
+                      <span style={{ fontSize:9, color:'rgba(232,196,100,0.45)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Desktop : layout colonne original */
+                  <div style={{ marginBottom:8 }}>
+                    <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(255,222,100,0.95)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
+                    <div style={{ fontSize:13, fontWeight:600, letterSpacing:'0.01em', color:'rgba(255,222,100,0.70)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
+                  </div>
+                )}
 
                 <div style={{ height:1, background:'rgba(232,196,100,0.18)', borderRadius:1 }} />
               </button>

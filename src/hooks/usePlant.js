@@ -73,13 +73,21 @@ export function usePlant(userId) {
 
         if (lastPlant) {
           // Repart exactement là où la plante en était
+          // Fallback à 5 (valeur graine) si une zone est null en base
+          const safeHealth = lastPlant.health ?? 5
           const patch = {
-            health: lastPlant.health,
-            ...Object.fromEntries(ZONE_KEYS.map(k => [k, lastPlant[k] ?? lastPlant.health])),
+            health:        safeHealth,
+            updated_at:    new Date().toISOString(),
+            ...Object.fromEntries(ZONE_KEYS.map(k => [k, lastPlant[k] ?? safeHealth])),
           }
           resolvedPlant = { ...plant, ...patch }
-          // Persiste en base — non bloquant
-          supabase.from('plants').update(patch).eq('id', plant.id)
+          // Persiste en base — avec gestion d'erreur
+          if (plant?.id) {
+            supabase.from('plants').update(patch).eq('id', plant.id)
+              .then(({ error }) => {
+                if (error) console.warn('[usePlant] carry-over patch failed:', error.message)
+              })
+          }
         }
         // Pas d'historique avec health > 5 = premier jour ou utilisateur
         // qui n'a jamais fait de rituel → on garde la graine à 5%, rien à faire
