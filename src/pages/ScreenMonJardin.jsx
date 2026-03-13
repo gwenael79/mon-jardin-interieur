@@ -1941,7 +1941,7 @@ const PLANT_RITUALS = {
       ],
       deep:[
         { title:'Pranayama — respiration alternée', dur:'15 min', icon:'☯️', desc:'Inspirez par la gauche (4s). Fermez les deux (2s). Expirez par la droite (8s). Inversez. Faites 10 cycles. Équilibre les deux hémisphères.' },
-        { title:'Cohérence cardiaque 3-6-5', dur:'15 min', icon:'❤️', desc:'3 fois par jour, 6 respirations par minute, pendant 5 minutes. Matin au réveil, avant le déjeuner, avant le soir. Journal avant/après pendant une semaine.' },
+        { title:'Cohérence cardiaque 3-6-5', dur:'15 min', icon:'🌻', desc:'3 fois par jour, 6 respirations par minute, pendant 5 minutes. Matin au réveil, avant le déjeuner, avant le soir. Journal avant/après pendant une semaine.' },
         { title:'Respiration rebirthing douce', dur:'20–25 min', icon:'🌊', desc:'Allongez-vous. Cycle continu : inspir et expir reliés sans pause, par le nez, 20 minutes. Laissez les émotions traverser sans les retenir. 5 min de silence.' },
       ],
     },
@@ -3230,7 +3230,7 @@ function StreakMessage({ streak }) {
 //  BOÎTE À GRAINES — Estime de soi
 // ═══════════════════════════════════════════════════════
 const GRAINE_TAGS = [
-  { id: 'coeur', emoji: '❤️', label: 'Amour' },
+  { id: 'coeur', emoji: '🌻', label: 'Amour' },
   { id: 'merci', emoji: '🙏', label: 'Merci' },
 ]
 
@@ -3941,35 +3941,41 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? '#e088a835' : flowersExhausted ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)'}`, background: progress.flowers ? 'rgba(224,136,168,0.05)' : flowersExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
               <div style={{ width:42, height:42, borderRadius:13, background: flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.04)' : 'rgba(224,136,168,0.15)', border:`1px solid ${flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.08)' : 'rgba(224,136,168,0.28)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
-                {progress.flowers ? '✓' : flowersExhausted ? '🚫' : '💚'}
+                {progress.flowers ? '✓' : flowersExhausted ? '🚫' : '💐'}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.flowers || flowersExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>J'envoie une attention avec un bouquet</div>
-                <div style={{ fontSize: isMobile ? 12 : 11, color: flowersExhausted && !progress.flowers ? 'rgba(238,232,218,0.25)' : 'rgba(224,136,168,0.70)', marginTop:2, fontStyle: flowersExhausted && !progress.flowers ? 'italic' : 'normal' }}>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.flowers || flowersExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Offrir un élan à un jardin fragile</div>
+                <div style={{ fontSize: isMobile ? 12 : 11, color: flowersExhausted && !progress.flowers ? 'rgba(238,232,218,0.25)' : 'rgba(224,136,168,0.60)', marginTop:2, fontStyle:'italic' }}>
                   {progress.flowers
-                    ? weakestPeople.map(p => [p.display_name?.split(' ')[0], p.flower_name].filter(Boolean).join(' · ')).join(', ')
+                    ? `Élan envoyé — merci pour eux`
                     : flowersExhausted
-                      ? `Tout le monde a déjà reçu un bouquet aujourd'hui`
-                      : weakestPeople.length ? weakestPeople.map(p => [p.display_name?.split(' ')[0], p.flower_name].filter(Boolean).join(' · ')).join(', ') : '3 fleurs fragiles'}
+                      ? `Tous les jardins ont déjà reçu un élan aujourd'hui`
+                      : `Ces jardins ont besoin d'un peu d'énergie`}
                 </div>
               </div>
               {progress.flowers && <span style={{ fontSize:18, color:'#e088a8' }}>✓</span>}
             </div>
             {!progress.flowers && !flowersExhausted && weakestPeople.length > 0 && (
-              <div style={{ padding:'0 16px 14px', display:'flex', gap:8 }}>
+              <div style={{ padding:'0 16px 14px', display:'flex', flexDirection:'column', gap:10 }}>
+                <div style={{ fontSize:11, color:'rgba(238,232,218,0.30)', fontStyle:'italic', lineHeight:1.6, textAlign:'center', padding:'0 4px' }}>
+                  Un élan bienveillant, sans attente de retour — comme de la lumière partagée.
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
                 {weakestPeople.map(p => {
                   const sent = flowersSent.has(p.id)
                   return (
-                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'rgba(224,136,168,0.14)' : 'rgba(255,255,255,0.04)', border:`1px solid ${sent ? 'rgba(224,136,168,0.40)' : 'rgba(255,255,255,0.08)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                      <span style={{ fontSize:22 }}>{sent ? '💚' : '🌸'}</span>
-                      <span style={{ fontSize: isMobile ? 11 : 10, color: sent ? 'rgba(224,136,168,0.85)' : 'rgba(238,232,218,0.55)', lineHeight:1.2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>
-                        {p.display_name?.split(' ')[0] ?? '?'}
-                        {p.flower_name && <span style={{color:'rgba(224,136,168,0.55)', display:'block', fontSize:9}}>{p.flower_name}</span>}
+                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'rgba(224,136,168,0.14)' : 'rgba(255,255,255,0.04)', border:`1px solid ${sent ? 'rgba(224,136,168,0.40)' : 'rgba(255,255,255,0.08)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                      {/* Vitalité en premier — c'est la raison du geste */}
+                      <span style={{ fontSize:11, fontWeight:600, color: sent ? 'rgba(224,136,168,0.70)' : 'rgba(238,232,218,0.45)', letterSpacing:'.02em' }}>{sent ? '✓' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
+                      <span style={{ fontSize:22, lineHeight:1 }}>{sent ? '🌿' : '💐'}</span>
+                      {/* Nom en secondaire */}
+                      <span style={{ fontSize: isMobile ? 10 : 9, color: sent ? 'rgba(224,136,168,0.75)' : 'rgba(238,232,218,0.40)', lineHeight:1.2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>
+                        {sent ? 'Soutenu' : (p.display_name?.split(' ')[0] ?? 'Jardinier')}
                       </span>
-                      <span style={{ fontSize:9, color: sent ? 'rgba(224,136,168,0.55)' : 'rgba(238,232,218,0.25)' }}>{sent ? 'envoyé' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
                     </button>
                   )
                 })}
+                </div>
               </div>
             )}
           </div>
@@ -3981,7 +3987,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 {progress.thought ? '✓' : thoughtExhausted ? '🚫' : '💌'}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.thought || thoughtExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>J'envoie une belle pensée à un(e) ami(e)</div>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.thought || thoughtExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Envoyer une belle pensée à un jardinier proche</div>
                 <div style={{ fontSize: isMobile ? 12 : 11, color: thoughtExhausted && !progress.thought ? 'rgba(238,232,218,0.25)' : 'rgba(240,192,112,0.70)', marginTop:2, fontStyle: thoughtExhausted && !progress.thought ? 'italic' : 'normal' }}>
                   {progress.thought
                     ? <span>Envoyé à <strong style={{color:'rgba(255,220,140,0.65)'}}>{[closestFriend?.display_name?.split(' ')[0], closestFriend?.flower_name].filter(Boolean).join(' · ')}</strong></span>
@@ -3994,7 +4000,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
               </div>
               {!progress.thought && !thoughtExhausted && closestFriend && (
                 <button onClick={handleSendThought} style={{ background:'rgba(240,192,112,0.10)', border:'1px solid rgba(240,192,112,0.28)', borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color:'rgba(255,220,140,0.90)', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
-                  Envoyer ❤️
+                  Lui offrir 🌿
                 </button>
               )}
               {progress.thought && <span style={{ fontSize:18, color:'#f0c070' }}>✓</span>}
