@@ -21,6 +21,7 @@ import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
 import { ScreenAteliers }       from './ScreenAteliers'
 import { HelpModal }            from './HelpModal'
+import PremiumGate              from '../components/PremiumGate'
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 const SCREENS = [
@@ -825,21 +826,41 @@ export default function DashboardPage() {
                 unreadMessages={unreadCoeurs}
                 pendingInvitations={pendingInvitations}
               />
-            ) : Component ? (
-              <Component
-                userId={user?.id}
-                openCreate={showCreateCircle}
-                onCreateClose={() => setShowCreateCircle(false)}
-                openInvite={showInviteModal}
-                onInviteClose={() => setShowInviteModal(false)}
-                onReport={refreshPendingReports}
-                awardLumens={awardLumens}
-                lumens={lumens}
-                onCoeurSeen={() => setUnreadCoeurs(n => Math.max(0, n - 1))}
-                bilanDoneToday={bilanDoneToday}
-                onOpenBilan={() => setShowBilanModal(true)}
-              />
-            ) : null}
+            ) : Component ? (() => {
+              const PREMIUM_SCREENS = {
+                club:     'le Club des Jardiniers',
+                ateliers: 'les Ateliers',
+                defis:    'les Défis',
+                champ:    'le Jardin Collectif',
+              }
+              const featureName = PREMIUM_SCREENS[effectiveActive]
+              const inner = (
+                <Component
+                  userId={user?.id}
+                  openCreate={showCreateCircle}
+                  onCreateClose={() => setShowCreateCircle(false)}
+                  openInvite={showInviteModal}
+                  onInviteClose={() => setShowInviteModal(false)}
+                  onReport={refreshPendingReports}
+                  awardLumens={awardLumens}
+                  lumens={lumens}
+                  onCoeurSeen={() => setUnreadCoeurs(n => Math.max(0, n - 1))}
+                  bilanDoneToday={bilanDoneToday}
+                  onOpenBilan={() => setShowBilanModal(true)}
+                />
+              )
+              if (featureName) {
+                return (
+                  <PremiumGate
+                    featureName={featureName}
+                    onUpgrade={() => window.openAccessModal?.()}
+                  >
+                    {inner}
+                  </PremiumGate>
+                )
+              }
+              return inner
+            })()
           </div>
 
           {/* ── FAB mobile — accès Lumens (écran Ma Fleur) ── */}
