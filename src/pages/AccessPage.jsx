@@ -391,10 +391,10 @@ const FLOWER_NAMES = [
 ]
 
 const PLANS = [
-  { id: '1m',  label: '1 mois',  desc: 'Sans engagement',            price: '5,00 €',  note: '/ mois',   popular: false },
-  { id: '3m',  label: '3 mois',  desc: 'Économisez 17 %',            price: '12,00 €', note: '/ 3 mois', popular: false },
-  { id: '6m',  label: '6 mois',  desc: '3,00 € / mois · -40 %',     price: '18,00 €', note: '/ 6 mois', popular: true  },
-  { id: '12m', label: '12 mois', desc: '2,50 € / mois · -50 %',     price: '30,00 €', note: '/ an',     popular: false },
+  { id: 'price_1TAaItFtS3pnlbfx7KMK583V', label: '1 mois',  desc: 'Sans engagement',          price: '5,00 €',  note: '/ mois',   popular: false },
+  { id: 'price_1TAaItFtS3pnlbfxdZjT2e3l', label: '3 mois',  desc: 'Économisez 17 %',          price: '12,00 €', note: '/ 3 mois', popular: false },
+  { id: 'price_1TAaItFtS3pnlbfxbbzkkukr', label: '6 mois',  desc: '3,00 € / mois · -40 %',   price: '18,00 €', note: '/ 6 mois', popular: true  },
+  { id: 'price_1TAaItFtS3pnlbfxMBj4eltY', label: '12 mois', desc: '2,50 € / mois · -50 %',   price: '30,00 €', note: '/ an',     popular: false },
 ]
 
 function FleurLogoTiny() {
@@ -452,15 +452,28 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
     if (!selectedPlan) return
     setPaying(true)
     try {
-      // const { data: { session } } = await supabase.auth.getSession()
-      // Stripe checkout call here...
-      await new Promise(r => setTimeout(r, 1200))
-      setModalOpen(false)
-      setSelectedPlan(null)
-      showToast('✨', `Abonnement ${selectedPlan.label} activé !`)
-      onSuccess?.({ plan: selectedPlan })
-    } catch {
-      showToast('⚠️', 'Une erreur est survenue.')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { showToast('⚠️', 'Session expirée, veuillez vous reconnecter.'); return }
+
+      const origin = window.location.origin
+      const res = await supabase.functions.invoke('stripe-checkout', {
+        body: {
+          priceId:    selectedPlan.id,
+          successUrl: `${origin}/?premium=success`,
+          cancelUrl:  `${origin}/?premium=cancel`,
+        },
+      })
+
+      if (res.error) throw new Error(res.error.message)
+      const { url } = res.data
+      if (!url) throw new Error('URL de paiement manquante')
+
+      // Redirection vers Stripe Checkout
+      window.location.href = url
+
+    } catch (e) {
+      console.error('[handlePay]', e)
+      showToast('⚠️', 'Une erreur est survenue, veuillez réessayer.')
     } finally {
       setPaying(false)
     }
