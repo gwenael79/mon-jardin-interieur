@@ -4019,45 +4019,22 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
   )
 }
 
-function useWakeUpTrigger({ userId, plant, isLoading }) {
+function useWakeUpTrigger({ userId }) {
   const [showWakeUp, setShowWakeUp] = useState(false)
-  // Clé composite : on retrace dès que userId ou plant change
-  const [checkedFor, setCheckedFor] = useState(null)
 
   const todayKey = new Date().toISOString().slice(0, 10)
-  const checkKey = userId && plant?.id ? `${userId}__${plant.id}` : null
 
+  // Reset à la déconnexion
   useEffect(() => {
-    // Rien à faire si pas connecté, pas de plante, encore en chargement
-    if (isLoading || !checkKey || !userId) return
-    // Déjà vérifié pour cette combinaison userId+plant → skip
-    if (checkedFor === checkKey) return
-
-    async function check() {
-      setCheckedFor(checkKey)  // marquer immédiatement pour éviter double appel
-      try {
-        const { data } = await supabase
-          .from('wakeup_seen')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('date', todayKey)
-          .maybeSingle()
-        if (!data) setShowWakeUp(true)
-      } catch(e) {
-        // Table inexistante ou erreur réseau → afficher par défaut
-        setShowWakeUp(true)
-      }
-    }
-    check()
-  }, [isLoading, checkKey])
-
-  // Reset quand userId disparaît (déconnexion)
-  useEffect(() => {
-    if (!userId) {
-      setShowWakeUp(false)
-      setCheckedFor(null)  // forcer re-vérification à la prochaine connexion
-    }
+    if (!userId) setShowWakeUp(false)
   }, [userId])
+
+  // Seul déclencheur : l'event "openWakeUp" envoyé par WelcomeScreen
+  useEffect(() => {
+    const handler = () => setShowWakeUp(true)
+    window.addEventListener('openWakeUp', handler)
+    return () => window.removeEventListener('openWakeUp', handler)
+  }, [])
 
   async function closeModal() {
     setShowWakeUp(false)
@@ -4083,7 +4060,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   // Optimistic override : mis à jour immédiatement quand un rituel est coché
   const [plantOverride, setPlantOverride] = useState(null)
   const plant = plantOverride ?? todayPlant   // ← utilisé partout à la place de todayPlant
-  const { showWakeUp, setShowWakeUp } = useWakeUpTrigger({ userId, plant, isLoading })
+  const { showWakeUp, setShowWakeUp } = useWakeUpTrigger({ userId })
 
   // ── Initialisation / carry-over du plant du jour ──────────────────────────────
   // Règle métier fondamentale : une plante ne revient JAMAIS à 5% une fois qu'elle

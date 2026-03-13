@@ -2,7 +2,7 @@
 //  DashboardPage.jsx  —  Coque principale du dashboard
 //  Gère : sidebar, topbar, routing entre écrans, lumens, profil
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useAuth }   from '../hooks/useAuth'
 import { usePlant }  from '../hooks/usePlant'
 import { useCircle } from '../hooks/useCircle'
@@ -15,6 +15,8 @@ import { useAnalytics } from '../hooks/useAnalytics'
 import { logActivity } from '../utils/logActivity'
 import PushNotificationButton from '../components/PushNotificationButton'
 import { ScreenMonJardin, DailyQuizModal } from './ScreenMonJardin'
+import { OnboardingScreen } from './OnboardingScreen'
+import { WelcomeScreen }   from './WelcomeScreen'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
 import { ScreenAteliers }       from './ScreenAteliers'
@@ -356,6 +358,38 @@ export default function DashboardPage() {
   const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
   const { track } = useAnalytics(user?.id)
 
+  // ── Onboarding (première connexion) + WelcomeScreen (connexions suivantes) ──
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showWelcome,    setShowWelcome]    = useState(false)
+  const [welcomeReady,   setWelcomeReady]   = useState(false)
+
+  // Détecter première visite du jour
+  const isFirstToday = useMemo(() => {
+    const today = new Date().toISOString().slice(0,10)
+    const key   = `last_welcome_${user?.id}`
+    const last  = localStorage.getItem(key)
+    if (last !== today) { localStorage.setItem(key, today); return true }
+    return false
+  }, [user?.id])
+
+  // Lire onboarded directement depuis users (useProfile lit profiles, pas users)
+  useEffect(() => {
+    if (!user?.id || welcomeReady) return
+    supabase
+      .from('users')
+      .select('onboarded')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setWelcomeReady(true)
+        if (!data?.onboarded) {
+          setShowOnboarding(true)
+        } else {
+          setShowWelcome(true)
+        }
+      })
+  }, [user?.id])
+
   // Nombre de fleurs visibles dans le Jardin Collectif
   const [gardenFlowerCount, setGardenFlowerCount] = useState(null)
   const [bilanDoneToday,    setBilanDoneToday]    = useState(false)
@@ -488,6 +522,33 @@ export default function DashboardPage() {
 
   return (
     <div className="root">
+
+      {/* ── ONBOARDING (première connexion) ── */}
+      {showOnboarding && (
+        <OnboardingScreen
+          userId={user?.id}
+          onComplete={() => { setShowOnboarding(false); setShowWelcome(true) }}
+        />
+      )}
+
+      {/* ── WELCOME SCREEN (connexions suivantes) ── */}
+      {showWelcome && (
+        <WelcomeScreen
+          profile={profile}
+          isFirstToday={isFirstToday}
+          onQuick={() => {
+            setShowWelcome(false)
+            // Ouvre directement le WakeUp modal dans ScreenMonJardin
+            setActive('jardin')
+            setTimeout(() => window.dispatchEvent(new CustomEvent('openWakeUp')), 80)
+          }}
+          onFull={() => {
+            setShowWelcome(false)
+            setActive('jardin')
+          }}
+        />
+      )}
+
       <div className="app-layout">
 
         {/* ── MODAL LUMENS (accessible via NavHub) ── */}
