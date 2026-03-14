@@ -2952,7 +2952,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
             const doneCnt   = rituals.filter(r => completedRituals[r.id]).length
             const deg       = hasDegradation ? (degradation[zoneId] ?? 50) : 50
             const dbKey     = ZONE_DB_KEY[zoneId]
-            const health    = todayPlant?.[dbKey] ?? Math.max(5, 100 - deg)
+            const health    = todayPlant?.[dbKey] ?? 5
             const isPriority= hasDegradation && deg >= 65 && doneCnt === 0
             const allDone   = doneCnt === rituals.length && rituals.length > 0
             const zoneIcons = { roots:'🌱', stem:'🌿', leaves:'🍃', flowers:'🌸', breath:'🌬️' }
