@@ -15,7 +15,6 @@ import { useAnalytics } from '../hooks/useAnalytics'
 import { logActivity } from '../utils/logActivity'
 import PushNotificationButton from '../components/PushNotificationButton'
 import { ScreenMonJardin, DailyQuizModal } from './ScreenMonJardin'
-import { OnboardingScreen } from './OnboardingScreen'
 import { WelcomeScreen }   from './WelcomeScreen'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
@@ -360,20 +359,8 @@ export default function DashboardPage() {
   const { track } = useAnalytics(user?.id)
 
   // ── Onboarding (première connexion) + WelcomeScreen (connexions suivantes) ──
-  const [showOnboarding, setShowOnboarding] = useState(false)
   const [showWelcome,    setShowWelcome]    = useState(false)
   const [welcomeReady,   setWelcomeReady]   = useState(false)
-
-  // Détecter retour depuis Stripe (skip WelcomeScreen)
-  const isStripeReturn = useMemo(() => {
-    const params = new URLSearchParams(window.location.search)
-    const isReturn = params.has('lumens') || params.has('premium')
-    if (isReturn) {
-      // Nettoyer l'URL sans recharger la page
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-    return isReturn
-  }, [])
 
   // Détecter première visite du jour
   const isFirstToday = useMemo(() => {
@@ -389,17 +376,22 @@ export default function DashboardPage() {
     if (!user?.id || welcomeReady) return
     supabase
       .from('users')
-      .select('onboarded')
+      .select('onboarded, created_at')
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => {
         setWelcomeReady(true)
-        if (!data?.onboarded) {
-          setShowOnboarding(true)
-        } else if (!isStripeReturn) {
-          // Ne pas afficher le WelcomeScreen si on revient de Stripe
-          setShowWelcome(true)
-        }
+        if (!data?.onboarded) return // géré par App.jsx
+
+        // Retour Stripe → pas de WelcomeScreen
+        if (isStripeReturn) return
+
+        // Compte créé il y a moins de 10 min → première connexion → pas de WelcomeScreen
+        const createdAt = data?.created_at ? new Date(data.created_at) : null
+        const isJustCreated = createdAt && (Date.now() - createdAt.getTime()) < 10 * 60 * 1000
+        if (isJustCreated) return
+
+        setShowWelcome(true)
       })
   }, [user?.id])
 
@@ -535,14 +527,6 @@ export default function DashboardPage() {
 
   return (
     <div className="root">
-
-      {/* ── ONBOARDING (première connexion) ── */}
-      {showOnboarding && (
-        <OnboardingScreen
-          userId={user?.id}
-          onComplete={() => { setShowOnboarding(false); setShowWelcome(true) }}
-        />
-      )}
 
       {/* ── WELCOME SCREEN (connexions suivantes) ── */}
       {showWelcome && (

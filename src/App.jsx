@@ -6,6 +6,7 @@ import AccessPage from './pages/AccessPage'
 import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { query, supabase } from './core/supabaseClient'
+import { OnboardingScreen } from './pages/OnboardingScreen'
 
 // ── Notifications jardin ──────────────────────────────────
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
@@ -26,6 +27,7 @@ export default function App() {
   // ── État onboarding ──────────────────────────────────────
   const [onboarded,       setOnboarded]       = useState(null)
   const [checkingOnboard, setCheckingOnboard] = useState(false)
+  const [showSlides,      setShowSlides]      = useState(false)
 
   const [toast,    setToast]    = useState(null)
   const [hash,     setHash]     = useState(window.location.hash)
@@ -57,7 +59,10 @@ export default function App() {
       .eq('id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        setOnboarded(data?.onboarded === true)
+        const isOnboarded = data?.onboarded === true
+        setOnboarded(isOnboarded)
+        // Nouvel utilisateur → montrer les slides avant AccessPage
+        if (!isOnboarded) setShowSlides(true)
         setCheckingOnboard(false)
       })
   }, [user?.id])
@@ -88,6 +93,8 @@ export default function App() {
   // ── Callbacks AccessPage ─────────────────────────────────
   const handleActivateFree = async () => {
     await activateFree()
+    // Marquer comme onboardé en DB
+    await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
     showToast('🌱', 'Bienvenue dans votre jardin !')
     await refresh()
     setOnboarded(true)
@@ -117,7 +124,15 @@ export default function App() {
   // 1. Non connecté → AuthPage (pas de notifications)
   if (!user) return <AuthPage />
 
-  // 2. Pas encore onboardé → AccessPage
+  // 2a. Nouvel utilisateur → slides de présentation d'abord
+  if (onboarded === false && showSlides) return (
+    <OnboardingScreen
+      userId={user?.id}
+      onComplete={() => setShowSlides(false)}
+    />
+  )
+
+  // 2b. Slides terminées → AccessPage (choix plan)
   if (onboarded === false) return (
     <>
       <AccessPage

@@ -212,7 +212,7 @@ export function OnboardingScreen({ userId, onComplete }) {
     if (leaving) return
     if (isLast) {
       setLoading(true)
-      await supabase.from('users').update({ onboarded: true }).eq('id', userId)
+      // onboarded:true sera mis après le choix du plan dans App.jsx
       onComplete()
       return
     }
