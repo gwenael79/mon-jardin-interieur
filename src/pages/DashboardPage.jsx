@@ -364,6 +364,17 @@ export default function DashboardPage() {
   const [showWelcome,    setShowWelcome]    = useState(false)
   const [welcomeReady,   setWelcomeReady]   = useState(false)
 
+  // Détecter retour depuis Stripe (skip WelcomeScreen)
+  const isStripeReturn = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    const isReturn = params.has('lumens') || params.has('premium')
+    if (isReturn) {
+      // Nettoyer l'URL sans recharger la page
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+    return isReturn
+  }, [])
+
   // Détecter première visite du jour
   const isFirstToday = useMemo(() => {
     const today = new Date().toISOString().slice(0,10)
@@ -385,7 +396,8 @@ export default function DashboardPage() {
         setWelcomeReady(true)
         if (!data?.onboarded) {
           setShowOnboarding(true)
-        } else {
+        } else if (!isStripeReturn) {
+          // Ne pas afficher le WelcomeScreen si on revient de Stripe
           setShowWelcome(true)
         }
       })
@@ -826,41 +838,43 @@ export default function DashboardPage() {
                 unreadMessages={unreadCoeurs}
                 pendingInvitations={pendingInvitations}
               />
-            ) : Component ? (() => {
-              const PREMIUM_SCREENS = {
-                club:     'le Club des Jardiniers',
-                ateliers: 'les Ateliers',
-                defis:    'les Défis',
-                champ:    'le Jardin Collectif',
-              }
-              const featureName = PREMIUM_SCREENS[effectiveActive]
-              const inner = (
-                <Component
-                  userId={user?.id}
-                  openCreate={showCreateCircle}
-                  onCreateClose={() => setShowCreateCircle(false)}
-                  openInvite={showInviteModal}
-                  onInviteClose={() => setShowInviteModal(false)}
-                  onReport={refreshPendingReports}
-                  awardLumens={awardLumens}
-                  lumens={lumens}
-                  onCoeurSeen={() => setUnreadCoeurs(n => Math.max(0, n - 1))}
-                  bilanDoneToday={bilanDoneToday}
-                  onOpenBilan={() => setShowBilanModal(true)}
-                />
-              )
-              if (featureName) {
-                return (
-                  <PremiumGate
-                    featureName={featureName}
-                    onUpgrade={() => window.openAccessModal?.()}
-                  >
-                    {inner}
-                  </PremiumGate>
+            ) : Component ? (
+              (() => {
+                const PREMIUM_SCREENS = {
+                  club:     'le Club des Jardiniers',
+                  ateliers: 'les Ateliers',
+                  defis:    'les Défis',
+                  champ:    'le Jardin Collectif',
+                }
+                const featureName = PREMIUM_SCREENS[effectiveActive]
+                const inner = (
+                  <Component
+                    userId={user?.id}
+                    openCreate={showCreateCircle}
+                    onCreateClose={() => setShowCreateCircle(false)}
+                    openInvite={showInviteModal}
+                    onInviteClose={() => setShowInviteModal(false)}
+                    onReport={refreshPendingReports}
+                    awardLumens={awardLumens}
+                    lumens={lumens}
+                    onCoeurSeen={() => setUnreadCoeurs(n => Math.max(0, n - 1))}
+                    bilanDoneToday={bilanDoneToday}
+                    onOpenBilan={() => setShowBilanModal(true)}
+                  />
                 )
-              }
-              return inner
-            })()
+                if (featureName) {
+                  return (
+                    <PremiumGate
+                      featureName={featureName}
+                      onUpgrade={() => window.openAccessModal?.()}
+                    >
+                      {inner}
+                    </PremiumGate>
+                  )
+                }
+                return inner
+              })()
+            ) : null}
           </div>
 
           {/* ── FAB mobile — accès Lumens (écran Ma Fleur) ── */}

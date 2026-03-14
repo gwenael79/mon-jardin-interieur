@@ -12,7 +12,7 @@ export function usePremium() {
 
     async function checkPremium(userId) {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('premium_until')
         .eq('id', userId)
         .single()

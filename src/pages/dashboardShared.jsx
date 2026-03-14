@@ -167,12 +167,39 @@ export const ZONES = [
 
 // ── Composant LumensCard ─────────────────────────────────────────────────────
 const LUMEN_PACKS = [
-  { lumens: 50,  price: 20, label: 'Graine',      icon: '🌱' },
-  { lumens: 100, price: 40, label: 'Floraison',   icon: '🌸' },
-  { lumens: 150, price: 80, label: 'Rayonnement', icon: '✦'  },
+  { lumens: 50,  price: 20, label: 'Lumens Graines', icon: '🌱', priceId: 'price_1TAs4GFtS3pnlbfxqzSKAWIt' },
+  { lumens: 100, price: 40, label: 'Floraison',      icon: '🌸', priceId: 'price_1TAs5bFtS3pnlbfxy4wQAfOE' },
+  { lumens: 150, price: 80, label: 'Rayonnement',    icon: '✦',  priceId: 'price_1TAs60FtS3pnlbfxayTbh2gH' },
 ]
 
 export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
+  const [buyingPack, setBuyingPack] = useState(null)
+
+  async function handleBuyLumens(pack) {
+    if (buyingPack) return
+    setBuyingPack(pack.priceId)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) throw new Error('Non connecté')
+      const origin = window.location.origin
+      const res = await supabase.functions.invoke('stripe-checkout', {
+        body: {
+          priceId:    pack.priceId,
+          successUrl: origin + '/?lumens=success',
+          cancelUrl:  origin + '/?lumens=cancel',
+        },
+        headers: { Authorization: 'Bearer ' + token },
+      })
+      if (res.error) throw res.error
+      if (res.data?.url) window.location.href = res.data.url
+    } catch (e) {
+      console.error('[LumensCard] Erreur achat:', e)
+      alert('Une erreur est survenue, veuillez réessayer.')
+    } finally {
+      setBuyingPack(null)
+    }
+  }
   const [tab, setTab]               = useState('history')
   const [history, setHistory]       = useState([])
   const [loadingH, setLoadingH]     = useState(false)
@@ -318,16 +345,50 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
             <div style={{ fontSize:11, color:'rgba(238,232,218,0.3)', fontStyle:'italic', padding:'8px 0' }}>Aucune activité pour l'instant</div>
           )}
           {history.map((h, i) => {
-            const amt  = h.amount ?? h.delta ?? h.lumens ?? 0
-            const why  = h.reason ?? h.label ?? h.type ?? h.description ?? '—'
-            const date = h.created_at ?? h.inserted_at ?? h.date ?? null
+            const amt    = h.amount ?? h.delta ?? h.lumens ?? 0
+            const reason = h.reason ?? h.label ?? h.type ?? h.description ?? '—'
+            const date   = h.created_at ?? h.inserted_at ?? h.date ?? null
+            const meta   = h.meta ?? {}
+
+            // Traduction française des raisons
+            const REASON_LABELS = {
+              daily_login:            '🌅 Connexion quotidienne',
+              bilan_matin:            '🌹 Bilan du matin complété',
+              ritual_complete:        '🌿 Rituel accompli',
+              join_defi:              '✨ Défi rejoint',
+              leave_defi:             '✨ Défi quitté',
+              inscription_atelier:    '📖 Inscription à un atelier',
+              desinscription_atelier: '📖 Désinscription d\'un atelier',
+              atelier_payment:        '📖 Paiement atelier en Lumens',
+              atelier_refund:         '📖 Remboursement atelier',
+              lumen_purchase:         '✦ Achat de Lumens',
+              lumen_transfer_sent:    '↗ Lumens envoyés',
+              lumen_transfer_received:'↙ Lumens reçus',
+              coeur_envoye:           '💐 Bouquet envoyé',
+              merci:                  '🙏 Remerciement',
+              transfer_out:           '↗ Transfert envoyé',
+              transfer_in:            '↙ Transfert reçu',
+            }
+
+            // Label enrichi selon les metadata
+            let label = REASON_LABELS[reason] ?? reason
+            if (reason === 'lumen_purchase' && meta?.lumen_amount) {
+              label = `✦ Achat de ${meta.lumen_amount} Lumens`
+            }
+            if (reason === 'inscription_atelier' && meta?.atelier_id) {
+              label = '📖 Inscription à un atelier'
+            }
+
+            // Icône selon signe
+            const icon = amt > 0 ? '🌱' : '🍂'
+
             return (
               <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(255,255,255,0.03)', borderRadius:9, border:'1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: amt > 0 ? '#96d485' : 'rgba(255,140,140,0.8)' }}>
+                <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: amt > 0 ? '#96d485' : 'rgba(255,140,140,0.8)', flexShrink:0 }}>
                   {amt > 0 ? `+${amt}` : amt} ✦
                 </span>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:11, color:'rgba(238,232,218,0.7)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{why}</div>
+                  <div style={{ fontSize:11, color:'rgba(238,232,218,0.75)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
                   {date && <div style={{ fontSize:9, color:'rgba(238,232,218,0.28)', marginTop:2 }}>{timeAgo(date)}</div>}
                 </div>
               </div>
@@ -342,26 +403,29 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
           <div style={{ fontSize:11, color:'rgba(238,232,218,0.4)', fontStyle:'italic', marginBottom:2 }}>
             Chaque pack crédite votre soleil en Lumens ✦
           </div>
-          {LUMEN_PACKS.map(p => (
-            <div
-              key={p.lumens}
-              onClick={() => window.openAccessModal?.()}
-              style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, cursor:'pointer', transition:'all .2s', gap:8 }}
-              onMouseEnter={e => e.currentTarget.style.background='rgba(232,192,96,0.09)'}
-              onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
-            >
-              <div style={{ display:'flex', alignItems:'center', gap:10, flex:1 }}>
-                <span style={{ fontSize:20 }}>{p.icon}</span>
-                <div>
-                  <div style={{ fontSize:12, color:'rgba(238,232,218,0.85)', fontWeight:500 }}>{p.label}</div>
-                  <div style={{ fontSize:11, color:'rgba(232,192,96,0.7)', marginTop:1 }}>{p.lumens} ✦</div>
+          {LUMEN_PACKS.map(p => {
+            const isLoading = buyingPack === p.priceId
+            return (
+              <div
+                key={p.lumens}
+                onClick={() => !buyingPack && handleBuyLumens(p)}
+                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, cursor: buyingPack ? 'default' : 'pointer', transition:'all .2s', gap:8, opacity: buyingPack && !isLoading ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!buyingPack) e.currentTarget.style.background='rgba(232,192,96,0.09)' }}
+                onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+              >
+                <div style={{ display:'flex', alignItems:'center', gap:10, flex:1 }}>
+                  <span style={{ fontSize:20 }}>{p.icon}</span>
+                  <div>
+                    <div style={{ fontSize:12, color:'rgba(238,232,218,0.85)', fontWeight:500 }}>{p.label}</div>
+                    <div style={{ fontSize:11, color:'rgba(232,192,96,0.7)', marginTop:1 }}>{p.lumens} ✦</div>
+                  </div>
+                </div>
+                <div style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, fontSize:12, fontWeight:600, color:'#e8c060', background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)' }}>
+                  {isLoading ? '…' : p.price + ' €'}
                 </div>
               </div>
-              <div style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, fontSize:12, fontWeight:600, color:'#e8c060', background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)' }}>
-                {p.price} €
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
