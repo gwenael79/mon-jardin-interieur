@@ -1,4 +1,7 @@
 // hooks/usePushNotification.js
+// iOS → Web Push natif (VAPID)
+// Android → Firebase Cloud Messaging
+
 import { useState, useEffect, useCallback } from 'react'
 import { initializeApp, getApps } from 'firebase/app'
 import { getMessaging, getToken, deleteToken } from 'firebase/messaging'
@@ -13,11 +16,21 @@ const firebaseConfig = {
   appId:             "1:470084583376:web:c21bbfbd9d89f678d483d5",
 }
 
-const VAPID_KEY = 'BHoBRIRxT_0pQzgRMVn2BG9lgFbQ3au8aa7FFGn3Ab-O_V5N0ZXBZ0bLObr1t0SYKXwogXdJnAfqvAJuGf69INo'
+const VAPID_PUBLIC_KEY = 'BHoBRIRxT_0pQzgRMVn2BG9lgFbQ3au8aa7FFGn3Ab-O_V5N0ZXBZ0bLObr1t0SYKXwogXdJnAfqvAJuGf69INo'
+
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
 
 function getFirebaseApp() {
   if (getApps().length) return getApps()[0]
   return initializeApp(firebaseConfig)
+}
+
+// Convertit la VAPID key base64url en Uint8Array
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw     = atob(base64)
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
 }
 
 export function usePushNotification(userId) {
@@ -25,7 +38,6 @@ export function usePushNotification(userId) {
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [isSupported,  setIsSupported]  = useState(false)
   const [isLoading,    setIsLoading]    = useState(false)
-  const [fcmToken,     setFcmToken]     = useState(null)
 
   useEffect(() => {
     const supported = 'serviceWorker' in navigator && 'PushManager' in window
@@ -44,33 +56,59 @@ export function usePushNotification(userId) {
     if (!isSupported || !userId) return
     setIsLoading(true)
     try {
+      // Demander la permission
       const perm = await Notification.requestPermission()
       setPermission(perm)
       if (perm !== 'granted') { setIsLoading(false); return }
 
-      const app       = getFirebaseApp()
-      const messaging = getMessaging(app)
-      const sw        = await navigator.serviceWorker.ready
+      const sw = await navigator.serviceWorker.ready
 
-      const token = await getToken(messaging, {
-        vapidKey:           VAPID_KEY,
-        serviceWorkerRegistration: sw,
-      })
+      if (isIOS) {
+        // ── iOS : Web Push natif avec VAPID ──────────────────
+        const sub = await sw.pushManager.subscribe({
+          userVisibleOnly:      true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        })
 
-      if (!token) { console.error('[push] no token'); setIsLoading(false); return }
-      setFcmToken(token)
-      console.log('[push] FCM token:', token.slice(0, 30))
+        const subJson = sub.toJSON()
+        const endpoint = subJson.endpoint
+        const p256dh   = subJson.keys?.p256dh   ?? ''
+        const auth     = subJson.keys?.auth      ?? ''
 
-      // Supprimer l'ancien abonnement et insérer le nouveau
-      await supabase.from('push_subscriptions').delete().eq('user_id', userId)
-      await supabase.from('push_subscriptions').insert({
-        user_id:  userId,
-        endpoint: `fcm:${token}`,
-        p256dh:   token.slice(0, 87),
-        auth:     token.slice(0, 22),
-      })
+        // Supprimer l'ancien et insérer le nouveau
+        await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+        await supabase.from('push_subscriptions').insert({
+          user_id:  userId,
+          endpoint: endpoint,
+          p256dh:   p256dh,
+          auth:     auth,
+          platform: 'ios',
+        })
+      } else {
+        // ── Android : Firebase Cloud Messaging ───────────────
+        const app       = getFirebaseApp()
+        const messaging = getMessaging(app)
+
+        const token = await getToken(messaging, {
+          vapidKey:                  VAPID_PUBLIC_KEY,
+          serviceWorkerRegistration: sw,
+        })
+
+        if (!token) { console.error('[push] no FCM token'); setIsLoading(false); return }
+
+        await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+        await supabase.from('push_subscriptions').insert({
+          user_id:  userId,
+          endpoint: `fcm:${token}`,
+          p256dh:   token.slice(0, 87),
+          auth:     token.slice(0, 22),
+          platform: 'android',
+        })
+      }
 
       setIsSubscribed(true)
+      console.log('[push] abonné avec succès —', isIOS ? 'iOS WebPush' : 'Android FCM')
+
     } catch (e) {
       console.error('[push] subscribe error:', e)
     }
@@ -79,12 +117,17 @@ export function usePushNotification(userId) {
 
   const unsubscribe = useCallback(async () => {
     try {
-      const app       = getFirebaseApp()
-      const messaging = getMessaging(app)
-      await deleteToken(messaging)
+      if (!isIOS) {
+        const app       = getFirebaseApp()
+        const messaging = getMessaging(app)
+        await deleteToken(messaging)
+      } else {
+        const sw  = await navigator.serviceWorker.ready
+        const sub = await sw.pushManager.getSubscription()
+        if (sub) await sub.unsubscribe()
+      }
       await supabase.from('push_subscriptions').delete().eq('user_id', userId)
       setIsSubscribed(false)
-      setFcmToken(null)
     } catch (e) {
       console.error('[push] unsubscribe error:', e)
     }
