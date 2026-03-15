@@ -3,7 +3,7 @@ import { supabase, query } from '../core/supabaseClient'
 
 const HEALTH_MIN = 0
 const HEALTH_MAX = 100
-const HEALTH_DEFAULT = 50
+const HEALTH_DEFAULT = 5
 
 const ZONE_COLUMN = {
   Racines:  'zone_racines',
