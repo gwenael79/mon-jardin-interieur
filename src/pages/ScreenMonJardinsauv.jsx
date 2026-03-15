@@ -4115,44 +4115,6 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   }, [todayPlant?.id, isLoading, todayRituals, history])
   const { settings, toggle } = usePrivacy(userId)
 
-  // ── Mode contextuel selon l'heure ────────────────────────
-  const timeContext = useMemo(() => {
-    const h = new Date().getHours()
-    if (h >= 0  && h < 12) return 'matin'   // 00h01 - 12h
-    if (h >= 12 && h < 18) return 'aprem'   // 12h - 18h
-    return 'soir'                             // 18h - 24h
-  }, [])
-
-  const CONTEXT_MESSAGES = {
-    matin: [
-      'Un beau matin commence dans votre jardin.',
-      'Le matin est le meilleur moment pour prendre soin de vous.',
-      'Commencez par votre bilan, votre jardin vous remerciera.',
-      'Un rituel du matin, une journée qui s'ancre.',
-      'Votre jardin s'éveille avec vous ce matin.',
-    ],
-    aprem: [
-      'Un moment pour vous, au cœur de la journée.',
-      'Vos rituels vous attendent, prenez un instant.',
-      'Un souffle de calme au milieu de votre journée.',
-      'Quelques minutes pour nourrir votre équilibre.',
-      'Un rituel simple, un ancrage pour l'après-midi.',
-    ],
-    soir: [
-      'La journée se pose, votre jardin aussi.',
-      'Ce soir, semez une graine de gratitude.',
-      'Le soir est fait pour récolter ce que la journée a donné.',
-      'Prenez soin de vous avant de vous reposer.',
-      'Un dernier geste pour votre jardin avant la nuit.',
-    ],
-  }
-
-  const contextMessage = useMemo(() => {
-    const pool = CONTEXT_MESSAGES[timeContext]
-    const day  = parseInt(new Date().toISOString().slice(0,10).replace(/-/g,''))
-    return pool[day % pool.length]
-  }, [timeContext])
-
   // ── Nouveau système rituels ──────────────────────────────
   const {
     degradation,
@@ -4310,24 +4272,6 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     <div className="content">
     <div className="mj-layout">
       <div className="mj-left">
-        {/* ── Message contextuel selon l'heure ── */}
-        <div style={{
-          padding: isMobile ? '10px 4px 6px' : '8px 4px 6px',
-          display:'flex', alignItems:'center', gap:10,
-          marginBottom:6,
-        }}>
-          <span style={{ fontSize:16 }}>
-            {timeContext === 'matin' ? '🌅' : timeContext === 'aprem' ? '☀️' : '🌙'}
-          </span>
-          <span style={{
-            fontFamily:"'Cormorant Garamond',serif",
-            fontSize: isMobile ? 15 : 14,
-            fontWeight:300, fontStyle:'italic',
-            color:'rgba(242,237,224,0.55)',
-            letterSpacing:'0.01em',
-          }}>{contextMessage}</span>
-        </div>
-
         {/* ── Nouveau layout 50/50 : fleur | bilan + insight ── */}
         <div style={{
           display:'flex', flexDirection: isMobile ? 'column' : 'row',
@@ -4383,8 +4327,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             </div>
           </div>
 
-          {/* ── Colonne droite : bilan + insight — visible le matin ou si bilan fait ── */}
-          {(timeContext === 'matin' || bilanDoneToday) && <div style={{
+          {/* ── Colonne droite : bilan + insight ── */}
+          <div style={{
             flex:'1 1 0', minWidth:0,
             display:'flex', flexDirection:'column',
             padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
@@ -4392,8 +4336,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             gap:10,
           }}>
 
-            {/* Bouton bilan — visible uniquement le matin */}
-            {timeContext === 'matin' && !bilanDoneToday ? (
+            {/* Bouton bilan */}
+            {!bilanDoneToday ? (
               <button onClick={() => onOpenBilan?.()}
                 style={{ width:'100%', padding: isMobile ? '14px 16px' : '14px 18px', borderRadius:14,
                   border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)',
@@ -4504,7 +4448,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
             )}
 
-          </div>}
+          </div>
         </div>
 
 
@@ -4519,8 +4463,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           bilanDoneToday={bilanDoneToday}
         />
 
-        {/* Boîte à graines — visible uniquement le soir */}
-        {timeContext === 'soir' && <BoiteAGraines userId={userId} />}
+        <BoiteAGraines userId={userId} />
       </div>
 
       <div className="mj-right">
