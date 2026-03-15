@@ -4431,7 +4431,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             alignItems:'stretch', borderRadius:16, overflow:'hidden',
             border:'1px solid rgba(150,212,133,0.08)',
             background:'rgba(14,28,14,0.95)',
-            flexShrink:0, minHeight: isMobile ? 'auto' : 360,
+            flexShrink:0,
+            minHeight: isMobile ? 'auto' : 360,
           }}>
             {/* Colonne gauche : fleur */}
             <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
@@ -4493,7 +4494,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             alignItems:'stretch', borderRadius:16, overflow:'hidden',
             border:'1px solid rgba(150,212,133,0.08)',
             background:'rgba(14,28,14,0.95)',
-            flexShrink:0, minHeight: isMobile ? 'auto' : 360,
+            flexShrink:0,
+            minHeight: isMobile ? 'auto' : 360,
           }}>
             {/* Colonne gauche : fleur */}
             <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
@@ -4503,6 +4505,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
               background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
               gap:10,
+              maxHeight: isMobile ? 200 : 'none',
+              overflow: isMobile ? 'hidden' : 'visible',
             }}>
               {bilanDoneToday && degradation ? (
                 <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
@@ -4513,29 +4517,44 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           </div>
         )}
 
-        {/* ── SOIR : Fleur gauche | Boîte à graines droite ── */}
+        {/* ── SOIR : Fleur gauche | Boîte à graines droite (desktop) / Fleur + Boîte (mobile) ── */}
         {timeContext === 'soir' && (
-          <div style={{
-            display:'flex', flexDirection: isMobile ? 'column' : 'row',
-            alignItems:'stretch', borderRadius:16, overflow:'hidden',
-            border:'1px solid rgba(150,212,133,0.08)',
-            background:'rgba(14,28,14,0.95)',
-            flexShrink:0, minHeight: isMobile ? 'auto' : 360,
-          }}>
-            {/* Colonne gauche : fleur */}
-            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
-            {/* Colonne droite : boîte à graines */}
+          isMobile ? (
+            <>
+              {/* Mobile : fleur seule */}
+              <div style={{
+                borderRadius:16, overflow:'hidden',
+                border:'1px solid rgba(150,212,133,0.08)',
+                background:'rgba(14,28,14,0.95)',
+                flexShrink:0,
+              }}>
+                <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
+              </div>
+              {/* Mobile : boîte à graines en dessous, pleine largeur */}
+              <BoiteAGraines userId={userId} />
+            </>
+          ) : (
+            /* Desktop : 2 colonnes */
             <div style={{
-              flex:'1 1 0', minWidth:0,
-              background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
-              padding: '18px 20px',
-              display:'flex', flexDirection:'column',
-              justifyContent:'center',
-              overflow:'hidden',
+              display:'flex', flexDirection:'row',
+              alignItems:'stretch', borderRadius:16, overflow:'hidden',
+              border:'1px solid rgba(150,212,133,0.08)',
+              background:'rgba(14,28,14,0.95)',
+              flexShrink:0, minHeight:360,
             }}>
-              <BoiteAGraines userId={userId} inline />
+              <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={false} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
+              <div style={{
+                flex:'1 1 0', minWidth:0,
+                background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+                padding:'18px 20px',
+                display:'flex', flexDirection:'column',
+                justifyContent:'center',
+                overflow:'hidden',
+              }}>
+                <BoiteAGraines userId={userId} inline />
+              </div>
             </div>
-          </div>
+          )
         )}
 
         {/* ── Rituels — toujours visibles ── */}
