@@ -362,6 +362,14 @@ export default function DashboardPage() {
   const [showWelcome,    setShowWelcome]    = useState(false)
   const [welcomeReady,   setWelcomeReady]   = useState(false)
 
+  // Détecter retour depuis Stripe (skip WelcomeScreen)
+  const isStripeReturn = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    const isReturn = params.has('lumens') || params.has('premium')
+    if (isReturn) window.history.replaceState({}, '', window.location.pathname)
+    return isReturn
+  }, [])
+
   // Détecter première visite du jour
   const isFirstToday = useMemo(() => {
     const today = new Date().toISOString().slice(0,10)
