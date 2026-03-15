@@ -176,20 +176,6 @@ export default function App() {
       {/* ── Invitation installation PWA ── */}
       <InstallPrompt />
 
-      {/* ── DEBUG iOS temporaire ── */}
-      <div style={{
-        position:'fixed', top:10, left:10, right:10,
-        background:'rgba(0,0,0,0.85)', color:'white',
-        padding:12, borderRadius:8, fontSize:11, zIndex:99999,
-        fontFamily:'monospace', lineHeight:1.8,
-      }}>
-        standalone: {String(window.navigator.standalone)}<br/>
-        permission: {typeof Notification !== 'undefined' ? Notification.permission : 'non supporté'}<br/>
-        iOS: {String(/iphone|ipad|ipod/i.test(navigator.userAgent))}<br/>
-        SW: {String('serviceWorker' in navigator)}<br/>
-        Push: {String('PushManager' in window)}
-      </div>
-
       {/* ── Toast existant ── */}
       {toast && (
         <div style={styles.toast}>
