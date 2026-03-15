@@ -7,6 +7,7 @@ import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
+import InstallPrompt from './components/InstallPrompt'
 
 // ── Notifications jardin ──────────────────────────────────
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
@@ -171,6 +172,9 @@ export default function App() {
           </span>
         </div>
       )}
+
+      {/* ── Invitation installation PWA ── */}
+      <InstallPrompt />
 
       {/* ── Toast existant ── */}
       {toast && (
