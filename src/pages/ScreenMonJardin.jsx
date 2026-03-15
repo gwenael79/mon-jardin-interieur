@@ -4470,11 +4470,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                     </div>
                     <div style={{ fontSize:14, color:'rgba(150,212,133,0.35)' }}>✓</div>
                   </div>
-                  <button onClick={() => onOpenBilan?.()}
-                    style={{ fontSize:10, color:'rgba(180,200,180,0.28)', background:'none', border:'none',
-                      cursor:'pointer', letterSpacing:'0.05em', padding:'2px 4px', fontFamily:"'Jost',sans-serif" }}>
-                    ↺ Refaire le bilan
-                  </button>
+                  {timeContext === 'matin' && (
+                    <button onClick={() => onOpenBilan?.()}
+                      style={{ fontSize:10, color:'rgba(180,200,180,0.28)', background:'none', border:'none',
+                        cursor:'pointer', letterSpacing:'0.05em', padding:'2px 4px', fontFamily:"'Jost',sans-serif" }}>
+                      ↺ Refaire le bilan
+                    </button>
+                  )}
                 </div>
               )}
               {/* Message jardin ou insight */}
