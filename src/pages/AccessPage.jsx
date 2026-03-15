@@ -7,6 +7,7 @@ const css = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 .ap-root {
+  padding-top: 64px; padding-bottom: 70px;
   font-family: 'Epilogue', sans-serif;
   background: #06100a;
   color: #e2ddd3;
@@ -555,9 +556,11 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
         <div className="ap-brand">
           <FleurLogoTiny/>
           <span className="ap-brand-dot"/>
-          <span className="ap-brand-name">Fleur Intérieure</span>
+          <span className="ap-brand-name">Mon Jardin Intérieur</span>
           <span className="ap-brand-dot"/>
-          <span className="ap-brand-name" style={{fontSize:'11px', opacity:0.6}}>Paiement sécurisé · Sans engagement</span>
+          <span className="ap-brand-name" style={{fontSize:'11px', opacity:0.6}}>Paiement sécurisé</span>
+          <span className="ap-brand-dot"/>
+          <span className="ap-brand-name" style={{fontSize:'11px', opacity:0.6}}>stripe.com</span>
         </div>
       </div>
 
