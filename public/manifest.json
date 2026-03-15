@@ -1,24 +1,39 @@
 {
+  "id": "/",
   "name": "Mon Jardin Intérieur",
   "short_name": "Mon jardin",
   "description": "Cultivez votre équilibre intérieur chaque jour",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f0e8",
+  "background_color": "#060d07",
   "theme_color": "#4a6741",
   "orientation": "portrait",
+  "lang": "fr",
+  "categories": ["lifestyle", "health", "wellness"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icons/badge-72.png",
@@ -27,6 +42,20 @@
       "purpose": "monochrome"
     }
   ],
-  "categories": ["lifestyle", "health", "wellness"],
-  "lang": "fr"
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop.jpg",
+      "sizes": "1280x800",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Mon Jardin Intérieur sur desktop"
+    },
+    {
+      "src": "/screenshots/mobile.jpg",
+      "sizes": "390x844",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Mon Jardin Intérieur sur mobile"
+    }
+  ]
 }
