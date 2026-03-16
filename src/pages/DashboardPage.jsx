@@ -314,21 +314,6 @@ function ProfileModal({ user, onClose }) {
 }
 
 
-// ── Composant StreakMessage (utilisé dans la topbar) ─────────────────────────
-function StreakMessage({ streak }) {
-  if (!streak || streak < 2) return null
-  return (
-    <div style={{
-      display:'flex', alignItems:'center', gap:6,
-      padding:'4px 12px', borderRadius:20,
-      background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.22)',
-      fontSize:11, color:'#e8c060',
-    }}>
-      🔥 {streak} jours de suite
-    </div>
-  )
-}
-
 // ── DashboardPage principal ──────────────────────────────────────────────────
 export default function DashboardPage() {
   const isMobile = useIsMobile()
@@ -361,6 +346,7 @@ export default function DashboardPage() {
   // ── Onboarding (première connexion) + WelcomeScreen (connexions suivantes) ──
   const [showWelcome,    setShowWelcome]    = useState(false)
   const [welcomeReady,   setWelcomeReady]   = useState(false)
+  const [isNewUser,      setIsNewUser]      = useState(false)
 
   // Détecter retour depuis Stripe (skip WelcomeScreen)
   const isStripeReturn = useMemo(() => {
@@ -394,11 +380,10 @@ export default function DashboardPage() {
         // Retour Stripe → pas de WelcomeScreen
         if (isStripeReturn) return
 
-        // Compte créé il y a moins de 10 min → première connexion → pas de WelcomeScreen
+        // Détecter nouvelle inscription (< 10 min)
         const createdAt = data?.created_at ? new Date(data.created_at) : null
         const isJustCreated = createdAt && (Date.now() - createdAt.getTime()) < 10 * 60 * 1000
-        if (isJustCreated) return
-
+        setIsNewUser(!!isJustCreated)
         setShowWelcome(true)
       })
   }, [user?.id])
@@ -536,21 +521,12 @@ export default function DashboardPage() {
   return (
     <div className="root">
 
-      {/* ── WELCOME SCREEN (connexions suivantes) ── */}
+      {/* ── WELCOME SCREEN (transition 3s) ── */}
       {showWelcome && (
         <WelcomeScreen
           profile={profile}
-          isFirstToday={isFirstToday}
-          onQuick={() => {
-            setShowWelcome(false)
-            // Ouvre directement le WakeUp modal dans ScreenMonJardin
-            setActive('jardin')
-            setTimeout(() => window.dispatchEvent(new CustomEvent('openWakeUp')), 80)
-          }}
-          onFull={() => {
-            setShowWelcome(false)
-            setActive('jardin')
-          }}
+          isNewUser={isNewUser}
+          onDone={() => { setShowWelcome(false); setActive('jardin') }}
         />
       )}
 
@@ -796,7 +772,7 @@ export default function DashboardPage() {
             ) : (
               <div className="tb-title">{topbar.title}</div>
             )}
-            {active === 'jardin' && !isMobile && <StreakMessage streak={plantStats?.streak ?? 0} />}
+            
             <div style={{ flex:1 }} />
             <div className="tb-btn ghost" style={{ marginRight:5 }} onClick={() => setShowHelp(true)}>Aide</div>
             {topbar.btn && <div className="tb-btn" onClick={topbar.onBtn ?? undefined}>{topbar.btn}</div>}

@@ -13,7 +13,8 @@ export function useCircle(userId) {
 
   useEffect(() => {
     if (!userId) return
-    void loadCircles()
+    // Ne recharger que si les données ne sont pas déjà présentes
+    if (circles.length === 0 && !isLoading) void loadCircles()
   }, [userId]) // eslint-disable-line
 
   async function loadCircles() {

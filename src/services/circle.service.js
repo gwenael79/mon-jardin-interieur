@@ -4,13 +4,11 @@ import { supabase, query } from '../core/supabaseClient'
 export const circleService = {
   // ─── MES CERCLES ─────────────────────────────────────────
   async getMyCircles(userId) {
-    console.log('getMyCircles userId:', userId)
-  const { data: memberships, error } = await supabase
+    const { data: memberships, error } = await supabase
     .from('circle_members')
     .select('circle_id, role')
     .eq('user_id', userId)
 
-  console.log('memberships:', memberships, 'error:', error)  // ← ajoutez ça
 
   if (!memberships?.length) return []
     const circleIds = memberships.map(m => m.circle_id)
