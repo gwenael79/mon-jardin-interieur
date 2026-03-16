@@ -75,7 +75,7 @@ export const PLANT_RITUALS = {
       id: "r3", text: "Hydratation consciente", icon: "💧",
       quick: [
         { title: "Le verre d'eau rituel", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "🥛", desc: "Prenez un grand verre d'eau à température ambiante. Avant de le boire, posez les deux mains autour. Respirez une fois profondément. Buvez lentement, en 5 à 7 gorgées, en ressentant chaque gorgée descendre dans votre gorge et votre poitrine." },
-        { title: "Bilan hydratation", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "📊", desc: "Posez-vous ces questions : de quelle couleur étaient vos dernières urines ? Avez-vous bu au moins 1,5L hier ? Ressentez-vous des tensions dans la nuque ? Décidez d'un nombre de verres à boire avant midi." },
+        { title: "Bilan hydratation", dur: "2 min", tool: { type: "visualisation", enabled: true }, icon: "📊", desc: "Posez-vous ces questions : de quelle couleur étaient vos dernières urines ? Avez-vous bu au moins 1,5L hier ? Ressentez-vous des tensions dans la nuque ? Décidez d'un nombre de verres à boire avant midi." },
         { title: "Infusion consciente", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "🍵", desc: "Préparez une infusion (menthe, camomille, gingembre…). Pendant qu'elle infuse, posez vos mains autour de la tasse et sentez la chaleur. Inspirez la vapeur parfumée. Buvez la première gorgée en fermant les yeux." },
       ],
       deep: [
@@ -88,7 +88,7 @@ export const PLANT_RITUALS = {
       id: "r4", text: "Coucher avant minuit ce soir", icon: "🌙",
       quick: [
         { title: "Protocole extinction lumières", dur: "3 min", tool: { type: "movement", enabled: true }, icon: "💡", desc: "À 30 minutes de l'heure souhaitée de coucher, mettez votre téléphone en mode avion et posez-le hors de portée. Baissez tous les éclairages au maximum ou allumez une bougie. Votre cerveau reçoit alors le signal que la nuit commence." },
-        { title: "Scan de fin de journée", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "🌙", desc: "Allongez-vous et fermez les yeux. Passez mentalement en revue votre journée : 1 chose qui s'est bien passée, 1 chose à lâcher pour cette nuit, 1 intention pour demain. C'est tout. Laissez votre corps peser dans le matelas." },
+        { title: "Scan de fin de journée", dur: "2 min", tool: { type: "visualisation", enabled: true }, icon: "🌙", desc: "Allongez-vous et fermez les yeux. Passez mentalement en revue votre journée : 1 chose qui s'est bien passée, 1 chose à lâcher pour cette nuit, 1 intention pour demain. C'est tout. Laissez votre corps peser dans le matelas." },
         { title: "Respiration 4-7-8", dur: "2 min", icon: "😴", desc: "Cette respiration active le système nerveux parasympathique. Inspirez par le nez en comptant 4, retenez en comptant 7, expirez lentement par la bouche en comptant 8. Répétez 4 fois." },
       ],
       deep: [
@@ -182,7 +182,7 @@ export const PLANT_RITUALS = {
     {
       id: "l3", text: "Prendre des nouvelles de quelqu'un", icon: "💬",
       quick: [
-        { title: "Le message en 2 phrases", dur: "1 min", tool: { type: "gratitude", enabled: true }, icon: "📱", desc: "Pensez à une personne à qui vous n'avez pas parlé depuis un moment. Envoyez-lui : ce que vous avez pensé d'elle récemment + une question sincère sur sa vie. Deux phrases suffisent pour maintenir un lien." },
+        { title: "Le message en 2 phrases", dur: "1 min", tool: { type: "movement", enabled: true }, icon: "📱", desc: "Pensez à une personne à qui vous n'avez pas parlé depuis un moment. Envoyez-lui : ce que vous avez pensé d'elle récemment + une question sincère sur sa vie. Deux phrases suffisent pour maintenir un lien." },
         { title: "Appel de 3 minutes", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "📞", desc: "Appelez quelqu'un (pas un message — un appel). Dites-lui que vous pensiez à lui/elle. Posez une vraie question et écoutez vraiment la réponse. Un appel court mais sincère a plus de valeur qu'une longue conversation superficielle." },
         { title: "Observation attentive", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "👁️", desc: "Regardez quelqu'un dans votre entourage proche aujourd'hui avec une vraie attention. Qu'est-ce qui a l'air de le peser ? Qu'est-ce qui lui fait du bien ? Observez sans projeter." },
       ],
@@ -523,11 +523,19 @@ export function DailyQuizModal({ onComplete, onSkip }) {
 // ═══════════════════════════════════════════════════════════
 // ── Détection du type d'exercice ─────────────────────────────
 function detectExerciseType(exercise) {
+  // Priorité absolue au champ tool.type s'il est défini
+  const toolType = exercise.tool?.type
+  if (toolType === 'breath')        return 'breath'
+  if (toolType === 'timer')         return 'timer'
+  if (toolType === 'gratitude')     return 'gratitude'
+  if (toolType === 'movement')      return 'movement'
+  if (toolType === 'visualisation') return 'visualisation'
+  // Fallback : détection par le texte (exercices sans champ tool)
   const text = ((exercise.title ?? '') + ' ' + (exercise.desc ?? '')).toLowerCase()
-  if (/inspir|expir|respir|coh.rence|pranayama|narine|apn.e|souffle.*comp/.test(text)) return 'breath'
-  if (/gratitude|remerci|.crivez|lettre|journal.*grat|3 grat/.test(text)) return 'gratitude'
-  if (/imaginez|visualis|sentez.*corps|fermez les yeux.*imagin|racines.*imagin/.test(text)) return 'visualisation'
-  if (/torsion|posture|.tire|grandiss|pieds.*racin|marche.*lent|talon|bras|jambe/.test(text)) return 'movement'
+  if (/inspir|expir|respir|coh.rence|pranayama|narine|apn.e/.test(text)) return 'breath'
+  if (/gratitude|remerci|.crivez|lettre/.test(text)) return 'gratitude'
+  if (/imaginez|visualis|sentez.*corps|fermez les yeux.*imagin/.test(text)) return 'visualisation'
+  if (/torsion|posture|.tire|grandiss|marche.*lent|talon/.test(text)) return 'movement'
   return 'timer'
 }
 
@@ -809,14 +817,15 @@ function TimerTool({ exercise, color, accent }) {
 function GratitudeTool({ exercise, color, accent }) {
   const [text, setText] = useState('')
   const [saved, setSaved] = useState(false)
-  const prompts = ["Qu'est-ce qui s'est passé de positif aujourd'hui ?", "Qui vous a apporté quelque chose de bien ?", "Quel moment a été précieux pour vous ?"]
-  const prompt = prompts[new Date().getDate() % prompts.length]
+  // Utilise la description de l'exercice comme prompt contextualisé
+  const prompt = exercise.desc ?? "Écrivez librement, sans filtre…"
+  const placeholder = exercise.title ? `Répondez à ${exercise.title.toLowerCase()}…` : "Écrivez librement, sans filtre…"
   return (
     <div style={{ padding:'8px 0' }}>
-      <div style={{ fontSize:11, color:accent, letterSpacing:'.04em', marginBottom:8, fontStyle:'italic' }}>{prompt}</div>
-      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Écrivez librement, sans filtre…" style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.85)', fontSize:13, lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
-      {text.length > 10 && !saved && <button onClick={() => setSaved(true)} style={{ marginTop:8, padding:'8px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✓ J'ai noté ma gratitude</button>}
-      {saved && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ Belle gratitude semée 🌱</div>}
+      <div style={{ fontSize:12, color:'rgba(200,220,200,0.60)', lineHeight:1.7, marginBottom:12, fontStyle:'italic' }}>{prompt}</div>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.85)', fontSize:13, lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
+      {text.length > 10 && !saved && <button onClick={() => setSaved(true)} style={{ marginTop:8, padding:'8px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✓ Noté ✓</button>}
+      {saved && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ C'est fait 🌱</div>}
     </div>
   )
 }
@@ -825,7 +834,16 @@ function MovementTool({ exercise, color, accent }) {
   const [step, setStep] = useState(0)
   const [done, setDone] = useState(false)
   const steps = useMemo(() => (exercise.desc ?? '').split(/\. (?=[A-ZÀ-ÿ0-9])/).filter(s => s.trim().length > 8).slice(0, 6), [exercise.desc])
-  if (steps.length < 2) return null
+  // Si une seule étape, afficher le texte complet avec bouton "Fait"
+  if (steps.length < 2) return (
+    <div style={{ padding:'8px 0' }}>
+      <p style={{ fontSize:13, color:'rgba(200,220,200,0.85)', lineHeight:1.8, fontWeight:300, marginBottom:14 }}>{exercise.desc}</p>
+      {!done
+        ? <button onClick={() => setDone(true)} style={{ padding:'9px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:12, cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ C'est fait</button>
+        : <div style={{ fontSize:12, color:'#88D4A0' }}>✓ Mouvement accompli 🌿</div>
+      }
+    </div>
+  )
   return (
     <div style={{ padding:'8px 0' }}>
       <div style={{ display:'flex', gap:4, marginBottom:12 }}>{steps.map((_,i) => <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i <= step ? color : 'rgba(255,255,255,0.10)', transition:'background .3s' }} />)}</div>
