@@ -532,32 +532,41 @@ function detectExerciseType(exercise) {
 }
 
 function BreathingTool({ exercise, color, accent }) {
-  const [phase, setPhase] = useState('ready')
-  const [count, setCount] = useState(0)
+  const [phase, setPhase]   = useState('ready')
+  const [count, setCount]   = useState(0)
   const [cycles, setCycles] = useState(0)
+  const phaseRef = useRef('ready')
 
-  // ── Timings : priorité au champ tool, sinon extraction depuis desc ──────────
+  // ── Timings ─────────────────────────────────────────────────
   const timings = useMemo(() => {
+    // 1. Champ tool.type === 'breath' avec valeurs explicites
     if (exercise.tool?.type === 'breath') {
       return {
-        inhale:    exercise.tool.inhale    ?? 4,
+        inhale:    exercise.tool.inhale    ?? 5,
         hold:      exercise.tool.hold      ?? 0,
-        exhale:    exercise.tool.exhale    ?? 6,
+        exhale:    exercise.tool.exhale    ?? 5,
         holdEmpty: exercise.tool.holdEmpty ?? 0,
       }
     }
-    const m = (exercise.desc ?? '').match(/(\d+)[^\d]+(\d+)[^\d]+(\d+)/)
-    if (m) return { inhale: parseInt(m[1]), hold: parseInt(m[2]), exhale: parseInt(m[3]), holdEmpty: 0 }
-    return { inhale: 4, hold: 0, exhale: 6, holdEmpty: 0 }
-  }, [exercise.tool, exercise.desc])
+    // 2. Pattern "comptant jusqu'à N" dans la description (cohérence cardiaque)
+    const desc = exercise.desc ?? ''
+    const countMatch = desc.match(/comptant[^\d]*(\d+)[^.]*\.\s*Expirez[^.]*comptant[^\d]*(\d+)/)
+    if (countMatch) return { inhale: parseInt(countMatch[1]), hold: 0, exhale: parseInt(countMatch[2]), holdEmpty: 0 }
+    // 3. Pattern "N-M-P" (4-7-8 etc.)
+    const dashMatch = (exercise.title + ' ' + desc).match(/(\d+)-(\d+)-(\d+)/)
+    if (dashMatch) return { inhale: parseInt(dashMatch[1]), hold: parseInt(dashMatch[2]), exhale: parseInt(dashMatch[3]), holdEmpty: 0 }
+    // 4. Fallback 5-0-5
+    return { inhale: 5, hold: 0, exhale: 5, holdEmpty: 0 }
+  }, [exercise.tool, exercise.desc, exercise.title])
 
-  const totalCycles = exercise.tool?.cycles ?? 5
+  const totalCycles = exercise.tool?.cycles ?? 18
 
-  function startBreath() { setPhase('inhale'); setCount(timings.inhale) }
-
+  // ── Machine à états de respiration ──────────────────────────
+  const nextPhase = useRef(null)
   useEffect(() => {
     if (phase === 'ready' || phase === 'done') return
     if (count <= 0) {
+      // Transition vers la phase suivante
       if (phase === 'inhale') {
         if (timings.hold > 0) { setPhase('hold'); setCount(timings.hold) }
         else { setPhase('exhale'); setCount(timings.exhale) }
@@ -565,11 +574,21 @@ function BreathingTool({ exercise, color, accent }) {
         setPhase('exhale'); setCount(timings.exhale)
       } else if (phase === 'exhale') {
         if (timings.holdEmpty > 0) { setPhase('holdEmpty'); setCount(timings.holdEmpty) }
-        else { const n = cycles + 1; setCycles(n); if (n >= totalCycles) setPhase('done'); else { setPhase('inhale'); setCount(timings.inhale) } }
+        else {
+          setCycles(c => {
+            const n = c + 1
+            if (n >= totalCycles) { setPhase('done') }
+            else { setPhase('inhale'); setCount(timings.inhale) }
+            return n
+          })
+        }
       } else if (phase === 'holdEmpty') {
-        const n = cycles + 1; setCycles(n)
-        if (n >= totalCycles) setPhase('done')
-        else { setPhase('inhale'); setCount(timings.inhale) }
+        setCycles(c => {
+          const n = c + 1
+          if (n >= totalCycles) { setPhase('done') }
+          else { setPhase('inhale'); setCount(timings.inhale) }
+          return n
+        })
       }
       return
     }
@@ -577,125 +596,173 @@ function BreathingTool({ exercise, color, accent }) {
     return () => clearTimeout(t)
   }, [phase, count])
 
-  const labels = { ready: '', inhale: 'Inspirez', hold: 'Retenez', exhale: 'Expirez', holdEmpty: 'Poumons vides', done: '✓ Terminé' }
-  const phaseColor = phase === 'inhale' ? color : phase === 'exhale' ? accent : color
+  const isExpanding = phase === 'inhale' || phase === 'hold'
+  const isActive    = phase !== 'ready' && phase !== 'done'
+  const labels      = { ready:'', inhale:'INSPIREZ', hold:'RETENEZ', exhale:'EXPIREZ', holdEmpty:'POUMONS VIDES', done:'✓ Terminé' }
 
-  // Progression du cercle SVG selon la phase
+  // ── Progression arc SVG ──────────────────────────────────────
   const phaseTotal = phase === 'inhale' ? timings.inhale : phase === 'hold' ? timings.hold : phase === 'exhale' ? timings.exhale : timings.holdEmpty
-  const phasePct   = phaseTotal > 0 ? ((phaseTotal - count) / phaseTotal) : 0
-  const R = 80, CIRC = 2 * Math.PI * R
+  const phasePct   = phaseTotal > 0 ? (phaseTotal - count) / phaseTotal : 0
+  const R = 88, CIRC = 2 * Math.PI * R
 
-  // Scale de la sphère intérieure
-  const innerScale = phase === 'inhale' ? 1 + (phasePct * 0.35)
-    : phase === 'hold' ? 1.35
-    : phase === 'exhale' ? 1.35 - (phasePct * 0.35)
-    : phase === 'holdEmpty' ? 1 - (phasePct * 0.05)
-    : 1
+  // Keyframes injectées une seule fois
+  const css = `
+    @keyframes haloExpand  { 0%{transform:scale(.85);opacity:0} 40%{opacity:.7} 100%{transform:scale(1.18);opacity:0} }
+    @keyframes haloSteady  { 0%,100%{opacity:.25} 50%{opacity:.55} }
+    @keyframes haloShrink  { 0%{transform:scale(1.05);opacity:.5} 100%{transform:scale(.80);opacity:0} }
+    @keyframes countPop    { 0%{transform:scale(.7);opacity:0} 60%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+    @keyframes labelFade   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  `
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'8px 0 4px', gap:10 }}>
-      <style>{`
-        @keyframes breathPulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
-        @keyframes ringFade { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
-      `}</style>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'8px 0 4px', gap:14 }}>
+      <style>{css}</style>
 
-      {/* Cercle principal SVG + sphère */}
-      <div style={{ position:'relative', width:200, height:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      {/* ── Orbe principale ── */}
+      <div style={{ position:'relative', width:220, height:220, display:'flex', alignItems:'center', justifyContent:'center' }}>
 
-        {/* Arc de progression */}
-        <svg width={200} height={200} style={{ position:'absolute', inset:0, transform:'rotate(-90deg)' }}>
-          {/* Piste */}
-          <circle cx={100} cy={100} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={3} />
+        {/* Halo extérieur animé */}
+        {isActive && (
+          <>
+            <div style={{
+              position:'absolute', borderRadius:'50%',
+              width:220, height:220,
+              background:`radial-gradient(circle, ${color}22 0%, transparent 68%)`,
+              animation: isExpanding
+                ? 'haloExpand 1.8s ease-out infinite'
+                : 'haloShrink 1.8s ease-in infinite',
+              pointerEvents:'none',
+            }}/>
+            {phase === 'hold' && (
+              <div style={{
+                position:'absolute', borderRadius:'50%',
+                width:200, height:200,
+                background:`radial-gradient(circle, ${color}30 0%, transparent 65%)`,
+                animation:'haloSteady 2s ease-in-out infinite',
+                pointerEvents:'none',
+              }}/>
+            )}
+          </>
+        )}
+
+        {/* Arc SVG de progression */}
+        <svg width={220} height={220} style={{ position:'absolute', inset:0, transform:'rotate(-90deg)', overflow:'visible' }}>
+          {/* Piste de fond */}
+          <circle cx={110} cy={110} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={2.5}/>
           {/* Arc coloré */}
-          {phase !== 'ready' && phase !== 'done' && (
-            <circle cx={100} cy={100} r={R} fill="none" stroke={phaseColor} strokeWidth={3}
-              strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - phasePct)}
+          {isActive && (
+            <circle cx={110} cy={110} r={R} fill="none"
+              stroke={isExpanding ? color : accent}
+              strokeWidth={2.5}
+              strokeDasharray={CIRC}
+              strokeDashoffset={CIRC * (1 - phasePct)}
               strokeLinecap="round"
-              style={{ transition:'stroke-dashoffset 1s linear, stroke .5s ease' }}
+              style={{ transition:'stroke-dashoffset 1s linear, stroke .6s ease' }}
+            />
+          )}
+          {/* Anneau de fond lumineux */}
+          {isActive && (
+            <circle cx={110} cy={110} r={R} fill="none"
+              stroke={isExpanding ? color : accent}
+              strokeWidth={8}
+              opacity={0.04}
             />
           )}
         </svg>
 
-        {/* Halo extérieur */}
-        {(phase === 'inhale' || phase === 'hold') && (
-          <div style={{
-            position:'absolute', borderRadius:'50%',
-            width: 200, height: 200,
-            background:`radial-gradient(circle, ${color}18 0%, transparent 70%)`,
-            animation:'breathPulse 2s ease-in-out infinite',
-          }} />
-        )}
-
-        {/* Sphère centrale */}
+        {/* Sphère centrale — taille animée via CSS transition */}
         <div style={{
-          width: 120, height: 120, borderRadius:'50%',
-          background:`radial-gradient(circle at 38% 35%, ${color}55, ${color}18 50%, transparent)`,
-          boxShadow:`0 0 ${phase==='inhale'||phase==='hold' ? 40 : 12}px ${color}${phase==='inhale'||phase==='hold' ? '60' : '25'}, inset 0 1px 0 rgba(255,255,255,0.15)`,
-          border:`1px solid ${color}40`,
-          transform:`scale(${innerScale})`,
-          transition:`transform ${phase==='inhale' ? timings.inhale : phase==='exhale' ? timings.exhale : 0.4}s ease-in-out`,
+          position:'relative',
+          width:  isExpanding ? 138 : 108,
+          height: isExpanding ? 138 : 108,
+          borderRadius:'50%',
+          background: `radial-gradient(circle at 36% 32%, ${color}70 0%, ${color}28 45%, transparent 75%)`,
+          border: `1px solid ${color}50`,
+          boxShadow: isExpanding
+            ? `0 0 50px ${color}55, 0 0 20px ${color}30, inset 0 1px 0 rgba(255,255,255,0.18)`
+            : `0 0 18px ${color}22, inset 0 1px 0 rgba(255,255,255,0.08)`,
+          transition: 'width 1s ease-in-out, height 1s ease-in-out, box-shadow 1s ease-in-out',
           display:'flex', alignItems:'center', justifyContent:'center',
-          flexDirection:'column',
+          flexShrink:0,
         }}>
+          {/* Reflet interne */}
+          <div style={{
+            position:'absolute', top:'18%', left:'22%',
+            width:'30%', height:'20%', borderRadius:'50%',
+            background:`radial-gradient(circle, rgba(255,255,255,0.22), transparent)`,
+            pointerEvents:'none',
+          }}/>
           {/* Compte à rebours */}
-          {phase !== 'ready' && phase !== 'done' && (
-            <span style={{ fontSize:36, fontWeight:200, color:'rgba(242,237,224,0.90)', fontFamily:"'Cormorant Garamond',serif", lineHeight:1, textShadow:`0 0 20px ${color}` }}>
+          {isActive && (
+            <span key={`${phase}-${count}`} style={{
+              fontSize:40, fontWeight:200, lineHeight:1,
+              color:'rgba(242,237,224,0.92)',
+              fontFamily:"'Cormorant Garamond',Georgia,serif",
+              textShadow:`0 0 24px ${color}cc`,
+              animation:'countPop .35s cubic-bezier(.34,1.56,.64,1) both',
+            }}>
               {count}
             </span>
           )}
-          {phase === 'done' && <span style={{ fontSize:28 }}>✓</span>}
+          {phase === 'done' && <span style={{ fontSize:32 }}>✓</span>}
         </div>
       </div>
 
       {/* Label de phase */}
-      <div style={{
-        fontSize:18, fontWeight:300,
-        color: phase === 'done' ? '#88D4A0' : 'rgba(242,237,224,0.85)',
-        letterSpacing:'0.12em', textTransform:'uppercase',
+      <div key={phase} style={{
+        fontSize:15, fontWeight:400,
+        color: phase === 'done' ? '#88D4A0' : isExpanding ? `rgba(242,237,224,0.90)` : `rgba(180,210,195,0.75)`,
+        letterSpacing:'0.18em',
         fontFamily:"'Jost',sans-serif",
-        minHeight:26,
+        minHeight:22,
+        animation: isActive ? 'labelFade .4s ease both' : 'none',
       }}>
         {labels[phase]}
       </div>
 
-      {/* Indicateur de cycles */}
-      {phase !== 'ready' && phase !== 'done' && (
-        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-          {Array.from({length:totalCycles}).map((_,i) => (
+      {/* Dots de cycles */}
+      {isActive && totalCycles <= 24 && (
+        <div style={{ display:'flex', gap:5, alignItems:'center', flexWrap:'wrap', justifyContent:'center', maxWidth:200 }}>
+          {Array.from({length: Math.min(totalCycles, 20)}).map((_,i) => (
             <div key={i} style={{
-              width: i === cycles ? 10 : 7,
-              height: i === cycles ? 10 : 7,
+              width:  i === cycles ? 9 : 6,
+              height: i === cycles ? 9 : 6,
               borderRadius:'50%',
-              background: i < cycles ? color : i === cycles ? phaseColor : 'rgba(255,255,255,0.10)',
-              transition:'all .4s ease',
-              boxShadow: i === cycles ? `0 0 8px ${phaseColor}` : 'none',
-            }} />
+              background: i < cycles ? `${color}80` : i === cycles ? (isExpanding ? color : accent) : 'rgba(255,255,255,0.08)',
+              boxShadow: i === cycles ? `0 0 10px ${isExpanding ? color : accent}` : 'none',
+              transition:'all .5s ease',
+              flexShrink:0,
+            }}/>
           ))}
         </div>
       )}
 
-      {/* Phase ready : timings + bouton */}
+      {/* Phase ready */}
       {phase === 'ready' && (
-        <div style={{ textAlign:'center', marginTop:4 }}>
-          <div style={{ fontSize:11, color:'rgba(242,237,224,0.28)', marginBottom:12, letterSpacing:'.06em' }}>
+        <div style={{ textAlign:'center' }}>
+          <div style={{ fontSize:11, color:'rgba(242,237,224,0.25)', marginBottom:14, letterSpacing:'.07em' }}>
             {timings.inhale}s inspire
             {timings.hold > 0 ? ` · ${timings.hold}s retenir` : ''}
-            {' '}· {timings.exhale}s expirer
+            {` · ${timings.exhale}s expirer`}
             {timings.holdEmpty > 0 ? ` · ${timings.holdEmpty}s vide` : ''}
-            {' '}· {totalCycles} cycles
+            {` · ${totalCycles} cycles`}
           </div>
-          <button onClick={startBreath} style={{
-            padding:'11px 28px', borderRadius:100,
-            border:`1px solid ${color}50`, background:`${color}20`,
-            color, fontSize:13, fontWeight:500, cursor:'pointer',
-            fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
-            boxShadow:`0 0 20px ${color}25`,
-          }}>▶ Commencer</button>
+          <button
+            onClick={() => { setPhase('inhale'); setCount(timings.inhale); setCycles(0) }}
+            style={{
+              padding:'11px 32px', borderRadius:100,
+              border:`1px solid ${color}55`, background:`${color}1A`,
+              color, fontSize:13, fontWeight:500, cursor:'pointer',
+              fontFamily:"'Jost',sans-serif", letterSpacing:'.05em',
+              boxShadow:`0 0 24px ${color}28`,
+              transition:'all .25s',
+            }}
+          >▶ Commencer</button>
         </div>
       )}
 
       {phase === 'done' && (
-        <div style={{ fontSize:14, color:'#88D4A0', fontWeight:400, letterSpacing:'.06em' }}>
+        <div style={{ fontSize:13, color:'#88D4A0', fontWeight:400, letterSpacing:'.07em' }}>
           Session terminée 🌿
         </div>
       )}

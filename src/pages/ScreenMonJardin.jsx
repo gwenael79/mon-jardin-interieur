@@ -4035,7 +4035,8 @@ function useWakeUpTrigger({ userId }) {
 }
 
 // ── Composant réutilisable : colonne fleur ───────────────────────────────────
-function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings }) {
+function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings, streak = 0 }) {
+  const streakColor = streak >= 30 ? '#e8c060' : streak >= 14 ? '#c4a7f0' : streak >= 7 ? '#82c8f0' : '#96d48a'
   return (
     <div style={{
       flex:'1 1 0', minWidth:0,
@@ -4045,6 +4046,19 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
     }}>
       <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
         <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+        {streak >= 1 && (
+          <div style={{
+            position:'absolute', top:10, right:10, zIndex:10,
+            display:'flex', flexDirection:'column', alignItems:'center',
+            padding:'4px 8px', borderRadius:10,
+            background:'rgba(10,20,12,0.65)',
+            border:`1px solid ${streakColor}25`,
+            gap:0,
+          }}>
+            <span style={{ fontSize:11, color:`${streakColor}cc`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', lineHeight:1.4 }}>👍 {streak} jour{streak > 1 ? 's' : ''}</span>
+            <span style={{ fontSize:8, color:`${streakColor}66`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', letterSpacing:'.05em', lineHeight:1.3 }}>CONSÉCUTIFS</span>
+          </div>
+        )}
         <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
