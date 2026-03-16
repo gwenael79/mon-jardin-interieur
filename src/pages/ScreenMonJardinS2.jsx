@@ -2,7 +2,7 @@
 //  ScreenMonJardin.jsx  —  Écran "Ma Fleur"
 //  Contient : PlantSVG, GardenSettingsModal, rituels, journal, ScreenMonJardin
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
 import { logActivity } from '../utils/logActivity'
@@ -2927,11 +2927,12 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         {/* En-tête section */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <div>
-            <p style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:'rgba(180,200,180,0.3)', marginBottom:3 }}>Rituels du jour</p>
-            <p style={{ fontSize:12, color:'rgba(180,200,180,0.45)', lineHeight:1.4 }}>
-              {hasDegradation
-                ? <span>{doneCount}/{totalRituals} <span style={{ opacity:0.5 }}>· triés par priorité</span></span>
-                : 'Prenez votre bilan intérieur'}
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'rgba(242,237,224,0.82)', marginBottom:4 }}>
+              Prenez soin de vous
+            </p>
+            <p style={{ fontSize:11, color:'rgba(180,200,180,0.45)', lineHeight:1.5 }}>
+              Agissez au quotidien avec vos rituels
+              {hasDegradation && <span style={{ color:'rgba(180,200,180,0.28)' }}> · {doneCount}/{totalRituals} accomplis</span>}
             </p>
           </div>
           {bilanDoneToday && hasDegradation && (
@@ -4035,7 +4036,7 @@ function useWakeUpTrigger({ userId }) {
     if (!userId) setShowWakeUp(false)
   }, [userId])
 
-  // Seul déclencheur : l'event "openWakeUp" envoyé par WelcomeScreen
+  // Déclencheur : event "openWakeUp" (bouton Action rapide ou ancien WelcomeScreen)
   useEffect(() => {
     const handler = () => setShowWakeUp(true)
     window.addEventListener('openWakeUp', handler)
@@ -4055,6 +4056,119 @@ function useWakeUpTrigger({ userId }) {
   }
 
   return { showWakeUp, setShowWakeUp: closeModal }
+}
+
+// ── Composant réutilisable : colonne fleur ───────────────────────────────────
+function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings, streak = 0 }) {
+  return (
+    <div style={{
+      flex:'1 1 0', minWidth:0,
+      display:'flex', flexDirection:'column',
+      borderRight: isMobile ? 'none' : '1px solid rgba(150,212,133,0.06)',
+      borderBottom: isMobile ? '1px solid rgba(150,212,133,0.06)' : 'none',
+    }}>
+      <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
+        <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+
+        {/* Badge streak */}
+        {streak >= 2 && (
+          <div style={{
+            position:'absolute', top:10, right:10,
+            display:'flex', alignItems:'center', gap:5,
+            padding:'5px 9px', borderRadius:10,
+            background:'rgba(14,28,14,0.40)',
+            border:'1px solid rgba(150,212,133,0.15)',
+            backdropFilter:'blur(4px)',
+            zIndex:10, pointerEvents:'none',
+          }}>
+            <span style={{ fontSize:11 }}>👍</span>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
+              <span style={{ fontSize:11, fontWeight:600, lineHeight:1.1, color:'rgba(150,212,133,0.70)', fontFamily:"'Jost',sans-serif" }}>{streak} jours</span>
+              <span style={{ fontSize:7.5, fontWeight:400, lineHeight:1.2, color:'rgba(150,212,133,0.38)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', textTransform:'uppercase' }}>consécutifs</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
+          <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'rgba(242,237,224,0.55)', marginBottom:4 }}>%</span>
+          </div>
+          <div style={{ fontSize:8, letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(150,212,133,0.55)', fontWeight:500 }}>Vitalité</div>
+          <div style={{ fontSize:9, letterSpacing:'0.08em', color:'rgba(255,255,255,0.28)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
+        </div>
+      </div>
+      <div style={{
+        display:'flex', alignItems:'center', gap:4, flexWrap:'wrap',
+        padding:'6px 10px 7px',
+        borderTop:'1px solid rgba(150,212,133,0.06)',
+        background:'rgba(10,22,12,0.6)', flexShrink:0,
+      }}>
+        <span style={{ fontSize:8, color:'rgba(238,232,218,0.30)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
+        {[
+          { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
+          { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
+          { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3',    colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
+        ].map(cfg => (
+          <LevelBadge key={cfg.lv} {...cfg}
+            unlocked={(profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
+            isCurrent={(profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
+            isPast={(profile?.level ?? 1) > cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
+            onOpen={() => { setGardenTier(cfg.lv); setShowGardenSettings(true) }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Composant réutilisable : message jardin ───────────────────────────────────
+function MessageJardin({ profile, isMobile }) {
+  const firstName = (profile?.display_name ?? '').split(' ')[0] || 'ami(e)'
+  const PHRASES = [
+    '{p}, votre jardin est prêt pour aujourd\'hui.',
+    '{p}, un petit geste aujourd\'hui fera grandir votre jardin.',
+    '{p}, votre jardin vous attend.',
+    '{p}, prêt à nourrir votre jardin intérieur ?',
+    '{p}, une nouvelle journée pour faire pousser l\'essentiel.',
+    '{p}, votre jardin grandit avec vous.',
+    '{p}, une minute suffit pour prendre soin de votre jardin.',
+    '{p}, continuons à faire fleurir ce jardin.',
+    '{p}, votre présence fait grandir votre jardin.',
+    '{p}, plantons une belle graine aujourd\'hui.',
+    '{p}, votre jardin n\'attend que vous.',
+    '{p}, un nouveau jour commence dans votre jardin.',
+    '{p}, prêt à faire grandir quelque chose de beau ?',
+    '{p}, chaque action nourrit votre jardin.',
+    '{p}, votre jardin avance avec vous.',
+  ]
+  const dayIndex = new Date().toISOString().slice(0,10).replace(/-/g,'')
+  const idx    = parseInt(dayIndex) % PHRASES.length
+  const phrase = PHRASES[idx].replace('{p}', firstName)
+  const colonIdx = phrase.indexOf(',')
+  const namePart = phrase.slice(0, colonIdx + 1)
+  const restPart = phrase.slice(colonIdx + 1)
+  return (
+    <div style={{
+      flex:'1 1 0', display:'flex', flexDirection:'column',
+      alignItems:'center', justifyContent:'center',
+      padding:'24px 16px', textAlign:'center',
+      animation:'fadeUp 0.5s ease both',
+    }}>
+      <div style={{ marginBottom:24, animation:'pulse 3s ease-in-out infinite' }}>
+        <img src="/icons/icon-192.png" alt="logo" style={{ width:96, height:96, borderRadius:'50%', mixBlendMode:'screen' }} />
+      </div>
+      <div style={{
+        fontFamily:"'Cormorant Garamond','Georgia',serif",
+        fontSize: isMobile ? 26 : 30,
+        fontWeight:700, fontStyle:'italic',
+        lineHeight:1.35, maxWidth:320, letterSpacing:'0.01em',
+      }}>
+        <span style={{ color:'#96d485' }}>{namePart}</span>
+        <span style={{ color:'rgba(242,237,224,0.90)' }}>{restPart}</span>
+      </div>
+    </div>
+  )
 }
 
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan }) {
@@ -4114,6 +4228,44 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     }
   }, [todayPlant?.id, isLoading, todayRituals, history])
   const { settings, toggle } = usePrivacy(userId)
+
+  // ── Mode contextuel selon l'heure ────────────────────────
+  const timeContext = useMemo(() => {
+    const h = new Date().getHours()
+    if (h >= 0  && h < 12) return 'matin'   // 00h01 - 12h
+    if (h >= 12 && h < 18) return 'aprem'   // 12h - 18h
+    return 'soir'                             // 18h - 24h
+  }, [])
+
+  const CONTEXT_MESSAGES = {
+    matin: [
+      'Un beau matin commence dans votre jardin.',
+      'Le matin est le meilleur moment pour prendre soin de vous.',
+      'Commencez par votre bilan, votre jardin vous remerciera.',
+      'Un rituel du matin, une journée qui s\'ancre.',
+      'Votre jardin s\'éveille avec vous ce matin.',
+    ],
+    aprem: [
+      'Un moment pour vous, au cœur de la journée.',
+      'Vos rituels vous attendent, prenez un instant.',
+      'Un souffle de calme au milieu de votre journée.',
+      'Quelques minutes pour nourrir votre équilibre.',
+      'Un rituel simple, un ancrage pour l\'après-midi.',
+    ],
+    soir: [
+      'La journée se pose, votre jardin aussi.',
+      'Ce soir, semez une graine de gratitude.',
+      'Le soir est fait pour récolter ce que la journée a donné.',
+      'Prenez soin de vous avant de vous reposer.',
+      'Un dernier geste pour votre jardin avant la nuit.',
+    ],
+  }
+
+  const contextMessage = useMemo(() => {
+    const pool = CONTEXT_MESSAGES[timeContext]
+    const day  = parseInt(new Date().toISOString().slice(0,10).replace(/-/g,''))
+    return pool[day % pool.length]
+  }, [timeContext])
 
   // ── Nouveau système rituels ──────────────────────────────
   const {
@@ -4272,186 +4424,221 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     <div className="content">
     <div className="mj-layout">
       <div className="mj-left">
-        {/* ── Nouveau layout 50/50 : fleur | bilan + insight ── */}
+        {/* ── Message contextuel ── */}
         <div style={{
-          display:'flex', flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? 0 : 0, alignItems:'stretch',
-          borderRadius:16, overflow:'hidden',
-          border:'1px solid rgba(150,212,133,0.08)',
-          background:'rgba(14,28,14,0.95)',
-          flexShrink:0,
-          minHeight: isMobile ? 'auto' : 360,
+          padding: isMobile ? '12px 4px 6px' : '10px 4px 8px',
+          display:'flex', alignItems:'center', gap:12,
+          marginBottom: isMobile ? 8 : 10,
         }}>
-
-          {/* ── Colonne gauche : fleur + badges personnalisation ── */}
-          <div style={{
-            flex:'1 1 0', minWidth:0,
-            display:'flex', flexDirection:'column',
-            borderRight: isMobile ? 'none' : '1px solid rgba(150,212,133,0.06)',
-            borderBottom: isMobile ? '1px solid rgba(150,212,133,0.06)' : 'none',
-          }}>
-            {/* Fleur */}
-            <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
-              <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
-              {/* Score overlay */}
-              <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
-                <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
-                  <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
-                  <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'rgba(242,237,224,0.55)', marginBottom:4 }}>%</span>
-                </div>
-                <div style={{ fontSize:8, letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(150,212,133,0.55)', fontWeight:500 }}>Vitalité</div>
-                <div style={{ fontSize:9, letterSpacing:'0.08em', color:'rgba(255,255,255,0.28)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
-              </div>
-            </div>
-            {/* ── Badges personnalisation — sous la fleur ── */}
-            <div style={{
-              display:'flex', alignItems:'center', gap:4, flexWrap:'wrap',
-              padding:'6px 10px 7px',
-              borderTop:'1px solid rgba(150,212,133,0.06)',
-              background:'rgba(10,22,12,0.6)',
-              flexShrink:0,
-            }}>
-              <span style={{ fontSize:8, color:'rgba(238,232,218,0.30)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
-              {[
-                { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
-                { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
-                { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3',    colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
-              ].map(cfg => (
-                <LevelBadge key={cfg.lv} {...cfg}
-                  unlocked={(profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                  isCurrent={(profile?.level ?? 1) === cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                  isPast={(profile?.level ?? 1) > cfg.lv && userId !== 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-                  onOpen={() => { setGardenTier(cfg.lv); setShowGardenSettings(true) }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* ── Colonne droite : bilan + insight ── */}
-          <div style={{
-            flex:'1 1 0', minWidth:0,
-            display:'flex', flexDirection:'column',
-            padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
-            background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
-            gap:10,
-          }}>
-
-            {/* Bouton bilan */}
-            {!bilanDoneToday ? (
-              <button onClick={() => onOpenBilan?.()}
-                style={{ width:'100%', padding: isMobile ? '14px 16px' : '14px 18px', borderRadius:14,
-                  border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)',
-                  cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left',
-                  minHeight: isMobile ? 56 : 'auto', flexShrink:0 }}>
-                <span style={{ fontSize: isMobile ? 26 : 24 }}>🌹</span>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize: isMobile ? 14 : 13, color:'#C8A882', fontWeight:500, marginBottom:2 }}>Faire mon bilan du jour</div>
-                  <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(180,200,180,0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
-                </div>
-                <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
-                  +3 ✦
-                </div>
-              </button>
-            ) : (
-              <div>
-                <div style={{ width:'100%', padding: isMobile ? '12px 16px' : '12px 16px', borderRadius:14,
-                  border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)',
-                  display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
-                  <span style={{ fontSize:22, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
-                    <div style={{ fontSize:10, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
-                  </div>
-                  <div style={{ fontSize:14, color:'rgba(150,212,133,0.35)' }}>✓</div>
-                </div>
-                {/* ↺ Refaire le bilan */}
-                <button onClick={() => onOpenBilan?.()}
-                  style={{ fontSize:10, color:'rgba(180,200,180,0.28)', background:'none', border:'none',
-                    cursor:'pointer', letterSpacing:'0.05em', padding:'2px 4px', fontFamily:"'Jost',sans-serif" }}>
-                  ↺ Refaire le bilan
-                </button>
-              </div>
-            )}
-
-            {/* Message de bienvenue — visible avant le bilan, remplacé par l'insight après */}
-            {!bilanDoneToday ? (
-              (() => {
-                const firstName = (profile?.display_name ?? '').split(' ')[0] || 'ami(e)'
-                const PHRASES = [
-                  '{p}, votre jardin est prêt pour aujourd\'hui.',
-                  '{p}, un petit geste aujourd\'hui fera grandir votre jardin.',
-                  '{p}, votre jardin vous attend.',
-                  '{p}, prêt à nourrir votre jardin intérieur ?',
-                  '{p}, une nouvelle journée pour faire pousser l\'essentiel.',
-                  '{p}, votre jardin grandit avec vous.',
-                  '{p}, une minute suffit pour prendre soin de votre jardin.',
-                  '{p}, continuons à faire fleurir ce jardin.',
-                  '{p}, votre présence fait grandir votre jardin.',
-                  '{p}, plantons une belle graine aujourd\'hui.',
-                  '{p}, votre jardin n\'attend que vous.',
-                  '{p}, un nouveau jour commence dans votre jardin.',
-                  '{p}, prêt à faire grandir quelque chose de beau ?',
-                  '{p}, chaque action nourrit votre jardin.',
-                  '{p}, votre jardin avance avec vous.',
-                  '{p}, prenons soin de ce qui compte aujourd\'hui.',
-                  '{p}, votre jardin mérite ce moment.',
-                  '{p}, une nouvelle pousse commence aujourd\'hui.',
-                  '{p}, votre jardin évolue un peu plus chaque jour.',
-                  '{p}, faisons fleurir cette journée.',
-                  '{p}, votre jardin a besoin de votre présence.',
-                  '{p}, une graine aujourd\'hui, une fleur demain.',
-                  '{p}, cultivons un peu de calme aujourd\'hui.',
-                  '{p}, votre jardin intérieur se construit pas à pas.',
-                  '{p}, un instant pour vous, un pas pour votre jardin.',
-                  '{p}, votre jardin continue de grandir.',
-                  '{p}, faisons pousser quelque chose de beau aujourd\'hui.',
-                  '{p}, chaque jour compte dans votre jardin.',
-                  '{p}, votre jardin avance avec chaque attention.',
-                  '{p}, prêt à faire fleurir cette journée ?',
-                ]
-                // Phrase stable dans la journée, change chaque nouveau jour
-                const dayIndex = new Date().toISOString().slice(0,10).replace(/-/g,'')
-                const idx = parseInt(dayIndex) % PHRASES.length
-                const phrase = PHRASES[idx].replace('{p}', firstName)
-                // Séparer le prénom du reste pour le colorier
-                const colonIdx = phrase.indexOf(',')
-                const namePart = phrase.slice(0, colonIdx + 1)
-                const restPart = phrase.slice(colonIdx + 1)
-                return (
-                  <div style={{
-                    flex:'1 1 0', display:'flex', flexDirection:'column',
-                    alignItems:'center', justifyContent:'center',
-                    padding:'24px 16px', textAlign:'center',
-                    animation:'fadeUp 0.5s ease both',
-                  }}>
-                    {/* Logo */}
-                    <div style={{ marginBottom:24, animation:'pulse 3s ease-in-out infinite' }}>
-                      <img src="/icons/icon-192.png" alt="logo" style={{ width:96, height:96, borderRadius:'50%', mixBlendMode:'screen' }} />
-                    </div>
-                    {/* Phrase du jour */}
-                    <div style={{
-                      fontFamily:"'Cormorant Garamond','Georgia',serif",
-                      fontSize: isMobile ? 26 : 30,
-                      fontWeight:700,
-                      fontStyle:'italic',
-                      lineHeight:1.35,
-                      maxWidth:320,
-                      letterSpacing:'0.01em',
-                    }}>
-                      <span style={{ color:'#96d485' }}>{namePart}</span>
-                      <span style={{ color:'rgba(242,237,224,0.90)' }}>{restPart}</span>
-                    </div>
-                  </div>
-                )
-              })()
-            ) : degradation && (
-              <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
-            )}
-
-          </div>
+          <span style={{ fontSize: isMobile ? 22 : 24, flexShrink:0 }}>
+            {timeContext === 'matin' ? '🌅' : timeContext === 'aprem' ? '☀️' : '🌙'}
+          </span>
+          <span style={{
+            fontFamily:"'Cormorant Garamond',serif",
+            fontSize: isMobile ? 22 : 26,
+            fontWeight:300, fontStyle:'italic',
+            color:'rgba(242,237,224,0.82)',
+            letterSpacing:'0.01em',
+            lineHeight:1.25,
+          }}>{contextMessage}</span>
         </div>
 
+        {/* ── Bouton Action rapide — sous le message sur mobile, intégré sur desktop ── */}
+        {isMobile && (
+          <div
+            onClick={() => window.dispatchEvent(new CustomEvent('openWakeUp'))}
+            style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              padding:'12px 20px', borderRadius:14, cursor:'pointer',
+              marginBottom:10,
+              background: timeContext === 'matin'
+                ? 'linear-gradient(135deg,rgba(232,192,96,0.15),rgba(232,192,96,0.06))'
+                : timeContext === 'aprem'
+                ? 'linear-gradient(135deg,rgba(150,212,133,0.12),rgba(150,212,133,0.05))'
+                : 'linear-gradient(135deg,rgba(180,160,240,0.12),rgba(180,160,240,0.05))',
+              border: timeContext === 'matin'
+                ? '1px solid rgba(232,192,96,0.30)'
+                : timeContext === 'aprem'
+                ? '1px solid rgba(150,212,133,0.25)'
+                : '1px solid rgba(180,160,240,0.25)',
+              WebkitTapHighlightColor:'transparent',
+            }}
+          >
+            <span style={{ fontSize:16 }}>⚡</span>
+            <span style={{
+              fontSize:13, fontWeight:500, letterSpacing:'.04em',
+              fontFamily:"'Jost',sans-serif",
+              color: timeContext === 'matin' ? '#e8c060'
+                : timeContext === 'aprem' ? '#96d485'
+                : 'rgba(180,160,240,0.9)',
+            }}>
+              {timeContext === 'matin' ? 'Démarrer ma matinée'
+                : timeContext === 'aprem' ? 'Pause jardin'
+                : 'Moment réseau'}
+            </span>
+          </div>
+        )}
 
+        {/* ══ LAYOUT CONTEXTUEL ══ */}
+
+        {/* ── MATIN : Fleur gauche | Bilan + Message droite ── */}
+        {timeContext === 'matin' && (
+          <div style={{
+            display:'flex', flexDirection: isMobile ? 'column' : 'row',
+            alignItems:'stretch', borderRadius:16, overflow:'hidden',
+            border:'1px solid rgba(150,212,133,0.08)',
+            background:'rgba(14,28,14,0.95)',
+            flexShrink:0,
+            minHeight: isMobile ? 'auto' : 360,
+          }}>
+            {/* Colonne gauche : fleur */}
+            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
+            {/* Colonne droite : bilan */}
+            <div style={{
+              flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
+              padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
+              background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+              gap:10,
+            }}>
+              {!bilanDoneToday ? (
+                <button onClick={() => onOpenBilan?.()}
+                  style={{ width:'100%', padding: isMobile ? '14px 16px' : '14px 18px', borderRadius:14,
+                    border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)',
+                    cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left',
+                    minHeight: isMobile ? 56 : 'auto', flexShrink:0 }}>
+                  <span style={{ fontSize: isMobile ? 26 : 24 }}>🌹</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize: isMobile ? 14 : 13, color:'#C8A882', fontWeight:500, marginBottom:2 }}>Faire mon bilan du jour</div>
+                    <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(180,200,180,0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
+                    +3 ✦
+                  </div>
+                </button>
+              ) : (
+                <div>
+                  <div style={{ width:'100%', padding:'12px 16px', borderRadius:14,
+                    border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)',
+                    display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
+                    <span style={{ fontSize:22, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
+                      <div style={{ fontSize:10, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
+                    </div>
+                    <div style={{ fontSize:14, color:'rgba(150,212,133,0.35)' }}>✓</div>
+                  </div>
+
+                </div>
+              )}
+              {/* Bouton Action rapide — desktop uniquement */}
+              {!isMobile && (
+                <div
+                  onClick={() => window.dispatchEvent(new CustomEvent('openWakeUp'))}
+                  style={{
+                    display:'flex', alignItems:'center', gap:8,
+                    padding:'10px 16px', borderRadius:12, cursor:'pointer',
+                    background: timeContext === 'matin'
+                      ? 'linear-gradient(135deg,rgba(232,192,96,0.12),rgba(232,192,96,0.05))'
+                      : 'linear-gradient(135deg,rgba(150,212,133,0.10),rgba(150,212,133,0.04))',
+                    border: timeContext === 'matin'
+                      ? '1px solid rgba(232,192,96,0.25)'
+                      : '1px solid rgba(150,212,133,0.20)',
+                    alignSelf:'flex-start',
+                    WebkitTapHighlightColor:'transparent',
+                  }}
+                >
+                  <span style={{ fontSize:14 }}>⚡</span>
+                  <span style={{
+                    fontSize:12, fontWeight:500, letterSpacing:'.04em',
+                    fontFamily:"'Jost',sans-serif",
+                    color: timeContext === 'matin' ? '#e8c060' : '#96d485',
+                  }}>
+                    {timeContext === 'matin' ? 'Démarrer ma matinée' : 'Pause jardin'}
+                  </span>
+                </div>
+              )}
+
+              {/* Message jardin ou insight */}
+              {!bilanDoneToday ? (
+                <MessageJardin profile={profile} isMobile={isMobile} />
+              ) : degradation && (
+                <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── APRÈS-MIDI : Fleur gauche | Insight ou Message droite ── */}
+        {timeContext === 'aprem' && (
+          <div style={{
+            display:'flex', flexDirection: isMobile ? 'column' : 'row',
+            alignItems:'stretch', borderRadius:16, overflow:'hidden',
+            border:'1px solid rgba(150,212,133,0.08)',
+            background:'rgba(14,28,14,0.95)',
+            flexShrink:0,
+            minHeight: isMobile ? 'auto' : 360,
+          }}>
+            {/* Colonne gauche : fleur */}
+            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
+            {/* Colonne droite : insight si bilan fait, sinon message d'accueil */}
+            <div style={{
+              flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
+              padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
+              background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+              gap:10,
+              maxHeight: isMobile ? 200 : 'none',
+              overflow: isMobile ? 'hidden' : 'visible',
+            }}>
+              {bilanDoneToday && degradation ? (
+                <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
+              ) : (
+                <MessageJardin profile={profile} isMobile={isMobile} />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── SOIR : Fleur gauche | Boîte à graines droite (desktop) / Fleur + Boîte (mobile) ── */}
+        {timeContext === 'soir' && (
+          isMobile ? (
+            <>
+              {/* Mobile : fleur seule */}
+              <div style={{
+                borderRadius:16, overflow:'hidden',
+                border:'1px solid rgba(150,212,133,0.08)',
+                background:'rgba(14,28,14,0.95)',
+                flexShrink:0,
+              }}>
+                <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
+              </div>
+              {/* Mobile : boîte à graines en dessous, pleine largeur */}
+              <BoiteAGraines userId={userId} />
+            </>
+          ) : (
+            /* Desktop : 2 colonnes */
+            <div style={{
+              display:'flex', flexDirection:'row',
+              alignItems:'stretch', borderRadius:16, overflow:'hidden',
+              border:'1px solid rgba(150,212,133,0.08)',
+              background:'rgba(14,28,14,0.95)',
+              flexShrink:0, minHeight:360,
+            }}>
+              <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={false} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
+              <div style={{
+                flex:'1 1 0', minWidth:0,
+                background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+                padding:'18px 20px',
+                display:'flex', flexDirection:'column',
+                justifyContent:'center',
+                overflow:'hidden',
+              }}>
+                <BoiteAGraines userId={userId} inline />
+              </div>
+            </div>
+          )
+        )}
+
+        {/* ── Rituels — toujours visibles ── */}
         <RitualsSection
           userId={userId}
           degradation={degradation}
@@ -4462,8 +4649,6 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           onOpenBilan={onOpenBilan}
           bilanDoneToday={bilanDoneToday}
         />
-
-        <BoiteAGraines userId={userId} />
       </div>
 
       <div className="mj-right">

@@ -29,7 +29,7 @@ import { useAnalytics } from '../hooks/useAnalytics'
  * ─────────────────────────────────────────────────────────────
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 // ═══════════════════════════════════════════════════════════
 //  DONNÉES — Zones, Rituels, Questions
@@ -48,53 +48,53 @@ export const PLANT_RITUALS = {
     {
       id: "r1", text: "Un repas qui me nourrit vraiment", icon: "🍃",
       quick: [
-        { title: "La pause avant de manger", dur: "2 min", icon: "🍽️", desc: "Avant de prendre votre repas, posez les mains à plat sur la table. Fermez les yeux 30 secondes. Inspirez par le nez, ressentez l'odeur de ce que vous allez manger. Mangez la première bouchée en silence, en mâchant lentement 15 fois." },
-        { title: "Scan des couleurs dans l'assiette", dur: "1 min", icon: "🌈", desc: "Regardez votre repas comme si vous le voyiez pour la première fois. Identifiez chaque couleur, chaque texture. Nommez mentalement ce que chaque aliment va apporter à votre corps. Remerciez votre corps de recevoir ce soin." },
-        { title: "Bilan nutritionnel intuitif", dur: "3 min", icon: "⚡", desc: "Demandez-vous honnêtement : mon corps a-t-il faim d'énergie (glucides), de force (protéines), ou de légèreté (légumes) ? Choisissez un seul ingrédient à ajouter ou privilégier dans votre prochain repas." },
+        { title: "La pause avant de manger", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "🍽️", desc: "Avant de prendre votre repas, posez les mains à plat sur la table. Fermez les yeux 30 secondes. Inspirez par le nez, ressentez l'odeur de ce que vous allez manger. Mangez la première bouchée en silence, en mâchant lentement 15 fois." },
+        { title: "Scan des couleurs dans l'assiette", dur: "1 min", tool: { type: "visualisation", enabled: true }, icon: "🌈", desc: "Regardez votre repas comme si vous le voyiez pour la première fois. Identifiez chaque couleur, chaque texture. Nommez mentalement ce que chaque aliment va apporter à votre corps. Remerciez votre corps de recevoir ce soin." },
+        { title: "Bilan nutritionnel intuitif", dur: "3 min", tool: { type: "gratitude", enabled: true }, icon: "⚡", desc: "Demandez-vous honnêtement : mon corps a-t-il faim d'énergie (glucides), de force (protéines), ou de légèreté (légumes) ? Choisissez un seul ingrédient à ajouter ou privilégier dans votre prochain repas." },
       ],
       deep: [
         { title: "Préparation d'un repas en pleine conscience", dur: "20–30 min", icon: "🥗", desc: "Choisissez de cuisiner un plat simple avec 3–5 ingrédients que vous aimez. Pendant la préparation, éteignez les écrans. Sentez chaque aliment avant de le couper. Observez les transformations — la chaleur, les textures qui changent. Mangez ensuite dans le silence ou avec de la musique douce." },
-        { title: "Journal alimentaire intuitif", dur: "15 min", icon: "📓", desc: "Écrivez dans un carnet : quels aliments vous manquent vraiment en ce moment ? Quels aliments vous lourdissent ? Y a-t-il un lien entre ce que vous mangez et votre humeur ? Identifiez 2 changements simples et réalistes pour cette semaine." },
+        { title: "Journal alimentaire intuitif", dur: "15 min", tool: { type: "gratitude", enabled: true }, icon: "📓", desc: "Écrivez dans un carnet : quels aliments vous manquent vraiment en ce moment ? Quels aliments vous lourdissent ? Y a-t-il un lien entre ce que vous mangez et votre humeur ? Identifiez 2 changements simples et réalistes pour cette semaine." },
         { title: "Rituels autour des repas", dur: "10 min", icon: "🕯️", desc: "Créez un petit rituel pour votre prochain repas : mettez une belle assiette, allumez une bougie, mettez une musique qui vous fait du bien. Posez votre téléphone dans une autre pièce. Mangez assis, sans regarder un écran." },
       ],
     },
     {
       id: "r2", text: "5 min de centrage, pieds au sol", icon: "🧘",
       quick: [
-        { title: "Ancrage 5-4-3-2-1", dur: "2 min", icon: "🌍", desc: "Debout ou assis, pieds bien à plat. Nommez mentalement : 5 choses que vous voyez, 4 que vous entendez, 3 que vous pouvez toucher, 2 odeurs, 1 goût. Terminez par 3 respirations profondes ventre gonflé à l'inspire, ventre rentré à l'expire." },
-        { title: "Les pieds comme racines", dur: "2 min", icon: "🌳", desc: "Asseyez-vous et posez les deux pieds à plat sur le sol. Sentez le contact avec le sol. Imaginez des racines qui partent de vos plantes de pieds et s'enfoncent profondément dans la terre. À chaque expiration, laissez votre poids descendre un peu plus." },
-        { title: "Scan corporel express", dur: "3 min", icon: "🔍", desc: "Fermez les yeux. Parcourez mentalement votre corps de la tête aux pieds. À chaque zone, expirez en relâchant la tension. Si une zone est douloureuse, respirez dedans sans chercher à la supprimer." },
+        { title: "Ancrage 5-4-3-2-1", dur: "2 min", tool: { type: "movement", enabled: true }, icon: "🌍", desc: "Debout ou assis, pieds bien à plat. Nommez mentalement : 5 choses que vous voyez, 4 que vous entendez, 3 que vous pouvez toucher, 2 odeurs, 1 goût. Terminez par 3 respirations profondes ventre gonflé à l'inspire, ventre rentré à l'expire." },
+        { title: "Les pieds comme racines", dur: "2 min", tool: { type: "visualisation", enabled: true }, icon: "🌳", desc: "Asseyez-vous et posez les deux pieds à plat sur le sol. Sentez le contact avec le sol. Imaginez des racines qui partent de vos plantes de pieds et s'enfoncent profondément dans la terre. À chaque expiration, laissez votre poids descendre un peu plus." },
+        { title: "Scan corporel express", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "🔍", desc: "Fermez les yeux. Parcourez mentalement votre corps de la tête aux pieds. À chaque zone, expirez en relâchant la tension. Si une zone est douloureuse, respirez dedans sans chercher à la supprimer." },
       ],
       deep: [
-        { title: "Méditation d'ancrage guidée", dur: "15–20 min", icon: "🧘", desc: "Asseyez-vous confortablement. Fermez les yeux. Sentez votre poids dans le siège. Suivez votre respiration pendant 5 minutes — inspirez en comptant 4, retenez 2, expirez en comptant 6. Puis laissez votre respiration retrouver son rythme naturel. Restez 10 minutes à simplement observer." },
+        { title: "Méditation d'ancrage guidée", dur: "15–20 min", tool: { type: "timer", enabled: true, duration: 900 }, icon: "🧘", desc: "Asseyez-vous confortablement. Fermez les yeux. Sentez votre poids dans le siège. Suivez votre respiration pendant 5 minutes — inspirez en comptant 4, retenez 2, expirez en comptant 6. Puis laissez votre respiration retrouver son rythme naturel. Restez 10 minutes à simplement observer." },
         { title: "Marche pieds nus dans la nature", dur: "20–30 min", icon: "🌿", desc: "Si possible, retirez vos chaussures dehors. Marchez très lentement, en sentant chaque surface sous vos pieds. Posez d'abord le talon, puis le milieu, puis l'avant du pied. Cette pratique (earthing) est reconnue pour réduire le cortisol." },
-        { title: "Yoga des racines (série courte)", dur: "20 min", icon: "🌱", desc: "Enchaînez ces postures en maintenant chacune 2–3 minutes : (1) Montagne — debout immobile. (2) Enfant — à genoux, front au sol. (3) Demi-pont — couché sur le dos, hanches soulevées. (4) Cadavre final — allongé, relâchez pendant 5 min." },
+        { title: "Yoga des racines (série courte)", dur: "20 min", tool: { type: "movement", enabled: true }, icon: "🌱", desc: "Enchaînez ces postures en maintenant chacune 2–3 minutes : (1) Montagne — debout immobile. (2) Enfant — à genoux, front au sol. (3) Demi-pont — couché sur le dos, hanches soulevées. (4) Cadavre final — allongé, relâchez pendant 5 min." },
       ],
     },
     {
       id: "r3", text: "Hydratation consciente", icon: "💧",
       quick: [
-        { title: "Le verre d'eau rituel", dur: "1 min", icon: "🥛", desc: "Prenez un grand verre d'eau à température ambiante. Avant de le boire, posez les deux mains autour. Respirez une fois profondément. Buvez lentement, en 5 à 7 gorgées, en ressentant chaque gorgée descendre dans votre gorge et votre poitrine." },
-        { title: "Bilan hydratation", dur: "2 min", icon: "📊", desc: "Posez-vous ces questions : de quelle couleur étaient vos dernières urines ? Avez-vous bu au moins 1,5L hier ? Ressentez-vous des tensions dans la nuque ? Décidez d'un nombre de verres à boire avant midi." },
-        { title: "Infusion consciente", dur: "3 min", icon: "🍵", desc: "Préparez une infusion (menthe, camomille, gingembre…). Pendant qu'elle infuse, posez vos mains autour de la tasse et sentez la chaleur. Inspirez la vapeur parfumée. Buvez la première gorgée en fermant les yeux." },
+        { title: "Le verre d'eau rituel", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "🥛", desc: "Prenez un grand verre d'eau à température ambiante. Avant de le boire, posez les deux mains autour. Respirez une fois profondément. Buvez lentement, en 5 à 7 gorgées, en ressentant chaque gorgée descendre dans votre gorge et votre poitrine." },
+        { title: "Bilan hydratation", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "📊", desc: "Posez-vous ces questions : de quelle couleur étaient vos dernières urines ? Avez-vous bu au moins 1,5L hier ? Ressentez-vous des tensions dans la nuque ? Décidez d'un nombre de verres à boire avant midi." },
+        { title: "Infusion consciente", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "🍵", desc: "Préparez une infusion (menthe, camomille, gingembre…). Pendant qu'elle infuse, posez vos mains autour de la tasse et sentez la chaleur. Inspirez la vapeur parfumée. Buvez la première gorgée en fermant les yeux." },
       ],
       deep: [
         { title: "Détox hydratante sur 1 journée", dur: "Journée entière", icon: "🌊", desc: "Posez une bouteille d'eau de 1,5L visible sur votre bureau. Planifiez 3 moments dans la journée pour boire : matin, avant chaque repas, avant le coucher. Remplacez café de l'après-midi par une infusion." },
-        { title: "Rituel beauté intérieure", dur: "15 min", icon: "✨", desc: "Commencez par boire 2 grands verres d'eau citronnée. Préparez une infusion beauté (hibiscus, rose, romarin). Pendant qu'elle refroidit, faites un masque visage naturel. Restez allongé·e 10 min. Buvez l'infusion." },
+        { title: "Rituel beauté intérieure", dur: "15 min", tool: { type: "timer", enabled: true, duration: 900 }, icon: "✨", desc: "Commencez par boire 2 grands verres d'eau citronnée. Préparez une infusion beauté (hibiscus, rose, romarin). Pendant qu'elle refroidit, faites un masque visage naturel. Restez allongé·e 10 min. Buvez l'infusion." },
         { title: "Journée sans boissons sucrées", dur: "Journée entière", icon: "🚫", desc: "Engagement pour aujourd'hui : remplacez toutes les boissons sucrées par de l'eau, des infusions ou des eaux aromatisées maison (concombre-menthe, citron-gingembre). Notez le soir votre niveau d'énergie." },
       ],
     },
     {
       id: "r4", text: "Coucher avant minuit ce soir", icon: "🌙",
       quick: [
-        { title: "Protocole extinction lumières", dur: "3 min", icon: "💡", desc: "À 30 minutes de l'heure souhaitée de coucher, mettez votre téléphone en mode avion et posez-le hors de portée. Baissez tous les éclairages au maximum ou allumez une bougie. Votre cerveau reçoit alors le signal que la nuit commence." },
-        { title: "Scan de fin de journée", dur: "2 min", icon: "🌙", desc: "Allongez-vous et fermez les yeux. Passez mentalement en revue votre journée : 1 chose qui s'est bien passée, 1 chose à lâcher pour cette nuit, 1 intention pour demain. C'est tout. Laissez votre corps peser dans le matelas." },
+        { title: "Protocole extinction lumières", dur: "3 min", tool: { type: "movement", enabled: true }, icon: "💡", desc: "À 30 minutes de l'heure souhaitée de coucher, mettez votre téléphone en mode avion et posez-le hors de portée. Baissez tous les éclairages au maximum ou allumez une bougie. Votre cerveau reçoit alors le signal que la nuit commence." },
+        { title: "Scan de fin de journée", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "🌙", desc: "Allongez-vous et fermez les yeux. Passez mentalement en revue votre journée : 1 chose qui s'est bien passée, 1 chose à lâcher pour cette nuit, 1 intention pour demain. C'est tout. Laissez votre corps peser dans le matelas." },
         { title: "Respiration 4-7-8", dur: "2 min", icon: "😴", desc: "Cette respiration active le système nerveux parasympathique. Inspirez par le nez en comptant 4, retenez en comptant 7, expirez lentement par la bouche en comptant 8. Répétez 4 fois." },
       ],
       deep: [
         { title: "Rituel de décompression du soir", dur: "30 min", icon: "🛁", desc: "1h avant de dormir : prenez une douche ou un bain chaud. Enfilez des vêtements confortables. Lisez un livre physique 20 min. Éteignez tous les écrans. Notez 3 pensées qui tournent dans votre tête dans un carnet." },
         { title: "Yoga nidra (yoga du sommeil)", dur: "20 min", icon: "🌌", desc: "Allongez-vous dans votre lit. Fermez les yeux. Portez votre attention successivement sur chaque partie de votre corps pendant 15–20 secondes. À la fin, ne faites plus rien — laissez le sommeil venir." },
-        { title: "Écriture de décompression", dur: "15 min", icon: "📝", desc: "Prenez un carnet. Écrivez sans filtre tout ce qui tourne dans votre tête. Puis, sur une nouvelle page, écrivez 3 choses positives de la journée. Enfin, écrivez 1 seule priorité pour demain. Fermez le carnet." },
+        { title: "Écriture de décompression", dur: "15 min", tool: { type: "gratitude", enabled: true }, icon: "📝", desc: "Prenez un carnet. Écrivez sans filtre tout ce qui tourne dans votre tête. Puis, sur une nouvelle page, écrivez 3 choses positives de la journée. Enfin, écrivez 1 seule priorité pour demain. Fermez le carnet." },
       ],
     },
   ],
@@ -102,9 +102,9 @@ export const PLANT_RITUALS = {
     {
       id: "s1", text: "Bouger mon corps (marche, danse…)", icon: "🚶",
       quick: [
-        { title: "1 minute de saut", dur: "1 min", icon: "⚡", desc: "Levez-vous et sautez sur place pendant 60 secondes — pas besoin de force, juste rebondir légèrement. Les sauts stimulent le système lymphatique, augmentent immédiatement le flux sanguin et libèrent des endorphines." },
-        { title: "Marche de 3 minutes", dur: "3 min", icon: "🚶", desc: "Sortez ou marchez dans votre espace. Pendant les 3 minutes, concentrez-vous sur les sensations dans vos pieds, vos jambes, votre balancement naturel. Marchez un peu plus lentement que d'habitude, en ressentant chaque pas." },
-        { title: "Étirements debout", dur: "2 min", icon: "🙆", desc: "Levez les bras au-dessus de la tête et étirez-vous vers le plafond. Puis penchez-vous sur le côté gauche, puis droit. Roulez les épaules 5 fois en arrière, 5 fois en avant. Tournez la tête lentement. Terminez par 3 grandes inspirations bras ouverts." },
+        { title: "1 minute de saut", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "⚡", desc: "Levez-vous et sautez sur place pendant 60 secondes — pas besoin de force, juste rebondir légèrement. Les sauts stimulent le système lymphatique, augmentent immédiatement le flux sanguin et libèrent des endorphines." },
+        { title: "Marche de 3 minutes", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "🚶", desc: "Sortez ou marchez dans votre espace. Pendant les 3 minutes, concentrez-vous sur les sensations dans vos pieds, vos jambes, votre balancement naturel. Marchez un peu plus lentement que d'habitude, en ressentant chaque pas." },
+        { title: "Étirements debout", dur: "2 min", tool: { type: "movement", enabled: true }, icon: "🙆", desc: "Levez les bras au-dessus de la tête et étirez-vous vers le plafond. Puis penchez-vous sur le côté gauche, puis droit. Roulez les épaules 5 fois en arrière, 5 fois en avant. Tournez la tête lentement. Terminez par 3 grandes inspirations bras ouverts." },
       ],
       deep: [
         { title: "Marche méditée en nature", dur: "25–30 min", icon: "🌲", desc: "Partez marcher dehors. Laissez votre téléphone en mode silencieux. Marchez sans destination précise. Observez 3 choses belles sur votre chemin. Modifiez votre rythme : 5 min lentement, 5 min plus vite, 5 min lentement." },
@@ -115,26 +115,26 @@ export const PLANT_RITUALS = {
     {
       id: "s2", text: "Accueillir un imprévu sans résister", icon: "🌊",
       quick: [
-        { title: "La pause STOP", dur: "2 min", icon: "✋", desc: "Face à une situation stressante : Stop — arrêtez tout 10 secondes. Respirez — 1 inspiration profonde, 1 longue expiration. Observez — nommez ce que vous ressentez. Puis choisissez — quelle est la réponse la plus utile ?" },
-        { title: "Reformulation mentale", dur: "2 min", icon: "🔄", desc: "Prenez un imprévu de votre journée. Formulez : 'Cela m'oblige à…' (contrainte). Puis reformulez : 'Cela me permet de…' (opportunité). La flexibilité mentale se muscle comme un muscle." },
-        { title: "Le corps d'abord", dur: "1 min", icon: "🌊", desc: "Quand une résistance surgit, posez une main sur votre sternum. Sentez la chaleur de votre main. Expirez lentement en disant intérieurement 'je peux accueillir ça'. Répétez 3 fois." },
+        { title: "La pause STOP", dur: "2 min", tool: { type: "movement", enabled: true }, icon: "✋", desc: "Face à une situation stressante : Stop — arrêtez tout 10 secondes. Respirez — 1 inspiration profonde, 1 longue expiration. Observez — nommez ce que vous ressentez. Puis choisissez — quelle est la réponse la plus utile ?" },
+        { title: "Reformulation mentale", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "🔄", desc: "Prenez un imprévu de votre journée. Formulez : 'Cela m'oblige à…' (contrainte). Puis reformulez : 'Cela me permet de…' (opportunité). La flexibilité mentale se muscle comme un muscle." },
+        { title: "Le corps d'abord", dur: "1 min", tool: { type: "breath", inhale: 4, hold: 0, exhale: 4, cycles: 3, enabled: true }, icon: "🌊", desc: "Quand une résistance surgit, posez une main sur votre sternum. Sentez la chaleur de votre main. Expirez lentement en disant intérieurement 'je peux accueillir ça'. Répétez 3 fois." },
       ],
       deep: [
-        { title: "Journal des résistances", dur: "15 min", icon: "📓", desc: "Écrivez sur ce qui vous résiste en ce moment. Pas d'analyse — juste écrire librement pendant 8 minutes. Puis relisez et soulignez ce que vous n'acceptez pas. Pour chacun, écrivez : 'Si j'acceptais vraiment cela, je pourrais…'" },
-        { title: "Méditation du fleuve", dur: "15–20 min", icon: "🏞️", desc: "Asseyez-vous. Imaginez que vous êtes au bord d'un fleuve tranquille. Chaque pensée est une feuille portée par le courant. Observez-la passer, sans la retenir, sans la repousser. Vous êtes la rive — stable, présent·e." },
+        { title: "Journal des résistances", dur: "15 min", tool: { type: "gratitude", enabled: true }, icon: "📓", desc: "Écrivez sur ce qui vous résiste en ce moment. Pas d'analyse — juste écrire librement pendant 8 minutes. Puis relisez et soulignez ce que vous n'acceptez pas. Pour chacun, écrivez : 'Si j'acceptais vraiment cela, je pourrais…'" },
+        { title: "Méditation du fleuve", dur: "15–20 min", tool: { type: "timer", enabled: true, duration: 900 }, icon: "🏞️", desc: "Asseyez-vous. Imaginez que vous êtes au bord d'un fleuve tranquille. Chaque pensée est une feuille portée par le courant. Observez-la passer, sans la retenir, sans la repousser. Vous êtes la rive — stable, présent·e." },
         { title: "L'obstacle comme chemin", dur: "20 min", icon: "🧩", desc: "Prenez la situation qui vous résiste le plus. Notez : 1/ Ce que je veux. 2/ L'obstacle. 3/ Ce que l'obstacle m'apprend. 4/ Ce que je peux faire avec les ressources disponibles. Concluez en définissant 1 action concrète." },
       ],
     },
     {
       id: "s3", text: "Étirements ou pause corporelle", icon: "🤸",
       quick: [
-        { title: "Détente nuque et épaules", dur: "2 min", icon: "🙆", desc: "Penchez doucement la tête vers l'épaule gauche, maintenez 20 secondes. Roulez la tête vers l'avant. Épaule droite. Puis roulez les deux épaules vers l'arrière, 5 fois lentement. Croisez les bras derrière le dos et ouvrez la poitrine." },
-        { title: "Torsion assise", dur: "2 min", icon: "🔄", desc: "Assis, pieds à plat. Inspirez en grandissant. À l'expiration, tournez vers la droite, maintenez 5 respirations. Revenez au centre. Recommencez à gauche. Cette torsion libère les tensions du dos et stimule la digestion." },
-        { title: "Posture de l'enfant", dur: "2 min", icon: "🧘", desc: "À genoux au sol, pliez-vous vers l'avant, front vers les genoux. Laissez votre dos s'arrondir, vos épaules se relâcher. Respirez profondément dans le bas du dos. Cette posture active le système nerveux parasympathique." },
+        { title: "Détente nuque et épaules", dur: "2 min", tool: { type: "movement", enabled: true }, icon: "🙆", desc: "Penchez doucement la tête vers l'épaule gauche, maintenez 20 secondes. Roulez la tête vers l'avant. Épaule droite. Puis roulez les deux épaules vers l'arrière, 5 fois lentement. Croisez les bras derrière le dos et ouvrez la poitrine." },
+        { title: "Torsion assise", dur: "2 min", tool: { type: "movement", enabled: true }, icon: "🔄", desc: "Assis, pieds à plat. Inspirez en grandissant. À l'expiration, tournez vers la droite, maintenez 5 respirations. Revenez au centre. Recommencez à gauche. Cette torsion libère les tensions du dos et stimule la digestion." },
+        { title: "Posture de l'enfant", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "🧘", desc: "À genoux au sol, pliez-vous vers l'avant, front vers les genoux. Laissez votre dos s'arrondir, vos épaules se relâcher. Respirez profondément dans le bas du dos. Cette posture active le système nerveux parasympathique." },
       ],
       deep: [
-        { title: "Séquence yoga du dos", dur: "20 min", icon: "🌱", desc: "Enchaînez ces postures, 3 minutes chacune : (1) Chat-Vache. (2) Chien tête en bas. (3) Cobra. (4) Pigeon. (5) Demi-bridge. (6) Savasana." },
-        { title: "Automassage guidé", dur: "15 min", icon: "✋", desc: "Commencez par les pieds (roulez-les sur une balle). Remontez vers les mollets, cuisses, ventre (cercles dans le sens horaire), épaules, crâne. L'automassage réduit le cortisol et améliore la qualité du sommeil." },
+        { title: "Séquence yoga du dos", dur: "20 min", tool: { type: "movement", enabled: true }, icon: "🌱", desc: "Enchaînez ces postures, 3 minutes chacune : (1) Chat-Vache. (2) Chien tête en bas. (3) Cobra. (4) Pigeon. (5) Demi-bridge. (6) Savasana." },
+        { title: "Automassage guidé", dur: "15 min", tool: { type: "movement", enabled: true }, icon: "✋", desc: "Commencez par les pieds (roulez-les sur une balle). Remontez vers les mollets, cuisses, ventre (cercles dans le sens horaire), épaules, crâne. L'automassage réduit le cortisol et améliore la qualité du sommeil." },
         { title: "Marche nordique ou Qi gong", dur: "25–30 min", icon: "🌿", desc: "Si vous pouvez sortir : marchez en oscillant les bras en opposition aux jambes. Si vous restez : cherchez une vidéo de Qi gong débutant de 20 min. Ces mouvements libèrent les tensions accumulées." },
       ],
     },
@@ -148,7 +148,7 @@ export const PLANT_RITUALS = {
       deep: [
         { title: "Pranayama — respiration alternée", dur: "15 min", icon: "☯️", desc: "Assis, dos droit. Inspirez par la gauche (4s). Fermez les deux (2s). Expirez par la droite (8s). Inspirez par la droite (4s). Fermez (2s). Expirez par la gauche (8s). Faites 10 cycles. Cette pratique équilibre les deux hémisphères." },
         { title: "Cohérence cardiaque 3-6-5", dur: "15 min", icon: "❤️", desc: "3 fois par jour, 6 respirations par minute, pendant 5 minutes. Matin au réveil, avant le déjeuner, avant le soir. Maintenez un journal de votre ressenti avant/après pendant une semaine." },
-        { title: "Respiration rebirthing douce", dur: "20–25 min", icon: "🌊", desc: "Allongez-vous. Respirez en cycle continu : inspir et expir reliés sans pause, par le nez. Maintenez ce cycle 20 minutes en laissant les émotions traverser votre corps sans les retenir. À la fin, restez 5 minutes en silence." },
+        { title: "Respiration rebirthing douce", dur: "20–25 min", tool: { type: "timer", enabled: true, duration: 1200 }, icon: "🌊", desc: "Allongez-vous. Respirez en cycle continu : inspir et expir reliés sans pause, par le nez. Maintenez ce cycle 20 minutes en laissant les émotions traverser votre corps sans les retenir. À la fin, restez 5 minutes en silence." },
       ],
     },
   ],
@@ -156,21 +156,21 @@ export const PLANT_RITUALS = {
     {
       id: "l1", text: "Un sourire sincère offert", icon: "😊",
       quick: [
-        { title: "Le demi-sourire bouddhiste", dur: "1 min", icon: "🙂", desc: "Relevez très légèrement les coins de votre bouche — à peine perceptible, comme un secret intérieur. Fermez les yeux. Même un sourire volontaire minimal active les mêmes circuits que le sourire spontané et libère de la sérotonine." },
-        { title: "Sourire mémorisé", dur: "2 min", icon: "💛", desc: "Fermez les yeux. Pensez à un moment récent où vous avez vraiment souri. Laissez le souvenir remplir tout votre corps. Sentez la chaleur dans la poitrine. Ouvrez les yeux en portant cette sensation." },
-        { title: "Gratitude rapide", dur: "2 min", icon: "🙏", desc: "Pensez à une personne dans votre vie qui vous a apporté quelque chose de positif récemment. Nommez ce qu'elle a fait. Sentez la chaleur de cette gratitude dans votre corps." },
+        { title: "Le demi-sourire bouddhiste", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "🙂", desc: "Relevez très légèrement les coins de votre bouche — à peine perceptible, comme un secret intérieur. Fermez les yeux. Même un sourire volontaire minimal active les mêmes circuits que le sourire spontané et libère de la sérotonine." },
+        { title: "Sourire mémorisé", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "💛", desc: "Fermez les yeux. Pensez à un moment récent où vous avez vraiment souri. Laissez le souvenir remplir tout votre corps. Sentez la chaleur dans la poitrine. Ouvrez les yeux en portant cette sensation." },
+        { title: "Gratitude rapide", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "🙏", desc: "Pensez à une personne dans votre vie qui vous a apporté quelque chose de positif récemment. Nommez ce qu'elle a fait. Sentez la chaleur de cette gratitude dans votre corps." },
       ],
       deep: [
-        { title: "Lettre de gratitude", dur: "20 min", icon: "✉️", desc: "Choisissez quelqu'un qui a eu un impact positif et à qui vous n'avez jamais dit merci. Écrivez-lui une lettre à la main — précis sur ce qu'il a fait, comment cela vous a affecté, et ce que ça a changé. Vous n'êtes pas obligé·e de l'envoyer." },
-        { title: "Méditation Metta", dur: "15–20 min", icon: "💖", desc: "Envoyez mentalement ces 4 phrases : 'Puisses-tu être heureux·se. Puisses-tu être en bonne santé. Puisses-tu être en sécurité. Puisses-tu vivre avec légèreté.' Commencez par vous-même, puis quelqu'un que vous aimez, puis quelqu'un difficile." },
+        { title: "Lettre de gratitude", dur: "20 min", tool: { type: "gratitude", enabled: true }, icon: "✉️", desc: "Choisissez quelqu'un qui a eu un impact positif et à qui vous n'avez jamais dit merci. Écrivez-lui une lettre à la main — précis sur ce qu'il a fait, comment cela vous a affecté, et ce que ça a changé. Vous n'êtes pas obligé·e de l'envoyer." },
+        { title: "Méditation Metta", dur: "15–20 min", tool: { type: "timer", enabled: true, duration: 900 }, icon: "💖", desc: "Envoyez mentalement ces 4 phrases : 'Puisses-tu être heureux·se. Puisses-tu être en bonne santé. Puisses-tu être en sécurité. Puisses-tu vivre avec légèreté.' Commencez par vous-même, puis quelqu'un que vous aimez, puis quelqu'un difficile." },
         { title: "Acte de gentillesse aléatoire", dur: "Variable", icon: "🌟", desc: "Choisissez aujourd'hui de faire une chose gentille sans que personne ne sache que c'est vous. Ces actes anonymes augmentent le plus le sentiment de sens et de bonheur." },
       ],
     },
     {
       id: "l2", text: "Un moment de rire partagé", icon: "😄",
       quick: [
-        { title: "Yoga du rire — 1 min", dur: "1 min", icon: "😂", desc: "Commencez par rire de manière forcée — 'Ha ha ha, Ho ho ho'. Après 30–45 secondes, votre corps prend le relais et le rire devient naturel. 60 secondes suffisent pour libérer des endorphines." },
-        { title: "La liste des choses absurdes", dur: "3 min", icon: "🤣", desc: "Notez toutes les situations légèrement cocasses de votre semaine — vos propres maladresses, les situations bizarres, les quiproquos. Relisez-les en cherchant ce qu'il y a de drôle." },
+        { title: "Yoga du rire — 1 min", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "😂", desc: "Commencez par rire de manière forcée — 'Ha ha ha, Ho ho ho'. Après 30–45 secondes, votre corps prend le relais et le rire devient naturel. 60 secondes suffisent pour libérer des endorphines." },
+        { title: "La liste des choses absurdes", dur: "3 min", tool: { type: "gratitude", enabled: true }, icon: "🤣", desc: "Notez toutes les situations légèrement cocasses de votre semaine — vos propres maladresses, les situations bizarres, les quiproquos. Relisez-les en cherchant ce qu'il y a de drôle." },
         { title: "Mème ou vidéo qui vous fait rire", dur: "2 min", icon: "📱", desc: "Permettez-vous 2 minutes de contenus qui vous font vraiment sourire. Mais faites-le intentionnellement — pas par habitude de scroll. Choisissez quelque chose, riez vraiment, puis fermez l'application." },
       ],
       deep: [
@@ -182,27 +182,27 @@ export const PLANT_RITUALS = {
     {
       id: "l3", text: "Prendre des nouvelles de quelqu'un", icon: "💬",
       quick: [
-        { title: "Le message en 2 phrases", dur: "1 min", icon: "📱", desc: "Pensez à une personne à qui vous n'avez pas parlé depuis un moment. Envoyez-lui : ce que vous avez pensé d'elle récemment + une question sincère sur sa vie. Deux phrases suffisent pour maintenir un lien." },
-        { title: "Appel de 3 minutes", dur: "3 min", icon: "📞", desc: "Appelez quelqu'un (pas un message — un appel). Dites-lui que vous pensiez à lui/elle. Posez une vraie question et écoutez vraiment la réponse. Un appel court mais sincère a plus de valeur qu'une longue conversation superficielle." },
-        { title: "Observation attentive", dur: "2 min", icon: "👁️", desc: "Regardez quelqu'un dans votre entourage proche aujourd'hui avec une vraie attention. Qu'est-ce qui a l'air de le peser ? Qu'est-ce qui lui fait du bien ? Observez sans projeter." },
+        { title: "Le message en 2 phrases", dur: "1 min", tool: { type: "gratitude", enabled: true }, icon: "📱", desc: "Pensez à une personne à qui vous n'avez pas parlé depuis un moment. Envoyez-lui : ce que vous avez pensé d'elle récemment + une question sincère sur sa vie. Deux phrases suffisent pour maintenir un lien." },
+        { title: "Appel de 3 minutes", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "📞", desc: "Appelez quelqu'un (pas un message — un appel). Dites-lui que vous pensiez à lui/elle. Posez une vraie question et écoutez vraiment la réponse. Un appel court mais sincère a plus de valeur qu'une longue conversation superficielle." },
+        { title: "Observation attentive", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "👁️", desc: "Regardez quelqu'un dans votre entourage proche aujourd'hui avec une vraie attention. Qu'est-ce qui a l'air de le peser ? Qu'est-ce qui lui fait du bien ? Observez sans projeter." },
       ],
       deep: [
         { title: "Dîner intentionnel", dur: "1–2h", icon: "🍽️", desc: "Invitez quelqu'un à partager un repas. Proposez une règle : les téléphones restent dans les poches. Posez des questions inhabituelles : 'Qu'est-ce qui t'enthousiasme en ce moment ?'" },
-        { title: "Lettre de reconnexion", dur: "20 min", icon: "✉️", desc: "Pensez à quelqu'un dont vous vous êtes éloigné·e. Écrivez-lui : comment vous êtes, ce que vous avez traversé, ce que vous appréciez chez lui/elle, et votre envie de reconnecter." },
+        { title: "Lettre de reconnexion", dur: "20 min", tool: { type: "gratitude", enabled: true }, icon: "✉️", desc: "Pensez à quelqu'un dont vous vous êtes éloigné·e. Écrivez-lui : comment vous êtes, ce que vous avez traversé, ce que vous appréciez chez lui/elle, et votre envie de reconnecter." },
         { title: "Conversation de qualité", dur: "45–60 min", icon: "🗣️", desc: "Organisez un appel pour avoir une vraie conversation. Commencez par : 'Si tu pouvais changer une chose dans ta vie cette année, ce serait quoi ?' Et partagez votre propre réponse honnêtement." },
       ],
     },
     {
       id: "l4", text: "Exprimer ma gratitude", icon: "🙏",
       quick: [
-        { title: "3 gratitudes en 3 minutes", dur: "2 min", icon: "✨", desc: "Écrivez ou pensez à 3 choses pour lesquelles vous êtes reconnaissant·e aujourd'hui. La règle : elles doivent être spécifiques et nouvelles. La spécificité active beaucoup plus le circuit de récompense du cerveau." },
-        { title: "Le remerciement silencieux", dur: "1 min", icon: "🌸", desc: "Fermez les yeux. Pensez à 1 personne qui vous a aidé·e cette semaine. Ressentez dans votre corps ce que sa présence vous a apporté. Laissez ce sentiment de chaleur rayonner dans votre poitrine." },
-        { title: "Gratitude envers votre corps", dur: "2 min", icon: "💪", desc: "Fermez les yeux et remerciez votre corps : vos poumons, votre cœur, vos mains, vos jambes. Pour chaque partie, prenez 10 secondes. Si une partie vous fait souffrir, envoyez-lui de la gratitude aussi." },
+        { title: "3 gratitudes en 3 minutes", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "✨", desc: "Écrivez ou pensez à 3 choses pour lesquelles vous êtes reconnaissant·e aujourd'hui. La règle : elles doivent être spécifiques et nouvelles. La spécificité active beaucoup plus le circuit de récompense du cerveau." },
+        { title: "Le remerciement silencieux", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "🌸", desc: "Fermez les yeux. Pensez à 1 personne qui vous a aidé·e cette semaine. Ressentez dans votre corps ce que sa présence vous a apporté. Laissez ce sentiment de chaleur rayonner dans votre poitrine." },
+        { title: "Gratitude envers votre corps", dur: "2 min", tool: { type: "visualisation", enabled: true }, icon: "💪", desc: "Fermez les yeux et remerciez votre corps : vos poumons, votre cœur, vos mains, vos jambes. Pour chaque partie, prenez 10 secondes. Si une partie vous fait souffrir, envoyez-lui de la gratitude aussi." },
       ],
       deep: [
-        { title: "Journal de gratitude — 1 semaine", dur: "10 min/soir", icon: "📓", desc: "Engagez-vous 7 jours à écrire chaque soir 5 gratitudes spécifiques avec au moins 2 nouvelles chaque jour. En 7 jours, cette pratique recalibre le biais de négativité naturel du cerveau." },
+        { title: "Journal de gratitude — 1 semaine", dur: "10 min/soir", tool: { type: "gratitude", enabled: true }, icon: "📓", desc: "Engagez-vous 7 jours à écrire chaque soir 5 gratitudes spécifiques avec au moins 2 nouvelles chaque jour. En 7 jours, cette pratique recalibre le biais de négativité naturel du cerveau." },
         { title: "Visite de gratitude", dur: "30–60 min", icon: "🚶", desc: "Choisissez quelqu'un à qui vous êtes sincèrement reconnaissant·e. Écrivez une lettre précise (5–10 minutes). Puis allez la lui lire en personne. C'est l'intervention de psychologie positive au plus grand effet sur le bonheur." },
-        { title: "Gratitude des difficultés", dur: "20 min", icon: "🌱", desc: "Choisissez une difficulté actuelle. Écrivez comment elle vous a forcé·e à grandir. Qu'auriez-vous raté si tout avait été facile ? Trouvez au moins 3 choses que cette épreuve vous a apportées." },
+        { title: "Gratitude des difficultés", dur: "20 min", tool: { type: "gratitude", enabled: true }, icon: "🌱", desc: "Choisissez une difficulté actuelle. Écrivez comment elle vous a forcé·e à grandir. Qu'auriez-vous raté si tout avait été facile ? Trouvez au moins 3 choses que cette épreuve vous a apportées." },
       ],
     },
   ],
@@ -210,9 +210,9 @@ export const PLANT_RITUALS = {
     {
       id: "f1", text: "Quelque chose rien que pour moi", icon: "🎁",
       quick: [
-        { title: "5 minutes de rien", dur: "3 min", icon: "☁️", desc: "Posez tout. Asseyez-vous dans un endroit confortable. Ne faites rien d'utile — pas de liste, pas de planification. Juste exister. Ces minutes de 'non-productivité' volontaire sont l'un des actes les plus régénérateurs." },
-        { title: "Plaisir sensoriel en 2 min", dur: "2 min", icon: "✨", desc: "Choisissez quelque chose de délicieux pour vos sens : une crème sur vos mains, un carré de chocolat mangé lentement, une musique adorée écoutée yeux fermés. L'acte de s'offrir un plaisir conscient recalibre la bienveillance envers soi." },
-        { title: "Question de désir", dur: "2 min", icon: "💫", desc: "Posez-vous : 'Si personne ne me regardait et que rien n'était jugé, qu'est-ce que j'aurais vraiment envie de faire en ce moment ?' Notez la première réponse. Elle contient une information sur ce dont vous avez vraiment besoin." },
+        { title: "5 minutes de rien", dur: "3 min", tool: { type: "timer", enabled: true, duration: 300 }, icon: "☁️", desc: "Posez tout. Asseyez-vous dans un endroit confortable. Ne faites rien d'utile — pas de liste, pas de planification. Juste exister. Ces minutes de 'non-productivité' volontaire sont l'un des actes les plus régénérateurs." },
+        { title: "Plaisir sensoriel en 2 min", dur: "2 min", tool: { type: "visualisation", enabled: true }, icon: "✨", desc: "Choisissez quelque chose de délicieux pour vos sens : une crème sur vos mains, un carré de chocolat mangé lentement, une musique adorée écoutée yeux fermés. L'acte de s'offrir un plaisir conscient recalibre la bienveillance envers soi." },
+        { title: "Question de désir", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "💫", desc: "Posez-vous : 'Si personne ne me regardait et que rien n'était jugé, qu'est-ce que j'aurais vraiment envie de faire en ce moment ?' Notez la première réponse. Elle contient une information sur ce dont vous avez vraiment besoin." },
       ],
       deep: [
         { title: "Après-midi libre sans obligation", dur: "3–4h", icon: "🌅", desc: "Bloquez un après-midi dans votre agenda avec un seul critère : faire uniquement ce que vous avez envie de faire. Pas de 'devrait', pas de productivité." },
@@ -223,9 +223,9 @@ export const PLANT_RITUALS = {
     {
       id: "f2", text: "Prendre soin de mon apparence", icon: "💆",
       quick: [
-        { title: "1 minute de soin intentionnel", dur: "1 min", icon: "✨", desc: "Choisissez un geste de soin que vous faites d'habitude en pilote automatique et faites-le cette fois avec une attention totale. L'intentionnalité transforme un geste banal en acte de soin envers soi-même." },
-        { title: "Posture et regard dans le miroir", dur: "2 min", icon: "🪞", desc: "Tenez-vous devant un miroir. Redressez-vous : pieds ancrés, épaules en arrière. Regardez-vous dans les yeux. Maintenez 30 secondes. Choisissez 1 chose que vous appréciez dans votre apparence aujourd'hui." },
-        { title: "Habillage intentionnel", dur: "3 min", icon: "👗", desc: "Choisissez ce que vous portez en fonction de comment vous voulez vous sentir — pas de comment vous voulez que les autres vous voient. Un vêtement qui vous fait vous sentir bien est un acte d'intelligence émotionnelle." },
+        { title: "1 minute de soin intentionnel", dur: "1 min", tool: { type: "timer", enabled: true, duration: 60 }, icon: "✨", desc: "Choisissez un geste de soin que vous faites d'habitude en pilote automatique et faites-le cette fois avec une attention totale. L'intentionnalité transforme un geste banal en acte de soin envers soi-même." },
+        { title: "Posture et regard dans le miroir", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "🪞", desc: "Tenez-vous devant un miroir. Redressez-vous : pieds ancrés, épaules en arrière. Regardez-vous dans les yeux. Maintenez 30 secondes. Choisissez 1 chose que vous appréciez dans votre apparence aujourd'hui." },
+        { title: "Habillage intentionnel", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "👗", desc: "Choisissez ce que vous portez en fonction de comment vous voulez vous sentir — pas de comment vous voulez que les autres vous voient. Un vêtement qui vous fait vous sentir bien est un acte d'intelligence émotionnelle." },
       ],
       deep: [
         { title: "Rituel beauté complet", dur: "30–45 min", icon: "🌸", desc: "Consacrez un moment de qualité à votre apparence — pas pour les autres, pour vous. Douche, soin du visage, coiffure soignée. Pendant tout ce temps, parlez-vous intérieurement avec douceur." },
@@ -236,9 +236,9 @@ export const PLANT_RITUALS = {
     {
       id: "f3", text: "Une activité créative ou joyeuse", icon: "🎨",
       quick: [
-        { title: "Dessin libre 3 min", dur: "3 min", icon: "✏️", desc: "Prenez une feuille et un stylo. Dessinez pendant 3 minutes sans but — juste ce que la main a envie de faire. L'évaluation est interdite. Cette pratique désactive temporairement l'amygdale (réactivité au stress)." },
-        { title: "Playlist joie", dur: "2 min", icon: "🎵", desc: "Créez une playlist de 5 chansons qui vous donnent de la joie. Mettez-en une maintenant, à fond. Laissez votre corps répondre à la musique comme il veut." },
-        { title: "La question créative", dur: "2 min", icon: "💡", desc: "Posez-vous une question absurde : 'Si ma journée était une peinture, de quelle couleur serait-elle ?' 'Si mon état intérieur était une météo ?' La métaphore créative donne accès à des émotions que le langage direct ne touche pas." },
+        { title: "Dessin libre 3 min", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "✏️", desc: "Prenez une feuille et un stylo. Dessinez pendant 3 minutes sans but — juste ce que la main a envie de faire. L'évaluation est interdite. Cette pratique désactive temporairement l'amygdale (réactivité au stress)." },
+        { title: "Playlist joie", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "🎵", desc: "Créez une playlist de 5 chansons qui vous donnent de la joie. Mettez-en une maintenant, à fond. Laissez votre corps répondre à la musique comme il veut." },
+        { title: "La question créative", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "💡", desc: "Posez-vous une question absurde : 'Si ma journée était une peinture, de quelle couleur serait-elle ?' 'Si mon état intérieur était une météo ?' La métaphore créative donne accès à des émotions que le langage direct ne touche pas." },
       ],
       deep: [
         { title: "Session créative de 1h", dur: "60 min", icon: "🎨", desc: "Choisissez un medium créatif — dessin, peinture, écriture, musique. Consacrez-y 1 heure complète avec ce seul objectif : le plaisir du processus, pas le résultat." },
@@ -249,12 +249,12 @@ export const PLANT_RITUALS = {
     {
       id: "f4", text: "Poser une limite qui me respecte", icon: "🛡️",
       quick: [
-        { title: "La phrase-limite", dur: "2 min", icon: "🛡️", desc: "Pensez à une situation où vous avez du mal à dire non. Formulez mentalement : 'J'ai besoin de…', 'Je ne suis pas disponible pour…'. Préparer ses mots est déjà la moitié du chemin." },
+        { title: "La phrase-limite", dur: "2 min", tool: { type: "gratitude", enabled: true }, icon: "🛡️", desc: "Pensez à une situation où vous avez du mal à dire non. Formulez mentalement : 'J'ai besoin de…', 'Je ne suis pas disponible pour…'. Préparer ses mots est déjà la moitié du chemin." },
         { title: "Le non sans explication", dur: "1 min", icon: "✋", desc: "Rappel : vous n'avez pas besoin de justifier un refus. 'Non, ça ne me convient pas' est une réponse complète. Choisissez quelque chose de petit à refuser aujourd'hui sans explication détaillée." },
-        { title: "Scan de surengagement", dur: "3 min", icon: "📋", desc: "Regardez votre agenda de la semaine. Y a-t-il un engagement accepté à contrecœur ? Que pourriez-vous décliner, déléguer ou réduire ? Identifier les surengagements est la première étape pour se libérer." },
+        { title: "Scan de surengagement", dur: "3 min", tool: { type: "gratitude", enabled: true }, icon: "📋", desc: "Regardez votre agenda de la semaine. Y a-t-il un engagement accepté à contrecœur ? Que pourriez-vous décliner, déléguer ou réduire ? Identifier les surengagements est la première étape pour se libérer." },
       ],
       deep: [
-        { title: "Cartographie de mes limites", dur: "20 min", icon: "🗺️", desc: "Écrivez : 1/ Ce que je tolère actuellement et qui m'épuise. 2/ Ce dont j'ai besoin mais que je n'ose pas demander. 3/ Une relation dans laquelle mes limites ne sont pas respectées. Pour chaque point, notez 1 action concrète." },
+        { title: "Cartographie de mes limites", dur: "20 min", tool: { type: "gratitude", enabled: true }, icon: "🗺️", desc: "Écrivez : 1/ Ce que je tolère actuellement et qui m'épuise. 2/ Ce dont j'ai besoin mais que je n'ose pas demander. 3/ Une relation dans laquelle mes limites ne sont pas respectées. Pour chaque point, notez 1 action concrète." },
         { title: "La conversation difficile", dur: "Variable", icon: "🗣️", desc: "Il y a souvent une conversation repoussée depuis des semaines. Préparez-la : ce que vous voulez dire, les mots exacts, le moment et le lieu. Puis faites-la. La peur est presque toujours plus grande que la conversation." },
         { title: "Coaching sur les limites", dur: "45–60 min", icon: "💬", desc: "Prenez rendez-vous avec un thérapeute ou coach pour explorer votre rapport aux limites. Si les difficultés à dire non sont récurrentes, elles ont souvent une origine — et la comprendre est plus transformateur que des techniques." },
       ],
@@ -266,10 +266,10 @@ export const PLANT_RITUALS = {
       quick: [
         { title: "Cohérence cardiaque express", dur: "3 min", icon: "💚", desc: "Inspirez par le nez en 5 secondes (ventre qui gonfle), expirez en 5 secondes (ventre qui rentre). Répétez 3 minutes — 18 cycles. Validée par des centaines d'études, réduit le cortisol et améliore la clarté mentale." },
         { title: "Respiration 4-7-8", dur: "2 min", icon: "😴", desc: "Inspirez en 4 secondes. Retenez en 7 secondes. Expirez lentement en 8 secondes. Répétez 4 fois. Cette technique active le système nerveux parasympathique — recommandée pour l'anxiété aiguë et l'insomnie." },
-        { title: "Ventilation cellulaire", dur: "2 min", icon: "🌬️", desc: "Prenez 5 grandes inspirations (poumons pleins à 100%), puis 5 grandes expirations (poumons vides à 100%). Cette technique chasse le CO2 résiduel — sensation de légèreté et de clarté garantie." },
+        { title: "Ventilation cellulaire", dur: "2 min", tool: { type: "breath", inhale: 4, hold: 0, exhale: 4, cycles: 8, enabled: true }, icon: "🌬️", desc: "Prenez 5 grandes inspirations (poumons pleins à 100%), puis 5 grandes expirations (poumons vides à 100%). Cette technique chasse le CO2 résiduel — sensation de légèreté et de clarté garantie." },
       ],
       deep: [
-        { title: "Méthode Wim Hof — 3 cycles", dur: "15–20 min", icon: "❄️", desc: "Allongez-vous. 30 respirations rapides et profondes. Après la 30ème, expirez tout et retenez votre souffle le plus longtemps possible. Puis inspirez et retenez 15 secondes. C'est 1 cycle. Faites-en 3. Pratiquer allongé uniquement, jamais dans l'eau." },
+        { title: "Méthode Wim Hof — 3 cycles", dur: "15–20 min", tool: { type: "timer", enabled: true, duration: 900 }, icon: "❄️", desc: "Allongez-vous. 30 respirations rapides et profondes. Après la 30ème, expirez tout et retenez votre souffle le plus longtemps possible. Puis inspirez et retenez 15 secondes. C'est 1 cycle. Faites-en 3. Pratiquer allongé uniquement, jamais dans l'eau." },
         { title: "Pranayama — Nadi Shodhana", dur: "15 min", icon: "☯️", desc: "Respiration alternée. Inspirez par la gauche (4s). Fermez les deux (2s). Expirez par la droite (8s). Inspirez par la droite (4s). Fermez (2s). Expirez par la gauche (8s). Répétez 10 cycles." },
         { title: "Breath work accompagné", dur: "30–45 min", icon: "🌊", desc: "Cherchez une séance guidée de breathwork en ligne ou un praticien local. Ces sessions permettent d'aller plus loin dans la libération des tensions accumulées, souvent ancrées dans le corps avant le mental." },
       ],
@@ -277,8 +277,8 @@ export const PLANT_RITUALS = {
     {
       id: "b2", text: "5 min sans écran, juste présent·e", icon: "🌀",
       quick: [
-        { title: "Micro-pause sensorielle", dur: "2 min", icon: "👁️", desc: "Posez votre téléphone. Nommez : 5 choses que vous voyez, 3 sons que vous entendez, 1 sensation dans votre corps. Les sens sont la porte d'entrée vers le présent — le mental est la porte vers le passé et le futur." },
-        { title: "Fenêtre ou ciel", dur: "2 min", icon: "☁️", desc: "Levez les yeux vers une fenêtre ou sortez. Regardez le ciel pendant 2 minutes. Ne pensez à rien en particulier. Le regard vers l'horizon active un mode de conscience élargie." },
+        { title: "Micro-pause sensorielle", dur: "2 min", tool: { type: "breath", inhale: 4, hold: 0, exhale: 4, cycles: 3, enabled: true }, icon: "👁️", desc: "Posez votre téléphone. Nommez : 5 choses que vous voyez, 3 sons que vous entendez, 1 sensation dans votre corps. Les sens sont la porte d'entrée vers le présent — le mental est la porte vers le passé et le futur." },
+        { title: "Fenêtre ou ciel", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "☁️", desc: "Levez les yeux vers une fenêtre ou sortez. Regardez le ciel pendant 2 minutes. Ne pensez à rien en particulier. Le regard vers l'horizon active un mode de conscience élargie." },
         { title: "Pose du téléphone — règle", dur: "1 min", icon: "📵", desc: "Choisissez un moment précis dans votre journée et posez votre téléphone dans une autre pièce. La simple présence d'un téléphone visible (même éteint) réduit de 20% les capacités cognitives disponibles." },
       ],
       deep: [
@@ -290,12 +290,12 @@ export const PLANT_RITUALS = {
     {
       id: "b3", text: "Observer mes pensées sans les suivre", icon: "🔮",
       quick: [
-        { title: "La rivière de pensées", dur: "3 min", icon: "🏞️", desc: "Fermez les yeux. Imaginez que vos pensées sont des feuilles sur une rivière. Vous êtes assis·e sur la rive. Observez chaque pensée arriver, passer et s'éloigner. La méditation n'est pas l'absence de pensées — c'est l'art de ne plus les confondre avec soi." },
-        { title: "Nomme et lâche", dur: "2 min", icon: "🏷️", desc: "Fermez les yeux 2 minutes. Pour chaque contenu mental, donnez-lui une étiquette : 'planification', 'souvenir', 'inquiétude', 'jugement'. Puis laissez-le passer. Nommer une pensée diminue son emprise émotionnelle." },
-        { title: "Retour au souffle", dur: "2 min", icon: "🌬️", desc: "Fermez les yeux. Chaque fois qu'une pensée surgit, ramenez doucement votre attention sur votre respiration. La respiration est toujours dans le présent — elle est une ancre vers le maintenant." },
+        { title: "La rivière de pensées", dur: "3 min", tool: { type: "visualisation", enabled: true }, icon: "🏞️", desc: "Fermez les yeux. Imaginez que vos pensées sont des feuilles sur une rivière. Vous êtes assis·e sur la rive. Observez chaque pensée arriver, passer et s'éloigner. La méditation n'est pas l'absence de pensées — c'est l'art de ne plus les confondre avec soi." },
+        { title: "Nomme et lâche", dur: "2 min", tool: { type: "movement", enabled: true }, icon: "🏷️", desc: "Fermez les yeux 2 minutes. Pour chaque contenu mental, donnez-lui une étiquette : 'planification', 'souvenir', 'inquiétude', 'jugement'. Puis laissez-le passer. Nommer une pensée diminue son emprise émotionnelle." },
+        { title: "Retour au souffle", dur: "2 min", tool: { type: "breath", inhale: 4, hold: 0, exhale: 6, cycles: 5, enabled: true }, icon: "🌬️", desc: "Fermez les yeux. Chaque fois qu'une pensée surgit, ramenez doucement votre attention sur votre respiration. La respiration est toujours dans le présent — elle est une ancre vers le maintenant." },
       ],
       deep: [
-        { title: "Méditation Vipassana — 20 min", dur: "20 min", icon: "💎", desc: "Asseyez-vous dans une posture stable. Portez votre attention sur les sensations physiques — d'abord la respiration, puis les sensations dans chaque partie du corps. Quand l'esprit part, notez-le sans jugement et revenez." },
+        { title: "Méditation Vipassana — 20 min", dur: "20 min", tool: { type: "timer", enabled: true, duration: 1200 }, icon: "💎", desc: "Asseyez-vous dans une posture stable. Portez votre attention sur les sensations physiques — d'abord la respiration, puis les sensations dans chaque partie du corps. Quand l'esprit part, notez-le sans jugement et revenez." },
         { title: "Retraite de méditation guidée", dur: "2–3h", icon: "🧘", desc: "Rejoignez une séance de méditation collective dans votre ville. La méditation en groupe crée une énergie de présence collective et permet d'aller plus loin que seul·e." },
         { title: "Pratique MBSR (Mindfulness)", dur: "Variable", icon: "🌱", desc: "Le programme MBSR de Jon Kabat-Zinn est la méthode de pleine conscience la plus validée scientifiquement. Il existe des versions gratuites en ligne — engagez-vous pour 8 semaines, 45 min par jour." },
       ],
@@ -303,9 +303,9 @@ export const PLANT_RITUALS = {
     {
       id: "b4", text: "Un instant de silence choisi", icon: "☁️",
       quick: [
-        { title: "2 minutes de silence absolu", dur: "2 min", icon: "🤫", desc: "Trouvez le lieu le plus silencieux accessible. Asseyez-vous. Fermez les yeux. Ne faites rien. N'essayez pas de méditer — juste être dans le silence. Le silence révèle ce qui était couvert par le bruit." },
-        { title: "Silence dans la nature", dur: "3 min", icon: "🌿", desc: "Sortez si vous le pouvez. Fermez les yeux. Écoutez ce qu'il reste : vent, oiseaux, feuilles, votre souffle. Les sons naturels activent le système nerveux parasympathique." },
-        { title: "Pause obligatoire", dur: "2 min", icon: "⏸️", desc: "Posez tout ce que vous faites. Éloignez-vous de votre poste. Ne vérifiez aucun écran. Restez debout, les mains libres, sans rien faire 2 minutes. C'est le muscle de la présence qui se réveille." },
+        { title: "2 minutes de silence absolu", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "🤫", desc: "Trouvez le lieu le plus silencieux accessible. Asseyez-vous. Fermez les yeux. Ne faites rien. N'essayez pas de méditer — juste être dans le silence. Le silence révèle ce qui était couvert par le bruit." },
+        { title: "Silence dans la nature", dur: "3 min", tool: { type: "timer", enabled: true, duration: 180 }, icon: "🌿", desc: "Sortez si vous le pouvez. Fermez les yeux. Écoutez ce qu'il reste : vent, oiseaux, feuilles, votre souffle. Les sons naturels activent le système nerveux parasympathique." },
+        { title: "Pause obligatoire", dur: "2 min", tool: { type: "timer", enabled: true, duration: 120 }, icon: "⏸️", desc: "Posez tout ce que vous faites. Éloignez-vous de votre poste. Ne vérifiez aucun écran. Restez debout, les mains libres, sans rien faire 2 minutes. C'est le muscle de la présence qui se réveille." },
       ],
       deep: [
         { title: "Bain de forêt (Shinrin-yoku)", dur: "2–3h", icon: "🌳", desc: "La pratique japonaise du Shinrin-yoku : s'immerger dans une forêt avec tous ses sens. Marchez très lentement, sans destination. Touchez les écorces. Sentez la mousse. Les effets perdurent plusieurs jours." },
@@ -521,44 +521,357 @@ export function DailyQuizModal({ onComplete, onSkip }) {
 //  COMPOSANT : ExerciseDetail
 //  Sous-vue du modal rituel : détail d'un exercice
 // ═══════════════════════════════════════════════════════════
-function ExerciseDetail({ exercise, zone, onDone, onBack }) {
-  const [done, setDone] = useState(false);
-
-  const handleDone = () => {
-    setDone(true);
-    setTimeout(onDone, 500);
-  };
-
-  return (
-    <div style={{ animation: "fadeUp 0.28s ease both" }}>
-      <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "rgba(180,200,180,0.45)", fontSize: 12, cursor: "pointer", marginBottom: 20, padding: 0, letterSpacing: "0.05em" }}>
-        ← Retour
-      </button>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 26 }}>{exercise.icon}</span>
-        <div>
-          <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 20, color: "#EEF0E8", fontWeight: 400, lineHeight: 1.15 }}>{exercise.title}</h3>
-          <span style={{ fontSize: 10, color: zone.accent, fontWeight: 500, letterSpacing: "0.06em" }}>⏱ {exercise.dur}</span>
-        </div>
-      </div>
-      <div style={{ height: 1, background: "rgba(255,255,255,0.07)", margin: "14px 0" }} />
-      <p style={{ fontSize: 13, color: "rgba(200,220,200,0.7)", lineHeight: 1.85, marginBottom: 28, fontWeight: 300 }}>
-        {exercise.desc}
-      </p>
-      <button onClick={handleDone} style={{
-        width: "100%", padding: "15px", borderRadius: 12, border: "none",
-        background: done ? "rgba(88,200,120,0.25)" : `linear-gradient(135deg, ${zone.color}28, ${zone.accent}18)`,
-        color: done ? "#88D4A0" : zone.accent,
-        fontSize: 13, cursor: "pointer", fontWeight: 500, letterSpacing: "0.06em",
-        boxShadow: `0 0 0 1px ${done ? "rgba(88,200,120,0.4)" : zone.color + "35"}`,
-        transition: "all 0.3s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-      }}>
-        {done ? "✓ Rituel accompli" : "J'ai fait cet exercice"}
-      </button>
-    </div>
-  );
+// ── Détection du type d'exercice ─────────────────────────────
+function detectExerciseType(exercise) {
+  const text = ((exercise.title ?? '') + ' ' + (exercise.desc ?? '')).toLowerCase()
+  if (/inspir|expir|respir|coh.rence|pranayama|narine|apn.e|souffle.*comp/.test(text)) return 'breath'
+  if (/gratitude|remerci|.crivez|lettre|journal.*grat|3 grat/.test(text)) return 'gratitude'
+  if (/imaginez|visualis|sentez.*corps|fermez les yeux.*imagin|racines.*imagin/.test(text)) return 'visualisation'
+  if (/torsion|posture|.tire|grandiss|pieds.*racin|marche.*lent|talon|bras|jambe/.test(text)) return 'movement'
+  return 'timer'
 }
 
+function BreathingTool({ exercise, color, accent }) {
+  const [phase, setPhase] = useState('ready')
+  const [count, setCount] = useState(0)
+  const [cycles, setCycles] = useState(0)
+
+  // ── Timings : priorité au champ tool, sinon extraction depuis desc ──────────
+  const timings = useMemo(() => {
+    if (exercise.tool?.type === 'breath') {
+      return {
+        inhale:    exercise.tool.inhale    ?? 4,
+        hold:      exercise.tool.hold      ?? 0,
+        exhale:    exercise.tool.exhale    ?? 6,
+        holdEmpty: exercise.tool.holdEmpty ?? 0,
+      }
+    }
+    const m = (exercise.desc ?? '').match(/(\d+)[^\d]+(\d+)[^\d]+(\d+)/)
+    if (m) return { inhale: parseInt(m[1]), hold: parseInt(m[2]), exhale: parseInt(m[3]), holdEmpty: 0 }
+    return { inhale: 4, hold: 0, exhale: 6, holdEmpty: 0 }
+  }, [exercise.tool, exercise.desc])
+
+  const totalCycles = exercise.tool?.cycles ?? 5
+
+  function startBreath() { setPhase('inhale'); setCount(timings.inhale) }
+
+  useEffect(() => {
+    if (phase === 'ready' || phase === 'done') return
+    if (count <= 0) {
+      if (phase === 'inhale') {
+        if (timings.hold > 0) { setPhase('hold'); setCount(timings.hold) }
+        else { setPhase('exhale'); setCount(timings.exhale) }
+      } else if (phase === 'hold') {
+        setPhase('exhale'); setCount(timings.exhale)
+      } else if (phase === 'exhale') {
+        if (timings.holdEmpty > 0) { setPhase('holdEmpty'); setCount(timings.holdEmpty) }
+        else { const n = cycles + 1; setCycles(n); if (n >= totalCycles) setPhase('done'); else { setPhase('inhale'); setCount(timings.inhale) } }
+      } else if (phase === 'holdEmpty') {
+        const n = cycles + 1; setCycles(n)
+        if (n >= totalCycles) setPhase('done')
+        else { setPhase('inhale'); setCount(timings.inhale) }
+      }
+      return
+    }
+    const t = setTimeout(() => setCount(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [phase, count])
+
+  const labels = { ready: '', inhale: 'Inspirez', hold: 'Retenez', exhale: 'Expirez', holdEmpty: 'Poumons vides', done: '✓ Terminé' }
+  const phaseColor = phase === 'inhale' ? color : phase === 'exhale' ? accent : color
+
+  // Progression du cercle SVG selon la phase
+  const phaseTotal = phase === 'inhale' ? timings.inhale : phase === 'hold' ? timings.hold : phase === 'exhale' ? timings.exhale : timings.holdEmpty
+  const phasePct   = phaseTotal > 0 ? ((phaseTotal - count) / phaseTotal) : 0
+  const R = 80, CIRC = 2 * Math.PI * R
+
+  // Scale de la sphère intérieure
+  const innerScale = phase === 'inhale' ? 1 + (phasePct * 0.35)
+    : phase === 'hold' ? 1.35
+    : phase === 'exhale' ? 1.35 - (phasePct * 0.35)
+    : phase === 'holdEmpty' ? 1 - (phasePct * 0.05)
+    : 1
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'8px 0 4px', gap:10 }}>
+      <style>{`
+        @keyframes breathPulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
+        @keyframes ringFade { from{opacity:0;transform:scale(.7)} to{opacity:1;transform:scale(1)} }
+      `}</style>
+
+      {/* Cercle principal SVG + sphère */}
+      <div style={{ position:'relative', width:200, height:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
+
+        {/* Arc de progression */}
+        <svg width={200} height={200} style={{ position:'absolute', inset:0, transform:'rotate(-90deg)' }}>
+          {/* Piste */}
+          <circle cx={100} cy={100} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={3} />
+          {/* Arc coloré */}
+          {phase !== 'ready' && phase !== 'done' && (
+            <circle cx={100} cy={100} r={R} fill="none" stroke={phaseColor} strokeWidth={3}
+              strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - phasePct)}
+              strokeLinecap="round"
+              style={{ transition:'stroke-dashoffset 1s linear, stroke .5s ease' }}
+            />
+          )}
+        </svg>
+
+        {/* Halo extérieur */}
+        {(phase === 'inhale' || phase === 'hold') && (
+          <div style={{
+            position:'absolute', borderRadius:'50%',
+            width: 200, height: 200,
+            background:`radial-gradient(circle, ${color}18 0%, transparent 70%)`,
+            animation:'breathPulse 2s ease-in-out infinite',
+          }} />
+        )}
+
+        {/* Sphère centrale */}
+        <div style={{
+          width: 120, height: 120, borderRadius:'50%',
+          background:`radial-gradient(circle at 38% 35%, ${color}55, ${color}18 50%, transparent)`,
+          boxShadow:`0 0 ${phase==='inhale'||phase==='hold' ? 40 : 12}px ${color}${phase==='inhale'||phase==='hold' ? '60' : '25'}, inset 0 1px 0 rgba(255,255,255,0.15)`,
+          border:`1px solid ${color}40`,
+          transform:`scale(${innerScale})`,
+          transition:`transform ${phase==='inhale' ? timings.inhale : phase==='exhale' ? timings.exhale : 0.4}s ease-in-out`,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          flexDirection:'column',
+        }}>
+          {/* Compte à rebours */}
+          {phase !== 'ready' && phase !== 'done' && (
+            <span style={{ fontSize:36, fontWeight:200, color:'rgba(242,237,224,0.90)', fontFamily:"'Cormorant Garamond',serif", lineHeight:1, textShadow:`0 0 20px ${color}` }}>
+              {count}
+            </span>
+          )}
+          {phase === 'done' && <span style={{ fontSize:28 }}>✓</span>}
+        </div>
+      </div>
+
+      {/* Label de phase */}
+      <div style={{
+        fontSize:18, fontWeight:300,
+        color: phase === 'done' ? '#88D4A0' : 'rgba(242,237,224,0.85)',
+        letterSpacing:'0.12em', textTransform:'uppercase',
+        fontFamily:"'Jost',sans-serif",
+        minHeight:26,
+      }}>
+        {labels[phase]}
+      </div>
+
+      {/* Indicateur de cycles */}
+      {phase !== 'ready' && phase !== 'done' && (
+        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+          {Array.from({length:totalCycles}).map((_,i) => (
+            <div key={i} style={{
+              width: i === cycles ? 10 : 7,
+              height: i === cycles ? 10 : 7,
+              borderRadius:'50%',
+              background: i < cycles ? color : i === cycles ? phaseColor : 'rgba(255,255,255,0.10)',
+              transition:'all .4s ease',
+              boxShadow: i === cycles ? `0 0 8px ${phaseColor}` : 'none',
+            }} />
+          ))}
+        </div>
+      )}
+
+      {/* Phase ready : timings + bouton */}
+      {phase === 'ready' && (
+        <div style={{ textAlign:'center', marginTop:4 }}>
+          <div style={{ fontSize:11, color:'rgba(242,237,224,0.28)', marginBottom:12, letterSpacing:'.06em' }}>
+            {timings.inhale}s inspire
+            {timings.hold > 0 ? ` · ${timings.hold}s retenir` : ''}
+            {' '}· {timings.exhale}s expirer
+            {timings.holdEmpty > 0 ? ` · ${timings.holdEmpty}s vide` : ''}
+            {' '}· {totalCycles} cycles
+          </div>
+          <button onClick={startBreath} style={{
+            padding:'11px 28px', borderRadius:100,
+            border:`1px solid ${color}50`, background:`${color}20`,
+            color, fontSize:13, fontWeight:500, cursor:'pointer',
+            fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+            boxShadow:`0 0 20px ${color}25`,
+          }}>▶ Commencer</button>
+        </div>
+      )}
+
+      {phase === 'done' && (
+        <div style={{ fontSize:14, color:'#88D4A0', fontWeight:400, letterSpacing:'.06em' }}>
+          Session terminée 🌿
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TimerTool({ exercise, color, accent }) {
+  const [seconds, setSeconds] = useState(null)
+  const [running, setRunning] = useState(false)
+  const [done, setDone] = useState(false)
+  const totalSeconds = useMemo(() => { const m = (exercise.dur ?? '').match(/(\d+)/); return m ? parseInt(m[1]) * 60 : 180 }, [exercise.dur])
+  useEffect(() => { setSeconds(totalSeconds) }, [totalSeconds])
+  useEffect(() => {
+    if (!running) return
+    if (seconds <= 0) { setRunning(false); setDone(true); return }
+    const t = setTimeout(() => setSeconds(s => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [running, seconds])
+  const pct = seconds !== null ? ((totalSeconds - seconds) / totalSeconds) * 100 : 0
+  const mins = Math.floor((seconds ?? 0) / 60)
+  const secs = (seconds ?? 0) % 60
+  const r = 52, circ = 2 * Math.PI * r
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'16px 0 8px', gap:12 }}>
+      <div style={{ position:'relative', width:136, height:136 }}>
+        <svg width={136} height={136} style={{ transform:'rotate(-90deg)' }}>
+          <circle cx={68} cy={68} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={6} />
+          <circle cx={68} cy={68} r={r} fill="none" stroke={color} strokeWidth={6} strokeDasharray={circ} strokeDashoffset={circ*(1-pct/100)} strokeLinecap="round" style={{ transition:'stroke-dashoffset 1s linear' }} />
+        </svg>
+        <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+          <span style={{ fontSize:26, fontWeight:300, color, fontFamily:"'Cormorant Garamond',serif" }}>{mins}:{String(secs).padStart(2,'0')}</span>
+          {done && <span style={{ fontSize:11, color:'#88D4A0', marginTop:2 }}>✓</span>}
+        </div>
+      </div>
+      {!done
+        ? <button onClick={() => setRunning(r => !r)} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>{running ? '⏸ Pause' : seconds === totalSeconds ? '▶ Commencer' : '▶ Reprendre'}</button>
+        : <div style={{ fontSize:13, color:'#88D4A0', fontWeight:500 }}>Méditation terminée ✓</div>
+      }
+    </div>
+  )
+}
+
+function GratitudeTool({ exercise, color, accent }) {
+  const [text, setText] = useState('')
+  const [saved, setSaved] = useState(false)
+  const prompts = ["Qu'est-ce qui s'est passé de positif aujourd'hui ?", "Qui vous a apporté quelque chose de bien ?", "Quel moment a été précieux pour vous ?"]
+  const prompt = prompts[new Date().getDate() % prompts.length]
+  return (
+    <div style={{ padding:'8px 0' }}>
+      <div style={{ fontSize:11, color:accent, letterSpacing:'.04em', marginBottom:8, fontStyle:'italic' }}>{prompt}</div>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Écrivez librement, sans filtre…" style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.85)', fontSize:13, lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
+      {text.length > 10 && !saved && <button onClick={() => setSaved(true)} style={{ marginTop:8, padding:'8px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✓ J'ai noté ma gratitude</button>}
+      {saved && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ Belle gratitude semée 🌱</div>}
+    </div>
+  )
+}
+
+function MovementTool({ exercise, color, accent }) {
+  const [step, setStep] = useState(0)
+  const [done, setDone] = useState(false)
+  const steps = useMemo(() => (exercise.desc ?? '').split(/\. (?=[A-ZÀ-ÿ0-9])/).filter(s => s.trim().length > 8).slice(0, 6), [exercise.desc])
+  if (steps.length < 2) return null
+  return (
+    <div style={{ padding:'8px 0' }}>
+      <div style={{ display:'flex', gap:4, marginBottom:12 }}>{steps.map((_,i) => <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i <= step ? color : 'rgba(255,255,255,0.10)', transition:'background .3s' }} />)}</div>
+      <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:8 }}>Étape {step+1} / {steps.length}</div>
+      <p style={{ fontSize:13, color:'rgba(200,220,200,0.85)', lineHeight:1.8, minHeight:60, fontWeight:300, marginBottom:14 }}>{steps[step]}</p>
+      <div style={{ display:'flex', gap:8 }}>
+        {step > 0 && <button onClick={() => setStep(s => s-1)} style={{ padding:'9px 16px', borderRadius:100, border:'1px solid rgba(255,255,255,0.10)', background:'transparent', color:'rgba(242,237,224,0.40)', fontSize:12, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>← Préc.</button>}
+        {step < steps.length-1
+          ? <button onClick={() => setStep(s => s+1)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:12, cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>Suivant →</button>
+          : <button onClick={() => setDone(true)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}25`, color, fontSize:12, cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ Terminé</button>
+        }
+      </div>
+      {done && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ Mouvement accompli 🌿</div>}
+    </div>
+  )
+}
+
+function VisualisationTool({ exercise, color, accent }) {
+  const [wordIdx, setWordIdx] = useState(-1)
+  const [started, setStarted] = useState(false)
+  const [done, setDone] = useState(false)
+  const words = useMemo(() => (exercise.desc ?? '').split(' '), [exercise.desc])
+  function start() { setStarted(true); setWordIdx(0) }
+  useEffect(() => {
+    if (!started || done) return
+    if (wordIdx >= words.length) { setDone(true); return }
+    const t = setTimeout(() => setWordIdx(i => i+1), 1400)
+    return () => clearTimeout(t)
+  }, [started, wordIdx])
+  return (
+    <div style={{ padding:'8px 0' }}>
+      {!started ? (
+        <div style={{ textAlign:'center', paddingTop:8 }}>
+          <div style={{ fontSize:11, color:'rgba(242,237,224,0.30)', marginBottom:12, fontStyle:'italic' }}>Le texte va se dérouler doucement…</div>
+          <button onClick={start} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>▶ Commencer</button>
+        </div>
+      ) : (
+        <p style={{ fontSize:13, color:'rgba(200,220,200,0.80)', lineHeight:1.9, minHeight:80, fontWeight:300, fontStyle:'italic' }}>
+          {words.slice(0, wordIdx).join(' ')}{!done && <span style={{ opacity:0.4 }}>|</span>}
+          {done && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ Visualisation complète 🌿</div>}
+        </p>
+      )}
+    </div>
+  )
+}
+
+export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
+  const [marked,  setMarked]  = useState(false)
+  const [started, setStarted] = useState(false)
+  const toolEnabled = exercise.tool?.enabled !== false
+  const type  = detectExerciseType(exercise)
+  const color  = zone?.color  ?? '#96d48a'
+  const accent = zone?.accent ?? '#c8f0b8'
+  const handleMark = () => { setMarked(true); setTimeout(onDone, 600) }
+
+  return (
+    <div style={{ animation:'fadeUp 0.28s ease both' }}>
+      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', marginBottom:16, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+
+      {/* En-tête */}
+      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
+        <span style={{ fontSize:24 }}>{exercise.icon}</span>
+        <div>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:19, color:'#EEF0E8', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
+          <span style={{ fontSize:10, color:accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
+        </div>
+      </div>
+      <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'10px 0' }} />
+
+      {/* Description — toujours visible */}
+      <p style={{ fontSize:13, color:'rgba(200,220,200,0.75)', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
+
+      {/* Outil interactif — affiché après clic sur Commencer */}
+      {toolEnabled && !started && (
+        <button onClick={() => setStarted(true)} style={{
+          width:'100%', padding:'12px', borderRadius:12, marginBottom:12,
+          border:`1px solid ${color}40`, background:`${color}12`,
+          color, fontSize:13, fontWeight:500, cursor:'pointer',
+          letterSpacing:'.04em', fontFamily:"'Jost',sans-serif",
+          display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+        }}>
+          ▶ Commencer l'exercice
+        </button>
+      )}
+
+      {toolEnabled && started && (
+        <div style={{ animation:'fadeUp 0.3s ease both' }}>
+          <div style={{ height:1, background:'rgba(255,255,255,0.06)', margin:'0 0 4px' }} />
+          {type === 'breath'        && <BreathingTool     exercise={exercise} color={color} accent={accent} />}
+          {type === 'timer'         && <TimerTool          exercise={exercise} color={color} accent={accent} />}
+          {type === 'gratitude'     && <GratitudeTool      exercise={exercise} color={color} accent={accent} />}
+          {type === 'movement'      && <MovementTool       exercise={exercise} color={color} accent={accent} />}
+          {type === 'visualisation' && <VisualisationTool  exercise={exercise} color={color} accent={accent} />}
+        </div>
+      )}
+
+      <div style={{ height:1, background:'rgba(255,255,255,0.06)', margin:'12px 0' }} />
+
+      {/* Bouton valider */}
+      <button onClick={handleMark} style={{
+        width:'100%', padding:14, borderRadius:12, border:'none',
+        background: marked ? 'rgba(88,200,120,0.25)' : `linear-gradient(135deg,${color}28,${accent}18)`,
+        color: marked ? '#88D4A0' : accent,
+        fontSize:13, cursor:'pointer', fontWeight:500, letterSpacing:'0.06em',
+        boxShadow:`0 0 0 1px ${marked ? 'rgba(88,200,120,0.4)' : color+'35'}`,
+        transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+        fontFamily:"'Jost',sans-serif",
+      }}>
+        {marked ? '✓ Rituel accompli !' : "✓ J'ai fait cet exercice"}
+      </button>
+    </div>
+  )
+}
 // ═══════════════════════════════════════════════════════════
 //  COMPOSANT : RitualExercises
 //  Choix quick/deep + liste des exercices
@@ -681,9 +994,8 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose }) {
       onClick={!activeRitual ? onClose : undefined}
     >
       <div
-        style={{ width: "100%", maxWidth: 440, borderRadius: "22px 22px 0 0", padding: "28px 24px 48px", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", background: `linear-gradient(175deg, ${zone.bg} 0%, #080E0A 100%)`, maxHeight: "88vh", overflowY: "auto" }}
-        onClick={e => e.stopPropagation()}
         style={{ width: "100%", maxWidth: 440, borderRadius: "22px 22px 0 0", padding: "28px 24px 48px", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", background: `linear-gradient(175deg, ${zone.bg} 0%, #080E0A 100%)`, maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.4s cubic-bezier(0.34,1.4,0.64,1)" }}
+        onClick={e => e.stopPropagation()}
       >
         {activeRitual ? (
           <RitualExercises

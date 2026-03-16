@@ -10,6 +10,7 @@ import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
 import { useIsMobile, LumenBadge, LumensCard, useProfile } from './dashboardShared'
+import { ExerciseDetail } from './mafleur_rituels'
 
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -2272,31 +2273,6 @@ function useRitualsState(userId, awardLumens) {
 }
 
 // ── ExerciseDetail ──────────────────────────────────────────
-function ExerciseDetail({ exercise, zone, onDone, onBack }) {
-  const [done, setDone] = useState(false)
-  const handleDone = () => { setDone(true); setTimeout(onDone, 500) }
-  return (
-    <div style={{ animation:'fadeUp 0.28s ease both' }}>
-      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', marginBottom:20, padding:0, letterSpacing:'0.05em' }}>
-        ← Retour
-      </button>
-      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-        <span style={{ fontSize:26 }}>{exercise.icon}</span>
-        <div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:20, color:'#EEF0E8', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
-          <span style={{ fontSize:10, color:zone.accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
-        </div>
-      </div>
-      <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'14px 0' }} />
-      <p style={{ fontSize:13, color:'rgba(200,220,200,0.7)', lineHeight:1.85, marginBottom:28, fontWeight:300 }}>{exercise.desc}</p>
-      <button onClick={handleDone} style={{ width:'100%', padding:15, borderRadius:12, border:'none', background: done ? 'rgba(88,200,120,0.25)' : `linear-gradient(135deg,${zone.color}28,${zone.accent}18)`, color: done ? '#88D4A0' : zone.accent, fontSize:13, cursor:'pointer', fontWeight:500, letterSpacing:'0.06em', boxShadow:`0 0 0 1px ${done ? 'rgba(88,200,120,0.4)' : zone.color+'35'}`, transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-        {done ? '✓ Rituel accompli' : 'J\'ai fait cet exercice'}
-      </button>
-    </div>
-  )
-}
-
-// ── RitualExercises ─────────────────────────────────────────
 function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
   const [mode,     setMode]     = useState(initialMode ?? null)
   const [activeEx, setActiveEx] = useState(null)
@@ -4059,7 +4035,7 @@ function useWakeUpTrigger({ userId }) {
 }
 
 // ── Composant réutilisable : colonne fleur ───────────────────────────────────
-function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings, streak = 0 }) {
+function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings }) {
   return (
     <div style={{
       flex:'1 1 0', minWidth:0,
@@ -4069,26 +4045,6 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
     }}>
       <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
         <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
-
-        {/* Badge streak */}
-        {streak >= 2 && (
-          <div style={{
-            position:'absolute', top:10, right:10,
-            display:'flex', alignItems:'center', gap:5,
-            padding:'5px 9px', borderRadius:10,
-            background:'rgba(14,28,14,0.40)',
-            border:'1px solid rgba(150,212,133,0.15)',
-            backdropFilter:'blur(4px)',
-            zIndex:10, pointerEvents:'none',
-          }}>
-            <span style={{ fontSize:11 }}>👍</span>
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
-              <span style={{ fontSize:11, fontWeight:600, lineHeight:1.1, color:'rgba(150,212,133,0.70)', fontFamily:"'Jost',sans-serif" }}>{streak} jours</span>
-              <span style={{ fontSize:7.5, fontWeight:400, lineHeight:1.2, color:'rgba(150,212,133,0.38)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', textTransform:'uppercase' }}>consécutifs</span>
-            </div>
-          </div>
-        )}
-
         <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
