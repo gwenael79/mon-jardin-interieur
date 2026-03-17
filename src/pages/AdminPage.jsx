@@ -98,6 +98,282 @@ html,body,#root{height:100%;width:100%}
 }
 `
 
+
+const ZONES_RITUELS = {
+  roots:   { name: "Racines",  color: "#C8894A" },
+  stem:    { name: "Tige",     color: "#5AAF78" },
+  leaves:  { name: "Feuilles", color: "#4A9E5C" },
+  flowers: { name: "Fleurs",   color: "#D4779A" },
+  breath:  { name: "Souffle",  color: "#6ABBE4" },
+}
+
+function RituelsEditor({ showToast }) {
+  // ── Filtres cascade ──────────────────────────────────────
+  const [zone,    setZone]    = useState('')
+  const [rituel,  setRituel]  = useState('')
+  const [title,   setTitle]   = useState('')
+
+  // ── Options calculées depuis Supabase ────────────────────
+  const [optRituels, setOptRituels] = useState([])
+  const [optTitles,  setOptTitles]  = useState([])
+
+  // ── Exercice chargé ──────────────────────────────────────
+  const [exercise,  setExercise]  = useState(null)
+  const [loading,   setLoading]   = useState(false)
+  const [saving,    setSaving]    = useState(false)
+
+  // ── Form state ───────────────────────────────────────────
+  const [desc,    setDesc]    = useState('')
+  const [dur,     setDur]     = useState('')
+  const [toolType,setToolType]= useState('none')
+  const [toolObj, setToolObj] = useState({ inhale:5, hold:0, exhale:5, holdEmpty:0, cycles:5 })
+
+  const zColors = { roots:'#C8894A', stem:'#5AAF78', leaves:'#4A9E5C', flowers:'#D4779A', breath:'#6ABBE4' }
+  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)', background:'#1a2e1a', color:'rgba(242,237,224,0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+
+  // Quand la zone change → charge les rituels disponibles
+  useEffect(() => {
+    setRituel(''); setTitle(''); setOptRituels([]); setOptTitles([]); setExercise(null)
+    if (!zone) return
+    supabase.from('rituels').select('rituel').eq('zone', zone)
+      .then(({ data }) => {
+        if (!data) return
+        const unique = [...new Set(data.map(r => r.rituel))]
+        setOptRituels(unique)
+      })
+  }, [zone])
+
+  // Quand le rituel change → charge les titres
+  useEffect(() => {
+    setTitle(''); setOptTitles([]); setExercise(null)
+    if (!zone || !rituel) return
+    supabase.from('rituels').select('title, mode').eq('zone', zone).eq('rituel', rituel).order('n')
+      .then(({ data }) => {
+        if (!data) return
+        setOptTitles(data.map(r => ({ title: r.title, mode: r.mode })))
+      })
+  }, [rituel])
+
+  // Quand le titre change → charge l'exercice complet
+  useEffect(() => {
+    setExercise(null)
+    if (!zone || !rituel || !title) return
+    setLoading(true)
+    supabase.from('rituels').select('*').eq('zone', zone).eq('rituel', rituel).eq('title', title).single()
+      .then(({ data }) => {
+        setLoading(false)
+        if (!data) return
+        setExercise(data)
+        setDesc(data.desc || '')
+        setDur(data.dur || '')
+        const t = data.tool
+        if (!t) { setToolType('none'); return }
+        setToolType(t.type || 'none')
+        if (t.type === 'breath') setToolObj({ inhale: t.inhale||5, hold: t.hold||0, exhale: t.exhale||5, holdEmpty: t.holdEmpty||0, cycles: t.cycles||5 })
+      })
+  }, [title])
+
+  const handleSave = async () => {
+    if (!exercise) return
+    setSaving(true)
+    const tool = toolType === 'none' ? null
+      : toolType === 'breath' ? { type:'breath', ...toolObj }
+      : { type: toolType }
+    const { error } = await supabase.from('rituels')
+      .update({ rituel: editRituel, title: editTitle, "desc": desc, dur, tool, updated_at: new Date().toISOString() })
+      .eq('n', exercise.n)
+    setSaving(false)
+    if (error) { showToast('✗ Erreur : ' + error.message); return }
+    if (window.__PLANT_RITUALS_CACHE__) delete window.__PLANT_RITUALS_CACHE__
+    showToast('✓ Enregistré — MaFleur se mettra à jour au prochain chargement')
+  }
+
+  // ── State accordéon ─────────────────────────────────────
+  const [openZone, setOpenZone] = useState('')
+
+  const toggleZone = (k) => {
+    const next = openZone === k ? '' : k
+    setOpenZone(next)
+    if (next !== zone) { setZone(next); setRituel(''); setTitle(''); setExercise(null) }
+  }
+
+  const zc = zColors[zone] || '#96d485'
+  const label = { fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8, display:'block' }
+
+  // ── Champs éditables titre rituel + titre exercice ───────
+  const [editRituel, setEditRituel] = useState('')
+  const [editTitle,  setEditTitle]  = useState('')
+  useEffect(() => { setEditRituel(exercise?.rituel || '') }, [exercise])
+  useEffect(() => { setEditTitle(exercise?.title  || '') }, [exercise])
+
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:24, alignItems:'start' }}>
+
+      {/* ── Colonne gauche : accordéon ── */}
+      <div style={{ display:'flex', flexDirection:'column', gap:2, position:'sticky', top:20 }}>
+        <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', letterSpacing:'.12em', textTransform:'uppercase', marginBottom:12, paddingBottom:10, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+          Sélectionner un exercice
+        </div>
+
+        {Object.entries(ZONES_RITUELS).map(([k, v]) => {
+          const isOpen = openZone === k
+          return (
+            <div key={k} style={{ borderRadius:10, overflow:'hidden', border: isOpen ? `1px solid ${v.color}35` : '1px solid transparent', background: isOpen ? `${v.color}08` : 'transparent', transition:'all .2s' }}>
+
+              {/* ── En-tête zone ── */}
+              <button onClick={() => toggleZone(k)} style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 14px', background:'none', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, textAlign:'left', color: isOpen ? v.color : 'rgba(242,237,224,0.55)', transition:'color .15s' }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background: isOpen ? v.color : 'rgba(255,255,255,0.18)', flexShrink:0, transition:'background .15s' }}/>
+                <span style={{ flex:1 }}>{v.name}</span>
+                <span style={{ fontSize:10, opacity:.5, transition:'transform .2s', display:'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+              </button>
+
+              {/* ── Rituels ── */}
+              {isOpen && optRituels.length > 0 && (
+                <div style={{ padding:'0 8px 8px' }}>
+                  {optRituels.map(r => {
+                    const isRituelOpen = rituel === r
+                    return (
+                      <div key={r}>
+                        <button onClick={() => { setRituel(isRituelOpen ? '' : r); setTitle(''); setExercise(null) }}
+                          style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'7px 10px', borderRadius:8, background: isRituelOpen ? `${v.color}12` : 'transparent', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, textAlign:'left', color: isRituelOpen ? 'rgba(242,237,224,0.88)' : 'rgba(242,237,224,0.45)', transition:'all .15s' }}>
+                          <span style={{ fontSize:9, opacity:.4, transition:'transform .2s', display:'inline-block', transform: isRituelOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
+                          {r}
+                        </button>
+
+                        {/* ── Exercices ── */}
+                        {isRituelOpen && optTitles.length > 0 && (
+                          <div style={{ paddingLeft:16, display:'flex', flexDirection:'column', gap:1, marginTop:2 }}>
+                            {optTitles.map(ex => (
+                              <button key={ex.title} onClick={() => setTitle(ex.title)}
+                                style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 10px', borderRadius:7, background: title===ex.title ? `${v.color}15` : 'transparent', border: title===ex.title ? `1px solid ${v.color}30` : '1px solid transparent', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:11, textAlign:'left', color: title===ex.title ? 'rgba(242,237,224,0.88)' : 'rgba(242,237,224,0.40)', transition:'all .15s', lineHeight:1.4 }}>
+                                <span style={{ fontSize:9, padding:'1px 5px', borderRadius:5, flexShrink:0, background: ex.mode==='quick' ? 'rgba(232,192,96,0.10)' : 'rgba(130,200,240,0.10)', color: ex.mode==='quick' ? '#e8c060' : '#82c8f0', border: ex.mode==='quick' ? '1px solid rgba(232,192,96,0.20)' : '1px solid rgba(130,200,240,0.20)' }}>
+                                  {ex.mode === 'quick' ? '⚡' : '🌊'}
+                                </span>
+                                {ex.title}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Colonne droite : form ── */}
+      <div>
+        {!exercise && !loading && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:320, border:'1px dashed rgba(255,255,255,0.07)', borderRadius:14, flexDirection:'column', gap:12 }}>
+            <div style={{ fontSize:32, opacity:.3 }}>✦</div>
+            <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>
+              {!zone ? 'Ouvrez une zone pour commencer' : !rituel ? 'Choisissez un rituel' : 'Choisissez un exercice'}
+            </div>
+          </div>
+        )}
+
+        {loading && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200 }}>
+            <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic' }}>Chargement…</div>
+          </div>
+        )}
+
+        {exercise && !loading && (
+          <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+
+            {/* Header exercice */}
+            <div style={{ display:'flex', alignItems:'center', gap:14, padding:'16px 20px', background:`${zc}08`, border:`1px solid ${zc}25`, borderRadius:14 }}>
+              <span style={{ fontSize:28, lineHeight:1, flexShrink:0 }}>{exercise.icon}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:'rgba(242,237,224,0.88)', fontWeight:300, lineHeight:1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{editTitle || exercise.title}</div>
+                <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:5 }}>
+                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background:`${zc}15`, border:`1px solid ${zc}30`, color:zc }}>{ZONES_RITUELS[exercise.zone]?.name}</span>
+                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(242,237,224,0.40)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{editRituel || exercise.rituel}</span>
+                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background: exercise.mode==='quick' ? 'rgba(232,192,96,0.08)' : 'rgba(130,200,240,0.08)', border: exercise.mode==='quick' ? '1px solid rgba(232,192,96,0.20)' : '1px solid rgba(130,200,240,0.20)', color: exercise.mode==='quick' ? '#e8c060' : '#82c8f0' }}>
+                    {exercise.mode === 'quick' ? '⚡ Rapide' : '🌊 Profond'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Titre rituel + Titre exercice */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+              <div>
+                <span style={label}>Titre du rituel</span>
+                <input value={editRituel} onChange={e => setEditRituel(e.target.value)} style={{ ...inp }}/>
+              </div>
+              <div>
+                <span style={label}>Titre de l'exercice</span>
+                <input value={editTitle} onChange={e => setEditTitle(e.target.value)} style={{ ...inp }}/>
+              </div>
+            </div>
+
+            {/* Durée + Outil */}
+            <div style={{ display:'grid', gridTemplateColumns:'180px 1fr', gap:16 }}>
+              <div>
+                <span style={label}>Durée</span>
+                <input value={dur} onChange={e => setDur(e.target.value)} style={{ ...inp }}/>
+              </div>
+              <div>
+                <span style={label}>Outil interactif</span>
+                <select value={toolType} onChange={e => setToolType(e.target.value)} style={{ ...inp }}>
+                  <option value="none">Aucun outil</option>
+                  <option value="breath">🫁 Respiration (breath)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Paramètres breath */}
+            {toolType === 'breath' && (
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, padding:'16px', background:'rgba(106,187,228,0.05)', border:'1px solid rgba(106,187,228,0.15)', borderRadius:10 }}>
+                {[['inhale','Inspir (s)'],['hold','Rétention (s)'],['exhale','Expir (s)'],['holdEmpty','Vide (s)'],['cycles','Cycles']].map(([k,lbl]) => (
+                  <div key={k} style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                    <label style={{ fontSize:9, color:'rgba(106,187,228,0.60)', textTransform:'uppercase', letterSpacing:'.06em' }}>{lbl}</label>
+                    <input type="number" min="0" max="120" value={toolObj[k]||0}
+                      onChange={e => setToolObj(p => ({ ...p, [k]: parseInt(e.target.value)||0 }))}
+                      style={{ ...inp, padding:'8px', textAlign:'center', fontSize:18, fontFamily:"'Cormorant Garamond',serif", fontWeight:300 }}/>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Description */}
+            <div>
+              <span style={label}>Description</span>
+              <textarea value={desc} onChange={e => setDesc(e.target.value.slice(0, 250))} rows={7}
+                style={{ ...inp, resize:'vertical', lineHeight:1.9, fontSize:14 }}/>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
+                <span style={{ fontSize:10, color: desc.length > 230 ? (desc.length >= 250 ? '#e87060' : '#e8c060') : 'rgba(242,237,224,0.22)', fontWeight: desc.length > 230 ? 500 : 400 }}>{desc.length} / 250</span>
+                <button
+                  onClick={() => {
+                    const text = `${editRituel}, ${editTitle}, ${desc}`
+                    navigator.clipboard.writeText(text).then(() => showToast('✓ Copié'))
+                  }}
+                  style={{ padding:'5px 14px', borderRadius:20, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.45)', fontSize:11, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.04em', transition:'all .15s' }}
+                >
+                  ⎘ Copier
+                </button>
+              </div>
+            </div>
+
+            {/* Save */}
+            <button onClick={handleSave} disabled={saving}
+              style={{ padding:'14px', borderRadius:10, border:`1px solid ${zc}50`, background:`${zc}18`,
+                color:zc, fontSize:13, fontWeight:500, cursor: saving ? 'wait' : 'pointer',
+                fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', opacity: saving ? 0.6 : 1,
+                transition:'all .2s' }}>
+              {saving ? 'Enregistrement…' : '✓ Enregistrer dans Supabase'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function AdminPage() {
   const { user, signOut } = useAuth()
   const [tab,       setTab]       = useState('reports')
@@ -533,6 +809,9 @@ export function AdminPage() {
               <span style={{ position:'absolute', top:2, right:2, background:'rgba(246,196,83,0.35)', border:'1px solid rgba(246,196,83,0.5)', borderRadius:100, fontSize:8, padding:'1px 5px', color:'#F6C453', lineHeight:1.4 }}>{pendingReviews.length}</span>
             )}
           </div>
+          <div className={`adm-tab${tab === 'parametres' ? ' active' : ''}`} onClick={() => setTab('parametres')}>
+            ⚙️ Paramètres
+          </div>
         </div>
 
         {/* ── SIGNALEMENTS ── */}
@@ -748,7 +1027,6 @@ export function AdminPage() {
           </div>
         )}
 
-      </div>
 
         {/* ── FRÉQUENTATION ── */}
 
@@ -1022,6 +1300,13 @@ export function AdminPage() {
           </div>
         )}
 
+        {tab === 'parametres' && (
+          <div className="adm-section">
+            <RituelsEditor showToast={showToast} />
+          </div>
+        )}
+
+      </div>
       {toast && <div className="adm-toast">{toast}</div>}
     </div>
   )

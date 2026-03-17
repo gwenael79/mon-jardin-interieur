@@ -10,7 +10,7 @@ import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
 import { useIsMobile, LumenBadge, LumensCard, useProfile } from './dashboardShared'
-import { ExerciseDetail } from './mafleur_rituels'
+import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_rituels'
 
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -1846,258 +1846,10 @@ const ZONE_DB_KEY = {
   breath:  'zone_souffle',
 }
 
-const PLANT_RITUALS = {
-  roots: [
-    { id:'r1', text:'Un repas qui me nourrit vraiment', icon:'🍃',
-      quick:[
-        { title:'La pause avant de manger', dur:'2 min', icon:'🍽️', desc:'Avant de prendre votre repas, posez les mains à plat sur la table. Fermez les yeux 30 secondes. Inspirez par le nez, ressentez l\'odeur de ce que vous allez manger. Mangez la première bouchée en silence, en mâchant lentement 15 fois.' },
-        { title:'Scan des couleurs dans l\'assiette', dur:'1 min', icon:'🌈', desc:'Regardez votre repas comme si vous le voyiez pour la première fois. Identifiez chaque couleur, chaque texture. Nommez mentalement ce que chaque aliment va apporter à votre corps.' },
-        { title:'Bilan nutritionnel intuitif', dur:'3 min', icon:'⚡', desc:'Demandez-vous honnêtement : mon corps a-t-il faim d\'énergie (glucides), de force (protéines), ou de légèreté (légumes) ? Choisissez un seul ingrédient à ajouter dans votre prochain repas.' },
-      ],
-      deep:[
-        { title:'Préparation d\'un repas en pleine conscience', dur:'20–30 min', icon:'🥗', desc:'Cuisinez un plat simple avec 3–5 ingrédients que vous aimez. Éteignez les écrans. Sentez chaque aliment avant de le couper. Observez les transformations — la chaleur, les textures.' },
-        { title:'Journal alimentaire intuitif', dur:'15 min', icon:'📓', desc:'Écrivez : quels aliments vous manquent vraiment ? Quels aliments vous lourdissent ? Identifiez 2 changements simples et réalistes pour cette semaine.' },
-        { title:'Rituels autour des repas', dur:'10 min', icon:'🕯️', desc:'Créez un petit rituel pour votre prochain repas : belle assiette, bougie, musique douce. Téléphone dans une autre pièce. Mangez assis, sans écran.' },
-      ],
-    },
-    { id:'r2', text:'5 min de centrage, pieds au sol', icon:'🧘',
-      quick:[
-        { title:'Ancrage 5-4-3-2-1', dur:'2 min', icon:'🌍', desc:'Pieds à plat. Nommez mentalement : 5 choses que vous voyez, 4 entendez, 3 touchez, 2 odeurs, 1 goût. Terminez par 3 respirations profondes.' },
-        { title:'Les pieds comme racines', dur:'2 min', icon:'🌳', desc:'Asseyez-vous, deux pieds à plat. Imaginez des racines qui partent de vos plantes de pieds et s\'enfoncent dans la terre. À chaque expiration, laissez votre poids descendre.' },
-        { title:'Scan corporel express', dur:'3 min', icon:'🔍', desc:'Fermez les yeux. Parcourez mentalement votre corps de la tête aux pieds. À chaque zone, expirez en relâchant la tension.' },
-      ],
-      deep:[
-        { title:'Méditation d\'ancrage guidée', dur:'15–20 min', icon:'🧘', desc:'Asseyez-vous confortablement. Sentez votre poids dans le siège. Inspirez en comptant 4, retenez 2, expirez en comptant 6. Puis laissez la respiration retrouver son rythme naturel.' },
-        { title:'Marche pieds nus dans la nature', dur:'20–30 min', icon:'🌿', desc:'Retirez vos chaussures dehors. Marchez très lentement en sentant chaque surface. Posez d\'abord le talon, puis le milieu, puis l\'avant du pied.' },
-        { title:'Yoga des racines', dur:'20 min', icon:'🌱', desc:'Enchaînez : (1) Montagne debout immobile 2 min. (2) Enfant à genoux 3 min. (3) Demi-pont hanches soulevées 2 min. (4) Cadavre final 5 min.' },
-      ],
-    },
-    { id:'r3', text:'Hydratation consciente', icon:'💧',
-      quick:[
-        { title:'Le verre d\'eau rituel', dur:'1 min', icon:'🥛', desc:'Grand verre d\'eau à température ambiante. Posez les deux mains autour. Respirez une fois profondément. Buvez lentement, en 5 à 7 gorgées, en ressentant chaque gorgée descendre.' },
-        { title:'Bilan hydratation', dur:'2 min', icon:'📊', desc:'De quelle couleur étaient vos dernières urines ? Avez-vous bu au moins 1,5L hier ? Avez-vous des tensions dans la nuque ? Décidez d\'un nombre de verres à boire avant midi.' },
-        { title:'Infusion consciente', dur:'3 min', icon:'🍵', desc:'Préparez une infusion. Pendant qu\'elle infuse, posez les mains autour de la tasse et sentez la chaleur. Inspirez la vapeur parfumée. Buvez la première gorgée yeux fermés.' },
-      ],
-      deep:[
-        { title:'Détox hydratante sur 1 journée', dur:'Journée', icon:'🌊', desc:'Posez une bouteille d\'eau de 1,5L visible sur votre bureau. Planifiez 3 moments pour boire : matin, avant chaque repas, avant le coucher. Remplacez le café de l\'après-midi par une infusion.' },
-        { title:'Rituel beauté intérieure', dur:'15 min', icon:'✨', desc:'Commencez par boire 2 grands verres d\'eau citronnée. Préparez une infusion beauté (hibiscus, rose, romarin). Pendant qu\'elle refroidit, faites un masque visage. Restez allongé·e 10 min.' },
-        { title:'Journée sans boissons sucrées', dur:'Journée', icon:'🚫', desc:'Engagement : remplacez toutes les boissons sucrées par de l\'eau, des infusions ou des eaux aromatisées maison (concombre-menthe, citron-gingembre). Notez le soir votre niveau d\'énergie.' },
-      ],
-    },
-    { id:'r4', text:'Coucher avant minuit ce soir', icon:'🌙',
-      quick:[
-        { title:'Protocole extinction lumières', dur:'3 min', icon:'💡', desc:'À 30 minutes du coucher, mettez votre téléphone en mode avion. Baissez tous les éclairages au maximum ou allumez une bougie. Votre cerveau reçoit le signal que la nuit commence.' },
-        { title:'Scan de fin de journée', dur:'2 min', icon:'🌙', desc:'Allongez-vous. 1 chose qui s\'est bien passée, 1 chose à lâcher pour cette nuit, 1 intention pour demain. Laissez votre corps peser dans le matelas.' },
-        { title:'Respiration 4-7-8', dur:'2 min', icon:'😴', desc:'Inspirez par le nez en comptant 4, retenez en comptant 7, expirez lentement par la bouche en comptant 8. Répétez 4 fois. Active le système nerveux parasympathique.' },
-      ],
-      deep:[
-        { title:'Rituel de décompression du soir', dur:'30 min', icon:'🛁', desc:'1h avant de dormir : douche chaude, vêtements confortables, lecture physique 20 min, éteignez tous les écrans, notez 3 pensées dans un carnet.' },
-        { title:'Yoga nidra (yoga du sommeil)', dur:'20 min', icon:'🌌', desc:'Allongez-vous dans votre lit. Fermez les yeux. Portez votre attention successivement sur chaque partie du corps pendant 15–20 secondes. Ne faites plus rien — laissez le sommeil venir.' },
-        { title:'Écriture de décompression', dur:'15 min', icon:'📝', desc:'Écrivez sans filtre tout ce qui tourne dans votre tête. Sur une nouvelle page : 3 choses positives. Enfin : 1 seule priorité pour demain. Fermez le carnet.' },
-      ],
-    },
-  ],
-  stem: [
-    { id:'s1', text:'Bouger mon corps (marche, danse…)', icon:'🚶',
-      quick:[
-        { title:'1 minute de saut', dur:'1 min', icon:'⚡', desc:'Sautez sur place 60 secondes — rebondissement léger. Stimule le système lymphatique, augmente le flux sanguin et libère des endorphines immédiatement.' },
-        { title:'Marche de 3 minutes', dur:'3 min', icon:'🚶', desc:'Marchez en vous concentrant sur les sensations dans vos pieds, vos jambes, votre balancement naturel. Un peu plus lentement que d\'habitude.' },
-        { title:'Étirements debout', dur:'2 min', icon:'🙆', desc:'Bras au plafond, étirez-vous. Penchez-vous à gauche puis à droite. Roulez les épaules 5 fois en arrière, 5 en avant. Tournez la tête lentement. 3 grandes inspirations.' },
-      ],
-      deep:[
-        { title:'Marche méditée en nature', dur:'25–30 min', icon:'🌲', desc:'Partez marcher sans destination. Observez 3 choses belles. Modifiez votre rythme : 5 min lentement, 5 min plus vite, 5 min lentement.' },
-        { title:'Session danse libre', dur:'15–20 min', icon:'💃', desc:'Mettez vos 5 chansons préférées. Yeux fermés, laissez votre corps bouger spontanément — pas de bien faire, juste répondre à la musique.' },
-        { title:'Marche + intention', dur:'20 min', icon:'🎯', desc:'Définissez une intention avant de partir. À chaque expiration, imaginez que vous déposez quelque chose. À chaque inspiration, vous recevez énergie ou clarté.' },
-      ],
-    },
-    { id:'s2', text:'Accueillir un imprévu sans résister', icon:'🌊',
-      quick:[
-        { title:'La pause STOP', dur:'2 min', icon:'✋', desc:'Stop — arrêtez tout 10 secondes. Respirez — 1 inspiration profonde. Observez — nommez ce que vous ressentez. Puis choisissez — quelle est la réponse la plus utile ?' },
-        { title:'Reformulation mentale', dur:'2 min', icon:'🔄', desc:'Prenez un imprévu. Formulez "Cela m\'oblige à…" (contrainte). Reformulez "Cela me permet de…" (opportunité). La flexibilité mentale se muscle.' },
-        { title:'Le corps d\'abord', dur:'1 min', icon:'🌊', desc:'Main sur le sternum. Sentez la chaleur. Expirez lentement en disant intérieurement "je peux accueillir ça". Répétez 3 fois.' },
-      ],
-      deep:[
-        { title:'Journal des résistances', dur:'15 min', icon:'📓', desc:'Écrivez ce qui vous résiste. 8 minutes libres. Relisez et soulignez ce que vous n\'acceptez pas. Pour chacun : "Si j\'acceptais vraiment cela, je pourrais…"' },
-        { title:'Méditation du fleuve', dur:'15–20 min', icon:'🏞️', desc:'Imaginez que vous êtes au bord d\'un fleuve tranquille. Chaque pensée est une feuille portée par le courant. Vous êtes la rive — stable, présent·e.' },
-        { title:'L\'obstacle comme chemin', dur:'20 min', icon:'🧩', desc:'Ce que je veux / L\'obstacle / Ce que l\'obstacle m\'apprend / Ce que je peux faire. Concluez avec 1 action concrète.' },
-      ],
-    },
-    { id:'s3', text:'Étirements ou pause corporelle', icon:'🤸',
-      quick:[
-        { title:'Détente nuque et épaules', dur:'2 min', icon:'🙆', desc:'Penchez la tête vers l\'épaule gauche, 20 secondes. Roulez vers l\'avant, puis droite. Roulez les deux épaules en arrière 5 fois. Croisez les bras derrière le dos.' },
-        { title:'Torsion assise', dur:'2 min', icon:'🔄', desc:'Assis, pieds à plat. Inspirez en grandissant. À l\'expiration, tournez à droite, 5 respirations. Revenez. Recommencez à gauche. Libère les tensions du dos.' },
-        { title:'Posture de l\'enfant', dur:'2 min', icon:'🧘', desc:'À genoux, pliez-vous vers l\'avant, front vers les genoux. Épaules relâchées. Respirez dans le bas du dos. Active le système nerveux parasympathique.' },
-      ],
-      deep:[
-        { title:'Séquence yoga du dos', dur:'20 min', icon:'🌱', desc:'3 minutes chacune : (1) Chat-Vache. (2) Chien tête en bas. (3) Cobra. (4) Pigeon. (5) Demi-bridge. (6) Savasana 5 min.' },
-        { title:'Automassage guidé', dur:'15 min', icon:'✋', desc:'Commencez par les pieds (roulez sur une balle). Remontez vers les mollets, cuisses, ventre (groupes horaires), épaules, crâne. Réduit le cortisol.' },
-        { title:'Marche nordique ou Qi gong', dur:'25–30 min', icon:'🌿', desc:'Marchez en oscillant les bras en opposition aux jambes. Ou cherchez une vidéo Qi gong débutant de 20 min. Libère les tensions accumulées.' },
-      ],
-    },
-    { id:'s4', text:'Respiration abdominale 3 min', icon:'🌬️',
-      quick:[
-        { title:'Cohérence cardiaque', dur:'3 min', icon:'💚', desc:'Inspirez lentement par le nez en comptant jusqu\'à 5 — le ventre gonfle. Expirez en comptant jusqu\'à 5 — le ventre rentre. 18 cycles. Réduit le cortisol de 20% en 6 semaines.' },
-        { title:'Respiration en carré', dur:'2 min', icon:'🔲', desc:'Inspirez (4s) · Retenez (4s) · Expirez (4s) · Vide (4s). Répétez 5 fois. Utilisé par les Navy SEALs pour revenir au calme sous stress intense.' },
-        { title:'Expiration longue anti-stress', dur:'2 min', icon:'🌬️', desc:'Inspirez 4 secondes. Expirez très lentement 8 secondes, comme si vous souffliez sur une flamme sans l\'éteindre. L\'expiration longue active le nerf vague. 6 fois.' },
-      ],
-      deep:[
-        { title:'Pranayama — respiration alternée', dur:'15 min', icon:'☯️', desc:'Inspirez par la gauche (4s). Fermez les deux (2s). Expirez par la droite (8s). Inversez. Faites 10 cycles. Équilibre les deux hémisphères.' },
-        { title:'Cohérence cardiaque 3-6-5', dur:'15 min', icon:'🌻', desc:'3 fois par jour, 6 respirations par minute, pendant 5 minutes. Matin au réveil, avant le déjeuner, avant le soir. Journal avant/après pendant une semaine.' },
-        { title:'Respiration rebirthing douce', dur:'20–25 min', icon:'🌊', desc:'Allongez-vous. Cycle continu : inspir et expir reliés sans pause, par le nez, 20 minutes. Laissez les émotions traverser sans les retenir. 5 min de silence.' },
-      ],
-    },
-  ],
-  leaves: [
-    { id:'l1', text:'Un sourire sincère offert', icon:'😊',
-      quick:[
-        { title:'Le demi-sourire bouddhiste', dur:'1 min', icon:'🙂', desc:'Relevez très légèrement les coins de votre bouche. Fermez les yeux. Même un sourire volontaire minimal active les mêmes circuits que le sourire spontané.' },
-        { title:'Sourire mémorisé', dur:'2 min', icon:'💛', desc:'Pensez à un moment récent où vous avez vraiment souri. Laissez le souvenir remplir tout votre corps. Sentez la chaleur dans la poitrine. Ouvrez les yeux avec cette sensation.' },
-        { title:'Gratitude rapide', dur:'2 min', icon:'🙏', desc:'Pensez à une personne qui vous a apporté quelque chose de positif récemment. Nommez ce qu\'elle a fait. Sentez la chaleur de cette gratitude dans votre corps.' },
-      ],
-      deep:[
-        { title:'Lettre de gratitude', dur:'20 min', icon:'✉️', desc:'Choisissez quelqu\'un qui a eu un impact positif et à qui vous n\'avez jamais dit merci. Écrivez-lui une lettre à la main — précis sur ce qu\'il a fait et ce que ça a changé.' },
-        { title:'Méditation Metta', dur:'15–20 min', icon:'💖', desc:'Envoyez mentalement ces 4 phrases : "Puisses-tu être heureux·se. En bonne santé. En sécurité. Vivre avec légèreté." Commencez par vous-même, puis quelqu\'un que vous aimez.' },
-        { title:'Acte de gentillesse aléatoire', dur:'Variable', icon:'🌟', desc:'Faites une chose gentille aujourd\'hui sans que personne ne sache que c\'est vous. Ces actes anonymes augmentent le plus le sentiment de sens et de bonheur.' },
-      ],
-    },
-    { id:'l2', text:'Un moment de rire partagé', icon:'😄',
-      quick:[
-        { title:'Yoga du rire — 1 min', dur:'1 min', icon:'😂', desc:'Commencez par rire de manière forcée — "Ha ha ha, Ho ho ho". Après 45 secondes, votre corps prend le relais. 60 secondes suffisent pour libérer des endorphines.' },
-        { title:'La liste des choses absurdes', dur:'3 min', icon:'🤣', desc:'Notez toutes les situations légèrement cocasses de votre semaine — vos maladresses, les situations bizarres, les quiproquos. Relisez en cherchant ce qu\'il y a de drôle.' },
-        { title:'Mème ou vidéo qui vous fait rire', dur:'2 min', icon:'📱', desc:'Permettez-vous 2 minutes de contenus qui vous font vraiment sourire. Intentionnellement — pas par habitude. Riez vraiment, puis fermez l\'application.' },
-      ],
-      deep:[
-        { title:'Soirée comédie ou spectacle', dur:'60–90 min', icon:'🎭', desc:'Planifiez pour ce soir un spectacle d\'humour ou film comique que vous attendez depuis longtemps — ou appelez un ami pour le faire ensemble.' },
-        { title:'Jeu en famille ou entre amis', dur:'30–60 min', icon:'🎮', desc:'Un jeu qui fait rire, sans téléphones individuels. Les moments de jeu collectif libèrent de l\'ocytocine et créent des souvenirs partagés.' },
-        { title:'Cours d\'improvisation', dur:'2h', icon:'🎪', desc:'L\'improvisation développe simultanément la flexibilité mentale, le lien aux autres, l\'humour et la confiance en soi.' },
-      ],
-    },
-    { id:'l3', text:'Prendre des nouvelles de quelqu\'un', icon:'💬',
-      quick:[
-        { title:'Le message en 2 phrases', dur:'1 min', icon:'📱', desc:'Pensez à quelqu\'un à qui vous n\'avez pas parlé depuis un moment. Envoyez ce que vous avez pensé d\'elle + une question sincère. Deux phrases suffisent pour maintenir un lien.' },
-        { title:'Appel de 3 minutes', dur:'3 min', icon:'📞', desc:'Appelez quelqu\'un (pas un message — un appel). Dites que vous pensiez à lui/elle. Posez une vraie question et écoutez vraiment la réponse.' },
-        { title:'Observation attentive', dur:'2 min', icon:'👁️', desc:'Regardez quelqu\'un dans votre entourage avec une vraie attention. Qu\'est-ce qui a l\'air de le peser ? Qu\'est-ce qui lui fait du bien ? Observez sans projeter.' },
-      ],
-      deep:[
-        { title:'Dîner intentionnel', dur:'1–2h', icon:'🍽️', desc:'Invitez quelqu\'un à partager un repas. Règle : téléphones dans les poches. Posez des questions inhabituelles : "Qu\'est-ce qui t\'enthousiasme en ce moment ?"' },
-        { title:'Lettre de reconnexion', dur:'20 min', icon:'✉️', desc:'Pensez à quelqu\'un dont vous vous êtes éloigné·e. Écrivez comment vous êtes, ce que vous avez traversé, et votre envie de reconnecter.' },
-        { title:'Conversation de qualité', dur:'45–60 min', icon:'🗣️', desc:'Commencez par : "Si tu pouvais changer une chose dans ta vie cette année, ce serait quoi ?" Et partagez votre propre réponse honnêtement.' },
-      ],
-    },
-    { id:'l4', text:'Exprimer ma gratitude', icon:'🙏',
-      quick:[
-        { title:'3 gratitudes en 3 minutes', dur:'2 min', icon:'✨', desc:'3 choses spécifiques et nouvelles pour lesquelles vous êtes reconnaissant·e. La spécificité active beaucoup plus le circuit de récompense du cerveau.' },
-        { title:'Le remerciement silencieux', dur:'1 min', icon:'🌸', desc:'Pensez à 1 personne qui vous a aidé·e cette semaine. Ressentez dans votre corps ce que sa présence vous a apporté. Laissez la chaleur rayonner dans votre poitrine.' },
-        { title:'Gratitude envers votre corps', dur:'2 min', icon:'💪', desc:'Fermez les yeux et remerciez votre corps : vos poumons, votre cœur, vos mains, vos jambes. Pour chaque partie, 10 secondes. Si une partie souffre, envoyez-lui de la gratitude aussi.' },
-      ],
-      deep:[
-        { title:'Journal de gratitude — 1 semaine', dur:'10 min/soir', icon:'📓', desc:'Engagez-vous 7 jours à écrire chaque soir 5 gratitudes spécifiques avec au moins 2 nouvelles. En 7 jours, cette pratique recalibre le biais de négativité.' },
-        { title:'Visite de gratitude', dur:'30–60 min', icon:'🚶', desc:'Choisissez quelqu\'un à qui vous êtes sincèrement reconnaissant·e. Écrivez une lettre précise. Puis allez la lui lire en personne. L\'intervention de psychologie positive la plus efficace.' },
-        { title:'Gratitude des difficultés', dur:'20 min', icon:'🌱', desc:'Choisissez une difficulté actuelle. Écrivez comment elle vous a forcé·e à grandir. 3 choses que cette épreuve vous a apportées.' },
-      ],
-    },
-  ],
-  flowers: [
-    { id:'f1', text:'Quelque chose rien que pour moi', icon:'🎁',
-      quick:[
-        { title:'5 minutes de rien', dur:'3 min', icon:'☁️', desc:'Posez tout. Asseyez-vous. Ne faites rien d\'utile — pas de liste, pas de planification. Juste exister. Ces minutes de non-productivité volontaire sont régénératrices.' },
-        { title:'Plaisir sensoriel en 2 min', dur:'2 min', icon:'✨', desc:'Crème sur vos mains, carré de chocolat mangé lentement, musique adorée yeux fermés. S\'offrir un plaisir conscient recalibre la bienveillance envers soi.' },
-        { title:'Question de désir', dur:'2 min', icon:'💫', desc:'"Si personne ne me regardait et que rien n\'était jugé, qu\'est-ce que j\'aurais vraiment envie de faire en ce moment ?" Notez la première réponse.' },
-      ],
-      deep:[
-        { title:'Après-midi libre sans obligation', dur:'3–4h', icon:'🌅', desc:'Bloquez un après-midi avec un seul critère : faire uniquement ce que vous avez envie de faire. Pas de "devrait", pas de productivité.' },
-        { title:'Rituel beauté ou soin profond', dur:'45–60 min', icon:'🛁', desc:'Bain aux huiles essentielles, masque visage maison, automassage. Bougie. Notifications éteintes. Ce soin est pour vous seul·e.' },
-        { title:'Initiation à une passion oubliée', dur:'1–2h', icon:'🎨', desc:'Quelque chose que vous aimiez enfant et avez abandonné — dessiner, chanter, cuisiner, jardiner. 1 heure sans objectif de résultat.' },
-      ],
-    },
-    { id:'f2', text:'Prendre soin de mon apparence', icon:'💆',
-      quick:[
-        { title:'1 minute de soin intentionnel', dur:'1 min', icon:'✨', desc:'Faites un geste de soin habituel avec une attention totale. L\'intentionnalité transforme un geste banal en acte de soin envers soi-même.' },
-        { title:'Posture et regard dans le miroir', dur:'2 min', icon:'🪞', desc:'Redressez-vous, pieds ancrés, épaules en arrière. Regardez-vous dans les yeux 30 secondes. Choisissez 1 chose que vous appréciez aujourd\'hui.' },
-        { title:'Habillage intentionnel', dur:'3 min', icon:'👗', desc:'Choisissez ce que vous portez selon comment vous voulez vous sentir — pas comment vous voulez que les autres vous voient.' },
-      ],
-      deep:[
-        { title:'Rituel beauté complet', dur:'30–45 min', icon:'🌸', desc:'Douche, soin du visage, coiffure soignée. Pendant tout ce temps, parlez-vous intérieurement avec douceur. Pas pour les autres — pour vous.' },
-        { title:'Nettoyage et tri de garde-robe', dur:'1–2h', icon:'👘', desc:'Pour chaque vêtement : "Est-ce que je me sens bien quand je porte ça ?" Si non — même neuf, même cher — mettez-le de côté.' },
-        { title:'Journée de soin complet', dur:'Journée', icon:'💆', desc:'Coiffeur, massage, soin esthétique. Non comme récompense, mais parce que votre corps mérite une attention régulière.' },
-      ],
-    },
-    { id:'f3', text:'Une activité créative ou joyeuse', icon:'🎨',
-      quick:[
-        { title:'Dessin libre 3 min', dur:'3 min', icon:'✏️', desc:'Feuille et stylo. Dessinez sans but pendant 3 minutes. L\'évaluation est interdite. Désactive temporairement l\'amygdale (réactivité au stress).' },
-        { title:'Playlist joie', dur:'2 min', icon:'🎵', desc:'Créez une playlist de 5 chansons qui donnent de la joie. Mettez-en une maintenant, à fond. Laissez votre corps répondre à la musique comme il veut.' },
-        { title:'La question créative', dur:'2 min', icon:'💡', desc:'"Si ma journée était une peinture, de quelle couleur serait-elle ?" La métaphore créative donne accès à des émotions que le langage direct ne touche pas.' },
-      ],
-      deep:[
-        { title:'Session créative de 1h', dur:'60 min', icon:'🎨', desc:'Dessin, peinture, écriture, musique. 1 heure complète avec un seul objectif : le plaisir du processus, pas le résultat.' },
-        { title:'Atelier ou cours découverte', dur:'2–3h', icon:'🏺', desc:'Inscrivez-vous à quelque chose que vous avez toujours voulu essayer. Être débutant·e volontaire recalibre la relation à l\'erreur.' },
-        { title:'Journée de création', dur:'Demi-journée', icon:'🌟', desc:'Une demi-journée avec une seule règle : créer quelque chose qui n\'existait pas avant. Peu importe quoi, peu importe la qualité.' },
-      ],
-    },
-    { id:'f4', text:'Poser une limite qui me respecte', icon:'🛡️',
-      quick:[
-        { title:'La phrase-limite', dur:'2 min', icon:'🛡️', desc:'"J\'ai besoin de…", "Je ne suis pas disponible pour…". Préparer ses mots est déjà la moitié du chemin.' },
-        { title:'Le non sans explication', dur:'1 min', icon:'✋', desc:'"Non, ça ne me convient pas" est une réponse complète. Choisissez quelque chose de petit à refuser aujourd\'hui sans explication.' },
-        { title:'Scan de surengagement', dur:'3 min', icon:'📋', desc:'Regardez votre agenda. Un engagement accepté à contrecœur ? Décliner, déléguer, ou réduire ?' },
-      ],
-      deep:[
-        { title:'Cartographie de mes limites', dur:'20 min', icon:'🗺️', desc:'1/ Ce que je tolère qui m\'épuise. 2/ Ce dont j\'ai besoin mais n\'ose pas demander. 3/ Une relation sans respect de mes limites. 1 action concrète pour chaque.' },
-        { title:'La conversation difficile', dur:'Variable', icon:'🗣️', desc:'Une conversation repoussée ? Préparez-la : mots exacts, moment, lieu. La peur est presque toujours plus grande que la conversation elle-même.' },
-        { title:'Coaching sur les limites', dur:'45–60 min', icon:'💬', desc:'Prenez rendez-vous avec un thérapeute ou coach pour explorer votre rapport aux limites. Comprendre l\'origine est plus transformateur que des techniques.' },
-      ],
-    },
-  ],
-  breath: [
-    { id:'b1', text:'Session de respiration consciente', icon:'🫁',
-      quick:[
-        { title:'Cohérence cardiaque express', dur:'3 min', icon:'💚', desc:'Inspirez par le nez en 5 secondes (ventre gonfle), expirez en 5 secondes (ventre rentre). 18 cycles. Validée par des centaines d\'études, réduit le cortisol et améliore la clarté.' },
-        { title:'Respiration 4-7-8', dur:'2 min', icon:'😴', desc:'Inspirez en 4s. Retenez en 7s. Expirez lentement en 8s. Répétez 4 fois. Active le système nerveux parasympathique — recommandée pour l\'anxiété et l\'insomnie.' },
-        { title:'Ventilation cellulaire', dur:'2 min', icon:'🌬️', desc:'5 grandes inspirations (poumons pleins à 100%), puis 5 grandes expirations (poumons vides à 100%). Chasse le CO2 résiduel — légèreté et clarté garanties.' },
-      ],
-      deep:[
-        { title:'Méthode Wim Hof — 3 cycles', dur:'15–20 min', icon:'❄️', desc:'Allongé. 30 respirations rapides et profondes. Après la 30ème, expirez et retenez le plus longtemps possible. Inspirez et retenez 15s. C\'est 1 cycle. Jamais dans l\'eau.' },
-        { title:'Pranayama — Nadi Shodhana', dur:'15 min', icon:'☯️', desc:'Inspirez gauche (4s). Fermez les deux (2s). Expirez droite (8s). Inversez. 10 cycles. Équilibre les deux hémisphères cérébraux.' },
-        { title:'Breathwork accompagné', dur:'30–45 min', icon:'🌊', desc:'Séance guidée de breathwork en ligne ou praticien local. Permet d\'aller plus loin dans la libération des tensions souvent ancrées dans le corps avant le mental.' },
-      ],
-    },
-    { id:'b2', text:'5 min sans écran, juste présent·e', icon:'🌀',
-      quick:[
-        { title:'Micro-pause sensorielle', dur:'2 min', icon:'👁️', desc:'Posez votre téléphone. Nommez : 5 choses que vous voyez, 3 sons que vous entendez, 1 sensation dans votre corps. Les sens sont la porte vers le présent.' },
-        { title:'Fenêtre ou ciel', dur:'2 min', icon:'☁️', desc:'Levez les yeux vers une fenêtre ou sortez. Regardez le ciel 2 minutes sans penser en particulier. Le regard vers l\'horizon active un mode de conscience élargie.' },
-        { title:'Pose du téléphone — règle', dur:'1 min', icon:'📵', desc:'Posez votre téléphone dans une autre pièce à un moment précis. La simple présence d\'un téléphone visible (même éteint) réduit de 20% les capacités cognitives.' },
-      ],
-      deep:[
-        { title:'Heure sans écran le matin', dur:'60 min', icon:'🌅', desc:'Demain matin : ne touchez pas à un écran pendant la première heure. Buvez un verre d\'eau, étirez-vous, lisez, regardez par la fenêtre. Change toute la journée.' },
-        { title:'Digital detox d\'une demi-journée', dur:'3–4h', icon:'🌲', desc:'Demi-journée sans écran. Activités analogiques : marche, lecture, cuisine, jardinage. Notez votre inconfort au début et comment il évolue.' },
-        { title:'Retraite silencieuse d\'1 jour', dur:'Journée', icon:'🏔️', desc:'Journée sans téléphone, sans parler, sans médias. Marchez, lisez, dessinez, reposez-vous. C\'est un nettoyage profond du système nerveux.' },
-      ],
-    },
-    { id:'b3', text:'Observer mes pensées sans les suivre', icon:'🔮',
-      quick:[
-        { title:'La rivière de pensées', dur:'3 min', icon:'🏞️', desc:'Imaginez que vos pensées sont des feuilles sur une rivière. Vous êtes sur la rive. Observez chaque pensée arriver, passer et s\'éloigner. La méditation n\'est pas l\'absence de pensées.' },
-        { title:'Nomme et lâche', dur:'2 min', icon:'🏷️', desc:'Fermez les yeux 2 minutes. Pour chaque contenu mental : "planification", "souvenir", "inquiétude", "jugement". Puis laissez-le passer. Nommer diminue l\'emprise émotionnelle.' },
-        { title:'Retour au souffle', dur:'2 min', icon:'🌬️', desc:'Chaque fois qu\'une pensée surgit, ramenez doucement votre attention sur votre respiration. La respiration est toujours dans le présent.' },
-      ],
-      deep:[
-        { title:'Méditation Vipassana — 20 min', dur:'20 min', icon:'💎', desc:'Posture stable. Attention sur les sensations physiques — d\'abord la respiration, puis chaque partie du corps. Quand l\'esprit part, notez sans jugement et revenez.' },
-        { title:'Retraite de méditation guidée', dur:'2–3h', icon:'🧘', desc:'Une séance de méditation collective dans votre ville. La méditation en groupe crée une énergie de présence collective et permet d\'aller plus loin que seul·e.' },
-        { title:'Pratique MBSR (Mindfulness)', dur:'Variable', icon:'🌱', desc:'Le programme MBSR de Jon Kabat-Zinn est la méthode de pleine conscience la plus validée scientifiquement. 8 semaines, 45 min par jour.' },
-      ],
-    },
-    { id:'b4', text:'Un instant de silence choisi', icon:'☁️',
-      quick:[
-        { title:'2 minutes de silence absolu', dur:'2 min', icon:'🤫', desc:'Trouvez le lieu le plus silencieux accessible. Asseyez-vous. Fermez les yeux. Ne faites rien. Le silence révèle ce qui était couvert par le bruit.' },
-        { title:'Silence dans la nature', dur:'3 min', icon:'🌿', desc:'Sortez. Fermez les yeux. Écoutez ce qu\'il reste : vent, oiseaux, feuilles, votre souffle. Les sons naturels activent le système nerveux parasympathique.' },
-        { title:'Pause obligatoire', dur:'2 min', icon:'⏸️', desc:'Posez tout ce que vous faites. Éloignez-vous de votre poste. Restez debout, mains libres, sans rien faire 2 minutes. C\'est le muscle de la présence qui se réveille.' },
-      ],
-      deep:[
-        { title:'Bain de forêt (Shinrin-yoku)', dur:'2–3h', icon:'🌳', desc:'S\'immerger dans une forêt avec tous ses sens. Marchez très lentement, sans destination. Touchez les écorces. Sentez la mousse. Les effets perdurent plusieurs jours.' },
-        { title:'Journée de silence partielle', dur:'Demi-journée', icon:'🔕', desc:'Demi-journée sans musique, sans podcast, sans télévision. Cuisinez et marchez en silence. Observez comment votre rapport à vous-même change.' },
-        { title:'Retraite de silence guidée', dur:'1–2 jours', icon:'⛩️', desc:'Un lieu de retraite proposant des journées de silence. L\'une des expériences les plus transformatrices accessible sans engagement spirituel.' },
-      ],
-    },
-  ],
-}
+// PLANT_RITUALS — chargé depuis Supabase via useRituels() dans ScreenMonJardin
+// La variable est mutée au chargement pour que tous les composants du module l'utilisent
+let PLANT_RITUALS = PLANT_RITUALS_EMPTY
+
 
 const PLANT_QUESTIONS = [
   { id:'q1',  zone:'roots',   theme:'Énergie vitale',   icon:'⚡', text:'Comment est votre énergie physique en ce moment ?',            sub:'Fermez les yeux. Scannez votre corps de la tête aux pieds.',          answers:[{label:'Vidé·e',emoji:'🪫',stress:95},{label:'Épuisé·e',emoji:'😴',stress:72},{label:'Passable',emoji:'😐',stress:48},{label:'Bien',emoji:'🌱',stress:20},{label:'Plein·e d\'élan',emoji:'✨',stress:0}] },
@@ -4142,6 +3894,14 @@ function MessageJardin({ profile, isMobile }) {
 }
 
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan }) {
+  // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
+  const { rituals: _rituals, loading: ritualsLoading } = useRituels()
+  useEffect(() => {
+    if (!ritualsLoading) {
+      PLANT_RITUALS = _rituals
+    }
+  }, [_rituals, ritualsLoading])
+
   const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)

@@ -10,6 +10,7 @@ import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
 import { useIsMobile, LumenBadge, LumensCard, useProfile } from './dashboardShared'
+import { ExerciseDetail } from './mafleur_rituels'
 
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -2272,31 +2273,6 @@ function useRitualsState(userId, awardLumens) {
 }
 
 // ── ExerciseDetail ──────────────────────────────────────────
-function ExerciseDetail({ exercise, zone, onDone, onBack }) {
-  const [done, setDone] = useState(false)
-  const handleDone = () => { setDone(true); setTimeout(onDone, 500) }
-  return (
-    <div style={{ animation:'fadeUp 0.28s ease both' }}>
-      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', marginBottom:20, padding:0, letterSpacing:'0.05em' }}>
-        ← Retour
-      </button>
-      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8 }}>
-        <span style={{ fontSize:26 }}>{exercise.icon}</span>
-        <div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:20, color:'#EEF0E8', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
-          <span style={{ fontSize:10, color:zone.accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
-        </div>
-      </div>
-      <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'14px 0' }} />
-      <p style={{ fontSize:13, color:'rgba(200,220,200,0.7)', lineHeight:1.85, marginBottom:28, fontWeight:300 }}>{exercise.desc}</p>
-      <button onClick={handleDone} style={{ width:'100%', padding:15, borderRadius:12, border:'none', background: done ? 'rgba(88,200,120,0.25)' : `linear-gradient(135deg,${zone.color}28,${zone.accent}18)`, color: done ? '#88D4A0' : zone.accent, fontSize:13, cursor:'pointer', fontWeight:500, letterSpacing:'0.06em', boxShadow:`0 0 0 1px ${done ? 'rgba(88,200,120,0.4)' : zone.color+'35'}`, transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-        {done ? '✓ Rituel accompli' : 'J\'ai fait cet exercice'}
-      </button>
-    </div>
-  )
-}
-
-// ── RitualExercises ─────────────────────────────────────────
 function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
   const [mode,     setMode]     = useState(initialMode ?? null)
   const [activeEx, setActiveEx] = useState(null)
@@ -2927,11 +2903,12 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         {/* En-tête section */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <div>
-            <p style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:'rgba(180,200,180,0.3)', marginBottom:3 }}>Rituels du jour</p>
-            <p style={{ fontSize:12, color:'rgba(180,200,180,0.45)', lineHeight:1.4 }}>
-              {hasDegradation
-                ? <span>{doneCount}/{totalRituals} <span style={{ opacity:0.5 }}>· triés par priorité</span></span>
-                : 'Prenez votre bilan intérieur'}
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'rgba(242,237,224,0.82)', marginBottom:4 }}>
+              Prenez soin de vous
+            </p>
+            <p style={{ fontSize:11, color:'rgba(180,200,180,0.45)', lineHeight:1.5 }}>
+              Agissez au quotidien avec vos rituels
+              {hasDegradation && <span style={{ color:'rgba(180,200,180,0.28)' }}> · {doneCount}/{totalRituals} accomplis</span>}
             </p>
           </div>
           {bilanDoneToday && hasDegradation && (
@@ -4058,7 +4035,8 @@ function useWakeUpTrigger({ userId }) {
 }
 
 // ── Composant réutilisable : colonne fleur ───────────────────────────────────
-function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings }) {
+function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings, streak = 0 }) {
+  const streakColor = streak >= 30 ? '#e8c060' : streak >= 14 ? '#c4a7f0' : streak >= 7 ? '#82c8f0' : '#96d48a'
   return (
     <div style={{
       flex:'1 1 0', minWidth:0,
@@ -4068,6 +4046,19 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
     }}>
       <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
         <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
+        {streak >= 1 && (
+          <div style={{
+            position:'absolute', top:10, right:10, zIndex:10,
+            display:'flex', flexDirection:'column', alignItems:'center',
+            padding:'4px 8px', borderRadius:10,
+            background:'rgba(10,20,12,0.65)',
+            border:`1px solid ${streakColor}25`,
+            gap:0,
+          }}>
+            <span style={{ fontSize:11, color:`${streakColor}cc`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', lineHeight:1.4 }}>👍 {streak} jour{streak > 1 ? 's' : ''}</span>
+            <span style={{ fontSize:8, color:`${streakColor}66`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', letterSpacing:'.05em', lineHeight:1.3 }}>CONSÉCUTIFS</span>
+          </div>
+        )}
         <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
@@ -4471,7 +4462,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             minHeight: isMobile ? 'auto' : 360,
           }}>
             {/* Colonne gauche : fleur */}
-            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
+            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
             {/* Colonne droite : bilan */}
             <div style={{
               flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
@@ -4558,7 +4549,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             minHeight: isMobile ? 'auto' : 360,
           }}>
             {/* Colonne gauche : fleur */}
-            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
+            <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
             {/* Colonne droite : insight si bilan fait, sinon message d'accueil */}
             <div style={{
               flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
@@ -4588,7 +4579,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 background:'rgba(14,28,14,0.95)',
                 flexShrink:0,
               }}>
-                <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
+                <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
               </div>
               {/* Mobile : boîte à graines en dessous, pleine largeur */}
               <BoiteAGraines userId={userId} />
@@ -4602,7 +4593,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               background:'rgba(14,28,14,0.95)',
               flexShrink:0, minHeight:360,
             }}>
-              <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={false} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} />
+              <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={false} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
               <div style={{
                 flex:'1 1 0', minWidth:0,
                 background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
