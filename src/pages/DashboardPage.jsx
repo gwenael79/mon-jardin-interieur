@@ -19,6 +19,8 @@ import { WelcomeScreen }   from './WelcomeScreen'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers } from './ScreenClubJardiniers'
 import { ScreenAteliers }       from './ScreenAteliers'
+import { MaBibliotheque }       from './MaBibliotheque'
+import { ScreenJardinotheque }  from './ScreenJardinotheque'
 import { HelpModal }            from './HelpModal'
 import PremiumGate              from '../components/PremiumGate'
 
@@ -28,7 +30,8 @@ const SCREENS = [
   { id:'champ',    icon:'🌻', label:'Jardin Collectif',    Component: ScreenJardinCollectif   },
   { id:'club',     icon:'👨‍👩‍👧‍👦', label:'Club des Jardiniers', Component: ScreenClubJardiniers    },
   { id:'ateliers', icon:'📖', label:'Ateliers',            Component: ScreenAteliers           },
-  { id:'defis',    icon:'✨', label:'Défis',               Component: ScreenDefis             },
+  { id:'defis',       icon:'✨', label:'Défis',               Component: ScreenDefis              },
+  { id:'jardinotheque', icon:'🌿', label:'Jardinothèque',       Component: ScreenJardinotheque      },
 ]
 
 // ── NavHub mobile ────────────────────────────────────────────────────────────
@@ -48,6 +51,8 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
       accent:'#78c4a0', accentBg:'rgba(100,180,140,0.09)' },
     { id:'defis',    icon:'✨', label:'Défis',                sub: communityStats?.totalDefis > 0 ? `${communityStats.totalDefis} défis actifs` : 'Challenges du moment', action:'screen',
       accent:'#b4a0f0', accentBg:'rgba(180,140,255,0.09)' },
+    { id:'jardinotheque', icon:'🌿', label:'Jardinothèque', sub:'Ressources & boutique', action:'screen',
+      accent:'#82c8a0', accentBg:'rgba(130,200,160,0.09)' },
     { id:'lumens',   icon:'✦',  label:'Lumens',               sub: lumens ? `${lumens.available} disponibles` : 'Votre lumière', action:'lumens',
       accent:'#e8c060', accentBg:'rgba(232,192,96,0.10)' },
   ]
@@ -181,6 +186,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
 
 // ── Modal Profil ─────────────────────────────────────────────────────────────
 function ProfileModal({ user, onClose }) {
+  const [tab,         setTab]         = useState('profil') // 'profil' | 'bibliotheque'
   const [name,        setName]        = useState('')
   const [profession,  setProfession]  = useState('')
   const [flowerName,  setFlowerName]  = useState('')
@@ -225,8 +231,20 @@ function ProfileModal({ user, onClose }) {
     <div className="profile-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="profile-modal">
         <button className="profile-modal-close" onClick={onClose}>✕</button>
-        <div className="profile-modal-title">Mon profil</div>
-        <div className="profile-modal-sub">Votre prénom ou pseudo visible dans les groupes.</div>
+        <div className="profile-modal-title">Mon espace</div>
+        {/* Onglets */}
+        <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,0.08)', marginBottom:16, marginTop:4 }}>
+          {[['profil','🌸 Mon profil'],['bibliotheque','🎧 Ma bibliothèque']].map(([id,lbl]) => (
+            <button key={id} onClick={() => setTab(id)}
+              style={{ padding:'8px 16px', fontSize:11, letterSpacing:'.06em', background:'none', border:'none',
+                borderBottom: tab===id ? '2px solid #96d485' : '2px solid transparent',
+                color: tab===id ? '#96d485' : 'rgba(242,237,224,0.40)', cursor:'pointer',
+                fontFamily:"'Jost',sans-serif", marginBottom:-1, transition:'all .2s' }}>
+              {lbl}
+            </button>
+          ))}
+        </div>
+        {tab === 'profil' && <>
         <div className="profile-field">
           <label className="profile-label">Prénom ou pseudo</label>
           <input
@@ -308,6 +326,10 @@ function ProfileModal({ user, onClose }) {
           {saving ? '…' : 'Sauvegarder'}
         </button>
         {saved && <div className="profile-saved">✓ Profil mis à jour</div>}
+        </>}
+        {tab === 'bibliotheque' && (
+          <MaBibliotheque userId={user?.id} />
+        )}
       </div>
     </div>
   )
@@ -515,6 +537,10 @@ export default function DashboardPage() {
       title: <><em>Défis</em></>,
       btn: 'Proposer',
       onBtn: () => document.dispatchEvent(new CustomEvent('openPropose')),
+    },
+    jardinotheque: {
+      title: <>La <em>Jardinothèque</em></>,
+      btn: null,
     },
   }[effectiveActive] ?? { title: <><em>Navigation</em></>, btn: null }
 

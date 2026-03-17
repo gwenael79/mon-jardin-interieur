@@ -343,10 +343,10 @@ function RituelsEditor({ showToast }) {
             {/* Description */}
             <div>
               <span style={label}>Description</span>
-              <textarea value={desc} onChange={e => setDesc(e.target.value.slice(0, 250))} rows={7}
+              <textarea value={desc} onChange={e => setDesc(e.target.value.slice(0, 350))} rows={7}
                 style={{ ...inp, resize:'vertical', lineHeight:1.9, fontSize:14 }}/>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
-                <span style={{ fontSize:10, color: desc.length > 230 ? (desc.length >= 250 ? '#e87060' : '#e8c060') : 'rgba(242,237,224,0.22)', fontWeight: desc.length > 230 ? 500 : 400 }}>{desc.length} / 250</span>
+                <span style={{ fontSize:10, color: desc.length > 320 ? (desc.length >= 350 ? '#e87060' : '#e8c060') : 'rgba(242,237,224,0.22)', fontWeight: desc.length > 320 ? 500 : 400 }}>{desc.length} / 350</span>
                 <button
                   onClick={() => {
                     const text = `${editRituel}, ${editTitle}, ${desc}`
@@ -370,6 +370,426 @@ function RituelsEditor({ showToast }) {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  FleuristesAdmin
+// ═══════════════════════════════════════════════════════════
+function FleuristesAdmin({ showToast }) {
+  const [fleuristes, setFleuristes] = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [filter,     setFilter]     = useState('en_attente')
+
+  const load = () => {
+    setLoading(true)
+    supabase.from('fleuristes').select('*').order('created_at', { ascending:false })
+      .then(({ data }) => { setFleuristes(data || []); setLoading(false) })
+  }
+  useEffect(() => { load() }, [])
+
+  const filtered = filter === 'all' ? fleuristes : fleuristes.filter(f => f.statut === filter)
+  const pending = fleuristes.filter(f => f.statut === 'en_attente').length
+
+  const update = async (id, patch, msg) => {
+    const { error } = await supabase.from('fleuristes').update(patch).eq('id', id)
+    if (error) { showToast('✗ ' + error.message); return }
+    showToast(msg); load()
+  }
+
+  const sColors = { en_attente:'#e8c060', actif:'#96d485', suspendu:'rgba(255,140,140,0.7)' }
+
+  return (
+    <div style={{ marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.12em', textTransform:'uppercase' }}>
+          Fleuristes
+        </div>
+        {pending > 0 && (
+          <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', color:'#e8c060', fontWeight:500 }}>
+            {pending} en attente de validation
+          </span>
+        )}
+      </div>
+
+      {/* Filtres */}
+      <div style={{ display:'flex', gap:6, marginBottom:14 }}>
+        {['en_attente','actif','suspendu','all'].map(s => (
+          <button key={s} onClick={() => setFilter(s)}
+            style={{ padding:'4px 12px', borderRadius:20, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif",
+              border: filter===s ? `1px solid ${sColors[s]||'#96d485'}55` : '1px solid rgba(255,255,255,0.08)',
+              background: filter===s ? `${sColors[s]||'#96d485'}15` : 'transparent',
+              color: filter===s ? (sColors[s]||'#96d485') : 'rgba(242,237,224,0.35)' }}>
+            {s==='all' ? 'Tous' : s==='en_attente' ? '⏳ En attente' : s==='actif' ? '✓ Actifs' : '⛔ Suspendus'}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', textAlign:'center', padding:'20px 0' }}>
+          Aucun fleuriste dans cette catégorie
+        </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {filtered.map(f => (
+            <div key={f.id} style={{ padding:'14px 16px', borderRadius:12, background:'rgba(255,255,255,0.025)', border:`1px solid rgba(255,255,255,0.06)` }}>
+              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, marginBottom:8 }}>
+                <div>
+                  <div style={{ fontSize:14, color:'rgba(242,237,224,0.88)', fontWeight:500 }}>
+                    {f.nom_boutique}
+                    <span style={{ marginLeft:8, fontSize:10, color:'rgba(242,237,224,0.30)', fontWeight:400 }}>
+                      {f.type_vendeur === 'professionnel' ? '🏪 Pro' : '🌱 Particulier'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:3 }}>
+                    Code : <span style={{ fontFamily:'monospace', color:'rgba(242,237,224,0.55)' }}>{f.code_vendeur}</span>
+                    {f.email ? ` · ${f.email}` : ''}
+                    {f.telephone ? ` · ${f.telephone}` : ''}
+                  </div>
+                  {f.nom_entreprise && <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', marginTop:2 }}>{f.nom_entreprise}{f.siret ? ` · SIRET ${f.siret}` : ''}</div>}
+                  {f.description && <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)', marginTop:5, lineHeight:1.6, fontStyle:'italic' }}>{f.description}</div>}
+                </div>
+                <span style={{ fontSize:9, padding:'3px 10px', borderRadius:20, flexShrink:0,
+                  background:`${sColors[f.statut]||'rgba(255,255,255,0.05)'}15`,
+                  border:`1px solid ${sColors[f.statut]||'rgba(255,255,255,0.08)'}40`,
+                  color:sColors[f.statut]||'rgba(242,237,224,0.35)' }}>
+                  {f.statut}
+                </span>
+              </div>
+
+              {/* Mode publication */}
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                <span style={{ fontSize:10, color:'rgba(242,237,224,0.30)' }}>Publication :</span>
+                <button onClick={() => update(f.id, { publication_mode:'direct' }, '✓ Accès direct')}
+                  style={{ padding:'3px 10px', borderRadius:6, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif",
+                    background: f.publication_mode==='direct' ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: f.publication_mode==='direct' ? '1px solid rgba(150,212,133,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    color: f.publication_mode==='direct' ? '#96d485' : 'rgba(242,237,224,0.35)' }}>⚡ Direct</button>
+                <button onClick={() => update(f.id, { publication_mode:'validation' }, '✓ Validation activée')}
+                  style={{ padding:'3px 10px', borderRadius:6, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif",
+                    background: f.publication_mode==='validation' ? 'rgba(232,192,96,0.15)' : 'rgba(255,255,255,0.04)',
+                    border: f.publication_mode==='validation' ? '1px solid rgba(232,192,96,0.35)' : '1px solid rgba(255,255,255,0.08)',
+                    color: f.publication_mode==='validation' ? '#e8c060' : 'rgba(242,237,224,0.35)' }}>✋ Validation</button>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display:'flex', gap:6 }}>
+                {f.statut !== 'actif' && (
+                  <button onClick={() => update(f.id, { statut:'actif' }, `✓ ${f.nom_boutique} activé`)}
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.30)', color:'#96d485' }}>
+                    ✓ Valider
+                  </button>
+                )}
+                {f.statut !== 'suspendu' && (
+                  <button onClick={() => update(f.id, { statut:'suspendu' }, `✓ Suspendu`)}
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.25)', color:'rgba(255,140,140,0.70)' }}>
+                    ⛔ Suspendre
+                  </button>
+                )}
+                {f.statut !== 'en_attente' && (
+                  <button onClick={() => update(f.id, { statut:'en_attente' }, '✓ Remis en attente')}
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.10)', color:'rgba(242,237,224,0.45)' }}>
+                    ↺ En attente
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BoutiqueEditor — Gestion des produits de la Jardinothèque
+// ═══════════════════════════════════════════════════════════
+const TYPE_OPTS = [
+  { val:'digital',  label:'🎧 Digital',     color:'#b4a0f0' },
+  { val:'physique', label:'🌿 Partenaires',  color:'#82c8a0' },
+  { val:'occasion', label:'🤝 Occasion',     color:'#e8c060' },
+]
+const CAT_OPTS = {
+  digital:  ['Audio','Formation','Méditation','Guide'],
+  physique: ['Livre','Bijou','Pierre','Huile essentielle','Autre'],
+  occasion: ['Livre','Bijou','Pierre','Accessoire','Autre'],
+}
+const EMPTY_FORM = {
+  type:'digital', categorie:'Audio', titre:'', description:'',
+  prix:'', image_url:'', lien_externe:'', stripe_price_id:'',
+  vendeur_nom:'', vendeur_contact:'', statut:'actif', ordre:0, storage_path:'',
+}
+
+function BoutiqueEditor({ showToast }) {
+  const [produits,   setProduits]   = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [filterType, setFilterType] = useState('all')
+  const [form,       setForm]       = useState(EMPTY_FORM)
+  const [editId,     setEditId]     = useState(null)
+  const [showForm,   setShowForm]   = useState(false)
+  const [saving,     setSaving]     = useState(false)
+
+  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)', background:'#1a2e1a', color:'rgba(242,237,224,0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+  const lbl = { fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6, display:'block' }
+  const zColors = { digital:'#b4a0f0', physique:'#82c8a0', occasion:'#e8c060', all:'#96d485' }
+
+  const load = () => {
+    setLoading(true)
+    supabase.from('produits').select('*').order('ordre').order('created_at', { ascending:false })
+      .then(({ data }) => { setProduits(data || []); setLoading(false) })
+  }
+  useEffect(() => { load() }, [])
+
+  const filtered = filterType === 'all' ? produits : produits.filter(p => p.type === filterType)
+
+  const openNew  = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true) }
+  const openEdit = (p) => {
+    setForm({ type:p.type, categorie:p.categorie||'', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', stripe_price_id:p.stripe_price_id||'', vendeur_nom:p.vendeur_nom||'', vendeur_contact:p.vendeur_contact||'', statut:p.statut||'actif', ordre:p.ordre||0, storage_path:p.storage_path||'' })
+    setEditId(p.id); setShowForm(true)
+  }
+
+  const [audioUploading, setAudioUploading] = useState(false)
+
+  const handleAudioUpload = async (file) => {
+    if (!file) return
+    setAudioUploading(true)
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error } = await supabase.storage.from('audio-produits').upload(path, file, { upsert: true })
+    setAudioUploading(false)
+    if (error) { showToast('✗ Upload : ' + error.message); return }
+    setForm(f => ({ ...f, storage_path: path }))
+    showToast('✓ Fichier audio uploadé')
+  }
+
+  const handleSave = async () => {
+    if (!form.titre.trim()) { showToast('✗ Titre obligatoire'); return }
+    setSaving(true)
+    const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, ordre: parseInt(form.ordre)||0, updated_at: new Date().toISOString() }
+    delete payload._audioFile // ne pas envoyer le File object
+    const { error } = editId
+      ? await supabase.from('produits').update(payload).eq('id', editId)
+      : await supabase.from('produits').insert({ ...payload, created_at: new Date().toISOString() })
+    setSaving(false)
+    if (error) { showToast('✗ ' + error.message); return }
+    showToast(editId ? '✓ Produit mis à jour' : '✓ Produit ajouté')
+    setShowForm(false); load()
+  }
+
+  const handleDelete = async (id, titre) => {
+    if (!window.confirm(`Supprimer "${titre}" ?`)) return
+    const { error } = await supabase.from('produits').delete().eq('id', id)
+    if (error) { showToast('✗ ' + error.message); return }
+    showToast('✓ Supprimé'); load()
+  }
+
+  const toggleStatut = async (p) => {
+    const next = p.statut === 'actif' ? 'inactif' : 'actif'
+    await supabase.from('produits').update({ statut: next }).eq('id', p.id)
+    load()
+  }
+
+  const tc = zColors[form.type] || '#96d485'
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+
+      {/* Toolbar */}
+      <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', paddingBottom:14, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+        {['all','digital','physique','occasion'].map(t => (
+          <button key={t} onClick={() => setFilterType(t)}
+            style={{ padding:'5px 14px', borderRadius:20, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", border: filterType===t ? `1px solid ${zColors[t]}55` : '1px solid rgba(255,255,255,0.10)', background: filterType===t ? `${zColors[t]}15` : 'transparent', color: filterType===t ? zColors[t] : 'rgba(242,237,224,0.38)' }}>
+            {t==='all' ? 'Tous' : t==='digital' ? '🎧 Digital' : t==='physique' ? '🌿 Partenaires' : '🤝 Occasion'}
+          </button>
+        ))}
+        <div style={{ marginLeft:'auto' }}>
+          <button onClick={openNew}
+            style={{ padding:'8px 18px', borderRadius:8, fontSize:12, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.35)', color:'#96d485', fontWeight:500 }}>
+            + Ajouter un produit
+          </button>
+        </div>
+      </div>
+
+      {/* Liste */}
+      {loading ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic', padding:'20px 0' }}>Chargement…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', textAlign:'center', padding:'40px 0' }}>
+          Aucun produit — cliquez sur "+ Ajouter"
+        </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+          {filtered.map(p => {
+            const c = zColors[p.type] || '#96d485'
+            return (
+              <div key={p.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderRadius:10, border:`1px solid ${p.statut==='actif' ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)'}`, background: p.statut==='actif' ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.01)', opacity: p.statut==='actif' ? 1 : 0.5 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:c, flexShrink:0 }}/>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, color:'rgba(242,237,224,0.88)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
+                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', marginTop:2 }}>
+                    {p.categorie} · {p.prix != null ? `${Number(p.prix).toFixed(2)} €` : 'prix libre'}
+                    {p.vendeur_nom ? ` · ${p.vendeur_nom}` : ''}
+                  </div>
+                </div>
+                <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, flexShrink:0, background: p.statut==='actif' ? 'rgba(150,212,133,0.10)' : 'rgba(255,255,255,0.05)', border: p.statut==='actif' ? '1px solid rgba(150,212,133,0.25)' : '1px solid rgba(255,255,255,0.07)', color: p.statut==='actif' ? '#96d485' : 'rgba(242,237,224,0.30)' }}>
+                  {p.statut}
+                </span>
+                <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                  <button onClick={() => toggleStatut(p)}
+                    style={{ padding:'5px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.10)', color:'rgba(242,237,224,0.45)' }}>
+                    {p.statut==='actif' ? 'Désactiver' : 'Activer'}
+                  </button>
+                  <button onClick={() => openEdit(p)}
+                    style={{ padding:'5px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:`${c}12`, border:`1px solid ${c}35`, color:c }}>
+                    ✏ Modifier
+                  </button>
+                  <button onClick={() => handleDelete(p.id, p.titre)}
+                    style={{ padding:'5px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.25)', color:'rgba(255,140,140,0.7)' }}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <FleuristesAdmin showToast={showToast} />
+
+      {/* Formulaire modal */}
+      {showForm && (
+        <div style={{ position:'fixed', inset:0, zIndex:500, display:'flex', alignItems:'flex-end', justifyContent:'center', background:'rgba(0,0,0,0.75)', backdropFilter:'blur(10px)' }}
+          onClick={() => setShowForm(false)}>
+          <div style={{ width:'100%', maxWidth:640, borderRadius:'22px 22px 0 0', background:'#12201a', border:'1px solid rgba(255,255,255,0.09)', borderBottom:'none', padding:'24px 28px 48px', maxHeight:'90vh', overflowY:'auto' }}
+            onClick={e => e.stopPropagation()}>
+
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'rgba(242,237,224,0.88)' }}>
+                {editId ? 'Modifier le produit' : 'Nouveau produit'}
+              </div>
+              <button onClick={() => setShowForm(false)} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:18, cursor:'pointer' }}>✕</button>
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+
+              {/* Type + Catégorie */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+                <div>
+                  <span style={lbl}>Type</span>
+                  <select value={form.type} onChange={e => setForm(f => ({ ...f, type:e.target.value, categorie:CAT_OPTS[e.target.value][0] }))} style={{ ...inp }}>
+                    {TYPE_OPTS.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <span style={lbl}>Catégorie</span>
+                  <select value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie:e.target.value }))} style={{ ...inp }}>
+                    {(CAT_OPTS[form.type]||[]).map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Titre */}
+              <div>
+                <span style={lbl}>Titre *</span>
+                <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre:e.target.value }))} placeholder="Nom du produit" style={{ ...inp }}/>
+              </div>
+
+              {/* Description */}
+              <div>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                  <span style={lbl}>Description</span>
+                  <span style={{ fontSize:10, color: form.description.length > 320 ? '#e87060' : 'rgba(242,237,224,0.22)' }}>{form.description.length} / 350</span>
+                </div>
+                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description:e.target.value.slice(0,350) }))} rows={4} style={{ ...inp, resize:'vertical', lineHeight:1.8 }}/>
+              </div>
+
+              {/* Prix + Ordre */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+                <div>
+                  <span style={lbl}>Prix (€)</span>
+                  <input type="number" min="0" step="0.01" value={form.prix} onChange={e => setForm(f => ({ ...f, prix:e.target.value }))} placeholder="0.00" style={{ ...inp }}/>
+                </div>
+                <div>
+                  <span style={lbl}>Ordre d'affichage</span>
+                  <input type="number" min="0" value={form.ordre} onChange={e => setForm(f => ({ ...f, ordre:e.target.value }))} style={{ ...inp }}/>
+                </div>
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <span style={lbl}>URL de l'image</span>
+                <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url:e.target.value }))} placeholder="https://..." style={{ ...inp }}/>
+              </div>
+
+              {/* Fichier audio — seulement pour les produits digitaux */}
+              {form.type === 'digital' && (
+                <div>
+                  <span style={lbl}>Fichier audio</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <label style={{ flex:1, padding:'9px 12px', borderRadius:8, border:'1px dashed rgba(180,160,240,0.35)', background:'rgba(180,160,240,0.06)', color: form.storage_path ? '#b4a0f0' : 'rgba(242,237,224,0.40)', fontSize:12, cursor:'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', display:'block' }}>
+                      <input type="file" accept="audio/*" style={{ display:'none' }} onChange={e => handleAudioUpload(e.target.files[0])}/>
+                      {audioUploading ? '⏳ Upload en cours…' : form.storage_path ? `✓ ${form.storage_path}` : '📁 Choisir un fichier audio'}
+                    </label>
+                    {form.storage_path && (
+                      <button onClick={() => setForm(f => ({ ...f, storage_path:'' }))}
+                        style={{ padding:'6px 10px', borderRadius:7, fontSize:11, cursor:'pointer', background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.25)', color:'rgba(255,140,140,0.7)', fontFamily:"'Jost',sans-serif" }}>✕</button>
+                    )}
+                  </div>
+                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:5 }}>MP3, WAV, AAC — max 500 MB. Le fichier sera protégé et non téléchargeable.</div>
+                </div>
+              )}
+
+              {/* Lien + Stripe (pas occasion) */}
+              {form.type !== 'occasion' && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+                  <div>
+                    <span style={lbl}>Lien externe</span>
+                    <input value={form.lien_externe} onChange={e => setForm(f => ({ ...f, lien_externe:e.target.value }))} placeholder="https://..." style={{ ...inp }}/>
+                  </div>
+                  <div>
+                    <span style={lbl}>Stripe Price ID</span>
+                    <input value={form.stripe_price_id} onChange={e => setForm(f => ({ ...f, stripe_price_id:e.target.value }))} placeholder="price_..." style={{ ...inp }}/>
+                  </div>
+                </div>
+              )}
+
+              {/* Vendeur (partenaires + occasion) */}
+              {form.type !== 'digital' && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+                  <div>
+                    <span style={lbl}>Nom du vendeur</span>
+                    <input value={form.vendeur_nom} onChange={e => setForm(f => ({ ...f, vendeur_nom:e.target.value }))} placeholder="Nom ou enseigne" style={{ ...inp }}/>
+                  </div>
+                  <div>
+                    <span style={lbl}>Contact</span>
+                    <input value={form.vendeur_contact} onChange={e => setForm(f => ({ ...f, vendeur_contact:e.target.value }))} placeholder="email, lien..." style={{ ...inp }}/>
+                  </div>
+                </div>
+              )}
+
+              {/* Statut */}
+              <div>
+                <span style={lbl}>Statut</span>
+                <select value={form.statut} onChange={e => setForm(f => ({ ...f, statut:e.target.value }))} style={{ ...inp, maxWidth:220 }}>
+                  <option value="actif">Actif — visible</option>
+                  <option value="inactif">Inactif — masqué</option>
+                  <option value="vendu">Vendu (occasion)</option>
+                </select>
+              </div>
+
+              {/* Save */}
+              <button onClick={handleSave} disabled={saving}
+                style={{ padding:'13px', borderRadius:10, border:`1px solid ${tc}50`, background:`${tc}18`, color:tc, fontSize:13, fontWeight:500, cursor: saving ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', opacity: saving ? 0.6 : 1, marginTop:4 }}>
+                {saving ? 'Enregistrement…' : editId ? '✓ Mettre à jour' : '✓ Créer le produit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -808,6 +1228,9 @@ export function AdminPage() {
             {pendingReviews.length > 0 && (
               <span style={{ position:'absolute', top:2, right:2, background:'rgba(246,196,83,0.35)', border:'1px solid rgba(246,196,83,0.5)', borderRadius:100, fontSize:8, padding:'1px 5px', color:'#F6C453', lineHeight:1.4 }}>{pendingReviews.length}</span>
             )}
+          </div>
+          <div className={`adm-tab${tab === 'boutique' ? ' active' : ''}`} onClick={() => setTab('boutique')}>
+            🌿 Jardinothèque
           </div>
           <div className={`adm-tab${tab === 'parametres' ? ' active' : ''}`} onClick={() => setTab('parametres')}>
             ⚙️ Paramètres
@@ -1297,6 +1720,12 @@ export function AdminPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'boutique' && (
+          <div className="adm-section">
+            <BoutiqueEditor showToast={showToast} />
           </div>
         )}
 
