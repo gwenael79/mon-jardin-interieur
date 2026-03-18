@@ -899,6 +899,8 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
 
   const handleAudioUpload = async (file) => {
     if (!file) return
+    console.log('[upload] fleuriste:', fleuriste)
+    console.log('[upload] code_vendeur:', fleuriste.code_vendeur)
     setAudioUploading(true)
     const fd = new FormData()
     fd.append('file', file)
@@ -931,25 +933,46 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
     setShowForm(true)
   }
 
+  const FLEURISTE_STRIPE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/fleuriste-stripe'
+
   const handleSubmit = async () => {
     if (!form.titre.trim()) { alert('Titre obligatoire'); return }
     setSaving(true)
     const statut = fleuriste.publication_mode === 'direct' ? 'actif' : 'en_attente'
     const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, updated_at: new Date().toISOString() }
 
+    let savedId = editId
     if (editId) {
       const { error } = await supabase.from('produits').update(payload).eq('id', editId).eq('fleuriste_id', fleuriste.id)
       setSaving(false)
       if (error) { alert('Erreur : ' + error.message); return }
     } else {
-      const { error } = await supabase.from('produits').insert({
-        ...payload, fleuriste_id: fleuriste.id, vendeur_nom: fleuriste.nom_boutique,
-        statut, created_at: new Date().toISOString(),
-      })
-      setSaving(false)
-      if (error) { alert('Erreur : ' + error.message); return }
+      const { data, error } = await supabase.from('produits')
+        .insert({ ...payload, fleuriste_id: fleuriste.id, vendeur_nom: fleuriste.nom_boutique, statut, created_at: new Date().toISOString() })
+        .select('id').single()
+      if (error) { setSaving(false); alert('Erreur : ' + error.message); return }
+      savedId = data.id
       if (fleuriste.publication_mode === 'direct') onProductAdded()
     }
+
+    // Création Stripe automatique uniquement si publication directe
+    if (form.type === 'digital' && form.prix && fleuriste.publication_mode === 'direct' && savedId) {
+      try {
+        const res = await fetch(FLEURISTE_STRIPE_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            produit_id: savedId, code_vendeur: fleuriste.code_vendeur,
+            titre: form.titre, description: form.description,
+            prix: form.prix, image_url: form.image_url,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok) console.warn('[fleuriste-stripe] erreur:', data.error)
+      } catch (e) { console.warn('[fleuriste-stripe] réseau:', e) }
+    }
+
+    setSaving(false)
     setShowForm(false)
     setEditId(null)
     setForm(EMPTY_FORM)

@@ -393,9 +393,37 @@ function FleuristesAdmin({ showToast }) {
   const filtered = filter === 'all' ? fleuristes : fleuristes.filter(f => f.statut === filter)
   const pending = fleuristes.filter(f => f.statut === 'en_attente').length
 
+  const FLEURISTE_STRIPE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/fleuriste-stripe'
+
   const update = async (id, patch, msg) => {
     const { error } = await supabase.from('fleuristes').update(patch).eq('id', id)
     if (error) { showToast('✗ ' + error.message); return }
+
+    // Si on active un fleuriste, créer les Price Stripe pour ses produits digitaux en attente
+    if (patch.statut === 'actif') {
+      const { data: produits } = await supabase.from('produits')
+        .select('id, titre, description, prix, image_url, stripe_price_id, type')
+        .eq('fleuriste_id', id)
+        .eq('type', 'digital')
+        .is('stripe_price_id', null)
+
+      const fleuristeData = fleuristes.find(f => f.id === id)
+      if (produits?.length && fleuristeData?.code_vendeur) {
+        for (const p of produits) {
+          if (!p.prix) continue
+          try {
+            await fetch(FLEURISTE_STRIPE_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ produit_id: p.id, code_vendeur: fleuristeData.code_vendeur, titre: p.titre, description: p.description, prix: p.prix, image_url: p.image_url }),
+            })
+          } catch (e) { console.warn('[stripe] produit', p.id, e) }
+        }
+        // Active aussi les produits en attente
+        await supabase.from('produits').update({ statut: 'actif' }).eq('fleuriste_id', id).eq('statut', 'en_attente')
+      }
+    }
+
     showToast(msg); load()
   }
 
@@ -608,23 +636,30 @@ function BoutiqueEditor({ showToast }) {
     }
 
     // Création automatique du produit Stripe pour les produits digitaux sans price_id
+    console.log('[save] type:', form.type, '— prix:', form.prix, '— stripe_price_id:', JSON.stringify(form.stripe_price_id), '— savedId:', savedId)
     if (form.type === 'digital' && form.prix && !form.stripe_price_id && savedId) {
+      console.log('[save] → appel Stripe en cours…')
       try {
         const session = await supabase.auth.getSession()
         const token = session.data.session?.access_token
+        console.log('[save] token:', token ? 'ok' : 'ABSENT')
+        if (!token) { showToast('✓ Produit sauvegardé — ⚠ Stripe : session expirée'); setSaving(false); setShowForm(false); load(); return }
+        console.log('[save] URL:', STRIPE_PRODUCT_URL)
         const res = await fetch(STRIPE_PRODUCT_URL, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ produit_id: savedId, titre: form.titre, description: form.description, prix: form.prix, image_url: form.image_url }),
         })
         const data = await res.json()
-        if (res.ok) {
-          showToast(`✓ Produit créé — Stripe Price ID : ${data.price_id}`)
+        if (res.ok && data.price_id) {
+          // Double sécurité — on met aussi à jour depuis le front
+          await supabase.from('produits').update({ stripe_price_id: data.price_id }).eq('id', savedId)
+          showToast(`✓ Produit + Stripe créés — ${data.price_id}`)
         } else {
-          showToast('✓ Produit sauvegardé — ⚠ Stripe : ' + (data.error || 'erreur'))
+          showToast(`✓ Sauvegardé — ⚠ Stripe (${res.status}) : ${data.error || JSON.stringify(data)}`)
         }
-      } catch {
-        showToast('✓ Produit sauvegardé — ⚠ Stripe non joignable')
+      } catch(e) {
+        showToast('✓ Sauvegardé — ⚠ Stripe : ' + (e instanceof Error ? e.message : String(e)))
       }
     } else {
       showToast(editId ? '✓ Produit mis à jour' : '✓ Produit ajouté')
