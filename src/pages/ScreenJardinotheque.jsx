@@ -327,6 +327,7 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ produitId: p.id }),
       })
+      console.log('[checkout] produitId envoyé:', p.id, '— status:', res.status)
       const data = await res.json()
       if (!res.ok) { setPayErr(data.error || 'Erreur paiement'); setPaying(false); return }
       window.location.href = data.url
@@ -883,12 +884,33 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
   const [produits,  setProduits]  = useState([])
   const [loading,   setLoading]   = useState(true)
   const [showForm,  setShowForm]  = useState(false)
+  const [editId,    setEditId]    = useState(null) // null = création, sinon UUID
   const [saving,    setSaving]    = useState(false)
   const [form,      setForm]      = useState({ type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'' })
 
+  const EMPTY_FORM = { type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'' }
   const CAT_OPTS = { digital:['Audio','Formation','Méditation','Guide'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
   const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid rgba(255,255,255,0.18)', background:'#0e1a0e', color:'rgba(242,237,224,0.92)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
   const lbl = { fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
+
+  const [audioUploading, setAudioUploading] = useState(false)
+
+  const UPLOAD_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/fleuriste-upload'
+
+  const handleAudioUpload = async (file) => {
+    if (!file) return
+    setAudioUploading(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('code_vendeur', fleuriste.code_vendeur)
+    try {
+      const res = await fetch(UPLOAD_URL, { method:'POST', body: fd })
+      const data = await res.json()
+      if (!res.ok) { alert('Upload : ' + (data.error || 'erreur')); setAudioUploading(false); return }
+      setForm(f => ({ ...f, storage_path: data.storage_path }))
+    } catch (e) { alert('Erreur réseau : ' + e.message) }
+    setAudioUploading(false)
+  }
 
   const loadProduits = () => {
     setLoading(true)
@@ -897,25 +919,41 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
   }
   useEffect(() => { loadProduits() }, [])
 
+  const openEdit = (p) => {
+    setForm({ type:p.type, categorie:p.categorie||'Autre', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', storage_path:p.storage_path||'' })
+    setEditId(p.id)
+    setShowForm(true)
+  }
+
+  const openNew = () => {
+    setForm(EMPTY_FORM)
+    setEditId(null)
+    setShowForm(true)
+  }
+
   const handleSubmit = async () => {
     if (!form.titre.trim()) { alert('Titre obligatoire'); return }
     setSaving(true)
     const statut = fleuriste.publication_mode === 'direct' ? 'actif' : 'en_attente'
-    const { error } = await supabase.from('produits').insert({
-      ...form,
-      prix: form.prix !== '' ? parseFloat(form.prix) : null,
-      fleuriste_id: fleuriste.id,
-      vendeur_nom: fleuriste.nom_boutique,
-      statut,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    setSaving(false)
-    if (error) { alert('Erreur : ' + error.message); return }
+    const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, updated_at: new Date().toISOString() }
+
+    if (editId) {
+      const { error } = await supabase.from('produits').update(payload).eq('id', editId).eq('fleuriste_id', fleuriste.id)
+      setSaving(false)
+      if (error) { alert('Erreur : ' + error.message); return }
+    } else {
+      const { error } = await supabase.from('produits').insert({
+        ...payload, fleuriste_id: fleuriste.id, vendeur_nom: fleuriste.nom_boutique,
+        statut, created_at: new Date().toISOString(),
+      })
+      setSaving(false)
+      if (error) { alert('Erreur : ' + error.message); return }
+      if (fleuriste.publication_mode === 'direct') onProductAdded()
+    }
     setShowForm(false)
-    setForm({ type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'' })
+    setEditId(null)
+    setForm(EMPTY_FORM)
     loadProduits()
-    if (fleuriste.publication_mode === 'direct') onProductAdded()
   }
 
   const handleDelete = async (id) => {
@@ -943,16 +981,22 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
 
       {/* Bouton ajouter */}
       {!showForm && (
-        <button onClick={() => setShowForm(true)}
+        <button onClick={openNew}
           style={{ padding:'12px', borderRadius:12, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.08)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500 }}>
           + Proposer un nouveau produit
         </button>
       )}
 
-      {/* Formulaire ajout */}
+      {/* Formulaire ajout/édition */}
       {showForm && (
         <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:'18px 20px', display:'flex', flexDirection:'column', gap:14 }}>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, color:'rgba(242,237,224,0.80)', marginBottom:2 }}>Nouveau produit</div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, color:'rgba(242,237,224,0.80)' }}>
+              {editId ? 'Modifier le produit' : 'Nouveau produit'}
+            </div>
+            <button onClick={() => { setShowForm(false); setEditId(null); setForm(EMPTY_FORM) }}
+              style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:16, cursor:'pointer' }}>✕</button>
+          </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div>
@@ -1001,10 +1045,33 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
             <div style={{ fontSize:10, color:'rgba(242,237,224,0.45)', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
           </div>
 
+          {/* Upload audio — uniquement pour les produits digitaux */}
+          {form.type === 'digital' && (
+            <div>
+              <span style={lbl}>Fichier audio <span style={{ color:'rgba(242,237,224,0.35)', textTransform:'none', letterSpacing:0, fontWeight:300 }}>(lecture sécurisée dans l'app)</span></span>
+              <label style={{ display:'block', padding:'12px 14px', borderRadius:8, border:`1px dashed ${form.storage_path ? 'rgba(150,212,133,0.40)' : 'rgba(255,255,255,0.15)'}`, background: form.storage_path ? 'rgba(150,212,133,0.06)' : 'rgba(255,255,255,0.03)', color: form.storage_path ? '#96d485' : 'rgba(242,237,224,0.45)', fontSize:12, cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
+                <input type="file" accept="audio/*" style={{ display:'none' }} onChange={e => handleAudioUpload(e.target.files[0])} disabled={audioUploading}/>
+                {audioUploading ? '⏳ Upload en cours…' : form.storage_path ? '✓ Fichier audio chargé' : '📁 Choisir un fichier audio (MP3, WAV, AAC…)'}
+              </label>
+              {form.storage_path && (
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
+                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                    {form.storage_path.split('/').pop()}
+                  </div>
+                  <button onClick={() => setForm(f => ({ ...f, storage_path:'' }))}
+                    style={{ background:'none', border:'none', color:'rgba(255,140,140,0.60)', fontSize:11, cursor:'pointer', flexShrink:0, marginLeft:8 }}>
+                    ✕ Supprimer
+                  </button>
+                </div>
+              )}
+              <div style={{ fontSize:10, color:'rgba(242,237,224,0.28)', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
+            </div>
+          )}
+
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleSubmit} disabled={saving}
               style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:500, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Envoi…' : fleuriste.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
+              {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : fleuriste.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
             </button>
             <button onClick={() => setShowForm(false)}
               style={{ padding:'11px 18px', borderRadius:10, border:'1px solid rgba(255,255,255,0.10)', background:'transparent', color:'rgba(242,237,224,0.40)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
@@ -1039,10 +1106,16 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
                   color: p.statut==='actif' ? '#96d485' : p.statut==='en_attente' ? '#e8c060' : 'rgba(242,237,224,0.30)' }}>
                   {p.statut === 'en_attente' ? '⏳ en attente' : p.statut}
                 </span>
-                <button onClick={() => handleDelete(p.id)}
-                  style={{ padding:'4px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.20)', color:'rgba(255,140,140,0.65)' }}>
-                  ✕
-                </button>
+                <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                  <button onClick={() => openEdit(p)}
+                    style={{ padding:'4px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(130,200,240,0.08)', border:'1px solid rgba(130,200,240,0.20)', color:'#82c8f0' }}>
+                    ✏ Modifier
+                  </button>
+                  <button onClick={() => handleDelete(p.id)}
+                    style={{ padding:'4px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.20)', color:'rgba(255,140,140,0.65)' }}>
+                    ✕
+                  </button>
+                </div>
               </div>
             ))}
           </div>

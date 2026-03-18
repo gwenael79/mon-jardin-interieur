@@ -143,9 +143,19 @@ function SecureAudioPlayer({ produitId, userId, titre, onClose }) {
     const load = async () => {
       setStatus('loading')
       try {
-        const session = await supabase.auth.getSession()
-        const token = session.data.session?.access_token
-        if (!token) throw new Error('Non connecté')
+        // Attend que la session soit disponible (jusqu'à 3s après redirect Stripe)
+        let token = null
+        for (let i = 0; i < 6; i++) {
+          const { data } = await supabase.auth.getSession()
+          token = data.session?.access_token ?? null
+          if (token) break
+          await new Promise(r => setTimeout(r, 500))
+        }
+        if (!token) throw new Error('Session expirée — reconnectez-vous')
+
+        console.log('[audio-stream] URL:', EDGE_FN_URL)
+        console.log('[audio-stream] produit_id:', produitId)
+        console.log('[audio-stream] token présent:', !!token)
 
         const res = await fetch(EDGE_FN_URL, {
           method: 'POST',
@@ -153,6 +163,7 @@ function SecureAudioPlayer({ produitId, userId, titre, onClose }) {
           body: JSON.stringify({ produit_id: produitId }),
         })
         const json = await res.json()
+        console.log('[audio-stream] status:', res.status, 'response:', json)
         if (!res.ok) throw new Error(json.error || 'Erreur serveur')
 
         // Télécharge le fichier audio en mémoire → Blob URL
