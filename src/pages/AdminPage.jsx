@@ -554,6 +554,29 @@ function BoutiqueEditor({ showToast }) {
   }
 
   const [audioUploading, setAudioUploading] = useState(false)
+  const [attribuerProduit, setAttribuerProduit] = useState(null) // produit à attribuer
+  const [users,            setUsers]            = useState([])
+  const [usersLoaded,      setUsersLoaded]      = useState(false)
+  const [attribuant,       setAttribuant]       = useState(false)
+
+  const loadUsers = () => {
+    if (usersLoaded) return
+    supabase.from('users').select('id, display_name, email').order('display_name')
+      .then(({ data }) => { setUsers(data || []); setUsersLoaded(true) })
+  }
+
+  const handleAttribuer = async (userId) => {
+    if (!attribuerProduit || !userId) return
+    setAttribuant(true)
+    const { error } = await supabase.from('achats').upsert(
+      { user_id: userId, produit_id: attribuerProduit.id, statut: 'offert', montant: 0 },
+      { onConflict: 'user_id,produit_id' }
+    )
+    setAttribuant(false)
+    if (error) { showToast('✗ ' + error.message); return }
+    showToast(`✓ "${attribuerProduit.titre}" attribué`)
+    setAttribuerProduit(null)
+  }
 
   const handleAudioUpload = async (file) => {
     if (!file) return
@@ -566,17 +589,48 @@ function BoutiqueEditor({ showToast }) {
     showToast('✓ Fichier audio uploadé')
   }
 
+  const STRIPE_PRODUCT_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/stripe-product'
+
   const handleSave = async () => {
     if (!form.titre.trim()) { showToast('✗ Titre obligatoire'); return }
     setSaving(true)
     const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, ordre: parseInt(form.ordre)||0, updated_at: new Date().toISOString() }
-    delete payload._audioFile // ne pas envoyer le File object
-    const { error } = editId
-      ? await supabase.from('produits').update(payload).eq('id', editId)
-      : await supabase.from('produits').insert({ ...payload, created_at: new Date().toISOString() })
+    delete payload._audioFile
+
+    let savedId = editId
+    if (editId) {
+      const { error } = await supabase.from('produits').update(payload).eq('id', editId)
+      if (error) { setSaving(false); showToast('✗ ' + error.message); return }
+    } else {
+      const { data, error } = await supabase.from('produits').insert({ ...payload, created_at: new Date().toISOString() }).select('id').single()
+      if (error) { setSaving(false); showToast('✗ ' + error.message); return }
+      savedId = data.id
+    }
+
+    // Création automatique du produit Stripe pour les produits digitaux sans price_id
+    if (form.type === 'digital' && form.prix && !form.stripe_price_id && savedId) {
+      try {
+        const session = await supabase.auth.getSession()
+        const token = session.data.session?.access_token
+        const res = await fetch(STRIPE_PRODUCT_URL, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ produit_id: savedId, titre: form.titre, description: form.description, prix: form.prix, image_url: form.image_url }),
+        })
+        const data = await res.json()
+        if (res.ok) {
+          showToast(`✓ Produit créé — Stripe Price ID : ${data.price_id}`)
+        } else {
+          showToast('✓ Produit sauvegardé — ⚠ Stripe : ' + (data.error || 'erreur'))
+        }
+      } catch {
+        showToast('✓ Produit sauvegardé — ⚠ Stripe non joignable')
+      }
+    } else {
+      showToast(editId ? '✓ Produit mis à jour' : '✓ Produit ajouté')
+    }
+
     setSaving(false)
-    if (error) { showToast('✗ ' + error.message); return }
-    showToast(editId ? '✓ Produit mis à jour' : '✓ Produit ajouté')
     setShowForm(false); load()
   }
 
@@ -643,6 +697,12 @@ function BoutiqueEditor({ showToast }) {
                     style={{ padding:'5px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.10)', color:'rgba(242,237,224,0.45)' }}>
                     {p.statut==='actif' ? 'Désactiver' : 'Activer'}
                   </button>
+                  {p.type === 'digital' && p.storage_path && (
+                    <button onClick={() => { setAttribuerProduit(p); loadUsers() }}
+                      style={{ padding:'5px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(180,160,240,0.10)', border:'1px solid rgba(180,160,240,0.30)', color:'#b4a0f0' }}>
+                      🎁 Attribuer
+                    </button>
+                  )}
                   <button onClick={() => openEdit(p)}
                     style={{ padding:'5px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:`${c}12`, border:`1px solid ${c}35`, color:c }}>
                     ✏ Modifier
@@ -659,6 +719,52 @@ function BoutiqueEditor({ showToast }) {
       )}
 
       <FleuristesAdmin showToast={showToast} />
+
+
+      {/* ── Modal attribution accès ── */}
+      {attribuerProduit && (
+        <div style={{ position:'fixed', inset:0, zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.75)', backdropFilter:'blur(10px)', padding:'20px' }}
+          onClick={() => setAttribuerProduit(null)}>
+          <div style={{ width:'100%', maxWidth:480, borderRadius:18, background:'#12201a', border:'1px solid rgba(255,255,255,0.09)', padding:'24px 28px', maxHeight:'80vh', overflowY:'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color:'rgba(242,237,224,0.88)' }}>
+                Attribuer l'accès
+              </div>
+              <button onClick={() => setAttribuerProduit(null)} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:18, cursor:'pointer' }}>✕</button>
+            </div>
+            <div style={{ fontSize:12, color:'rgba(180,160,240,0.70)', marginBottom:16, padding:'8px 12px', background:'rgba(180,160,240,0.06)', border:'1px solid rgba(180,160,240,0.20)', borderRadius:8 }}>
+              🎧 {attribuerProduit.titre}
+            </div>
+            <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:10 }}>
+              Choisir un utilisateur
+            </div>
+            {!usersLoaded ? (
+              <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic' }}>Chargement…</div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight:360, overflowY:'auto' }}>
+                {users.map(u => (
+                  <button key={u.id} onClick={() => handleAttribuer(u.id)} disabled={attribuant}
+                    style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderRadius:9, background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.06)', cursor:'pointer', fontFamily:"'Jost',sans-serif", textAlign:'left', transition:'background .15s', opacity: attribuant ? 0.6 : 1 }}
+                    onMouseEnter={e => e.currentTarget.style.background='rgba(180,160,240,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.025)'}>
+                    <div style={{ width:28, height:28, borderRadius:'50%', background:'rgba(180,160,240,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#b4a0f0', flexShrink:0, fontWeight:500 }}>
+                      {(u.display_name || u.email || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:12, color:'rgba(242,237,224,0.80)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                        {u.display_name || u.email}
+                      </div>
+                      {u.display_name && <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{u.email}</div>}
+                    </div>
+                    <span style={{ fontSize:11, color:'rgba(180,160,240,0.50)' }}>Attribuer →</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Formulaire modal */}
       {showForm && (

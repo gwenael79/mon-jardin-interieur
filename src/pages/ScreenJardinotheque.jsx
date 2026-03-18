@@ -293,18 +293,43 @@ function ProductModal({ produit: p, tc, onClose }) {
   const emoji = CAT_EMOJI[p.categorie] ?? tc.icon
   const isDigital  = p.type === 'digital'
   const isOccasion = p.type === 'occasion'
+  const [paying, setPaying] = useState(false)
+  const [payErr, setPayErr] = useState('')
 
-  const handleAction = () => {
-    if (p.lien_externe) {
-      window.open(p.lien_externe, '_blank')
-    } else {
-      // Stripe : à brancher plus tard via stripe_price_id
-      alert('Paiement Stripe — à configurer')
+  const CHECKOUT_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/stripe-checkout'
+
+  const handleAction = async () => {
+    setPayErr('')
+    // Partenaires physiques → lien externe
+    if (!isDigital) {
+      if (p.lien_externe) window.open(p.lien_externe, '_blank')
+      return
     }
+    // Digital avec stripe_price_id → Stripe Checkout
+    if (p.stripe_price_id) {
+      setPaying(true)
+      try {
+        const session = await supabase.auth.getSession()
+        const token = session.data.session?.access_token
+        if (!token) { setPayErr('Connectez-vous pour acheter.'); setPaying(false); return }
+        const res = await fetch(CHECKOUT_URL, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ produitId: p.id }),
+        })
+        const data = await res.json()
+        if (!res.ok) { setPayErr(data.error || 'Erreur paiement'); setPaying(false); return }
+        window.location.href = data.url
+      } catch (e) {
+        setPayErr('Erreur réseau'); setPaying(false)
+      }
+      return
+    }
+    // Fallback lien externe
+    if (p.lien_externe) window.open(p.lien_externe, '_blank')
   }
 
   const handleContact = () => {
-    // TODO : ouvrir la messagerie interne avec vendeur_id
     alert(`Contacter ${p.vendeur_nom} — messagerie à brancher`)
   }
 
@@ -363,10 +388,11 @@ function ProductModal({ produit: p, tc, onClose }) {
             ✉ Contacter le vendeur
           </button>
         ) : (
-          <button className="jt-modal-btn" onClick={handleAction}
-            style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color }}>
-            {isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
+          <button className="jt-modal-btn" onClick={handleAction} disabled={paying}
+            style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
+            {paying ? '⏳ Redirection vers le paiement…' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
           </button>
+          {payErr && <div style={{ fontSize:12, color:'#e87060', marginTop:8, textAlign:'center' }}>{payErr}</div>}
         )}
 
         {/* Mention légale discrète */}
