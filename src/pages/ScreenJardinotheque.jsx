@@ -101,14 +101,14 @@ const TYPE_CONFIG = {
 
 // ── Catégories par type ──────────────────────────────────────────────────────
 const CATEGORIES = {
-  digital:  ['Tous', 'Audio', 'Formation', 'Méditation', 'Guide'],
+  digital:  ['Tous', 'Audio', 'Formation', 'E-book'],
   physique: ['Tous', 'Livre', 'Bijou', 'Pierre', 'Huile essentielle', 'Autre'],
   occasion: ['Tous', 'Livre', 'Bijou', 'Pierre', 'Accessoire', 'Autre'],
 }
 
 // ── Emoji par catégorie ──────────────────────────────────────────────────────
 const CAT_EMOJI = {
-  'Audio':'🎧', 'Formation':'📚', 'Méditation':'🧘', 'Guide':'📖',
+  'Audio':'🎧', 'Formation':'📚', 'E-book':'📖', 'Méditation':'🧘', 'Guide':'📖',
   'Livre':'📕', 'Bijou':'💍', 'Pierre':'💎', 'Huile essentielle':'🌸',
   'Accessoire':'🎀', 'Autre':'✨',
 }
@@ -898,7 +898,7 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
   const [form,      setForm]      = useState({ type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'' })
 
   const EMPTY_FORM = { type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'' }
-  const CAT_OPTS = { digital:['Audio','Formation','Méditation','Guide'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
+  const CAT_OPTS = { digital:['Audio','Formation','E-book'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
   const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid rgba(255,255,255,0.18)', background:'#0e1a0e', color:'rgba(242,237,224,0.92)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
   const lbl = { fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
 

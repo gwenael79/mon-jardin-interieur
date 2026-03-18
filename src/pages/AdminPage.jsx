@@ -543,7 +543,7 @@ const TYPE_OPTS = [
   { val:'occasion', label:'🤝 Occasion',     color:'#e8c060' },
 ]
 const CAT_OPTS = {
-  digital:  ['Audio','Formation','Méditation','Guide'],
+  digital:  ['Audio','Formation','E-book'],
   physique: ['Livre','Bijou','Pierre','Huile essentielle','Autre'],
   occasion: ['Livre','Bijou','Pierre','Accessoire','Autre'],
 }
