@@ -27,33 +27,34 @@ const css = `
                     border-color:rgba(255,255,255,0.25); }
 
 /* ── Grille ── */
-.jt-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:16px; }
+.jt-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:12px; }
 
 /* ── Card ── */
 .jt-card { border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.07);
            background:rgba(255,255,255,0.03); transition:all .2s; cursor:pointer; display:flex; flex-direction:column; }
 .jt-card:hover { background:rgba(255,255,255,0.055); border-color:rgba(255,255,255,0.14);
                  transform:translateY(-2px); }
-.jt-card-img { width:100%; aspect-ratio:16/9; object-fit:cover; background:rgba(255,255,255,0.04);
-               display:flex; align-items:center; justify-content:center; font-size:48px; }
-.jt-card-body { padding:16px 18px 20px; flex:1; display:flex; flex-direction:column; gap:8px; }
+.jt-card-img { width:100%; aspect-ratio:3/2; background:rgba(255,255,255,0.04);
+               display:flex; align-items:center; justify-content:center; font-size:32px; max-height:120px; overflow:hidden; position:relative; }
+.jt-card-img img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.jt-card-body { padding:10px 14px 14px; flex:1; display:flex; flex-direction:column; gap:4px; }
 .jt-card-cat  { font-size:9px; letter-spacing:.12em; text-transform:uppercase;
                 color:rgba(242,237,224,0.35); }
-.jt-card-title { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300;
+.jt-card-title { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:300;
                  color:#f2ede0; line-height:1.25; }
-.jt-card-desc  { font-size:12px; color:rgba(242,237,224,0.50); line-height:1.7; flex:1; }
+.jt-card-desc  { display:none; }
 .jt-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
-.jt-card-price { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:300; }
-.jt-card-btn   { padding:7px 18px; border-radius:20px; font-size:11px; font-family:'Jost',sans-serif;
+.jt-card-price { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:300; }
+.jt-card-btn   { padding:5px 12px; border-radius:20px; font-size:10px; font-family:'Jost',sans-serif;
                  cursor:pointer; transition:all .2s; font-weight:500; }
 
 /* ── Badge vendeur ── */
-.jt-vendeur { display:flex; align-items:center; gap:8px; padding:8px 0 0;
-              border-top:1px solid rgba(255,255,255,0.06); margin-top:4px; }
-.jt-vendeur-av { width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.10);
+.jt-vendeur { display:flex; align-items:center; gap:6px; padding:5px 0 0;
+              border-top:1px solid rgba(255,255,255,0.06); margin-top:2px; }
+.jt-vendeur-av { width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,0.10);
                  display:flex; align-items:center; justify-content:center;
-                 font-size:11px; font-weight:500; flex-shrink:0; }
-.jt-vendeur-name { font-size:11px; color:rgba(242,237,224,0.45); }
+                 font-size:9px; font-weight:500; flex-shrink:0; }
+.jt-vendeur-name { font-size:10px; color:rgba(242,237,224,0.45); }
 
 /* ── Empty ── */
 .jt-empty { text-align:center; padding:60px 20px; }
@@ -86,7 +87,7 @@ const css = `
                   letter-spacing:.06em; transition:all .2s; }
 
 @media(max-width:640px) {
-  .jt-grid { grid-template-columns:1fr; }
+  .jt-grid { grid-template-columns:1fr 1fr; gap:8px; }
   .jt-tab  { padding:10px 14px; font-size:10px; }
 }
 `
@@ -141,7 +142,7 @@ export function ScreenJardinotheque({ userId }) {
       .then(({ data }) => setAchatIds(new Set((data || []).map(a => a.produit_id))))
   }, [userId])
 
-  useEffect(() => {
+  const loadProduits = () => {
     setLoading(true)
     supabase.from('produits').select('*')
       .eq('statut', 'actif')
@@ -154,6 +155,14 @@ export function ScreenJardinotheque({ userId }) {
           setProduits(data)
         }
       })
+  }
+
+  useEffect(() => {
+    loadProduits()
+    // Recharge quand la page redevient visible (retour depuis Stripe par ex.)
+    const onVisible = () => { if (document.visibilityState === 'visible') loadProduits() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
   // Reset catégorie au changement d'onglet
@@ -261,10 +270,10 @@ function ProductCard({ produit: p, tc, onOpen, hasBought }) {
   return (
     <div className="jt-card" onClick={onOpen}>
       {/* Image / emoji fallback */}
-      <div className="jt-card-img">
+      <div className="jt-card-img" style={{ position:'relative', overflow:'hidden', aspectRatio:'3/2', maxHeight:120, background:'rgba(255,255,255,0.04)', display:'flex', alignItems:'center', justifyContent:'center' }}>
         {p.image_url
-          ? <img src={p.image_url} alt={p.titre} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-          : <span style={{ fontSize:48, opacity:.4 }}>{emoji}</span>
+          ? <img src={p.image_url} alt={p.titre} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+          : <span style={{ fontSize:28, opacity:.35 }}>{emoji}</span>
         }
       </div>
 
