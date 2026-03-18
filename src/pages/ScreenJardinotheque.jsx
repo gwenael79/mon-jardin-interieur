@@ -132,7 +132,14 @@ export function ScreenJardinotheque({ userId }) {
   const [loading,       setLoading]       = useState(true)
   const [selected,      setSelected]      = useState(null)
   const [showFleuriste, setShowFleuriste] = useState(false)
-  const [fleuriste,     setFleuriste]     = useState(null) // fleuriste connecté
+  const [fleuriste,     setFleuriste]     = useState(null)
+  const [achatIds,      setAchatIds]      = useState(new Set()) // produits déjà achetés
+
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('achats').select('produit_id').eq('user_id', userId).eq('statut', 'complete')
+      .then(({ data }) => setAchatIds(new Set((data || []).map(a => a.produit_id))))
+  }, [userId])
 
   useEffect(() => {
     setLoading(true)
@@ -216,7 +223,7 @@ export function ScreenJardinotheque({ userId }) {
         ) : (
           <div className="jt-grid">
             {filtered.map(p => (
-              <ProductCard key={p.id} produit={p} tc={tc} onOpen={() => setSelected(p)} />
+              <ProductCard key={p.id} produit={p} tc={tc} onOpen={() => setSelected(p)} hasBought={achatIds.has(p.id)} />
             ))}
           </div>
         )}
@@ -224,7 +231,7 @@ export function ScreenJardinotheque({ userId }) {
 
       {/* ── Modal détail ── */}
       {selected && (
-        <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} />
+        <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} hasBought={achatIds.has(selected.id)} userId={userId} />
       )}
 
       {/* ── Modal Fleuristes ── */}
@@ -248,7 +255,7 @@ export function ScreenJardinotheque({ userId }) {
 }
 
 // ── Card produit ─────────────────────────────────────────────────────────────
-function ProductCard({ produit: p, tc, onOpen }) {
+function ProductCard({ produit: p, tc, onOpen, hasBought }) {
   const emoji = CAT_EMOJI[p.categorie] ?? tc.icon
 
   return (
@@ -280,7 +287,7 @@ function ProductCard({ produit: p, tc, onOpen }) {
           </div>
           <div className="jt-card-btn"
             style={{ background: tc.bg, border:`1px solid ${tc.color}40`, color: tc.color }}>
-            {p.type === 'digital' ? 'Découvrir' : p.type === 'occasion' ? 'Contacter' : 'Voir'}
+            {hasBought ? '✓ Acheté' : p.type === 'digital' ? 'Acheter' : p.type === 'occasion' ? 'Contacter' : 'Voir'}
           </div>
         </div>
       </div>
@@ -289,7 +296,7 @@ function ProductCard({ produit: p, tc, onOpen }) {
 }
 
 // ── Modal détail produit ──────────────────────────────────────────────────────
-function ProductModal({ produit: p, tc, onClose }) {
+function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
   const emoji = CAT_EMOJI[p.categorie] ?? tc.icon
   const isDigital  = p.type === 'digital'
   const isOccasion = p.type === 'occasion'
@@ -300,33 +307,32 @@ function ProductModal({ produit: p, tc, onClose }) {
 
   const handleAction = async () => {
     setPayErr('')
-    // Partenaires physiques → lien externe
+    // Partenaires physiques → lien externe uniquement
     if (!isDigital) {
       if (p.lien_externe) window.open(p.lien_externe, '_blank')
       return
     }
-    // Digital avec stripe_price_id → Stripe Checkout
-    if (p.stripe_price_id) {
-      setPaying(true)
-      try {
-        const session = await supabase.auth.getSession()
-        const token = session.data.session?.access_token
-        if (!token) { setPayErr('Connectez-vous pour acheter.'); setPaying(false); return }
-        const res = await fetch(CHECKOUT_URL, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ produitId: p.id }),
-        })
-        const data = await res.json()
-        if (!res.ok) { setPayErr(data.error || 'Erreur paiement'); setPaying(false); return }
-        window.location.href = data.url
-      } catch (e) {
-        setPayErr('Erreur réseau'); setPaying(false)
-      }
+    // Digital → toujours par Stripe, jamais de lien direct
+    if (!p.stripe_price_id) {
+      setPayErr('Ce produit n\'est pas encore disponible à l\'achat.')
       return
     }
-    // Fallback lien externe
-    if (p.lien_externe) window.open(p.lien_externe, '_blank')
+    setPaying(true)
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+      if (!token) { setPayErr('Connectez-vous pour acheter.'); setPaying(false); return }
+      const res = await fetch(CHECKOUT_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ produitId: p.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setPayErr(data.error || 'Erreur paiement'); setPaying(false); return }
+      window.location.href = data.url
+    } catch {
+      setPayErr('Erreur réseau'); setPaying(false)
+    }
   }
 
   const handleContact = () => {
@@ -387,12 +393,19 @@ function ProductModal({ produit: p, tc, onClose }) {
             style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color }}>
             ✉ Contacter le vendeur
           </button>
+        ) : isDigital && hasBought ? (
+          <div style={{ padding:'14px', borderRadius:12, background:'rgba(150,212,133,0.08)', border:'1px solid rgba(150,212,133,0.30)', textAlign:'center' }}>
+            <div style={{ fontSize:13, color:'#96d485', fontWeight:500, marginBottom:6 }}>✓ Vous possédez ce produit</div>
+            <div style={{ fontSize:11, color:'rgba(242,237,224,0.45)' }}>Retrouvez-le dans Mon profil → 🎧 Ma bibliothèque</div>
+          </div>
         ) : (
-          <button className="jt-modal-btn" onClick={handleAction} disabled={paying}
-            style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
-            {paying ? '⏳ Redirection vers le paiement…' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
-          </button>
-          {payErr && <div style={{ fontSize:12, color:'#e87060', marginTop:8, textAlign:'center' }}>{payErr}</div>}
+          <>
+            <button className="jt-modal-btn" onClick={handleAction} disabled={paying}
+              style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
+              {paying ? '⏳ Redirection vers le paiement…' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
+            </button>
+            {payErr && <div style={{ fontSize:12, color:'#e87060', marginTop:8, textAlign:'center' }}>{payErr}</div>}
+          </>
         )}
 
         {/* Mention légale discrète */}
