@@ -94,23 +94,23 @@ const css = `
 
 // ── Couleurs par type ────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
-  digital:  { label:'Digital',      color:'#b4a0f0', bg:'rgba(180,160,240,0.10)', icon:'🎧' },
-  physique: { label:'Partenaires',  color:'#82c8a0', bg:'rgba(130,200,160,0.10)', icon:'🌿' },
-  occasion: { label:'Occasion',     color:'#e8c060', bg:'rgba(232,192,96,0.10)',  icon:'🤝' },
+  digital:  { label:'Contenus digitaux',          color:'#b4a0f0', bg:'rgba(180,160,240,0.10)', icon:'🎧' },
+  physique: { label:'Articles de nos partenaires', color:'#82c8a0', bg:'rgba(130,200,160,0.10)', icon:'🤝' },
+  occasion: { label:"Produits d'occasion",         color:'#e8c060', bg:'rgba(232,192,96,0.10)',  icon:'🛍' },
 }
 
 // ── Catégories par type ──────────────────────────────────────────────────────
 const CATEGORIES = {
   digital:  ['Tous', 'Audio', 'Formation', 'E-book'],
-  physique: ['Tous', 'Livre', 'Bijou', 'Pierre', 'Huile essentielle', 'Autre'],
-  occasion: ['Tous', 'Livre', 'Bijou', 'Pierre', 'Accessoire', 'Autre'],
+  physique: ['Tous', 'Livres', 'Bijoux', 'Pierres', 'Huiles essentielles', 'Autres'],
+  occasion: ['Tous', 'Livres', 'Bijoux', 'Pierres', 'Accessoires', 'Autres'],
 }
 
 // ── Emoji par catégorie ──────────────────────────────────────────────────────
 const CAT_EMOJI = {
   'Audio':'🎧', 'Formation':'📚', 'E-book':'📖', 'Méditation':'🧘', 'Guide':'📖',
-  'Livre':'📕', 'Bijou':'💍', 'Pierre':'💎', 'Huile essentielle':'🌸',
-  'Accessoire':'🎀', 'Autre':'✨',
+  'Livres':'📕', 'Bijoux':'💍', 'Pierres':'💎', 'Huiles essentielles':'🌸',
+  'Accessoires':'🎀', 'Autres':'✨',
 }
 
 // ── Produits de démo (affichés si la table est vide) ─────────────────────────
@@ -425,6 +425,81 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
           {isOccasion && 'Vente entre particuliers · Mon Jardin Intérieur n\'intervient pas dans la transaction'}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VentesDashboard — visible par le fleuriste pro
+// ═══════════════════════════════════════════════════════════
+function VentesDashboard({ fleuristeId }) {
+  const [ventes,  setVentes]  = useState([])
+  const [loading, setLoading] = useState(true)
+  const [mois,    setMois]    = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
+  })
+
+  useEffect(() => {
+    setLoading(true)
+    supabase.from('ventes_partenaires')
+      .select('*, produits(titre, type, categorie)')
+      .eq('fleuriste_id', fleuristeId)
+      .eq('mois_facturation', mois)
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        console.log('[ventes] data:', data, 'error:', error, 'fleuristeId:', fleuristeId, 'mois:', mois)
+        setVentes(data || [])
+        setLoading(false)
+      })
+  }, [fleuristeId, mois])
+
+  const totalBrut = ventes.reduce((s, v) => s + Number(v.montant_brut), 0)
+  const totalNet  = ventes.reduce((s, v) => s + Number(v.montant_net), 0)
+  const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
+  const inp = { padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.80)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
+
+  return (
+    <div style={{ marginTop:20, paddingTop:16, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+        <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.10em', textTransform:'uppercase' }}>Mes ventes</div>
+        <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp }}/>
+      </div>
+      {loading ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
+      ) : ventes.length === 0 ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Aucune vente ce mois.</div>
+      ) : (
+        <>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
+            {[
+              { lbl:'Ventes brutes', val: fmt(totalBrut), color:'rgba(242,237,224,0.70)' },
+              { lbl:'Commission 15%', val: fmt(totalBrut - totalNet), color:'#e8c060' },
+              { lbl:'Net à reverser', val: fmt(totalNet), color:'#96d485' },
+            ].map(({ lbl, val, color }) => (
+              <div key={lbl} style={{ padding:'10px 12px', borderRadius:8, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize:9, color:'rgba(242,237,224,0.30)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>{lbl}</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:300, color }}>{val}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+            {ventes.map(v => (
+              <div key={v.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:7, background:'rgba(255,255,255,0.02)' }}>
+                <div style={{ flex:1, fontSize:11, color:'rgba(242,237,224,0.65)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.produits?.titre || 'Produit'}</div>
+                <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)' }}>{fmt(v.montant_brut)}</div>
+                <div style={{ fontSize:11, color:'#96d485', fontWeight:500 }}>{fmt(v.montant_net)} net</div>
+                <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20,
+                  background: v.statut==="reverse" ? "rgba(150,212,133,0.10)" : "rgba(232,192,96,0.10)",
+                  border: v.statut==="reverse" ? "1px solid rgba(150,212,133,0.25)" : "1px solid rgba(232,192,96,0.25)",
+                  color: v.statut==="reverse" ? "#96d485" : "#e8c060" }}>
+                  {v.statut === "reverse" ? "✓ reversé" : "⏳ en attente"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -1153,6 +1228,11 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
           </div>
         )}
       </div>
+
+      {/* Dashboard ventes — pros uniquement */}
+      {fleuriste.type_vendeur === 'professionnel' && (
+        <VentesDashboard fleuristeId={fleuriste.id} />
+      )}
     </div>
   )
 }

@@ -375,6 +375,131 @@ function RituelsEditor({ showToast }) {
 }
 
 
+
+// ═══════════════════════════════════════════════════════════
+//  VentesPartenairesAdmin
+// ═══════════════════════════════════════════════════════════
+function VentesPartenairesAdmin({ showToast }) {
+  const [ventes,   setVentes]   = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [mois,     setMois]     = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
+  })
+
+  const load = () => {
+    setLoading(true)
+    supabase.from('ventes_partenaires')
+      .select('*, fleuristes(nom_boutique, email, code_vendeur), produits(titre, type, categorie)')
+      .eq('mois_facturation', mois)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => { setVentes(data || []); setLoading(false) })
+  }
+  useEffect(() => { load() }, [mois])
+
+  // Grouper par fleuriste
+  const byFleuriste = ventes.reduce((acc, v) => {
+    const id = v.fleuriste_id
+    if (!acc[id]) acc[id] = { fleuriste: v.fleuristes, ventes: [], total_brut: 0, total_commission: 0, total_net: 0, all_reverse: true }
+    acc[id].ventes.push(v)
+    acc[id].total_brut       += Number(v.montant_brut)
+    acc[id].total_commission += Number(v.commission)
+    acc[id].total_net        += Number(v.montant_net)
+    if (v.statut !== 'reverse') acc[id].all_reverse = false
+    return acc
+  }, {})
+
+  const marquerReverses = async (fleuristeId) => {
+    const ids = ventes.filter(v => v.fleuriste_id === fleuristeId && v.statut === 'en_attente').map(v => v.id)
+    if (!ids.length) return
+    const { error } = await supabase.from('ventes_partenaires')
+      .update({ statut: 'reverse', reverse_le: new Date().toISOString() })
+      .in('id', ids)
+    if (error) { showToast('✗ ' + error.message); return }
+    showToast('✓ Reversement marqué')
+    load()
+  }
+
+  const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
+  const inp = { padding:'6px 10px', borderRadius:6, border:'1px solid rgba(255,255,255,0.12)', background:'#1a2e1a', color:'rgba(242,237,224,0.85)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
+
+  return (
+    <div style={{ marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
+        <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.12em', textTransform:'uppercase' }}>
+          Ventes partenaires
+        </div>
+        <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp }}/>
+      </div>
+
+      {loading ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
+      ) : Object.keys(byFleuriste).length === 0 ? (
+        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', textAlign:'center', padding:'20px 0' }}>
+          Aucune vente ce mois
+        </div>
+      ) : (
+        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          {Object.entries(byFleuriste).map(([fleuristeId, data]) => (
+            <div key={fleuristeId} style={{ padding:'16px', borderRadius:12, background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.06)' }}>
+              {/* Header partenaire */}
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
+                <div>
+                  <div style={{ fontSize:14, color:'rgba(242,237,224,0.88)', fontWeight:500 }}>{data.fleuriste?.nom_boutique}</div>
+                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:2 }}>{data.fleuriste?.email} · {data.ventes.length} vente{data.ventes.length > 1 ? 's' : ''}</div>
+                </div>
+                {!data.all_reverse && (
+                  <button onClick={() => marquerReverses(fleuristeId)}
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.30)', color:'#96d485' }}>
+                    ✓ Marquer reversé
+                  </button>
+                )}
+                {data.all_reverse && (
+                  <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, background:'rgba(150,212,133,0.10)', border:'1px solid rgba(150,212,133,0.25)', color:'#96d485' }}>✓ Reversé</span>
+                )}
+              </div>
+
+              {/* Totaux */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:12 }}>
+                {[
+                  { lbl:'Total brut', val: fmt(data.total_brut), color:'rgba(242,237,224,0.70)' },
+                  { lbl:'Commission 15%', val: fmt(data.total_commission), color:'#e8c060' },
+                  { lbl:'À reverser', val: fmt(data.total_net), color:'#96d485' },
+                ].map(({ lbl, val, color }) => (
+                  <div key={lbl} style={{ padding:'10px 12px', borderRadius:8, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ fontSize:9, color:'rgba(242,237,224,0.35)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:4 }}>{lbl}</div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color }}>{val}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Liste des ventes */}
+              <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                {data.ventes.map(v => (
+                  <div key={v.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 10px', borderRadius:7, background:'rgba(255,255,255,0.02)' }}>
+                    <div style={{ flex:1, fontSize:12, color:'rgba(242,237,224,0.65)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                      {v.produits?.titre || 'Produit supprimé'}
+                    </div>
+                    <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)', whiteSpace:'nowrap' }}>{fmt(v.montant_brut)}</div>
+                    <div style={{ fontSize:11, color:'#e8c060', whiteSpace:'nowrap' }}>-{fmt(v.commission)}</div>
+                    <div style={{ fontSize:11, color:'#96d485', whiteSpace:'nowrap', fontWeight:500 }}>{fmt(v.montant_net)}</div>
+                    <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, flexShrink:0,
+                      background: v.statut==='reverse' ? 'rgba(150,212,133,0.10)' : 'rgba(232,192,96,0.10)',
+                      border: v.statut==='reverse' ? '1px solid rgba(150,212,133,0.25)' : '1px solid rgba(232,192,96,0.25)',
+                      color: v.statut==='reverse' ? '#96d485' : '#e8c060' }}>
+                      {v.statut === 'reverse' ? '✓ reversé' : '⏳ en attente'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════════
 //  FleuristesAdmin
 // ═══════════════════════════════════════════════════════════
@@ -545,7 +670,7 @@ const TYPE_OPTS = [
 const CAT_OPTS = {
   digital:  ['Audio','Formation','E-book'],
   physique: ['Livre','Bijou','Pierre','Huile essentielle','Autre'],
-  occasion: ['Livre','Bijou','Pierre','Accessoire','Autre'],
+  occasion: ['Livres','Bijoux','Pierres','Accessoires','Autres'],
 }
 const EMPTY_FORM = {
   type:'digital', categorie:'Audio', titre:'', description:'',
@@ -753,6 +878,7 @@ function BoutiqueEditor({ showToast }) {
         </div>
       )}
 
+      <VentesPartenairesAdmin showToast={showToast} />
       <FleuristesAdmin showToast={showToast} />
 
 
