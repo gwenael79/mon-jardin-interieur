@@ -858,7 +858,37 @@ function BoutiqueEditor({ showToast }) {
                   </div>
                   <div>
                     <span style={lbl}>Stripe Price ID</span>
-                    <input value={form.stripe_price_id} onChange={e => setForm(f => ({ ...f, stripe_price_id:e.target.value }))} placeholder="price_..." style={{ ...inp }}/>
+                    {form.stripe_price_id ? (
+                      <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                        <input value={form.stripe_price_id} onChange={e => setForm(f => ({ ...f, stripe_price_id:e.target.value }))} style={{ ...inp, flex:1, color:'#96d485', fontSize:11 }}/>
+                        <button onClick={() => setForm(f => ({ ...f, stripe_price_id:'' }))}
+                          style={{ padding:'8px 10px', borderRadius:7, fontSize:11, cursor:'pointer', background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.20)', color:'rgba(255,140,140,0.65)', fontFamily:"'Jost',sans-serif", flexShrink:0 }}>✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={async () => {
+                        if (!editId && !form.titre.trim()) { showToast('Sauvegardez d\'abord le produit'); return }
+                        const targetId = editId
+                        if (!targetId) { showToast('Sauvegardez d\'abord le produit pour créer le Price Stripe'); return }
+                        if (!form.prix) { showToast('Renseignez le prix avant de créer dans Stripe'); return }
+                        showToast('⏳ Création dans Stripe…')
+                        try {
+                          const session = await supabase.auth.getSession()
+                          const token = session.data.session?.access_token
+                          const res = await fetch(STRIPE_PRODUCT_URL, {
+                            method:'POST',
+                            headers:{ 'Authorization':`Bearer ${token}`, 'Content-Type':'application/json' },
+                            body: JSON.stringify({ produit_id:targetId, titre:form.titre, description:form.description, prix:form.prix, image_url:form.image_url })
+                          })
+                          const data = await res.json()
+                          if (!res.ok) { showToast('✗ Stripe : ' + (data.error||'erreur')); return }
+                          setForm(f => ({ ...f, stripe_price_id: data.price_id }))
+                          showToast('✓ Produit Stripe créé : ' + data.price_id)
+                        } catch { showToast('✗ Erreur réseau') }
+                      }}
+                        style={{ width:'100%', padding:'9px 12px', borderRadius:8, border:'1px dashed rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.06)', color:'#96d485', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', textAlign:'center' }}>
+                        ⚡ Créer automatiquement dans Stripe
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
