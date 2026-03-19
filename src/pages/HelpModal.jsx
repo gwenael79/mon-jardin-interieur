@@ -389,7 +389,7 @@ export function HelpModal({ onClose }) {
            onClick={onClose} />
 
       <div style={{
-        position:'relative', background:'linear-gradient(160deg,#1a2e1a 0%,#0f1f12 100%)',
+        position:'relative', background:'var(--bg)',
         borderRadius:22, padding:'0 0 24px',
         maxHeight:'88vh', width:'100%', maxWidth:420,
         display:'flex', flexDirection:'column',

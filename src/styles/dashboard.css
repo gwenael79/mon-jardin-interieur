@@ -496,7 +496,7 @@ body { background: var(--bg); }
 /* ── PROFILE MODAL ── */
 .profile-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: profileFadeIn 0.25s ease; }
 @keyframes profileFadeIn { from { opacity:0 } to { opacity:1 } }
-.profile-modal { background: #132010; border: 1px solid rgba(150,212,133,0.15); border-radius: 20px; width: 100%; max-width: 360px; padding: 32px 30px 28px; position: relative; animation: profileSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+.profile-modal { background: var(--bg); border: 1px solid var(--border2); border-radius: 20px; width: 100%; max-width: 360px; padding: 32px 30px 28px; position: relative; animation: profileSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
 @keyframes profileSlideUp { from { opacity:0; transform:scale(0.94) translateY(20px) } to { opacity:1; transform:scale(1) translateY(0) } }
 .profile-modal-close { position: absolute; top: 14px; right: 16px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); background: none; color: rgba(242,237,224,0.35); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
 .profile-modal-close:hover { border-color: rgba(150,212,133,0.3); color: #c8f0b8; }

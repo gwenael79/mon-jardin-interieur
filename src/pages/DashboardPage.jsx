@@ -23,6 +23,9 @@ import { MaBibliotheque }       from './MaBibliotheque'
 import { ScreenJardinotheque }  from './ScreenJardinotheque'
 import { HelpModal }            from './HelpModal'
 import PremiumGate              from '../components/PremiumGate'
+import PremiumBanner            from '../components/PremiumBanner'
+import AccessPage               from './AccessPage'
+import { useTheme }             from '../hooks/useTheme'
 
 // ── Navigation ───────────────────────────────────────────────────────────────
 const SCREENS = [
@@ -76,7 +79,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
     }}>
       {/* Titre discret */}
       <div style={{
-        fontSize:9, letterSpacing:'0.18em', color:'rgba(242,237,224,0.20)',
+        fontSize:9, letterSpacing:'0.18em', color:'var(--text3)',
         fontFamily:"'Jost', sans-serif", textTransform:'uppercase',
         paddingLeft:4, paddingBottom:2, flexShrink:0,
       }}>Mon Jardin</div>
@@ -136,14 +139,14 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
                 fontSize:15, fontWeight:600,
                 fontFamily:"'Cormorant Garamond', 'Georgia', serif",
                 letterSpacing:'0.01em',
-                color: item.done ? 'rgba(242,237,224,0.25)' : isActive ? 'var(--cream)' : 'rgba(242,237,224,0.88)',
+                color: item.done ? 'var(--text3)' : isActive ? 'var(--cream)' : 'var(--text2)',
                 lineHeight:1.2,
                 marginBottom:1,
               }}>{item.label}</div>
               <div style={{
                 fontSize:10,
                 fontFamily:"'Jost', sans-serif",
-                color: item.done ? 'rgba(242,237,224,0.18)' : 'rgba(242,237,224,0.38)',
+                color: item.done ? 'var(--text3)' : 'var(--text3)',
                 letterSpacing:'0.02em',
                 animation: item.id === 'bilan' && !item.done ? 'navPulse 2.5s ease-in-out infinite' : 'none',
                 fontStyle: item.id === 'bilan' && !item.done ? 'italic' : 'normal',
@@ -171,7 +174,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
                 background:'rgba(150,212,133,0.12)',
                 border:'1px solid rgba(150,212,133,0.30)',
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:10, color:'rgba(150,212,133,0.60)',
+                fontSize:10, color:'var(--greenT)',
               }}>✓</div>
             )}
             {!badge && !item.done && (
@@ -238,7 +241,7 @@ function ProfileModal({ user, onClose }) {
             <button key={id} onClick={() => setTab(id)}
               style={{ padding:'8px 16px', fontSize:11, letterSpacing:'.06em', background:'none', border:'none',
                 borderBottom: tab===id ? '2px solid #96d485' : '2px solid transparent',
-                color: tab===id ? '#96d485' : 'rgba(242,237,224,0.40)', cursor:'pointer',
+                color: tab===id ? 'var(--green)' : 'var(--text3)', cursor:'pointer',
                 fontFamily:"'Jost',sans-serif", marginBottom:-1, transition:'all .2s' }}>
               {lbl}
             </button>
@@ -271,7 +274,7 @@ function ProfileModal({ user, onClose }) {
             maxLength={30}
             disabled={loading}
           />
-          <div style={{ fontSize:10, color:'rgba(242,237,224,0.3)', marginTop:4 }}>
+          <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>
             Votre identité dans la communauté · {name && flowerName ? `${name}·${flowerName}` : 'Prénom·NomDeFleur'}
           </div>
         </div>
@@ -283,8 +286,8 @@ function ProfileModal({ user, onClose }) {
           borderRadius:10, display:'flex', alignItems:'center', justifyContent:'space-between', gap:12
         }}>
           <div>
-            <div style={{ fontSize:12, color:'rgba(242,237,224,0.8)' }}>🌿 Visible dans Le Jardin</div>
-            <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:3 }}>
+            <div style={{ fontSize:12, color:'var(--text2)' }}>🌿 Visible dans Le Jardin</div>
+            <div style={{ fontSize:10, color:'var(--text3)', marginTop:3 }}>
               Les autres personnes peuvent vous envoyer un ❤️
             </div>
           </div>
@@ -301,7 +304,7 @@ function ProfileModal({ user, onClose }) {
             <div style={{
               position:'absolute', top:3, left: visibility ? 22 : 3,
               width:16, height:16, borderRadius:'50%',
-              background: visibility ? '#96d485' : 'rgba(255,255,255,0.25)',
+              background: visibility ? 'var(--green)' : 'rgba(255,255,255,0.25)',
               transition:'left .25s, background .25s',
             }} />
           </div>
@@ -362,6 +365,9 @@ export default function DashboardPage() {
   const { stats, circleMembers, activeCircle } = useCircle(user?.id)
 
   const profile                       = useProfile(user?.id)
+  const isPremium = (profile?.plan === 'premium' || !!profile?.premium_until) && profile?.premium_until && new Date(profile.premium_until) > new Date()
+  const [showAccessModal, setShowAccessModal] = useState(false)
+  useTheme() // Charge le thème depuis Supabase
   const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
   const { track } = useAnalytics(user?.id)
 
@@ -406,7 +412,11 @@ export default function DashboardPage() {
         const createdAt = data?.created_at ? new Date(data.created_at) : null
         const isJustCreated = createdAt && (Date.now() - createdAt.getTime()) < 10 * 60 * 1000
         setIsNewUser(!!isJustCreated)
-        setShowWelcome(true)
+
+        // N'afficher le welcome que si première visite du jour ou nouvelle inscription
+        if (isJustCreated || isFirstToday) {
+          setShowWelcome(true)
+        }
       })
   }, [user?.id])
 
@@ -547,6 +557,15 @@ export default function DashboardPage() {
   return (
     <div className="root">
 
+      {/* ── MODAL ACCESS PAGE ── */}
+      {showAccessModal && (
+        <AccessPage
+          onActivateFree={() => setShowAccessModal(false)}
+          onSuccess={() => { setShowAccessModal(false) }}
+          onBack={() => setShowAccessModal(false)}
+        />
+      )}
+
       {/* ── WELCOME SCREEN (transition 3s) ── */}
       {showWelcome && (
         <WelcomeScreen
@@ -683,7 +702,7 @@ export default function DashboardPage() {
             <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
               <div style={{ position:'relative', background:'#1a2e1a', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
-                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:16, background:'none', border:'none', color:'rgba(242,237,224,0.4)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
+                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:16, background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
                 <LumensCard
                   lumens={lumens}
                   userId={user?.id}
@@ -710,9 +729,9 @@ export default function DashboardPage() {
             >
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 <span style={{ fontSize:13 }}>⚙️</span>
-                <span style={{ fontSize:10, color:'rgba(242,237,224,0.5)', letterSpacing:'.05em', fontFamily:'Jost,sans-serif' }}>Gérer mes préférences</span>
+                <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.05em', fontFamily:'Jost,sans-serif' }}>Gérer mes préférences</span>
               </div>
-              <span style={{ fontSize:10, color:'rgba(242,237,224,0.25)', transition:'transform .2s', display:'inline-block', transform: showPrefsAccordion ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+              <span style={{ fontSize:10, color:'var(--text3)', transition:'transform .2s', display:'inline-block', transform: showPrefsAccordion ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </div>
 
             {/* Contenu accordéon */}
@@ -727,7 +746,7 @@ export default function DashboardPage() {
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}
                 >
                   <span style={{ fontSize:12 }}>✏️</span>
-                  <span style={{ fontSize:10, color:'rgba(242,237,224,0.5)', fontFamily:'Jost,sans-serif' }}>Modifier mon profil</span>
+                  <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Modifier mon profil</span>
                 </div>
 
                 {/* Abonnement */}
@@ -738,7 +757,7 @@ export default function DashboardPage() {
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}
                 >
                   <span style={{ fontSize:12 }}>🌸</span>
-                  <span style={{ fontSize:10, color:'rgba(242,237,224,0.5)', fontFamily:'Jost,sans-serif' }}>Abonnement</span>
+                  <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Abonnement</span>
                 </div>
 
                 {/* Notifications */}
@@ -755,7 +774,7 @@ export default function DashboardPage() {
                     onMouseLeave={e => e.currentTarget.style.background='transparent'}
                   >
                     <span style={{ fontSize:12 }}>🛡️</span>
-                    <span style={{ fontSize:10, color:'rgba(255,200,100,0.6)', fontFamily:'Jost,sans-serif' }}>Administration</span>
+                    <span style={{ fontSize:10, color:'var(--gold-warm)', fontFamily:'Jost,sans-serif' }}>Administration</span>
                     {pendingReports > 0 && (
                       <div style={{ background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
                         {pendingReports}
@@ -772,7 +791,7 @@ export default function DashboardPage() {
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}
                 >
                   <span style={{ fontSize:12 }}>⎋</span>
-                  <span style={{ fontSize:10, color:'rgba(242,237,224,0.3)', fontFamily:'Jost,sans-serif' }}>Se déconnecter</span>
+                  <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Se déconnecter</span>
                 </div>
 
               </div>
@@ -816,7 +835,28 @@ export default function DashboardPage() {
             ) : null}
           </div>
 
-          <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
+          <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
+
+            {/* ── BANNIÈRE PREMIUM — 50px sous le titre ── */}
+            {!isPremium && (
+              <div style={{ display:'flex', justifyContent:'center', paddingTop: 50, paddingBottom: 0, flexShrink: 0 }}>
+                <div onClick={() => setShowAccessModal(true)} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+                  padding: '10px 24px', borderRadius: 24,
+                  background: 'linear-gradient(90deg, rgba(232,192,96,0.13), rgba(180,160,240,0.13))',
+                  border: '1px solid rgba(232,192,96,0.28)',
+                }}>
+                  <span style={{ fontSize: 15 }}>✨</span>
+                  <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.4 }}>
+                    Accédez à tout l'univers de votre jardin intérieur en rejoignant l'offre{' '}
+                    <strong style={{ color: 'var(--gold)' }}>Premium</strong>
+                  </span>
+                  <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>→</span>
+                </div>
+              </div>
+            )}
+
+            <div style={{ flex:1, overflow:'hidden', display:'flex', minHeight:0 }}>
             {(isMobile && effectiveActive === 'nav') ? (
               <NavHub
                 active={active}
@@ -844,6 +884,8 @@ export default function DashboardPage() {
                 const inner = (
                   <Component
                     userId={user?.id}
+                    isPremium={isPremium}
+                    onUpgrade={() => setShowAccessModal(true)}
                     openCreate={showCreateCircle}
                     onCreateClose={() => setShowCreateCircle(false)}
                     openInvite={showInviteModal}
@@ -856,20 +898,11 @@ export default function DashboardPage() {
                     onOpenBilan={() => setShowBilanModal(true)}
                   />
                 )
-                if (featureName) {
-                  return (
-                    <PremiumGate
-                      featureName={featureName}
-                      onUpgrade={() => window.openAccessModal?.()}
-                    >
-                      {inner}
-                    </PremiumGate>
-                  )
-                }
                 return inner
               })()
             ) : null}
           </div>
+          </div>{/* fin bannière+contenu */}
 
           {/* ── FAB mobile — accès Lumens (écran Ma Fleur) ── */}
           {active === 'jardin' && (
@@ -909,9 +942,9 @@ export default function DashboardPage() {
               />
               {/* Panel */}
               <div style={{
-                position:'relative', background:'#16261a',
+                position:'relative', background:'var(--bg)',
                 borderRadius:'22px 22px 0 0', padding:'0 0 40px',
-                border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none',
+                border:'1px solid var(--border)', borderBottom:'none',
                 maxHeight:'90vh', overflowY:'auto',
               }}>
                 {/* Handle */}
@@ -944,23 +977,23 @@ export default function DashboardPage() {
                             {name ?? email}
                           </div>
                           {flowerName && (
-                            <div style={{ fontSize:11, color:'rgba(232,192,96,0.60)', marginTop:1 }}>🌸 {flowerName}</div>
+                            <div style={{ fontSize:11, color:'var(--gold)', marginTop:1 }}>🌸 {flowerName}</div>
                           )}
                           {name && (
-                            <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', marginTop:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{email}</div>
+                            <div style={{ fontSize:10, color:'var(--text3)', marginTop:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{email}</div>
                           )}
                         </div>
                         {/* Niveau */}
                         <div style={{ textAlign:'center', flexShrink:0 }}>
                           <div style={{ fontSize:18, fontWeight:600, color:'var(--gold)', lineHeight:1 }}>{level}</div>
-                          <div style={{ fontSize:9, color:'rgba(242,237,224,0.35)', textTransform:'uppercase', letterSpacing:'.06em' }}>Niveau</div>
+                          <div style={{ fontSize:9, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em' }}>Niveau</div>
                         </div>
                       </div>
                       {/* Barre XP */}
                       <div style={{ marginTop:10, height:3, background:'rgba(255,255,255,0.07)', borderRadius:100, overflow:'hidden' }}>
-                        <div style={{ height:'100%', width: xpPct + '%', background:'linear-gradient(90deg,#96d485,#e8c060)', borderRadius:100, transition:'width .4s' }} />
+                        <div style={{ height:'100%', width: xpPct + '%', background:'linear-gradient(90deg,var(--green),var(--gold))', borderRadius:100, transition:'width .4s' }} />
                       </div>
-                      <div style={{ fontSize:9, color:'rgba(242,237,224,0.25)', marginTop:3, textAlign:'right' }}>{xp} / {xpNext} XP</div>
+                      <div style={{ fontSize:9, color:'var(--text3)', marginTop:3, textAlign:'right' }}>{xp} / {xpNext} XP</div>
                     </div>
                   )
                 })()}
@@ -980,9 +1013,9 @@ export default function DashboardPage() {
                     <span style={{ fontSize:18 }}>✏️</span>
                     <div style={{ flex:1 }}>
                       <div style={{ fontSize:13, color:'var(--cream)', fontWeight:500 }}>Modifier mon profil</div>
-                      <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:1 }}>Nom, fleur, visibilité…</div>
+                      <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>Nom, fleur, visibilité…</div>
                     </div>
-                    <span style={{ fontSize:12, color:'rgba(242,237,224,0.25)' }}>›</span>
+                    <span style={{ fontSize:12, color:'var(--text3)' }}>›</span>
                   </div>
 
                   {/* Notifications push — masqué sur iOS hors PWA */}
@@ -1007,10 +1040,10 @@ export default function DashboardPage() {
                   >
                     <span style={{ fontSize:18 }}>🌸</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'#e8c060', fontWeight:500 }}>Abonnement</div>
-                      <div style={{ fontSize:10, color:'rgba(232,192,96,0.45)', marginTop:1 }}>Gérer votre accès</div>
+                      <div style={{ fontSize:13, color:'var(--gold)', fontWeight:500 }}>Abonnement</div>
+                      <div style={{ fontSize:10, color:'var(--gold-warm)', marginTop:1 }}>Gérer votre accès</div>
                     </div>
-                    <span style={{ fontSize:12, color:'rgba(232,192,96,0.30)' }}>›</span>
+                    <span style={{ fontSize:12, color:'var(--gold-warm)' }}>›</span>
                   </div>
 
                   {/* Administration (admin uniquement) */}
@@ -1026,8 +1059,8 @@ export default function DashboardPage() {
                     >
                       <span style={{ fontSize:18 }}>⚙️</span>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:13, color:'rgba(255,200,100,0.85)', fontWeight:500 }}>Administration</div>
-                        <div style={{ fontSize:10, color:'rgba(255,200,100,0.40)', marginTop:1 }}>Gestion de la plateforme</div>
+                        <div style={{ fontSize:13, color:'var(--gold-warm)', fontWeight:500 }}>Administration</div>
+                        <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>Gestion de la plateforme</div>
                       </div>
                       {pendingReports > 0 && (
                         <div style={{ background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
@@ -1048,7 +1081,7 @@ export default function DashboardPage() {
                   >
                     <span style={{ fontSize:18 }}>⎋</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'rgba(242,100,100,0.80)', fontWeight:500 }}>Se déconnecter</div>
+                      <div style={{ fontSize:13, color:'var(--red)', fontWeight:500 }}>Se déconnecter</div>
                     </div>
                   </div>
                 </div>

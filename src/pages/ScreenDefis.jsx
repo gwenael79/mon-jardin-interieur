@@ -115,9 +115,9 @@ function ProposeModal({ onClose, onSubmit }) {
   )
 }
 
-const ZONE_COLORS = { Souffle:'#88b8e8', Racines:'#96d485', Feuilles:'#90d890', Tige:'#a8c8a0', Fleurs:'#e088a8', Toutes:'#c8a8e8' }
+const ZONE_COLORS = { Souffle:'var(--zone-breath)', Racines:'var(--zone-roots)', Feuilles:'var(--zone-leaves)', Tige:'var(--zone-stem)', Fleurs:'var(--zone-flowers)', Toutes:'var(--green)' }
 
-function ScreenDefis({ userId, awardLumens }) {
+function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
   const [cat, setCat] = useState('Tous')
@@ -127,6 +127,7 @@ function ScreenDefis({ userId, awardLumens }) {
   const filtered = cat === 'Tous'
   ? defis.filter(d => !d.is_featured)
   : defis.filter(d => d.zone === cat && !d.is_featured)
+  const visibleDefis = isPremium ? filtered : filtered.slice(0, 1)
   const featuredJoined = featured ? joinedIds.has(featured.id) : false
 
   useEffect(() => {
@@ -182,8 +183,8 @@ function ScreenDefis({ userId, awardLumens }) {
         </div>
       </div>
 
-      <div className="df-learn" onClick={() => setShowPropose(true)}>
-        Proposer un défi
+      <div className="df-learn" onClick={isPremium ? () => setShowPropose(true) : onUpgrade} style={{ opacity: isPremium ? 1 : 0.4, cursor: isPremium ? 'pointer' : 'not-allowed' }}>
+        {isPremium ? 'Proposer un défi' : '🔒 Proposer un défi'}
       </div>
     </div>
   </>
@@ -221,8 +222,8 @@ function ScreenDefis({ userId, awardLumens }) {
   🌱 Trouvez votre défi du jour
 </div>
 
-      <div className="df-learn" onClick={() => setShowPropose(true)}>
-        Proposer un défi à la communauté
+      <div className="df-learn" onClick={isPremium ? () => setShowPropose(true) : onUpgrade} style={{ opacity: isPremium ? 1 : 0.4, cursor: isPremium ? 'pointer' : 'not-allowed' }}>
+        {isPremium ? 'Proposer un défi à la communauté' : '🔒 Proposer un défi'}
       </div>
     </div>
   </>
@@ -230,13 +231,23 @@ function ScreenDefis({ userId, awardLumens }) {
         </div>
         {isLoading && <div style={{ fontSize:13, color:'var(--text3)', padding:'20px 0' }}>Chargement des défis…</div>}
         <div className="cat-filter">
-          {cats.map(c => <div key={c} className={'cat-btn'+(cat===c?' active':'')} onClick={() => setCat(c)}>{c}</div>)}
+          {cats.map(c => {
+            const locked = !isPremium && ['Racines','Feuilles','Tige','Fleurs'].includes(c)
+            return (
+              <div key={c}
+                className={'cat-btn'+(cat===c?' active':'')}
+                onClick={() => locked ? onUpgrade?.() : setCat(c)}
+                style={{ opacity: locked ? 0.35 : 1, cursor: locked ? 'not-allowed' : 'pointer', position:'relative' }}>
+                {locked ? '🔒 ' : ''}{c}
+              </div>
+            )
+          })}
         </div>
         <div className="slabel">{cat==='Tous'?'Tous les défis':`Zone ${cat}`} · {filtered.length} disponibles</div>
         <div className="defis-grid">
-          {filtered.map((d,i) => {
+          {visibleDefis.map((d,i) => {
             const isJoined = joinedIds.has(d.id)
-            const color = ZONE_COLORS[d.zone] ?? '#96d485'
+            const color = ZONE_COLORS[d.zone] ?? 'var(--green)'
             return (
               <div key={d.id??i} className="defi-card">
                 <div className="dc-top">
@@ -262,6 +273,20 @@ function ScreenDefis({ userId, awardLumens }) {
             )
           })}
         </div>
+        {/* Verrou premium — défis masqués */}
+        {!isPremium && filtered.length > 1 && (
+          <div style={{ marginTop: 12 }}>
+            <div onClick={onUpgrade} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              padding: '8px 14px', borderRadius: 20, cursor: 'pointer',
+              background: 'rgba(232,192,96,0.08)', border: '1px solid rgba(232,192,96,0.25)',
+            }}>
+              <span style={{ fontSize: 13 }}>🔒</span>
+              <span style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 500 }}>{filtered.length - 1} défis Premium</span>
+              <span style={{ fontSize: 11, color: 'var(--gold-warm)' }}>→</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="rpanel" style={{ display: isMobile ? "none" : undefined }}>
@@ -278,7 +303,7 @@ function ScreenDefis({ userId, awardLumens }) {
                 </div>
               </div>
               <div style={{ height:3, background:'rgba(255,255,255,0.09)', borderRadius:100, overflow:'hidden' }}>
-                <div style={{ height:'100%', width:`${d.progress??0}%`, background:(ZONE_COLORS[d.zone]??'#96d485')+'aa', borderRadius:100 }} />
+                <div style={{ height:'100%', width:`${d.progress??0}%`, background:(ZONE_COLORS[d.zone]??'var(--green)'), borderRadius:100 }} />
               </div>
               <div style={{ fontSize:10, color:'var(--text3)', marginTop:5, display:'flex', justifyContent:'space-between' }}>
                 <span>Progression</span><span>{d.progress??0}%</span>
@@ -322,11 +347,38 @@ function ScreenDefis({ userId, awardLumens }) {
 }
 
 
-function ScreenJardinCollectif({ userId }) {
+function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade }) {
   const isMobile = useIsMobile()
   return (
-    <div className="content" style={{ flex:1, overflow:'hidden', paddingBottom: isMobile ? 64 : 0 }}>
-      <CommunityGarden currentUserId={userId} embedded />
+    <div className="content" style={{ flex:1, overflow:'hidden', paddingBottom: isMobile ? 64 : 0, position:'relative' }}>
+      <CommunityGarden currentUserId={userId} embedded isPremium={isPremium} />
+
+      {/* Overlay flou pour les non-premium — masque les fleurs éloignées */}
+      {!isPremium && (
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'radial-gradient(circle at center, transparent 5%, rgba(14,26,14,0.40) 25%, rgba(14,26,14,0.75) 45%, rgba(14,26,14,0.96) 65%)',
+          zIndex: 10,
+        }} />
+      )}
+
+      {/* Badge premium */}
+      {!isPremium && (
+        <div style={{
+          position: 'absolute', bottom: isMobile ? 80 : 24, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 20,
+        }}>
+          <div onClick={onUpgrade} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
+            padding: '8px 18px', borderRadius: 20,
+            background: 'rgba(180,160,240,0.12)', border: '1px solid rgba(180,160,240,0.30)',
+          }}>
+            <span style={{ fontSize: 13 }}>🔒</span>
+            <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>Voir tout le jardin — Premium</span>
+            <span style={{ fontSize: 11, color: 'rgba(180,160,240,0.60)' }}>→</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
 
 // ── Votre userId admin — remplacez par le vôtre ──
@@ -13,11 +14,14 @@ html,body,#root{height:100%;width:100%}
   --bg:#1a2e1a;--bg2:#213d21;--bg3:#274827;
   --border:rgba(255,255,255,0.18);--border2:rgba(255,255,255,0.10);
   --text:#f2ede0;--text2:rgba(242,237,224,0.88);--text3:rgba(242,237,224,0.60);
+  --cream:#f2ede0;
   --green:#96d485;--green2:rgba(150,212,133,0.25);--green3:rgba(150,212,133,0.12);--greenT:rgba(150,212,133,0.50);
-  --gold:#e8d4a8;--red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
+  --gold:#e8d4a8;--gold-warm:#C8A882;
+  --red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
+  --zone-roots:#C8894A;--zone-stem:#5AAF78;--zone-leaves:#4A9E5C;--zone-flowers:#D4779A;--zone-breath:#6ABBE4;
 }
 .adm-root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;width:100vw;color:var(--text);display:flex;flex-direction:column}
-.adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:rgba(20,45,20,0.97);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:var(--bg2);backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em;color:var(--gold)}
 .adm-logo em{font-style:italic;color:var(--green)}
 .adm-badge{font-size:9px;letter-spacing:.15em;text-transform:uppercase;padding:4px 12px;border-radius:100px;background:rgba(210,80,80,0.12);border:1px solid rgba(210,80,80,0.3);color:rgba(255,160,160,0.9)}
@@ -54,10 +58,10 @@ html,body,#root{height:100%;width:100%}
 .adm-btn.danger:hover{background:rgba(210,80,80,0.22)}
 .adm-btn.ghost{background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text2)}
 .adm-btn.ghost:hover{background:rgba(255,255,255,0.12);color:var(--text)}
-.adm-btn.success{background:var(--green3);border:1px solid var(--greenT);color:#c8f0b8}
-.adm-btn.success:hover{background:rgba(150,212,133,0.18)}
+.adm-btn.success{background:var(--green3);border:1px solid var(--greenT);color:var(--cream)}
+.adm-btn.success:hover{background:var(--green2)}
 /* TOAST */
-.adm-toast{position:fixed;bottom:24px;right:24px;background:rgba(30,60,30,0.97);border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:12px;color:#c8f0b8;z-index:999;animation:fadeInUp .3s ease}
+.adm-toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:12px;color:var(--cream);z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 @media(max-width:700px){
@@ -129,7 +133,7 @@ function RituelsEditor({ showToast }) {
   const [toolObj, setToolObj] = useState({ inhale:5, hold:0, exhale:5, holdEmpty:0, cycles:5 })
 
   const zColors = { roots:'#C8894A', stem:'#5AAF78', leaves:'#4A9E5C', flowers:'#D4779A', breath:'#6ABBE4' }
-  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)', background:'#1a2e1a', color:'rgba(242,237,224,0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text2)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
 
   // Quand la zone change → charge les rituels disponibles
   useEffect(() => {
@@ -198,7 +202,7 @@ function RituelsEditor({ showToast }) {
   }
 
   const zc = zColors[zone] || '#96d485'
-  const label = { fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8, display:'block' }
+  const label = { fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8, display:'block' }
 
   // ── Champs éditables titre rituel + titre exercice ───────
   const [editRituel, setEditRituel] = useState('')
@@ -211,7 +215,7 @@ function RituelsEditor({ showToast }) {
 
       {/* ── Colonne gauche : accordéon ── */}
       <div style={{ display:'flex', flexDirection:'column', gap:2, position:'sticky', top:20 }}>
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', letterSpacing:'.12em', textTransform:'uppercase', marginBottom:12, paddingBottom:10, borderBottom:'1px solid rgba(255,255,255,0.07)' }}>
+        <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.12em', textTransform:'uppercase', marginBottom:12, paddingBottom:10, borderBottom:'1px solid var(--border2)' }}>
           Sélectionner un exercice
         </div>
 
@@ -221,7 +225,7 @@ function RituelsEditor({ showToast }) {
             <div key={k} style={{ borderRadius:10, overflow:'hidden', border: isOpen ? `1px solid ${v.color}35` : '1px solid transparent', background: isOpen ? `${v.color}08` : 'transparent', transition:'all .2s' }}>
 
               {/* ── En-tête zone ── */}
-              <button onClick={() => toggleZone(k)} style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 14px', background:'none', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, textAlign:'left', color: isOpen ? v.color : 'rgba(242,237,224,0.55)', transition:'color .15s' }}>
+              <button onClick={() => toggleZone(k)} style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'10px 14px', background:'none', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, textAlign:'left', color: isOpen ? v.color : 'var(--text3)', transition:'color .15s' }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background: isOpen ? v.color : 'rgba(255,255,255,0.18)', flexShrink:0, transition:'background .15s' }}/>
                 <span style={{ flex:1 }}>{v.name}</span>
                 <span style={{ fontSize:10, opacity:.5, transition:'transform .2s', display:'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
@@ -235,7 +239,7 @@ function RituelsEditor({ showToast }) {
                     return (
                       <div key={r}>
                         <button onClick={() => { setRituel(isRituelOpen ? '' : r); setTitle(''); setExercise(null) }}
-                          style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'7px 10px', borderRadius:8, background: isRituelOpen ? `${v.color}12` : 'transparent', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, textAlign:'left', color: isRituelOpen ? 'rgba(242,237,224,0.88)' : 'rgba(242,237,224,0.45)', transition:'all .15s' }}>
+                          style={{ display:'flex', alignItems:'center', gap:8, width:'100%', padding:'7px 10px', borderRadius:8, background: isRituelOpen ? `${v.color}12` : 'transparent', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, textAlign:'left', color: isRituelOpen ? 'var(--text2)' : 'var(--text3)', transition:'all .15s' }}>
                           <span style={{ fontSize:9, opacity:.4, transition:'transform .2s', display:'inline-block', transform: isRituelOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
                           {r}
                         </button>
@@ -245,8 +249,8 @@ function RituelsEditor({ showToast }) {
                           <div style={{ paddingLeft:16, display:'flex', flexDirection:'column', gap:1, marginTop:2 }}>
                             {optTitles.map(ex => (
                               <button key={ex.title} onClick={() => setTitle(ex.title)}
-                                style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 10px', borderRadius:7, background: title===ex.title ? `${v.color}15` : 'transparent', border: title===ex.title ? `1px solid ${v.color}30` : '1px solid transparent', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:11, textAlign:'left', color: title===ex.title ? 'rgba(242,237,224,0.88)' : 'rgba(242,237,224,0.40)', transition:'all .15s', lineHeight:1.4 }}>
-                                <span style={{ fontSize:9, padding:'1px 5px', borderRadius:5, flexShrink:0, background: ex.mode==='quick' ? 'rgba(232,192,96,0.10)' : 'rgba(130,200,240,0.10)', color: ex.mode==='quick' ? '#e8c060' : '#82c8f0', border: ex.mode==='quick' ? '1px solid rgba(232,192,96,0.20)' : '1px solid rgba(130,200,240,0.20)' }}>
+                                style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 10px', borderRadius:7, background: title===ex.title ? `${v.color}15` : 'transparent', border: title===ex.title ? `1px solid ${v.color}30` : '1px solid transparent', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:11, textAlign:'left', color: title===ex.title ? 'var(--text2)' : 'var(--text3)', transition:'all .15s', lineHeight:1.4 }}>
+                                <span style={{ fontSize:9, padding:'1px 5px', borderRadius:5, flexShrink:0, background: ex.mode==='quick' ? 'rgba(232,192,96,0.10)' : 'rgba(130,200,240,0.10)', color: ex.mode==='quick' ? 'var(--gold)' : 'var(--green)', border: ex.mode==='quick' ? '1px solid rgba(232,192,96,0.20)' : '1px solid rgba(130,200,240,0.20)' }}>
                                   {ex.mode === 'quick' ? '⚡' : '🌊'}
                                 </span>
                                 {ex.title}
@@ -269,7 +273,7 @@ function RituelsEditor({ showToast }) {
         {!exercise && !loading && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:320, border:'1px dashed rgba(255,255,255,0.07)', borderRadius:14, flexDirection:'column', gap:12 }}>
             <div style={{ fontSize:32, opacity:.3 }}>✦</div>
-            <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>
+            <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>
               {!zone ? 'Ouvrez une zone pour commencer' : !rituel ? 'Choisissez un rituel' : 'Choisissez un exercice'}
             </div>
           </div>
@@ -277,7 +281,7 @@ function RituelsEditor({ showToast }) {
 
         {loading && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:200 }}>
-            <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic' }}>Chargement…</div>
+            <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
           </div>
         )}
 
@@ -288,11 +292,11 @@ function RituelsEditor({ showToast }) {
             <div style={{ display:'flex', alignItems:'center', gap:14, padding:'16px 20px', background:`${zc}08`, border:`1px solid ${zc}25`, borderRadius:14 }}>
               <span style={{ fontSize:28, lineHeight:1, flexShrink:0 }}>{exercise.icon}</span>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:'rgba(242,237,224,0.88)', fontWeight:300, lineHeight:1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{editTitle || exercise.title}</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:'var(--text2)', fontWeight:300, lineHeight:1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{editTitle || exercise.title}</div>
                 <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:5 }}>
                   <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background:`${zc}15`, border:`1px solid ${zc}30`, color:zc }}>{ZONES_RITUELS[exercise.zone]?.name}</span>
-                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(242,237,224,0.40)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{editRituel || exercise.rituel}</span>
-                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background: exercise.mode==='quick' ? 'rgba(232,192,96,0.08)' : 'rgba(130,200,240,0.08)', border: exercise.mode==='quick' ? '1px solid rgba(232,192,96,0.20)' : '1px solid rgba(130,200,240,0.20)', color: exercise.mode==='quick' ? '#e8c060' : '#82c8f0' }}>
+                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color:'var(--text3)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{editRituel || exercise.rituel}</span>
+                  <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, background: exercise.mode==='quick' ? 'rgba(232,192,96,0.08)' : 'rgba(130,200,240,0.08)', border: exercise.mode==='quick' ? '1px solid rgba(232,192,96,0.20)' : '1px solid rgba(130,200,240,0.20)', color: exercise.mode==='quick' ? 'var(--gold)' : 'var(--green)' }}>
                     {exercise.mode === 'quick' ? '⚡ Rapide' : '🌊 Profond'}
                   </span>
                 </div>
@@ -346,13 +350,13 @@ function RituelsEditor({ showToast }) {
               <textarea value={desc} onChange={e => setDesc(e.target.value.slice(0, 350))} rows={7}
                 style={{ ...inp, resize:'vertical', lineHeight:1.9, fontSize:14 }}/>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
-                <span style={{ fontSize:10, color: desc.length > 320 ? (desc.length >= 350 ? '#e87060' : '#e8c060') : 'rgba(242,237,224,0.22)', fontWeight: desc.length > 320 ? 500 : 400 }}>{desc.length} / 350</span>
+                <span style={{ fontSize:10, color: desc.length > 320 ? (desc.length >= 350 ? 'var(--red)' : 'var(--gold)') : 'var(--text3)', fontWeight: desc.length > 320 ? 500 : 400 }}>{desc.length} / 350</span>
                 <button
                   onClick={() => {
                     const text = `${editRituel}, ${editTitle}, ${desc}`
                     navigator.clipboard.writeText(text).then(() => showToast('✓ Copié'))
                   }}
-                  style={{ padding:'5px 14px', borderRadius:20, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.45)', fontSize:11, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.04em', transition:'all .15s' }}
+                  style={{ padding:'5px 14px', borderRadius:20, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.04)', color:'var(--text3)', fontSize:11, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.04em', transition:'all .15s' }}
                 >
                   ⎘ Copier
                 </button>
@@ -390,27 +394,32 @@ function VentesPartenairesAdmin({ showToast }) {
   const load = () => {
     setLoading(true)
     supabase.from('ventes_partenaires')
-      .select('*, fleuristes(nom_boutique, email, code_vendeur), produits(titre, type, categorie)')
+      .select('*, partenaires(nom_boutique, email, code_vendeur, user_id, type_vendeur), produits(titre, type, categorie)')
       .eq('mois_facturation', mois)
       .order('created_at', { ascending: false })
       .then(({ data }) => { setVentes(data || []); setLoading(false) })
   }
   useEffect(() => { load() }, [mois])
 
-  // Grouper par fleuriste
-  const byFleuriste = ventes.reduce((acc, v) => {
-    const id = v.fleuriste_id
-    if (!acc[id]) acc[id] = { fleuriste: v.fleuristes, ventes: [], total_brut: 0, total_commission: 0, total_net: 0, all_reverse: true }
-    acc[id].ventes.push(v)
-    acc[id].total_brut       += Number(v.montant_brut)
-    acc[id].total_commission += Number(v.commission)
-    acc[id].total_net        += Number(v.montant_net)
-    if (v.statut !== 'reverse') acc[id].all_reverse = false
+  // Grouper par user_id MaFleur si dispo, sinon par partenaire_id
+  const byPro = ventes.reduce((acc, v) => {
+    const key = v.partenaires?.user_id || v.partenaire_id
+    if (!acc[key]) acc[key] = {
+      partenaire: v.partenaires,
+      user_id: v.partenaires?.user_id || null,
+      ventes: [], total_brut: 0, total_commission: 0, total_net: 0, all_reverse: true
+    }
+    acc[key].ventes.push(v)
+    acc[key].total_brut       += Number(v.montant_brut)
+    acc[key].total_commission += Number(v.commission)
+    acc[key].total_net        += Number(v.montant_net)
+    if (v.statut !== 'reverse') acc[key].all_reverse = false
     return acc
   }, {})
 
-  const marquerReverses = async (fleuristeId) => {
-    const ids = ventes.filter(v => v.fleuriste_id === fleuristeId && v.statut === 'en_attente').map(v => v.id)
+  const marquerReverses = async (key) => {
+    const partenaireIds = [...new Set(byPro[key].ventes.map(v => v.partenaire_id))]
+    const ids = ventes.filter(v => partenaireIds.includes(v.partenaire_id) && v.statut === 'en_attente').map(v => v.id)
     if (!ids.length) return
     const { error } = await supabase.from('ventes_partenaires')
       .update({ statut: 'reverse', reverse_le: new Date().toISOString() })
@@ -421,53 +430,56 @@ function VentesPartenairesAdmin({ showToast }) {
   }
 
   const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
-  const inp = { padding:'6px 10px', borderRadius:6, border:'1px solid rgba(255,255,255,0.12)', background:'#1a2e1a', color:'rgba(242,237,224,0.85)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
+  const inp = { padding:'6px 10px', borderRadius:6, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text2)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
 
   return (
     <div style={{ marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.12em', textTransform:'uppercase' }}>
+        <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.12em', textTransform:'uppercase' }}>
           Ventes partenaires
         </div>
         <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp }}/>
       </div>
 
       {loading ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
-      ) : Object.keys(byFleuriste).length === 0 ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', textAlign:'center', padding:'20px 0' }}>
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
+      ) : Object.keys(byPro).length === 0 ? (
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', textAlign:'center', padding:'20px 0' }}>
           Aucune vente ce mois
         </div>
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {Object.entries(byFleuriste).map(([fleuristeId, data]) => (
-            <div key={fleuristeId} style={{ padding:'16px', borderRadius:12, background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.06)' }}>
+          {Object.entries(byPro).map(([proKey, data]) => (
+            <div key={proKey} style={{ padding:'16px', borderRadius:12, background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.06)' }}>
               {/* Header partenaire */}
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
                 <div>
-                  <div style={{ fontSize:14, color:'rgba(242,237,224,0.88)', fontWeight:500 }}>{data.fleuriste?.nom_boutique}</div>
-                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:2 }}>{data.fleuriste?.email} · {data.ventes.length} vente{data.ventes.length > 1 ? 's' : ''}</div>
+                  <div style={{ fontSize:14, color:'var(--text2)', fontWeight:500 }}>
+                    {data.partenaire?.nom_boutique}
+                    {data.user_id && <span style={{ marginLeft:8, fontSize:9, padding:'1px 6px', borderRadius:10, background:'rgba(180,160,240,0.12)', border:'1px solid rgba(180,160,240,0.25)', color:'#b4a0f0' }}>🔗 MaFleur</span>}
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{data.partenaire?.email} · {data.ventes.length} vente{data.ventes.length > 1 ? 's' : ''}</div>
                 </div>
                 {!data.all_reverse && (
-                  <button onClick={() => marquerReverses(fleuristeId)}
-                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.30)', color:'#96d485' }}>
+                  <button onClick={() => marquerReverses(proKey)}
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid var(--greenT)', color:'var(--green)' }}>
                     ✓ Marquer reversé
                   </button>
                 )}
                 {data.all_reverse && (
-                  <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, background:'rgba(150,212,133,0.10)', border:'1px solid rgba(150,212,133,0.25)', color:'#96d485' }}>✓ Reversé</span>
+                  <span style={{ fontSize:10, padding:'3px 10px', borderRadius:20, background:'rgba(150,212,133,0.10)', border:'1px solid var(--greenT)', color:'var(--green)' }}>✓ Reversé</span>
                 )}
               </div>
 
               {/* Totaux */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, marginBottom:12 }}>
                 {[
-                  { lbl:'Total brut', val: fmt(data.total_brut), color:'rgba(242,237,224,0.70)' },
-                  { lbl:'Commission 15%', val: fmt(data.total_commission), color:'#e8c060' },
+                  { lbl:'Total brut', val: fmt(data.total_brut), color:'var(--text2)' },
+                  { lbl:'Commission 15%', val: fmt(data.total_commission), color:'var(--gold)' },
                   { lbl:'À reverser', val: fmt(data.total_net), color:'#96d485' },
                 ].map(({ lbl, val, color }) => (
                   <div key={lbl} style={{ padding:'10px 12px', borderRadius:8, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
-                    <div style={{ fontSize:9, color:'rgba(242,237,224,0.35)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:4 }}>{lbl}</div>
+                    <div style={{ fontSize:9, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:4 }}>{lbl}</div>
                     <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color }}>{val}</div>
                   </div>
                 ))}
@@ -477,11 +489,12 @@ function VentesPartenairesAdmin({ showToast }) {
               <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
                 {data.ventes.map(v => (
                   <div key={v.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'7px 10px', borderRadius:7, background:'rgba(255,255,255,0.02)' }}>
-                    <div style={{ flex:1, fontSize:12, color:'rgba(242,237,224,0.65)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    <div style={{ flex:1, fontSize:12, color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                       {v.produits?.titre || 'Produit supprimé'}
+                      {v.source === 'atelier' && <span style={{ marginLeft:6, fontSize:9, color:'#82c8f0' }}>📖 Atelier</span>}
                     </div>
-                    <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)', whiteSpace:'nowrap' }}>{fmt(v.montant_brut)}</div>
-                    <div style={{ fontSize:11, color:'#e8c060', whiteSpace:'nowrap' }}>-{fmt(v.commission)}</div>
+                    <div style={{ fontSize:11, color:'var(--text3)', whiteSpace:'nowrap' }}>{fmt(v.montant_brut)}</div>
+                    <div style={{ fontSize:11, color:'var(--gold)', whiteSpace:'nowrap' }}>-{fmt(v.commission)}</div>
                     <div style={{ fontSize:11, color:'#96d485', whiteSpace:'nowrap', fontWeight:500 }}>{fmt(v.montant_net)}</div>
                     <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, flexShrink:0,
                       background: v.statut==='reverse' ? 'rgba(150,212,133,0.10)' : 'rgba(232,192,96,0.10)',
@@ -501,51 +514,220 @@ function VentesPartenairesAdmin({ showToast }) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  FleuristesAdmin
+//  PartenairesAdmin
 // ═══════════════════════════════════════════════════════════
-function FleuristesAdmin({ showToast }) {
-  const [fleuristes, setFleuristes] = useState([])
+
+// ═══════════════════════════════════════════════════════════
+//  ProWallet — Solde + historique inline dans la fiche pro
+// ═══════════════════════════════════════════════════════════
+function ProWallet({ userId, partenaireId }) {
+  const [lumens,   setLumens]   = useState(null)
+  const [ventesE,  setVentesE]  = useState([])
+  const [ventesL,  setVentesL]  = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [tab,      setTab]      = useState('euros') // euros | lumens
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all([
+      // Solde Lumens
+      supabase.from('lumen_transactions').select('amount').eq('user_id', userId),
+      // Ventes euros (3 derniers mois)
+      supabase.from('ventes_partenaires')
+        .select('montant_brut, commission, montant_net, statut, mois_facturation, source, reverse_le, produits(titre)')
+        .eq('partenaire_id', partenaireId)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      // Ventes Lumens
+      supabase.from('lumen_transactions')
+        .select('amount, reason, meta, created_at')
+        .eq('user_id', userId)
+        .in('reason', ['vente_produit', 'vente_atelier'])
+        .order('created_at', { ascending: false })
+        .limit(20),
+    ]).then(([lumenRes, ventesRes, lumensVentesRes]) => {
+      const total = (lumenRes.data || []).reduce((s, t) => s + Number(t.amount), 0)
+      setLumens(total)
+      setVentesE(ventesRes.data || [])
+      setVentesL(lumensVentesRes.data || [])
+      setLoading(false)
+    })
+  }, [userId, partenaireId])
+
+  const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
+  const totalNet = ventesE.filter(v => v.statut === 'en_attente').reduce((s, v) => s + Number(v.montant_net), 0)
+  const totalLumens = ventesL.reduce((s, v) => s + Number(v.amount), 0)
+  const [openReverse, setOpenReverse] = useState(false)
+
+  if (loading) return <div style={{ marginTop:12, fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
+
+  return (
+    <div style={{ marginTop:12, borderTop:'1px solid rgba(255,255,255,0.06)', paddingTop:12 }}>
+      {/* Soldes */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
+        <div style={{ padding:'10px 12px', borderRadius:8, background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.15)' }}>
+          <div style={{ fontSize:9, color:'rgba(150,212,133,0.60)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>À reverser ce mois</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color:'#96d485' }}>{fmt(totalNet)}</div>
+        </div>
+        <div style={{ padding:'10px 12px', borderRadius:8, background:'rgba(232,192,96,0.06)', border:'1px solid rgba(232,192,96,0.15)' }}>
+          <div style={{ fontSize:9, color:'rgba(232,192,96,0.60)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Lumens reçus (ventes)</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color:'#e8c060' }}>{totalLumens} ✦</div>
+        </div>
+        <div style={{ padding:'10px 12px', borderRadius:8, background:'rgba(180,160,240,0.06)', border:'1px solid rgba(180,160,240,0.15)' }}>
+          <div style={{ fontSize:9, color:'rgba(180,160,240,0.60)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:3 }}>Solde Lumens total</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color:'#b4a0f0' }}>{lumens ?? '…'} ✦</div>
+        </div>
+      </div>
+
+      {/* Onglets historique */}
+      <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,0.07)', marginBottom:10 }}>
+        {[['euros','💶 Ventes €'],['lumens','✦ Ventes Lumens']].map(([id,lbl]) => (
+          <button key={id} onClick={() => setTab(id)}
+            style={{ padding:'5px 14px', fontSize:10, background:'none', border:'none',
+              borderBottom: tab===id ? '2px solid #e8c060' : '2px solid transparent',
+              color: tab===id ? '#e8c060' : 'rgba(242,237,224,0.35)', cursor:'pointer',
+              fontFamily:"'Jost',sans-serif", marginBottom:-1, letterSpacing:'.04em' }}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+
+      {/* Euros */}
+      {tab === 'euros' && (
+        ventesE.length === 0 ? (
+          <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Aucune vente enregistrée.</div>
+        ) : (() => {
+          const enAttente = ventesE.filter(v => v.statut !== 'reverse')
+          const reversees  = ventesE.filter(v => v.statut === 'reverse')
+          const totalReverse = reversees.reduce((s, v) => s + Number(v.montant_net), 0)
+          const lastDate = reversees.filter(v => v.reverse_le).sort((a,b) => new Date(b.reverse_le) - new Date(a.reverse_le))[0]?.reverse_le
+
+          const LigneVente = ({ v, showStatut }) => (
+            <div style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', borderRadius:6, background:'rgba(255,255,255,0.02)' }}>
+              <div style={{ fontSize:9, color:'rgba(242,237,224,0.25)', flexShrink:0 }}>{v.mois_facturation}</div>
+              <div style={{ flex:1, fontSize:11, color:'rgba(242,237,224,0.60)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                {v.produits?.titre || 'Produit'}
+                {v.source === 'atelier' && <span style={{ marginLeft:5, fontSize:9, color:'#82c8f0' }}>📖</span>}
+              </div>
+              <div style={{ fontSize:11, color:'#96d485', fontWeight:500, flexShrink:0 }}>{fmt(v.montant_net)}</div>
+              {showStatut && (
+                <span style={{ fontSize:9, padding:'1px 6px', borderRadius:10, flexShrink:0, background:'rgba(150,212,133,0.10)', color:'#96d485' }}>
+                  reversé
+                </span>
+              )}
+            </div>
+          )
+
+          return (
+            <div style={{ display:'flex', flexDirection:'column', gap:3, maxHeight:280, overflowY:'auto' }}>
+              {/* Lignes en attente — sans badge */}
+              {enAttente.map((v, i) => <LigneVente key={i} v={v} showStatut={false} />)}
+
+              {/* Accordéon reversées */}
+              {reversees.length > 0 && (
+                <div style={{ marginTop: enAttente.length ? 6 : 0 }}>
+                  <div onClick={() => setOpenReverse(o => !o)}
+                    style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 8px', borderRadius:6,
+                      background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.15)', cursor:'pointer', userSelect:'none' }}>
+                    <div style={{ flex:1, fontSize:11, color:'#96d485', fontWeight:500 }}>Total reversé</div>
+                    <div style={{ fontSize:12, color:'#96d485', fontWeight:600 }}>{fmt(totalReverse)}</div>
+                    {lastDate && <div style={{ fontSize:10, color:'rgba(150,212,133,0.55)' }}>{new Date(lastDate).toLocaleDateString('fr-FR')}</div>}
+                    <div style={{ fontSize:10, color:'rgba(150,212,133,0.50)', marginLeft:4 }}>{openReverse ? '▲' : '▼'}</div>
+                  </div>
+                  {openReverse && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:2, marginTop:3, paddingLeft:8 }}>
+                      {reversees.map((v, i) => <LigneVente key={i} v={v} showStatut={true} />)}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })()
+      )}
+
+      {/* Lumens */}
+      {tab === 'lumens' && (
+        ventesL.length === 0 ? (
+          <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Aucune vente en Lumens.</div>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:3, maxHeight:200, overflowY:'auto' }}>
+            {ventesL.map((v, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 8px', borderRadius:6, background:'rgba(255,255,255,0.02)' }}>
+                <div style={{ fontSize:9, color:'rgba(242,237,224,0.25)', flexShrink:0 }}>{new Date(v.created_at).toLocaleDateString('fr-FR')}</div>
+                <div style={{ flex:1, fontSize:11, color:'rgba(242,237,224,0.60)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {v.meta?.produit_titre || v.reason}
+                </div>
+                <div style={{ fontSize:12, color:'#e8c060', fontWeight:500, flexShrink:0 }}>+{v.amount} ✦</div>
+              </div>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+function PartenairesAdmin({ showToast }) {
+  const [partenaires, setPartenaires] = useState([])
   const [loading,    setLoading]    = useState(true)
   const [filter,     setFilter]     = useState('en_attente')
+  const [allUsers,   setAllUsers]   = useState([])
+  const [linkingId,  setLinkingId]  = useState(null)
+  const [expandedId, setExpandedId] = useState(null) // fiche ouverte pour historique
 
   const load = () => {
     setLoading(true)
-    supabase.from('fleuristes').select('*').order('created_at', { ascending:false })
-      .then(({ data }) => { setFleuristes(data || []); setLoading(false) })
+    supabase.from('partenaires').select('*').order('created_at', { ascending:false })
+      .then(({ data }) => { setPartenaires(data || []); setLoading(false) })
   }
   useEffect(() => { load() }, [])
 
-  const filtered = filter === 'all' ? fleuristes : fleuristes.filter(f => f.statut === filter)
-  const pending = fleuristes.filter(f => f.statut === 'en_attente').length
+  // Charge les users MaFleur pour la liaison
+  useEffect(() => {
+    supabase.from('users').select('id, display_name, email').order('display_name')
+      .then(({ data }) => setAllUsers(data || []))
+  }, [])
 
-  const FLEURISTE_STRIPE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/fleuriste-stripe'
+  const linkUser = async (partenaireId, userId) => {
+    const { error } = await supabase.from('partenaires').update({ user_id: userId || null }).eq('id', partenaireId)
+    if (error) { showToast('✗ ' + error.message); return }
+    showToast(userId ? '✓ Compte MaFleur lié' : '✓ Lien supprimé')
+    setLinkingId(null)
+    load()
+  }
+
+  const filtered = filter === 'all' ? partenaires : partenaires.filter(f => f.statut === filter)
+  const pending = partenaires.filter(f => f.statut === 'en_attente').length
+
+  const PARTENAIRE_STRIPE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/partenaire-stripe'
 
   const update = async (id, patch, msg) => {
-    const { error } = await supabase.from('fleuristes').update(patch).eq('id', id)
+    const { error } = await supabase.from('partenaires').update(patch).eq('id', id)
     if (error) { showToast('✗ ' + error.message); return }
 
-    // Si on active un fleuriste, créer les Price Stripe pour ses produits digitaux en attente
+    // Si on active un partenaire, créer les Price Stripe pour ses produits digitaux en attente
     if (patch.statut === 'actif') {
       const { data: produits } = await supabase.from('produits')
         .select('id, titre, description, prix, image_url, stripe_price_id, type')
-        .eq('fleuriste_id', id)
+        .eq('partenaire_id', id)
         .eq('type', 'digital')
         .is('stripe_price_id', null)
 
-      const fleuristeData = fleuristes.find(f => f.id === id)
-      if (produits?.length && fleuristeData?.code_vendeur) {
+      const partenaireData = partenaires.find(f => f.id === id)
+      if (produits?.length && partenaireData?.code_vendeur) {
         for (const p of produits) {
           if (!p.prix) continue
           try {
-            await fetch(FLEURISTE_STRIPE_URL, {
+            await fetch(PARTENAIRE_STRIPE_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ produit_id: p.id, code_vendeur: fleuristeData.code_vendeur, titre: p.titre, description: p.description, prix: p.prix, image_url: p.image_url }),
+              body: JSON.stringify({ produit_id: p.id, code_vendeur: partenaireData.code_vendeur, titre: p.titre, description: p.description, prix: p.prix, image_url: p.image_url }),
             })
           } catch (e) { console.warn('[stripe] produit', p.id, e) }
         }
         // Active aussi les produits en attente
-        await supabase.from('produits').update({ statut: 'actif' }).eq('fleuriste_id', id).eq('statut', 'en_attente')
+        await supabase.from('produits').update({ statut: 'actif' }).eq('partenaire_id', id).eq('statut', 'en_attente')
       }
     }
 
@@ -558,8 +740,8 @@ function FleuristesAdmin({ showToast }) {
     <div style={{ marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
       {/* Header */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.12em', textTransform:'uppercase' }}>
-          Fleuristes
+        <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.12em', textTransform:'uppercase' }}>
+          Partenaires
         </div>
         {pending > 0 && (
           <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', color:'#e8c060', fontWeight:500 }}>
@@ -582,18 +764,18 @@ function FleuristesAdmin({ showToast }) {
       </div>
 
       {loading ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
       ) : filtered.length === 0 ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', textAlign:'center', padding:'20px 0' }}>
-          Aucun fleuriste dans cette catégorie
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', textAlign:'center', padding:'20px 0' }}>
+          Aucun partenaire dans cette catégorie
         </div>
       ) : (
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(420px, 1fr))', gap:12 }}>
           {filtered.map(f => (
             <div key={f.id} style={{ padding:'14px 16px', borderRadius:12, background:'rgba(255,255,255,0.025)', border:`1px solid rgba(255,255,255,0.06)` }}>
               <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, marginBottom:8 }}>
                 <div>
-                  <div style={{ fontSize:14, color:'rgba(242,237,224,0.88)', fontWeight:500 }}>
+                  <div style={{ fontSize:14, color:'var(--text2)', fontWeight:500 }}>
                     {f.nom_boutique}
                     <span style={{ marginLeft:8, fontSize:10, color:'rgba(242,237,224,0.30)', fontWeight:400 }}>
                       {f.type_vendeur === 'professionnel' ? '🏪 Pro' : '🌱 Particulier'}
@@ -615,6 +797,41 @@ function FleuristesAdmin({ showToast }) {
                 </span>
               </div>
 
+              {/* Lien compte MaFleur — pros uniquement */}
+              {f.type_vendeur === 'professionnel' && (
+                <div style={{ marginBottom:8, padding:'8px 12px', background:'rgba(180,160,240,0.06)', border:'1px solid rgba(180,160,240,0.18)', borderRadius:8 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:10, color:'rgba(180,160,240,0.80)', fontWeight:500, flexShrink:0 }}>🔗</span>
+                    {linkingId === f.id ? (
+                      <>
+                        <select onChange={e => linkUser(f.id, e.target.value)} defaultValue=""
+                          style={{ flex:1, padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.12)', background:'#0e1a0e', color:'rgba(242,237,224,0.85)', fontSize:11, fontFamily:"'Jost',sans-serif", outline:'none' }}>
+                          <option value="" disabled>Choisir…</option>
+                          <option value="">— Délier</option>
+                          {allUsers.map(u => (
+                            <option key={u.id} value={u.id}>{u.display_name ? `${u.display_name} — ${u.email}` : u.email}</option>
+                          ))}
+                        </select>
+                        <button onClick={() => setLinkingId(null)}
+                          style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:11, cursor:'pointer', flexShrink:0 }}>✕</button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ flex:1, fontSize:11, color: f.user_id ? 'rgba(242,237,224,0.60)' : 'rgba(242,237,224,0.28)', fontStyle: f.user_id ? 'normal' : 'italic' }}>
+                          {f.user_id
+                            ? (() => { const u = allUsers.find(u => u.id === f.user_id); return u ? `${u.display_name || ''} ${u.email}`.trim() : f.user_id.slice(0,8) })()
+                            : 'Non lié à un compte MaFleur'}
+                        </span>
+                        <button onClick={() => setLinkingId(f.id)}
+                          style={{ padding:'3px 8px', borderRadius:5, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(180,160,240,0.10)', border:'1px solid rgba(180,160,240,0.25)', color:'#b4a0f0', flexShrink:0 }}>
+                          {f.user_id ? '↻' : '+ Lier'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Mode publication */}
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
                 <span style={{ fontSize:10, color:'rgba(242,237,224,0.30)' }}>Publication :</span>
@@ -631,10 +848,10 @@ function FleuristesAdmin({ showToast }) {
               </div>
 
               {/* Actions */}
-              <div style={{ display:'flex', gap:6 }}>
+              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                 {f.statut !== 'actif' && (
                   <button onClick={() => update(f.id, { statut:'actif' }, `✓ ${f.nom_boutique} activé`)}
-                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.30)', color:'#96d485' }}>
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(150,212,133,0.12)', border:'1px solid var(--greenT)', color:'var(--green)' }}>
                     ✓ Valider
                   </button>
                 )}
@@ -650,7 +867,23 @@ function FleuristesAdmin({ showToast }) {
                     ↺ En attente
                   </button>
                 )}
+                {f.type_vendeur === 'professionnel' && (
+                  <button onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    style={{ padding:'6px 14px', borderRadius:8, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", background: expandedId===f.id ? 'rgba(232,192,96,0.15)' : 'rgba(232,192,96,0.06)', border:'1px solid rgba(232,192,96,0.25)', color:'#e8c060' }}>
+                    {expandedId === f.id ? '▲ Fermer' : '✦ Solde & Historique'}
+                  </button>
+                )}
               </div>
+
+              {/* Portefeuille pro — inline */}
+              {expandedId === f.id && f.user_id && (
+                <ProWallet userId={f.user_id} partenaireId={f.id} />
+              )}
+              {expandedId === f.id && !f.user_id && (
+                <div style={{ marginTop:10, fontSize:11, color:'rgba(232,192,96,0.60)', fontStyle:'italic' }}>
+                  Liez d'abord ce partenaire à un compte MaFleur pour voir son solde.
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -676,6 +909,7 @@ const EMPTY_FORM = {
   type:'digital', categorie:'Audio', titre:'', description:'',
   prix:'', image_url:'', lien_externe:'', stripe_price_id:'',
   vendeur_nom:'', vendeur_contact:'', statut:'actif', ordre:0, storage_path:'',
+  accepte_lumens:false, prix_lumens:'',
 }
 
 function BoutiqueEditor({ showToast }) {
@@ -687,7 +921,7 @@ function BoutiqueEditor({ showToast }) {
   const [showForm,   setShowForm]   = useState(false)
   const [saving,     setSaving]     = useState(false)
 
-  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)', background:'#1a2e1a', color:'rgba(242,237,224,0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text2)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
   const lbl = { fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6, display:'block' }
   const zColors = { digital:'#b4a0f0', physique:'#82c8a0', occasion:'#e8c060', all:'#96d485' }
 
@@ -702,7 +936,7 @@ function BoutiqueEditor({ showToast }) {
 
   const openNew  = () => { setForm(EMPTY_FORM); setEditId(null); setShowForm(true) }
   const openEdit = (p) => {
-    setForm({ type:p.type, categorie:p.categorie||'', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', stripe_price_id:p.stripe_price_id||'', vendeur_nom:p.vendeur_nom||'', vendeur_contact:p.vendeur_contact||'', statut:p.statut||'actif', ordre:p.ordre||0, storage_path:p.storage_path||'' })
+    setForm({ type:p.type, categorie:p.categorie||'', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', stripe_price_id:p.stripe_price_id||'', vendeur_nom:p.vendeur_nom||'', vendeur_contact:p.vendeur_contact||'', statut:p.statut||'actif', ordre:p.ordre||0, storage_path:p.storage_path||'', accepte_lumens:p.accepte_lumens||false, prix_lumens:p.prix_lumens??'' })
     setEditId(p.id); setShowForm(true)
   }
 
@@ -830,9 +1064,9 @@ function BoutiqueEditor({ showToast }) {
 
       {/* Liste */}
       {loading ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic', padding:'20px 0' }}>Chargement…</div>
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', padding:'20px 0' }}>Chargement…</div>
       ) : filtered.length === 0 ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', textAlign:'center', padding:'40px 0' }}>
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', textAlign:'center', padding:'40px 0' }}>
           Aucun produit — cliquez sur "+ Ajouter"
         </div>
       ) : (
@@ -879,7 +1113,7 @@ function BoutiqueEditor({ showToast }) {
       )}
 
       <VentesPartenairesAdmin showToast={showToast} />
-      <FleuristesAdmin showToast={showToast} />
+      <PartenairesAdmin showToast={showToast} />
 
 
       {/* ── Modal attribution accès ── */}
@@ -901,7 +1135,7 @@ function BoutiqueEditor({ showToast }) {
               Choisir un utilisateur
             </div>
             {!usersLoaded ? (
-              <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic' }}>Chargement…</div>
+              <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:4, maxHeight:360, overflowY:'auto' }}>
                 {users.map(u => (
@@ -945,12 +1179,18 @@ function BoutiqueEditor({ showToast }) {
 
               {/* Type + Catégorie */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-                <div>
-                  <span style={lbl}>Type</span>
-                  <select value={form.type} onChange={e => setForm(f => ({ ...f, type:e.target.value, categorie:CAT_OPTS[e.target.value][0] }))} style={{ ...inp }}>
-                    {TYPE_OPTS.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
-                  </select>
+                {/* Type — forcé à Digital pour l'instant */}
+              <div style={{ display:'none' }}>
+                <select value={form.type} onChange={e => setForm(f => ({ ...f, type:e.target.value, categorie:CAT_OPTS[e.target.value][0] }))} style={{ ...inp }}>
+                  {TYPE_OPTS.map(t => <option key={t.val} value={t.val}>{t.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <span style={lbl}>Type</span>
+                <div style={{ padding:'9px 12px', borderRadius:8, border:'1px solid rgba(180,160,240,0.30)', background:'rgba(180,160,240,0.08)', color:'#b4a0f0', fontSize:13, fontFamily:"'Jost',sans-serif" }}>
+                  🎧 Digital
                 </div>
+              </div>
                 <div>
                   <span style={lbl}>Catégorie</span>
                   <select value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie:e.target.value }))} style={{ ...inp }}>
@@ -1074,6 +1314,31 @@ function BoutiqueEditor({ showToast }) {
                 </select>
               </div>
 
+              {/* Paiement en Lumens */}
+              <div style={{ padding:'14px 16px', background:'rgba(232,192,96,0.06)', border:'1px solid rgba(232,192,96,0.20)', borderRadius:10 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: form.accepte_lumens ? 12 : 0 }}>
+                  <div>
+                    <div style={{ fontSize:12, color:'rgba(242,237,224,0.80)', fontWeight:500 }}>✦ Accepter les Lumens</div>
+                    <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>L'acheteur pourra payer en Lumens ou en euros</div>
+                  </div>
+                  <div onClick={() => setForm(f => ({ ...f, accepte_lumens:!f.accepte_lumens }))}
+                    style={{ width:44, height:24, borderRadius:100, cursor:'pointer', flexShrink:0,
+                      background: form.accepte_lumens ? 'rgba(232,192,96,0.35)' : 'rgba(255,255,255,0.08)',
+                      border:`1px solid ${form.accepte_lumens ? 'rgba(232,192,96,0.5)' : 'rgba(255,255,255,0.12)'}`,
+                      position:'relative', transition:'all .25s' }}>
+                    <div style={{ position:'absolute', top:3, left: form.accepte_lumens ? 22 : 3, width:16, height:16, borderRadius:'50%',
+                      background: form.accepte_lumens ? '#e8c060' : 'rgba(255,255,255,0.25)', transition:'left .25s, background .25s' }}/>
+                  </div>
+                </div>
+                {form.accepte_lumens && (
+                  <div>
+                    <span style={lbl}>Prix en Lumens ✦</span>
+                    <input type="number" min="1" value={form.prix_lumens} onChange={e => setForm(f => ({ ...f, prix_lumens:e.target.value }))}
+                      placeholder="Ex: 50" style={{ ...inp, maxWidth:160 }}/>
+                  </div>
+                )}
+              </div>
+
               {/* Save */}
               <button onClick={handleSave} disabled={saving}
                 style={{ padding:'13px', borderRadius:10, border:`1px solid ${tc}50`, background:`${tc}18`, color:tc, fontSize:13, fontWeight:500, cursor: saving ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', opacity: saving ? 0.6 : 1, marginTop:4 }}>
@@ -1087,7 +1352,250 @@ function BoutiqueEditor({ showToast }) {
   )
 }
 
+// ThemeEditor — à intégrer dans AdminPage.jsx
+// Composant autonome, appelle supabase directement
+
+const PRESETS = [
+  {
+    name: 'Forêt', emoji: '🌿',
+    vars: { '--bg':'#1a2e1a','--bg2':'#213d21','--bg3':'#274827','--text':'#f2ede0','--text2':'rgba(242,237,224,0.85)','--text3':'rgba(242,237,224,0.55)','--green':'#96d485','--gold':'#e8d4a8','--cream':'#f2ede0','--gold-warm':'#C8A882','--border':'rgba(255,255,255,0.14)','--border2':'rgba(255,255,255,0.08)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Nuit', emoji: '🌙',
+    vars: { '--bg':'#0d1520','--bg2':'#131d2e','--bg3':'#1a2640','--text':'#e8eaf0','--text2':'rgba(232,234,240,0.85)','--text3':'rgba(232,234,240,0.50)','--green':'#7eb8f7','--gold':'#c9d4f0','--cream':'#e8eaf0','--gold-warm':'#a8b8d8','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Aube', emoji: '🌸',
+    vars: { '--bg':'#2a1a1e','--bg2':'#3d2128','--bg3':'#4a2730','--text':'#f5ede8','--text2':'rgba(245,237,232,0.85)','--text3':'rgba(245,237,232,0.50)','--green':'#e8a0a8','--gold':'#f0d4c0','--cream':'#f5ede8','--gold-warm':'#d4a882','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Terre', emoji: '🏜',
+    vars: { '--bg':'#1e1a0e','--bg2':'#2a2410','--bg3':'#352e14','--text':'#f0ead8','--text2':'rgba(240,234,216,0.85)','--text3':'rgba(240,234,216,0.50)','--green':'#d4a855','--gold':'#e8d4a8','--cream':'#f0ead8','--gold-warm':'#c8944a','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Océan', emoji: '🌊',
+    vars: { '--bg':'#0a1a22','--bg2':'#0f2530','--bg3':'#14303e','--text':'#e0eff5','--text2':'rgba(224,239,245,0.85)','--text3':'rgba(224,239,245,0.50)','--green':'#5bc8d8','--gold':'#a8d4e8','--cream':'#e0eff5','--gold-warm':'#78b4cc','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Pastel', emoji: '🌷',
+    vars: { '--bg':'#1e1a28','--bg2':'#2a2438','--bg3':'#342e48','--text':'#f0ecf8','--text2':'rgba(240,236,248,0.88)','--text3':'rgba(240,236,248,0.52)','--green':'#c4a8e8','--gold':'#f0c8e0','--cream':'#f0ecf8','--gold-warm':'#e8a8c4','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.08)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Brume', emoji: '🌫',
+    vars: { '--bg':'#181820','--bg2':'#20202e','--bg3':'#282838','--text':'#ebebf2','--text2':'rgba(235,235,242,0.85)','--text3':'rgba(235,235,242,0.48)','--green':'#a8c8e8','--gold':'#d8cce8','--cream':'#ebebf2','--gold-warm':'#b8a8d0','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Ambre', emoji: '🍂',
+    vars: { '--bg':'#1e1408','--bg2':'#2a1c0c','--bg3':'#352412','--text':'#f5e8d0','--text2':'rgba(245,232,208,0.88)','--text3':'rgba(245,232,208,0.52)','--green':'#e8a040','--gold':'#f0cc80','--cream':'#f5e8d0','--gold-warm':'#d48030','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+  {
+    name: 'Minuit', emoji: '🔮',
+    vars: { '--bg':'#100c1e','--bg2':'#18142c','--bg3':'#201a38','--text':'#ece8f8','--text2':'rgba(236,232,248,0.85)','--text3':'rgba(236,232,248,0.48)','--green':'#b090f0','--gold':'#e0c8f8','--cream':'#ece8f8','--gold-warm':'#c8a0e0','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
+  },
+]
+
+const VAR_LABELS = {
+  '--bg':             { label: 'Fond principal',           group: 'Fonds' },
+  '--bg2':            { label: 'Fond secondaire',          group: 'Fonds' },
+  '--bg3':            { label: 'Fond tertiaire',           group: 'Fonds' },
+  '--text':           { label: 'Texte principal',          group: 'Textes' },
+  '--text2':          { label: 'Texte secondaire',         group: 'Textes' },
+  '--text3':          { label: 'Texte atténué',            group: 'Textes' },
+  '--cream':          { label: 'Texte clair (titres UI)',  group: 'Textes' },
+  '--green':          { label: 'Accent principal',         group: 'Accents' },
+  '--green2':         { label: 'Accent fond (médium)',     group: 'Accents' },
+  '--green3':         { label: 'Accent fond (léger)',      group: 'Accents' },
+  '--greenT':         { label: 'Accent bordure',           group: 'Accents' },
+  '--gold':           { label: 'Accent doré',              group: 'Accents' },
+  '--gold-warm':      { label: 'Doré chaud (bilan, CTA)', group: 'Accents' },
+  '--border':         { label: 'Bordure forte',            group: 'Bordures' },
+  '--border2':        { label: 'Bordure légère',           group: 'Bordures' },
+  '--zone-roots':     { label: 'Zone Racines',             group: 'Zones rituels' },
+  '--zone-stem':      { label: 'Zone Tige',                group: 'Zones rituels' },
+  '--zone-leaves':    { label: 'Zone Feuilles',            group: 'Zones rituels' },
+  '--zone-flowers':   { label: 'Zone Fleurs',              group: 'Zones rituels' },
+  '--zone-breath':    { label: 'Zone Souffle',             group: 'Zones rituels' },
+}
+
+function ThemeEditor({ showToast }) {
+  const [vars,     setVars]     = useState({})
+  const [loading,  setLoading]  = useState(true)
+  const [saving,   setSaving]   = useState(false)
+  const [changed,  setChanged]  = useState(false)
+  const [preview,  setPreview]  = useState(null) // preset en survol
+
+  // Charge les valeurs actuelles
+  useEffect(() => {
+    supabase.from('app_settings').select('key,value')
+      .then(({ data }) => {
+        if (!data) return
+        const map = Object.fromEntries(data.map(r => [r.key, r.value]))
+        setVars(map)
+        setLoading(false)
+      })
+  }, [])
+
+  const updateVar = (key, val) => {
+    const updates = { [key]: val }
+    if (key === '--green') {
+      const derived = deriveFromGreen(val)
+      Object.assign(updates, derived)
+    }
+    setVars(v => ({ ...v, ...updates }))
+    setChanged(true)
+    Object.entries(updates).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
+  }
+
+  const deriveFromGreen = (g) => {
+    if (!g || !g.startsWith('#') || g.length !== 7) return {}
+    const rgb = parseInt(g.slice(1,3),16)+','+parseInt(g.slice(3,5),16)+','+parseInt(g.slice(5,7),16)
+    return {
+      '--green2': `rgba(${rgb},0.22)`,
+      '--green3': `rgba(${rgb},0.11)`,
+      '--greenT': `rgba(${rgb},0.48)`,
+    }
+  }
+
+  const applyPreset = (preset) => {
+    const derived = deriveFromGreen(preset.vars['--green'])
+    const full = { ...preset.vars, ...derived, theme_name: preset.name }
+    setVars(v => ({ ...v, ...full }))
+    setChanged(true)
+    Object.entries(full).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
+  }
+
+  const previewPreset = (preset) => {
+    if (!preset) {
+      Object.entries(vars).forEach(([k, v]) => {
+        if (k.startsWith('--')) document.documentElement.style.setProperty(k, v)
+      })
+      setPreview(null)
+      return
+    }
+    setPreview(preset.name)
+    const derived = deriveFromGreen(preset.vars['--green'])
+    Object.entries({ ...preset.vars, ...derived }).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
+  }
+
+  const save = async () => {
+    setSaving(true)
+    // Inclut les dérivées de --green si présentes
+    const derived = deriveFromGreen(vars['--green'])
+    const allVars = { ...vars, ...derived }
+    const entries = Object.entries(allVars).map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }))
+    const { error } = await supabase.from('app_settings').upsert(entries, { onConflict: 'key' })
+    setSaving(false)
+    if (error) { showToast('✗ ' + error.message); return }
+    setVars(v => ({ ...v, ...derived }))
+    setChanged(false)
+    showToast('✓ Thème sauvegardé')
+  }
+
+  const lbl = { fontSize:10, color:'rgba(242,237,224,0.50)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:6, display:'block', fontWeight:500 }
+  const groups = ['Fonds','Textes','Accents','Bordures','Zones rituels']
+
+  if (loading) return <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', padding:'20px 0' }}>Chargement du thème…</div>
+
+  return (
+    <div style={{ marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+        <div>
+          <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.12em', textTransform:'uppercase' }}>Thème & Couleurs</div>
+          <div style={{ fontSize:12, color:'rgba(242,237,224,0.40)', marginTop:3 }}>
+            Thème actuel : <span style={{ color:'var(--green)' }}>{vars.theme_name || 'Personnalisé'}</span>
+          </div>
+        </div>
+        {changed && (
+          <button onClick={save} disabled={saving}
+            style={{ padding:'8px 18px', borderRadius:8, fontSize:12, cursor:'pointer', fontFamily:"'Jost',sans-serif", fontWeight:500, background:'rgba(150,212,133,0.15)', border:'1px solid rgba(150,212,133,0.35)', color:'#96d485', opacity: saving ? 0.6 : 1 }}>
+            {saving ? '⏳ Sauvegarde…' : '✓ Sauvegarder'}
+          </button>
+        )}
+      </div>
+
+      {/* Thèmes prédéfinis */}
+      <div style={{ marginBottom:24 }}>
+        <span style={lbl}>Thèmes prédéfinis</span>
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          {PRESETS.map(p => (
+            <div key={p.name}
+              onClick={() => applyPreset(p)}
+              onMouseEnter={() => previewPreset(p)}
+              onMouseLeave={() => previewPreset(null)}
+              style={{
+                display:'flex', alignItems:'center', gap:8, padding:'8px 14px',
+                borderRadius:10, cursor:'pointer', transition:'all .2s',
+                background: vars.theme_name === p.name ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${vars.theme_name === p.name ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.10)'}`,
+              }}>
+              {/* Swatches */}
+              <div style={{ display:'flex', gap:3 }}>
+                {['--bg','--green','--gold','--gold-warm'].map(k => (
+                  <div key={k} style={{ width:12, height:12, borderRadius:'50%', background: p.vars[k], border:'1px solid rgba(255,255,255,0.15)' }} />
+                ))}
+              </div>
+              <span style={{ fontSize:12, color: vars.theme_name === p.name ? '#96d485' : 'rgba(242,237,224,0.70)' }}>
+                {p.emoji} {p.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Personnalisation fine — groupée */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:20 }}>
+        {groups.map(group => {
+          const groupVars = Object.entries(VAR_LABELS).filter(([, v]) => v.group === group)
+          return (
+            <div key={group} style={{ padding:'14px 16px', borderRadius:12, background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ fontSize:10, color:'rgba(242,237,224,0.40)', letterSpacing:'.10em', textTransform:'uppercase', marginBottom:14, fontWeight:500 }}>{group}</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {groupVars.map(([key, meta]) => {
+                  const val = vars[key] || ''
+                  // Extrait hex pour les color pickers (ignore rgba)
+                  const isHex = val.startsWith('#')
+                  return (
+                    <div key={key} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                      {/* Aperçu couleur */}
+                      <div style={{ width:28, height:28, borderRadius:6, background: val, border:'1px solid rgba(255,255,255,0.15)', flexShrink:0, position:'relative', overflow:'hidden' }}>
+                        {isHex && (
+                          <input type="color" value={val} onChange={e => updateVar(key, e.target.value)}
+                            style={{ position:'absolute', inset:0, width:'150%', height:'150%', opacity:0, cursor:'pointer', transform:'translate(-10%,-10%)' }} />
+                        )}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:11, color:'rgba(242,237,224,0.75)', marginBottom:3 }}>{meta.label}</div>
+                        <input
+                          value={val}
+                          onChange={e => updateVar(key, e.target.value)}
+                          style={{ width:'100%', padding:'4px 8px', borderRadius:5, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.70)', fontSize:10, fontFamily:'monospace', outline:'none', boxSizing:'border-box' }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {changed && (
+        <div style={{ marginTop:16, display:'flex', justifyContent:'flex-end' }}>
+          <button onClick={save} disabled={saving}
+            style={{ padding:'10px 24px', borderRadius:10, fontSize:13, cursor:'pointer', fontFamily:"'Jost',sans-serif", fontWeight:500, background:'rgba(150,212,133,0.15)', border:'1px solid rgba(150,212,133,0.35)', color:'#96d485', opacity: saving ? 0.6 : 1 }}>
+            {saving ? '⏳ Sauvegarde…' : '✓ Sauvegarder le thème'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
 export function AdminPage() {
+  useTheme()
   const { user, signOut } = useAuth()
   const [tab,       setTab]       = useState('reports')
   const [pendingReviews, setPendingReviews] = useState([])
@@ -1527,6 +2035,9 @@ export function AdminPage() {
           </div>
           <div className={`adm-tab${tab === 'parametres' ? ' active' : ''}`} onClick={() => setTab('parametres')}>
             ⚙️ Paramètres
+          </div>
+          <div className={`adm-tab${tab === 'theme' ? ' active' : ''}`} onClick={() => setTab('theme')}>
+            🎨 Thème
           </div>
         </div>
 
@@ -2025,6 +2536,12 @@ export function AdminPage() {
         {tab === 'parametres' && (
           <div className="adm-section">
             <RituelsEditor showToast={showToast} />
+          </div>
+        )}
+
+        {tab === 'theme' && (
+          <div className="adm-section">
+            <ThemeEditor showToast={showToast} />
           </div>
         )}
 

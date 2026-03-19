@@ -118,8 +118,8 @@ export default function PushNotificationButton({ userId, compact = false }) {
           }}
         >
           <div style={{
-            background: '#1a2a1a',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'var(--bg)',
+            border: '1px solid var(--border2)',
             borderRadius: 20, padding: '28px 24px',
             width: '100%', maxWidth: 360,
             fontFamily: 'Jost, sans-serif',

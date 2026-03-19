@@ -65,7 +65,7 @@ const css = `
 .jt-overlay { position:fixed; inset:0; z-index:400; display:flex; align-items:center;
               justify-content:center; background:rgba(0,0,0,0.70); backdrop-filter:blur(12px); padding:20px; }
 .jt-modal   { width:100%; max-width:520px; border-radius:18px;
-              background:linear-gradient(170deg,#0e1a0e 0%,#080e0a 100%);
+              background:var(--bg);
               border:1px solid rgba(255,255,255,0.08); border-bottom:none;
               padding:28px 24px 48px; max-height:90vh; overflow-y:auto;
               animation:slideUp .35s cubic-bezier(.34,1.4,.64,1); }
@@ -126,14 +126,14 @@ const DEMO_PRODUITS = [
 ]
 
 // ── Composant principal ──────────────────────────────────────────────────────
-export function ScreenJardinotheque({ userId }) {
+export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
   const [tab,           setTab]           = useState('digital')
   const [cat,           setCat]           = useState('Tous')
   const [produits,      setProduits]      = useState([])
   const [loading,       setLoading]       = useState(true)
   const [selected,      setSelected]      = useState(null)
-  const [showFleuriste, setShowFleuriste] = useState(false)
-  const [fleuriste,     setFleuriste]     = useState(null)
+  const [showPartenaire, setShowPartenaire] = useState(false)
+  const [partenaire,     setPartenaire]     = useState(null)
   const [achatIds,      setAchatIds]      = useState(new Set()) // produits déjà achetés
 
   useEffect(() => {
@@ -191,16 +191,16 @@ export function ScreenJardinotheque({ userId }) {
             Ressources, créations de partenaires et échanges de la communauté — tout ce qui nourrit votre jardin intérieur.
           </p>
         </div>
-        <button onClick={() => setShowFleuriste(true)}
+        <button onClick={() => setShowPartenaire(true)}
           style={{ flexShrink:0, padding:'9px 18px', borderRadius:20, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.08)', color:'#96d485', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em', transition:'all .2s', marginTop:6 }}>
-          🌸 Fleuristes
+          🌿 Partenaires
         </button>
       </div>
 
       {/* ── Onglets ── */}
       <div style={{ padding:'0 24px' }}>
         <div className="jt-tabs">
-          {Object.entries(TYPE_CONFIG).map(([k, v]) => (
+          {Object.entries(TYPE_CONFIG).filter(([k]) => k === 'digital').map(([k, v]) => (
             <button key={k} className={'jt-tab' + (tab===k ? ' active' : '')}
               onClick={() => setTab(k)}
               style={{ color: tab===k ? v.color : undefined, borderBottomColor: tab===k ? v.color : undefined }}>
@@ -240,18 +240,18 @@ export function ScreenJardinotheque({ userId }) {
 
       {/* ── Modal détail ── */}
       {selected && (
-        <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} hasBought={achatIds.has(selected.id)} userId={userId} />
+        <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} hasBought={achatIds.has(selected.id)} userId={userId} isPremium={isPremium} onUpgrade={onUpgrade} onAchatLumens={() => { setAchatIds(s => new Set([...s, selected.id])); setSelected(null) }} />
       )}
 
-      {/* ── Modal Fleuristes ── */}
-      {showFleuriste && (
-        <FleuristeModal
-          fleuriste={fleuriste}
-          onLogin={f => setFleuriste(f)}
-          onLogout={() => setFleuriste(null)}
-          onClose={() => setShowFleuriste(false)}
+      {/* ── Modal Partenaires ── */}
+      {showPartenaire && (
+        <PartenaireModal
+          partenaire={partenaire}
+          onLogin={f => setPartenaire(f)}
+          onLogout={() => setPartenaire(null)}
+          onClose={() => setShowPartenaire(false)}
           onProductAdded={() => {
-            setShowFleuriste(false)
+            setShowPartenaire(false)
             // Recharge les produits
             setLoading(true)
             supabase.from('produits').select('*').eq('statut','actif').order('ordre')
@@ -305,12 +305,13 @@ function ProductCard({ produit: p, tc, onOpen, hasBought }) {
 }
 
 // ── Modal détail produit ──────────────────────────────────────────────────────
-function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
+function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumens, isPremium = false, onUpgrade }) {
   const emoji = CAT_EMOJI[p.categorie] ?? tc.icon
   const isDigital  = p.type === 'digital'
   const isOccasion = p.type === 'occasion'
-  const [paying, setPaying] = useState(false)
-  const [payErr, setPayErr] = useState('')
+  const [paying,      setPaying]      = useState(false)
+  const [payingLumens, setPayingLumens] = useState(false)
+  const [payErr,       setPayErr]       = useState('')
 
   const CHECKOUT_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/stripe-checkout'
 
@@ -343,6 +344,39 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
     } catch {
       setPayErr('Erreur réseau'); setPaying(false)
     }
+  }
+
+  const handlePayLumens = async () => {
+    setPayErr('')
+    setPayingLumens(true)
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+      if (!token) { setPayErr('Connectez-vous pour acheter.'); setPayingLumens(false); return }
+
+      // Vérifie que l'acheteur a assez de Lumens
+      const { data: lumenData } = await supabase.from('lumen_transactions').select('amount').eq('user_id', userId)
+      const total = (lumenData || []).reduce((s, t) => s + Number(t.amount), 0)
+      if (total < p.prix_lumens) { setPayErr(`Lumens insuffisants — vous avez ${total} ✦, il faut ${p.prix_lumens} ✦`); setPayingLumens(false); return }
+
+      // Récupère le user_id du vendeur via le partenaire
+      const { data: produitData } = await supabase.from('produits').select('partenaire_id, partenaires(user_id)').eq('id', p.id).maybeSingle()
+      const vendeurUserId = produitData?.partenaires?.user_id ?? null
+
+      // Débite l'acheteur
+      await supabase.rpc('award_lumens', { p_user_id: userId, p_amount: -p.prix_lumens, p_reason: 'achat_produit', p_meta: { produit_id: p.id, produit_titre: p.titre } })
+
+      // Crédite le vendeur si lié à un compte MaFleur
+      if (vendeurUserId) {
+        await supabase.rpc('award_lumens', { p_user_id: vendeurUserId, p_amount: p.prix_lumens, p_reason: 'vente_produit', p_meta: { produit_id: p.id, produit_titre: p.titre, acheteur_id: userId } })
+      }
+
+      // Enregistre l'achat
+      await supabase.from('achats').upsert({ user_id: userId, produit_id: p.id, statut: 'complete', montant: 0 }, { onConflict: 'user_id,produit_id' })
+
+      setPayingLumens(false)
+      onAchatLumens?.()
+    } catch(e) { setPayErr('Erreur : ' + e.message); setPayingLumens(false) }
   }
 
   const handleContact = () => {
@@ -410,10 +444,18 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
           </div>
         ) : (
           <>
-            <button className="jt-modal-btn" onClick={handleAction} disabled={paying}
-              style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
-              {paying ? '⏳ Redirection vers le paiement…' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
-            </button>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <button className="jt-modal-btn" onClick={isPremium ? handleAction : onUpgrade} disabled={paying}
+                style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
+                {paying ? '⏳ Redirection…' : !isPremium ? '🔒 Premium requis — Découvrir' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
+              </button>
+              {p.accepte_lumens && p.prix_lumens && (
+                <button className="jt-modal-btn" onClick={handlePayLumens} disabled={payingLumens}
+                  style={{ background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.40)', color:'#e8c060', opacity: payingLumens ? 0.7 : 1 }}>
+                  {payingLumens ? '⏳ Traitement…' : `✦ Payer ${p.prix_lumens} Lumens`}
+                </button>
+              )}
+            </div>
             {payErr && <div style={{ fontSize:12, color:'#e87060', marginTop:8, textAlign:'center' }}>{payErr}</div>}
           </>
         )}
@@ -430,9 +472,9 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId }) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  VentesDashboard — visible par le fleuriste pro
+//  VentesDashboard — visible par le partenaire pro
 // ═══════════════════════════════════════════════════════════
-function VentesDashboard({ fleuristeId }) {
+function VentesDashboard({ partenaireId }) {
   const [ventes,  setVentes]  = useState([])
   const [loading, setLoading] = useState(true)
   const [mois,    setMois]    = useState(() => {
@@ -444,15 +486,15 @@ function VentesDashboard({ fleuristeId }) {
     setLoading(true)
     supabase.from('ventes_partenaires')
       .select('*, produits(titre, type, categorie)')
-      .eq('fleuriste_id', fleuristeId)
+      .eq('partenaire_id', partenaireId)
       .eq('mois_facturation', mois)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
-        console.log('[ventes] data:', data, 'error:', error, 'fleuristeId:', fleuristeId, 'mois:', mois)
+        console.log('[ventes] data:', data, 'error:', error, 'partenaireId:', partenaireId, 'mois:', mois)
         setVentes(data || [])
         setLoading(false)
       })
-  }, [fleuristeId, mois])
+  }, [partenaireId, mois])
 
   const totalBrut = ventes.reduce((s, v) => s + Number(v.montant_brut), 0)
   const totalNet  = ventes.reduce((s, v) => s + Number(v.montant_net), 0)
@@ -505,11 +547,11 @@ function VentesDashboard({ fleuristeId }) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  FleuristeModal
+//  PartenaireModal
 //  3 vues : accueil → inscription / connexion → espace vendeur
 // ═══════════════════════════════════════════════════════════
-function FleuristeModal({ fleuriste, onLogin, onLogout, onClose, onProductAdded }) {
-  const [view,         setView]         = useState(fleuriste ? 'espace' : 'accueil')
+function PartenaireModal({ partenaire, onLogin, onLogout, onClose, onProductAdded }) {
+  const [view,         setView]         = useState(partenaire ? 'espace' : 'accueil')
   const [typeVendeur,  setTypeVendeur]  = useState(null) // 'particulier' | 'professionnel'
   // 'accueil' | 'choix' | 'form_particulier' | 'form_pro' | 'verification' | 'connexion' | 'espace'
   const [pendingEmail, setPendingEmail] = useState('')
@@ -518,7 +560,7 @@ function FleuristeModal({ fleuriste, onLogin, onLogout, onClose, onProductAdded 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.75)', backdropFilter:'blur(14px)', padding:'20px' }}
       onClick={onClose}>
-      <div style={{ width:'100%', maxWidth:520, borderRadius:18, background:'linear-gradient(170deg,#0c1a0e 0%,#080e0a 100%)', border:'1px solid rgba(255,255,255,0.09)', padding:'0 0 32px', maxHeight:'90vh', overflowY:'auto', animation:'fadeIn .25s ease both' }}
+      <div style={{ width:'100%', maxWidth:520, borderRadius:18, background:'var(--bg)', border:'1px solid var(--border2)', padding:'0 0 32px', maxHeight:'90vh', overflowY:'auto', animation:'fadeIn .25s ease both' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Handle */}
@@ -533,8 +575,8 @@ function FleuristeModal({ fleuriste, onLogin, onLogout, onClose, onProductAdded 
           {view === 'form_particulier' && <VueFormParticulier onSuccess={(d,e) => { setPendingData(d); setPendingEmail(e); setView('verification') }} onBack={() => setView('choix')} />}
           {view === 'form_pro'         && <VueFormPro         onSuccess={(d,e) => { setPendingData(d); setPendingEmail(e); setView('verification') }} onBack={() => setView('choix')} />}
           {view === 'verification'     && <VueVerification    email={pendingEmail} pendingData={pendingData} onSuccess={() => setView('connexion')} onBack={() => setView(typeVendeur === 'particulier' ? 'form_particulier' : 'form_pro')} />}
-          {view === 'connexion'        && <VueConnexion       onSuccess={f => { onLogin(f); setView('espace') }} onBack={() => setView('accueil')} />}
-          {view === 'espace'           && <VueEspace          fleuriste={fleuriste} onLogout={() => { onLogout(); setView('accueil') }} onProductAdded={onProductAdded} />}
+          {view === 'connexion'        && <VueConnexion       onSuccess={f => { onLogin(p); setView('espace') }} onBack={() => setView('accueil')} />}
+          {view === 'espace'           && <VueEspace          partenaire={partenaire} onLogout={() => { onLogout(); setView('accueil') }} onProductAdded={onProductAdded} />}
         </div>
       </div>
     </div>
@@ -547,7 +589,7 @@ function VueAccueil({ onInscription, onConnexion }) {
     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
       <div>
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#f2ede0', marginBottom:8 }}>
-          Espace <em style={{ fontStyle:'italic', color:'#96d485' }}>Fleuristes</em>
+          Espace <em style={{ fontStyle:'italic', color:'#96d485' }}>Partenaires</em>
         </div>
         <p style={{ fontSize:12, color:'rgba(242,237,224,0.45)', lineHeight:1.8 }}>
           Partagez vos créations, ressources et produits avec la communauté de Mon Jardin Intérieur. Chaque vendeur reçoit un code unique pour gérer sa boutique.
@@ -557,11 +599,11 @@ function VueAccueil({ onInscription, onConnexion }) {
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         <button onClick={onInscription}
           style={{ padding:'14px', borderRadius:12, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em' }}>
-          🌱 Devenir Fleuriste
+          🌱 Devenir Partenaire
         </button>
         <button onClick={onConnexion}
           style={{ padding:'14px', borderRadius:12, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.60)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.04em' }}>
-          🔑 J'ai déjà un code vendeur — me connecter
+          🔑 J'ai déjà un code — me connecter
         </button>
       </div>
 
@@ -602,7 +644,7 @@ function VueChoixType({ onChoix, onBack }) {
   )
 }
 
-const INP_STYLE = { padding:'10px 12px', borderRadius:8, border:'1px solid rgba(255,255,255,0.18)', background:'#0e1a0e', color:'rgba(242,237,224,0.92)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+const INP_STYLE = { padding:'10px 12px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg2)', color:'rgba(242,237,224,0.92)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
 const LBL_STYLE = { fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
 
 function ErrBox({ msg }) {
@@ -653,7 +695,7 @@ function VueFormParticulier({ onSuccess, onBack }) {
     if (!codeOk) { setErr('Le code vendeur ne respecte pas les critères de sécurité.'); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('Adresse email invalide.'); return }
     setSaving(true)
-    const { data: existing } = await supabase.from('fleuristes').select('id').eq('code_vendeur', code).maybeSingle()
+    const { data: existing } = await supabase.from('partenaires').select('id').eq('code_vendeur', code).maybeSingle()
     if (existing) { setSaving(false); setErr('Ce code vendeur est déjà pris.'); return }
     const { error: otpErr } = await sendOtp(email.trim())
     setSaving(false)
@@ -759,7 +801,7 @@ function VueFormPro({ onSuccess, onBack }) {
     if (!codeOk)               { setErr('Le code vendeur ne respecte pas les critères de sécurité.'); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('Adresse email invalide.'); return }
     setSaving(true)
-    const { data: existing } = await supabase.from('fleuristes').select('id').eq('code_vendeur', code).maybeSingle()
+    const { data: existing } = await supabase.from('partenaires').select('id').eq('code_vendeur', code).maybeSingle()
     if (existing) { setSaving(false); setErr('Ce code vendeur est déjà pris.'); return }
     const { error: otpErr } = await sendOtp(email.trim())
     setSaving(false)
@@ -854,7 +896,7 @@ function VueVerification({ email, pendingData, onSuccess, onBack }) {
     setLoading(true)
     const { error } = await supabase.auth.verifyOtp({ email, token: otp, type: 'magiclink' })
     if (error) { setLoading(false); setErr('Code invalide ou expiré. Vérifiez votre boîte mail.'); return }
-    const { error: insErr } = await supabase.from('fleuristes').insert({ ...pendingData, email_verified: true })
+    const { error: insErr } = await supabase.from('partenaires').insert({ ...pendingData, email_verified: true })
     setLoading(false)
     if (insErr) {
       if (insErr.code === '23505') setErr('Ce code vendeur est déjà pris.')
@@ -927,7 +969,7 @@ function VueConnexion({ onSuccess, onBack }) {
     setErr('')
     if (!code.trim()) { setErr('Entrez votre code vendeur.'); return }
     setLoading(true)
-    const { data, error } = await supabase.from('fleuristes')
+    const { data, error } = await supabase.from('partenaires')
       .select('*').eq('code_vendeur', code.trim()).single()
     setLoading(false)
     if (error || !data) { setErr('Code vendeur introuvable. Vérifiez votre saisie.'); return }
@@ -943,7 +985,7 @@ function VueConnexion({ onSuccess, onBack }) {
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
         <button onClick={onBack} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>Connexion Fleuriste</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>Connexion Partenaire</div>
       </div>
 
       <div>
@@ -964,7 +1006,7 @@ function VueConnexion({ onSuccess, onBack }) {
 }
 
 // ── Vue espace vendeur ───────────────────────────────────────
-function VueEspace({ fleuriste, onLogout, onProductAdded }) {
+function VueEspace({ partenaire, onLogout, onProductAdded }) {
   const [produits,  setProduits]  = useState([])
   const [loading,   setLoading]   = useState(true)
   const [showForm,  setShowForm]  = useState(false)
@@ -972,23 +1014,23 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
   const [saving,    setSaving]    = useState(false)
   const [form,      setForm]      = useState({ type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'' })
 
-  const EMPTY_FORM = { type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'' }
+  const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'' }
   const CAT_OPTS = { digital:['Audio','Formation','E-book'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
-  const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid rgba(255,255,255,0.18)', background:'#0e1a0e', color:'rgba(242,237,224,0.92)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+  const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg2)', color:'var(--text)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
   const lbl = { fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
 
   const [audioUploading, setAudioUploading] = useState(false)
 
-  const UPLOAD_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/fleuriste-upload'
+  const UPLOAD_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/partenaire-upload'
 
   const handleAudioUpload = async (file) => {
     if (!file) return
-    console.log('[upload] fleuriste:', fleuriste)
-    console.log('[upload] code_vendeur:', fleuriste.code_vendeur)
+    console.log('[upload] partenaire:', partenaire)
+    console.log('[upload] code_vendeur:', partenaire.code_vendeur)
     setAudioUploading(true)
     const fd = new FormData()
     fd.append('file', file)
-    fd.append('code_vendeur', fleuriste.code_vendeur)
+    fd.append('code_vendeur', partenaire.code_vendeur)
     try {
       const res = await fetch(UPLOAD_URL, { method:'POST', body: fd })
       const data = await res.json()
@@ -1000,13 +1042,13 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
 
   const loadProduits = () => {
     setLoading(true)
-    supabase.from('produits').select('*').eq('fleuriste_id', fleuriste.id).order('created_at', { ascending:false })
+    supabase.from('produits').select('*').eq('partenaire_id', partenaire.id).order('created_at', { ascending:false })
       .then(({ data }) => { setProduits(data || []); setLoading(false) })
   }
   useEffect(() => { loadProduits() }, [])
 
   const openEdit = (p) => {
-    setForm({ type:p.type, categorie:p.categorie||'Autre', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', storage_path:p.storage_path||'' })
+    setForm({ type:p.type, categorie:p.categorie||'Autre', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', storage_path:p.storage_path||'', accepte_lumens:p.accepte_lumens||false, prix_lumens:p.prix_lumens??'' })
     setEditId(p.id)
     setShowForm(true)
   }
@@ -1017,43 +1059,43 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
     setShowForm(true)
   }
 
-  const FLEURISTE_STRIPE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/fleuriste-stripe'
+  const PARTENAIRE_STRIPE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/partenaire-stripe'
 
   const handleSubmit = async () => {
     if (!form.titre.trim()) { alert('Titre obligatoire'); return }
     setSaving(true)
-    const statut = fleuriste.publication_mode === 'direct' ? 'actif' : 'en_attente'
+    const statut = partenaire.publication_mode === 'direct' ? 'actif' : 'en_attente'
     const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, updated_at: new Date().toISOString() }
 
     let savedId = editId
     if (editId) {
-      const { error } = await supabase.from('produits').update(payload).eq('id', editId).eq('fleuriste_id', fleuriste.id)
+      const { error } = await supabase.from('produits').update(payload).eq('id', editId).eq('partenaire_id', partenaire.id)
       setSaving(false)
       if (error) { alert('Erreur : ' + error.message); return }
     } else {
       const { data, error } = await supabase.from('produits')
-        .insert({ ...payload, fleuriste_id: fleuriste.id, vendeur_nom: fleuriste.nom_boutique, statut, created_at: new Date().toISOString() })
+        .insert({ ...payload, partenaire_id: partenaire.id, vendeur_nom: partenaire.nom_boutique, statut, created_at: new Date().toISOString() })
         .select('id').single()
       if (error) { setSaving(false); alert('Erreur : ' + error.message); return }
       savedId = data.id
-      if (fleuriste.publication_mode === 'direct') onProductAdded()
+      if (partenaire.publication_mode === 'direct') onProductAdded()
     }
 
     // Création Stripe automatique uniquement si publication directe
-    if (form.type === 'digital' && form.prix && fleuriste.publication_mode === 'direct' && savedId) {
+    if (form.type === 'digital' && form.prix && partenaire.publication_mode === 'direct' && savedId) {
       try {
-        const res = await fetch(FLEURISTE_STRIPE_URL, {
+        const res = await fetch(PARTENAIRE_STRIPE_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            produit_id: savedId, code_vendeur: fleuriste.code_vendeur,
+            produit_id: savedId, code_vendeur: partenaire.code_vendeur,
             titre: form.titre, description: form.description,
             prix: form.prix, image_url: form.image_url,
           }),
         })
         const data = await res.json()
-        if (!res.ok) console.warn('[fleuriste-stripe] erreur:', data.error)
-      } catch (e) { console.warn('[fleuriste-stripe] réseau:', e) }
+        if (!res.ok) console.warn('[partenaire-stripe] erreur:', data.error)
+      } catch (e) { console.warn('[partenaire-stripe] réseau:', e) }
     }
 
     setSaving(false)
@@ -1065,7 +1107,7 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Supprimer ce produit ?')) return
-    await supabase.from('produits').delete().eq('id', id).eq('fleuriste_id', fleuriste.id)
+    await supabase.from('produits').delete().eq('id', id).eq('partenaire_id', partenaire.id)
     loadProduits()
   }
 
@@ -1074,9 +1116,9 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>{fleuriste.nom_boutique}</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>{partenaire.nom_boutique}</div>
           <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:3 }}>
-            {fleuriste.publication_mode === 'direct'
+            {partenaire.publication_mode === 'direct'
               ? '✓ Publication directe activée'
               : '⏳ Vos produits sont soumis à validation avant publication'}
           </div>
@@ -1107,17 +1149,15 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div>
-              <span style={lbl}>Type</span>
-              <select value={form.type} onChange={e => setForm(f => ({ ...f, type:e.target.value, categorie:(CAT_OPTS[e.target.value]||[])[0]||'' }))} style={{ ...inp, appearance:'none' }}>
-                <option value="digital">🎧 Digital</option>
-                <option value="physique">🌿 Physique</option>
-                <option value="occasion">🤝 Occasion</option>
-              </select>
+              <span style={lbl}>Choix du support</span>
+              <div style={{ padding:'9px 12px', borderRadius:8, border:'1px solid rgba(180,160,240,0.30)', background:'rgba(180,160,240,0.08)', color:'#b4a0f0', fontSize:13, fontFamily:"'Jost',sans-serif" }}>
+                🎧 Digital
+              </div>
             </div>
             <div>
               <span style={lbl}>Catégorie</span>
               <select value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie:e.target.value }))} style={{ ...inp, appearance:'none' }}>
-                {(CAT_OPTS[form.type]||[]).map(c => <option key={c} value={c}>{c}</option>)}
+                {(CAT_OPTS['digital']||[]).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
@@ -1152,6 +1192,31 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
             <div style={{ fontSize:10, color:'rgba(242,237,224,0.45)', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
           </div>
 
+          {/* Paiement en Lumens */}
+          <div style={{ padding:'12px 14px', background:'rgba(232,192,96,0.06)', border:'1px solid rgba(232,192,96,0.18)', borderRadius:10 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: form.accepte_lumens ? 10 : 0 }}>
+              <div>
+                <div style={{ fontSize:12, color:'rgba(242,237,224,0.80)', fontWeight:500 }}>✦ Accepter les Lumens</div>
+                <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:2 }}>L'acheteur pourra payer en Lumens ou en euros</div>
+              </div>
+              <div onClick={() => setForm(f => ({ ...f, accepte_lumens:!f.accepte_lumens }))}
+                style={{ width:40, height:22, borderRadius:100, cursor:'pointer', flexShrink:0,
+                  background: form.accepte_lumens ? 'rgba(232,192,96,0.35)' : 'rgba(255,255,255,0.08)',
+                  border:`1px solid ${form.accepte_lumens ? 'rgba(232,192,96,0.5)' : 'rgba(255,255,255,0.12)'}`,
+                  position:'relative', transition:'all .25s' }}>
+                <div style={{ position:'absolute', top:3, left: form.accepte_lumens ? 20 : 3, width:14, height:14, borderRadius:'50%',
+                  background: form.accepte_lumens ? '#e8c060' : 'rgba(255,255,255,0.25)', transition:'left .25s' }}/>
+              </div>
+            </div>
+            {form.accepte_lumens && (
+              <div>
+                <span style={lbl}>Prix en Lumens ✦</span>
+                <input type="number" min="1" value={form.prix_lumens} onChange={e => setForm(f => ({ ...f, prix_lumens:e.target.value }))}
+                  placeholder="Ex: 50" style={{ ...inp, maxWidth:140 }}/>
+              </div>
+            )}
+          </div>
+
           {/* Upload audio — uniquement pour les produits digitaux */}
           {form.type === 'digital' && (
             <div>
@@ -1178,7 +1243,7 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleSubmit} disabled={saving}
               style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:500, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : fleuriste.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
+              {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : partenaire.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
             </button>
             <button onClick={() => setShowForm(false)}
               style={{ padding:'11px 18px', borderRadius:10, border:'1px solid rgba(255,255,255,0.10)', background:'transparent', color:'rgba(242,237,224,0.40)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
@@ -1230,8 +1295,8 @@ function VueEspace({ fleuriste, onLogout, onProductAdded }) {
       </div>
 
       {/* Dashboard ventes — pros uniquement */}
-      {fleuriste.type_vendeur === 'professionnel' && (
-        <VentesDashboard fleuristeId={fleuriste.id} />
+      {partenaire.type_vendeur === 'professionnel' && (
+        <VentesDashboard partenaireId={partenaire.id} />
       )}
     </div>
   )

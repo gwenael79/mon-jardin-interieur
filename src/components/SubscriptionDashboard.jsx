@@ -20,7 +20,7 @@ const css = `
   background:none; color:#e2ddd3; font-family:'Epilogue',sans-serif;
   font-size:13px; font-weight:500; cursor:pointer; transition:all .25s;
 }
-.sd-manage-btn:hover { background:rgba(168,224,64,0.08); border-color:rgba(168,224,64,0.3); color:#a8e040; }
+.sd-manage-btn:hover { background:var(--green3); border-color:var(--greenT); color:var(--green); }
 
 .sd-grid {
   display:grid;
@@ -29,13 +29,13 @@ const css = `
 }
 
 .sd-card {
-  background: #0e1a0c;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--bg);
+  border: 1px solid var(--border2);
   border-radius:14px; padding:20px;
   position:relative; transition:border-color .25s;
 }
 .sd-card:hover { border-color:rgba(255,255,255,0.12); }
-.sd-card-free { border-color:rgba(168,224,64,0.14); background:rgba(168,224,64,0.04); }
+.sd-card-free { border-color:var(--greenT); background:var(--green3); }
 
 .sd-tag {
   position:absolute; top:13px; right:13px;
@@ -55,7 +55,7 @@ const css = `
 .sd-ring-wrap  { position:relative; width:44px; height:44px; flex-shrink:0; }
 .sd-ring-wrap svg { transform:rotate(-90deg); width:44px; height:44px; }
 .sd-ring-track    { fill:none; stroke:rgba(255,255,255,0.08); stroke-width:3; }
-.sd-ring-prog     { fill:none; stroke:#a8e040; stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset .5s; }
+.sd-ring-prog     { fill:none; stroke:var(--green); stroke-width:3; stroke-linecap:round; transition:stroke-dashoffset .5s; }
 .sd-ring-expiring .sd-ring-prog { stroke:#d4a94e; }
 .sd-ring-expired  .sd-ring-prog { stroke:#e06060; }
 .sd-days-num {
@@ -63,7 +63,7 @@ const css = `
   color:#e2ddd3; display:block;
 }
 .sd-days-label { font-size:10px; color:rgba(226,221,211,0.35); text-transform:uppercase; letter-spacing:1px; }
-.sd-inf { font-size:22px; color:#a8e040; }
+.sd-inf { font-size:22px; color:var(--green); }
 
 /* renew button */
 .sd-renew {
@@ -152,7 +152,7 @@ export default function SubscriptionDashboard({ subscriptions, loading, onManage
             <div className="sd-countdown">
               <span className="sd-inf">∞</span>
               <div>
-                <span className="sd-days-num" style={{fontSize:16,color:'#a8e040'}}>Sans limite</span>
+                <span className="sd-days-num" style={{fontSize:16,color:'var(--green)'}}>Sans limite</span>
               </div>
             </div>
           </div>

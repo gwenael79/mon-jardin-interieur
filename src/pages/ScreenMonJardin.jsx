@@ -63,7 +63,7 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
             width:164, padding:'9px 11px', borderRadius:10, zIndex:50,
             background:'rgba(14,9,4,0.97)', border:'1px solid rgba(200,140,40,0.35)',
             boxShadow:'0 4px 20px rgba(0,0,0,0.6)',
-            fontSize:9, color:'rgba(240,200,100,0.90)', lineHeight:1.6, textAlign:'center',
+            fontSize:9, color:'var(--gold)', lineHeight:1.6, textAlign:'center',
           }}>
           🔒 {unlockInfo}
           <div style={{
@@ -133,7 +133,7 @@ function AccordionSection({ title, icon, isOpen, onToggle, children, accent }) {
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <span style={{ fontSize:14 }}>{icon}</span>
-          <span style={{ fontSize:10, color:'rgba(238,232,218,0.75)', letterSpacing:'.06em' }}>{title}</span>
+          <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.06em' }}>{title}</span>
         </div>
         <span style={{ fontSize:10, color:'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition:'transform .2s' }}>▾</span>
       </div>
@@ -165,7 +165,7 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
 
         {/* En-tête compact */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <div style={{ fontSize:13, color:'rgba(238,232,218,0.88)', fontWeight:400, letterSpacing:'.04em' }}>🌸 Ma fleur</div>
+          <div style={{ fontSize:13, color:'var(--text2)', fontWeight:400, letterSpacing:'.04em' }}>🌸 Ma fleur</div>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <div style={{
               display:'flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:20,
@@ -2451,7 +2451,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
         </div>
         {!isGood && rec.zones.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
-            <div style={{ fontSize:9, color:'rgba(238,232,218,0.38)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
+            <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
               Zone(s) à prendre soin :
             </div>
             <div style={{ display:'flex', gap:5 }}>
@@ -2484,7 +2484,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
           <p ref={textRef}
             style={{
               fontSize:'clamp(13px, 1.2vw, 16px)',
-              color:'rgba(220,235,220,0.75)',
+              color:'var(--text2)',
               lineHeight:1.65,
               margin:0,
               fontStyle:'italic',
@@ -2655,12 +2655,12 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         {/* En-tête section */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <div>
-            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'rgba(242,237,224,0.82)', marginBottom:4 }}>
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'var(--text2)', marginBottom:4 }}>
               Prenez soin de vous
             </p>
-            <p style={{ fontSize:11, color:'rgba(180,200,180,0.45)', lineHeight:1.5 }}>
+            <p style={{ fontSize:11, color:'var(--text3)', lineHeight:1.5 }}>
               Agissez au quotidien avec vos rituels
-              {hasDegradation && <span style={{ color:'rgba(180,200,180,0.28)' }}> · {doneCount}/{totalRituals} accomplis</span>}
+              {hasDegradation && <span style={{ color:'var(--text3)', opacity:0.55 }}> · {doneCount}/{totalRituals} accomplis</span>}
             </p>
           </div>
           {bilanDoneToday && hasDegradation && (
@@ -2818,18 +2818,18 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                           <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
                         </svg>
                       </div>
-                      <span style={{ fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'rgba(255,222,100,0.95)', lineHeight:1.2 }}>Une action rapide</span>
+                      <span style={{ fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--gold)', lineHeight:1.2 }}>Une action rapide</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:12, fontWeight:600, color:'rgba(255,222,100,0.70)' }}>{quickRitual.zoneName}</span>
+                      <span style={{ fontSize:12, fontWeight:600, color:'var(--gold-warm)' }}>{quickRitual.zoneName}</span>
                       <span style={{ fontSize:9, color:'rgba(232,196,100,0.45)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
                     </div>
                   </div>
                 ) : (
                   /* Desktop : layout colonne original */
                   <div style={{ marginBottom:8 }}>
-                    <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(255,222,100,0.95)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
-                    <div style={{ fontSize:13, fontWeight:600, letterSpacing:'0.01em', color:'rgba(255,222,100,0.70)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
+                    <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--gold)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
+                    <div style={{ fontSize:13, fontWeight:600, letterSpacing:'0.01em', color:'var(--gold-warm)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
                   </div>
                 )}
 
@@ -2850,7 +2850,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
               position:'relative', overflow:'hidden',
               padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
               borderRadius:14, textAlign:'left',
-              background:'linear-gradient(160deg, rgba(20,32,14,0.97) 0%, rgba(12,20,10,0.99) 100%)',
+              background:'var(--bg2)',
               border:'1px solid rgba(150,212,133,0.20)',
               width:'100%', display:'flex', flexDirection:'column', gap:0,
             }}>
@@ -2934,17 +2934,17 @@ function StreakMessage({ streak }) {
     <div style={{ display:'flex', alignItems:'center', gap:12, marginLeft:4 }}>
       <div style={{ display:'flex', alignItems:'baseline', gap:4, flexShrink:0 }}>
         <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:38, fontWeight:400, lineHeight:1, letterSpacing:'-1px', color, textShadow:glow }}>{streak}</span>
-        <span style={{ fontSize:11, color:'rgba(238,232,218,0.34)', paddingBottom:3 }}>j.</span>
+        <span style={{ fontSize:11, color:'var(--text3)', paddingBottom:3 }}>j.</span>
       </div>
       {!isMobile && (
         <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
           {streak > 1 && (
-            <span style={{ fontSize:11.5, color:'rgba(238,232,218,0.48)', whiteSpace:'nowrap' }}>
+            <span style={{ fontSize:11.5, color:'var(--text3)', whiteSpace:'nowrap' }}>
               Vous êtes à{' '}
               <strong style={{ color, fontWeight:600 }}>{streak} jour{streak > 1 ? 's' : ''} consécutifs</strong>
             </span>
           )}
-          <em className='streak-phrase' style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'rgba(238,232,218,0.90)' }}>
+          <em className='streak-phrase' style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'var(--text)' }}>
             {phrase}
           </em>
         </div>
@@ -2963,7 +2963,7 @@ const GRAINE_TAGS = [
   { id: 'merci', emoji: '🙏', label: 'Merci' },
 ]
 
-function BoiteAGraines({ userId }) {
+function BoiteAGraines({ userId, inline }) {
   const isMobile = useIsMobile()
   const [text, setText]             = useState('')
   const [tags, setTags]             = useState([])
@@ -3039,18 +3039,18 @@ function BoiteAGraines({ userId }) {
     <>
       {/* ── CARD ── */}
       <div style={{
-        background: 'linear-gradient(160deg, rgba(150,212,133,0.07) 0%, rgba(10,18,12,0.95) 100%)',
-        border: '1px solid rgba(150,212,133,0.2)',
-        borderRadius: 14, padding: isMobile ? '14px 12px' : '16px', marginTop: 16,
+        background: inline ? 'transparent' : 'linear-gradient(160deg, var(--green3) 0%, var(--bg) 100%)',
+        border: inline ? 'none' : '1px solid var(--border2)',
+        borderRadius: inline ? 0 : 14, padding: isMobile ? '14px 12px' : '16px', marginTop: inline ? 0 : 16,
         display: 'flex', flexDirection: 'column', gap: 10,
       }}>
         {/* En-tête */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
           <div>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 15 : 16, color:'#c8f0b8', lineHeight:1.2 }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 15 : 16, color:'var(--green)', lineHeight:1.2 }}>
               🌱 Boîte à graines
             </div>
-            <div style={{ fontSize:9, color:'rgba(238,232,218,0.35)', letterSpacing:'.1em', textTransform:'uppercase', marginTop:3 }}>
+            <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginTop:3 }}>
               Estime de soi · chaque soir
             </div>
           </div>
@@ -3061,7 +3061,7 @@ function BoiteAGraines({ userId }) {
                 display:'flex', alignItems:'center', gap:5, flexShrink:0,
                 minHeight: 44, padding:'0 14px', borderRadius:100,
                 background:'rgba(150,212,133,0.10)', border:'1px solid rgba(150,212,133,0.25)',
-                cursor:'pointer', fontSize:11, color:'#96d485',
+                cursor:'pointer', fontSize:11, color:'var(--green)',
               }}
             >
               <span style={{ fontSize:14 }}>🫙</span>
@@ -3076,7 +3076,7 @@ function BoiteAGraines({ userId }) {
             <div style={{ fontSize:9, color:'rgba(150,212,133,0.5)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6 }}>
               ✓ Graine du jour plantée
             </div>
-            <div style={{ fontSize: isMobile ? 13 : 13, color:'rgba(238,232,218,0.8)', lineHeight:1.6, fontStyle:'italic' }}>
+            <div style={{ fontSize: isMobile ? 13 : 13, color:'var(--text2)', lineHeight:1.6, fontStyle:'italic' }}>
               "{todayEntry?.content}"
             </div>
             {todayEntry?.tags?.length > 0 && (
@@ -3086,13 +3086,13 @@ function BoiteAGraines({ userId }) {
                 ))}
               </div>
             )}
-            <div style={{ fontSize:9, color:'rgba(238,232,218,0.25)', marginTop:8 }}>
+            <div style={{ fontSize:9, color:'var(--text3)', opacity:0.5, marginTop:8 }}>
               Reviens demain soir pour planter une nouvelle graine 🌿
             </div>
           </div>
         ) : (
           <>
-            <div style={{ fontSize:11, color:'rgba(238,232,218,0.45)', lineHeight:1.6, fontStyle:'italic' }}>
+            <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>
               {tip}
             </div>
             <textarea
@@ -3106,7 +3106,7 @@ function BoiteAGraines({ userId }) {
                 borderRadius: 9, padding: '10px 12px', resize: 'none',
                 height: isMobile ? 96 : 80,
                 fontSize: isMobile ? 14 : 12,
-                fontFamily: 'Jost, sans-serif', color: 'rgba(238,232,218,0.85)',
+                fontFamily: 'Jost, sans-serif', color: 'var(--text2)',
                 outline: 'none', lineHeight: 1.6, colorScheme: 'dark',
               }}
             />
@@ -3122,7 +3122,7 @@ function BoiteAGraines({ userId }) {
                     fontSize: isMobile ? 13 : 12, cursor:'pointer',
                     background: tags.includes(t.id) ? 'rgba(255,100,100,0.12)' : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${tags.includes(t.id) ? 'rgba(255,100,100,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                    color: tags.includes(t.id) ? 'rgba(255,180,180,0.9)' : 'rgba(238,232,218,0.35)',
+                    color: tags.includes(t.id) ? 'rgba(255,180,180,0.9)' : 'var(--text3)',
                     transition:'all .15s', userSelect:'none', WebkitTapHighlightColor:'transparent',
                   }}
                 >
@@ -3134,7 +3134,7 @@ function BoiteAGraines({ userId }) {
 
             {/* Footer */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-              <span style={{ fontSize:9, color:'rgba(238,232,218,0.25)', flex:1 }}>
+              <span style={{ fontSize:9, color:'var(--text3)', opacity:0.5, flex:1 }}>
                 {text.length > 0 ? `${text.length}/400` : 'Privé · visible uniquement par vous'}
               </span>
               <button
@@ -3144,7 +3144,7 @@ function BoiteAGraines({ userId }) {
                   minHeight: 44, padding:'0 22px', borderRadius: 9, fontSize: 13,
                   background: text.trim() ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${text.trim() ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                  color: text.trim() ? '#c8f0b8' : 'rgba(238,232,218,0.25)',
+                  color: text.trim() ? 'var(--cream)' : 'var(--text3)',
                   cursor: text.trim() ? 'pointer' : 'default',
                   fontFamily: 'Jost, sans-serif', transition: 'all .15s',
                   WebkitTapHighlightColor:'transparent',
@@ -3173,7 +3173,7 @@ function BoiteAGraines({ userId }) {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: 'linear-gradient(160deg, #0d1f0d 0%, #0a130a 100%)',
+              background: 'linear-gradient(160deg, var(--bg2) 0%, var(--bg) 100%)',
               border: '1px solid rgba(150,212,133,0.25)',
               borderRadius: isMobile ? '18px 18px 0 0' : 18,
               padding: isMobile ? '20px 18px 32px' : 28,
@@ -3190,16 +3190,16 @@ function BoiteAGraines({ userId }) {
             {/* Header modal */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
               <div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 24, color:'#c8f0b8', lineHeight:1.2 }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 24, color:'var(--cream)', lineHeight:1.2 }}>
                   🫙 Mes graines
                 </div>
-                <div style={{ fontSize:11, color:'rgba(238,232,218,0.4)', marginTop:4 }}>
+                <div style={{ fontSize:11, color:'var(--text3)', marginTop:4 }}>
                   {graines.length} réussite{graines.length > 1 ? 's' : ''} semée{graines.length > 1 ? 's' : ''}
                 </div>
               </div>
               <div
                 onClick={() => setShowModal(false)}
-                style={{ minWidth:44, minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, color:'rgba(238,232,218,0.3)', cursor:'pointer' }}
+                style={{ minWidth:44, minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, color:'var(--text3)', cursor:'pointer' }}
               >✕</div>
             </div>
 
@@ -3207,7 +3207,7 @@ function BoiteAGraines({ userId }) {
             <div style={{
               background: 'rgba(150,212,133,0.06)', border: '1px solid rgba(150,212,133,0.15)',
               borderRadius: 10, padding: '10px 14px',
-              fontSize: isMobile ? 13 : 12, color: 'rgba(238,232,218,0.6)', lineHeight: 1.7, fontStyle: 'italic',
+              fontSize: isMobile ? 13 : 12, color: 'var(--text3)', lineHeight: 1.7, fontStyle: 'italic',
             }}>
               Ces moments sont réels. Tu les as vécus. Ils font partie de qui tu es.
             </div>
@@ -3215,10 +3215,10 @@ function BoiteAGraines({ userId }) {
             {/* Liste des graines */}
             <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, flex: 1, WebkitOverflowScrolling:'touch' }}>
               {loadingG && (
-                <div style={{ textAlign:'center', color:'rgba(238,232,218,0.3)', fontSize:12, padding:20 }}>Chargement…</div>
+                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:12, padding:20 }}>Chargement…</div>
               )}
               {!loadingG && graines.length === 0 && (
-                <div style={{ textAlign:'center', color:'rgba(238,232,218,0.3)', fontSize:12, fontStyle:'italic', padding:20 }}>
+                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:12, fontStyle:'italic', padding:20 }}>
                   Aucune graine pour l'instant — reviens ce soir 🌙
                 </div>
               )}
@@ -3234,14 +3234,14 @@ function BoiteAGraines({ userId }) {
                     border: `1px solid ${i === 0 && today === g.created_at?.slice(0,10) ? 'rgba(150,212,133,0.2)' : 'rgba(255,255,255,0.06)'}`,
                     borderRadius: 10,
                   }}>
-                    <div style={{ fontSize:9, color:'rgba(238,232,218,0.3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:5 }}>
+                    <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:5 }}>
                       {label}
                       {i === 0 && today === g.created_at?.slice(0,10) && (
                         <span style={{ marginLeft:8, color:'rgba(150,212,133,0.6)' }}>· aujourd'hui</span>
                       )}
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{ flex:1, fontSize: isMobile ? 14 : 13, color:'rgba(238,232,218,0.82)', lineHeight:1.65, fontStyle:'italic' }}>
+                      <div style={{ flex:1, fontSize: isMobile ? 14 : 13, color:'var(--text2)', lineHeight:1.65, fontStyle:'italic' }}>
                         "{g.content}"
                       </div>
                       {g.tags?.length > 0 && (
@@ -3347,7 +3347,7 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
             border:'1px solid rgba(136,184,232,0.28)',
             borderRadius:100, padding:'7px 14px',
             fontSize: isMobile ? 13 : 12,
-            color:'rgba(176,222,250,0.90)',
+            color:'var(--green)',
             cursor:'pointer', flexShrink:0, fontWeight:500,
             whiteSpace:'nowrap',
           }}>Rejoindre</button>
@@ -3367,7 +3367,7 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
         }}>
           <div style={{
             fontSize: isMobile ? 14 : 13,
-            color:'rgba(238,232,218,0.75)',
+            color:'var(--text3)',
             lineHeight:1.75,
             fontStyle:'italic',
             fontFamily:"'Cormorant Garamond',serif",
@@ -3595,15 +3595,15 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight:300, color:'#f0e8d0', lineHeight:1.1 }}>
                 Bonjour, {firstName} 🌿
               </div>
-              <div style={{ fontSize: isMobile ? 14 : 13, color:'rgba(238,232,218,0.65)', marginTop:6, lineHeight:1.4 }}>
+              <div style={{ fontSize: isMobile ? 14 : 13, color:'var(--text3)', marginTop:6, lineHeight:1.4 }}>
                 2 minutes pour prendre soin de votre jardin intérieur
               </div>
             </div>
-            <button onClick={doClose} style={{ background:'none', border:'none', color:'rgba(238,232,218,0.28)', fontSize:22, cursor:'pointer', padding:'2px 0 0 14px', lineHeight:1, flexShrink:0 }}>x</button>
+            <button onClick={doClose} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:22, cursor:'pointer', padding:'2px 0 0 14px', lineHeight:1, flexShrink:0 }}>x</button>
           </div>
           <div style={{ marginBottom:6 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-              <span style={{ fontSize:10, color:'rgba(238,232,218,0.28)', letterSpacing:'.08em', textTransform:'uppercase' }}>Progression</span>
+              <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase' }}>Progression</span>
               <span style={{ fontSize:11, fontWeight:500, color: doneCount===4 ? '#96d485' : 'rgba(238,232,218,0.50)' }}>{doneCount===4 ? 'Tout accompli !' : `${doneCount} / 4`}</span>
             </div>
             <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.07)', overflow:'hidden' }}>
@@ -3639,7 +3639,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 {suggestedRitual && (
                   <div style={{ fontSize: isMobile ? 12 : 11, color:zColor, marginTop:2, lineHeight:1.3, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                     {suggestedRitual.text}
-                    <span style={{ color:'rgba(238,232,218,0.30)' }}> · {suggestedRitual.zoneName} {suggestedRitual.zoneValue}%</span>
+                    <span style={{ color:'var(--text3)' }}> · {suggestedRitual.zoneName} {suggestedRitual.zoneValue}%</span>
                   </div>
                 )}
               </div>
@@ -3655,11 +3655,11 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                   <span style={{ fontSize:18 }}>{suggestedRitual.quick[0].icon}</span>
                   <div>
-                    <div style={{ fontSize: isMobile ? 14 : 13, color:'rgba(238,232,218,0.90)', fontWeight:500 }}>{suggestedRitual.quick[0].title}</div>
+                    <div style={{ fontSize: isMobile ? 14 : 13, color:'var(--text2)', fontWeight:500 }}>{suggestedRitual.quick[0].title}</div>
                     <div style={{ fontSize:11, color:zColor }}>{suggestedRitual.quick[0].dur}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: isMobile ? 13 : 12, color:'rgba(238,232,218,0.60)', lineHeight:1.65 }}>{suggestedRitual.quick[0].desc}</div>
+                <div style={{ fontSize: isMobile ? 13 : 12, color:'var(--text3)', lineHeight:1.65 }}>{suggestedRitual.quick[0].desc}</div>
               </div>
             )}
           </div>
@@ -3686,7 +3686,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
             </div>
             {!progress.flowers && !flowersExhausted && weakestPeople.length > 0 && (
               <div style={{ padding:'0 16px 14px', display:'flex', flexDirection:'column', gap:10 }}>
-                <div style={{ fontSize:11, color:'rgba(238,232,218,0.30)', fontStyle:'italic', lineHeight:1.6, textAlign:'center', padding:'0 4px' }}>
+                <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', lineHeight:1.6, textAlign:'center', padding:'0 4px' }}>
                   Un élan bienveillant, sans attente de retour — comme de la lumière partagée.
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
@@ -3745,7 +3745,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           />
 
           {/* Passer */}
-          <div onClick={doClose} style={{ textAlign:'center', paddingTop:4, fontSize: isMobile ? 13 : 12, color:'rgba(238,232,218,0.28)', cursor:'pointer', letterSpacing:'.04em', userSelect:'none' }}>
+          <div onClick={doClose} style={{ textAlign:'center', paddingTop:4, fontSize: isMobile ? 13 : 12, color:'var(--text3)', cursor:'pointer', letterSpacing:'.04em', userSelect:'none' }}>
             Passer pour l'instant
           </div>
         </div>
@@ -3793,8 +3793,8 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
     <div style={{
       flex:'1 1 0', minWidth:0,
       display:'flex', flexDirection:'column',
-      borderRight: isMobile ? 'none' : '1px solid rgba(150,212,133,0.06)',
-      borderBottom: isMobile ? '1px solid rgba(150,212,133,0.06)' : 'none',
+      borderRight: isMobile ? 'none' : '1px solid var(--border2)',
+      borderBottom: isMobile ? '1px solid var(--border2)' : 'none',
     }}>
       <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
         <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
@@ -3814,7 +3814,7 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
         <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'rgba(242,237,224,0.55)', marginBottom:4 }}>%</span>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'var(--text3)', marginBottom:4 }}>%</span>
           </div>
           <div style={{ fontSize:8, letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(150,212,133,0.55)', fontWeight:500 }}>Vitalité</div>
           <div style={{ fontSize:9, letterSpacing:'0.08em', color:'rgba(255,255,255,0.28)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
@@ -3823,10 +3823,10 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
       <div style={{
         display:'flex', alignItems:'center', gap:4, flexWrap:'wrap',
         padding:'6px 10px 7px',
-        borderTop:'1px solid rgba(150,212,133,0.06)',
-        background:'rgba(10,22,12,0.6)', flexShrink:0,
+        borderTop:'1px solid var(--border2)',
+        background:'var(--bg)', flexShrink:0,
       }}>
-        <span style={{ fontSize:8, color:'rgba(238,232,218,0.30)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
+        <span style={{ fontSize:8, color:'var(--text3)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
         {[
           { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
           { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
@@ -3887,7 +3887,7 @@ function MessageJardin({ profile, isMobile }) {
         lineHeight:1.35, maxWidth:320, letterSpacing:'0.01em',
       }}>
         <span style={{ color:'#96d485' }}>{namePart}</span>
-        <span style={{ color:'rgba(242,237,224,0.90)' }}>{restPart}</span>
+        <span style={{ color:'var(--text)' }}>{restPart}</span>
       </div>
     </div>
   )
@@ -4167,7 +4167,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             fontFamily:"'Cormorant Garamond',serif",
             fontSize: isMobile ? 22 : 26,
             fontWeight:300, fontStyle:'italic',
-            color:'rgba(242,237,224,0.82)',
+            color:'var(--text2)',
             letterSpacing:'0.01em',
             lineHeight:1.25,
           }}>{contextMessage}</span>
@@ -4216,8 +4216,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           <div style={{
             display:'flex', flexDirection: isMobile ? 'column' : 'row',
             alignItems:'stretch', borderRadius:16, overflow:'hidden',
-            border:'1px solid rgba(150,212,133,0.08)',
-            background:'rgba(14,28,14,0.95)',
+            border:'1px solid var(--border2)',
+            background:'var(--bg)',
             flexShrink:0,
             minHeight: isMobile ? 'auto' : 360,
           }}>
@@ -4227,7 +4227,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             <div style={{
               flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
               padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
-              background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+              background:'var(--bg2)',
               gap:10,
             }}>
               {!bilanDoneToday ? (
@@ -4252,8 +4252,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                     display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
                     <span style={{ fontSize:22, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'rgba(242,237,224,0.30)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
-                      <div style={{ fontSize:10, color:'rgba(242,237,224,0.20)', fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
+                      <div style={{ fontSize:13, color:'var(--text3)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
+                      <div style={{ fontSize:10, color:'var(--text3)', opacity:0.4, fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
                     </div>
                     <div style={{ fontSize:14, color:'rgba(150,212,133,0.35)' }}>✓</div>
                   </div>
@@ -4303,8 +4303,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           <div style={{
             display:'flex', flexDirection: isMobile ? 'column' : 'row',
             alignItems:'stretch', borderRadius:16, overflow:'hidden',
-            border:'1px solid rgba(150,212,133,0.08)',
-            background:'rgba(14,28,14,0.95)',
+            border:'1px solid var(--border2)',
+            background:'var(--bg)',
             flexShrink:0,
             minHeight: isMobile ? 'auto' : 360,
           }}>
@@ -4314,7 +4314,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             <div style={{
               flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
               padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
-              background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
+              background:'var(--bg2)',
               gap:10,
               maxHeight: isMobile ? 200 : 'none',
               overflow: isMobile ? 'hidden' : 'visible',
@@ -4336,7 +4336,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <div style={{
                 borderRadius:16, overflow:'hidden',
                 border:'1px solid rgba(150,212,133,0.08)',
-                background:'rgba(14,28,14,0.95)',
+                background:'var(--bg)',
                 flexShrink:0,
               }}>
                 <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
@@ -4350,17 +4350,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               display:'flex', flexDirection:'row',
               alignItems:'stretch', borderRadius:16, overflow:'hidden',
               border:'1px solid rgba(150,212,133,0.08)',
-              background:'rgba(14,28,14,0.95)',
+              background:'linear-gradient(160deg, var(--green3) 0%, var(--bg) 100%)',
               flexShrink:0, minHeight:360,
             }}>
               <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={false} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
               <div style={{
                 flex:'1 1 0', minWidth:0,
-                background:'linear-gradient(160deg, rgba(22,42,22,0.97), rgba(14,28,18,0.99))',
                 padding:'18px 20px',
                 display:'flex', flexDirection:'column',
                 justifyContent:'center',
-                overflow:'hidden',
+                overflow:'auto',
               }}>
                 <BoiteAGraines userId={userId} inline />
               </div>

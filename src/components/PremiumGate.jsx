@@ -1,244 +1,247 @@
-// src/components/PremiumGate.jsx
-import { useState } from 'react'
-import { usePremium } from '../hooks/usePremium'
+import React, { useState } from 'react'
 
 /**
- * Bloque l'accès à un contenu si l'utilisateur n'est pas premium.
+ * PremiumGate — enveloppe n'importe quelle section payante.
  *
- * Usage :
- *   <PremiumGate featureName="le Club des Jardiniers" onUpgrade={() => setShowAccessPage(true)}>
- *     <ScreenClubJardiniers />
+ * Usage simple :
+ *   <PremiumGate onUpgrade={() => setShowAccessPage(true)}>
+ *     <ClubDesJardiniers />
  *   </PremiumGate>
+ *
+ * Props :
+ *   - children       : le contenu à afficher si premium
+ *   - onUpgrade      : callback quand l'user clique "Passer Premium"
+ *   - featureName    : nom de la fonctionnalité (affiché dans la modale)
+ *   - blur           : afficher le contenu flouté derrière (default: true)
  */
-export default function PremiumGate({ children, featureName = 'cette section', onUpgrade }) {
-  const { isPremium, loading } = usePremium()
-  const [modalOpen, setModalOpen] = useState(false)
+export default function PremiumGate({
+  children,
+  onUpgrade,
+  featureName = 'cette fonctionnalité',
+  blur = true,
+  isPremium = false,
+}) {
+  const [visible, setVisible] = useState(false)
+  if (isPremium) return <>{children}</>
 
-  // Pendant le chargement : écran neutre
-  if (loading) {
-    return (
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 200,
-      }}>
-        <div style={{ fontSize: 12, color: 'rgba(238,232,218,0.3)', letterSpacing: '.1em' }}>
-          Chargement…
-        </div>
-      </div>
-    )
-  }
-
-  // Utilisateur premium : affiche le contenu normalement
-  if (isPremium) return children
-
-  // Utilisateur gratuit : contenu flouté + bandeau
   return (
-    <>
-      {/* Contenu flouté */}
-      <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
-        <div style={{
-          filter: 'blur(6px)',
-          pointerEvents: 'none',
-          userSelect: 'none',
-          opacity: 0.45,
-        }}>
+    <div style={styles.wrapper}>
+
+      {/* Contenu flouté en arrière-plan */}
+      {blur && (
+        <div
+          style={styles.blurred}
+          onClick={() => setVisible(true)}
+          aria-hidden="true"
+        >
           {children}
         </div>
+      )}
 
-        {/* Bandeau centré */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 20,
-          padding: '0 24px',
-          background: 'linear-gradient(180deg, transparent 0%, rgba(6,14,7,0.85) 40%, rgba(6,14,7,0.95) 100%)',
-        }}>
-          <div style={{
-            width: 56,
-            height: 56,
-            borderRadius: '50%',
-            background: 'rgba(232,196,100,0.12)',
-            border: '1px solid rgba(232,196,100,0.35)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 26,
-          }}>
-            🔒
-          </div>
-
-          <div style={{ textAlign: 'center', maxWidth: 320 }}>
-            <div style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 22,
-              fontWeight: 300,
-              color: '#f0e8d0',
-              marginBottom: 8,
-              lineHeight: 1.2,
-            }}>
-              Accès Premium requis
-            </div>
-            <div style={{
-              fontSize: 13,
-              color: 'rgba(238,232,218,0.55)',
-              lineHeight: 1.65,
-            }}>
-              {featureName} est réservé aux membres Premium.
-              Débloquez l'accès pour profiter de toutes les fonctionnalités.
-            </div>
-          </div>
-
-          <div
-            onClick={() => setModalOpen(true)}
-            style={{
-              minHeight: 44,
-              padding: '0 28px',
-              borderRadius: 100,
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: 13,
-              fontWeight: 500,
-              cursor: 'pointer',
-              background: 'linear-gradient(135deg, rgba(232,196,100,0.22), rgba(232,196,100,0.12))',
-              border: '1px solid rgba(232,196,100,0.50)',
-              color: '#e8d4a8',
-              letterSpacing: '.04em',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            Voir les abonnements →
-          </div>
-        </div>
+      {/* Bandeau d'accès */}
+      <div style={styles.overlay} onClick={() => setVisible(true)}>
+        <div style={styles.badge}>✨ Premium</div>
+        <p style={styles.overlayText}>
+          Débloque {featureName} avec l'abonnement Premium
+        </p>
+        <button style={styles.btn} onClick={(e) => { e.stopPropagation(); setVisible(true) }}>
+          Voir les abonnements
+        </button>
       </div>
 
-      {/* Modal bottom-sheet */}
-      {modalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.75)',
-            zIndex: 500,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-          }}
-          onClick={() => setModalOpen(false)}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: '100%',
-              maxWidth: 480,
-              background: 'linear-gradient(160deg, #0d1f0d, #080e08)',
-              border: '1px solid rgba(232,196,100,0.2)',
-              borderRadius: '22px 22px 0 0',
-              padding: '20px 24px 40px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 20,
-              animation: 'slideUp .3s ease',
-            }}
-          >
-            {/* Handle */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -8 }}>
-              <div style={{ width: 36, height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.18)' }} />
-            </div>
+      {/* Modale */}
+      {visible && (
+        <div style={styles.backdrop} onClick={() => setVisible(false)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <button style={styles.closeBtn} onClick={() => setVisible(false)}>✕</button>
 
-            {/* Titre */}
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 28, marginBottom: 6 }}>✨</div>
-              <div style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 24,
-                fontWeight: 300,
-                color: '#f0e8d0',
-              }}>
-                Passez Premium
-              </div>
-              <div style={{ fontSize: 12, color: 'rgba(238,232,218,0.45)', marginTop: 6 }}>
-                Débloquez {featureName} et bien plus
-              </div>
-            </div>
+            <div style={styles.modalIcon}>🌿</div>
+            <h2 style={styles.modalTitle}>Passe à l'étape suivante</h2>
+            <p style={styles.modalSubtitle}>
+              {featureName === 'cette fonctionnalité'
+                ? 'Cette section est réservée aux membres Premium.'
+                : <>
+                    <strong>{featureName}</strong> est réservé aux membres Premium.
+                  </>
+              }
+            </p>
 
-            {/* Avantages */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
-                { icon: '🌿', label: 'Club des Jardiniers',    sub: 'Égrégore, Jardin collectif, Amis jardiniers' },
-                { icon: '🌱', label: 'Mon Jardin complet',     sub: 'Rituels avancés, personnalisation, insights IA' },
-                { icon: '🎓', label: 'Ateliers illimités',     sub: 'Inscriptions et accès à tous les ateliers' },
-                { icon: '🏆', label: 'Défis communauté',       sub: 'Rejoignez les défis et suivez votre progression' },
-              ].map(({ icon, label, sub }) => (
-                <div key={label} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '10px 14px',
-                  borderRadius: 12,
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                }}>
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>
-                  <div>
-                    <div style={{ fontSize: 13, color: 'rgba(238,232,218,0.9)', fontWeight: 500 }}>{label}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(238,232,218,0.4)', marginTop: 2 }}>{sub}</div>
-                  </div>
+            <div style={styles.perks}>
+              {PERKS.map((p, i) => (
+                <div key={i} style={styles.perk}>
+                  <span style={styles.perkIcon}>{p.icon}</span>
+                  <span style={styles.perkText}>{p.text}</span>
                 </div>
               ))}
             </div>
 
-            {/* CTA */}
-            <div
-              onClick={() => { setModalOpen(false); onUpgrade?.() }}
-              style={{
-                width: '100%',
-                minHeight: 50,
-                borderRadius: 100,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 14,
-                fontWeight: 500,
-                cursor: 'pointer',
-                background: 'linear-gradient(135deg, rgba(232,196,100,0.28), rgba(232,196,100,0.15))',
-                border: '1px solid rgba(232,196,100,0.55)',
-                color: '#e8d4a8',
-                letterSpacing: '.04em',
-                WebkitTapHighlightColor: 'transparent',
-              }}
+            <button
+              style={styles.upgradeBtn}
+              onClick={() => { setVisible(false); onUpgrade?.() }}
             >
-              Voir les abonnements
-            </div>
-
-            <div
-              onClick={() => setModalOpen(false)}
-              style={{
-                textAlign: 'center',
-                fontSize: 12,
-                color: 'rgba(238,232,218,0.3)',
-                cursor: 'pointer',
-                paddingTop: 4,
-              }}
-            >
-              Fermer
-            </div>
+              Voir les abonnements — dès 5€
+            </button>
+            <p style={styles.hint}>Sans engagement · Paiement sécurisé</p>
           </div>
         </div>
       )}
-
-      <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(100%); opacity: 0; }
-          to   { transform: translateY(0);    opacity: 1; }
-        }
-      `}</style>
-    </>
+    </div>
   )
+}
+
+// ── Avantages listés dans la modale ─────────────────────────────────────────
+
+const PERKS = [
+  { icon: '🌻', text: 'Club des Jardiniers — connexions & élans' },
+  { icon: '🌱', text: 'Ateliers & Défis — pratiques guidées' },
+  { icon: '📖', text: 'Journal illimité — toutes tes entrées' },
+  { icon: '💡', text: 'Lumens complets & statistiques détaillées' },
+]
+
+// ── Styles ───────────────────────────────────────────────────────────────────
+
+const styles = {
+  wrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  blurred: {
+    filter: 'blur(6px)',
+    opacity: 0.45,
+    pointerEvents: 'none',
+    userSelect: 'none',
+    overflow: 'hidden',
+    maxHeight: '340px',
+  },
+  overlay: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    cursor: 'pointer',
+    zIndex: 2,
+    padding: '24px',
+  },
+  badge: {
+    background: 'linear-gradient(135deg, #a8d5a2, #6dbf67)',
+    color: '#fff',
+    borderRadius: '20px',
+    padding: '4px 14px',
+    fontSize: '12px',
+    fontWeight: '700',
+    letterSpacing: '0.06em',
+  },
+  overlayText: {
+    textAlign: 'center',
+    color: '#3a5c38',
+    fontSize: '15px',
+    fontWeight: '500',
+    margin: 0,
+  },
+  btn: {
+    background: 'rgba(107,191,103,0.15)',
+    border: '1.5px solid rgba(107,191,103,0.5)',
+    borderRadius: '20px',
+    padding: '8px 20px',
+    fontSize: '14px',
+    color: '#3a7c36',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  backdrop: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(30,50,28,0.55)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '0 0 env(safe-area-inset-bottom,0)',
+  },
+  modal: {
+    background: '#fff',
+    borderRadius: '24px 24px 0 0',
+    padding: '32px 24px 40px',
+    width: '100%',
+    maxWidth: '480px',
+    position: 'relative',
+    textAlign: 'center',
+    boxShadow: '0 -8px 40px rgba(0,0,0,0.15)',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: '16px',
+    right: '16px',
+    background: 'rgba(0,0,0,0.06)',
+    border: 'none',
+    borderRadius: '50%',
+    width: '32px',
+    height: '32px',
+    fontSize: '14px',
+    cursor: 'pointer',
+    color: '#555',
+  },
+  modalIcon: {
+    fontSize: '48px',
+    marginBottom: '12px',
+  },
+  modalTitle: {
+    fontSize: '22px',
+    fontWeight: '700',
+    color: '#1e3a1c',
+    margin: '0 0 8px',
+  },
+  modalSubtitle: {
+    fontSize: '15px',
+    color: '#5a7a58',
+    margin: '0 0 24px',
+    lineHeight: '1.5',
+  },
+  perks: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    marginBottom: '28px',
+    textAlign: 'left',
+  },
+  perk: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    background: 'rgba(107,191,103,0.08)',
+    borderRadius: '12px',
+    padding: '10px 14px',
+  },
+  perkIcon: {
+    fontSize: '20px',
+    flexShrink: 0,
+  },
+  perkText: {
+    fontSize: '14px',
+    color: '#2d4a2b',
+    fontWeight: '500',
+  },
+  upgradeBtn: {
+    width: '100%',
+    background: 'linear-gradient(135deg, #6dbf67, #4a9e44)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '16px',
+    padding: '16px',
+    fontSize: '16px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    boxShadow: '0 4px 20px rgba(107,191,103,0.4)',
+    marginBottom: '10px',
+  },
+  hint: {
+    fontSize: '12px',
+    color: '#9ab898',
+    margin: 0,
+  },
 }
