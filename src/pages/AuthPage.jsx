@@ -164,7 +164,9 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
 
   async function handleSetNewPassword(e) {
     e.preventDefault()
-    if (newPassword.length < 6) { setError('Le mot de passe doit contenir au moins 6 caractères.'); return }
+    if (newPassword.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return }
+    if (!/[A-Z]/.test(newPassword)) { setError('Le mot de passe doit contenir au moins une majuscule.'); return }
+    if (!/[a-z]/.test(newPassword)) { setError('Le mot de passe doit contenir au moins une minuscule.'); return }
     setError(null); setIsLoading(true)
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
@@ -277,23 +279,33 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
                 </div>
               )}
 
-              {view === 'newpassword' ? (
-                /* Formulaire nouveau mot de passe */
+              {/* Vue : nouveau mot de passe */}
+              {view === 'newpassword' && (
                 <div className="auth-field">
                   <label className="auth-label">Nouveau mot de passe</label>
                   <input
                     className="auth-input"
                     type="password"
-                    placeholder="6 caractères minimum"
+                    placeholder="8 caractères minimum"
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     required
                     autoFocus
-                    minLength={6}
+                    minLength={8}
                   />
-                  <div className="auth-hint">Choisissez un mot de passe sécurisé</div>
+                  <div className="auth-hint">
+                    8 caractères minimum · 1 majuscule · 1 minuscule
+                    {newPassword.length > 0 && (
+                      <span style={{ marginLeft:6, color: /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && newPassword.length >= 8 ? 'rgba(150,212,133,0.8)' : 'rgba(210,110,110,0.8)' }}>
+                        {/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && newPassword.length >= 8 ? '✓ Valide' : [newPassword.length < 8 && '8 car. min', !/[A-Z]/.test(newPassword) && '1 maj.', !/[a-z]/.test(newPassword) && '1 min.'].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ) : view === 'reset' && resetSent ? (
+              )}
+
+              {/* Vue : confirmation envoi reset */}
+              {view === 'reset' && resetSent && (
                 <div className="auth-success" style={{ padding:'12px 0' }}>
                   <div className="as-icon">📬</div>
                   <div className="as-title">Email envoyé !</div>
@@ -306,29 +318,36 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
                     ← Retour à la connexion
                   </div>
                 </div>
-              ) : (
-                <>
-              <div className="auth-field">
-                <label className="auth-label">Email</label>
-                <input className="auth-input" type="email" placeholder="votre@email.com" value={email} onChange={e => setEmail(e.target.value)} required={view !== 'newpassword'} />
-              </div>
-              {view !== 'reset' && view !== 'newpassword' && (
-              <div className="auth-field">
-                <label className="auth-label">Mot de passe</label>
-                <input className="auth-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required={view !== 'reset'} />
-                {view === 'login' && (
-                  <div className="auth-forgot" onClick={() => { setView('reset'); setError(null); setResetSent(false) }}>
-                    Mot de passe oublié ?
-                  </div>
-                )}
-              </div>
               )}
 
-              {error && <div className="auth-error">{error}</div>}
+              {/* Vue : email */}
+              {view !== 'newpassword' && !(view === 'reset' && resetSent) && (
+                <div className="auth-field">
+                  <label className="auth-label">Email</label>
+                  <input className="auth-input" type="email" placeholder="votre@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                </div>
+              )}
 
-              <button className="auth-submit" type="submit" disabled={isLoading}>
-                {isLoading ? '…' : view === 'login' ? 'Entrer dans mon jardin' : view === 'reset' ? 'Envoyer le lien de réinitialisation' : view === 'newpassword' ? 'Mettre à jour le mot de passe' : 'Créer mon jardin'}
-              </button>
+              {/* Vue : mot de passe (login/register) */}
+              {view !== 'reset' && view !== 'newpassword' && (
+                <div className="auth-field">
+                  <label className="auth-label">Mot de passe</label>
+                  <input className="auth-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+                  {view === 'login' && (
+                    <div className="auth-forgot" onClick={() => { setView('reset'); setError(null); setResetSent(false) }}>
+                      Mot de passe oublié ?
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Erreur + bouton — toujours visibles sauf confirmation envoi */}
+              {!(view === 'reset' && resetSent) && (
+                <>
+                  {error && <div className="auth-error">{error}</div>}
+                  <button className="auth-submit" type="submit" disabled={isLoading || (view === 'newpassword' && !(newPassword.length >= 8 && /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword)))}>
+                    {isLoading ? '…' : view === 'login' ? 'Entrer dans mon jardin' : view === 'reset' ? 'Envoyer le lien de réinitialisation' : view === 'newpassword' ? '✓ Mettre à jour le mot de passe' : 'Créer mon jardin'}
+                  </button>
                 </>
               )}
             </form>
