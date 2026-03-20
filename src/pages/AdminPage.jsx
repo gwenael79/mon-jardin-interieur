@@ -1415,6 +1415,11 @@ const VAR_LABELS = {
   '--zone-leaves':    { label: 'Zone Feuilles',            group: 'Zones rituels' },
   '--zone-flowers':   { label: 'Zone Fleurs',              group: 'Zones rituels' },
   '--zone-breath':    { label: 'Zone Souffle',             group: 'Zones rituels' },
+  '--font-body':      { label: 'Police corps',             group: 'Typographie' },
+  '--font-serif':     { label: 'Police titres',            group: 'Typographie' },
+  '--font-size-base': { label: 'Taille base (px)',         group: 'Typographie' },
+  '--font-size-sm':   { label: 'Taille petite (px)',       group: 'Typographie' },
+  '--font-size-lg':   { label: 'Taille grande (px)',       group: 'Typographie' },
 }
 
 function ThemeEditor({ showToast }) {
@@ -1480,6 +1485,12 @@ function ThemeEditor({ showToast }) {
     setSaving(true)
     const derived = deriveFromGreen(vars['--green'])
     const allVars = { ...vars, ...derived }
+    // Appliquer les polices
+    if (allVars['--font-body'])      document.documentElement.style.setProperty('--font-body', allVars['--font-body'])
+    if (allVars['--font-serif'])     document.documentElement.style.setProperty('--font-serif', allVars['--font-serif'])
+    if (allVars['--font-size-base']) document.documentElement.style.setProperty('--font-size-base', allVars['--font-size-base'])
+    if (allVars['--font-size-sm'])   document.documentElement.style.setProperty('--font-size-sm', allVars['--font-size-sm'])
+    if (allVars['--font-size-lg'])   document.documentElement.style.setProperty('--font-size-lg', allVars['--font-size-lg'])
 
     // ── 1. Appliquer immédiatement à l'app entière (optimistic) ──────────────
     Object.entries(allVars).forEach(([k, v]) => {
@@ -1542,7 +1553,7 @@ function ThemeEditor({ showToast }) {
   }
 
   const lbl = { fontSize:10, color:'rgba(242,237,224,0.50)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:6, display:'block', fontWeight:500 }
-  const groups = ['Fonds','Textes','Accents','Bordures','Zones rituels']
+  const groups = ['Fonds','Textes','Accents','Bordures','Zones rituels']  // Typographie géré séparément
 
   if (loading) return <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', padding:'20px 0' }}>Chargement du thème…</div>
 
@@ -1593,6 +1604,78 @@ function ThemeEditor({ showToast }) {
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* ── Typographie ── */}
+          <div style={{ marginBottom:20 }}>
+            <span style={lbl}>Typographie</span>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+
+              {/* Police corps */}
+              <div style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 12px' }}>
+                <div style={{ fontSize:9, color:'rgba(242,237,224,0.40)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8 }}>Police corps (Jost)</div>
+                <select
+                  value={vars['--font-body'] || "'Jost',sans-serif"}
+                  onChange={e => updateVar('--font-body', e.target.value)}
+                  style={{ width:'100%', padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.75)', fontSize:11, outline:'none', cursor:'pointer' }}
+                >
+                  <option value="'Jost',sans-serif">Jost (actuelle)</option>
+                  <option value="'Inter',sans-serif">Inter</option>
+                  <option value="'Lato',sans-serif">Lato</option>
+                  <option value="'Nunito',sans-serif">Nunito</option>
+                  <option value="'DM Sans',sans-serif">DM Sans</option>
+                </select>
+                <div style={{ marginTop:8, fontSize:12, color:'rgba(242,237,224,0.45)', fontFamily: vars['--font-body'] || "'Jost',sans-serif" }}>
+                  Aperçu du texte courant
+                </div>
+              </div>
+
+              {/* Police titres */}
+              <div style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 12px' }}>
+                <div style={{ fontSize:9, color:'rgba(242,237,224,0.40)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8 }}>Police titres (Cormorant)</div>
+                <select
+                  value={vars['--font-serif'] || "'Cormorant Garamond',serif"}
+                  onChange={e => updateVar('--font-serif', e.target.value)}
+                  style={{ width:'100%', padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.75)', fontSize:11, outline:'none', cursor:'pointer' }}
+                >
+                  <option value="'Cormorant Garamond',serif">Cormorant Garamond (actuelle)</option>
+                  <option value="'Playfair Display',serif">Playfair Display</option>
+                  <option value="'Lora',serif">Lora</option>
+                  <option value="'Libre Baskerville',serif">Libre Baskerville</option>
+                  <option value="'EB Garamond',serif">EB Garamond</option>
+                </select>
+                <div style={{ marginTop:8, fontSize:16, color:'rgba(242,237,224,0.55)', fontFamily: vars['--font-serif'] || "'Cormorant Garamond',serif", fontWeight:300 }}>
+                  Aperçu titre
+                </div>
+              </div>
+
+            </div>
+
+            {/* Tailles */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, marginTop:10 }}>
+              {[
+                { key:'--font-size-base', label:'Taille base', default:'13', unit:'px', min:11, max:18 },
+                { key:'--font-size-sm',   label:'Petite',      default:'10', unit:'px', min:8,  max:14 },
+                { key:'--font-size-lg',   label:'Grande',      default:'16', unit:'px', min:13, max:24 },
+              ].map(({ key, label, default: def, min, max }) => {
+                const raw = vars[key] || def
+                const num = parseInt(raw) || parseInt(def)
+                return (
+                  <div key={key} style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 12px' }}>
+                    <div style={{ fontSize:9, color:'rgba(242,237,224,0.40)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6 }}>{label}</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <input type="range" min={min} max={max} value={num}
+                        onChange={e => updateVar(key, e.target.value + 'px')}
+                        style={{ flex:1, accentColor:'#96d485', cursor:'pointer' }} />
+                      <span style={{ fontSize:11, color:'rgba(242,237,224,0.60)', width:32, textAlign:'right', flexShrink:0 }}>{num}px</span>
+                    </div>
+                    <div style={{ marginTop:6, fontSize: num, color:'rgba(242,237,224,0.45)', lineHeight:1.3 }}>
+                      Aa
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
