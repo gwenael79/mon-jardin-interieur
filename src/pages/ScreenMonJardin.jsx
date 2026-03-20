@@ -38,21 +38,21 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
       <div
         onClick={() => unlocked ? onOpen() : setTooltip(t => !t)}
         style={{
-          display:'inline-flex', flexDirection:'row', alignItems:'center', gap:2,
-          padding:'2px 6px 2px 4px', borderRadius:20, cursor: unlocked ? 'pointer' : 'default',
+          display:'inline-flex', flexDirection:'row', alignItems:'center', gap:4,
+          padding:'5px 12px 5px 8px', borderRadius:20, cursor: unlocked ? 'pointer' : 'default',
           background: bg, border: `1px solid ${bd}`,
           transition:'all .2s', opacity: op, userSelect:'none',
-          boxShadow: isCurrent ? `0 0 0 1.5px ${colorU}55` : 'none',
+          boxShadow: isCurrent ? `0 0 0 2px ${colorU}55` : 'none',
           whiteSpace:'nowrap',
         }}
         onMouseEnter={e => { if (unlocked && !isPast) e.currentTarget.style.background = bgU.replace('0.14','0.24') }}
         onMouseLeave={e => { e.currentTarget.style.background = bg }}
       >
-        <span style={{ fontSize:9, position:'relative', lineHeight:1 }}>
+        <span style={{ fontSize:13, position:'relative', lineHeight:1 }}>
           {isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{badge}</span> : badge}
           {!unlocked && <span style={{ position:'absolute', top:-2, right:-4, fontSize:6 }}>🔒</span>}
         </span>
-        <span style={{ fontSize:7, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
+        <span style={{ fontSize:11, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
       </div>
 
       {tooltip && !unlocked && (
@@ -424,7 +424,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
 
     /* ── NIVEAU 1 : ellipses classiques (rendu original) ── */
     if (ps === 'round') {
-      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
+      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
       return <g>
         {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
           const rad=a*Math.PI/180
@@ -442,7 +442,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
       </g>
     }
     if (ps === 'wide') {
-      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
+      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
       return <g>
         {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
           const rad=a*Math.PI/180
@@ -3919,12 +3919,12 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
         </div>
       </div>
       <div style={{
-        display:'flex', alignItems:'center', gap:4, flexWrap:'wrap',
-        padding:'6px 10px 7px',
+        display:'flex', alignItems:'center', gap:8, flexWrap:'wrap',
+        padding:'10px 14px 11px',
         borderTop:'1px solid var(--border2)',
         background:'var(--bg)', flexShrink:0,
       }}>
-        <span style={{ fontSize:8, color:'var(--text3)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
+        <span style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
         {[
           { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
           { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
