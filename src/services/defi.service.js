@@ -70,7 +70,7 @@ export const defiService = {
   },
 
   // ── Proposer un nouveau défi ────────────────────────────
-async propose(_userId, { title, description, zone, duration_days, emoji }) {
+async propose(_userId, { title, description, zone, duration_days, emoji, action_duration_minutes, action_periods }) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) throw new Error('Session expirée, veuillez vous reconnecter')
 
@@ -87,6 +87,8 @@ async propose(_userId, { title, description, zone, duration_days, emoji }) {
       is_active: false,
       is_featured: false,
       created_by: authUid,
+      action_duration_minutes: action_duration_minutes ?? null,
+      action_periods: action_periods?.length > 0 ? action_periods : null,
     })
     .select()
     .single()
