@@ -2033,7 +2033,10 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
 
   if (!mode) return (
     <div style={{ animation:'fadeUp 0.3s ease both' }}>
-      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', marginBottom:20, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+      </div>
       <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
         <span style={{ fontSize:26 }}>{ritual.icon}</span>
         <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:20, color:'#EEF0E8', fontWeight:400, lineHeight:1.1 }}>{ritual.text}</h3>
@@ -2074,7 +2077,10 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
 
   return (
     <div style={{ animation:'fadeUp 0.28s ease both' }}>
-      <button onClick={() => setMode(null)} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', marginBottom:20, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+        <button onClick={() => setMode(null)} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+      </div>
       <div style={{ marginBottom:6 }}>
         <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:modeColor, fontWeight:500 }}>{modeLabel}</span>
       </div>
@@ -2142,9 +2148,12 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
                 <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, fontWeight:500, display:'block', marginBottom:4 }}>{zone.subtitle}</span>
                 <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:28, color:'#EEF0E8', fontWeight:300, lineHeight:1.05 }}>{zone.name}</h2>
               </div>
-              <div style={{ textAlign:'right' }}>
-                <span style={{ fontSize:10, color:'rgba(180,200,180,0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
-                <span style={{ fontSize:22, color:zone.accent, fontWeight:300 }}>{Math.round(pct)}<span style={{ fontSize:12, opacity:0.6 }}>%</span></span>
+              <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+                <div style={{ textAlign:'right' }}>
+                  <span style={{ fontSize:10, color:'rgba(180,200,180,0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
+                  <span style={{ fontSize:22, color:zone.accent, fontWeight:300 }}>{Math.round(pct)}<span style={{ fontSize:12, opacity:0.6 }}>%</span></span>
+                </div>
+                <button onClick={onClose} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
               </div>
             </div>
             <div style={{ height:3, borderRadius:2, background:'rgba(255,255,255,0.07)', marginBottom:22, overflow:'hidden' }}>
@@ -2329,6 +2338,7 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   // Écran d'accueil
   if (step === -1) return (
     <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(6,14,7,0.96)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
+      <button onClick={onSkip} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1 }}>✕</button>
       <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
         <div style={{ fontSize:52, marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
         <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:36, color:'#EEF0E8', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'#C8A882' }}>sentez-vous</em> aujourd'hui ?</h2>
@@ -2353,7 +2363,10 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
       </div>
       <div style={{ padding:'16px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
-        <span style={{ fontSize:11, color:'rgba(180,200,180,0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:11, color:'rgba(180,200,180,0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
+          <button onClick={onSkip} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:12, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        </div>
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
         <div style={{ fontSize:36, marginBottom:12 }}>{q.icon}</div>

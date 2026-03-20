@@ -587,6 +587,7 @@ export default function DashboardPage() {
             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
             <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', borderBottom:'none' }}>
               <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
+              <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:14, cursor:'pointer', lineHeight:1 }}>✕</button>
               <LumensCard
                 lumens={lumens}
                 userId={user?.id}
@@ -706,7 +707,7 @@ export default function DashboardPage() {
             <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
               <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
-                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:16, background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
+                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:12, right:12, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:14, cursor:'pointer', lineHeight:1 }}>✕</button>
                 <LumensCard
                   lumens={lumens}
                   userId={user?.id}
