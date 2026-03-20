@@ -481,6 +481,7 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
           {atelier.animator?.display_name && (
             <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', marginTop:2 }}>Par {atelier.animator.display_name}{atelier.animator.profession ? ` · ${atelier.animator.profession}` : ''}</div>
           )}
+          <div style={{ marginTop:6 }}><LumenBadge amount={3} /></div>
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, flexShrink:0 }}>
           {atelier.price > 0 ? (
@@ -528,32 +529,30 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
         {!isPast && !isMine && (
           <>
             {!isInscrit && !isFull && (
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
-                {/* Paiement Lumens — prioritaire, toujours affiché si lumen_price défini */}
-                {atelier.lumen_price > 0 && (
-                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:4 }}>
-                    <LumenBadge amount={3} />
-                    <button
-                      onClick={() => onPayLumens?.(atelier.id, atelier.lumen_price)}
-                      style={{ padding:'7px 18px', fontSize:12, borderRadius:9, fontWeight:500,
-                        background: lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.14)' : 'rgba(255,255,255,0.04)',
-                        border:`1px solid ${lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.40)' : 'rgba(255,255,255,0.1)'}`,
-                        color: lumensAvailable >= atelier.lumen_price ? 'var(--gold)' : 'var(--text3)',
-                        cursor: lumensAvailable >= atelier.lumen_price ? 'pointer' : 'default',
-                        fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:6 }}
-                      title={lumensAvailable >= atelier.lumen_price ? `Vous avez ${lumensAvailable} ✦` : `Lumens insuffisants (${lumensAvailable}/${atelier.lumen_price} ✦)`}
-                    >
-                      <LumenOrb total={atelier.lumen_price} level="halo" size={14} />
-                      {atelier.lumen_price} Lumens
-                    </button>
-                  </div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {/* Bouton Lumens — masqué si prix en euros défini */}
+                {atelier.lumen_price > 0 && atelier.price === 0 && (
+                  <button
+                    onClick={() => onPayLumens?.(atelier.id, atelier.lumen_price)}
+                    style={{ padding:'9px 18px', fontSize:12, borderRadius:9, fontWeight:500,
+                      background: lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.14)' : 'rgba(255,255,255,0.04)',
+                      border:`1px solid ${lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.40)' : 'rgba(255,255,255,0.1)'}`,
+                      color: lumensAvailable >= atelier.lumen_price ? 'var(--gold)' : 'var(--text3)',
+                      cursor: lumensAvailable >= atelier.lumen_price ? 'pointer' : 'default',
+                      fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:7 }}
+                    title={lumensAvailable >= atelier.lumen_price ? `Vous avez ${lumensAvailable} ✦` : `Lumens insuffisants (${lumensAvailable}/${atelier.lumen_price} ✦)`}
+                  >
+                    <LumenOrb total={atelier.lumen_price} level="aura" size={14} />
+                    Accédez contre {atelier.lumen_price} Lumens
+                  </button>
                 )}
-                {/* Paiement euros — uniquement si prix euros défini */}
+                {/* Bouton euros */}
                 {atelier.price > 0 && (
                   <button onClick={() => onInscrit(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:12 }}>
                     ✓ S&apos;inscrire · {atelier.price} €
                   </button>
                 )}
+
               </div>
             )}
             {!isInscrit && isFull && (

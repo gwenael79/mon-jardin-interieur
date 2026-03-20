@@ -30,6 +30,17 @@ export default function App() {
   const [checkingOnboard, setCheckingOnboard] = useState(false)
   const [showSlides,      setShowSlides]      = useState(false)
 
+  // Détecter immédiatement si on revient d'un lien reset
+  const [isRecovery, setIsRecovery] = useState(() => {
+    const hash = window.location.hash
+    const params = new URLSearchParams(hash.replace('#', '?'))
+    const type = params.get('type')
+    const error = params.get('error')
+    const errorDesc = params.get('error_description')
+    // Erreur OTP expiré → afficher le formulaire reset avec message d'erreur
+    if (error === 'access_denied' && errorDesc?.includes('expired')) return 'expired'
+    return type === 'recovery' ? true : false
+  })
   const [toast,    setToast]    = useState(null)
   const [hash,     setHash]     = useState(window.location.hash)
   const toastTimer              = useRef(null)
@@ -75,6 +86,14 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
+  // ── Intercepter PASSWORD_RECOVERY (retour lien email reset) ──
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setIsRecovery(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   // ── Exposer openAccessModal globalement ─────────────────
   useEffect(() => {
     window.openAccessModal = () => setOnboarded(false)
@@ -114,13 +133,18 @@ export default function App() {
   }
 
   // ── Chargement ───────────────────────────────────────────
-  if (authLoading || checkingOnboard) return (
+  // Si on est en mode recovery, ne pas bloquer sur le spinner
+  if (!isRecovery && (authLoading || checkingOnboard)) return (
     <div style={styles.loading}>
       <span>🌱</span>
     </div>
   )
 
   // ── Routing ──────────────────────────────────────────────
+
+  // 0. Retour depuis lien email reset
+  if (isRecovery === 'expired') return <AuthPage initialView="reset" resetError="Votre lien a expiré. Demandez un nouveau lien." onPasswordUpdated={() => setIsRecovery(false)} />
+  if (isRecovery) return <AuthPage initialView="newpassword" onPasswordUpdated={() => setIsRecovery(false)} />
 
   // 1. Non connecté → AuthPage (pas de notifications)
   if (!user) return <AuthPage />

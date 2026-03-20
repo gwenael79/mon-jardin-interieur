@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../core/supabaseClient'
 import { useTheme } from '../hooks/useTheme'
@@ -49,6 +49,8 @@ html,body,#root{height:100%;width:100%}
 .as-text{font-size:13px;font-weight:300;color:var(--text2);line-height:1.7}
 .as-email{color:var(--cream)}
 .auth-footer{margin-top:32px;font-size:9px;color:var(--text3);text-align:center;line-height:1.8}
+.auth-forgot{font-size:10px;color:var(--text3);text-align:right;margin-top:6px;cursor:pointer;letter-spacing:.02em;text-decoration:underline;opacity:.7}
+.auth-forgot:hover{opacity:1}
 
 @media(max-width:700px){
   .auth-root{flex-direction:column;min-height:100vh;height:auto;overflow-y:auto}
@@ -85,7 +87,7 @@ html,body,#root{height:100%;width:100%}
 }
 `
 
-export function AuthPage() {
+export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError }) {
   useTheme()
   const { signIn, signUp } = useAuth()
   const [email,       setEmail]       = useState('')
@@ -93,9 +95,12 @@ export function AuthPage() {
   const [displayName, setDisplayName] = useState('')
   const [birthdate,   setBirthdate]   = useState('')
   const [isLoading,   setIsLoading]   = useState(false)
-  const [error,       setError]       = useState(null)
-  const [view,        setView]        = useState('login')
+  const [error,       setError]       = useState(resetError ?? null)
+  const [view,        setView]        = useState(initialView)
   const [success,     setSuccess]     = useState(false)
+  const [resetSent,   setResetSent]   = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [isRecovery,  setIsRecovery]  = useState(false)  // true quand on revient du lien email
 
   async function handleSignIn(e) {
     e.preventDefault()
@@ -145,6 +150,54 @@ export function AuthPage() {
     finally { setIsLoading(false) }
   }
 
+  // Détecter le retour depuis le lien email (type=recovery dans le hash ou session active)
+  useEffect(() => {
+    // Supabase gère automatiquement le token du hash — on écoute l'événement PASSWORD_RECOVERY
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true)
+        setView('newpassword')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  async function handleSetNewPassword(e) {
+    e.preventDefault()
+    if (newPassword.length < 6) { setError('Le mot de passe doit contenir au moins 6 caractères.'); return }
+    setError(null); setIsLoading(true)
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
+      if (updateError) throw new Error(updateError.message)
+      setNewPassword('')
+      setError(null)
+      if (onPasswordUpdated) {
+        onPasswordUpdated() // Retour vers App → routing normal
+      } else {
+        setIsRecovery(false)
+        setView('login')
+        setSuccess(false)
+      }
+    }
+    catch (err) { setError(err.message) }
+    finally { setIsLoading(false) }
+  }
+
+  async function handleResetPassword(e) {
+    e.preventDefault()
+    if (!email.trim()) { setError('Veuillez saisir votre adresse email.'); return }
+    setError(null); setIsLoading(true)
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/?reset=true',
+      })
+      if (resetError) throw new Error(resetError.message)
+      setResetSent(true)
+    }
+    catch (err) { setError(err.message) }
+    finally { setIsLoading(false) }
+  }
+
   return (
     <div className="auth-root">
       <style>{css}</style>
@@ -180,15 +233,15 @@ export function AuthPage() {
           </div>
         ) : (
           <>
-            <div className="auth-form-title">{view === 'login' ? 'Bon retour 🌿' : 'Planter une graine 🌱'}</div>
-            <div className="auth-form-sub">{view === 'login' ? 'Votre jardin vous attend' : 'Créez votre espace de bien-être'}</div>
+            <div className="auth-form-title">{view === 'login' ? 'Bon retour 🌿' : view === 'reset' ? 'Réinitialiser 🔑' : view === 'newpassword' ? 'Nouveau mot de passe 🔑' : 'Planter une graine 🌱'}</div>
+            <div className="auth-form-sub">{view === 'login' ? 'Votre jardin vous attend' : view === 'reset' ? 'Recevez un lien par email' : view === 'newpassword' ? 'Choisissez un nouveau mot de passe' : 'Créez votre espace de bien-être'}</div>
 
             <div className="auth-tabs">
-              <div className={`auth-tab${view === 'login' ? ' active' : ''}`} onClick={() => { setView('login'); setError(null) }}>Connexion</div>
-              <div className={`auth-tab${view === 'register' ? ' active' : ''}`} onClick={() => { setView('register'); setError(null) }}>Inscription</div>
+              <div className={`auth-tab${view === 'login' ? ' active' : ''}`} onClick={() => { setView('login'); setError(null); setResetSent(false) }}>Connexion</div>
+              <div className={`auth-tab${view === 'register' ? ' active' : ''}`} onClick={() => { setView('register'); setError(null); setResetSent(false) }}>Inscription</div>
             </div>
 
-            <form onSubmit={view === 'login' ? handleSignIn : handleSignUp}>
+            <form onSubmit={view === 'login' ? handleSignIn : view === 'reset' ? handleResetPassword : view === 'newpassword' ? handleSetNewPassword : handleSignUp}>
 
               {/* Champ prénom — inscription uniquement */}
               {view === 'register' && (
@@ -224,20 +277,60 @@ export function AuthPage() {
                 </div>
               )}
 
+              {view === 'newpassword' ? (
+                /* Formulaire nouveau mot de passe */
+                <div className="auth-field">
+                  <label className="auth-label">Nouveau mot de passe</label>
+                  <input
+                    className="auth-input"
+                    type="password"
+                    placeholder="6 caractères minimum"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    required
+                    autoFocus
+                    minLength={6}
+                  />
+                  <div className="auth-hint">Choisissez un mot de passe sécurisé</div>
+                </div>
+              ) : view === 'reset' && resetSent ? (
+                <div className="auth-success" style={{ padding:'12px 0' }}>
+                  <div className="as-icon">📬</div>
+                  <div className="as-title">Email envoyé !</div>
+                  <div className="as-text">
+                    Un lien de réinitialisation a été envoyé à<br />
+                    <span className="as-email">{email}</span><br /><br />
+                    Vérifiez vos spams si vous ne le trouvez pas.
+                  </div>
+                  <div className="auth-forgot" style={{ marginTop:16, textAlign:'center' }} onClick={() => { setView('login'); setResetSent(false) }}>
+                    ← Retour à la connexion
+                  </div>
+                </div>
+              ) : (
+                <>
               <div className="auth-field">
                 <label className="auth-label">Email</label>
-                <input className="auth-input" type="email" placeholder="votre@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                <input className="auth-input" type="email" placeholder="votre@email.com" value={email} onChange={e => setEmail(e.target.value)} required={view !== 'newpassword'} />
               </div>
+              {view !== 'reset' && view !== 'newpassword' && (
               <div className="auth-field">
                 <label className="auth-label">Mot de passe</label>
-                <input className="auth-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
+                <input className="auth-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required={view !== 'reset'} />
+                {view === 'login' && (
+                  <div className="auth-forgot" onClick={() => { setView('reset'); setError(null); setResetSent(false) }}>
+                    Mot de passe oublié ?
+                  </div>
+                )}
               </div>
+              )}
 
               {error && <div className="auth-error">{error}</div>}
 
               <button className="auth-submit" type="submit" disabled={isLoading}>
-                {isLoading ? '…' : view === 'login' ? 'Entrer dans mon jardin' : 'Créer mon jardin'}
+                {isLoading ? '…' : view === 'login' ? 'Entrer dans mon jardin' : view === 'reset' ? 'Envoyer le lien de réinitialisation' : view === 'newpassword' ? 'Mettre à jour le mot de passe' : 'Créer mon jardin'}
               </button>
+                </>
+              )}
             </form>
 
             <div className="auth-footer">
