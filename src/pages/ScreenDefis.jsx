@@ -3,7 +3,8 @@ import { useAnalytics } from '../hooks/useAnalytics'
 //  ScreenDefis.jsx  —  Écran "Défis"
 //  Contient : ProposeModal, ScreenDefis, ScreenJardinCollectif
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { supabase } from '../core/supabaseClient'
 import { useDefi } from '../hooks/useDefi'
 import CommunityGarden from '../components/CommunityGarden'
 import { useIsMobile, LumenBadge } from './dashboardShared'
@@ -13,34 +14,51 @@ import { useIsMobile, LumenBadge } from './dashboardShared'
 ───────────────────────────────────────── */
 // DEFIS_DATA → now in Supabase via useDefi
 
-function ProposeModal({ onClose, onSubmit }) {
-  const [title, setTitle]   = useState('')
-  const [desc, setDesc]     = useState('')
-  const [zone, setZone]     = useState('Souffle')
-  const [dur, setDur]       = useState(7)
-  const [emoji, setEmoji]   = useState('🌿')
-  const [sent, setSent]     = useState(false)
+function ProposeModal({ onClose, onSubmit, initialData = null }) {
+  const isEdit = !!initialData
+  const [title, setTitle]     = useState(initialData?.title ?? '')
+  const [desc, setDesc]       = useState(initialData?.description ?? '')
+  const [zone, setZone]       = useState(initialData?.zone ?? 'Souffle')
+  const [dur, setDur]         = useState(initialData?.duration_days ?? 7)
+  const [actionVal, setActionVal] = useState(() => {
+    const m = initialData?.action_duration_minutes ?? 20
+    return m >= 60 ? m / 60 : m
+  })
+  const [actionUnit, setActionUnit] = useState(initialData?.action_duration_minutes >= 60 ? 'h' : 'min')
+  const [emoji, setEmoji]     = useState(initialData?.emoji ?? '🌿')
+  const [sent, setSent]       = useState(false)
   const [loading, setLoading] = useState(false)
+  const [periods, setPeriods] = useState(initialData?.action_periods ?? [])
   const zones = ['Souffle','Racines','Feuilles','Tige','Fleurs','Toutes']
   const durs  = [7,14,21,30]
+
+  // Durée action en minutes (pour la DB)
+  const actionMinutes = actionUnit === 'h' ? actionVal * 60 : actionVal
 
   async function handleSubmit() {
     if (!title.trim()) return
     setLoading(true)
-    try { await onSubmit({ title, description:desc, zone, duration_days:dur, emoji }); setSent(true); setTimeout(onClose,1800) }
-    finally { setLoading(false) }
+    try {
+      await onSubmit({
+        title, description: desc, zone, duration_days: dur, emoji,
+        action_duration_minutes: actionMinutes,
+        action_periods: periods.length > 0 ? periods : null,
+      })
+      setSent(true)
+      setTimeout(onClose, 1800)
+    } finally { setLoading(false) }
   }
 
   return (
     <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
       <div className="modal">
-        <div className="modal-title">Proposer un défi ✨</div>
+        <div className="modal-title">{isEdit ? '✏️ Modifier le défi' : 'Proposer un défi ✨'}</div>
 
         {sent ? (
           <div style={{ textAlign:'center', padding:'28px 0' }}>
             <div style={{ fontSize:32, marginBottom:12 }}>🌿</div>
-            <div style={{ fontSize:13, color:'rgba(150,212,133,0.9)', letterSpacing:'.04em' }}>Proposition envoyée !</div>
-            <div style={{ fontSize:11, color:'var(--text3)', marginTop:6 }}>Elle sera examinée par notre équipe.</div>
+            <div style={{ fontSize:13, color:'rgba(150,212,133,0.9)', letterSpacing:'.04em' }}>{isEdit ? 'Défi modifié !' : 'Proposition envoyée !'}</div>
+            <div style={{ fontSize:11, color:'var(--text3)', marginTop:6 }}>{isEdit ? '' : 'Elle sera examinée par notre équipe.'}</div>
           </div>
         ) : (
           <>
@@ -95,17 +113,87 @@ function ProposeModal({ onClose, onSubmit }) {
                 </select>
               </div>
               <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
-                <div className="modal-label">Durée</div>
+                <div className="modal-label">Durée du défi</div>
                 <select className="modal-input" value={dur} onChange={e => setDur(Number(e.target.value))} style={{ width:'100%' }}>
                   {durs.map(d => <option key={d} value={d}>{d} jours</option>)}
                 </select>
               </div>
             </div>
 
+            {/* Durée de l'action quotidienne */}
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              <div className="modal-label">Durée de l'action quotidienne
+                <span style={{ color:'var(--text3)', fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, fontSize:9 }}>
+                  — combien de temps activer le bouton ACTION chaque jour
+                </span>
+              </div>
+              <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                <input
+                  type="number" min={1} max={actionUnit==='h' ? 24 : 59}
+                  value={actionVal}
+                  onChange={e => setActionVal(Math.max(1, Number(e.target.value)))}
+                  className="modal-input"
+                  style={{ width:80 }}
+                />
+                <select
+                  className="modal-input"
+                  value={actionUnit}
+                  onChange={e => setActionUnit(e.target.value)}
+                  style={{ width:90 }}
+                >
+                  <option value="min">minutes</option>
+                  <option value="h">heures</option>
+                </select>
+                <span style={{ fontSize:10, color:'var(--text3)', whiteSpace:'nowrap' }}>
+                  = {actionMinutes < 60
+                    ? `${actionMinutes} min`
+                    : `${Math.floor(actionMinutes/60)}h${actionMinutes%60>0?String(actionMinutes%60).padStart(2,'0'):''}`
+                  } / jour
+                </span>
+              </div>
+            </div>
+
+            {/* Périodes de disponibilité du bouton ACTION */}
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              <div className="modal-label">Périodes de disponibilité
+                <span style={{ color:'var(--text3)', fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, fontSize:9 }}>
+                  — quand le bouton ACTION est actif (vide = toute la journée)
+                </span>
+              </div>
+              <div style={{ display:'flex', gap:8 }}>
+                {[['matin','🌅 Matin','6h–12h'], ['midi','☀️ Midi','12h–18h'], ['soir','🌙 Soir','18h–0h']].map(([val, lbl, hint]) => {
+                  const active = periods.includes(val)
+                  return (
+                    <div
+                      key={val}
+                      onClick={() => setPeriods(prev => active ? prev.filter(p => p !== val) : [...prev, val])}
+                      style={{
+                        flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+                        padding:'8px 6px', borderRadius:10, cursor:'pointer', transition:'all .2s',
+                        background: active ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)',
+                        border:`1px solid ${active ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.10)'}`,
+                        userSelect:'none',
+                      }}
+                    >
+                      <span style={{ fontSize:16 }}>{lbl.split(' ')[0]}</span>
+                      <span style={{ fontSize:11, color: active ? 'var(--cream)' : 'var(--text3)', fontWeight: active ? 600 : 400 }}>{lbl.split(' ')[1]}</span>
+                      <span style={{ fontSize:9, color:'var(--text3)' }}>{hint}</span>
+                      {active && <span style={{ fontSize:9, color:'var(--green)' }}>✓</span>}
+                    </div>
+                  )
+                })}
+              </div>
+              {periods.length === 0 && (
+                <div style={{ fontSize:10, color:'var(--text3)', fontStyle:'italic' }}>
+                  Disponible toute la journée — le bouton peut être activé à n'importe quelle heure.
+                </div>
+              )}
+            </div>
+
             <div className="modal-actions">
               <button className="modal-cancel" onClick={onClose}>Annuler</button>
               <button className="modal-submit" onClick={handleSubmit} disabled={!title.trim() || loading}>
-                {loading ? 'Envoi…' : 'Envoyer la proposition'}
+                {loading ? (isEdit ? 'Sauvegarde…' : 'Envoi…') : (isEdit ? '✓ Sauvegarder' : 'Envoyer la proposition')}
               </button>
             </div>
           </>
@@ -116,14 +204,471 @@ function ProposeModal({ onClose, onSubmit }) {
 }
 
 const ZONE_COLORS = { Souffle:'var(--zone-breath)', Racines:'var(--zone-roots)', Feuilles:'var(--zone-leaves)', Tige:'var(--zone-stem)', Fleurs:'var(--zone-flowers)', Toutes:'var(--green)' }
+const ADMIN_IDS = ['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7']
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SYSTÈME ACTION
+//  - 1 activation par jour autorisée
+//  - Décompte silencieux de action_duration_minutes
+//  - Journée validée quand le décompte atteint 0
+//  - Progression = jours_validés / duration_days
+// ─────────────────────────────────────────────────────────────────────────────
+
+function fmtDuration(minutes) {
+  if (!minutes) return ''
+  if (minutes < 60) return `${minutes} min`
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return m > 0 ? `${h}h${String(m).padStart(2,'0')}` : `${h}h`
+}
+
+function fmtCountdown(ms) {
+  const totalSec = Math.ceil(ms / 1000)
+  const h   = Math.floor(totalSec / 3600)
+  const m   = Math.floor((totalSec % 3600) / 60)
+  const s   = totalSec % 60
+  if (h > 0) return `${h}h${String(m).padStart(2,'0')}m`
+  if (m > 0) return `${m}m${String(s).padStart(2,'0')}s`
+  return `${s}s`
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/* ── Hook : état ACTION de l'utilisateur pour un défi ── */
+function useActionState(defiId, userId, actionDurationMin) {
+  const [status,    setStatus]    = useState('idle')    // 'idle' | 'running' | 'done'
+  const [startedAt, setStartedAt] = useState(null)      // timestamp ms
+  const [remaining, setRemaining] = useState(0)         // ms
+  const [daysCount, setDaysCount] = useState(0)         // jours validés
+  const timerRef  = useRef(null)
+  const durationMs = (actionDurationMin ?? 20) * 60 * 1000
+
+  // Charger depuis Supabase au montage
+  const load = useCallback(async () => {
+    if (!userId || !defiId) return
+    const today = todayStr()
+
+    // Jours validés (toutes les sessions complétées)
+    const { data: completed } = await supabase
+      .from('defi_daily_actions')
+      .select('action_date')
+      .eq('defi_id', defiId)
+      .eq('user_id', userId)
+      .eq('completed', true)
+    setDaysCount((completed ?? []).length)
+
+    // Session d'aujourd'hui
+    const { data: todayRow } = await supabase
+      .from('defi_daily_actions')
+      .select('*')
+      .eq('defi_id', defiId)
+      .eq('user_id', userId)
+      .eq('action_date', today)
+      .maybeSingle()
+
+    if (!todayRow) {
+      setStatus('idle')
+      setStartedAt(null)
+      setRemaining(durationMs)
+      return
+    }
+    if (todayRow.completed) {
+      setStatus('done')
+      return
+    }
+    // En cours : reprendre là où on en était
+    const elapsed = Date.now() - new Date(todayRow.started_at).getTime()
+    const left = Math.max(0, durationMs - elapsed)
+    if (left <= 0) {
+      // Terminé pendant l'absence
+      await supabase
+        .from('defi_daily_actions')
+        .update({ completed: true, completed_at: new Date().toISOString() })
+        .eq('id', todayRow.id)
+      setStatus('done')
+      setDaysCount(n => n + 1)
+    } else {
+      setStatus('running')
+      setStartedAt(new Date(todayRow.started_at).getTime())
+      setRemaining(left)
+    }
+  }, [defiId, userId, durationMs])
+
+  useEffect(() => { load() }, [load])
+
+  // Ticker quand running
+  useEffect(() => {
+    if (status !== 'running' || !startedAt) return
+    clearInterval(timerRef.current)
+    timerRef.current = setInterval(async () => {
+      const elapsed = Date.now() - startedAt
+      const left = Math.max(0, durationMs - elapsed)
+      setRemaining(left)
+      if (left <= 0) {
+        clearInterval(timerRef.current)
+        setStatus('done')
+        setDaysCount(n => n + 1)
+        // Marquer complété en DB
+        const today = todayStr()
+        await supabase
+          .from('defi_daily_actions')
+          .update({ completed: true, completed_at: new Date().toISOString() })
+          .eq('defi_id', defiId)
+          .eq('user_id', userId)
+          .eq('action_date', today)
+      }
+    }, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [status, startedAt, durationMs, defiId, userId])
+
+  async function startAction() {
+    if (status !== 'idle' || !userId || !defiId) return
+    const today = todayStr()
+    const now = new Date().toISOString()
+    await supabase
+      .from('defi_daily_actions')
+      .upsert({
+        defi_id:     defiId,
+        user_id:     userId,
+        action_date: today,
+        started_at:  now,
+        completed:   false,
+      }, { onConflict: 'user_id,defi_id,action_date' })
+    setStartedAt(Date.now())
+    setRemaining(durationMs)
+    setStatus('running')
+  }
+
+  return { status, remaining, daysCount, startAction }
+}
+
+/* ── Générique de film — remplace la carte entière pendant l'action ── */
+function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
+  const [names, setNames] = useState([])
+
+  useEffect(() => {
+    if (!defiId) return
+    async function load() {
+      const today = todayStr()
+      const { data } = await supabase
+        .from('defi_daily_actions')
+        .select('user:user_id(display_name)')
+        .eq('defi_id', defiId)
+        .eq('action_date', today)
+        .eq('completed', false)
+      setNames((data ?? []).map(r => r.user?.display_name).filter(Boolean))
+    }
+    load()
+    const id = setInterval(load, 10000)
+    return () => clearInterval(id)
+  }, [defiId])
+
+  // Durée du scroll : plus il y a de noms, plus c'est lent
+  const scrollDuration = Math.max(12, names.length * 3)
+
+  return (
+    <div style={{
+      position:'relative', overflow:'hidden',
+      borderRadius:14, height:220,
+      background:`linear-gradient(180deg, var(--bg) 0%, color-mix(in srgb, ${color} 6%, var(--bg)) 100%)`,
+      border:`1px solid color-mix(in srgb, ${color} 30%, transparent)`,
+      display:'flex', flexDirection:'column',
+    }}>
+      <style>{`
+        @keyframes creditsRoll {
+          0%   { transform: translateY(100%) }
+          100% { transform: translateY(-100%) }
+        }
+        @keyframes creditsFade { from { opacity:0 } to { opacity:1 } }
+      `}</style>
+
+      {/* Haut : décompte + bouton retour */}
+      <div style={{
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'10px 14px', flexShrink:0,
+        borderBottom:`1px solid color-mix(in srgb, ${color} 15%, transparent)`,
+        background:'rgba(0,0,0,0.25)',
+      }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{
+            width:7, height:7, borderRadius:'50%',
+            background:color, boxShadow:`0 0 6px ${color}`,
+            display:'inline-block', animation:'actionGlow 1.5s ease-in-out infinite',
+          }}/>
+          <span style={{ fontSize:10, color, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.08em' }}>
+            ⚡ {fmtCountdown(remaining)}
+          </span>
+        </div>
+        <span style={{ fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:'var(--text3)', fontStyle:'italic', flex:1, textAlign:'center', paddingRight:8 }}>
+          {emoji} {title}
+        </span>
+        <div
+          onClick={onBack}
+          style={{ fontSize:10, color:'var(--text3)', cursor:'pointer', padding:'3px 8px', borderRadius:20, border:'1px solid rgba(255,255,255,0.10)', fontFamily:"'Jost',sans-serif", flexShrink:0 }}
+        >← retour</div>
+      </div>
+
+      {/* Zone de défilement */}
+      <div style={{ flex:1, overflow:'hidden', position:'relative' }}>
+        {/* Fondu haut */}
+        <div style={{ position:'absolute', top:0, left:0, right:0, height:40, background:'linear-gradient(to bottom, var(--bg), transparent)', zIndex:2, pointerEvents:'none' }}/>
+        {/* Fondu bas */}
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:40, background:'linear-gradient(to top, var(--bg), transparent)', zIndex:2, pointerEvents:'none' }}/>
+
+        {names.length === 0 ? (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', flexDirection:'column', gap:8 }}>
+            <span style={{ fontSize:22, opacity:.4 }}>⚡</span>
+            <span style={{ fontSize:11, color:'var(--text3)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>
+              Tu es le premier à agir aujourd'hui
+            </span>
+          </div>
+        ) : (
+          <div style={{
+            animation:`creditsRoll ${scrollDuration}s linear infinite`,
+            paddingTop:30,
+          }}>
+            {/* Label intro */}
+            <div style={{ textAlign:'center', marginBottom:20 }}>
+              <div style={{ fontSize:8, letterSpacing:'.18em', textTransform:'uppercase', color, opacity:.5, fontFamily:"'Jost',sans-serif" }}>
+                En action maintenant
+              </div>
+            </div>
+            {/* Noms */}
+            {names.map((name, i) => (
+              <div key={i} style={{
+                textAlign:'center', padding:'9px 0',
+                animation:`creditsFade .4s ease ${i * 0.05}s both`,
+              }}>
+                <div style={{ display:'inline-flex', alignItems:'center', gap:10 }}>
+                  <span style={{
+                    width:28, height:28, borderRadius:'50%', flexShrink:0,
+                    background:`color-mix(in srgb, ${color} 18%, transparent)`,
+                    border:`1px solid color-mix(in srgb, ${color} 40%, transparent)`,
+                    display:'inline-flex', alignItems:'center', justifyContent:'center',
+                    fontSize:12, fontWeight:700, color,
+                    fontFamily:"'Jost',sans-serif",
+                  }}>{name.charAt(0).toUpperCase()}</span>
+                  <span style={{
+                    fontSize:15, color:'var(--cream)',
+                    fontFamily:"'Cormorant Garamond',serif",
+                    fontWeight:300, letterSpacing:'.04em',
+                  }}>{name}</span>
+                </div>
+              </div>
+            ))}
+            {/* Séparateur */}
+            <div style={{ textAlign:'center', padding:'14px 0', color, opacity:.3, fontSize:18 }}>✦</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ── Badge ACTION (reçoit l'état depuis DefiCard) ── */
+function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits, color, actionDurationMin, actionPeriods }) {
+  const isRunning = status === 'running'
+  const isDone    = status === 'done'
+  const isIdle    = status === 'idle'
+
+  // Vérifier si la période courante est autorisée
+  const currentHour = new Date().getHours()
+  const currentPeriod = currentHour < 12 ? 'matin' : currentHour < 18 ? 'midi' : 'soir'
+  const PERIOD_LABELS = { matin:'🌅 Matin (6h–12h)', midi:'☀️ Midi (12h–18h)', soir:'🌙 Soir (18h–0h)' }
+  const inPeriod = !actionPeriods || actionPeriods.length === 0 || actionPeriods.includes(currentPeriod)
+  const nextPeriod = actionPeriods?.find(p => p !== currentPeriod) ?? null
+  const blockedMsg = !inPeriod
+    ? `Disponible : ${actionPeriods.map(p => PERIOD_LABELS[p]).join(' · ')}`
+    : null
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, marginTop:8 }}>
+      <style>{`
+        @keyframes actionPulse {
+          0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, ${color} 40%, transparent); }
+          50%      { box-shadow: 0 0 0 6px color-mix(in srgb, ${color} 0%, transparent); }
+        }
+        @keyframes actionGlow {
+          0%,100% { opacity:1; } 50% { opacity:.55; }
+        }
+      `}</style>
+
+      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <div
+          onClick={isIdle && inPeriod ? startAction : isRunning ? onOpenCredits : undefined}
+          style={{
+            display:'inline-flex', alignItems:'center', gap:6,
+            padding:'6px 16px', borderRadius:20,
+            fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:700,
+            letterSpacing:'.06em', cursor: (isIdle && inPeriod) || isRunning ? 'pointer' : 'not-allowed',
+            transition:'all .2s',
+            ...(isDone ? {
+              background:'var(--green3)', border:'1px solid var(--greenT)', color:'var(--green)',
+            } : isRunning ? {
+              background:`color-mix(in srgb, ${color} 15%, transparent)`,
+              border:`1px solid color-mix(in srgb, ${color} 45%, transparent)`,
+              color, animation:'actionPulse 2s ease-in-out infinite',
+            } : {
+              background:`color-mix(in srgb, ${color} 8%, transparent)`,
+              border:`1px solid color-mix(in srgb, ${color} 30%, transparent)`,
+              color, animation: inPeriod ? 'actionGlow 3s ease-in-out infinite' : 'none',
+              opacity: inPeriod ? 1 : 0.45,
+            }),
+          }}
+        >
+          <span style={{
+            width:7, height:7, borderRadius:'50%', flexShrink:0,
+            background: isDone ? 'var(--green)' : color,
+            boxShadow: isDone ? '0 0 5px var(--green)' : `0 0 5px ${color}`,
+          }}/>
+          {isDone
+            ? '✓ Fait aujourd\'hui'
+            : isRunning
+            ? `⚡ ACTION · ${fmtCountdown(remaining)}`
+            : `⚡ ACTION · ${fmtDuration(actionDurationMin)}`}
+        </div>
+        {daysCount > 0 && (
+          <span style={{ fontSize:10, color:'var(--text3)', fontFamily:"'Jost',sans-serif" }}>
+            {daysCount} j
+          </span>
+        )}
+      </div>
+      {blockedMsg && (
+        <div style={{ fontSize:10, color:'var(--text3)', fontStyle:'italic', textAlign:'center', marginTop:4 }}>
+          {blockedMsg}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Carte défi avec mode générique ── */
+function DefiCard({ d, isJoined, color, userId, toggleJoin, awardLumens, track, joinedIds, isAdmin, onEdit, onDelete }) {
+  const [showCredits, setShowCredits] = useState(false)
+  const { status, remaining, daysCount, startAction } = useActionState(d.id, userId, d.action_duration_minutes)
+
+  // Ouvrir le générique si action en cours (reprise après rechargement)
+  // Fermer quand terminé
+  useEffect(() => {
+    if (status === 'running') setShowCredits(true)
+    if (status === 'done')    setShowCredits(false)
+  }, [status])
+
+  const pct = d.duration_days > 0
+    ? Math.round(((d.days_validated ?? d.progress ?? 0) / d.duration_days) * 100)
+    : (d.progress ?? 0)
+  const daysVal = d.days_validated ?? Math.round((d.progress ?? 0) * d.duration_days / 100) ?? 0
+
+  if (showCredits) {
+    return (
+      <div className="defi-card" style={{ padding:0, overflow:'hidden' }}>
+        <CreditsView
+          defiId={d.id}
+          color={color}
+          title={d.title}
+          emoji={d.emoji}
+          remaining={remaining}
+          onBack={() => setShowCredits(false)}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="defi-card">
+      <div className="dc-top">
+        <div className="dc-emoji">{d.emoji}</div>
+        <div className="dc-info">
+          <div className="dc-title">{d.title}</div>
+          <div className="dc-zone">{d.zone}</div>
+        </div>
+        <div className="dc-dur">{d.duration_days} j</div>
+      </div>
+      <div className="dc-desc">{d.description}</div>
+      <div className="dc-foot">
+        <div className="dc-participants">{(d.participantCount??0).toLocaleString()} pers.</div>
+        <div className="dc-bar">
+          <div className="dc-bar-fill" style={{ width:`${pct}%`, background:color+'88', transition:'width .4s' }} />
+        </div>
+        {isJoined
+          ? <div className="dc-joined" onClick={() => { toggleJoin(d.id); awardLumens?.(-2, 'leave_defi', { defi_id: d.id }) }} style={{ cursor:'pointer' }}>✓ En cours</div>
+          : <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+              <LumenBadge amount={2} />
+              <div className="dc-join-btn" onClick={() => {
+                toggleJoin(d.id)
+                if (!joinedIds.has(d.id)) { awardLumens?.(2, 'join_defi', { defi_id: d.id }); track('defi_join', { defi_id: d.id }, 'defis', 'defis') }
+              }}>Rejoindre</div>
+            </div>}
+      </div>
+      {isAdmin && (
+        <div style={{
+          marginTop:6, display:'flex', alignItems:'center', gap:0,
+          borderTop:'1px solid rgba(255,255,255,0.06)',
+          fontFamily:"'Jost',sans-serif",
+        }}>
+          {/* Modifier */}
+          <div
+            onClick={() => onEdit?.(d)}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:10, color:'var(--text3)', cursor:'pointer', transition:'color .15s', borderRight:'1px solid rgba(255,255,255,0.06)' }}
+            onMouseEnter={e => e.currentTarget.style.color='var(--gold)'}
+            onMouseLeave={e => e.currentTarget.style.color='var(--text3)'}
+          >
+            ✏️ Modifier
+          </div>
+          {/* Supprimer */}
+          <div
+            onClick={() => onDelete?.(d)}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:10, color:'var(--text3)', cursor:'pointer', transition:'color .15s' }}
+            onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
+            onMouseLeave={e => e.currentTarget.style.color='var(--text3)'}
+          >
+            🗑 Supprimer
+          </div>
+        </div>
+      )}
+      {isJoined && d.action_duration_minutes && (
+        <ActionBadge
+          status={status}
+          remaining={remaining}
+          daysCount={daysCount}
+          startAction={() => { startAction(); setShowCredits(true) }}
+          onOpenCredits={() => setShowCredits(true)}
+          color={color}
+          actionDurationMin={d.action_duration_minutes}
+          actionPeriods={d.action_periods ?? null}
+        />
+      )}
+    </div>
+  )
+}
 
 function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
   const [cat, setCat] = useState('Tous')
   const [showPropose, setShowPropose] = useState(false)
+  const [editDefi, setEditDefi]       = useState(null)
+  const [refreshKey, setRefreshKey]   = useState(0)
   const cats = ['Tous','Souffle','Racines','Feuilles','Tige','Fleurs']
-  const { defis, featured, myDefis, joinedIds, communityStats, isLoading, toggleJoin, proposeDefi } = useDefi(userId)
+  const { defis: rawDefis, featured: rawFeatured, myDefis, joinedIds, communityStats, isLoading, toggleJoin, proposeDefi, reload: reloadDefis } = useDefi(userId)
+  const [periodsMap, setPeriodsMap] = useState({})
+
+  // Charger action_periods directement depuis Supabase (le service ne l'inclut peut-être pas)
+  useEffect(() => {
+    if (!rawDefis.length) return
+    supabase.from('defis').select('id, action_periods')
+      .then(({ data }) => {
+        if (!data) return
+        const map = Object.fromEntries(data.map(d => [d.id, d.action_periods ?? null]))
+        setPeriodsMap(map)
+      })
+  }, [rawDefis.length])
+
+  // Fusionner action_periods dans les défis
+  const defis = rawDefis.map(d => ({ ...d, action_periods: periodsMap[d.id] ?? d.action_periods ?? null }))
+  const featured = rawFeatured ? { ...rawFeatured, action_periods: periodsMap[rawFeatured.id] ?? rawFeatured.action_periods ?? null } : null
   const filtered = cat === 'Tous'
   ? defis.filter(d => !d.is_featured)
   : defis.filter(d => d.zone === cat && !d.is_featured)
@@ -136,9 +681,44 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
     return () => document.removeEventListener('openPropose', handler)
   }, [])
 
+  // Actualisation après édition/suppression via Supabase realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel('defis-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'defis' }, () => {
+        setRefreshKey(k => k + 1)
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [])
+
   return (
-    <div className="content">
+    <div className="content" key={refreshKey}>
       {showPropose && <ProposeModal onClose={() => setShowPropose(false)} onSubmit={proposeDefi} />}
+      {editDefi && (
+        <ProposeModal
+          onClose={() => setEditDefi(null)}
+          initialData={editDefi}
+          onSubmit={async (fields) => {
+            const { error } = await supabase.from('defis').update({
+              title:                   fields.title,
+              description:             fields.description,
+              zone:                    fields.zone,
+              duration_days:           fields.duration_days,
+              emoji:                   fields.emoji,
+              action_duration_minutes: fields.action_duration_minutes,
+              action_periods:          fields.action_periods ?? null,
+            }).eq('id', editDefi.id)
+            if (error) {
+              console.error('Erreur update défi:', error.message)
+              alert('Erreur : ' + error.message)
+              return
+            }
+            setEditDefi(null)
+            await reloadDefis()   // Recharge les défis avec les nouvelles données
+          }}
+        />
+      )}
       <div className="col" style={{ flex:1 }}>
         <div className="defi-featured">
           <div className="df-glow" />
@@ -249,27 +829,24 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
             const isJoined = joinedIds.has(d.id)
             const color = ZONE_COLORS[d.zone] ?? 'var(--green)'
             return (
-              <div key={d.id??i} className="defi-card">
-                <div className="dc-top">
-                  <div className="dc-emoji">{d.emoji}</div>
-                  <div className="dc-info">
-                    <div className="dc-title">{d.title}</div>
-                    <div className="dc-zone">{d.zone}</div>
-                  </div>
-                  <div className="dc-dur">{d.duration_days} j</div>
-                </div>
-                <div className="dc-desc">{d.description}</div>
-                <div className="dc-foot">
-                  <div className="dc-participants">{(d.participantCount??0).toLocaleString()} pers.</div>
-                  <div className="dc-bar"><div className="dc-bar-fill" style={{ width:`${d.progress??0}%`, background:color+'88' }} /></div>
-                  {isJoined
-                    ? <div className="dc-joined" onClick={() => { toggleJoin(d.id); awardLumens?.(-2, 'leave_defi', { defi_id: d.id }) }} style={{ cursor:'pointer' }}>✓ En cours</div>
-                    : <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-                        <LumenBadge amount={2} />
-                        <div className="dc-join-btn" onClick={() => { toggleJoin(d.id); if (!joinedIds.has(d.id)) { awardLumens?.(2, 'join_defi', { defi_id: d.id }); track('defi_join', { defi_id: d.id }, 'defis', 'defis') } }}>Rejoindre</div>
-                      </div>}
-                </div>
-              </div>
+              <DefiCard
+                key={d.id??i}
+                d={d}
+                isJoined={isJoined}
+                color={color}
+                userId={userId}
+                toggleJoin={toggleJoin}
+                awardLumens={awardLumens}
+                track={track}
+                joinedIds={joinedIds}
+                isAdmin={ADMIN_IDS.includes(userId)}
+                onEdit={defi => setEditDefi(defi)}
+                onDelete={async defi => {
+                  if (!confirm(`Supprimer "${defi.title}" ? Cette action est irréversible.`)) return
+                  await supabase.from('defis').delete().eq('id', defi.id)
+                  setRefreshKey(k => k + 1)
+                }}
+              />
             )
           })}
         </div>
@@ -293,7 +870,12 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
         <div className="rp-section">
           <div className="rp-slabel">Mes défis actifs</div>
           {myDefis.length === 0 && <div style={{ fontSize:12, color:'var(--text3)', padding:'8px 0' }}>Aucun défi en cours</div>}
-          {myDefis.map((d,i) => (
+          {myDefis.map((d,i) => {
+            const pct = d.duration_days > 0
+              ? Math.round(((d.days_validated ?? d.progress ?? 0) / d.duration_days) * 100)
+              : (d.progress ?? 0)
+            const daysVal = d.days_validated ?? Math.round((d.progress ?? 0) * d.duration_days / 100) ?? 0
+            return (
             <div key={i} style={{ marginBottom:11, padding:'11px 13px', background:'var(--green3)', border:'1px solid rgba(150,212,133,0.18)', borderRadius:13 }}>
               <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:7 }}>
                 <span style={{ fontSize:17 }}>{d.emoji}</span>
@@ -303,13 +885,15 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
                 </div>
               </div>
               <div style={{ height:3, background:'rgba(255,255,255,0.09)', borderRadius:100, overflow:'hidden' }}>
-                <div style={{ height:'100%', width:`${d.progress??0}%`, background:(ZONE_COLORS[d.zone]??'var(--green)'), borderRadius:100 }} />
+                <div style={{ height:'100%', width:`${pct}%`, background:(ZONE_COLORS[d.zone]??'var(--green)'), borderRadius:100, transition:'width .4s' }} />
               </div>
               <div style={{ fontSize:10, color:'var(--text3)', marginTop:5, display:'flex', justifyContent:'space-between' }}>
-                <span>Progression</span><span>{d.progress??0}%</span>
+                <span>{daysVal} / {d.duration_days} jours validés</span>
+                <span>{pct}%</span>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
         <div className="rp-section">
           <div className="rp-slabel">Pouls de la communauté</div>

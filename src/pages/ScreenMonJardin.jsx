@@ -3275,15 +3275,109 @@ function BoiteAGraines({ userId, inline }) {
 //  WAKEUP MODAL  "Le Réveil du Jardin"
 // ─────────────────────────────────────────────────────────────────────────────
 // ── EgregoreCard (accordéon) ─────────────────────────────────────────────────
-function EgregoreCard({ intention, progress, isMobile, onJoin }) {
+// ─────────────────────────────────────────────────────────────────────────────
+//  PARTICULE — identique à ScreenClubJardiniers
+// ─────────────────────────────────────────────────────────────────────────────
+function WakeUpParticle({ x, y, color, char, vx: initVx, vy: initVy, dur: initDur, onDone }) {
+  const [pos, setPos]   = useState({ x, y, o: 1, rot: 0 })
+  const [gone, setGone] = useState(false)
+  const frame = useRef(null)
+  const start = useRef(Date.now())
+
+  useEffect(() => {
+    const dur = initDur ?? (3200 + Math.random() * 1200)
+    const vx  = initVx  ?? (0.5 + Math.random() * 0.8)
+    const vy  = initVy  ?? -(0.5 + Math.random() * 0.7)
+    const rot = (Math.random() - 0.5) * 0.004
+    function tick() {
+      const elapsed = Date.now() - start.current
+      const p = Math.min(elapsed / dur, 1)
+      setPos({ x: x + vx * elapsed * 0.06, y: y + vy * elapsed * 0.06, o: 1 - p, rot: rot * elapsed })
+      if (p < 1) frame.current = requestAnimationFrame(tick)
+      else { setGone(true); onDone?.() }
+    }
+    frame.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (gone) return null
+  if (char) return (
+    <div style={{
+      position:'fixed', left: pos.x - 10, top: pos.y - 10,
+      fontSize:18, opacity: pos.o, pointerEvents:'none', zIndex:9999,
+      transform:`rotate(${pos.rot}rad)`, transition:'none', userSelect:'none',
+    }}>{char}</div>
+  )
+  return (
+    <div style={{
+      position:'fixed', left: pos.x - 4, top: pos.y - 4,
+      width:8, height:8, borderRadius:'50%',
+      background: color, opacity: pos.o, pointerEvents:'none',
+      boxShadow:`0 0 6px ${color}`, transition:'none',
+    }}/>
+  )
+}
+
+function EgregoreCard({ intention, progress, isMobile, onJoin, onBurst }) {
   const [open, setOpen] = useState(false)
   const isDone = progress.egregore
+  const btnRef = useRef(null)
+
+  function spawnBurst() {
+    if (!btnRef.current) return
+    const rect  = btnRef.current.getBoundingClientRect()
+    const bx    = rect.left + rect.width  / 2
+    const by    = rect.top  + rect.height / 2
+    const PETALS = ['🌸','🌺','🌼','🌷','💮','🌻']
+    const STARS  = ['✨','⭐','🌟','💫','✦']
+    const ps = []
+
+    // Pétales — montent en éventail
+    for (let i = 0; i < 14; i++) {
+      const angle = -Math.PI/2 + (Math.random() - 0.5) * Math.PI * 1.4
+      const speed = 0.4 + Math.random() * 0.7
+      ps.push({
+        id:   `ep-${i}-${Date.now()}-${Math.random()}`,
+        x:    bx + (Math.random() - 0.5) * 30,
+        y:    by + (Math.random() - 0.5) * 20,
+        char: PETALS[Math.floor(Math.random() * PETALS.length)],
+        vx:   Math.cos(angle) * speed,
+        vy:   Math.sin(angle) * speed,
+        dur:  2800 + Math.random() * 1600,
+        color: null,
+      })
+    }
+
+    // Étoiles — explosent dans toutes les directions, rapides
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const speed = 1.0 + Math.random() * 1.4
+      ps.push({
+        id:   `es-${i}-${Date.now()}-${Math.random()}`,
+        x:    bx + (Math.random() - 0.5) * 16,
+        y:    by + (Math.random() - 0.5) * 16,
+        char: STARS[Math.floor(Math.random() * STARS.length)],
+        vx:   Math.cos(angle) * speed,
+        vy:   Math.sin(angle) * speed,
+        dur:  800 + Math.random() * 500,
+        color: null,
+      })
+    }
+
+    onBurst?.(ps)
+  }
+
+  function handleJoin() {
+    spawnBurst()
+    onJoin?.()
+  }
 
   return (
     <div style={{
       borderRadius:16,
-      border:`1px solid ${isDone ? 'rgba(232,196,100,0.30)' : 'rgba(232,196,100,0.18)'}`,
-      background: isDone ? 'rgba(232,196,100,0.06)' : 'rgba(232,196,100,0.03)',
+      border:`1px solid ${isDone ? 'var(--greenT)' : 'var(--border2)'}`,
+      background: isDone ? 'var(--green3)' : 'rgba(255,255,255,0.02)',
       transition:'all .3s',
       overflow:'hidden',
     }}>
@@ -3291,8 +3385,8 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
       <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
         <div style={{
           width:42, height:42, borderRadius:13,
-          background:'rgba(232,196,100,0.15)',
-          border:'1px solid rgba(232,196,100,0.32)',
+          background: isDone ? 'var(--green3)' : 'rgba(255,255,255,0.06)',
+          border:`1px solid ${isDone ? 'var(--greenT)' : 'var(--border)'}`,
           display:'flex', alignItems:'center', justifyContent:'center',
           fontSize:20, flexShrink:0,
         }}>
@@ -3300,12 +3394,11 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
         </div>
 
         <div style={{ flex:1, minWidth:0 }}>
-          {/* Titre de l'intention en doré, police généreuse */}
           <div style={{
             fontSize: isMobile ? 16 : 15,
             fontFamily:"'Cormorant Garamond',serif",
             fontWeight:600,
-            color: isDone ? 'rgba(232,196,100,0.45)' : 'rgba(232,196,100,1)',
+            color: isDone ? 'var(--text3)' : 'var(--gold)',
             lineHeight:1.3,
             letterSpacing:'0.01em',
           }}>
@@ -3313,7 +3406,7 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
           </div>
           <div style={{
             fontSize: isMobile ? 12 : 11,
-            color: isDone ? 'rgba(136,184,232,0.35)' : 'rgba(136,184,232,0.65)',
+            color: isDone ? 'var(--text3)' : 'var(--zone-breath)',
             marginTop:3,
           }}>
             Je participe à la pensée collective (égregore)
@@ -3325,14 +3418,14 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
           <button
             onClick={() => setOpen(o => !o)}
             style={{
-              background:'rgba(232,196,100,0.08)',
-              border:'1px solid rgba(232,196,100,0.20)',
+              background: isDone ? 'rgba(255,255,255,0.04)' : 'var(--green3)',
+              border:`1px solid ${isDone ? 'var(--border2)' : 'var(--greenT)'}`,
               borderRadius:100,
               width:32, height:32,
               display:'flex', alignItems:'center', justifyContent:'center',
               cursor:'pointer', flexShrink:0,
               fontSize:14,
-              color:'rgba(232,196,100,0.70)',
+              color: isDone ? 'var(--text3)' : 'var(--gold)',
               transition:'transform .25s',
               transform: open ? 'rotate(180deg)' : 'none',
             }}
@@ -3342,9 +3435,9 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
 
         {/* Rejoindre / checkmark */}
         {!isDone && (
-          <button onClick={onJoin} style={{
-            background:'rgba(136,184,232,0.10)',
-            border:'1px solid rgba(136,184,232,0.28)',
+          <button ref={btnRef} onClick={handleJoin} style={{
+            background:'var(--green3)',
+            border:'1px solid var(--greenT)',
             borderRadius:100, padding:'7px 14px',
             fontSize: isMobile ? 13 : 12,
             color:'var(--green)',
@@ -3352,7 +3445,7 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
             whiteSpace:'nowrap',
           }}>Rejoindre</button>
         )}
-        {isDone && <span style={{ fontSize:18, color:'rgba(232,196,100,0.80)' }}>✓</span>}
+        {isDone && <span style={{ fontSize:18, color:'var(--green)' }}>✓</span>}
       </div>
 
       {/* Accordéon — description complète */}
@@ -3361,8 +3454,8 @@ function EgregoreCard({ intention, progress, isMobile, onJoin }) {
           margin:'0 16px 14px',
           padding:'14px 16px',
           borderRadius:12,
-          background:'rgba(232,196,100,0.05)',
-          border:'1px solid rgba(232,196,100,0.14)',
+          background:'var(--green3)',
+          border:'1px solid var(--greenT)',
           animation:'fadeUp 0.22s ease',
         }}>
           <div style={{
@@ -3581,18 +3674,18 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
   }
 
   const zColor = suggestedRitual?.zoneColor ?? '#96d485'
+  const [particles, setParticles] = useState([])
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,0.80)', backdropFilter: isMobile ? 'none' : 'blur(10px)', display:'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent:'center', padding: isMobile ? 0 : 20 }} onClick={e => { if (e.target === e.currentTarget) doClose() }}>
-      <div style={{ width:'100%', maxWidth: isMobile ? '100%' : 560, maxHeight: isMobile ? '94vh' : '88vh', overflowY:'auto', background:'linear-gradient(170deg,#0d1f0e 0%,#060d07 100%)', border:'1px solid rgba(150,212,133,0.13)', borderRadius: isMobile ? '22px 22px 0 0' : 24, borderBottom: isMobile ? 'none' : undefined, opacity: closing ? 0 : 1, transition:'opacity .3s, transform .3s', transform: closing ? (isMobile ? 'translateY(30px)' : 'scale(.97)') : 'none', animation: closing ? 'none' : 'fadeUp 0.35s cubic-bezier(0.34,1.3,0.64,1)' }}>
-
+      <div style={{ width:'100%', maxWidth: isMobile ? '100%' : 560, maxHeight: isMobile ? '94vh' : '88vh', overflowY:'auto', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', border:'1px solid var(--greenT)', borderRadius: isMobile ? '22px 22px 0 0' : 24, borderBottom: isMobile ? 'none' : undefined, opacity: closing ? 0 : 1, transition:'opacity .3s, transform .3s', transform: closing ? (isMobile ? 'translateY(30px)' : 'scale(.97)') : 'none', animation: closing ? 'none' : 'fadeUp 0.35s cubic-bezier(0.34,1.3,0.64,1)' }}>
         {isMobile && <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 0' }}><div style={{ width:36, height:3, borderRadius:2, background:'rgba(255,255,255,.18)' }}/></div>}
 
         {/* Header */}
         <div style={{ padding: isMobile ? '14px 20px 0' : '26px 28px 0' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12 }}>
             <div>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight:300, color:'#f0e8d0', lineHeight:1.1 }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight:300, color:'var(--cream)', lineHeight:1.1 }}>
                 Bonjour, {firstName} 🌿
               </div>
               <div style={{ fontSize: isMobile ? 14 : 13, color:'var(--text3)', marginTop:6, lineHeight:1.4 }}>
@@ -3604,13 +3697,13 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           <div style={{ marginBottom:6 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
               <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase' }}>Progression</span>
-              <span style={{ fontSize:11, fontWeight:500, color: doneCount===4 ? '#96d485' : 'rgba(238,232,218,0.50)' }}>{doneCount===4 ? 'Tout accompli !' : `${doneCount} / 4`}</span>
+              <span style={{ fontSize:11, fontWeight:500, color: doneCount===4 ? 'var(--green)' : 'var(--text3)' }}>{doneCount===4 ? 'Tout accompli !' : `${doneCount} / 4`}</span>
             </div>
             <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.07)', overflow:'hidden' }}>
-              <div style={{ height:'100%', borderRadius:3, width:`${(doneCount/4)*100}%`, background:'linear-gradient(90deg,#5aaf78,#96d485)', transition:'width .5s ease' }}/>
+              <div style={{ height:'100%', borderRadius:3, width:`${(doneCount/4)*100}%`, background:'linear-gradient(90deg, var(--green), var(--green))', transition:'width .5s ease' }}/>
             </div>
           </div>
-          {confetti && <div style={{ textAlign:'center', padding:'8px 0 2px', fontSize:14, color:'#96d485', fontStyle:'italic' }}>Magnifique — votre jardin rayonne aujourd'hui.</div>}
+          {confetti && <div style={{ textAlign:'center', padding:'8px 0 2px', fontSize:14, color:'var(--green)', fontStyle:'italic' }}>Magnifique — votre jardin rayonne aujourd'hui.</div>}
         </div>
 
         {/* Actions */}
@@ -3629,7 +3722,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                  <span style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Mon rituel rapide</span>
+                  <span style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'var(--text3)' : 'var(--text)', fontWeight:500 }}>Mon rituel rapide</span>
                   {!progress.ritual && (
                     <span style={{ fontSize:9, color:'rgba(238,232,218,0.35)', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'1px 7px', whiteSpace:'nowrap', flexShrink:0 }}>
                       {remainingZones}/5
@@ -3667,14 +3760,14 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           })()}
 
           {/* 2 Fleurs */}
-          <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? '#e088a835' : flowersExhausted ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)'}`, background: progress.flowers ? 'rgba(224,136,168,0.05)' : flowersExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
+          <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? 'var(--zone-flowers)' : flowersExhausted ? 'var(--border2)' : 'var(--border2)'}`, background: progress.flowers ? 'rgba(255,255,255,0.03)' : flowersExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:42, height:42, borderRadius:13, background: flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.04)' : 'rgba(224,136,168,0.15)', border:`1px solid ${flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.08)' : 'rgba(224,136,168,0.28)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background: flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)', border:`1px solid ${flowersExhausted && !progress.flowers ? 'var(--border2)' : 'var(--zone-flowers)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
                 {progress.flowers ? '✓' : flowersExhausted ? '🚫' : '💐'}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.flowers || flowersExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Offrir un élan à un jardin fragile</div>
-                <div style={{ fontSize: isMobile ? 12 : 11, color: flowersExhausted && !progress.flowers ? 'rgba(238,232,218,0.25)' : 'rgba(224,136,168,0.60)', marginTop:2, fontStyle:'italic' }}>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.flowers || flowersExhausted ? 'var(--text3)' : 'var(--text)', fontWeight:500 }}>Offrir un élan à un jardin fragile</div>
+                <div style={{ fontSize: isMobile ? 12 : 11, color: flowersExhausted && !progress.flowers ? 'var(--text3)' : 'var(--zone-flowers)', marginTop:2, fontStyle:'italic' }}>
                   {progress.flowers
                     ? `Élan envoyé — merci pour eux`
                     : flowersExhausted
@@ -3682,7 +3775,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                       : `Ces jardins ont besoin d'un peu d'énergie`}
                 </div>
               </div>
-              {progress.flowers && <span style={{ fontSize:18, color:'#e088a8' }}>✓</span>}
+              {progress.flowers && <span style={{ fontSize:18, color:'var(--zone-flowers)' }}>✓</span>}
             </div>
             {!progress.flowers && !flowersExhausted && weakestPeople.length > 0 && (
               <div style={{ padding:'0 16px 14px', display:'flex', flexDirection:'column', gap:10 }}>
@@ -3693,12 +3786,10 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 {weakestPeople.map(p => {
                   const sent = flowersSent.has(p.id)
                   return (
-                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'rgba(224,136,168,0.14)' : 'rgba(255,255,255,0.04)', border:`1px solid ${sent ? 'rgba(224,136,168,0.40)' : 'rgba(255,255,255,0.08)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
-                      {/* Vitalité en premier — c'est la raison du geste */}
-                      <span style={{ fontSize:11, fontWeight:600, color: sent ? 'rgba(224,136,168,0.70)' : 'rgba(238,232,218,0.45)', letterSpacing:'.02em' }}>{sent ? '✓' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
+                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)', border:`1px solid ${sent ? 'var(--zone-flowers)' : 'var(--border2)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                      <span style={{ fontSize:11, fontWeight:600, color: sent ? 'var(--zone-flowers)' : 'var(--text3)', letterSpacing:'.02em' }}>{sent ? '✓' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
                       <span style={{ fontSize:22, lineHeight:1 }}>{sent ? '🌿' : '💐'}</span>
-                      {/* Nom en secondaire */}
-                      <span style={{ fontSize: isMobile ? 10 : 9, color: sent ? 'rgba(224,136,168,0.75)' : 'rgba(238,232,218,0.40)', lineHeight:1.2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>
+                      <span style={{ fontSize: isMobile ? 10 : 9, color: sent ? 'var(--zone-flowers)' : 'var(--text3)', lineHeight:1.2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>
                         {sent ? 'Soutenu' : (p.display_name?.split(' ')[0] ?? 'Jardinier')}
                       </span>
                     </button>
@@ -3710,29 +3801,29 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           </div>
 
           {/* 3 Pensee */}
-          <div style={{ borderRadius:16, border:`1px solid ${progress.thought ? '#f0c07035' : thoughtExhausted ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)'}`, background: progress.thought ? 'rgba(240,192,112,0.05)' : thoughtExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: thoughtExhausted && !progress.thought ? 0.45 : 1, transition:'all .3s' }}>
+          <div style={{ borderRadius:16, border:`1px solid ${progress.thought ? 'var(--gold)' : thoughtExhausted ? 'var(--border2)' : 'var(--border2)'}`, background: progress.thought ? 'rgba(255,255,255,0.03)' : thoughtExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: thoughtExhausted && !progress.thought ? 0.45 : 1, transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:42, height:42, borderRadius:13, background: thoughtExhausted && !progress.thought ? 'rgba(255,255,255,0.04)' : 'rgba(240,192,112,0.15)', border:`1px solid ${thoughtExhausted && !progress.thought ? 'rgba(255,255,255,0.08)' : 'rgba(240,192,112,0.28)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background: thoughtExhausted && !progress.thought ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)', border:`1px solid ${thoughtExhausted && !progress.thought ? 'var(--border2)' : 'var(--gold)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
                 {progress.thought ? '✓' : thoughtExhausted ? '🚫' : '💌'}
               </div>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.thought || thoughtExhausted ? 'rgba(238,232,218,0.40)' : 'rgba(238,232,218,0.92)', fontWeight:500 }}>Envoyer une belle pensée à un jardinier proche</div>
-                <div style={{ fontSize: isMobile ? 12 : 11, color: thoughtExhausted && !progress.thought ? 'rgba(238,232,218,0.25)' : 'rgba(240,192,112,0.70)', marginTop:2, fontStyle: thoughtExhausted && !progress.thought ? 'italic' : 'normal' }}>
+                <div style={{ fontSize: isMobile ? 15 : 14, color: progress.thought || thoughtExhausted ? 'var(--text3)' : 'var(--text)', fontWeight:500 }}>Envoyer une belle pensée à un jardinier proche</div>
+                <div style={{ fontSize: isMobile ? 12 : 11, color: thoughtExhausted && !progress.thought ? 'var(--text3)' : 'var(--gold)', marginTop:2, fontStyle: thoughtExhausted && !progress.thought ? 'italic' : 'normal' }}>
                   {progress.thought
-                    ? <span>Envoyé à <strong style={{color:'rgba(255,220,140,0.65)'}}>{[closestFriend?.display_name?.split(' ')[0], closestFriend?.flower_name].filter(Boolean).join(' · ')}</strong></span>
+                    ? <span>Envoyé à <strong style={{color:'var(--gold-warm)'}}>{[closestFriend?.display_name?.split(' ')[0], closestFriend?.flower_name].filter(Boolean).join(' · ')}</strong></span>
                     : thoughtExhausted
                       ? `Tous vos amis ont déjà reçu un cœur aujourd'hui`
                       : closestFriend
-                        ? <span>Pour <strong style={{color:'rgba(255,220,140,0.85)'}}>{[closestFriend.display_name?.split(' ')[0], closestFriend.flower_name].filter(Boolean).join(' · ')}</strong></span>
+                        ? <span>Pour <strong style={{color:'var(--gold)'}}>{[closestFriend.display_name?.split(' ')[0], closestFriend.flower_name].filter(Boolean).join(' · ')}</strong></span>
                         : 'Aucun ami disponible'}
                 </div>
               </div>
               {!progress.thought && !thoughtExhausted && closestFriend && (
-                <button onClick={handleSendThought} style={{ background:'rgba(240,192,112,0.10)', border:'1px solid rgba(240,192,112,0.28)', borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color:'rgba(255,220,140,0.90)', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
+                <button onClick={handleSendThought} style={{ background:'var(--green3)', border:'1px solid var(--greenT)', borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color:'var(--gold)', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
                   Lui offrir 🌿
                 </button>
               )}
-              {progress.thought && <span style={{ fontSize:18, color:'#f0c070' }}>✓</span>}
+              {progress.thought && <span style={{ fontSize:18, color:'var(--gold)' }}>✓</span>}
             </div>
           </div>
 
@@ -3742,6 +3833,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
             progress={progress}
             isMobile={isMobile}
             onJoin={handleJoinEgregore}
+            onBurst={ps => setParticles(prev => [...prev, ...ps])}
           />
 
           {/* Passer */}
@@ -3750,6 +3842,12 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           </div>
         </div>
       </div>
+
+      {/* Particules égrégore — rendues hors du modal pour passer au-dessus */}
+      {particles.map(p => (
+        <WakeUpParticle key={p.id} {...p}
+          onDone={() => setParticles(prev => prev.filter(q => q.id !== p.id))} />
+      ))}
     </div>
   )
 }
@@ -4202,9 +4300,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 : timeContext === 'aprem' ? '#96d485'
                 : 'rgba(180,160,240,0.9)',
             }}>
-              {timeContext === 'matin' ? 'Démarrer ma matinée'
-                : timeContext === 'aprem' ? 'Pause jardin'
-                : 'Moment réseau'}
+              {timeContext === 'matin' ? 'Mon jardin en express'
+                : timeContext === 'aprem' ? 'Une micro-pause qui compte'
+                : 'Un instant pour mon jardin'}
             </span>
           </div>
         )}
@@ -4265,25 +4363,35 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 <div
                   onClick={() => window.dispatchEvent(new CustomEvent('openWakeUp'))}
                   style={{
-                    display:'flex', alignItems:'center', gap:8,
-                    padding:'10px 16px', borderRadius:12, cursor:'pointer',
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+                    padding:'13px 20px', borderRadius:13, cursor:'pointer',
                     background: timeContext === 'matin'
-                      ? 'linear-gradient(135deg,rgba(232,192,96,0.12),rgba(232,192,96,0.05))'
-                      : 'linear-gradient(135deg,rgba(150,212,133,0.10),rgba(150,212,133,0.04))',
+                      ? 'linear-gradient(135deg,rgba(232,192,96,0.14),rgba(232,192,96,0.06))'
+                      : timeContext === 'aprem'
+                      ? 'linear-gradient(135deg,rgba(150,212,133,0.12),rgba(150,212,133,0.05))'
+                      : 'linear-gradient(135deg,rgba(180,160,240,0.12),rgba(180,160,240,0.05))',
                     border: timeContext === 'matin'
-                      ? '1px solid rgba(232,192,96,0.25)'
-                      : '1px solid rgba(150,212,133,0.20)',
-                    alignSelf:'flex-start',
+                      ? '1px solid rgba(232,192,96,0.32)'
+                      : timeContext === 'aprem'
+                      ? '1px solid rgba(150,212,133,0.28)'
+                      : '1px solid rgba(180,160,240,0.28)',
                     WebkitTapHighlightColor:'transparent',
+                    transition:'all .18s ease',
                   }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '.82'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '1';   e.currentTarget.style.transform = 'none' }}
                 >
-                  <span style={{ fontSize:14 }}>⚡</span>
+                  <span style={{ fontSize:16 }}>⚡</span>
                   <span style={{
-                    fontSize:12, fontWeight:500, letterSpacing:'.04em',
+                    fontSize:13, fontWeight:500, letterSpacing:'.04em',
                     fontFamily:"'Jost',sans-serif",
-                    color: timeContext === 'matin' ? '#e8c060' : '#96d485',
+                    color: timeContext === 'matin' ? 'var(--gold)'
+                      : timeContext === 'aprem' ? 'var(--green)'
+                      : 'rgba(180,160,240,0.9)',
                   }}>
-                    {timeContext === 'matin' ? 'Démarrer ma matinée' : 'Pause jardin'}
+                    {timeContext === 'matin' ? 'Mon jardin en express'
+                      : timeContext === 'aprem' ? 'Une micro-pause qui compte'
+                      : 'Un instant pour mon jardin'}
                   </span>
                 </div>
               )}
@@ -4310,7 +4418,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           }}>
             {/* Colonne gauche : fleur */}
             <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
-            {/* Colonne droite : insight si bilan fait, sinon message d'accueil */}
+            {/* Colonne droite : bilan si pas fait, insight si fait, bouton express desktop */}
             <div style={{
               flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
               padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
@@ -4319,10 +4427,30 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               maxHeight: isMobile ? 200 : 'none',
               overflow: isMobile ? 'hidden' : 'visible',
             }}>
-              {bilanDoneToday && degradation ? (
-                <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
-              ) : (
-                <MessageJardin profile={profile} isMobile={isMobile} />
+              {bilanDoneToday && degradation
+                  ? <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
+                  : <MessageJardin profile={profile} isMobile={isMobile} />
+              }
+              {/* Bouton Action rapide — desktop */}
+              {!isMobile && (
+                <div
+                  onClick={() => window.dispatchEvent(new CustomEvent('openWakeUp'))}
+                  style={{
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+                    padding:'13px 20px', borderRadius:13, cursor:'pointer',
+                    background:'linear-gradient(135deg,rgba(150,212,133,0.12),rgba(150,212,133,0.05))',
+                    border:'1px solid rgba(150,212,133,0.28)',
+                    WebkitTapHighlightColor:'transparent',
+                    transition:'all .18s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity='.82'; e.currentTarget.style.transform='translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity='1';   e.currentTarget.style.transform='none' }}
+                >
+                  <span style={{ fontSize:16 }}>⚡</span>
+                  <span style={{ fontSize:13, fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'var(--green)' }}>
+                    Une micro-pause qui compte
+                  </span>
+                </div>
               )}
             </div>
           </div>
@@ -4358,9 +4486,27 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 flex:'1 1 0', minWidth:0,
                 padding:'18px 20px',
                 display:'flex', flexDirection:'column',
-                justifyContent:'center',
+                justifyContent:'center', gap:10,
                 overflow:'auto',
               }}>
+                <div
+                  onClick={() => window.dispatchEvent(new CustomEvent('openWakeUp'))}
+                  style={{
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+                    padding:'13px 20px', borderRadius:13, cursor:'pointer',
+                    background:'linear-gradient(135deg,rgba(180,160,240,0.12),rgba(180,160,240,0.05))',
+                    border:'1px solid rgba(180,160,240,0.28)',
+                    WebkitTapHighlightColor:'transparent',
+                    transition:'all .18s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity='.82'; e.currentTarget.style.transform='translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity='1';   e.currentTarget.style.transform='none' }}
+                >
+                  <span style={{ fontSize:16 }}>⚡</span>
+                  <span style={{ fontSize:13, fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'rgba(180,160,240,0.9)' }}>
+                    Un instant pour mon jardin
+                  </span>
+                </div>
                 <BoiteAGraines userId={userId} inline />
               </div>
             </div>

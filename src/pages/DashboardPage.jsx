@@ -10,7 +10,7 @@ import { useDefi }   from '../hooks/useDefi'
 import { supabase }  from '../core/supabaseClient'
 import '../styles/dashboard.css'
 
-import { useIsMobile, useProfile, useLumens, LumenBadge, LumenOrb, LumensCard } from './dashboardShared'
+import { useIsMobile, useProfile, useLumens, LumenBadge, LumenOrb, LumensCard, clearProfileCache } from './dashboardShared'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { logActivity } from '../utils/logActivity'
 import PushNotificationButton from '../components/PushNotificationButton'
@@ -171,8 +171,8 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
             {item.done && (
               <div style={{
                 flexShrink:0, width:20, height:20, borderRadius:'50%',
-                background:'rgba(150,212,133,0.12)',
-                border:'1px solid rgba(150,212,133,0.30)',
+                background:'var(--green3)',
+                border:'1px solid var(--greenT)',
                 display:'flex', alignItems:'center', justifyContent:'center',
                 fontSize:10, color:'var(--greenT)',
               }}>✓</div>
@@ -236,11 +236,11 @@ function ProfileModal({ user, onClose }) {
         <button className="profile-modal-close" onClick={onClose}>✕</button>
         <div className="profile-modal-title">Mon espace</div>
         {/* Onglets */}
-        <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,0.08)', marginBottom:16, marginTop:4 }}>
+        <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--border2)', marginBottom:16, marginTop:4 }}>
           {[['profil','🌸 Mon profil'],['bibliotheque','🎧 Ma bibliothèque']].map(([id,lbl]) => (
             <button key={id} onClick={() => setTab(id)}
               style={{ padding:'8px 16px', fontSize:11, letterSpacing:'.06em', background:'none', border:'none',
-                borderBottom: tab===id ? '2px solid #96d485' : '2px solid transparent',
+                borderBottom: tab===id ? '2px solid var(--green)' : '2px solid transparent',
                 color: tab===id ? 'var(--green)' : 'var(--text3)', cursor:'pointer',
                 fontFamily:"'Jost',sans-serif", marginBottom:-1, transition:'all .2s' }}>
               {lbl}
@@ -282,7 +282,7 @@ function ProfileModal({ user, onClose }) {
         {/* Toggle visibilité Le Jardin */}
         <div style={{
           marginTop:16, padding:'12px 14px',
-          background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)',
+          background:'rgba(255,255,255,0.03)', border:'1px solid var(--border2)',
           borderRadius:10, display:'flex', alignItems:'center', justifyContent:'space-between', gap:12
         }}>
           <div>
@@ -295,8 +295,8 @@ function ProfileModal({ user, onClose }) {
             onClick={() => !loading && setVisibility(v => !v)}
             style={{
               width:44, height:24, borderRadius:100, flexShrink:0, cursor:'pointer',
-              background: visibility ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.08)',
-              border: `1px solid ${visibility ? 'rgba(150,212,133,0.5)' : 'rgba(255,255,255,0.12)'}`,
+              background: visibility ? 'var(--green2)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${visibility ? 'var(--greenT)' : 'rgba(255,255,255,0.12)'}`,
               position:'relative', transition:'all .25s',
               WebkitTapHighlightColor:'transparent',
             }}
@@ -380,7 +380,11 @@ export default function DashboardPage() {
   const isStripeReturn = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
     const isReturn = params.has('lumens') || params.has('premium')
-    if (isReturn) window.history.replaceState({}, '', window.location.pathname)
+    if (isReturn) {
+      window.history.replaceState({}, '', window.location.pathname)
+      // Invalider le cache profil pour forcer le rechargement du statut premium
+      if (params.has('premium')) clearProfileCache(user?.id)
+    }
     return isReturn
   }, [])
 
@@ -561,7 +565,7 @@ export default function DashboardPage() {
       {showAccessModal && (
         <AccessPage
           onActivateFree={() => setShowAccessModal(false)}
-          onSuccess={() => { setShowAccessModal(false) }}
+          onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }}
           onBack={() => setShowAccessModal(false)}
         />
       )}
@@ -581,7 +585,7 @@ export default function DashboardPage() {
         {showLumensModal && (
           <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
             <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
-            <div style={{ position:'relative', background:'#1a2e1a', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none' }}>
+            <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', borderBottom:'none' }}>
               <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
               <LumensCard
                 lumens={lumens}
@@ -701,7 +705,7 @@ export default function DashboardPage() {
           {!isMobile && showLumensModal && (
             <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
               <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
-              <div style={{ position:'relative', background:'#1a2e1a', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
+              <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
                 <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:16, background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
                 <LumensCard
                   lumens={lumens}
@@ -776,7 +780,7 @@ export default function DashboardPage() {
                     <span style={{ fontSize:12 }}>🛡️</span>
                     <span style={{ fontSize:10, color:'var(--gold-warm)', fontFamily:'Jost,sans-serif' }}>Administration</span>
                     {pendingReports > 0 && (
-                      <div style={{ background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                      <div style={{ background:'var(--red)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
                         {pendingReports}
                       </div>
                     )}
@@ -827,7 +831,7 @@ export default function DashboardPage() {
                 style={{
                   width:36, height:36, borderRadius:'50%', flexShrink:0,
                   display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
-                  background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.10)',
+                  background:'var(--bg3)', border:'1px solid var(--border)',
                   fontSize:17, WebkitTapHighlightColor:'transparent',
                   transition:'background .2s',
                 }}
@@ -843,8 +847,8 @@ export default function DashboardPage() {
                 <div onClick={() => setShowAccessModal(true)} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer',
                   padding: '10px 24px', borderRadius: 24,
-                  background: 'linear-gradient(90deg, rgba(232,192,96,0.13), rgba(180,160,240,0.13))',
-                  border: '1px solid rgba(232,192,96,0.28)',
+                  background: 'linear-gradient(90deg, color-mix(in srgb, var(--gold) 13%, transparent), rgba(180,160,240,0.13))',
+                  border: '1px solid color-mix(in srgb, var(--gold) 28%, transparent)',
                 }}>
                   <span style={{ fontSize: 15 }}>✨</span>
                   <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.4 }}>
@@ -917,7 +921,7 @@ export default function DashboardPage() {
               {showMjRight && (
                 <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
                   <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowMjRight(false)} />
-                  <div style={{ position:'relative', background:'#1a2e1a', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid rgba(255,255,255,0.10)', borderBottom:'none' }}>
+                  <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', borderBottom:'none' }}>
                     <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
                     <LumensCard
                       lumens={lumens}
@@ -966,8 +970,8 @@ export default function DashboardPage() {
                         {/* Avatar */}
                         <div style={{
                           width:46, height:46, borderRadius:'50%', flexShrink:0,
-                          background:'linear-gradient(135deg,rgba(232,192,96,0.25),rgba(150,212,133,0.15))',
-                          border:'1px solid rgba(232,192,96,0.30)',
+                          background:'linear-gradient(135deg, color-mix(in srgb, var(--gold) 25%, transparent), var(--green3))',
+                          border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)',
                           display:'flex', alignItems:'center', justifyContent:'center',
                           fontSize:20, color:'var(--gold)', fontWeight:600,
                         }}>{initial}</div>
@@ -1034,7 +1038,7 @@ export default function DashboardPage() {
                     onClick={() => { setShowSettingsDrawer(false); window.openAccessModal?.() }}
                     style={{
                       display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
-                      background:'rgba(232,192,96,0.07)', border:'1px solid rgba(232,192,96,0.18)',
+                      background:'color-mix(in srgb, var(--gold) 7%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 18%, transparent)',
                       borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
                     }}
                   >
@@ -1063,7 +1067,7 @@ export default function DashboardPage() {
                         <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>Gestion de la plateforme</div>
                       </div>
                       {pendingReports > 0 && (
-                        <div style={{ background:'rgba(210,80,80,0.9)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                        <div style={{ background:'var(--red)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
                           {pendingReports}
                         </div>
                       )}
@@ -1075,7 +1079,7 @@ export default function DashboardPage() {
                     onClick={() => { setShowSettingsDrawer(false); signOut() }}
                     style={{
                       display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
-                      background:'rgba(210,80,80,0.06)', border:'1px solid rgba(210,80,80,0.15)',
+                      background:'var(--red2)', border:'1px solid var(--redT)',
                       borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
                     }}
                   >

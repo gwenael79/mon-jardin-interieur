@@ -8,22 +8,22 @@ import { supabase } from '../core/supabaseClient'
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap');
 
-.jt-root { font-family:'Jost',sans-serif; color:#f2ede0; width:100%; }
+.jt-root { font-family:'Jost',sans-serif; color:var(--text); width:100%; }
 
 /* ── Tabs ── */
 .jt-tabs { display:flex; gap:0; border-bottom:1px solid rgba(255,255,255,0.08); margin-bottom:28px; }
 .jt-tab  { padding:10px 22px; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
-           color:rgba(242,237,224,0.38); cursor:pointer; border-bottom:2px solid transparent;
+           color:var(--text3); cursor:pointer; border-bottom:2px solid transparent;
            margin-bottom:-1px; transition:all .2s; font-family:'Jost',sans-serif; background:none; border-top:none; border-left:none; border-right:none; }
-.jt-tab.active { color:#f2ede0; border-bottom-color:currentColor; }
+.jt-tab.active { color:var(--text); border-bottom-color:currentColor; }
 
 /* ── Filtres ── */
 .jt-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
 .jt-filter  { padding:5px 14px; border-radius:20px; font-size:11px; cursor:pointer;
               border:1px solid rgba(255,255,255,0.10); background:transparent;
-              color:rgba(242,237,224,0.40); font-family:'Jost',sans-serif;
+              color:var(--text3); font-family:'Jost',sans-serif;
               transition:all .15s; }
-.jt-filter.active { background:rgba(255,255,255,0.08); color:#f2ede0;
+.jt-filter.active { background:rgba(255,255,255,0.08); color:var(--text);
                     border-color:rgba(255,255,255,0.25); }
 
 /* ── Grille ── */
@@ -39,9 +39,9 @@ const css = `
 .jt-card-img img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
 .jt-card-body { padding:10px 14px 14px; flex:1; display:flex; flex-direction:column; gap:4px; }
 .jt-card-cat  { font-size:9px; letter-spacing:.12em; text-transform:uppercase;
-                color:rgba(242,237,224,0.35); }
+                color:var(--text3); }
 .jt-card-title { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:300;
-                 color:#f2ede0; line-height:1.25; }
+                 color:var(--text); line-height:1.25; }
 .jt-card-desc  { display:none; }
 .jt-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
 .jt-card-price { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:300; }
@@ -54,12 +54,12 @@ const css = `
 .jt-vendeur-av { width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,0.10);
                  display:flex; align-items:center; justify-content:center;
                  font-size:9px; font-weight:500; flex-shrink:0; }
-.jt-vendeur-name { font-size:10px; color:rgba(242,237,224,0.45); }
+.jt-vendeur-name { font-size:10px; color:var(--text3); }
 
 /* ── Empty ── */
 .jt-empty { text-align:center; padding:60px 20px; }
 .jt-empty-icon { font-size:40px; opacity:.25; margin-bottom:16px; }
-.jt-empty-text { font-size:13px; color:rgba(242,237,224,0.30); font-style:italic; }
+.jt-empty-text { font-size:13px; color:var(--text3); font-style:italic; }
 
 /* ── Modal ── */
 .jt-overlay { position:fixed; inset:0; z-index:400; display:flex; align-items:center;
@@ -75,10 +75,10 @@ const css = `
                 background:rgba(255,255,255,0.04); display:flex; align-items:center;
                 justify-content:center; font-size:64px; margin-bottom:20px; }
 .jt-modal-cat   { font-size:9px; letter-spacing:.14em; text-transform:uppercase;
-                  color:rgba(242,237,224,0.35); margin-bottom:6px; }
+                  color:var(--text3); margin-bottom:6px; }
 .jt-modal-title { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:300;
-                  color:#f2ede0; line-height:1.2; margin-bottom:12px; }
-.jt-modal-desc  { font-size:13px; color:rgba(242,237,224,0.62); line-height:1.85;
+                  color:var(--text); line-height:1.2; margin-bottom:12px; }
+.jt-modal-desc  { font-size:13px; color:var(--text3); line-height:1.85;
                   margin-bottom:20px; }
 .jt-modal-price { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:300;
                   margin-bottom:20px; }
@@ -94,9 +94,9 @@ const css = `
 
 // ── Couleurs par type ────────────────────────────────────────────────────────
 const TYPE_CONFIG = {
-  digital:  { label:'Contenus digitaux',          color:'#b4a0f0', bg:'rgba(180,160,240,0.10)', icon:'🎧' },
+  digital:  { label:'Contenus digitaux',          color:'var(--green)', bg:'rgba(180,160,240,0.10)', icon:'🎧' },
   physique: { label:'Articles de nos partenaires', color:'#82c8a0', bg:'rgba(130,200,160,0.10)', icon:'🤝' },
-  occasion: { label:"Produits d'occasion",         color:'#e8c060', bg:'rgba(232,192,96,0.10)',  icon:'🛍' },
+  occasion: { label:"Produits d'occasion",         color:'var(--gold)', bg:'rgba(232,192,96,0.10)',  icon:'🛍' },
 }
 
 // ── Catégories par type ──────────────────────────────────────────────────────
@@ -187,12 +187,12 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, lineHeight:1, marginBottom:6 }}>
             La <em style={{ fontStyle:'italic', color:tc.color }}>Jardinothèque</em>
           </div>
-          <p style={{ fontSize:12, color:'rgba(242,237,224,0.40)', lineHeight:1.6, maxWidth:480 }}>
+          <p style={{ fontSize:12, color:'var(--text3)', lineHeight:1.6, maxWidth:480 }}>
             Ressources, créations de partenaires et échanges de la communauté — tout ce qui nourrit votre jardin intérieur.
           </p>
         </div>
         <button onClick={() => setShowPartenaire(true)}
-          style={{ flexShrink:0, padding:'9px 18px', borderRadius:20, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.08)', color:'#96d485', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em', transition:'all .2s', marginTop:6 }}>
+          style={{ flexShrink:0, padding:'9px 18px', borderRadius:20, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em', transition:'all .2s', marginTop:6 }}>
           🌿 Partenaires
         </button>
       </div>
@@ -221,7 +221,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
 
         {/* ── Grille ── */}
         {loading ? (
-          <div style={{ textAlign:'center', padding:'60px 0', color:'rgba(242,237,224,0.25)', fontSize:13, fontStyle:'italic' }}>
+          <div style={{ textAlign:'center', padding:'60px 0', color:'var(--text3)', fontSize:13, fontStyle:'italic' }}>
             Chargement…
           </div>
         ) : filtered.length === 0 ? (
@@ -390,7 +390,7 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
         {/* Handle + fermer */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
           <div style={{ width:36, height:3, background:'rgba(255,255,255,0.18)', borderRadius:100 }} />
-          <button onClick={onClose} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
         </div>
 
         {/* Image */}
@@ -419,9 +419,9 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
               {p.vendeur_nom.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div style={{ fontSize:12, color:'rgba(242,237,224,0.80)', fontWeight:500 }}>{p.vendeur_nom}</div>
-              {p.type === 'physique' && <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)' }}>Partenaire officiel</div>}
-              {p.type === 'occasion' && <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)' }}>Membre de la communauté</div>}
+              <div style={{ fontSize:12, color:'var(--text2)', fontWeight:500 }}>{p.vendeur_nom}</div>
+              {p.type === 'physique' && <div style={{ fontSize:10, color:'var(--text3)' }}>Partenaire officiel</div>}
+              {p.type === 'occasion' && <div style={{ fontSize:10, color:'var(--text3)' }}>Membre de la communauté</div>}
             </div>
           </div>
         )}
@@ -439,8 +439,8 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
           </button>
         ) : isDigital && hasBought ? (
           <div style={{ padding:'14px', borderRadius:12, background:'rgba(150,212,133,0.08)', border:'1px solid rgba(150,212,133,0.30)', textAlign:'center' }}>
-            <div style={{ fontSize:13, color:'#96d485', fontWeight:500, marginBottom:6 }}>✓ Vous possédez ce produit</div>
-            <div style={{ fontSize:11, color:'rgba(242,237,224,0.45)' }}>Retrouvez-le dans Mon profil → 🎧 Ma bibliothèque</div>
+            <div style={{ fontSize:13, color:'var(--green)', fontWeight:500, marginBottom:6 }}>✓ Vous possédez ce produit</div>
+            <div style={{ fontSize:11, color:'var(--text3)' }}>Retrouvez-le dans Mon profil → 🎧 Ma bibliothèque</div>
           </div>
         ) : (
           <>
@@ -451,17 +451,17 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
               </button>
               {p.accepte_lumens && p.prix_lumens && (
                 <button className="jt-modal-btn" onClick={handlePayLumens} disabled={payingLumens}
-                  style={{ background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.40)', color:'#e8c060', opacity: payingLumens ? 0.7 : 1 }}>
+                  style={{ background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.40)', color:'var(--gold)', opacity: payingLumens ? 0.7 : 1 }}>
                   {payingLumens ? '⏳ Traitement…' : `✦ Payer ${p.prix_lumens} Lumens`}
                 </button>
               )}
             </div>
-            {payErr && <div style={{ fontSize:12, color:'#e87060', marginTop:8, textAlign:'center' }}>{payErr}</div>}
+            {payErr && <div style={{ fontSize:12, color:'var(--red)', marginTop:8, textAlign:'center' }}>{payErr}</div>}
           </>
         )}
 
         {/* Mention légale discrète */}
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.20)', textAlign:'center', marginTop:14, lineHeight:1.6 }}>
+        <div style={{ fontSize:10, color:'var(--text3)', textAlign:'center', marginTop:14, lineHeight:1.6 }}>
           {isDigital && 'Paiement sécurisé via Stripe · Accès immédiat après achat'}
           {p.type === 'physique' && 'Lien vers le site partenaire · Mon Jardin Intérieur ne perçoit pas de commission'}
           {isOccasion && 'Vente entre particuliers · Mon Jardin Intérieur n\'intervient pas dans la transaction'}
@@ -499,28 +499,28 @@ function VentesDashboard({ partenaireId }) {
   const totalBrut = ventes.reduce((s, v) => s + Number(v.montant_brut), 0)
   const totalNet  = ventes.reduce((s, v) => s + Number(v.montant_net), 0)
   const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
-  const inp = { padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.80)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
+  const inp = { padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.04)', color:'var(--text2)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
 
   return (
     <div style={{ marginTop:20, paddingTop:16, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.10em', textTransform:'uppercase' }}>Mes ventes</div>
+        <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase' }}>Mes ventes</div>
         <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp }}/>
       </div>
       {loading ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
       ) : ventes.length === 0 ? (
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Aucune vente ce mois.</div>
+        <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Aucune vente ce mois.</div>
       ) : (
         <>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
             {[
-              { lbl:'Ventes brutes', val: fmt(totalBrut), color:'rgba(242,237,224,0.70)' },
-              { lbl:'Commission 15%', val: fmt(totalBrut - totalNet), color:'#e8c060' },
-              { lbl:'Net à reverser', val: fmt(totalNet), color:'#96d485' },
+              { lbl:'Ventes brutes', val: fmt(totalBrut), color:'var(--text2)' },
+              { lbl:'Commission 15%', val: fmt(totalBrut - totalNet), color:'var(--gold)' },
+              { lbl:'Net à reverser', val: fmt(totalNet), color:'var(--green)' },
             ].map(({ lbl, val, color }) => (
               <div key={lbl} style={{ padding:'10px 12px', borderRadius:8, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ fontSize:9, color:'rgba(242,237,224,0.30)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>{lbl}</div>
+                <div style={{ fontSize:9, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>{lbl}</div>
                 <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:300, color }}>{val}</div>
               </div>
             ))}
@@ -528,13 +528,13 @@ function VentesDashboard({ partenaireId }) {
           <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
             {ventes.map(v => (
               <div key={v.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:7, background:'rgba(255,255,255,0.02)' }}>
-                <div style={{ flex:1, fontSize:11, color:'rgba(242,237,224,0.65)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.produits?.titre || 'Produit'}</div>
-                <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)' }}>{fmt(v.montant_brut)}</div>
-                <div style={{ fontSize:11, color:'#96d485', fontWeight:500 }}>{fmt(v.montant_net)} net</div>
+                <div style={{ flex:1, fontSize:11, color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.produits?.titre || 'Produit'}</div>
+                <div style={{ fontSize:11, color:'var(--text3)' }}>{fmt(v.montant_brut)}</div>
+                <div style={{ fontSize:11, color:'var(--green)', fontWeight:500 }}>{fmt(v.montant_net)} net</div>
                 <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20,
                   background: v.statut==="reverse" ? "rgba(150,212,133,0.10)" : "rgba(232,192,96,0.10)",
                   border: v.statut==="reverse" ? "1px solid rgba(150,212,133,0.25)" : "1px solid rgba(232,192,96,0.25)",
-                  color: v.statut==="reverse" ? "#96d485" : "#e8c060" }}>
+                  color: v.statut==="reverse" ? "var(--green)" : "var(--gold)" }}>
                   {v.statut === "reverse" ? "✓ reversé" : "⏳ en attente"}
                 </span>
               </div>
@@ -566,7 +566,7 @@ function PartenaireModal({ partenaire, onLogin, onLogout, onClose, onProductAdde
         {/* Handle */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'16px 24px 0' }}>
           <div style={{ width:36, height:3, background:'rgba(255,255,255,0.18)', borderRadius:100 }} />
-          <button onClick={onClose} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:18, cursor:'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer' }}>✕</button>
         </div>
 
         <div style={{ padding:'20px 24px 0' }}>
@@ -588,28 +588,28 @@ function VueAccueil({ onInscription, onConnexion }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
       <div>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#f2ede0', marginBottom:8 }}>
-          Espace <em style={{ fontStyle:'italic', color:'#96d485' }}>Partenaires</em>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'var(--text)', marginBottom:8 }}>
+          Espace <em style={{ fontStyle:'italic', color:'var(--green)' }}>Partenaires</em>
         </div>
-        <p style={{ fontSize:12, color:'rgba(242,237,224,0.45)', lineHeight:1.8 }}>
+        <p style={{ fontSize:12, color:'var(--text3)', lineHeight:1.8 }}>
           Partagez vos créations, ressources et produits avec la communauté de Mon Jardin Intérieur. Chaque vendeur reçoit un code unique pour gérer sa boutique.
         </p>
       </div>
 
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         <button onClick={onInscription}
-          style={{ padding:'14px', borderRadius:12, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em' }}>
+          style={{ padding:'14px', borderRadius:12, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em' }}>
           🌱 Devenir Partenaire
         </button>
         <button onClick={onConnexion}
-          style={{ padding:'14px', borderRadius:12, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.60)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.04em' }}>
+          style={{ padding:'14px', borderRadius:12, border:'1px solid rgba(255,255,255,0.10)', background:'rgba(255,255,255,0.03)', color:'var(--text3)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.04em' }}>
           🔑 J'ai déjà un code — me connecter
         </button>
       </div>
 
       <div style={{ padding:'12px 16px', background:'rgba(232,192,96,0.08)', border:'1px solid rgba(232,192,96,0.25)', borderRadius:12 }}>
-        <div style={{ fontSize:12, color:'#e8c060', fontWeight:500, marginBottom:4 }}>⏳ Validation requise</div>
-        <div style={{ fontSize:11, color:'rgba(242,237,224,0.55)', lineHeight:1.7 }}>
+        <div style={{ fontSize:12, color:'var(--gold)', fontWeight:500, marginBottom:4 }}>⏳ Validation requise</div>
+        <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.7 }}>
           Après inscription, votre compte est examiné par notre équipe sous 48h. Vous pourrez vous connecter et vendre dès validation.
         </div>
       </div>
@@ -622,37 +622,37 @@ function VueChoixType({ onChoix, onBack }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <button onClick={onBack} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>Créer mon compte</div>
+        <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'var(--text)' }}>Créer mon compte</div>
       </div>
-      <p style={{ fontSize:12, color:'rgba(242,237,224,0.45)', lineHeight:1.75 }}>Quel type de vendeur êtes-vous ?</p>
+      <p style={{ fontSize:12, color:'var(--text3)', lineHeight:1.75 }}>Quel type de vendeur êtes-vous ?</p>
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         <button onClick={() => onChoix('particulier')}
           style={{ padding:'18px 20px', borderRadius:14, border:'1px solid rgba(150,212,133,0.30)', background:'rgba(150,212,133,0.06)', cursor:'pointer', textAlign:'left', display:'flex', flexDirection:'column', gap:5 }}>
           <div style={{ fontSize:20 }}>🌱</div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:19, color:'#f2ede0', fontWeight:300 }}>Particulier</div>
-          <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)', lineHeight:1.6 }}>Créations personnelles, objets d'occasion, produits artisanaux faits maison.</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:19, color:'var(--text)', fontWeight:300 }}>Particulier</div>
+          <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6 }}>Créations personnelles, objets d'occasion, produits artisanaux faits maison.</div>
         </button>
         <button onClick={() => onChoix('professionnel')}
           style={{ padding:'18px 20px', borderRadius:14, border:'1px solid rgba(130,200,240,0.30)', background:'rgba(130,200,240,0.05)', cursor:'pointer', textAlign:'left', display:'flex', flexDirection:'column', gap:5 }}>
           <div style={{ fontSize:20 }}>🏪</div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:19, color:'#f2ede0', fontWeight:300 }}>Professionnel</div>
-          <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)', lineHeight:1.6 }}>Entreprise, marque ou activité commerciale déclarée.</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:19, color:'var(--text)', fontWeight:300 }}>Professionnel</div>
+          <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6 }}>Entreprise, marque ou activité commerciale déclarée.</div>
         </button>
       </div>
     </div>
   )
 }
 
-const INP_STYLE = { padding:'10px 12px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg2)', color:'rgba(242,237,224,0.92)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
-const LBL_STYLE = { fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
+const INP_STYLE = { padding:'10px 12px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg2)', color:'var(--text)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+const LBL_STYLE = { fontSize:11, color:'var(--text2)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
 
 function ErrBox({ msg }) {
   if (!msg) return null
   const isPending = msg.includes('en attente') || msg.includes('vérifié ✓')
   return (
     <div style={{ fontSize:12, lineHeight:1.7, borderRadius:8, padding:'10px 14px',
-      color: isPending ? '#e8c060' : '#e87060',
+      color: isPending ? 'var(--gold)' : 'var(--red)',
       background: isPending ? 'rgba(232,192,96,0.08)' : 'rgba(232,96,96,0.08)',
       border: isPending ? '1px solid rgba(232,192,96,0.25)' : '1px solid rgba(232,96,96,0.25)',
       whiteSpace: 'pre-line' }}>
@@ -669,12 +669,28 @@ async function sendOtp(email) {
 function VueFormParticulier({ onSuccess, onBack }) {
   const [prenom,    setPrenom]    = useState('')
   const [nom,       setNom]       = useState('')
-  const [age,       setAge]       = useState('')
+  const [dob,       setDob]       = useState('')
   const [code,      setCode]      = useState('')
   const [email,     setEmail]     = useState('')
   const [telephone, setTelephone] = useState('')
   const [saving,    setSaving]    = useState(false)
   const [err,       setErr]       = useState('')
+
+  // Calcule l'âge depuis la date de naissance
+  function calcAge(dateStr) {
+    if (!dateStr) return null
+    const birth = new Date(dateStr)
+    if (isNaN(birth.getTime())) return null
+    const today = new Date()
+    let age = today.getFullYear() - birth.getFullYear()
+    const m = today.getMonth() - birth.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
+    return age
+  }
+
+  const age       = calcAge(dob)
+  const ageMineur = dob && age !== null && age < 18
+  const ageValide = dob && age !== null && age >= 18 && age <= 120
 
   const codeOk = code.length >= 8 && /[A-Z]/.test(code) && /[a-z]/.test(code) && /[0-9]/.test(code)
   const codeHints = [
@@ -688,10 +704,10 @@ function VueFormParticulier({ onSuccess, onBack }) {
     setErr('')
     if (!prenom.trim()) { setErr('Le prénom est obligatoire.'); return }
     if (!nom.trim())    { setErr('Le nom est obligatoire.'); return }
-    const ageNum = parseInt(age)
-    if (!age || isNaN(ageNum))  { setErr("L'âge est obligatoire."); return }
-    if (ageNum < 18)  { setErr('Vous devez avoir au moins 18 ans.'); return }
-    if (ageNum > 120) { setErr('Âge invalide.'); return }
+    if (!dob)           { setErr('La date de naissance est obligatoire.'); return }
+    if (age === null)   { setErr('Date de naissance invalide.'); return }
+    if (ageMineur)      { setErr('Vous devez avoir au moins 18 ans pour créer un compte vendeur.'); return }
+    if (age > 120)      { setErr('Date de naissance invalide.'); return }
     if (!codeOk) { setErr('Le code vendeur ne respecte pas les critères de sécurité.'); return }
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('Adresse email invalide.'); return }
     setSaving(true)
@@ -701,7 +717,8 @@ function VueFormParticulier({ onSuccess, onBack }) {
     setSaving(false)
     if (otpErr) { setErr("Envoi impossible : " + otpErr.message); return }
     onSuccess({
-      prenom: prenom.trim(), nom: nom.trim(), age: ageNum,
+      prenom: prenom.trim(), nom: nom.trim(), age: age,
+      date_naissance: dob,
       nom_boutique: prenom.trim() + ' ' + nom.trim(),
       code_vendeur: code,
       email: email.trim(), telephone: telephone.trim() || null,
@@ -712,9 +729,9 @@ function VueFormParticulier({ onSuccess, onBack }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <button onClick={onBack} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
         <div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'#f2ede0' }}>Compte Particulier</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'var(--text)' }}>Compte Particulier</div>
           <div style={{ fontSize:10, color:'rgba(150,212,133,0.60)', marginTop:2 }}>🌱 Vente d'articles d'occasion uniquement</div>
         </div>
       </div>
@@ -724,15 +741,39 @@ function VueFormParticulier({ onSuccess, onBack }) {
         <div><span style={LBL_STYLE}>Nom *</span><input value={nom} onChange={e => setNom(e.target.value)} placeholder="Nom" style={{ ...INP_STYLE }}/></div>
       </div>
 
-      <div style={{ maxWidth:160 }}>
-        <span style={LBL_STYLE}>Âge * <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(18 ans minimum)</span></span>
-        <input type="number" min="18" max="120" value={age} onChange={e => setAge(e.target.value)} placeholder="Votre âge"
-          style={{ ...INP_STYLE, borderColor: age && parseInt(age) < 18 ? '#e87060' : undefined }}/>
-        {age && parseInt(age) < 18 && <div style={{ fontSize:10, color:'#e87060', marginTop:4 }}>Accès réservé aux +18 ans.</div>}
+      <div style={{ maxWidth:220 }}>
+        <span style={LBL_STYLE}>Date de naissance * <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(18 ans minimum)</span></span>
+        <input
+          type="date"
+          value={dob}
+          onChange={e => setDob(e.target.value)}
+          max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+          style={{
+            ...INP_STYLE,
+            colorScheme:'dark',
+            borderColor: ageMineur ? 'var(--red)' : ageValide ? 'rgba(150,212,133,0.40)' : undefined,
+          }}
+        />
+        {/* Affichage âge calculé */}
+        {dob && age !== null && !ageMineur && age <= 120 && (
+          <div style={{ fontSize:10, color:'var(--green)', marginTop:4 }}>✓ {age} ans</div>
+        )}
+        {/* Blocage mineur */}
+        {ageMineur && (
+          <div style={{ marginTop:8, padding:'10px 14px', borderRadius:10,
+            background:'var(--red2)', border:'1px solid var(--redT)',
+            display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:16 }}>🔒</span>
+            <div>
+              <div style={{ fontSize:12, color:'rgba(255,160,160,0.95)', fontWeight:500 }}>Accès refusé</div>
+              <div style={{ fontSize:10, color:'rgba(255,160,160,0.65)', marginTop:1 }}>La création d'un compte vendeur est réservée aux personnes majeures (+18 ans).</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
-        <span style={LBL_STYLE}>Code vendeur * <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(votre clé de connexion)</span></span>
+        <span style={LBL_STYLE}>Code vendeur * <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(votre clé de connexion)</span></span>
         <input value={code} onChange={e => setCode(e.target.value.replace(/\s/g, ''))} placeholder="Ex : MonCode42" style={{ ...INP_STYLE, borderColor: code.length > 0 ? (codeOk ? 'rgba(150,212,133,0.40)' : 'rgba(232,192,96,0.35)') : undefined }}/>
         {code.length > 0 && (
           <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:8 }}>
@@ -740,30 +781,30 @@ function VueFormParticulier({ onSuccess, onBack }) {
               <span key={h.label} style={{ fontSize:10, padding:'2px 8px', borderRadius:20,
                 background: h.ok ? 'rgba(150,212,133,0.10)' : 'rgba(255,255,255,0.03)',
                 border: h.ok ? '1px solid rgba(150,212,133,0.28)' : '1px solid rgba(255,255,255,0.07)',
-                color: h.ok ? '#96d485' : 'rgba(242,237,224,0.28)' }}>
+                color: h.ok ? 'var(--green)' : 'var(--text3)' }}>
                 {h.ok ? '✓' : '·'} {h.label}
               </span>
             ))}
           </div>
         )}
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.45)', marginTop:6 }}>Conservez-le soigneusement — c'est votre seul accès.</div>
+        <div style={{ fontSize:10, color:'var(--text3)', marginTop:6 }}>Conservez-le soigneusement — c'est votre seul accès.</div>
       </div>
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
         <div>
-          <span style={LBL_STYLE}>Email * <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(vérification)</span></span>
+          <span style={LBL_STYLE}>Email * <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(vérification)</span></span>
           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="votre@email.com" style={{ ...INP_STYLE }}/>
         </div>
         <div>
-          <span style={LBL_STYLE}>Téléphone <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(optionnel)</span></span>
+          <span style={LBL_STYLE}>Téléphone <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(optionnel)</span></span>
           <input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder="06 XX XX XX XX" style={{ ...INP_STYLE }}/>
         </div>
       </div>
 
       <ErrBox msg={err} />
 
-      <button onClick={handleSubmit} disabled={saving}
-        style={{ padding:'13px', borderRadius:12, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:500, opacity: saving ? 0.6 : 1 }}>
+      <button onClick={handleSubmit} disabled={saving || !!ageMineur}
+        style={{ padding:'13px', borderRadius:12, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: (saving || ageMineur) ? 'not-allowed' : 'pointer', fontWeight:500, opacity: (saving || ageMineur) ? 0.4 : 1 }}>
         {saving ? 'Envoi…' : '→ Recevoir mon code de vérification'}
       </button>
     </div>
@@ -819,9 +860,9 @@ function VueFormPro({ onSuccess, onBack }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <button onClick={onBack} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
         <div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'#f2ede0' }}>Compte Professionnel</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'var(--text)' }}>Compte Professionnel</div>
           <div style={{ fontSize:10, color:'rgba(130,200,240,0.60)', marginTop:2 }}>🏪 Vendeur professionnel</div>
         </div>
       </div>
@@ -833,10 +874,10 @@ function VueFormPro({ onSuccess, onBack }) {
 
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
         <div>
-          <span style={LBL_STYLE}>SIRET * <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(14 chiffres)</span></span>
+          <span style={LBL_STYLE}>SIRET * <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(14 chiffres)</span></span>
           <input value={siret} onChange={e => setSiret(e.target.value.replace(/\D/g,'').slice(0,14))} placeholder="00000000000000" maxLength={14}
             style={{ ...INP_STYLE, borderColor: siret.length > 0 ? (siretOk ? 'rgba(150,212,133,0.40)' : 'rgba(232,192,96,0.35)') : undefined }}/>
-          {siret.length > 0 && !siretOk && <div style={{ fontSize:10, color:'rgba(232,192,96,0.70)', marginTop:4 }}>{siret.length}/14 chiffres</div>}
+          {siret.length > 0 && !siretOk && <div style={{ fontSize:10, color:'var(--gold-warm)', marginTop:4 }}>{siret.length}/14 chiffres</div>}
         </div>
         <div><span style={LBL_STYLE}>Téléphone</span><input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder="06 XX XX XX XX" style={{ ...INP_STYLE }}/></div>
       </div>
@@ -844,7 +885,7 @@ function VueFormPro({ onSuccess, onBack }) {
       <div><span style={LBL_STYLE}>Site web</span><input value={siteWeb} onChange={e => setSiteWeb(e.target.value)} placeholder="https://..." style={{ ...INP_STYLE }}/></div>
 
       <div>
-        <span style={LBL_STYLE}>Code vendeur * <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(votre clé de connexion)</span></span>
+        <span style={LBL_STYLE}>Code vendeur * <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(votre clé de connexion)</span></span>
         <input value={code} onChange={e => setCode(e.target.value.replace(/\s/g,''))} placeholder="Ex : MaBoutique42"
           style={{ ...INP_STYLE, borderColor: code.length > 0 ? (codeOk ? 'rgba(150,212,133,0.40)' : 'rgba(232,192,96,0.35)') : undefined }}/>
         {code.length > 0 && (
@@ -853,22 +894,22 @@ function VueFormPro({ onSuccess, onBack }) {
               <span key={h.label} style={{ fontSize:10, padding:'2px 8px', borderRadius:20,
                 background: h.ok ? 'rgba(150,212,133,0.10)' : 'rgba(255,255,255,0.03)',
                 border: h.ok ? '1px solid rgba(150,212,133,0.28)' : '1px solid rgba(255,255,255,0.07)',
-                color: h.ok ? '#96d485' : 'rgba(242,237,224,0.28)' }}>
+                color: h.ok ? 'var(--green)' : 'var(--text3)' }}>
                 {h.ok ? '✓' : '·'} {h.label}
               </span>
             ))}
           </div>
         )}
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.45)', marginTop:6 }}>Conservez-le soigneusement — c'est votre seul accès.</div>
+        <div style={{ fontSize:10, color:'var(--text3)', marginTop:6 }}>Conservez-le soigneusement — c'est votre seul accès.</div>
       </div>
 
       <div>
-        <span style={LBL_STYLE}>Email professionnel * <span style={{ color:'rgba(242,237,224,0.42)', textTransform:'none', letterSpacing:0 }}>(vérification requise)</span></span>
+        <span style={LBL_STYLE}>Email professionnel * <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(vérification requise)</span></span>
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="contact@entreprise.com" style={{ ...INP_STYLE }}/>
       </div>
 
       <div>
-        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}><span style={LBL_STYLE}>Description</span><span style={{ fontSize:10, color:'rgba(242,237,224,0.22)' }}>{desc.length}/250</span></div>
+        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}><span style={LBL_STYLE}>Description</span><span style={{ fontSize:10, color:'var(--text3)' }}>{desc.length}/250</span></div>
         <textarea value={desc} onChange={e => setDesc(e.target.value.slice(0,250))} rows={3} placeholder="Décrivez vos produits et votre activité…" style={{ ...INP_STYLE, resize:'none', lineHeight:1.7 }}/>
       </div>
 
@@ -916,15 +957,15 @@ function VueVerification({ email, pendingData, onSuccess, onBack }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <button onClick={onBack} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'#f2ede0' }}>Vérification email</div>
+        <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:300, color:'var(--text)' }}>Vérification email</div>
       </div>
 
       <div style={{ padding:'14px 16px', background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.20)', borderRadius:12 }}>
-        <div style={{ fontSize:12, color:'rgba(242,237,224,0.70)', lineHeight:1.75 }}>
-          Un code à 6 chiffres a été envoyé à<br/><strong style={{ color:'#96d485' }}>{email}</strong>
+        <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.75 }}>
+          Un code à 6 chiffres a été envoyé à<br/><strong style={{ color:'var(--green)' }}>{email}</strong>
         </div>
-        <div style={{ fontSize:11, color:'rgba(242,237,224,0.35)', marginTop:8 }}>Vérifiez vos spams. Expire dans 1h.</div>
+        <div style={{ fontSize:11, color:'var(--text3)', marginTop:8 }}>Vérifiez vos spams. Expire dans 1h.</div>
       </div>
 
       <div>
@@ -938,18 +979,18 @@ function VueVerification({ email, pendingData, onSuccess, onBack }) {
       <ErrBox msg={err} />
 
       <button onClick={handleVerify} disabled={loading || otp.length !== 8}
-        style={{ padding:'13px', borderRadius:12, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:(loading||otp.length!==8)?'not-allowed':'pointer', fontWeight:500, opacity:(loading||otp.length!==8)?0.5:1 }}>
+        style={{ padding:'13px', borderRadius:12, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:(loading||otp.length!==8)?'not-allowed':'pointer', fontWeight:500, opacity:(loading||otp.length!==8)?0.5:1 }}>
         {loading ? 'Vérification…' : '✓ Valider et créer mon compte'}
       </button>
 
       <div style={{ textAlign:'center' }}>
         <button onClick={handleResend} disabled={resending}
-          style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", textDecoration:'underline' }}>
+          style={{ background:'none', border:'none', color:'var(--text3)', fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif", textDecoration:'underline' }}>
           {resending ? 'Envoi…' : sent ? '✓ Code renvoyé !' : 'Renvoyer le code'}
         </button>
       </div>
 
-      <p style={{ fontSize:10, color:'rgba(242,237,224,0.22)', lineHeight:1.7, textAlign:'center' }}>
+      <p style={{ fontSize:10, color:'var(--text3)', lineHeight:1.7, textAlign:'center' }}>
         Compte créé après vérification.<br/>Activé par l'équipe sous 48h.
       </p>
     </div>
@@ -963,7 +1004,7 @@ function VueConnexion({ onSuccess, onBack }) {
   const [loading, setLoading] = useState(false)
   const [err,     setErr]     = useState('')
 
-  const inp = { padding:'12px 14px', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.85)', fontSize:14, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', letterSpacing:'.04em' }
+  const inp = { padding:'12px 14px', borderRadius:8, border:'1px solid rgba(255,255,255,0.12)', background:'rgba(255,255,255,0.04)', color:'var(--text2)', fontSize:14, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', letterSpacing:'.04em' }
 
   const handleLogin = async () => {
     setErr('')
@@ -984,21 +1025,21 @@ function VueConnexion({ onSuccess, onBack }) {
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-        <button onClick={onBack} style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>Connexion Partenaire</div>
+        <button onClick={onBack} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:12, cursor:'pointer', padding:0 }}>← Retour</button>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'var(--text)' }}>Connexion Partenaire</div>
       </div>
 
       <div>
-        <div style={{ fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8, fontWeight:500 }}>Code vendeur</div>
+        <div style={{ fontSize:11, color:'var(--text2)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8, fontWeight:500 }}>Code vendeur</div>
         <input value={code} onChange={e => setCode(e.target.value)} placeholder="votre-code-vendeur"
           onKeyDown={e => e.key === 'Enter' && handleLogin()}
           style={{ ...inp }}/>
       </div>
 
-      {err && <div style={{ fontSize:12, color:'#e87060', background:'rgba(232,96,96,0.08)', border:'1px solid rgba(232,96,96,0.25)', borderRadius:8, padding:'10px 14px' }}>{err}</div>}
+      {err && <div style={{ fontSize:12, color:'var(--red)', background:'rgba(232,96,96,0.08)', border:'1px solid rgba(232,96,96,0.25)', borderRadius:8, padding:'10px 14px' }}>{err}</div>}
 
       <button onClick={handleLogin} disabled={loading}
-        style={{ padding:'13px', borderRadius:12, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: loading ? 'wait' : 'pointer', fontWeight:500, opacity: loading ? 0.6 : 1 }}>
+        style={{ padding:'13px', borderRadius:12, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: loading ? 'wait' : 'pointer', fontWeight:500, opacity: loading ? 0.6 : 1 }}>
         {loading ? 'Connexion…' : '→ Accéder à mon espace'}
       </button>
     </div>
@@ -1017,7 +1058,7 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
   const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'' }
   const CAT_OPTS = { digital:['Audio','Formation','E-book'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
   const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg2)', color:'var(--text)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
-  const lbl = { fontSize:11, color:'rgba(242,237,224,0.70)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
+  const lbl = { fontSize:11, color:'var(--text2)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
 
   const [audioUploading, setAudioUploading] = useState(false)
 
@@ -1116,14 +1157,14 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#f2ede0' }}>{partenaire.nom_boutique}</div>
-          <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:3 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'var(--text)' }}>{partenaire.nom_boutique}</div>
+          <div style={{ fontSize:10, color:'var(--text3)', marginTop:3 }}>
             {partenaire.publication_mode === 'direct'
               ? '✓ Publication directe activée'
               : '⏳ Vos produits sont soumis à validation avant publication'}
           </div>
         </div>
-        <button onClick={onLogout} style={{ background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:8, color:'rgba(242,237,224,0.35)', fontSize:11, cursor:'pointer', padding:'6px 12px', fontFamily:"'Jost',sans-serif" }}>
+        <button onClick={onLogout} style={{ background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:8, color:'var(--text3)', fontSize:11, cursor:'pointer', padding:'6px 12px', fontFamily:"'Jost',sans-serif" }}>
           Déconnexion
         </button>
       </div>
@@ -1131,7 +1172,7 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
       {/* Bouton ajouter */}
       {!showForm && (
         <button onClick={openNew}
-          style={{ padding:'12px', borderRadius:12, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.08)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500 }}>
+          style={{ padding:'12px', borderRadius:12, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500 }}>
           + Proposer un nouveau produit
         </button>
       )}
@@ -1140,17 +1181,17 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
       {showForm && (
         <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:'18px 20px', display:'flex', flexDirection:'column', gap:14 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, color:'rgba(242,237,224,0.80)' }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, color:'var(--text2)' }}>
               {editId ? 'Modifier le produit' : 'Nouveau produit'}
             </div>
             <button onClick={() => { setShowForm(false); setEditId(null); setForm(EMPTY_FORM) }}
-              style={{ background:'none', border:'none', color:'rgba(242,237,224,0.35)', fontSize:16, cursor:'pointer' }}>✕</button>
+              style={{ background:'none', border:'none', color:'var(--text3)', fontSize:16, cursor:'pointer' }}>✕</button>
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div>
               <span style={lbl}>Choix du support</span>
-              <div style={{ padding:'9px 12px', borderRadius:8, border:'1px solid rgba(180,160,240,0.30)', background:'rgba(180,160,240,0.08)', color:'#b4a0f0', fontSize:13, fontFamily:"'Jost',sans-serif" }}>
+              <div style={{ padding:'9px 12px', borderRadius:8, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif" }}>
                 🎧 Digital
               </div>
             </div>
@@ -1170,7 +1211,7 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
           <div>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
               <span style={lbl}>Description</span>
-              <span style={{ fontSize:10, color:'rgba(242,237,224,0.22)' }}>{form.description.length} / 350</span>
+              <span style={{ fontSize:10, color:'var(--text3)' }}>{form.description.length} / 350</span>
             </div>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description:e.target.value.slice(0,350) }))} rows={3} style={{ ...inp, resize:'none', lineHeight:1.7 }}/>
           </div>
@@ -1189,15 +1230,15 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
           <div>
             <span style={lbl}>Lien de téléchargement / boutique</span>
             <input value={form.lien_externe} onChange={e => setForm(f => ({ ...f, lien_externe:e.target.value }))} placeholder="Ex: gumroad.com/l/votre-produit, drive.google.com/…" style={{ ...inp }}/>
-            <div style={{ fontSize:10, color:'rgba(242,237,224,0.45)', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
+            <div style={{ fontSize:10, color:'var(--text3)', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
           </div>
 
           {/* Paiement en Lumens */}
           <div style={{ padding:'12px 14px', background:'rgba(232,192,96,0.06)', border:'1px solid rgba(232,192,96,0.18)', borderRadius:10 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: form.accepte_lumens ? 10 : 0 }}>
               <div>
-                <div style={{ fontSize:12, color:'rgba(242,237,224,0.80)', fontWeight:500 }}>✦ Accepter les Lumens</div>
-                <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', marginTop:2 }}>L'acheteur pourra payer en Lumens ou en euros</div>
+                <div style={{ fontSize:12, color:'var(--text2)', fontWeight:500 }}>✦ Accepter les Lumens</div>
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>L'acheteur pourra payer en Lumens ou en euros</div>
               </div>
               <div onClick={() => setForm(f => ({ ...f, accepte_lumens:!f.accepte_lumens }))}
                 style={{ width:40, height:22, borderRadius:100, cursor:'pointer', flexShrink:0,
@@ -1205,7 +1246,7 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
                   border:`1px solid ${form.accepte_lumens ? 'rgba(232,192,96,0.5)' : 'rgba(255,255,255,0.12)'}`,
                   position:'relative', transition:'all .25s' }}>
                 <div style={{ position:'absolute', top:3, left: form.accepte_lumens ? 20 : 3, width:14, height:14, borderRadius:'50%',
-                  background: form.accepte_lumens ? '#e8c060' : 'rgba(255,255,255,0.25)', transition:'left .25s' }}/>
+                  background: form.accepte_lumens ? 'var(--gold)' : 'rgba(255,255,255,0.25)', transition:'left .25s' }}/>
               </div>
             </div>
             {form.accepte_lumens && (
@@ -1220,14 +1261,14 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
           {/* Upload audio — uniquement pour les produits digitaux */}
           {form.type === 'digital' && (
             <div>
-              <span style={lbl}>Fichier audio <span style={{ color:'rgba(242,237,224,0.35)', textTransform:'none', letterSpacing:0, fontWeight:300 }}>(lecture sécurisée dans l'app)</span></span>
-              <label style={{ display:'block', padding:'12px 14px', borderRadius:8, border:`1px dashed ${form.storage_path ? 'rgba(150,212,133,0.40)' : 'rgba(255,255,255,0.15)'}`, background: form.storage_path ? 'rgba(150,212,133,0.06)' : 'rgba(255,255,255,0.03)', color: form.storage_path ? '#96d485' : 'rgba(242,237,224,0.45)', fontSize:12, cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
+              <span style={lbl}>Fichier audio <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0, fontWeight:300 }}>(lecture sécurisée dans l'app)</span></span>
+              <label style={{ display:'block', padding:'12px 14px', borderRadius:8, border:`1px dashed ${form.storage_path ? 'rgba(150,212,133,0.40)' : 'rgba(255,255,255,0.15)'}`, background: form.storage_path ? 'rgba(150,212,133,0.06)' : 'rgba(255,255,255,0.03)', color: form.storage_path ? 'var(--green)' : 'var(--text3)', fontSize:12, cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
                 <input type="file" accept="audio/*" style={{ display:'none' }} onChange={e => handleAudioUpload(e.target.files[0])} disabled={audioUploading}/>
                 {audioUploading ? '⏳ Upload en cours…' : form.storage_path ? '✓ Fichier audio chargé' : '📁 Choisir un fichier audio (MP3, WAV, AAC…)'}
               </label>
               {form.storage_path && (
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
-                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.35)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                  <div style={{ fontSize:10, color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
                     {form.storage_path.split('/').pop()}
                   </div>
                   <button onClick={() => setForm(f => ({ ...f, storage_path:'' }))}
@@ -1236,17 +1277,17 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
                   </button>
                 </div>
               )}
-              <div style={{ fontSize:10, color:'rgba(242,237,224,0.28)', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
+              <div style={{ fontSize:10, color:'var(--text3)', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
             </div>
           )}
 
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleSubmit} disabled={saving}
-              style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid rgba(150,212,133,0.40)', background:'rgba(150,212,133,0.10)', color:'#96d485', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:500, opacity: saving ? 0.6 : 1 }}>
+              style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:500, opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : partenaire.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
             </button>
             <button onClick={() => setShowForm(false)}
-              style={{ padding:'11px 18px', borderRadius:10, border:'1px solid rgba(255,255,255,0.10)', background:'transparent', color:'rgba(242,237,224,0.40)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
+              style={{ padding:'11px 18px', borderRadius:10, border:'1px solid rgba(255,255,255,0.10)', background:'transparent', color:'var(--text3)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
               Annuler
             </button>
           </div>
@@ -1255,27 +1296,27 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
 
       {/* Liste produits */}
       <div>
-        <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', letterSpacing:'.10em', textTransform:'uppercase', marginBottom:10 }}>
+        <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase', marginBottom:10 }}>
           Mes produits ({produits.length})
         </div>
         {loading ? (
-          <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic' }}>Chargement…</div>
+          <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
         ) : produits.length === 0 ? (
-          <div style={{ fontSize:12, color:'rgba(242,237,224,0.25)', fontStyle:'italic', padding:'16px 0' }}>Aucun produit pour l'instant.</div>
+          <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', padding:'16px 0' }}>Aucun produit pour l'instant.</div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {produits.map(p => (
               <div key={p.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderRadius:10, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:13, color:'rgba(242,237,224,0.80)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
-                  <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', marginTop:2 }}>
+                  <div style={{ fontSize:13, color:'var(--text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
+                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>
                     {p.categorie} · {p.prix != null ? `${Number(p.prix).toFixed(2)} €` : 'prix libre'}
                   </div>
                 </div>
                 <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, flexShrink:0,
                   background: p.statut==='actif' ? 'rgba(150,212,133,0.10)' : p.statut==='en_attente' ? 'rgba(232,192,96,0.10)' : 'rgba(255,255,255,0.04)',
                   border: p.statut==='actif' ? '1px solid rgba(150,212,133,0.25)' : p.statut==='en_attente' ? '1px solid rgba(232,192,96,0.25)' : '1px solid rgba(255,255,255,0.08)',
-                  color: p.statut==='actif' ? '#96d485' : p.statut==='en_attente' ? '#e8c060' : 'rgba(242,237,224,0.30)' }}>
+                  color: p.statut==='actif' ? 'var(--green)' : p.statut==='en_attente' ? 'var(--gold)' : 'var(--text3)' }}>
                   {p.statut === 'en_attente' ? '⏳ en attente' : p.statut}
                 </span>
                 <div style={{ display:'flex', gap:6, flexShrink:0 }}>

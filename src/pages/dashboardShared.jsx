@@ -27,20 +27,57 @@ export async function callModerateCircle(payload) {
 }
 
 // ── Hook profil utilisateur ──────────────────────────────────────────────────
+const PROFILE_CACHE_TTL = 5 * 60 * 1000 // 5 min
+
+function profileCacheKey(userId) { return `mji_profile_${userId}` }
+
+export function clearProfileCache(userId) {
+  try { localStorage.removeItem(profileCacheKey(userId)) } catch {}
+}
+
 export function useProfile(userId) {
-  const [profile, setProfile] = useState(null)
+  // Initialise depuis le cache localStorage → rendu immédiat, pas de flash
+  const [profile, setProfile] = useState(() => {
+    if (!userId) return null
+    try {
+      const raw = localStorage.getItem(profileCacheKey(userId))
+      if (raw) {
+        const { data, ts } = JSON.parse(raw)
+        if (data) return data
+      }
+    } catch {}
+    return null
+  })
+
   useEffect(() => {
     if (!userId) return
+
+    // Vérifier si le cache est encore frais
+    try {
+      const raw = localStorage.getItem(profileCacheKey(userId))
+      if (raw) {
+        const { ts } = JSON.parse(raw)
+        if (ts && Date.now() - ts < PROFILE_CACHE_TTL) return // frais → pas de fetch
+      }
+    } catch {}
+
+    // Fetch Supabase en arrière-plan
     supabase
       .from('users')
-      .select('display_name, level, xp, xp_next_level, plan, email, premium_until')
+      .select('display_name, level, xp, xp_next_level, plan, email, premium_until, flower_name')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data, error }) => {
-        if (error) console.error('useProfile error:', error.message)
-        else setProfile(data)
+        if (error) { console.error('useProfile error:', error.message); return }
+        if (!data) return
+        setProfile(data)
+        // Mettre à jour le cache
+        try {
+          localStorage.setItem(profileCacheKey(userId), JSON.stringify({ data, ts: Date.now() }))
+        } catch {}
       })
   }, [userId])
+
   return profile
 }
 
@@ -112,17 +149,61 @@ export function Toast({ msg }) {
 export function LumenBadge({ amount }) {
   const isGain = amount > 0
   return (
-    <span className={`lumen-badge ${isGain ? 'gain' : 'loss'}`}>
-      <span className="lumen-badge-dot" />
-      {isGain ? `+${amount}` : amount} ✦
-    </span>
+    <>
+      {/* Keyframes injectés une seule fois */}
+      <style>{`
+        @keyframes lumenBadgePulse {
+          0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--gold) 35%, transparent), 0 0 14px color-mix(in srgb, var(--gold) 12%, transparent); }
+          50%       { box-shadow: 0 0 12px color-mix(in srgb, var(--gold) 65%, transparent), 0 0 28px color-mix(in srgb, var(--gold) 25%, transparent); }
+        }
+        @keyframes lumenOrbPulse {
+          0%, 100% { transform: scale(1);    opacity: 0.85; }
+          50%       { transform: scale(1.12); opacity: 1;    }
+        }
+      `}</style>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '4px 10px 4px 6px', borderRadius: 100,
+        background: isGain
+          ? 'color-mix(in srgb, var(--gold) 15%, transparent)'
+          : 'var(--red2)',
+        border: `1px solid ${isGain ? 'color-mix(in srgb, var(--gold) 40%, transparent)' : 'var(--redT)'}`,
+        fontSize: 10, fontWeight: 600, letterSpacing: '.04em',
+        fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap',
+        color: isGain ? 'var(--gold)' : 'var(--red)',
+        pointerEvents: 'none',
+        animation: isGain ? 'lumenBadgePulse 3s ease-in-out infinite' : 'none',
+      }}>
+        {/* Orbe doré — gradient + pulsation */}
+        <span style={{
+          width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+          background: isGain
+            ? 'radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--gold) 90%, white), var(--gold), var(--gold-warm))'
+            : 'radial-gradient(circle at 35% 35%, #ffd8d8, #e08080, #c05050)',
+          boxShadow: isGain
+            ? 'color-mix(in srgb, var(--gold) 70%, transparent) 0 0 5px, color-mix(in srgb, var(--gold) 30%, transparent) 0 0 10px'
+            : '0 0 5px var(--redT)',
+          display: 'inline-block',
+          animation: isGain ? 'lumenOrbPulse 3s ease-in-out infinite' : 'none',
+        }} />
+        {isGain ? `+${amount}` : amount} ✦
+      </span>
+    </>
   )
 }
 
 // ── Composant LumenOrb ───────────────────────────────────────────────────────
 export function LumenOrb({ total = 0, level = 'faible', size = 18 }) {
   return (
-    <div className={`lumen-orb lumen-halo-${level}`} style={{ width:size, height:size }} />
+    <>
+      <style>{`
+        @keyframes lumenBadgePulse {
+          0%, 100% { box-shadow: 0 0 6px color-mix(in srgb, var(--gold) 35%, transparent), 0 0 14px color-mix(in srgb, var(--gold) 12%, transparent); }
+          50%       { box-shadow: 0 0 12px color-mix(in srgb, var(--gold) 65%, transparent), 0 0 28px color-mix(in srgb, var(--gold) 25%, transparent); }
+        }
+      `}</style>
+      <div className={`lumen-orb lumen-halo-${level}`} style={{ width:size, height:size }} />
+    </>
   )
 }
 
@@ -215,7 +296,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
   const level      = lumens?.level      ?? 'faible'
 
   const LEVEL_LABELS = { faible:'Lumière faible', halo:'Halo visible', aura:'Aura douce', rayonnement:'Rayonnement actif' }
-  const LEVEL_COLOR  = { faible:'#aaaaaa', halo:'#d4c060', aura:'#e8c060', rayonnement:'#f8e090' }
+  const LEVEL_COLOR  = { faible:'var(--text3)', halo:'var(--gold)', aura:'var(--gold)', rayonnement:'var(--gold)' }
 
   // Charge l'historique quand on arrive sur l'onglet ou sur refresh
   function loadHistory() {
@@ -296,8 +377,8 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
 
   const tabStyle = (id) => ({
     flex:1, textAlign:'center', padding:'7px', borderRadius:9, fontSize:11, cursor:'pointer',
-    background: tab===id ? 'rgba(232,192,96,0.15)' : 'rgba(255,255,255,0.04)',
-    border: `1px solid ${tab===id ? 'rgba(232,192,96,0.35)' : 'rgba(255,255,255,0.08)'}`,
+    background: tab===id ? 'color-mix(in srgb, var(--gold) 15%, transparent)' : 'rgba(255,255,255,0.04)',
+    border: `1px solid ${tab===id ? 'color-mix(in srgb, var(--gold) 35%, transparent)' : 'rgba(255,255,255,0.08)'}`,
     color: tab===id ? 'var(--gold)' : 'var(--text3)',
     transition:'all .2s',
   })
@@ -313,7 +394,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
     <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
 
       {/* ── En-tête orbe + total ── */}
-      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px', background:'rgba(232,192,96,0.07)', borderRadius:12, border:'1px solid rgba(232,192,96,0.18)' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px', background:'color-mix(in srgb, var(--gold) 7%, transparent)', borderRadius:12, border:'1px solid color-mix(in srgb, var(--gold) 18%, transparent)' }}>
         <LumenOrb total={available} level={level} size={36} />
         <div>
           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'var(--gold)', lineHeight:1 }}>
@@ -383,8 +464,8 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
             const icon = amt > 0 ? '🌱' : '🍂'
 
             return (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(255,255,255,0.03)', borderRadius:9, border:'1px solid rgba(255,255,255,0.05)' }}>
-                <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: amt > 0 ? 'var(--green)' : 'rgba(255,140,140,0.8)', flexShrink:0 }}>
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(255,255,255,0.03)', borderRadius:9, border:'1px solid var(--border2)' }}>
+                <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: amt > 0 ? 'var(--green)' : 'var(--red)', flexShrink:0 }}>
                   {amt > 0 ? `+${amt}` : amt} ✦
                 </span>
                 <div style={{ flex:1, minWidth:0 }}>
@@ -409,8 +490,8 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
               <div
                 key={p.lumens}
                 onClick={() => !buyingPack && handleBuyLumens(p)}
-                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, cursor: buyingPack ? 'default' : 'pointer', transition:'all .2s', gap:8, opacity: buyingPack && !isLoading ? 0.5 : 1 }}
-                onMouseEnter={e => { if (!buyingPack) e.currentTarget.style.background='rgba(232,192,96,0.09)' }}
+                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid var(--border2)', borderRadius:10, cursor: buyingPack ? 'default' : 'pointer', transition:'all .2s', gap:8, opacity: buyingPack && !isLoading ? 0.5 : 1 }}
+                onMouseEnter={e => { if (!buyingPack) e.currentTarget.style.background='color-mix(in srgb, var(--gold) 9%, transparent)' }}
                 onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
               >
                 <div style={{ display:'flex', alignItems:'center', gap:10, flex:1 }}>
@@ -420,7 +501,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
                     <div style={{ fontSize:11, color:'var(--gold-warm)', marginTop:1 }}>{p.lumens} ✦</div>
                   </div>
                 </div>
-                <div style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, fontSize:12, fontWeight:600, color:'var(--gold)', background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)' }}>
+                <div style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, fontSize:12, fontWeight:600, color:'var(--gold)', background:'color-mix(in srgb, var(--gold) 12%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)' }}>
                   {isLoading ? '…' : p.price + ' €'}
                 </div>
               </div>
@@ -434,7 +515,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
 
           {/* Envoyer */}
-          <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:'12px', border:'1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:'12px', border:'1px solid var(--border2)' }}>
             <div style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Envoyer des Lumens</div>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
               <input
@@ -445,7 +526,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
               <span style={{ fontSize:12, color:'var(--gold)' }}>✦</span>
             </div>
             {exportCode ? (
-              <div style={{ background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.3)', borderRadius:8, padding:'10px', textAlign:'center' }}>
+              <div style={{ background:'color-mix(in srgb, var(--gold) 10%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)', borderRadius:8, padding:'10px', textAlign:'center' }}>
                 <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>Code de transfert</div>
                 <div style={{ fontSize:22, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:'var(--gold)', letterSpacing:'4px' }}>{exportCode}</div>
                 <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>Valable 48h</div>
@@ -454,7 +535,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
               </div>
             ) : (
               <div onClick={!loading ? handleExport : undefined}
-                style={{ textAlign:'center', padding:'8px', background:'rgba(232,192,96,0.10)', border:'1px solid rgba(232,192,96,0.25)', borderRadius:8, fontSize:12, color:'var(--gold)', cursor:loading?'default':'pointer', opacity: transferAmt > available ? 0.4 : 1 }}>
+                style={{ textAlign:'center', padding:'8px', background:'color-mix(in srgb, var(--gold) 10%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 25%, transparent)', borderRadius:8, fontSize:12, color:'var(--gold)', cursor:loading?'default':'pointer', opacity: transferAmt > available ? 0.4 : 1 }}>
                 {loading ? '…' : 'Générer un code'}
               </div>
             )}
@@ -465,7 +546,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
           </div>
 
           {/* Recevoir */}
-          <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:'12px', border:'1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:'12px', border:'1px solid var(--border2)' }}>
             <div style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Recevoir des Lumens</div>
             <input
               value={importInput}
@@ -474,7 +555,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
               style={{ ...inputStyle, letterSpacing:'3px', marginBottom:8 }}
             />
             <div onClick={handleImport}
-              style={{ textAlign:'center', padding:'9px', background: importInput.trim().length > 0 ? 'rgba(130,200,240,0.18)' : 'rgba(130,200,240,0.06)', border:'1px solid rgba(130,200,240,0.30)', borderRadius:8, fontSize:12, color:'var(--green)', cursor: importInput.trim().length > 0 ? 'pointer' : 'default', transition:'all .2s' }}>
+              style={{ textAlign:'center', padding:'9px', background: importInput.trim().length > 0 ? 'color-mix(in srgb, var(--green) 18%, transparent)' : 'color-mix(in srgb, var(--green) 6%, transparent)', border:'1px solid color-mix(in srgb, var(--green) 30%, transparent)', borderRadius:8, fontSize:12, color:'var(--green)', cursor: importInput.trim().length > 0 ? 'pointer' : 'default', transition:'all .2s' }}>
               {loading ? '…' : 'Utiliser ce code'}
             </div>
             {importStatus === 'success' && <div style={{ fontSize:12, color:'var(--green)', marginTop:8 }}>✓ Lumens reçus avec succès</div>}

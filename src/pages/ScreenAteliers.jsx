@@ -7,7 +7,7 @@ import { useState, useEffect } from "react"
 import { logActivity } from '../utils/logActivity'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
-import { useIsMobile, LumenBadge, getThemeEmoji, THEMES_LIST, callModerateCircle } from './dashboardShared'
+import { useIsMobile, LumenBadge, LumenOrb, getThemeEmoji, THEMES_LIST, callModerateCircle } from './dashboardShared'
 
 // ═══════════════════════════════════════════════════════
 //  SCREEN ATELIERS
@@ -28,8 +28,49 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
   const [format,     setFormat]     = useState(initialData?.format ?? 'online')
   const [location,   setLocation]   = useState(initialData?.location ?? '')
   const [price,      setPrice]      = useState(initialData?.price ?? 0)
-  const [lumenPrice, setLumenPrice] = useState(initialData?.lumen_price ?? 0)
+  const [lumenPrice, setLumenPrice] = useState(initialData?.lumen_price ?? 10)
   const [loading,    setLoading]    = useState(false)
+  const [codePostal,    setCodePostal]    = useState(initialData?.code_postal_atelier ?? '')
+  const [deptInvites,   setDeptInvites]   = useState([])   // départements cochés pour invitations
+  const [availableDepts, setAvailableDepts] = useState([]) // départements dispo en base
+
+  // Charge uniquement les membres du département correspondant au code postal saisi
+  async function loadAvailableDepts(dept) {
+    if (!dept || dept.length < 2) return
+    const { data: prefsData } = await supabase
+      .from('atelier_preferences')
+      .select('code_postal, ville')
+      .not('code_postal', 'is', null)
+      .neq('code_postal', '')
+      .like('code_postal', `${dept}%`) // filtre sur les 2 premiers chiffres
+    if (!prefsData) { setAvailableDepts([]); return }
+    // Compter les membres et collecter les villes de ce département
+    const villes = new Set()
+    let count = 0
+    for (const p of prefsData) {
+      if (!p.code_postal || !p.code_postal.startsWith(dept)) continue
+      count++
+      if (p.ville) villes.add(p.ville)
+    }
+    if (count === 0) {
+      setAvailableDepts([]) // aucun client → badge géré dans le JSX
+    } else {
+      setAvailableDepts([{ dept, villes, count }])
+    }
+  }
+
+  // Déclencher le chargement + pré-sélection quand le code postal atteint 5 chiffres
+  useEffect(() => {
+    if (format === 'presentiel' && codePostal.length === 5) {
+      const dept = codePostal.slice(0, 2)
+      loadAvailableDepts(dept)
+      setDeptInvites([dept])
+    } else if (format === 'presentiel') {
+      // Code incomplet → réinitialiser
+      setAvailableDepts([])
+      setDeptInvites([])
+    }
+  }, [codePostal, format])
 
   async function generateDesc() {
     if (!rawDesc.trim()) return
@@ -49,10 +90,17 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
   async function handleSubmit() {
     if (!title.trim() || !startsAt) return
     setLoading(true)
-    const fields = { title: title.trim(), description: aiDesc || rawDesc, theme, starts_at: startsAt, duration_minutes: Number(duration), max_participants: Number(maxP), format, location, price: Number(price), lumen_price: lumenPrice ? Number(lumenPrice) : null, ...(isRepublish && sourceId ? { parent_id: sourceId } : {}) }
+    const fields = {
+      title: title.trim(), description: aiDesc || rawDesc, theme,
+      starts_at: startsAt, duration_minutes: Number(duration),
+      max_participants: Number(maxP), format, location,
+      price: Number(price), lumen_price: lumenPrice ? Number(lumenPrice) : null,
+      ...(format === 'presentiel' ? { code_postal_atelier: codePostal } : {}),
+      ...(isRepublish && sourceId ? { parent_id: sourceId } : {})
+    }
     try {
       if (isEdit) await onEdit(initialData.id, fields)
-      else await onCreate(fields)
+      else await onCreate(fields, format === 'presentiel' ? deptInvites : [])
     } finally { setLoading(false) }
   }
 
@@ -121,25 +169,107 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
             </select>
           </div>
           <div>
-            <label style={lStyle}>Prix (€, 0 = gratuit)</label>
-            <input style={iStyle} type="number" value={price} onChange={e=>setPrice(e.target.value)} min={0} />
-          </div>
-        </div>
-        {price > 0 && (
-          <div style={fStyle}>
-            <label style={lStyle}>Prix alternatif en Lumens ✦ (optionnel)</label>
+            <label style={lStyle}>Prix en Lumens ✦ <span style={{ color:'rgba(246,196,83,0.5)', textTransform:'none', letterSpacing:0 }}>(obligatoire)</span></label>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <input style={iStyle} type="number" value={lumenPrice} onChange={e=>setLumenPrice(e.target.value)} min={0} placeholder={`ex. ${price * 10} Lumens`} />
-              <div style={{ fontSize:10, color:'rgba(246,196,83,0.6)', whiteSpace:'nowrap' }}>1€ = 10 ✦</div>
+              <input style={iStyle} type="number" value={lumenPrice} onChange={e=>setLumenPrice(e.target.value)} min={1} placeholder="ex. 10" />
+              <span style={{ fontSize:13, color:'var(--gold)', flexShrink:0 }}>✦</span>
             </div>
           </div>
-        )}
+        </div>
+        <div style={fStyle}>
+          <label style={lStyle}>Prix en euros € <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(optionnel — 0 = non affiché)</span></label>
+          <input style={{ ...iStyle, width:160 }} type="number" value={price} onChange={e=>setPrice(e.target.value)} min={0} placeholder="0" />
+          {price > 0 && lumenPrice > 0 && (
+            <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>
+              Les participants peuvent choisir entre {price} € ou {lumenPrice} ✦
+            </div>
+          )}
+        </div>
 
         <div style={fStyle}>
           <label style={lStyle}>{format==='online' ? 'Lien visio' : 'Adresse'}</label>
-          <input style={iStyle} value={location} onChange={e=>setLocation(e.target.value)} placeholder={format==='online' ? 'https://meet.google.com/...' : 'Adresse complète'} />
+          <input style={iStyle} value={location} onChange={e=>setLocation(e.target.value)} placeholder={format==='online' ? 'https://meet.google.com/...' : 'Ex : 95 bd de l\'Atlantique, 79000 Niort'} />
         </div>
-        
+
+        {/* ── PRÉSENTIEL : code postal + sélection départements ── */}
+        {format === 'presentiel' && (
+          <div style={{ marginBottom:18, padding:'14px 16px', borderRadius:12, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)' }}>
+
+            {/* Code postal de l'animateur */}
+            <div style={{ marginBottom:14 }}>
+              <label style={lStyle}>📍 Code postal de l'atelier</label>
+              <input
+                style={{ ...iStyle, width:140 }}
+                type="text"
+                inputMode="numeric"
+                maxLength={5}
+                placeholder="79000"
+                value={codePostal}
+                onChange={e => setCodePostal(e.target.value.replace(/\D/g, '').slice(0, 5))}
+              />
+              {codePostal.length >= 2 && (
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>
+                  Département {codePostal.slice(0,2)}
+                </div>
+              )}
+            </div>
+
+            {/* Sélection des départements à inviter */}
+            <div>
+              <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>
+                Inviter automatiquement les membres de ces localisations
+              </div>
+
+              {codePostal.length < 5 ? (
+                <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>
+                  Saisissez votre code postal pour voir les clients disponibles.
+                </div>
+              ) : availableDepts.length === 0 ? (
+                <div style={{
+                  display:'inline-flex', alignItems:'center', gap:6,
+                  padding:'5px 12px', borderRadius:9, fontSize:11,
+                  background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.25)',
+                  color:'var(--red)',
+                }}>
+                  <span>⚠</span> Pas de clients associés à votre localisation {codePostal.slice(0,2)}
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+                  {availableDepts.map(({ dept, villes, count }) => {
+                    const active = deptInvites.includes(dept)
+                    return (
+                      <div
+                        key={dept}
+                        onClick={() => setDeptInvites(prev =>
+                          active ? prev.filter(d => d !== dept) : [...prev, dept]
+                        )}
+                        style={{
+                          display:'flex', alignItems:'center', gap:6,
+                          padding:'5px 12px', borderRadius:9, fontSize:11, cursor:'pointer',
+                          transition:'all .2s',
+                          background: active ? 'rgba(150,212,133,0.14)' : 'rgba(255,255,255,0.04)',
+                          border:`1px solid ${active ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.10)'}`,
+                          color: active ? 'var(--cream)' : 'var(--text3)',
+                        }}
+                      >
+                        <span style={{ fontWeight:600 }}>{dept}</span>
+                        {[...villes][0] && <span>— {[...villes][0]}</span>}
+                        <span style={{ opacity:0.5 }}>({count} client{count > 1 ? 's' : ''})</span>
+                        {active && <span>✓</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {deptInvites.filter(d => availableDepts.some(a => a.dept === d)).length > 0 && (
+                <div style={{ fontSize:10, color:'var(--text3)', marginTop:8, fontStyle:'italic' }}>
+                  {(() => { const n = deptInvites.filter(d => availableDepts.some(a => a.dept === d)).length; return `${n > 1 ? n + ' villes sélectionnées' : 'Ville sélectionnée'} — les invitations seront envoyées à la création.` })()}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={{ display:'flex', gap:10, marginTop:8 }}>
           <button onClick={onClose} style={{ ...btnStyle, background:'rgba(255,255,255,0.05)', color:'var(--text3)', flex:1 }}>Annuler</button>
@@ -353,9 +483,26 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
           )}
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, flexShrink:0 }}>
-          <div style={{ fontSize:12, fontFamily:'Cormorant Garamond,serif', padding:'3px 10px', borderRadius:100, background: atelier.price > 0 ? 'rgba(232,212,168,0.12)' : 'rgba(150,212,133,0.1)', border:`1px solid ${atelier.price > 0 ? 'rgba(232,212,168,0.3)' : 'rgba(150,212,133,0.25)'}`, color: atelier.price > 0 ? 'var(--gold)' : 'var(--green)', whiteSpace:'nowrap' }}>
-            {atelier.price > 0 ? `${atelier.price} €` : 'Gratuit'}
-          </div>
+          {atelier.price > 0 ? (
+            /* Badge euros classique */
+            <div style={{ fontSize:16, fontFamily:'Cormorant Garamond,serif', fontWeight:400, padding:'3px 12px', borderRadius:100, background:'rgba(232,212,168,0.12)', border:'1px solid rgba(232,212,168,0.3)', color:'var(--gold)', whiteSpace:'nowrap' }}>
+              {atelier.price} €
+            </div>
+          ) : (
+            /* Badge Lumens — charte dorée pulsante */
+            <div style={{
+              display:'inline-flex', alignItems:'center', gap:5,
+              padding:'4px 12px 4px 7px', borderRadius:100,
+              background:'linear-gradient(135deg, rgba(246,196,83,0.20), rgba(246,196,83,0.08))',
+              border:'1px solid rgba(246,196,83,0.42)',
+              fontSize:12, fontFamily:'Cormorant Garamond,serif',
+              color:'#F6C453', whiteSpace:'nowrap',
+              animation:'lumenBadgePulse 3s ease-in-out infinite',
+            }}>
+              <LumenOrb total={atelier.lumen_price} level="aura" size={13} />
+              {atelier.lumen_price} ✦
+            </div>
+          )}
           {!isPast && <CountdownDisplay startsAt={atelier.starts_at} isPast={isPast} />}
         </div>
       </div>
@@ -382,15 +529,29 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
           <>
             {!isInscrit && !isFull && (
               <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:4 }}>
-                  <LumenBadge amount={3} />
-                  <button onClick={() => onInscrit(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:12 }}>
-                    ✓ S&apos;inscrire{atelier.price > 0 ? ` · ${atelier.price}€` : ''}
-                  </button>
-                </div>
+                {/* Paiement Lumens — prioritaire, toujours affiché si lumen_price défini */}
                 {atelier.lumen_price > 0 && (
-                  <button onClick={() => onPayLumens?.(atelier.id, atelier.lumen_price)} style={{ padding:'7px 14px', fontSize:11, borderRadius:9, background: lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.12)' : 'rgba(255,255,255,0.04)', border:`1px solid ${lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.35)' : 'rgba(255,255,255,0.1)'}`, color: lumensAvailable >= atelier.lumen_price ? 'var(--gold)' : 'var(--text3)', cursor: lumensAvailable >= atelier.lumen_price ? 'pointer' : 'default', fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:5 }} title={lumensAvailable >= atelier.lumen_price ? `Vous avez ${lumensAvailable} ✦` : `Lumens insuffisants (${lumensAvailable}/${atelier.lumen_price} ✦)`}>
-                    ✦ {atelier.lumen_price} Lumens
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:4 }}>
+                    <LumenBadge amount={3} />
+                    <button
+                      onClick={() => onPayLumens?.(atelier.id, atelier.lumen_price)}
+                      style={{ padding:'7px 18px', fontSize:12, borderRadius:9, fontWeight:500,
+                        background: lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.14)' : 'rgba(255,255,255,0.04)',
+                        border:`1px solid ${lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.40)' : 'rgba(255,255,255,0.1)'}`,
+                        color: lumensAvailable >= atelier.lumen_price ? 'var(--gold)' : 'var(--text3)',
+                        cursor: lumensAvailable >= atelier.lumen_price ? 'pointer' : 'default',
+                        fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:6 }}
+                      title={lumensAvailable >= atelier.lumen_price ? `Vous avez ${lumensAvailable} ✦` : `Lumens insuffisants (${lumensAvailable}/${atelier.lumen_price} ✦)`}
+                    >
+                      <LumenOrb total={atelier.lumen_price} level="halo" size={14} />
+                      {atelier.lumen_price} Lumens
+                    </button>
+                  </div>
+                )}
+                {/* Paiement euros — uniquement si prix euros défini */}
+                {atelier.price > 0 && (
+                  <button onClick={() => onInscrit(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:12 }}>
+                    ✓ S&apos;inscrire · {atelier.price} €
                   </button>
                 )}
               </div>
@@ -404,7 +565,7 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
                 <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                   <LumenBadge amount={-3} />
                   <button onClick={() => onDesinscrit(atelier.id, atelier.lumen_price ?? 0)} style={{ fontSize:10, padding:'6px 10px', borderRadius:8, background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
-                    {atelier.price > 0 ? "Se désinscrire · contacter l'animateur" : 'Se désinscrire'}
+                    {atelier.price > 0 || atelier.lumen_price > 0 ? "Se désinscrire · contacter l'animateur" : 'Se désinscrire'}
                   </button>
                 </div>
               </>
@@ -475,7 +636,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   const [searchTheme,  setSearchTheme]  = useState('')
   const [searchAnim,   setSearchAnim]   = useState('')
   const [animators,    setAnimators]    = useState([])
-  const [prefs,        setPrefs]        = useState({ themes:[], formats:['online','presentiel'], notify_email:true })
+  const [prefs,        setPrefs]        = useState({ themes:[], formats:['online','presentiel'], notify_email:true, code_postal:'', ville:'' })
   const [invitations,  setInvitations]  = useState([])
   const [prefsSaved,   setPrefsSaved]   = useState(false)
   const [topAteliers,    setTopAteliers]    = useState([])
@@ -611,7 +772,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
   async function loadPrefs() {
     const { data } = await supabase.from('atelier_preferences').select('*').eq('user_id', userId).maybeSingle()
-    if (data) setPrefs({ themes: data.themes ?? [], formats: data.formats ?? ['online','presentiel'], notify_email: data.notify_email ?? true })
+    if (data) setPrefs({ themes: data.themes ?? [], formats: data.formats ?? ['online','presentiel'], notify_email: data.notify_email ?? true, code_postal: data.code_postal ?? '', ville: data.ville ?? '' })
   }
 
   async function loadInvitations() {
@@ -630,9 +791,18 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   async function handleInviteMatching(atelierIdVal, theme, format) {
     // Cherche tous les users dont prefs matchent
     const { data: allPrefs } = await supabase.from('atelier_preferences')
-      .select('user_id, themes, formats')
+      .select('user_id, themes, formats, code_postal, ville')
       .contains('themes', [theme])
-    const matched = (allPrefs ?? []).filter(p => p.formats?.includes(format) && p.user_id !== userId)
+    let matched = (allPrefs ?? []).filter(p => p.formats?.includes(format) && p.user_id !== userId)
+
+    // Pour un atelier en présentiel, filtrer par code postal si l'animateur a renseigné sa ville
+    if (format === 'presentiel' && prefs.code_postal) {
+      const dept = prefs.code_postal.slice(0, 2) // département = 2 premiers chiffres
+      const byDept = matched.filter(p => p.code_postal?.startsWith(dept))
+      // Si des correspondances géographiques existent, on les privilégie
+      if (byDept.length > 0) matched = byDept
+    }
+
     if (!matched.length) { showToastLocal('Aucun utilisateur correspondant aux critères'); return }
     const invites = matched.map(p => ({ atelier_id: atelierIdVal, user_id: p.user_id }))
     await supabase.from('atelier_invitations').upsert(invites, { onConflict: 'atelier_id,user_id' })
@@ -655,10 +825,14 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   async function loadAteliers() {
     const { data } = await supabase
       .from('ateliers')
-      .select('*, atelier_registrations(count), animator:animator_id(display_name, profession), lumen_price')
+      .select('*, atelier_registrations(count), animator:animator_id(display_name, profession)')
       .eq('is_published', true)
       .order('starts_at', { ascending: true })
-    setAteliers((data ?? []).map(a => ({ ...a, registrationCount: a.atelier_registrations?.[0]?.count ?? 0 })))
+    setAteliers((data ?? []).map(a => ({
+      ...a,
+      registrationCount: a.atelier_registrations?.[0]?.count ?? 0,
+      lumen_price: a.lumen_price ?? 10,  // défaut 10 Lumens si non défini
+    })))
   }
 
   async function loadMyReg() {
@@ -713,9 +887,39 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
     showToastLocal('↩ Désinscription effectuée · -3 ✦')
   }
 
-  async function handleCreate(fields) {
+  async function handleCreate(fields, deptInvites = []) {
     const { data, error } = await supabase.from('ateliers').insert({ ...fields, animator_id: userId, is_published: true }).select().single()
-    if (!error) { track('atelier_create', { atelier_id: data?.id }, 'ateliers', 'ateliers'); setShowCreate(false); loadAteliers(); showToastLocal('✨ Atelier créé !') }
+    if (error) return
+    track('atelier_create', { atelier_id: data?.id }, 'ateliers', 'ateliers')
+
+    // Invitations géographiques pour les ateliers en présentiel
+    if (fields.format === 'presentiel' && deptInvites.length > 0 && data?.id) {
+      const { data: matchedPrefs } = await supabase
+        .from('atelier_preferences')
+        .select('user_id, code_postal')
+        .not('code_postal', 'is', null)
+        .neq('code_postal', '')
+      if (matchedPrefs?.length) {
+        const targets = matchedPrefs.filter(p =>
+          p.user_id !== userId &&
+          deptInvites.includes(p.code_postal?.slice(0, 2))
+        )
+        if (targets.length > 0) {
+          const invites = targets.map(p => ({ atelier_id: data.id, user_id: p.user_id }))
+          await supabase.from('atelier_invitations').upsert(invites, { onConflict: 'atelier_id,user_id' })
+          showToastLocal(`✨ Atelier créé · ✉️ ${targets.length} invitation${targets.length > 1 ? 's' : ''} envoyée${targets.length > 1 ? 's' : ''} !`)
+        } else {
+          showToastLocal('✨ Atelier créé — aucun membre trouvé dans votre recherche.')
+        }
+      } else {
+        showToastLocal('✨ Atelier créé !')
+      }
+    } else {
+      showToastLocal('✨ Atelier créé !')
+    }
+
+    setShowCreate(false)
+    loadAteliers()
   }
 
   async function handleEdit(atelierIdVal, fields) {
@@ -976,6 +1180,48 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                 )
               })}
             </div>
+
+            {/* Champs géolocalisation — visibles uniquement si présentiel sélectionné */}
+            {prefs.formats.includes('presentiel') && (
+              <div style={{ marginTop:12, padding:'12px 14px', borderRadius:10, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:10 }}>
+                  📍 Votre localisation pour les ateliers en présentiel
+                </div>
+                <div style={{ display:'flex', gap:8 }}>
+                  <div style={{ flex:'0 0 100px' }}>
+                    <div style={{ fontSize:9, color:'var(--text3)', marginBottom:4 }}>Code postal</div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={5}
+                      placeholder="79000"
+                      value={prefs.code_postal}
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 5)
+                        setPrefs(p => ({ ...p, code_postal: val }))
+                      }}
+                      onBlur={() => savePrefs({ code_postal: prefs.code_postal, ville: prefs.ville })}
+                      style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }}
+                    />
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:9, color:'var(--text3)', marginBottom:4 }}>Ville</div>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      placeholder="Paris"
+                      value={prefs.ville}
+                      onChange={e => setPrefs(p => ({ ...p, ville: e.target.value }))}
+                      onBlur={() => savePrefs({ code_postal: prefs.code_postal, ville: prefs.ville })}
+                      style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }}
+                    />
+                  </div>
+                </div>
+                <div style={{ fontSize:9, color:'var(--text3)', marginTop:6, lineHeight:1.5 }}>
+                  Permet aux animateurs de vous inviter en priorité pour les ateliers près de chez vous.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Notification email */}
@@ -1027,7 +1273,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       {(showCreate || editAtelier) && (
         <AtelierFormModal
           onClose={() => { setShowCreate(false); setEditAtelier(null) }}
-          onCreate={handleCreate}
+          onCreate={(fields, deptInvites) => handleCreate(fields, deptInvites)}
           onEdit={handleEdit}
           initialData={editAtelier?._isRepublish ? { ...editAtelier, id: null } : editAtelier}
         />

@@ -1435,9 +1435,6 @@ function ThemeEditor({ showToast }) {
       })
   }, [])
 
-  // hoverVars : vars temporaires lors du survol d'un preset (preview uniquement)
-  const [hoverVars, setHoverVars] = useState(null)
-
   const updateVar = (key, val) => {
     const updates = { [key]: val }
     if (key === '--green') {
@@ -1446,7 +1443,7 @@ function ThemeEditor({ showToast }) {
     }
     setVars(v => ({ ...v, ...updates }))
     setChanged(true)
-    // Pas de setProperty ici — les changements restent dans le preview uniquement
+    Object.entries(updates).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
   }
 
   const deriveFromGreen = (g) => {
@@ -1463,82 +1460,35 @@ function ThemeEditor({ showToast }) {
     const derived = deriveFromGreen(preset.vars['--green'])
     const full = { ...preset.vars, ...derived, theme_name: preset.name }
     setVars(v => ({ ...v, ...full }))
-    setHoverVars(null)
     setChanged(true)
-    // Pas de setProperty — visible dans le preview seulement
+    Object.entries(full).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
   }
 
-  // Survol preset : mise à jour du preview uniquement via hoverVars
   const previewPreset = (preset) => {
-    if (!preset) { setHoverVars(null); setPreview(null); return }
+    if (!preset) {
+      Object.entries(vars).forEach(([k, v]) => {
+        if (k.startsWith('--')) document.documentElement.style.setProperty(k, v)
+      })
+      setPreview(null)
+      return
+    }
     setPreview(preset.name)
     const derived = deriveFromGreen(preset.vars['--green'])
-    setHoverVars({ ...preset.vars, ...derived })
+    Object.entries({ ...preset.vars, ...derived }).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
   }
 
   const save = async () => {
     setSaving(true)
+    // Inclut les dérivées de --green si présentes
     const derived = deriveFromGreen(vars['--green'])
     const allVars = { ...vars, ...derived }
-
-    // ── 1. Appliquer immédiatement à l'app entière (optimistic) ──────────────
-    Object.entries(allVars).forEach(([k, v]) => {
-      if (k.startsWith('--')) document.documentElement.style.setProperty(k, v)
-    })
-
-    // ── 2. Persister en base ─────────────────────────────────────────────────
-    // On upserte chaque clé individuellement pour éviter les erreurs de batch
-    // (colonnes manquantes, RLS, etc.)
-    let dbError = null
-    try {
-      const cssEntries = Object.entries(allVars)
-        .filter(([k]) => k !== null && k !== undefined)
-        .map(([key, value]) => ({ key, value }))
-
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert(cssEntries, { onConflict: 'key' })
-
-      if (error) {
-        // Fallback : tenter update + insert séparément
-        dbError = error
-        let fallbackOk = true
-        for (const [key, value] of Object.entries(allVars)) {
-          const { error: e1 } = await supabase
-            .from('app_settings')
-            .update({ value })
-            .eq('key', key)
-          if (e1) {
-            const { error: e2 } = await supabase
-              .from('app_settings')
-              .insert({ key, value })
-            if (e2) { fallbackOk = false; break }
-          }
-        }
-        dbError = fallbackOk ? null : dbError
-      }
-    } catch (e) {
-      dbError = e
-      console.error('[ThemeEditor] save error:', e)
-    }
-
+    const entries = Object.entries(allVars).map(([key, value]) => ({ key, value, updated_at: new Date().toISOString() }))
+    const { error } = await supabase.from('app_settings').upsert(entries, { onConflict: 'key' })
     setSaving(false)
+    if (error) { showToast('✗ ' + error.message); return }
     setVars(v => ({ ...v, ...derived }))
     setChanged(false)
-
-    if (dbError) {
-      showToast('⚠ Thème appliqué localement — erreur DB : ' + (dbError.message || dbError))
-    } else {
-      // ── 3. Mettre à jour le cache localStorage de useTheme ───────────────
-      // Sans ça, au prochain chargement useTheme réappliquerait l'ancien thème
-      try {
-        const cssVars = Object.fromEntries(
-          Object.entries(allVars).filter(([k]) => k.startsWith('--'))
-        )
-        localStorage.setItem('mji_theme_vars', JSON.stringify({ vars: cssVars, ts: Date.now() }))
-      } catch {}
-      showToast('✓ Thème sauvegardé et appliqué')
-    }
+    showToast('✓ Thème sauvegardé')
   }
 
   const lbl = { fontSize:10, color:'rgba(242,237,224,0.50)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:6, display:'block', fontWeight:500 }
@@ -1645,7 +1595,7 @@ function ThemeEditor({ showToast }) {
         </div>
 
         {/* ══ Colonne droite : preview navigable ══ */}
-        <ThemePreview vars={hoverVars || vars} />
+        <ThemePreview />
 
       </div>
     </div>
@@ -2091,17 +2041,10 @@ const NAV_MOBILE = [
   { id:'lumens',        icon:'✦',  label:'Lumens',              sub:'340 disponibles',                  accent:'#e8c060', accentBg:'rgba(232,192,96,0.10)',  screen:false },
 ]
 
-// cr() lit depuis vars (preview scopé) ou depuis document.documentElement (fallback)
-function cr(key, vars) {
-  if (vars) {
-    const v = vars[key]
-    if (v) return v
-  }
-  return getComputedStyle(document.documentElement).getPropertyValue(key).trim() || 'transparent'
-}
+function cr(key) { return getComputedStyle(document.documentElement).getPropertyValue(key).trim() || 'transparent' }
 
 /* ── Fleur SVG ── */
-function FleurSVG({ size=110, zonesData=ZONES_DATA, vars }) {
+function FleurSVG({ size=110, zonesData=ZONES_DATA }) {
   const cx=size/2, cy=size/2
   const angles=[234,162,18,306,90] // roots,stem,leaves,flowers,breath
   function petal(a,pct,color) {
@@ -2113,7 +2056,7 @@ function FleurSVG({ size=110, zonesData=ZONES_DATA, vars }) {
     const lr=rad-Math.PI/2
     const c1x=cx+r*.42*Math.cos(rad)+w*Math.cos(lr), c1y=cy+r*.42*Math.sin(rad)+w*Math.sin(lr)
     const c2x=cx+r*.42*Math.cos(rad)-w*Math.cos(lr), c2y=cy+r*.42*Math.sin(rad)-w*Math.sin(lr)
-    const c=cr(color, vars)
+    const c=cr(color)
     return {path:`M${cx} ${cy} Q${c1x} ${c1y} ${tx} ${ty} Q${c2x} ${c2y} ${cx} ${cy} Z`, color:c}
   }
   const petals=zonesData.map((z,i)=>petal(angles[i],z.health,z.cssVar))
@@ -2122,7 +2065,7 @@ function FleurSVG({ size=110, zonesData=ZONES_DATA, vars }) {
       {petals.map((p,i)=>(
         <path key={i} d={p.path} fill={p.color} fillOpacity={.72} stroke={p.color} strokeOpacity={.3} strokeWidth={.6}/>
       ))}
-      <circle cx={cx} cy={cy} r={size*.06} fill={cr('--gold', vars)} fillOpacity={.92}/>
+      <circle cx={cx} cy={cy} r={size*.06} fill={cr('--gold')} fillOpacity={.92}/>
       <circle cx={cx} cy={cy} r={size*.025} fill="rgba(255,255,255,0.6)"/>
     </svg>
   )
@@ -2131,7 +2074,7 @@ function FleurSVG({ size=110, zonesData=ZONES_DATA, vars }) {
 /* ════════════════════ ÉCRANS ════════════════════ */
 
 /* ── Ma Fleur (mobile) ── */
-function ScreenJardin({ vars }) {
+function ScreenJardin() {
   const S=.72 // scale factor pour adapter les tailles
   return (
     <div style={{fontFamily:"'Jost',sans-serif", padding:'12px 14px', display:'flex', flexDirection:'column', gap:8}}>
@@ -2167,7 +2110,7 @@ function ScreenJardin({ vars }) {
             <br/><span style={{fontSize:8,color:'rgba(150,212,133,0.4)',letterSpacing:'.05em'}}>CONSÉCUTIFS</span>
           </div>
           <div style={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:200}}>
-            <FleurSVG size={170} vars={vars}/>
+            <FleurSVG size={170}/>
           </div>
           {/* Badges personnalisation */}
           <div style={{display:'flex',alignItems:'center',gap:4,padding:'6px 10px',borderTop:'1px solid var(--border2)',background:'var(--bg)',flexWrap:'wrap'}}>
@@ -2214,7 +2157,7 @@ function ScreenJardin({ vars }) {
         {/* Grille 2 colonnes */}
         <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:10}}>
           {ZONES_DATA.map(z=>{
-            const c=cr(z.cssVar, vars)
+            const c=cr(z.cssVar)
             const doneCnt = z.id==='breath' ? 1 : 0
             const done = doneCnt>0
             return (
@@ -2279,13 +2222,13 @@ function ScreenJardin({ vars }) {
 }
 
 /* ── Jardin Collectif ── */
-function ScreenChamp({ vars }) {
+function ScreenChamp() {
   const zkeys=['--zone-roots','--zone-stem','--zone-leaves','--zone-flowers','--zone-breath']
   return (
     <div style={{position:'relative',minHeight:320,background:'var(--bg)',overflow:'hidden'}}>
       <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:3,padding:'12px'}}>
         {Array.from({length:42}).map((_,i)=>{
-          const k=zkeys[i%5], c=cr(k, vars)
+          const k=zkeys[i%5], c=cr(k)
           const pct=35+((i*13+7)%55)
           const sz=28,cx=14,cy=14
           return (
@@ -2299,7 +2242,7 @@ function ScreenChamp({ vars }) {
                 const c2x=cx+r*.42*Math.cos(rad)-w*Math.cos(lr),c2y=cy+r*.42*Math.sin(rad)-w*Math.sin(lr)
                 return <path key={j} d={`M${cx} ${cy} Q${c1x} ${c1y} ${tx} ${ty} Q${c2x} ${c2y} ${cx} ${cy} Z`} fill={c} fillOpacity={.72}/>
               })}
-              <circle cx={cx} cy={cy} r={2} fill={cr('--gold', vars)} fillOpacity={.88}/>
+              <circle cx={cx} cy={cy} r={2} fill={cr('--gold')} fillOpacity={.88}/>
             </svg>
           )
         })}
@@ -2317,7 +2260,7 @@ function ScreenChamp({ vars }) {
 }
 
 /* ── Club Jardiniers ── */
-function ScreenClub({ vars }) {
+function ScreenClub() {
   const btns=[
     {emoji:'✦',label:"L'Égrégore",sub:'Fleur collective du groupe',glow:true},
     {emoji:'🌿',label:'Le Jardin',sub:'20 fleurs à soutenir',glow:false},
@@ -2377,7 +2320,7 @@ function ScreenClub({ vars }) {
         <div style={{display:'flex',flexDirection:'column',gap:7}}>
           <div style={{fontSize:9,color:'var(--text3)',letterSpacing:'.12em',textTransform:'uppercase'}}>✦ Des petites attentions à votre égard !</div>
           {msgs.map((m,i)=>{
-            const c=cr(m.col, vars)
+            const c=cr(m.col)
             return (
               <div key={i} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',background:'rgba(255,100,100,.04)',border:'1px solid rgba(255,100,100,.10)',borderRadius:13}}>
                 <span style={{fontSize:20,flexShrink:0}}>💐</span>
@@ -2397,7 +2340,7 @@ function ScreenClub({ vars }) {
 }
 
 /* ── Ateliers ── */
-function ScreenAteliers({ vars }) {
+function ScreenAteliers() {
   const ateliers=[
     {title:'Méditation des Racines',theme:'Racines',date:'Sam 22 mars · 10h00',host:'Marie T.',spots:4,total:12,price:'12 €',col:'--zone-roots',fmt:'🌐 En ligne'},
     {title:'Respiration Souffle Libre',theme:'Souffle',date:'Dim 23 mars · 14h00',host:'Lucas V.',spots:2,total:8,price:'Gratuit',col:'--zone-breath',fmt:'📍 Présentiel'},
@@ -2429,7 +2372,7 @@ function ScreenAteliers({ vars }) {
       {/* Cards */}
       <div style={{display:'flex',flexDirection:'column',gap:10}}>
         {ateliers.map((a,i)=>{
-          const c=cr(a.col, vars)
+          const c=cr(a.col)
           const pct=Math.round((1-a.spots/a.total)*100)
           const isReg=i===0
           return (
@@ -2466,7 +2409,7 @@ function ScreenAteliers({ vars }) {
 }
 
 /* ── Défis ── */
-function ScreenDefis({ vars }) {
+function ScreenDefis() {
   const cats=['Tous','Souffle','Racines','Feuilles','Tige','Fleurs']
   const defis=[
     {emoji:'🌬️',title:'5 min de souffle chaque matin',zone:'Souffle',col:'--zone-breath',days:14,n:38,prog:60,joined:true},
@@ -2511,7 +2454,7 @@ function ScreenDefis({ vars }) {
       {/* Cards grille */}
       <div style={{display:'grid',gridTemplateColumns:'1fr',gap:8,padding:'0 14px 0'}}>
         {defis.map((d,i)=>{
-          const c=cr(d.col, vars)
+          const c=cr(d.col)
           return (
             <div key={i} style={{background:'rgba(255,255,255,0.04)',border:'1px solid var(--border2)',borderRadius:13,padding:'12px 14px',cursor:'pointer'}}>
               <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
@@ -2549,7 +2492,7 @@ function ScreenDefis({ vars }) {
 }
 
 /* ── Jardinothèque ── */
-function ScreenJardinotheque({ vars }) {
+function ScreenJardinotheque() {
   const tabs=[['🎧','Digital'],['🤝','Partenaires'],['🛍','Occasion']]
   const cats=['Tous','Audio','Formation','E-book']
   const produits=[
@@ -2603,24 +2546,27 @@ function ScreenJardinotheque({ vars }) {
 }
 
 /* ════════════════════ THEME PREVIEW ════════════════════ */
-function ThemePreview({ vars = {} }) {
+function ThemePreview() {
   const [activePage, setActivePage] = useState('nav')
 
-  // Génère le bloc <style> scopé au cadre preview uniquement
-  const scopedStyle = Object.entries(vars)
-    .filter(([k]) => k.startsWith('--'))
-    .map(([k, v]) => `  ${k}: ${v};`)
-    .join('\n')
+  const topbarTitles = {
+    jardin:        <>Mon <em style={{fontStyle:'italic',color:'var(--gold)'}}>Jardin</em> Intérieur</>,
+    champ:         <>Mon <em style={{fontStyle:'italic',color:'var(--gold)'}}>Jardin</em> Intérieur</>,
+    club:          <>Mon <em style={{fontStyle:'italic',color:'var(--gold)'}}>Jardin</em> Intérieur</>,
+    ateliers:      <>Mon <em style={{fontStyle:'italic',color:'var(--gold)'}}>Jardin</em> Intérieur</>,
+    defis:         <>Mon <em style={{fontStyle:'italic',color:'var(--gold)'}}>Jardin</em> Intérieur</>,
+    jardinotheque: <>Mon <em style={{fontStyle:'italic',color:'var(--gold)'}}>Jardin</em> Intérieur</>,
+  }
 
   const activeScreen = PREVIEW_NAV.find(n=>n.id===activePage)
 
   function renderScreen() {
-    if (activePage==='jardin')        return <ScreenJardin vars={vars}/>
-    if (activePage==='champ')         return <ScreenChamp vars={vars}/>
-    if (activePage==='club')          return <ScreenClub vars={vars}/>
-    if (activePage==='ateliers')      return <ScreenAteliers vars={vars}/>
-    if (activePage==='defis')         return <ScreenDefis vars={vars}/>
-    if (activePage==='jardinotheque') return <ScreenJardinotheque vars={vars}/>
+    if (activePage==='jardin')        return <ScreenJardin/>
+    if (activePage==='champ')         return <ScreenChamp/>
+    if (activePage==='club')          return <ScreenClub/>
+    if (activePage==='ateliers')      return <ScreenAteliers/>
+    if (activePage==='defis')         return <ScreenDefis/>
+    if (activePage==='jardinotheque') return <ScreenJardinotheque/>
     return null
   }
 
@@ -2630,15 +2576,12 @@ function ThemePreview({ vars = {} }) {
       {/* Label */}
       <div style={{ fontSize:9, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(242,237,224,0.35)', marginBottom:10, display:'flex', alignItems:'center', gap:8 }}>
         <span style={{ flex:1 }}>Aperçu mobile en direct</span>
-        <span style={{ width:7, height:7, borderRadius:'50%', background: cr('--green', vars) || 'var(--green)', boxShadow:`0 0 6px ${cr('--green', vars) || 'var(--green)'}`, animation:'pvPulse 2s ease-in-out infinite', display:'inline-block' }}/>
+        <span style={{ width:7, height:7, borderRadius:'50%', background:'var(--green)', boxShadow:'0 0 6px var(--green)', animation:'pvPulse 2s ease-in-out infinite', display:'inline-block' }}/>
       </div>
       <style>{`@keyframes pvPulse{0%,100%{opacity:1}50%{opacity:.3}}`}</style>
 
-      {/* Style scopé — les vars n'affectent QUE le cadre preview */}
-      <style>{`#theme-preview-root {\n${scopedStyle}\n}`}</style>
-
       {/* Cadre téléphone */}
-      <div id="theme-preview-root" style={{
+      <div style={{
         width: 280, margin: '0 auto',
         borderRadius: 36,
         border: '2.5px solid rgba(255,255,255,0.14)',
