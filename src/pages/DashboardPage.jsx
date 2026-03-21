@@ -2,6 +2,7 @@
 //  DashboardPage.jsx  —  Coque principale du dashboard
 //  Gère : sidebar, topbar, routing entre écrans, lumens, profil
 // ─────────────────────────────────────────────────────────────────────────────
+import { ADMIN_IDS } from './AdminPage'
 import { useState, useEffect, useMemo } from "react"
 import { useAuth }   from '../hooks/useAuth'
 import { usePlant }  from '../hooks/usePlant'
@@ -469,7 +470,7 @@ export default function DashboardPage() {
 
   // Rapports admin
   useEffect(() => {
-    if (['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id)) {
+    if (ADMIN_IDS.includes(user?.id)) {
       supabase.from('reports').select('*', { count:'exact', head:true }).eq('resolved', false)
         .then(({ count }) => setPendingReports(count ?? 0))
     }
@@ -770,7 +771,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Admin */}
-                {['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id) && (
+                {ADMIN_IDS.includes(user?.id) && (
                   <div
                     onClick={() => { setShowPrefsAccordion(false); window.location.hash = 'admin' }}
                     style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', position:'relative', WebkitTapHighlightColor:'transparent' }}
@@ -1051,7 +1052,7 @@ export default function DashboardPage() {
                   </div>
 
                   {/* Administration (admin uniquement) */}
-                  {['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'].includes(user?.id) && (
+                  {ADMIN_IDS.includes(user?.id) && (
                     <div
                       onClick={() => { setShowSettingsDrawer(false); window.location.hash = 'admin' }}
                       style={{

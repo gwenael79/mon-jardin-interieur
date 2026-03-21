@@ -1830,11 +1830,11 @@ function JournalComposer({ userId, plantId, onSaved }) {
 ───────────────────────────────────────── */
 
 const PLANT_ZONES = {
-  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'var(--zone-roots)', accent:'var(--gold-warm)', bg:'#120A03' },
-  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'var(--zone-stem)', accent:'#9DDBB4', bg:'#060F08' },
-  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'var(--zone-leaves)', accent:'var(--green)', bg:'#060C08' },
-  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'var(--zone-flowers)', accent:'var(--zone-flowers)', bg:'#0E0508' },
-  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'var(--zone-breath)', accent:'var(--zone-breath)', bg:'#03090E' },
+  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'var(--zone-roots)', accent:'var(--gold-warm)', bg:'var(--zone-roots-bg, #120A03)', modalBg:'var(--zone-roots-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
+  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'var(--zone-stem)', accent:'#9DDBB4', bg:'var(--zone-stem-bg, #060F08)', modalBg:'var(--zone-stem-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
+  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'var(--zone-leaves)', accent:'var(--green)', bg:'var(--zone-leaves-bg, #060C08)', modalBg:'var(--zone-leaves-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
+  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'var(--zone-flowers)', accent:'var(--zone-flowers)', bg:'var(--zone-flowers-bg, #0E0508)', modalBg:'var(--zone-flowers-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
+  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'var(--zone-breath)', accent:'var(--zone-breath)', bg:'var(--zone-breath-bg, #03090E)', modalBg:'var(--zone-breath-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
 }
 
 // Correspondance zone → clé DB pour la mise à jour de la plante
@@ -2138,7 +2138,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--overlay)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
-      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,${zone.bg} 0%,#080E0A 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,${zone.modalBg} 0%,var(--overlay-dark) 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
         {activeRitual ? (
           <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} initialMode={initialMode} zoneAlreadyDone={rituals.some(r => completed[r.id])} />
         ) : (
@@ -2614,7 +2614,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         zoneName:   zone.name,
         zoneColor:  zone.color,
         zoneAccent: zone.accent,
-        zoneBg:     zone.bg,
+        zoneBg:     zone.modalBg,
         zoneValue:  weakest.val,
         ritualId:   firstRitual.id,
         ritualText: firstRitual.text,
@@ -2705,7 +2705,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                   position:'relative', overflow:'hidden',
                   padding: isMobile ? '12px 12px 10px' : '14px 14px 12px',
                   borderRadius:14, textAlign:'left', cursor:'pointer',
-                  background: `linear-gradient(145deg, ${zone.color}12 0%, ${zone.bg} 60%)`,
+                  background: `color-mix(in srgb, ${zone.color} 8%, var(--zone-card-bg, var(--bg3)))`,
                   border:`1px solid ${isPriority ? zone.color + '50' : allDone ? zone.color + '35' : 'var(--track)'}`,
                   boxShadow: isPriority ? `0 0 18px ${zone.color}22, inset 0 1px 0 ${zone.color}18` : allDone ? `0 0 12px ${zone.color}18` : 'none',
                   width:'100%', display:'flex', flexDirection:'column', gap:0,
@@ -2724,11 +2724,11 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, minWidth:0 }}>
                         <span style={{ fontSize:'var(--fs-h2, 22px)', lineHeight:1, flexShrink:0 }}>{zoneIcons[zoneId]}</span>
-                        <span style={{ fontSize:'var(--fs-h4, 13px)', color: zone.accent, fontWeight:700, letterSpacing:'0.04em', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{zone.name}</span>
+                        <span style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--zone-card-text, var(--text))', fontWeight:700, letterSpacing:'0.04em', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{zone.name}</span>
                       </div>
                       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2, flexShrink:0, paddingLeft:8 }}>
-                        <span style={{ fontSize:'var(--fs-h3, 18px)', fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:'var(--fs-h5, 10px)', opacity:0.6 }}>%</span></span>
-                        {allDone && <span style={{ fontSize:'var(--fs-h5, 12px)', color: zone.accent }}>✓</span>}
+                        <span style={{ fontSize:'var(--fs-h3, 18px)', fontFamily:"'Cormorant Garamond',serif", color:'var(--zone-card-text, var(--text))', fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:'var(--fs-h5, 10px)', opacity:0.6 }}>%</span></span>
+                        {allDone && <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--zone-card-text, var(--text))' }}>✓</span>}
                         {isPriority && !allDone && <span style={{ fontSize:'var(--fs-h5, 8px)', color: zone.color, background:`${zone.color}22`, padding:'1px 6px', borderRadius:10, whiteSpace:'nowrap' }}>⚡ priorité</span>}
                       </div>
                     </div>
@@ -2738,11 +2738,11 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                     </div>
                     {/* Compteur + flèche */}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--border)' }}>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--zone-card-text-sub, var(--text3))' }}>
                         {doneCnt > 0 ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span> : <span>{doneCnt}</span>}
-                        <span style={{ color:'var(--separator)' }}>/{rituals.length}</span>
+                        <span style={{ color:'var(--zone-card-text-sub, var(--text3))' }}>/{rituals.length}</span>
                       </span>
-                      <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--separator)' }}>›</span>
+                      <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--zone-card-text-sub, var(--text3))' }}>›</span>
                     </div>
                   </>
                 ) : (
@@ -2751,24 +2751,24 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
                       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
                         <span style={{ fontSize:'var(--fs-h2, 22px)', lineHeight:1 }}>{zoneIcons[zoneId]}</span>
-                        <span style={{ fontSize:'var(--fs-h4, 13px)', color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
-                        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--border)', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>
+                        <span style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--zone-card-text, var(--text))', fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
+                        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--zone-card-text-sub, var(--text3))', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>
                       </div>
                       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
-                        <span style={{ fontSize:'var(--fs-h2, 20px)', fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:'var(--fs-h5, 11px)', opacity:0.6 }}>%</span></span>
+                        <span style={{ fontSize:'var(--fs-h2, 20px)', fontFamily:"'Cormorant Garamond',serif", color:'var(--zone-card-text, var(--text))', fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:'var(--fs-h5, 11px)', opacity:0.6 }}>%</span></span>
                         {isPriority && !allDone && <span style={{ fontSize:'var(--fs-h5, 8px)', color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>}
-                        {allDone && <span style={{ fontSize:'var(--fs-h5, 11px)', color: zone.accent }}>✓</span>}
+                        {allDone && <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--zone-card-text, var(--text))' }}>✓</span>}
                       </div>
                     </div>
                     <div style={{ height:3, borderRadius:3, background:'var(--surface-2)', overflow:'hidden', marginBottom:6 }}>
                       <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`, borderRadius:3, transition:'width .6s ease', boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none' }} />
                     </div>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--border)' }}>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--zone-card-text-sub, var(--text3))' }}>
                         {doneCnt > 0 ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span> : <span>{doneCnt}</span>}
-                        <span style={{ color:'var(--separator)' }}>/{rituals.length} rituels</span>
+                        <span style={{ color:'var(--zone-card-text-sub, var(--text3))' }}>/{rituals.length} rituels</span>
                       </span>
-                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--separator)' }}>›</span>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--zone-card-text-sub, var(--text3))' }}>›</span>
                     </div>
                   </>
                 )}

@@ -15,6 +15,9 @@ const CACHE_TTL = 10 * 60 * 1000
 export const CSS_VARS = [
   // ── Fonds structuraux ──────────────────────────────────────────────────────
   '--bg', '--bg2', '--bg3', '--card',
+  '--sidebar-bg', '--topbar-bg',
+  '--nav-item-active-bg', '--nav-item-active-color', '--nav-item-hover-bg', '--nav-item-hover-color',
+  '--nav-fs-logo', '--nav-fs-section', '--nav-fs-item', '--nav-fs-icon', '--nav-fs-badge',
 
   // ── Surfaces superposées ───────────────────────────────────────────────────
   '--surface-1', '--surface-2', '--surface-3', '--surface-hover',
@@ -52,6 +55,14 @@ export const CSS_VARS = [
   // ── Zones rituels ──────────────────────────────────────────────────────────
   '--zone-roots', '--zone-stem', '--zone-leaves',
   '--zone-flowers', '--zone-breath',
+  // Fonds des cards de zone (gradient sombre)
+  '--zone-roots-bg', '--zone-stem-bg', '--zone-leaves-bg',
+  '--zone-flowers-bg', '--zone-breath-bg',
+  // Fond des cards (partagé entre toutes les zones)
+  '--zone-card-bg',
+  // Textes des cards de zone
+  '--zone-card-text',       // titre zone (RACINES, TIGE...) et pourcentage
+  '--zone-card-text-sub',   // sous-titre, compteur rituels, flèche
 
   // ── Ombres ─────────────────────────────────────────────────────────────────
   '--shadow-sm', '--shadow',
@@ -195,6 +206,29 @@ const FS_DEFAULTS = {
   '--fs-emoji-sm': '14px',
   '--fs-emoji-md': '20px',
   '--fs-emoji-lg': '28px',
+  // Fonds de layout (fallback si pas en base)
+  '--sidebar-bg':  'rgba(0,0,0,0.18)',
+  '--topbar-bg':   'rgba(0,0,0,0.08)',
+  // Fonds des cards de zone (dark par défaut — s'adaptent au thème)
+  '--zone-roots-bg':    '#120A03',
+  '--zone-stem-bg':     '#060F08',
+  '--zone-leaves-bg':   '#060C08',
+  '--zone-flowers-bg':  '#0E0508',
+  '--zone-breath-bg':   '#03090E',
+  '--zone-card-bg':     'var(--bg3)',  // fond des cards de zone — suit --bg3 par défaut
+  '--zone-card-text':   'var(--text)', // titre + % des cards de zone
+  '--zone-card-text-sub': 'var(--text3)', // sous-titres + compteurs des cards de zone
+  // Navigation — tailles de police
+  '--nav-fs-logo':     '18px',
+  '--nav-fs-section':  '10px',
+  '--nav-fs-item':     '13px',
+  '--nav-fs-icon':     '15px',
+  '--nav-fs-badge':    '9px',
+  // Navigation items
+  '--nav-item-active-bg':     'rgba(150,212,133,0.11)',
+  '--nav-item-active-color':  '#96d485',
+  '--nav-item-hover-bg':      'rgba(255,255,255,0.05)',
+  '--nav-item-hover-color':   'rgba(242,237,224,0.85)',
 }
 
 export function useTheme() {
