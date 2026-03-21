@@ -105,12 +105,12 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
   }
 
   const fStyle = { marginBottom:14 }
-  const lStyle = { fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5, display:'block' }
+  const lStyle = { fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5, display:'block' }
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:16, padding:28, width:500, maxHeight:'92vh', overflowY:'auto' }}>
-        <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:22, color:'var(--gold)', marginBottom:20 }}>{isEdit ? '✏️ Modifier l\'atelier' : isRepublish ? '🔄 Republier l\'atelier' : '✨ Créer un atelier'}</div>
+        <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h2, 22px)', color:'var(--gold)', marginBottom:20 }}>{isEdit ? '✏️ Modifier l\'atelier' : isRepublish ? '🔄 Republier l\'atelier' : '✨ Créer un atelier'}</div>
 
         {/* Titre */}
         <div style={fStyle}>
@@ -131,17 +131,17 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
         <div style={fStyle}>
           <label style={lStyle}>Votre description (brouillon)</label>
           <textarea style={{...iStyle, height:80, resize:'none'}} value={rawDesc} onChange={e=>setRawDesc(e.target.value)} placeholder="Décrivez votre atelier en quelques phrases, même imparfait..." />
-          <button onClick={generateDesc} disabled={aiLoading || !rawDesc.trim()} style={{ marginTop:6, padding:'6px 14px', borderRadius:8, background:'rgba(150,212,133,0.1)', border:'1px solid rgba(150,212,133,0.25)', color:'var(--green)', fontSize:11, cursor:'pointer', fontFamily:'Jost,sans-serif', opacity: !rawDesc.trim() ? 0.4 : 1 }}>
+          <button onClick={generateDesc} disabled={aiLoading || !rawDesc.trim()} style={{ marginTop:6, padding:'6px 14px', borderRadius:8, background:'rgba(var(--green-rgb),0.1)', border:'1px solid rgba(var(--green-rgb),0.25)', color:'var(--green)', fontSize:'var(--fs-h5, 11px)', cursor:'pointer', fontFamily:'Jost,sans-serif', opacity: !rawDesc.trim() ? 0.4 : 1 }}>
             {aiLoading ? '✨ Reformulation…' : '✨ Reformuler par IA'}
           </button>
         </div>
 
         {/* Description reformulée */}
         {aiDesc && (
-          <div style={{ marginBottom:14, padding:'12px 14px', background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.2)', borderRadius:10 }}>
-            <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(150,212,133,0.6)', marginBottom:6 }}>✨ Version publique (reformulée par IA)</div>
-            <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.7, fontStyle:'italic' }}>{aiDesc}</div>
-            <button onClick={() => setAiDesc('')} style={{ marginTop:8, fontSize:10, color:'var(--text3)', background:'none', border:'none', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>✕ Effacer et réécrire</button>
+          <div style={{ marginBottom:14, padding:'12px 14px', background:'rgba(var(--green-rgb),0.06)', border:'1px solid rgba(var(--green-rgb),0.2)', borderRadius:10 }}>
+            <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(var(--green-rgb),0.6)', marginBottom:6 }}>✨ Version publique (reformulée par IA)</div>
+            <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)', lineHeight:1.7, fontStyle:'italic' }}>{aiDesc}</div>
+            <button onClick={() => setAiDesc('')} style={{ marginTop:8, fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', background:'none', border:'none', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>✕ Effacer et réécrire</button>
           </div>
         )}
 
@@ -169,10 +169,10 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
             </select>
           </div>
           <div>
-            <label style={lStyle}>Prix en Lumens ✦ <span style={{ color:'rgba(246,196,83,0.5)', textTransform:'none', letterSpacing:0 }}>(obligatoire)</span></label>
+            <label style={lStyle}>Prix en Lumens ✦ <span style={{ color:'rgba(var(--gold-rgb),0.5)', textTransform:'none', letterSpacing:0 }}>(obligatoire)</span></label>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <input style={iStyle} type="number" value={lumenPrice} onChange={e=>setLumenPrice(e.target.value)} min={1} placeholder="ex. 10" />
-              <span style={{ fontSize:13, color:'var(--gold)', flexShrink:0 }}>✦</span>
+              <span style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--gold)', flexShrink:0 }}>✦</span>
             </div>
           </div>
         </div>
@@ -180,7 +180,7 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
           <label style={lStyle}>Prix en euros € <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0 }}>(optionnel — 0 = non affiché)</span></label>
           <input style={{ ...iStyle, width:160 }} type="number" value={price} onChange={e=>setPrice(e.target.value)} min={0} placeholder="0" />
           {price > 0 && lumenPrice > 0 && (
-            <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:4 }}>
               Les participants peuvent choisir entre {price} € ou {lumenPrice} ✦
             </div>
           )}
@@ -193,7 +193,7 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
 
         {/* ── PRÉSENTIEL : code postal + sélection départements ── */}
         {format === 'presentiel' && (
-          <div style={{ marginBottom:18, padding:'14px 16px', borderRadius:12, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ marginBottom:18, padding:'14px 16px', borderRadius:12, background:'var(--surface-1)', border:'1px solid var(--surface-3)' }}>
 
             {/* Code postal de l'animateur */}
             <div style={{ marginBottom:14 }}>
@@ -208,7 +208,7 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
                 onChange={e => setCodePostal(e.target.value.replace(/\D/g, '').slice(0, 5))}
               />
               {codePostal.length >= 2 && (
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:4 }}>
                   Département {codePostal.slice(0,2)}
                 </div>
               )}
@@ -216,19 +216,18 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
 
             {/* Sélection des départements à inviter */}
             <div>
-              <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>
+              <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>
                 Inviter automatiquement les membres de ces localisations
               </div>
 
               {codePostal.length < 5 ? (
-                <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>
                   Saisissez votre code postal pour voir les clients disponibles.
                 </div>
               ) : availableDepts.length === 0 ? (
                 <div style={{
                   display:'inline-flex', alignItems:'center', gap:6,
-                  padding:'5px 12px', borderRadius:9, fontSize:11,
-                  background:'rgba(210,80,80,0.08)', border:'1px solid rgba(210,80,80,0.25)',
+                  padding:'5px 12px', borderRadius:9, fontSize:'var(--fs-h5, 11px)', background:'rgba(var(--red-rgb),0.08)', border:'1px solid rgba(var(--red-rgb),0.25)',
                   color:'var(--red)',
                 }}>
                   <span>⚠</span> Pas de clients associés à votre localisation {codePostal.slice(0,2)}
@@ -245,10 +244,10 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
                         )}
                         style={{
                           display:'flex', alignItems:'center', gap:6,
-                          padding:'5px 12px', borderRadius:9, fontSize:11, cursor:'pointer',
+                          padding:'5px 12px', borderRadius:9, fontSize:'var(--fs-h5, 11px)', cursor:'pointer',
                           transition:'all .2s',
-                          background: active ? 'rgba(150,212,133,0.14)' : 'rgba(255,255,255,0.04)',
-                          border:`1px solid ${active ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.10)'}`,
+                          background: active ? 'rgba(var(--green-rgb),0.14)' : 'var(--surface-2)',
+                          border:`1px solid ${active ? 'rgba(var(--green-rgb),0.35)' : 'var(--surface-3)'}`,
                           color: active ? 'var(--cream)' : 'var(--text3)',
                         }}
                       >
@@ -263,7 +262,7 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
               )}
 
               {deptInvites.filter(d => availableDepts.some(a => a.dept === d)).length > 0 && (
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:8, fontStyle:'italic' }}>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:8, fontStyle:'italic' }}>
                   {(() => { const n = deptInvites.filter(d => availableDepts.some(a => a.dept === d)).length; return `${n > 1 ? n + ' villes sélectionnées' : 'Ville sélectionnée'} — les invitations seront envoyées à la création.` })()}
                 </div>
               )}
@@ -272,7 +271,7 @@ function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
         )}
 
         <div style={{ display:'flex', gap:10, marginTop:8 }}>
-          <button onClick={onClose} style={{ ...btnStyle, background:'rgba(255,255,255,0.05)', color:'var(--text3)', flex:1 }}>Annuler</button>
+          <button onClick={onClose} style={{ ...btnStyle, background:'var(--surface-2)', color:'var(--text3)', flex:1 }}>Annuler</button>
           <button onClick={handleSubmit} disabled={loading || !title.trim() || !startsAt} style={{ ...btnStyle, flex:2, opacity: (!title.trim()||!startsAt) ? 0.4 : 1 }}>
             {loading ? '…' : isEdit ? '✏️ Enregistrer les modifications' : isRepublish ? '🔄 Republier' : "✨ Créer l'atelier"}
           </button>
@@ -294,7 +293,7 @@ function useCountdown(startsAt) {
 
 function CountdownDisplay({ startsAt, isPast }) {
   const remaining = useCountdown(startsAt)
-  if (isPast) return <div style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.05em' }}>Terminé</div>
+  if (isPast) return <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em' }}>Terminé</div>
   const totalMins = Math.floor(remaining / 60000)
   const days = Math.floor(totalMins / 1440)
   const hours = Math.floor((totalMins % 1440) / 60)
@@ -303,10 +302,10 @@ function CountdownDisplay({ startsAt, isPast }) {
   const sameDay = days === 0
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
-      <div style={{ fontSize:18, fontFamily:'Cormorant Garamond,serif', fontWeight:300, color: urgent ? 'rgba(255,180,80,0.95)' : sameDay ? 'rgba(255,210,100,0.8)' : 'rgba(150,212,133,0.8)', lineHeight:1 }}>
+      <div style={{ fontSize:'var(--fs-h3, 18px)', fontFamily:'Cormorant Garamond,serif', fontWeight:300, color: urgent ? 'rgba(var(--gold-rgb),0.95)' : sameDay ? 'rgba(var(--gold-rgb),0.8)' : 'rgba(var(--green-rgb),0.8)', lineHeight:1 }}>
         {days > 0 ? (hours > 0 ? `${days}j ${hours}h` : `${days}j`) : hours > 0 ? `${hours}h ${mins}min` : `${mins}min`}
       </div>
-      <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.06em' }}>
+      <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', letterSpacing:'.06em' }}>
         {urgent ? 'BIENTÔT' : sameDay ? "AUJOURD'HUI" : 'AVANT LE DÉBUT'}
       </div>
     </div>
@@ -330,23 +329,23 @@ function ReviewModal({ atelier, userId, existingReview, onClose, onSubmit }) {
     setTimeout(onClose, 1800)
   }
 
-  const lStyle = { fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:6, display:'block' }
+  const lStyle = { fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:6, display:'block' }
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.75)', zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px' }}>
       <div style={{ background:'var(--bg)', border:'1px solid var(--border2)', borderRadius:16, padding:28, width:'100%', maxWidth:420 }}>
         {done ? (
           <div style={{ textAlign:'center', padding:'20px 0' }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>🌿</div>
-            <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:18, color:'var(--gold)' }}>Merci pour votre avis !</div>
-            <div style={{ fontSize:11, color:'var(--text3)', marginTop:8 }}>Il sera visible après validation.</div>
+            <div style={{ fontSize:'var(--fs-emoji-lg, 32px)', marginBottom:12 }}>🌿</div>
+            <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h3, 18px)', color:'var(--gold)' }}>Merci pour votre avis !</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginTop:8 }}>Il sera visible après validation.</div>
           </div>
         ) : (
           <>
-            <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:20, color:'var(--gold)', marginBottom:6 }}>
+            <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h2, 20px)', color:'var(--gold)', marginBottom:6 }}>
               ⭐ Évaluer l'atelier
             </div>
-            <div style={{ fontSize:11, color:'var(--text3)', marginBottom:20, fontStyle:'italic' }}>{atelier.title}</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginBottom:20, fontStyle:'italic' }}>{atelier.title}</div>
 
             {/* Étoiles */}
             <div style={{ marginBottom:20 }}>
@@ -357,12 +356,12 @@ function ReviewModal({ atelier, userId, existingReview, onClose, onSubmit }) {
                     onMouseEnter={() => setHover(s)}
                     onMouseLeave={() => setHover(0)}
                     onClick={() => setRating(s)}
-                    style={{ fontSize:28, cursor:'pointer', color: s <= (hover || rating) ? 'var(--gold)' : 'var(--text3)', transition:'color .1s', userSelect:'none' }}>
+                    style={{ fontSize:'var(--fs-emoji-md, 28px)', cursor:'pointer', color: s <= (hover || rating) ? 'var(--gold)' : 'var(--text3)', transition:'color .1s', userSelect:'none' }}>
                     ★
                   </span>
                 ))}
                 {rating > 0 && (
-                  <span style={{ fontSize:11, color:'var(--text3)', alignSelf:'center', marginLeft:4 }}>
+                  <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', alignSelf:'center', marginLeft:4 }}>
                     {['','Décevant','Passable','Bien','Très bien','Excellent'][rating]}
                   </span>
                 )}
@@ -377,16 +376,16 @@ function ReviewModal({ atelier, userId, existingReview, onClose, onSubmit }) {
                 onChange={e => setComment(e.target.value)}
                 placeholder="Partagez votre expérience…"
                 maxLength={500}
-                style={{ width:'100%', padding:'9px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color:'#f2ede0', outline:'none', resize:'none', height:90, boxSizing:'border-box', colorScheme:'dark' }}
+                style={{ width:'100%', padding:'9px 12px', background:'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:9, fontSize:'var(--fs-h5, 12px)', fontFamily:'Jost,sans-serif', color:'var(--text-on-dark)', outline:'none', resize:'none', height:90, boxSizing:'border-box', colorScheme:'dark' }}
               />
-              <div style={{ fontSize:9, color:'var(--text3)', textAlign:'right', marginTop:3 }}>{comment.length}/500</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', textAlign:'right', marginTop:3 }}>{comment.length}/500</div>
             </div>
 
             <div style={{ display:'flex', gap:10 }}>
-              <button onClick={onClose} style={{ flex:1, padding:'9px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color:'var(--text3)', cursor:'pointer' }}>
+              <button onClick={onClose} style={{ flex:1, padding:'9px', background:'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:9, fontSize:'var(--fs-h5, 12px)', fontFamily:'Jost,sans-serif', color:'var(--text3)', cursor:'pointer' }}>
                 Annuler
               </button>
-              <button onClick={handleSubmit} disabled={!rating || loading} style={{ flex:2, padding:'9px', background: rating ? 'linear-gradient(135deg,rgba(246,196,83,.25),rgba(246,196,83,.15))' : 'rgba(255,255,255,0.04)', border:`1px solid ${rating ? 'rgba(246,196,83,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color: rating ? 'var(--gold)' : 'var(--text3)', cursor: rating ? 'pointer' : 'default', transition:'all .2s' }}>
+              <button onClick={handleSubmit} disabled={!rating || loading} style={{ flex:2, padding:'9px', background: rating ? 'linear-gradient(135deg,rgba(var(--gold-rgb),.25),rgba(var(--gold-rgb),.15))' : 'var(--surface-2)', border:`1px solid ${rating ? 'rgba(var(--gold-rgb),0.4)' : 'var(--surface-3)'}`, borderRadius:9, fontSize:'var(--fs-h5, 12px)', fontFamily:'Jost,sans-serif', color: rating ? 'var(--gold)' : 'var(--text3)', cursor: rating ? 'pointer' : 'default', transition:'all .2s' }}>
                 {loading ? '…' : existingReview ? '✏️ Modifier mon avis' : '⭐ Publier mon avis'}
               </button>
             </div>
@@ -407,26 +406,26 @@ function ReviewsPanel({ atelier, reviews, totalCount }) {
       <button onClick={() => setOpen(v => !v)} style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:6 }}>
         <div style={{ display:'flex', gap:2 }}>
           {[1,2,3,4,5].map(s => (
-            <span key={s} style={{ fontSize:11, color: s <= Math.round(avg) ? 'var(--gold)' : 'var(--text3)' }}>★</span>
+            <span key={s} style={{ fontSize:'var(--fs-h5, 11px)', color: s <= Math.round(avg) ? 'var(--gold)' : 'var(--text3)' }}>★</span>
           ))}
         </div>
-        <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>
+        <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>
           {avg.toFixed(1)} · {totalCount} avis
         </span>
-        <span style={{ fontSize:9, color:'var(--text3)' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)' }}>{open ? '▲' : '▼'}</span>
       </button>
 
       {open && (
-        <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:8, paddingLeft:4, borderLeft:'2px solid rgba(246,196,83,0.15)' }}>
+        <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:8, paddingLeft:4, borderLeft:'2px solid rgba(var(--gold-rgb),0.15)' }}>
           {reviews.map(r => (
-            <div key={r.id} style={{ fontSize:11 }}>
+            <div key={r.id} style={{ fontSize:'var(--fs-h5, 11px)' }}>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
                 <div style={{ display:'flex', gap:1 }}>
                   {[1,2,3,4,5].map(s => (
-                    <span key={s} style={{ fontSize:10, color: s <= r.rating ? 'var(--gold)' : 'var(--text3)' }}>★</span>
+                    <span key={s} style={{ fontSize:'var(--fs-h5, 10px)', color: s <= r.rating ? 'var(--gold)' : 'var(--text3)' }}>★</span>
                   ))}
                 </div>
-                <span style={{ fontSize:9, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>
+                <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>
                   {r.reviewer?.display_name ?? 'Participant'} · {new Date(r.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short' })}
                 </span>
               </div>
@@ -434,7 +433,7 @@ function ReviewsPanel({ atelier, reviews, totalCount }) {
             </div>
           ))}
           {totalCount > reviews.length && (
-            <div style={{ fontSize:10, color:'var(--text3)', fontStyle:'italic' }}>+{totalCount - reviews.length} autre(s) avis</div>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontStyle:'italic' }}>+{totalCount - reviews.length} autre(s) avis</div>
           )}
         </div>
       )}
@@ -471,22 +470,22 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
   }
 
   return (
-    <div id={`atelier-${atelier.id}`} style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${isInscrit ? 'rgba(150,212,133,0.3)' : 'rgba(255,255,255,0.09)'}`, borderRadius:12, padding:'16px 18px', display:'flex', flexDirection:'column', gap:10 }}>
+    <div id={`atelier-${atelier.id}`} style={{ background:'var(--surface-2)', border:`1px solid ${isInscrit ? 'rgba(var(--green-rgb),0.3)' : 'rgba(255,255,255,0.09)'}`, borderRadius:12, padding:'16px 18px', display:'flex', flexDirection:'column', gap:10 }}>
 
       {/* LIGNE 1 — titre + prix + countdown */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:15, fontWeight:400, color:'#f2ede0', lineHeight:1.3 }}>{atelier.title}</div>
-          <div style={{ fontSize:10, color:'var(--text3)', marginTop:3 }}>{getThemeEmoji(atelier.theme)} {atelier.theme}</div>
+          <div style={{ fontSize:'var(--fs-h3, 15px)', fontWeight:400, color:'var(--text-on-dark)', lineHeight:1.3 }}>{atelier.title}</div>
+          <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:3 }}>{getThemeEmoji(atelier.theme)} {atelier.theme}</div>
           {atelier.animator?.display_name && (
-            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', marginTop:2 }}>Par {atelier.animator.display_name}{atelier.animator.profession ? ` · ${atelier.animator.profession}` : ''}</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', marginTop:2 }}>Par {atelier.animator.display_name}{atelier.animator.profession ? ` · ${atelier.animator.profession}` : ''}</div>
           )}
           <div style={{ marginTop:6 }}><LumenBadge amount={3} /></div>
         </div>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, flexShrink:0 }}>
           {atelier.price > 0 ? (
             /* Badge euros classique */
-            <div style={{ fontSize:16, fontFamily:'Cormorant Garamond,serif', fontWeight:400, padding:'3px 12px', borderRadius:100, background:'rgba(232,212,168,0.12)', border:'1px solid rgba(232,212,168,0.3)', color:'var(--gold)', whiteSpace:'nowrap' }}>
+            <div style={{ fontSize:'var(--fs-h3, 16px)', fontFamily:'Cormorant Garamond,serif', fontWeight:400, padding:'3px 12px', borderRadius:100, background:'rgba(var(--gold-warm-rgb),0.12)', border:'1px solid rgba(var(--gold-warm-rgb),0.3)', color:'var(--gold)', whiteSpace:'nowrap' }}>
               {atelier.price} €
             </div>
           ) : (
@@ -494,10 +493,10 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
             <div style={{
               display:'inline-flex', alignItems:'center', gap:5,
               padding:'4px 12px 4px 7px', borderRadius:100,
-              background:'linear-gradient(135deg, rgba(246,196,83,0.20), rgba(246,196,83,0.08))',
-              border:'1px solid rgba(246,196,83,0.42)',
-              fontSize:12, fontFamily:'Cormorant Garamond,serif',
-              color:'#F6C453', whiteSpace:'nowrap',
+              background:'linear-gradient(135deg, rgba(var(--gold-rgb),0.20), rgba(var(--gold-rgb),0.08))',
+              border:'1px solid rgba(var(--gold-rgb),0.42)',
+              fontSize:'var(--fs-h5, 12px)', fontFamily:'Cormorant Garamond,serif',
+              color:'var(--gold)', whiteSpace:'nowrap',
               animation:'lumenBadgePulse 3s ease-in-out infinite',
             }}>
               <LumenOrb total={atelier.lumen_price} level="aura" size={13} />
@@ -510,18 +509,18 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
 
       {/* Description */}
       {atelier.description && (
-        <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>{atelier.description}</div>
+        <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>{atelier.description}</div>
       )}
 
       {/* AVIS — panel public */}
       <ReviewsPanel atelier={atelier} reviews={reviews ?? []} totalCount={reviews?.length ?? 0} />
 
       {/* LIGNE méta */}
-      <div style={{ display:'flex', flexWrap:'wrap', gap:10, fontSize:10, color:'var(--text3)' }}>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:10, fontSize:'var(--fs-h5, 10px)', color:'var(--text3)' }}>
         <span>🗓 {new Date(atelier.starts_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</span>
         <span>⏱ {atelier.duration_minutes}min</span>
         <span>{atelier.format === 'online' ? '🌐 En ligne' : '📍 Présentiel'}</span>
-        <span style={{ color: isFull ? 'rgba(255,130,130,0.55)' : 'inherit' }}>👥 {atelier.registrationCount ?? 0}/{atelier.max_participants}{isFull ? ' · Complet' : ''}</span>
+        <span style={{ color: isFull ? 'rgba(var(--red-rgb),0.55)' : 'inherit' }}>👥 {atelier.registrationCount ?? 0}/{atelier.max_participants}{isFull ? ' · Complet' : ''}</span>
       </div>
 
       {/* ACTIONS */}
@@ -534,9 +533,9 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
                 {atelier.lumen_price > 0 && atelier.price === 0 && (
                   <button
                     onClick={() => onPayLumens?.(atelier.id, atelier.lumen_price)}
-                    style={{ padding:'9px 18px', fontSize:12, borderRadius:9, fontWeight:500,
-                      background: lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.14)' : 'rgba(255,255,255,0.04)',
-                      border:`1px solid ${lumensAvailable >= atelier.lumen_price ? 'rgba(246,196,83,0.40)' : 'rgba(255,255,255,0.1)'}`,
+                    style={{ padding:'9px 18px', fontSize:'var(--fs-h5, 12px)', borderRadius:9, fontWeight:500,
+                      background: lumensAvailable >= atelier.lumen_price ? 'rgba(var(--gold-rgb),0.14)' : 'var(--surface-2)',
+                      border:`1px solid ${lumensAvailable >= atelier.lumen_price ? 'rgba(var(--gold-rgb),0.40)' : 'var(--surface-3)'}`,
                       color: lumensAvailable >= atelier.lumen_price ? 'var(--gold)' : 'var(--text3)',
                       cursor: lumensAvailable >= atelier.lumen_price ? 'pointer' : 'default',
                       fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:7 }}
@@ -548,7 +547,7 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
                 )}
                 {/* Bouton euros */}
                 {atelier.price > 0 && (
-                  <button onClick={() => onInscrit(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:12 }}>
+                  <button onClick={() => onInscrit(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:'var(--fs-h5, 12px)' }}>
                     ✓ S&apos;inscrire · {atelier.price} €
                   </button>
                 )}
@@ -556,14 +555,14 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
               </div>
             )}
             {!isInscrit && isFull && (
-              <span style={{ fontSize:11, color:'rgba(255,130,130,0.55)', fontStyle:'italic' }}>Complet</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--red-rgb),0.55)', fontStyle:'italic' }}>Complet</span>
             )}
             {isInscrit && (
               <>
-                <div style={{ fontSize:11, padding:'6px 12px', borderRadius:8, background:'rgba(150,212,133,0.08)', border:'1px solid rgba(150,212,133,0.2)', color:'var(--green)' }}>✓ Inscrit</div>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', padding:'6px 12px', borderRadius:8, background:'rgba(var(--green-rgb),0.08)', border:'1px solid rgba(var(--green-rgb),0.2)', color:'var(--green)' }}>✓ Inscrit</div>
                 <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                   <LumenBadge amount={-3} />
-                  <button onClick={() => onDesinscrit(atelier.id, atelier.lumen_price ?? 0)} style={{ fontSize:10, padding:'6px 10px', borderRadius:8, background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
+                  <button onClick={() => onDesinscrit(atelier.id, atelier.lumen_price ?? 0)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 10px', borderRadius:8, background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
                     {atelier.price > 0 || atelier.lumen_price > 0 ? "Se désinscrire · contacter l'animateur" : 'Se désinscrire'}
                   </button>
                 </div>
@@ -571,7 +570,7 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
             )}
             {/* CLOCHE RAPPEL */}
             {!isFull && (
-              <button onClick={toggleReminder} disabled={reminderLoading} title={hasReminder ? 'Supprimer le rappel' : 'Me rappeler 24h, 2h et 30min avant'} style={{ marginLeft:'auto', fontSize:14, padding:'6px 10px', borderRadius:8, background: hasReminder ? 'rgba(232,212,168,0.1)' : 'rgba(255,255,255,0.04)', border:`1px solid ${hasReminder ? 'rgba(232,212,168,0.3)' : 'rgba(255,255,255,0.1)'}`, color: hasReminder ? 'var(--gold)' : 'var(--text3)', cursor:'pointer', transition:'all .2s' }}>
+              <button onClick={toggleReminder} disabled={reminderLoading} title={hasReminder ? 'Supprimer le rappel' : 'Me rappeler 24h, 2h et 30min avant'} style={{ marginLeft:'auto', fontSize:'var(--fs-h4, 14px)', padding:'6px 10px', borderRadius:8, background: hasReminder ? 'rgba(var(--gold-warm-rgb),0.1)' : 'var(--surface-2)', border:`1px solid ${hasReminder ? 'rgba(var(--gold-warm-rgb),0.3)' : 'var(--surface-3)'}`, color: hasReminder ? 'var(--gold)' : 'var(--text3)', cursor:'pointer', transition:'all .2s' }}>
                 {hasReminder ? '🔔' : '🔕'}
               </button>
             )}
@@ -579,33 +578,33 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
         )}
         {/* BOUTON AVIS — participant d'un atelier passé */}
         {isPast && isInscrit && !isMine && (
-          <button onClick={() => onReview?.(atelier)} style={{ fontSize:10, padding:'6px 12px', borderRadius:8, background: myReview ? 'rgba(246,196,83,0.08)' : 'rgba(246,196,83,0.12)', border:`1px solid ${myReview ? 'rgba(246,196,83,0.2)' : 'rgba(246,196,83,0.35)'}`, color:'var(--gold)', cursor:'pointer', fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:5 }}>
+          <button onClick={() => onReview?.(atelier)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', borderRadius:8, background: myReview ? 'rgba(var(--gold-rgb),0.08)' : 'rgba(var(--gold-rgb),0.12)', border:`1px solid ${myReview ? 'rgba(var(--gold-rgb),0.2)' : 'rgba(var(--gold-rgb),0.35)'}`, color:'var(--gold)', cursor:'pointer', fontFamily:'Jost,sans-serif', display:'flex', alignItems:'center', gap:5 }}>
             {myReview ? `✏️ Mon avis (${myReview.rating}★)` : '⭐ Laisser un avis'}
           </button>
         )}
 
         {/* LIEN VISIO — visible si inscrit OU animateur, atelier en ligne, pas encore terminé */}
         {!isPast && atelier.format === 'online' && atelier.location && (isMine || isInscrit) && (
-          <a href={atelier.location} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 16px', borderRadius:8, background:'rgba(150,212,133,0.1)', border:'1px solid rgba(150,212,133,0.25)', color:'var(--cream)', fontSize:11, fontFamily:'Jost,sans-serif', textDecoration:'none', width:'fit-content' }}>
+          <a href={atelier.location} target="_blank" rel="noopener noreferrer" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 16px', borderRadius:8, background:'rgba(var(--green-rgb),0.1)', border:'1px solid rgba(var(--green-rgb),0.25)', color:'var(--cream)', fontSize:'var(--fs-h5, 11px)', fontFamily:'Jost,sans-serif', textDecoration:'none', width:'fit-content' }}>
             🌐 Accéder à l&apos;atelier
           </a>
         )}
         {isMine && (
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             {!isPast && (
-              <button onClick={() => onInvite?.(atelier.id, atelier.theme, atelier.format)} style={{ fontSize:10, padding:'6px 12px', borderRadius:8, background:'rgba(150,212,133,0.08)', border:'1px solid rgba(150,212,133,0.2)', color:'var(--green)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
+              <button onClick={() => onInvite?.(atelier.id, atelier.theme, atelier.format)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', borderRadius:8, background:'rgba(var(--green-rgb),0.08)', border:'1px solid rgba(var(--green-rgb),0.2)', color:'var(--green)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
                 ✉️ Inviter
               </button>
             )}
-            <button onClick={() => onEditAtelier?.(atelier)} style={{ fontSize:10, padding:'6px 12px', borderRadius:8, background:'rgba(232,212,168,0.07)', border:'1px solid rgba(232,212,168,0.2)', color:'var(--gold)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
+            <button onClick={() => onEditAtelier?.(atelier)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', borderRadius:8, background:'rgba(var(--gold-warm-rgb),0.07)', border:'1px solid rgba(var(--gold-warm-rgb),0.2)', color:'var(--gold)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
               ✏️ Modifier
             </button>
             {isPast && (
-              <button onClick={() => onRepublish?.(atelier)} style={{ fontSize:10, padding:'6px 12px', borderRadius:8, background:'rgba(150,212,133,0.08)', border:'1px solid rgba(150,212,133,0.25)', color:'var(--green)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
+              <button onClick={() => onRepublish?.(atelier)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', borderRadius:8, background:'rgba(var(--green-rgb),0.08)', border:'1px solid rgba(var(--green-rgb),0.25)', color:'var(--green)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
                 🔄 Republier
               </button>
             )}
-            <button onClick={() => onDelete(atelier.id, atelier.title)} style={{ fontSize:10, padding:'6px 12px', borderRadius:8, background:'rgba(210,80,80,0.07)', border:'1px solid rgba(210,80,80,0.18)', color:'rgba(255,130,130,0.65)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
+            <button onClick={() => onDelete(atelier.id, atelier.title)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', borderRadius:8, background:'rgba(var(--red-rgb),0.07)', border:'1px solid rgba(var(--red-rgb),0.18)', color:'rgba(var(--red-rgb),0.65)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>
               🗑 Supprimer
             </button>
           </div>
@@ -615,8 +614,8 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
   )
 }
 
-const iStyle = { width:'100%', padding:'9px 12px', background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color:'#f2ede0', outline:'none', boxSizing:'border-box', colorScheme:'dark' }
-const btnStyle = { padding:'9px 18px', background:'linear-gradient(135deg,rgba(122,173,110,.25),rgba(122,173,110,.15))', border:'1px solid rgba(150,212,133,0.4)', borderRadius:9, fontSize:12, fontFamily:'Jost,sans-serif', color:'var(--cream)', cursor:'pointer', transition:'all .2s' }
+const iStyle = { width:'100%', padding:'9px 12px', background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:9, fontSize:'var(--fs-h5, 12px)', fontFamily:'Jost,sans-serif', color:'var(--text-on-dark)', outline:'none', boxSizing:'border-box', colorScheme:'dark' }
+const btnStyle = { padding:'9px 18px', background:'linear-gradient(135deg,rgba(var(--green-rgb),.25),rgba(var(--green-rgb),.15))', border:'1px solid rgba(var(--green-rgb),0.4)', borderRadius:9, fontSize:'var(--fs-h5, 12px)', fontFamily:'Jost,sans-serif', color:'var(--cream)', cursor:'pointer', transition:'all .2s' }
 
 function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgrade }) {
   const { track } = useAnalytics(userId)
@@ -981,60 +980,60 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   const displayed = applySearch(tab === 'upcoming' ? upcoming : tab === 'mine' ? (isAnimator ? mine : myInscriptions) : past)
   const visibleDisplayed = (!isPremium && tab === 'upcoming') ? displayed.slice(0, 1) : displayed
 
-  const sStyle = { width:'100%', padding:'8px 10px', background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:8, fontSize:11, fontFamily:'Jost,sans-serif', color:'#f2ede0', outline:'none', colorScheme:'dark' }
+  const sStyle = { width:'100%', padding:'8px 10px', background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:8, fontSize:'var(--fs-h5, 11px)', fontFamily:'Jost,sans-serif', color:'var(--text-on-dark)', outline:'none', colorScheme:'dark' }
 
   return (
     <div style={{ flex:1, overflow: isMobile ? 'auto' : 'hidden', display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:0 }} className='at-layout'>
       {/* PANNEAU DROITE */}
-      <div className='at-right' style={{ width: isMobile ? '100%' : 220, flexShrink:0, borderLeft: isMobile ? 'none' : '1px solid rgba(255,255,255,0.07)', borderBottom: isMobile ? '1px solid rgba(255,255,255,0.07)' : 'none', padding: isMobile ? '10px 14px' : '20px 16px', overflowY: isMobile ? 'visible' : 'auto', display: isMobile && !showFilter ? 'none' : 'block', order: isMobile ? -1 : 2 }}>
+      <div className='at-right' style={{ width: isMobile ? '100%' : 220, flexShrink:0, borderLeft: isMobile ? 'none' : '1px solid var(--track)', borderBottom: isMobile ? '1px solid var(--track)' : 'none', padding: isMobile ? '10px 14px' : '20px 16px', overflowY: isMobile ? 'visible' : 'auto', display: isMobile && !showFilter ? 'none' : 'block', order: isMobile ? -1 : 2 }}>
         
         {/* RECHERCHE */}
         <div style={{ position:'relative' }}>
           {!isPremium && (
             <div onClick={onUpgrade} style={{ position:'absolute', inset:0, zIndex:10, cursor:'pointer', borderRadius:8,
-              background:'rgba(14,26,14,0.70)', backdropFilter:'blur(3px)',
+              background:'rgba(var(--overlay-dark-rgb,6,14,7),0.70)', backdropFilter:'blur(3px)',
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
-              <span style={{ fontSize:18 }}>🔒</span>
-              <span style={{ fontSize:11, color:'var(--gold)', fontWeight:500 }}>Recherche — Premium</span>
+              <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>🔒</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--gold)', fontWeight:500 }}>Recherche — Premium</span>
             </div>
           )}
-          <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:15, color:'var(--gold)', lineHeight:1.3, marginBottom:12 }}>Je recherche<br/><em style={{ color:'var(--green)' }}>mon atelier</em></div>
+          <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h3, 15px)', color:'var(--gold)', lineHeight:1.3, marginBottom:12 }}>Je recherche<br/><em style={{ color:'var(--green)' }}>mon atelier</em></div>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             <div>
-              <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:4 }}>Thème</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:4 }}>Thème</div>
               <select style={sStyle} value={searchTheme} onChange={e=>setSearchTheme(e.target.value)}>
                 <option value="">Tous les thèmes</option>
                 {THEMES_LIST.map(([emoji,label]) => <option key={label} value={label}>{emoji} {label}</option>)}
               </select>
             </div>
             <div>
-              <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:4 }}>Animateur</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:4 }}>Animateur</div>
               <select style={sStyle} value={searchAnim} onChange={e=>setSearchAnim(e.target.value)}>
                 <option value="">Tous les animateurs</option>
                 {animators.map(u => <option key={u.id} value={u.id}>{u.display_name ?? 'Anonyme'}</option>)}
               </select>
             </div>
             {(searchTheme || searchAnim) && (
-              <button onClick={() => { setSearchTheme(''); setSearchAnim('') }} style={{ fontSize:10, color:'var(--text3)', background:'none', border:'none', cursor:'pointer', fontFamily:'Jost,sans-serif', textAlign:'left', padding:0 }}>
+              <button onClick={() => { setSearchTheme(''); setSearchAnim('') }} style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', background:'none', border:'none', cursor:'pointer', fontFamily:'Jost,sans-serif', textAlign:'left', padding:0 }}>
                 ✕ Effacer
               </button>
             )}
           </div>
         </div>
 
-        <div style={{ borderTop:'1px solid rgba(255,255,255,0.07)' }} />
+        <div style={{ borderTop:'1px solid var(--track)' }} />
 
         {/* INVITATIONS — visible si badge cliqué */}
         {showInvitePanel && invitations.length > 0 && (
           <div>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-              <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--gold)' }}>✉️ Invitations</div>
-              <button onClick={() => setShowInvitePanel(false)} style={{ fontSize:10, background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>✕</button>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--gold)' }}>✉️ Invitations</div>
+              <button onClick={() => setShowInvitePanel(false)} style={{ fontSize:'var(--fs-h5, 10px)', background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>✕</button>
             </div>
             {invitations.map(inv => (
-              <div key={inv.id} style={{ padding:'8px 10px', borderRadius:9, background:'rgba(232,212,168,0.06)', border:'1px solid rgba(232,212,168,0.18)', marginBottom:6 }}>
-                <div style={{ fontSize:11, color:'#f2ede0', marginBottom:2, lineHeight:1.3 }}>{getThemeEmoji(inv.atelier?.theme)} <b>{inv.atelier?.title}</b></div>
-                <div style={{ fontSize:9, color:'var(--text3)', marginBottom:6 }}>
+              <div key={inv.id} style={{ padding:'8px 10px', borderRadius:9, background:'rgba(var(--gold-warm-rgb),0.06)', border:'1px solid rgba(var(--gold-warm-rgb),0.18)', marginBottom:6 }}>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text-on-dark)', marginBottom:2, lineHeight:1.3 }}>{getThemeEmoji(inv.atelier?.theme)} <b>{inv.atelier?.title}</b></div>
+                <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:6 }}>
                   {inv.atelier?.starts_at ? new Date(inv.atelier.starts_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : ''}
                 </div>
                 <div style={{ display:'flex', gap:5 }}>
@@ -1046,13 +1045,13 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                       const el = document.getElementById(`atelier-${inv.atelier_id}`)
                       if (el) el.scrollIntoView({ behavior:'smooth', block:'center' })
                     }, 150)
-                  }} style={{ fontSize:10, padding:'3px 9px', borderRadius:6, background:'rgba(232,212,168,0.15)', border:'1px solid rgba(232,212,168,0.3)', color:'var(--gold)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>Voir →</button>
-                  <button onClick={() => markInviteSeen(inv.id)} style={{ fontSize:10, padding:'3px 7px', borderRadius:6, background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>✕</button>
+                  }} style={{ fontSize:'var(--fs-h5, 10px)', padding:'3px 9px', borderRadius:6, background:'rgba(var(--gold-warm-rgb),0.15)', border:'1px solid rgba(var(--gold-warm-rgb),0.3)', color:'var(--gold)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>Voir →</button>
+                  <button onClick={() => markInviteSeen(inv.id)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'3px 7px', borderRadius:6, background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>✕</button>
                 </div>
               </div>
             ))}
-            <div style={{ borderTop:'1px solid rgba(255,255,255,0.07)', marginTop:4, paddingTop:4 }}>
-              <button onClick={() => { invitations.forEach(inv => markInviteSeen(inv.id)); setShowInvitePanel(false) }} style={{ fontSize:9, color:'var(--text3)', background:'none', border:'none', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>Tout ignorer</button>
+            <div style={{ borderTop:'1px solid var(--track)', marginTop:4, paddingTop:4 }}>
+              <button onClick={() => { invitations.forEach(inv => markInviteSeen(inv.id)); setShowInvitePanel(false) }} style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', background:'none', border:'none', cursor:'pointer', fontFamily:'Jost,sans-serif' }}>Tout ignorer</button>
             </div>
           </div>
         )}
@@ -1061,29 +1060,29 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         <div style={{ position:'relative' }}>
           {!isPremium && (
             <div onClick={onUpgrade} style={{ position:'absolute', inset:0, zIndex:10, cursor:'pointer', borderRadius:8,
-              background:'rgba(14,26,14,0.70)', backdropFilter:'blur(3px)',
+              background:'rgba(var(--overlay-dark-rgb,6,14,7),0.70)', backdropFilter:'blur(3px)',
               display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
-              <span style={{ fontSize:18 }}>🔒</span>
-              <span style={{ fontSize:11, color:'var(--gold)', fontWeight:500 }}>Mieux notés — Premium</span>
+              <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>🔒</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--gold)', fontWeight:500 }}>Mieux notés — Premium</span>
             </div>
           )}
-          <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:10 }}>⭐ Ateliers les mieux notés</div>
+          <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:10 }}>⭐ Ateliers les mieux notés</div>
           {topAteliers.length === 0 ? (
-            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Les avis apparaîtront ici une fois approuvés</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>Les avis apparaîtront ici une fois approuvés</div>
           ) : topAteliers.map(a => (
-            <div key={a.id} onClick={() => { setTab('past') }} style={{ padding:'9px 10px', borderRadius:9, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', marginBottom:7, cursor:'pointer', transition:'all .2s' }}
-              onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.06)'}
-              onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.03)'}>
-              <div style={{ fontSize:12, color:'#f2ede0', marginBottom:2, lineHeight:1.3 }}>{a.title}</div>
-              <div style={{ fontSize:9, color:'var(--text3)', marginBottom:5 }}>{getThemeEmoji(a.theme)} {a.theme}</div>
+            <div key={a.id} onClick={() => { setTab('past') }} style={{ padding:'9px 10px', borderRadius:9, background:'var(--surface-1)', border:'1px solid var(--track)', marginBottom:7, cursor:'pointer', transition:'all .2s' }}
+              onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
+              onMouseLeave={e => e.currentTarget.style.background='var(--surface-1)'}>
+              <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text-on-dark)', marginBottom:2, lineHeight:1.3 }}>{a.title}</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:5 }}>{getThemeEmoji(a.theme)} {a.theme}</div>
               <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:3 }}>
                 {[1,2,3,4,5].map(s => (
-                  <span key={s} style={{ fontSize:10, color: s <= Math.round(a.avgRating) ? 'var(--gold)' : 'var(--text3)' }}>★</span>
+                  <span key={s} style={{ fontSize:'var(--fs-h5, 10px)', color: s <= Math.round(a.avgRating) ? 'var(--gold)' : 'var(--text3)' }}>★</span>
                 ))}
-                <span style={{ fontSize:9, color:'rgba(246,196,83,0.7)', marginLeft:2 }}>{a.avgRating.toFixed(1)}</span>
-                <span style={{ fontSize:9, color:'var(--text3)' }}>· {a.reviewCount} avis</span>
+                <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--gold-rgb),0.7)', marginLeft:2 }}>{a.avgRating.toFixed(1)}</span>
+                <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)' }}>· {a.reviewCount} avis</span>
               </div>
-              <div style={{ fontSize:9, color:'var(--text3)' }}>{a.registrationCount} participant{a.registrationCount > 1 ? 's' : ''}</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)' }}>{a.registrationCount} participant{a.registrationCount > 1 ? 's' : ''}</div>
             </div>
           ))}
         </div>
@@ -1092,33 +1091,33 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       {/* CONTENU PRINCIPAL — gauche */}
       <div className='at-main' style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 14px 80px' : '24px 28px' }}>
       {/* HEADER */}
-      {isMobile && <button onClick={() => setShowFilter(f => !f)} style={{ fontSize:10, padding:'6px 12px', background: showFilter ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:20, color: showFilter ? 'var(--cream)' : 'var(--text3)', cursor:'pointer', marginBottom:10, display:'block' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button>}
+      {isMobile && <button onClick={() => setShowFilter(f => !f)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', background: showFilter ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:20, color: showFilter ? 'var(--cream)' : 'var(--text3)', cursor:'pointer', marginBottom:10, display:'block' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button>}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
         <div>
-          <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:26, fontWeight:300, color:'var(--gold)' }}>Ateliers</div>
-          <div style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des animateurs</div>
+          <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h1, 26px)', fontWeight:300, color:'var(--gold)' }}>Ateliers</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des animateurs</div>
         </div>
         {isAnimator ? (
           <button onClick={() => setShowCreate(true)} style={btnStyle}>✨ Créer un atelier</button>
         ) : hasApplied ? (
-          <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>📩 Candidature en cours d'examen</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>📩 Candidature en cours d'examen</div>
         ) : (
           <button
             onClick={!isPremium ? onUpgrade : () => setShowApply(true)}
-            style={{ ...btnStyle, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', color: isPremium ? 'var(--text3)' : 'var(--text3)', fontSize:11, cursor: isPremium ? 'pointer' : 'not-allowed', opacity: isPremium ? 1 : 0.5 }}>
+            style={{ ...btnStyle, background:'var(--surface-2)', border:'1px solid var(--surface-3)', color: isPremium ? 'var(--text3)' : 'var(--text3)', fontSize:'var(--fs-h5, 11px)', cursor: isPremium ? 'pointer' : 'not-allowed', opacity: isPremium ? 1 : 0.5 }}>
             {isPremium ? 'Devenir animateur' : '🔒 Devenir animateur'}
           </button>
         )}
       </div>
 
-      <div style={{ display:'flex', gap:0, borderBottom:'1px solid rgba(255,255,255,0.08)', marginBottom:20, overflowX: isMobile ? 'auto' : 'visible', flexWrap:'nowrap', WebkitOverflowScrolling:'touch' }}>
+      <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--surface-3)', marginBottom:20, overflowX: isMobile ? 'auto' : 'visible', flexWrap:'nowrap', WebkitOverflowScrolling:'touch' }}>
         {[
           { id:'upcoming', label:`À venir (${upcoming.length})`, short:`(${upcoming.length})` },
           { id:'mine', label: isAnimator
         ? <span style={{display:'flex',alignItems:'center',gap:6}}>
             Mes ateliers ({mine.length})
             {mine.some(a => (reviewsByAtelier[a.id] ?? []).length > 0) && (
-              <span style={{ background:'rgba(246,196,83,0.25)', border:'1px solid rgba(246,196,83,0.4)', borderRadius:100, fontSize:8, padding:'1px 5px', color:'var(--gold)' }}>★ avis</span>
+              <span style={{ background:'rgba(var(--gold-rgb),0.25)', border:'1px solid rgba(var(--gold-rgb),0.4)', borderRadius:100, fontSize:'var(--fs-h5, 8px)', padding:'1px 5px', color:'var(--gold)' }}>★ avis</span>
             )}
           </span>
         : `Mes inscriptions (${myInscriptions.length})` },
@@ -1128,7 +1127,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
           <div key={t.id} onClick={() => setTab(t.id)} style={{ padding: isMobile ? '7px 10px' : '8px 16px', fontSize: isMobile ? 10 : 11, whiteSpace:'nowrap', letterSpacing:'.07em', cursor:'pointer', borderBottom:`2px solid ${tab===t.id ? 'var(--green)' : 'transparent'}`, color: tab===t.id ? 'var(--cream)' : 'var(--text3)', marginBottom:-1, transition:'all .2s', display:'flex', alignItems:'center', gap:6, position:'relative' }}>
             {t.label}
             {t.id === 'prefs' && invitations.length > 0 && (
-              <div onClick={e => { e.stopPropagation(); setShowInvitePanel(p => !p) }} style={{ fontSize:9, fontWeight:600, borderRadius:100, background:'linear-gradient(135deg,var(--gold),var(--gold-warm))', color:'var(--bg)', display:'inline-flex', alignItems:'center', padding:'2px 7px', whiteSpace:'nowrap', cursor:'pointer' }}>
+              <div onClick={e => { e.stopPropagation(); setShowInvitePanel(p => !p) }} style={{ fontSize:'var(--fs-h5, 9px)', fontWeight:600, borderRadius:100, background:'linear-gradient(135deg,var(--gold),var(--gold-warm))', color:'var(--bg)', display:'inline-flex', alignItems:'center', padding:'2px 7px', whiteSpace:'nowrap', cursor:'pointer' }}>
                 {invitations.length} invitation{invitations.length > 1 ? 's' : ''}
               </div>
             )}
@@ -1141,12 +1140,12 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       {/* ONGLET PRÉFÉRENCES */}
       {tab === 'prefs' ? (
         <div style={{ maxWidth:420 }}>
-          <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:18, color:'var(--gold)', marginBottom:4 }}>Mes préférences d&apos;atelier</div>
-          <div style={{ fontSize:11, color:'var(--text3)', marginBottom:20 }}>Les animateurs pourront vous inviter selon ces critères.</div>
+          <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h3, 18px)', color:'var(--gold)', marginBottom:4 }}>Mes préférences d&apos;atelier</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginBottom:20 }}>Les animateurs pourront vous inviter selon ces critères.</div>
 
           {/* Thèmes */}
           <div style={{ marginBottom:18 }}>
-            <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Thèmes qui m&apos;intéressent</div>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Thèmes qui m&apos;intéressent</div>
             <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
               {THEMES_LIST.map(([emoji, label]) => {
                 const active = prefs.themes.includes(label)
@@ -1154,7 +1153,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                   <div key={label} onClick={() => {
                     const themes = active ? prefs.themes.filter(t => t !== label) : [...prefs.themes, label]
                     savePrefs({ themes })
-                  }} style={{ padding:'5px 12px', borderRadius:100, fontSize:11, cursor:'pointer', transition:'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.04)', border:`1px solid ${active ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.1)'}`, color: active ? 'var(--cream)' : 'var(--text3)' }}>
+                  }} style={{ padding:'5px 12px', borderRadius:100, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', transition:'all .2s', background: active ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-2)', border:`1px solid ${active ? 'rgba(var(--green-rgb),0.35)' : 'var(--surface-3)'}`, color: active ? 'var(--cream)' : 'var(--text3)' }}>
                     {emoji} {label}
                   </div>
                 )
@@ -1164,7 +1163,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
           {/* Format */}
           <div style={{ marginBottom:18 }}>
-            <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Format</div>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Format</div>
             <div style={{ display:'flex', gap:8 }}>
               {[['online','🌐 En ligne'], ['presentiel','📍 Présentiel']].map(([val, lbl]) => {
                 const active = prefs.formats.includes(val)
@@ -1173,7 +1172,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                     const formats = active ? prefs.formats.filter(f => f !== val) : [...prefs.formats, val]
                     if (formats.length === 0) return
                     savePrefs({ formats })
-                  }} style={{ padding:'7px 16px', borderRadius:9, fontSize:11, cursor:'pointer', transition:'all .2s', background: active ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)', border:`1px solid ${active ? 'rgba(150,212,133,0.3)' : 'rgba(255,255,255,0.1)'}`, color: active ? 'var(--cream)' : 'var(--text3)' }}>
+                  }} style={{ padding:'7px 16px', borderRadius:9, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', transition:'all .2s', background: active ? 'rgba(var(--green-rgb),0.12)' : 'var(--surface-2)', border:`1px solid ${active ? 'rgba(var(--green-rgb),0.3)' : 'var(--surface-3)'}`, color: active ? 'var(--cream)' : 'var(--text3)' }}>
                     {lbl}
                   </div>
                 )
@@ -1182,13 +1181,13 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
             {/* Champs géolocalisation — visibles uniquement si présentiel sélectionné */}
             {prefs.formats.includes('presentiel') && (
-              <div style={{ marginTop:12, padding:'12px 14px', borderRadius:10, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
-                <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:10 }}>
+              <div style={{ marginTop:12, padding:'12px 14px', borderRadius:10, background:'var(--surface-1)', border:'1px solid var(--track)' }}>
+                <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:10 }}>
                   📍 Votre localisation pour les ateliers en présentiel
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                   <div style={{ flex:'0 0 100px' }}>
-                    <div style={{ fontSize:9, color:'var(--text3)', marginBottom:4 }}>Code postal</div>
+                    <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:4 }}>Code postal</div>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -1200,11 +1199,11 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                         setPrefs(p => ({ ...p, code_postal: val }))
                       }}
                       onBlur={() => savePrefs({ code_postal: prefs.code_postal, ville: prefs.ville })}
-                      style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }}
+                      style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:'var(--fs-h5, 12px)', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }}
                     />
                   </div>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:9, color:'var(--text3)', marginBottom:4 }}>Ville</div>
+                    <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:4 }}>Ville</div>
                     <input
                       type="text"
                       maxLength={80}
@@ -1212,11 +1211,11 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                       value={prefs.ville}
                       onChange={e => setPrefs(p => ({ ...p, ville: e.target.value }))}
                       onBlur={() => savePrefs({ code_postal: prefs.code_postal, ville: prefs.ville })}
-                      style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }}
+                      style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:'var(--fs-h5, 12px)', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }}
                     />
                   </div>
                 </div>
-                <div style={{ fontSize:9, color:'var(--text3)', marginTop:6, lineHeight:1.5 }}>
+                <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginTop:6, lineHeight:1.5 }}>
                   Permet aux animateurs de vous inviter en priorité pour les ateliers près de chez vous.
                 </div>
               </div>
@@ -1225,23 +1224,23 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
           {/* Notification email */}
           <div style={{ marginBottom:20 }}>
-            <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Notifications</div>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Notifications</div>
             <div onClick={() => savePrefs({ notify_email: !prefs.notify_email })} style={{ display:'inline-flex', alignItems:'center', gap:8, cursor:'pointer' }}>
-              <div style={{ width:32, height:18, borderRadius:100, background: prefs.notify_email ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.1)', border:`1px solid ${prefs.notify_email ? 'rgba(150,212,133,0.5)' : 'rgba(255,255,255,0.15)'}`, position:'relative', transition:'all .2s' }}>
+              <div style={{ width:32, height:18, borderRadius:100, background: prefs.notify_email ? 'rgba(var(--green-rgb),0.4)' : 'var(--surface-3)', border:`1px solid ${prefs.notify_email ? 'rgba(var(--green-rgb),0.5)' : 'var(--separator)'}`, position:'relative', transition:'all .2s' }}>
                 <div style={{ position:'absolute', top:2, left: prefs.notify_email ? 14 : 2, width:12, height:12, borderRadius:100, background: prefs.notify_email ? 'var(--green)' : 'var(--text3)', transition:'all .2s' }} />
               </div>
-              <span style={{ fontSize:11, color:'var(--text3)' }}>Recevoir les invitations par email</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)' }}>Recevoir les invitations par email</span>
             </div>
           </div>
 
-          {prefsSaved && <div style={{ fontSize:11, color:'var(--green)' }}>✓ Préférences sauvegardées</div>}
+          {prefsSaved && <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--green)' }}>✓ Préférences sauvegardées</div>}
         </div>
       ) : (
         <>
         {loading ? (
-          <div style={{ textAlign:'center', color:'var(--text3)', fontSize:12, padding:40 }}>Chargement…</div>
+          <div style={{ textAlign:'center', color:'var(--text3)', fontSize:'var(--fs-h5, 12px)', padding:40 }}>Chargement…</div>
         ) : displayed.length === 0 ? (
-          <div style={{ textAlign:'center', color:'var(--text3)', fontSize:12, fontStyle:'italic', padding:40, border:'1px dashed rgba(255,255,255,0.08)', borderRadius:12 }}>
+          <div style={{ textAlign:'center', color:'var(--text3)', fontSize:'var(--fs-h5, 12px)', fontStyle:'italic', padding:40, border:'1px dashed var(--surface-3)', borderRadius:12 }}>
             {tab === 'upcoming' ? "Aucun atelier à venir pour l'instant" : tab === 'mine' ? isAnimator ? "Vous n'avez pas encore créé d'atelier" : "Vous n'êtes inscrit à aucun atelier" : 'Aucun atelier passé'}
           </div>
         ) : (
@@ -1257,11 +1256,11 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
             <div onClick={onUpgrade} style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
               padding: '7px 14px', borderRadius: 20,
-              background: 'rgba(232,192,96,0.08)', border: '1px solid rgba(232,192,96,0.25)',
+              background: 'rgba(var(--gold-rgb),0.08)', border: '1px solid rgba(var(--gold-rgb),0.25)',
             }}>
-              <span style={{ fontSize: 13 }}>🔒</span>
-              <span style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 500 }}>{displayed.length - 1} ateliers Premium</span>
-              <span style={{ fontSize: 11, color: 'var(--gold-warm)' }}>→</span>
+              <span style={{ fontSize:'var(--fs-emoji-sm, 13px)' }}>🔒</span>
+              <span style={{ fontSize:'var(--fs-h5, 12px)', color: 'var(--gold)', fontWeight: 500 }}>{displayed.length - 1} ateliers Premium</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', color: 'var(--gold-warm)' }}>→</span>
             </div>
           </div>
         )}
@@ -1290,7 +1289,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         />
       )}
 
-      {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 20px', fontSize:12, color:'var(--cream)', zIndex:999 }}>{toast}</div>}
+      {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:'var(--bg3)', border:'1px solid var(--border)', borderRadius:10, padding:'10px 20px', fontSize:'var(--fs-h5, 12px)', color:'var(--cream)', zIndex:999 }}>{toast}</div>}
       </div>
     </div>
   )
@@ -1309,20 +1308,20 @@ function ApplyAnimatorModal({ onClose, onSubmit }) {
   }
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
+    <div style={{ position:'fixed', inset:0, background:'var(--overlay)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:16, padding:32, width:440 }}>
-        <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:22, color:'var(--gold)', marginBottom:6 }}>Devenir animateur</div>
-        <div style={{ fontSize:11, color:'var(--text3)', marginBottom:24 }}>Votre candidature sera examinée par l'équipe Mon Jardin.</div>
+        <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h2, 22px)', color:'var(--gold)', marginBottom:6 }}>Devenir animateur</div>
+        <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginBottom:24 }}>Votre candidature sera examinée par l'équipe Mon Jardin.</div>
         <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5 }}>Votre motivation *</div>
+          <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5 }}>Votre motivation *</div>
           <textarea style={{...iStyle, height:90, resize:'none'}} value={motivation} onChange={e=>setMotivation(e.target.value)} placeholder="Pourquoi souhaitez-vous animer des ateliers bien-être ?" />
         </div>
         <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5 }}>Expérience (optionnel)</div>
+          <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5 }}>Expérience (optionnel)</div>
           <textarea style={{...iStyle, height:70, resize:'none'}} value={experience} onChange={e=>setExperience(e.target.value)} placeholder="Formation, pratique, certifications…" />
         </div>
         <div style={{ display:'flex', gap:10 }}>
-          <button onClick={onClose} style={{ ...btnStyle, background:'rgba(255,255,255,0.05)', color:'var(--text3)', flex:1 }}>Annuler</button>
+          <button onClick={onClose} style={{ ...btnStyle, background:'var(--surface-2)', color:'var(--text3)', flex:1 }}>Annuler</button>
           <button onClick={handleSend} disabled={loading || !motivation.trim()} style={{ ...btnStyle, flex:2, opacity:!motivation.trim()?0.4:1 }}>
             {loading ? '…' : '📩 Envoyer ma candidature'}
           </button>

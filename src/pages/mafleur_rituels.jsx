@@ -10,11 +10,11 @@ import { supabase } from "../core/supabaseClient";
 // ═══════════════════════════════════════════════════════════
 
 export const PLANT_ZONES = {
-  roots:   { name: "Racines",  subtitle: "Ancrage & Énergie",    color: "#C8894A", accent: "#EDBE87", bg: "#120A03" },
-  stem:    { name: "Tige",     subtitle: "Flexibilité & Corps",  color: "#5AAF78", accent: "#9DDBB4", bg: "#060F08" },
-  leaves:  { name: "Feuilles", subtitle: "Liens & Humeur",       color: "#4A9E5C", accent: "#88D4A0", bg: "#060C08" },
-  flowers: { name: "Fleurs",   subtitle: "Soin de Soi",          color: "#D4779A", accent: "#F2B8CC", bg: "#0E0508" },
-  breath:  { name: "Souffle",  subtitle: "Présence & Sérénité",  color: "#6ABBE4", accent: "#B0DEFA", bg: "#03090E" },
+  roots:   { name: "Racines",  subtitle: "Ancrage & Énergie",    color: "var(--zone-roots)", accent: "var(--gold-warm)", bg: "#120A03" },
+  stem:    { name: "Tige",     subtitle: "Flexibilité & Corps",  color: "var(--zone-stem)", accent: "#9DDBB4", bg: "#060F08" },
+  leaves:  { name: "Feuilles", subtitle: "Liens & Humeur",       color: "var(--zone-leaves)", accent: "var(--green)", bg: "#060C08" },
+  flowers: { name: "Fleurs",   subtitle: "Soin de Soi",          color: "var(--zone-flowers)", accent: "var(--zone-flowers)", bg: "#0E0508" },
+  breath:  { name: "Souffle",  subtitle: "Présence & Sérénité",  color: "var(--zone-breath)", accent: "var(--zone-breath)", bg: "#03090E" },
 };
 
 // PLANT_RITUALS est chargé dynamiquement depuis Supabase via useRituels()
@@ -164,35 +164,35 @@ export function DailyQuizModal({ onComplete, onSkip }) {
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", padding: "40px 28px",
     }}>
-      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.55)', fontSize:13, cursor:'pointer', lineHeight:1 }}>✕</button>
+      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1 }}>✕</button>
       <div style={{
         textAlign: "center", maxWidth: 340,
         opacity: visible ? 1 : 0, transition: "opacity 0.5s ease",
       }}>
-        <div style={{ fontSize: 52, marginBottom: 24, display: "inline-block", animation: "pulse 3s ease-in-out infinite" }}>🌹</div>
-        <h2 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize: 36, color: "#EEF0E8", fontWeight: 300, lineHeight: 1.1, marginBottom: 12 }}>
-          Comment vous<br /><em style={{ fontStyle: "italic", color: "#C8A882" }}>sentez-vous</em> aujourd'hui ?
+        <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom: 24, display: "inline-block", animation: "pulse 3s ease-in-out infinite" }}>🌹</div>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize:'var(--fs-h1, 36px)', color: "var(--text-on-dark)", fontWeight: 300, lineHeight: 1.1, marginBottom: 12 }}>
+          Comment vous<br /><em style={{ fontStyle: "italic", color: "var(--gold-warm)" }}>sentez-vous</em> aujourd'hui ?
         </h2>
-        <div style={{ width: 40, height: 1, background: "rgba(200,168,130,0.3)", margin: "16px auto" }} />
-        <p style={{ color: "rgba(180,200,180,0.5)", fontSize: 13, lineHeight: 1.7, marginBottom: 6 }}>
+        <div style={{ width: 40, height: 1, background: "rgba(var(--gold-warm-rgb),0.3)", margin: "16px auto" }} />
+        <p style={{ color: "rgba(var(--text-on-dark-rgb),0.5)", fontSize:'var(--fs-h4, 13px)', lineHeight: 1.7, marginBottom: 6 }}>
           Dix questions pour prendre votre pouls intérieur.
         </p>
-        <p style={{ color: "rgba(180,200,180,0.3)", fontSize: 11.5, lineHeight: 1.7, marginBottom: 32 }}>
+        <p style={{ color: "rgba(var(--text-on-dark-rgb),0.3)", fontSize:'var(--fs-h5, 11px)', lineHeight: 1.7, marginBottom: 32 }}>
           Votre plante reflétera votre état et vous révèlera les zones à soigner en priorité.
         </p>
         <button
           onClick={startQuiz}
-          style={{ padding: "13px 40px", borderRadius: 50, border: "1px solid rgba(200,168,130,0.35)", background: "rgba(200,168,130,0.1)", color: "#C8A882", fontSize: 13, cursor: "pointer", letterSpacing: "0.08em", display: "block", width: "100%", marginBottom: 10 }}
+          style={{ padding: "13px 40px", borderRadius: 50, border: "1px solid rgba(var(--gold-warm-rgb),0.35)", background: "rgba(var(--gold-warm-rgb),0.1)", color: "var(--gold-warm)", fontSize:'var(--fs-h4, 13px)', cursor: "pointer", letterSpacing: "0.08em", display: "block", width: "100%", marginBottom: 10 }}
         >
           Commencer le bilan
         </button>
         <button
           onClick={onSkip}
-          style={{ padding: "10px", borderRadius: 50, border: "none", background: "none", color: "rgba(180,200,180,0.3)", fontSize: 12, cursor: "pointer", letterSpacing: "0.05em", width: "100%" }}
+          style={{ padding: "10px", borderRadius: 50, border: "none", background: "none", color: "rgba(var(--text-on-dark-rgb),0.3)", fontSize:'var(--fs-h5, 12px)', cursor: "pointer", letterSpacing: "0.05em", width: "100%" }}
         >
           Passer pour aujourd'hui
         </button>
-        <p style={{ color: "rgba(180,200,180,0.2)", fontSize: 10, marginTop: 12 }}>Environ 2 minutes · Confidentiel</p>
+        <p style={{ color: "rgba(var(--text-on-dark-rgb),0.2)", fontSize:'var(--fs-h5, 10px)', marginTop: 12 }}>Environ 2 minutes · Confidentiel</p>
       </div>
     </div>
   );
@@ -204,24 +204,24 @@ export function DailyQuizModal({ onComplete, onSkip }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
-      background: "linear-gradient(170deg, #060E07 0%, #080E0A 60%, #060810 100%)",
+      background:'var(--overlay-dark)',
       display: "flex", flexDirection: "column",
     }}>
       {/* Barre de progression */}
-      <div style={{ height: 2, background: "rgba(255,255,255,0.05)", flexShrink: 0 }}>
+      <div style={{ height: 2, background: "var(--surface-2)", flexShrink: 0 }}>
         <div style={{ height: "100%", width: `${progress * 100}%`, background: `linear-gradient(90deg, ${zone.color}, ${zone.accent})`, borderRadius: "0 1px 1px 0", transition: "width 0.5s ease" }} />
       </div>
 
       {/* Header zone */}
       <div style={{ padding: "16px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: zone.color, opacity: 0.8, fontWeight: 500 }}>
+        <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: zone.color, opacity: 0.8, fontWeight: 500 }}>
           {zone.name} · {q.theme}
         </span>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <span style={{ fontSize: 11, color: "rgba(180,200,180,0.3)" }}>
+        <span style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.3)" }}>
           {step + 1} <span style={{ opacity: 0.4 }}>/ 10</span>
         </span>
-        <button onClick={onSkip} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.55)', fontSize:12, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         </div>
       </div>
 
@@ -232,9 +232,9 @@ export function DailyQuizModal({ onComplete, onSkip }) {
         opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(12px)",
         transition: "opacity 0.28s ease, transform 0.28s ease",
       }}>
-        <div style={{ fontSize: 36, marginBottom: 12 }}>{q.icon}</div>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize: 24, color: "#EEF0E8", fontWeight: 400, lineHeight: 1.25, marginBottom: 6 }}>{q.text}</h3>
-        <p style={{ fontSize: 12, color: "rgba(180,200,180,0.4)", lineHeight: 1.6, marginBottom: 20, fontStyle: "italic" }}>{q.sub}</p>
+        <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom: 12 }}>{q.icon}</div>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize:'var(--fs-h2, 24px)', color: "var(--text-on-dark)", fontWeight: 400, lineHeight: 1.25, marginBottom: 6 }}>{q.text}</h3>
+        <p style={{ fontSize:'var(--fs-h5, 12px)', color: "rgba(var(--text-on-dark-rgb),0.4)", lineHeight: 1.6, marginBottom: 20, fontStyle: "italic" }}>{q.sub}</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.answers.map((ans, i) => {
@@ -243,14 +243,14 @@ export function DailyQuizModal({ onComplete, onSkip }) {
               <button key={i} onClick={() => choose(i)} style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "12px 14px", borderRadius: 12, textAlign: "left", cursor: "pointer",
-                border: `1px solid ${sel ? `${zone.color}55` : "rgba(255,255,255,0.07)"}`,
-                background: sel ? "rgba(60,160,80,0.08)" : "rgba(255,255,255,0.025)",
+                border: `1px solid ${sel ? `${zone.color}55` : "var(--track)"}`,
+                background: sel ? "rgba(var(--green-rgb),0.08)" : "var(--surface-1)",
                 boxShadow: sel ? `0 0 0 1px ${zone.color}30` : "none",
                 transition: "all 0.18s ease",
               }}>
-                <span style={{ fontSize: 18 }}>{ans.emoji}</span>
-                <span style={{ flex: 1, fontSize: 13, color: sel ? "#D8EED8" : "rgba(190,210,190,0.6)", fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
-                <div style={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${sel ? zone.color : "rgba(255,255,255,0.15)"}`, background: sel ? `${zone.color}30` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.18s", flexShrink: 0 }}>
+                <span style={{ fontSize:'var(--fs-emoji-sm, 18px)' }}>{ans.emoji}</span>
+                <span style={{ flex: 1, fontSize:'var(--fs-h4, 13px)', color: sel ? "var(--text-on-dark)" : "rgba(var(--text-on-dark-rgb),0.6)", fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
+                <div style={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${sel ? zone.color : "var(--separator)"}`, background: sel ? `${zone.color}30` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.18s", flexShrink: 0 }}>
                   {sel && <div style={{ width: 6, height: 6, borderRadius: "50%", background: zone.accent }} />}
                 </div>
               </button>
@@ -263,10 +263,10 @@ export function DailyQuizModal({ onComplete, onSkip }) {
       <div style={{ padding: "0 24px 40px", maxWidth: 440, width: "100%", margin: "0 auto" }}>
         <button onClick={next} disabled={selected === null} style={{
           width: "100%", padding: "14px", borderRadius: 12,
-          border: `1px solid ${selected !== null ? `${zone.color}40` : "rgba(255,255,255,0.06)"}`,
-          background: selected !== null ? "rgba(60,160,80,0.12)" : "rgba(255,255,255,0.03)",
-          color: selected !== null ? zone.accent : "rgba(255,255,255,0.2)",
-          fontSize: 13, cursor: selected !== null ? "pointer" : "not-allowed",
+          border: `1px solid ${selected !== null ? `${zone.color}40` : "var(--surface-2)"}`,
+          background: selected !== null ? "rgba(var(--green-rgb),0.12)" : "var(--surface-1)",
+          color: selected !== null ? zone.accent : "var(--separator)",
+          fontSize:'var(--fs-h4, 13px)', cursor: selected !== null ? "pointer" : "not-allowed",
           fontWeight: 500, letterSpacing: "0.06em", transition: "all 0.25s",
         }}>
           {step === PLANT_QUESTIONS.length - 1 ? "Voir mes rituels →" : "Suivant →"}
@@ -402,7 +402,7 @@ function BreathingTool({ exercise, color, accent }) {
           style={{ position:'absolute', inset:0, transform:'rotate(-90deg)', overflow:'visible' }}
         >
           {/* Piste grise */}
-          <circle cx={110} cy={110} r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={2}/>
+          <circle cx={110} cy={110} r={R} fill="none" stroke="var(--surface-2)" strokeWidth={2}/>
           {/* Arc animé */}
           {isActive && (
             <circle
@@ -445,9 +445,9 @@ function BreathingTool({ exercise, color, accent }) {
           background: `radial-gradient(circle at 36% 32%, ${color}65 0%, ${color}22 50%, transparent 76%)`,
           border: `1px solid ${color}${phase === 'ready' ? '28' : isExpanding ? '70' : '42'}`,
           boxShadow: isExpanding && isActive
-            ? `0 0 52px ${color}48, 0 0 22px ${color}28, inset 0 1px 0 rgba(255,255,255,0.18)`
+            ? `0 0 52px ${color}48, 0 0 22px ${color}28, inset 0 1px 0 var(--separator)`
             : isActive
-              ? `0 0 18px ${color}18, inset 0 1px 0 rgba(255,255,255,0.08)`
+              ? `0 0 18px ${color}18, inset 0 1px 0 var(--surface-3)`
               : `0 0 12px ${color}12`,
           // Transition calée sur la phase (≠ 1s figé de l'ancienne version)
           transition: `width ${transDur}s ${easing}, height ${transDur}s ${easing}, box-shadow ${transDur}s ${easing}, border-color 0.4s ease`,
@@ -455,7 +455,7 @@ function BreathingTool({ exercise, color, accent }) {
           display:'flex', alignItems:'center', justifyContent:'center',
           flexShrink:0,
         }}>
-          {phase === 'done' && <span style={{ fontSize:28, opacity:.9 }}>✓</span>}
+          {phase === 'done' && <span style={{ fontSize:'var(--fs-emoji-lg, 28px)', opacity:.9 }}>✓</span>}
         </div>
       </div>
 
@@ -463,11 +463,11 @@ function BreathingTool({ exercise, color, accent }) {
       <div
         key={phase}
         style={{
-          fontSize:13, fontWeight:500, letterSpacing:'0.20em',
+          fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'0.20em',
           fontFamily:"'Jost',sans-serif", minHeight:20,
-          color: phase === 'done' ? '#88D4A0'
-               : isExpanding      ? 'rgba(242,237,224,0.88)'
-               :                    'rgba(180,210,195,0.70)',
+          color: phase === 'done' ? 'var(--green)'
+               : isExpanding      ? 'rgba(var(--text-on-dark-rgb),0.88)'
+               :                    'rgba(var(--text-on-dark-rgb),0.70)',
           animation: isActive ? 'labelFade .35s ease both' : 'none',
           transition:'color .4s ease',
         }}
@@ -479,7 +479,7 @@ function BreathingTool({ exercise, color, accent }) {
       {isActive && (() => {
         const d = { inhale: timings.inhale, hold: timings.hold, exhale: timings.exhale, holdEmpty: timings.holdEmpty }[phase]
         return d > 0 ? (
-          <div style={{ fontSize:11, color:'rgba(255,255,255,0.18)', letterSpacing:'0.05em' }}>{d}s</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--separator)', letterSpacing:'0.05em' }}>{d}s</div>
         ) : null
       })()}
 
@@ -493,7 +493,7 @@ function BreathingTool({ exercise, color, accent }) {
               borderRadius:'50%',
               background: i < cycles  ? `${color}55`
                         : i === cycles ? color
-                        : 'rgba(255,255,255,0.08)',
+                        : 'var(--surface-3)',
               boxShadow: i === cycles ? `0 0 8px ${color}99` : 'none',
               transition:'all .45s ease',
               flexShrink:0,
@@ -505,7 +505,7 @@ function BreathingTool({ exercise, color, accent }) {
       {/* ── Phase ready : résumé rythme + bouton ── */}
       {phase === 'ready' && (
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:11, color:'rgba(242,237,224,0.22)', marginBottom:16, letterSpacing:'.07em', lineHeight:1.8 }}>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.22)', marginBottom:16, letterSpacing:'.07em', lineHeight:1.8 }}>
             {[
               `${timings.inhale}s inspire`,
               timings.hold      > 0 ? `${timings.hold}s retenir`      : null,
@@ -519,7 +519,7 @@ function BreathingTool({ exercise, color, accent }) {
             style={{
               padding:'11px 32px', borderRadius:100,
               border:`1px solid ${color}50`, background:`${color}16`,
-              color, fontSize:13, fontWeight:500, cursor:'pointer',
+              color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer',
               fontFamily:"'Jost',sans-serif", letterSpacing:'.05em',
               transition:'all .2s',
             }}
@@ -528,7 +528,7 @@ function BreathingTool({ exercise, color, accent }) {
       )}
 
       {phase === 'done' && (
-        <div style={{ fontSize:13, color:'#88D4A0', fontWeight:400, letterSpacing:'.07em' }}>
+        <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--green)', fontWeight:400, letterSpacing:'.07em' }}>
           Session terminée 🌿
         </div>
       )}
@@ -556,17 +556,17 @@ function TimerTool({ exercise, color, accent }) {
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'16px 0 8px', gap:12 }}>
       <div style={{ position:'relative', width:136, height:136 }}>
         <svg width={136} height={136} style={{ transform:'rotate(-90deg)' }}>
-          <circle cx={68} cy={68} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={6} />
+          <circle cx={68} cy={68} r={r} fill="none" stroke="var(--surface-2)" strokeWidth={6} />
           <circle cx={68} cy={68} r={r} fill="none" stroke={color} strokeWidth={6} strokeDasharray={circ} strokeDashoffset={circ*(1-pct/100)} strokeLinecap="round" style={{ transition:'stroke-dashoffset 1s linear' }} />
         </svg>
         <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-          <span style={{ fontSize:26, fontWeight:300, color, fontFamily:"'Cormorant Garamond',serif" }}>{mins}:{String(secs).padStart(2,'0')}</span>
-          {done && <span style={{ fontSize:11, color:'#88D4A0', marginTop:2 }}>✓</span>}
+          <span style={{ fontSize:'var(--fs-h2, 26px)', fontWeight:300, color, fontFamily:"'Cormorant Garamond',serif" }}>{mins}:{String(secs).padStart(2,'0')}</span>
+          {done && <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--green)', marginTop:2 }}>✓</span>}
         </div>
       </div>
       {!done
-        ? <button onClick={() => setRunning(r => !r)} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>{running ? '⏸ Pause' : seconds === totalSeconds ? '▶ Commencer' : '▶ Reprendre'}</button>
-        : <div style={{ fontSize:13, color:'#88D4A0', fontWeight:500 }}>Méditation terminée ✓</div>
+        ? <button onClick={() => setRunning(r => !r)} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>{running ? '⏸ Pause' : seconds === totalSeconds ? '▶ Commencer' : '▶ Reprendre'}</button>
+        : <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--green)', fontWeight:500 }}>Méditation terminée ✓</div>
       }
     </div>
   )
@@ -580,10 +580,10 @@ function GratitudeTool({ exercise, color, accent }) {
   const placeholder = exercise.title ? `Répondez à ${exercise.title.toLowerCase()}…` : "Écrivez librement, sans filtre…"
   return (
     <div style={{ padding:'8px 0' }}>
-      <div style={{ fontSize:12, color:'rgba(200,220,200,0.60)', lineHeight:1.7, marginBottom:12, fontStyle:'italic' }}>{prompt}</div>
-      <textarea value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.85)', fontSize:13, lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
-      {text.length > 10 && !saved && <button onClick={() => setSaved(true)} style={{ marginTop:8, padding:'8px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:11, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✓ Noté ✓</button>}
-      {saved && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ C'est fait 🌱</div>}
+      <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.60)', lineHeight:1.7, marginBottom:12, fontStyle:'italic' }}>{prompt}</div>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.85)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
+      {text.length > 10 && !saved && <button onClick={() => setSaved(true)} style={{ marginTop:8, padding:'8px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✓ Noté ✓</button>}
+      {saved && <div style={{ marginTop:8, fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ C'est fait 🌱</div>}
     </div>
   )
 }
@@ -595,26 +595,26 @@ function MovementTool({ exercise, color, accent }) {
   // Si une seule étape, afficher le texte complet avec bouton "Fait"
   if (steps.length < 2) return (
     <div style={{ padding:'8px 0' }}>
-      <p style={{ fontSize:13, color:'rgba(200,220,200,0.85)', lineHeight:1.8, fontWeight:300, marginBottom:14 }}>{exercise.desc}</p>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.85)', lineHeight:1.8, fontWeight:300, marginBottom:14 }}>{exercise.desc}</p>
       {!done
-        ? <button onClick={() => setDone(true)} style={{ padding:'9px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:12, cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ C'est fait</button>
-        : <div style={{ fontSize:12, color:'#88D4A0' }}>✓ Mouvement accompli 🌿</div>
+        ? <button onClick={() => setDone(true)} style={{ padding:'9px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ C'est fait</button>
+        : <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ Mouvement accompli 🌿</div>
       }
     </div>
   )
   return (
     <div style={{ padding:'8px 0' }}>
-      <div style={{ display:'flex', gap:4, marginBottom:12 }}>{steps.map((_,i) => <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i <= step ? color : 'rgba(255,255,255,0.10)', transition:'background .3s' }} />)}</div>
-      <div style={{ fontSize:10, color:'rgba(242,237,224,0.30)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:8 }}>Étape {step+1} / {steps.length}</div>
-      <p style={{ fontSize:13, color:'rgba(200,220,200,0.85)', lineHeight:1.8, minHeight:60, fontWeight:300, marginBottom:14 }}>{steps[step]}</p>
+      <div style={{ display:'flex', gap:4, marginBottom:12 }}>{steps.map((_,i) => <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i <= step ? color : 'var(--surface-3)', transition:'background .3s' }} />)}</div>
+      <div style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--text-on-dark-rgb),0.30)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:8 }}>Étape {step+1} / {steps.length}</div>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.85)', lineHeight:1.8, minHeight:60, fontWeight:300, marginBottom:14 }}>{steps[step]}</p>
       <div style={{ display:'flex', gap:8 }}>
-        {step > 0 && <button onClick={() => setStep(s => s-1)} style={{ padding:'9px 16px', borderRadius:100, border:'1px solid rgba(255,255,255,0.10)', background:'transparent', color:'rgba(242,237,224,0.40)', fontSize:12, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>← Préc.</button>}
+        {step > 0 && <button onClick={() => setStep(s => s-1)} style={{ padding:'9px 16px', borderRadius:100, border:'1px solid var(--surface-3)', background:'transparent', color:'rgba(var(--text-on-dark-rgb),0.40)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>← Préc.</button>}
         {step < steps.length-1
-          ? <button onClick={() => setStep(s => s+1)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:12, cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>Suivant →</button>
-          : <button onClick={() => setDone(true)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}25`, color, fontSize:12, cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ Terminé</button>
+          ? <button onClick={() => setStep(s => s+1)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>Suivant →</button>
+          : <button onClick={() => setDone(true)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}25`, color, fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ Terminé</button>
         }
       </div>
-      {done && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ Mouvement accompli 🌿</div>}
+      {done && <div style={{ marginTop:8, fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ Mouvement accompli 🌿</div>}
     </div>
   )
 }
@@ -635,13 +635,13 @@ function VisualisationTool({ exercise, color, accent }) {
     <div style={{ padding:'8px 0' }}>
       {!started ? (
         <div style={{ textAlign:'center', paddingTop:8 }}>
-          <div style={{ fontSize:11, color:'rgba(242,237,224,0.30)', marginBottom:12, fontStyle:'italic' }}>Le texte va se dérouler doucement…</div>
-          <button onClick={start} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:13, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>▶ Commencer</button>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.30)', marginBottom:12, fontStyle:'italic' }}>Le texte va se dérouler doucement…</div>
+          <button onClick={start} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>▶ Commencer</button>
         </div>
       ) : (
-        <p style={{ fontSize:13, color:'rgba(200,220,200,0.80)', lineHeight:1.9, minHeight:80, fontWeight:300, fontStyle:'italic' }}>
+        <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.80)', lineHeight:1.9, minHeight:80, fontWeight:300, fontStyle:'italic' }}>
           {words.slice(0, wordIdx).join(' ')}{!done && <span style={{ opacity:0.4 }}>|</span>}
-          {done && <div style={{ marginTop:8, fontSize:12, color:'#88D4A0' }}>✓ Visualisation complète 🌿</div>}
+          {done && <div style={{ marginTop:8, fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ Visualisation complète 🌿</div>}
         </p>
       )}
     </div>
@@ -673,33 +673,33 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
 
   const type  = detectExerciseType(fullExercise)
   const toolEnabled = type === 'breath'
-  const color  = zone?.color  ?? '#96d48a'
-  const accent = zone?.accent ?? '#c8f0b8'
+  const color  = zone?.color  ?? 'var(--green)'
+  const accent = zone?.accent ?? 'var(--badge-lvl1)'
   const handleMark = () => { setMarked(true); setTimeout(onDone, 600) }
 
   return (
     <div style={{ animation:'fadeUp 0.28s ease both' }}>
-      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', marginBottom:16, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', marginBottom:16, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
 
       {/* En-tête */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
-        <span style={{ fontSize:24 }}>{exercise.icon}</span>
+        <span style={{ fontSize:'var(--fs-emoji-md, 24px)' }}>{exercise.icon}</span>
         <div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:19, color:'#EEF0E8', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
-          <span style={{ fontSize:10, color:accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 19px)', color:'var(--text-on-dark)', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
+          <span style={{ fontSize:'var(--fs-h5, 10px)', color:accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
         </div>
       </div>
-      <div style={{ height:1, background:'rgba(255,255,255,0.07)', margin:'10px 0' }} />
+      <div style={{ height:1, background:'var(--track)', margin:'10px 0' }} />
 
       {/* Description — toujours visible */}
-      <p style={{ fontSize:13, color:'rgba(200,220,200,0.75)', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.75)', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
 
       {/* Outil interactif — affiché après clic sur Commencer */}
       {toolEnabled && !started && (
         <button onClick={() => setStarted(true)} style={{
           width:'100%', padding:'12px', borderRadius:12, marginBottom:12,
           border:`1px solid ${color}40`, background:`${color}12`,
-          color, fontSize:13, fontWeight:500, cursor:'pointer',
+          color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer',
           letterSpacing:'.04em', fontFamily:"'Jost',sans-serif",
           display:'flex', alignItems:'center', justifyContent:'center', gap:8,
         }}>
@@ -709,7 +709,7 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
 
       {toolEnabled && started && (
         <div style={{ animation:'fadeUp 0.3s ease both' }}>
-          <div style={{ height:1, background:'rgba(255,255,255,0.06)', margin:'0 0 4px' }} />
+          <div style={{ height:1, background:'var(--surface-2)', margin:'0 0 4px' }} />
           {type === 'breath'        && <BreathingTool     exercise={fullExercise} color={color} accent={accent} />}
           {type === 'timer'         && <TimerTool          exercise={exercise} color={color} accent={accent} />}
           {type === 'gratitude'     && <GratitudeTool      exercise={exercise} color={color} accent={accent} />}
@@ -718,15 +718,15 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
         </div>
       )}
 
-      <div style={{ height:1, background:'rgba(255,255,255,0.06)', margin:'12px 0' }} />
+      <div style={{ height:1, background:'var(--surface-2)', margin:'12px 0' }} />
 
       {/* Bouton valider */}
       <button onClick={handleMark} style={{
         width:'100%', padding:14, borderRadius:12, border:'none',
-        background: marked ? 'rgba(88,200,120,0.25)' : `linear-gradient(135deg,${color}28,${accent}18)`,
-        color: marked ? '#88D4A0' : accent,
-        fontSize:13, cursor:'pointer', fontWeight:500, letterSpacing:'0.06em',
-        boxShadow:`0 0 0 1px ${marked ? 'rgba(88,200,120,0.4)' : color+'35'}`,
+        background: marked ? 'rgba(var(--green-rgb),0.25)' : `linear-gradient(135deg,${color}28,${accent}18)`,
+        color: marked ? 'var(--green)' : accent,
+        fontSize:'var(--fs-h4, 13px)', cursor:'pointer', fontWeight:500, letterSpacing:'0.06em',
+        boxShadow:`0 0 0 1px ${marked ? 'rgba(var(--green-rgb),0.4)' : color+'35'}`,
         transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8,
         fontFamily:"'Jost',sans-serif",
       }}>
@@ -756,47 +756,47 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
   if (!mode) return (
     <div style={{ animation: "fadeUp 0.3s ease both" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <button onClick={onBack} style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"none", color:"rgba(180,200,180,0.45)", fontSize:12, cursor:"pointer", padding:0, letterSpacing:"0.05em" }}>
+        <button onClick={onBack} style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"none", color:"rgba(var(--text-on-dark-rgb),0.45)", fontSize:'var(--fs-h5, 12px)', cursor:"pointer", padding:0, letterSpacing:"0.05em" }}>
           ← Retour
         </button>
-        <button onClick={onBack} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.55)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-        <span style={{ fontSize: 26 }}>{ritual.icon}</span>
-        <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 20, color: "#EEF0E8", fontWeight: 400, lineHeight: 1.1 }}>{ritual.text}</h3>
+        <span style={{ fontSize:'var(--fs-emoji-md, 26px)' }}>{ritual.icon}</span>
+        <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color: "var(--text-on-dark)", fontWeight: 400, lineHeight: 1.1 }}>{ritual.text}</h3>
       </div>
-      <p style={{ fontSize: 11.5, color: "rgba(180,200,180,0.35)", fontStyle: "italic", marginBottom: 22, lineHeight: 1.5 }}>
+      <p style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.35)", fontStyle: "italic", marginBottom: 22, lineHeight: 1.5 }}>
         Comment souhaitez-vous aborder ce rituel aujourd'hui ?
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {/* Je sais quoi faire */}
         <button onClick={onComplete} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: `1px solid ${zone.color}35`, background: `${zone.color}0C`, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 22, flexShrink: 0 }}>✅</span>
+          <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>✅</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: zone.accent, fontWeight: 500, marginBottom: 2 }}>Je sais quoi faire</div>
-            <div style={{ fontSize: 11, color: "rgba(180,200,180,0.4)" }}>Je le marque comme accompli directement.</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: zone.accent, fontWeight: 500, marginBottom: 2 }}>Je sais quoi faire</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>Je le marque comme accompli directement.</div>
           </div>
-          <span style={{ color: "rgba(180,200,180,0.25)", fontSize: 14 }}>→</span>
+          <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
 
         {/* Coup de pouce */}
-        <button onClick={() => setMode("quick")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 22, flexShrink: 0 }}>💡</span>
+        <button onClick={() => setMode("quick")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid var(--surface-3)", background: "var(--surface-1)", display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>💡</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: "#EEF0E8", fontWeight: 500, marginBottom: 2 }}>J'ai besoin d'un coup de pouce</div>
-            <div style={{ fontSize: 11, color: "rgba(180,200,180,0.4)" }}>3 exercices rapides · 1 à 3 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--text-on-dark)", fontWeight: 500, marginBottom: 2 }}>J'ai besoin d'un coup de pouce</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>3 exercices rapides · 1 à 3 minutes</div>
           </div>
-          <span style={{ color: "rgba(180,200,180,0.25)", fontSize: 14 }}>→</span>
+          <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
 
         {/* Je prends du temps */}
-        <button onClick={() => setMode("deep")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 22, flexShrink: 0 }}>🌿</span>
+        <button onClick={() => setMode("deep")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid var(--surface-3)", background: "var(--surface-1)", display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>🌿</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, color: "#EEF0E8", fontWeight: 500, marginBottom: 2 }}>Je prends du temps pour ça</div>
-            <div style={{ fontSize: 11, color: "rgba(180,200,180,0.4)" }}>3 pratiques profondes · 10 à 30 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--text-on-dark)", fontWeight: 500, marginBottom: 2 }}>Je prends du temps pour ça</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>3 pratiques profondes · 10 à 30 minutes</div>
           </div>
-          <span style={{ color: "rgba(180,200,180,0.25)", fontSize: 14 }}>→</span>
+          <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
       </div>
     </div>
@@ -805,30 +805,30 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
   // Liste des exercices
   const exercises = mode === "quick" ? ritual.quick : ritual.deep;
   const modeLabel = mode === "quick" ? "Coup de pouce · 1–3 min" : "Pratique profonde · 10–30 min";
-  const modeColor = mode === "quick" ? "#FFD080" : "#B0DEFA";
+  const modeColor = mode === "quick" ? "var(--gold)" : "var(--zone-breath)";
 
   return (
     <div style={{ animation: "fadeUp 0.28s ease both" }}>
-      <button onClick={() => setMode(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "rgba(180,200,180,0.45)", fontSize: 12, cursor: "pointer", marginBottom: 20, padding: 0, letterSpacing: "0.05em" }}>
+      <button onClick={() => setMode(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "rgba(var(--text-on-dark-rgb),0.45)", fontSize:'var(--fs-h5, 12px)', cursor: "pointer", marginBottom: 20, padding: 0, letterSpacing: "0.05em" }}>
         ← Retour
       </button>
       <div style={{ marginBottom: 6 }}>
-        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: modeColor, fontWeight: 500 }}>{modeLabel}</span>
+        <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: modeColor, fontWeight: 500 }}>{modeLabel}</span>
       </div>
-      <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 18, color: "#EEF0E8", fontWeight: 400, marginBottom: 18, lineHeight: 1.2 }}>Choisissez un exercice</h3>
+      <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color: "var(--text-on-dark)", fontWeight: 400, marginBottom: 18, lineHeight: 1.2 }}>Choisissez un exercice</h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {exercises.map((ex, i) => (
           <button key={i} onClick={() => setActiveEx(ex)} style={{
             padding: "14px 15px", borderRadius: 12, textAlign: "left", cursor: "pointer",
-            border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)",
+            border: "1px solid var(--surface-3)", background: "var(--surface-1)",
             display: "flex", alignItems: "center", gap: 12,
           }}>
-            <span style={{ fontSize: 22, flexShrink: 0 }}>{ex.icon}</span>
+            <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>{ex.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, color: "#D8EED8", fontWeight: 500, marginBottom: 2 }}>{ex.title}</div>
-              <span style={{ fontSize: 10, color: modeColor, fontWeight: 500, background: `${modeColor}18`, padding: "2px 8px", borderRadius: 10 }}>⏱ {ex.dur}</span>
+              <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--text-on-dark)", fontWeight: 500, marginBottom: 2 }}>{ex.title}</div>
+              <span style={{ fontSize:'var(--fs-h5, 10px)', color: modeColor, fontWeight: 500, background: `${modeColor}18`, padding: "2px 8px", borderRadius: 10 }}>⏱ {ex.dur}</span>
             </div>
-            <span style={{ color: "rgba(180,200,180,0.25)", fontSize: 14 }}>→</span>
+            <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
           </button>
         ))}
       </div>
@@ -856,11 +856,11 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,0.65)", backdropFilter: "blur(12px)" }}
+      style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "var(--overlay)", backdropFilter: "blur(12px)" }}
       onClick={!activeRitual ? onClose : undefined}
     >
       <div
-        style={{ width: "100%", maxWidth: 440, borderRadius: "22px 22px 0 0", padding: "28px 24px 48px", border: "1px solid rgba(255,255,255,0.07)", borderBottom: "none", background: `linear-gradient(175deg, ${zone.bg} 0%, #080E0A 100%)`, maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.4s cubic-bezier(0.34,1.4,0.64,1)" }}
+        style={{ width: "100%", maxWidth: 440, borderRadius: "22px 22px 0 0", padding: "28px 24px 48px", border: "1px solid var(--track)", borderBottom: "none", background: `linear-gradient(175deg, ${zone.bg} 0%, #080E0A 100%)`, maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.4s cubic-bezier(0.34,1.4,0.64,1)" }}
         onClick={e => e.stopPropagation()}
       >
         {activeRitual ? (
@@ -875,18 +875,18 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
             {/* Header zone */}
             <div style={{ position:'relative', display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
               <div>
-                <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: zone.color, fontWeight: 500, display: "block", marginBottom: 4 }}>{zone.subtitle}</span>
-                <h2 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 28, color: "#EEF0E8", fontWeight: 300, lineHeight: 1.05 }}>{zone.name}</h2>
+                <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: zone.color, fontWeight: 500, display: "block", marginBottom: 4 }}>{zone.subtitle}</span>
+                <h2 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 28px)', color: "var(--text-on-dark)", fontWeight: 300, lineHeight: 1.05 }}>{zone.name}</h2>
               </div>
               <div style={{ textAlign: "right", paddingRight: 36 }}>
-                <span style={{ fontSize: 10, color: "rgba(180,200,180,0.3)", display: "block", marginBottom: 4 }}>{done}/{rituals.length} rituels</span>
-                <span style={{ fontSize: 22, color: zone.accent, fontWeight: 300 }}>{Math.round(pct)}<span style={{ fontSize: 12, opacity: 0.6 }}>%</span></span>
+                <span style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.3)", display: "block", marginBottom: 4 }}>{done}/{rituals.length} rituels</span>
+                <span style={{ fontSize:'var(--fs-h2, 22px)', color: zone.accent, fontWeight: 300 }}>{Math.round(pct)}<span style={{ fontSize:'var(--fs-h5, 12px)', opacity:0.6 }}>%</span></span>
               </div>
-              <button onClick={onClose} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.55)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+              <button onClick={onClose} style={{ position:'absolute', top:14, right:14, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
             </div>
 
             {/* Progress bar */}
-            <div style={{ height: 3, borderRadius: 2, background: "rgba(255,255,255,0.07)", marginBottom: 22, overflow: "hidden" }}>
+            <div style={{ height: 3, borderRadius: 2, background: "var(--track)", marginBottom: 22, overflow: "hidden" }}>
               <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${zone.color}, ${zone.accent})`, width: `${pct}%`, transition: "width 0.7s ease" }} />
             </div>
 
@@ -901,18 +901,18 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
                     style={{
                       display: "flex", alignItems: "center", gap: 12,
                       padding: "14px 15px", borderRadius: 12,
-                      border: `1px solid ${isDone ? `${zone.color}45` : "rgba(255,255,255,0.06)"}`,
-                      background: isDone ? `${zone.color}10` : "rgba(255,255,255,0.025)",
+                      border: `1px solid ${isDone ? `${zone.color}45` : "var(--surface-2)"}`,
+                      background: isDone ? `${zone.color}10` : "var(--surface-1)",
                       cursor: "pointer", textAlign: "left", transition: "all 0.22s",
                     }}
                   >
-                    <span style={{ fontSize: 18, flexShrink: 0 }}>{r.icon}</span>
+                    <span style={{ fontSize:'var(--fs-emoji-sm, 18px)', flexShrink: 0 }}>{r.icon}</span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, color: isDone ? "#D8EED8" : "rgba(180,200,180,0.58)", fontWeight: isDone ? 500 : 300, lineHeight: 1.3 }}>{r.text}</div>
-                      {!isDone && <div style={{ fontSize: 10, color: "rgba(180,200,180,0.28)", marginTop: 2 }}>Toucher pour explorer →</div>}
+                      <div style={{ fontSize:'var(--fs-h4, 13px)', color: isDone ? "var(--text-on-dark)" : "rgba(var(--text-on-dark-rgb),0.58)", fontWeight: isDone ? 500 : 300, lineHeight: 1.3 }}>{r.text}</div>
+                      {!isDone && <div style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.28)", marginTop: 2 }}>Toucher pour explorer →</div>}
                     </div>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${isDone ? zone.color : "rgba(255,255,255,0.18)"}`, background: isDone ? `${zone.color}30` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", flexShrink: 0 }}>
-                      {isDone && <span style={{ fontSize: 9, color: zone.accent, fontWeight: 700 }}>✓</span>}
+                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${isDone ? zone.color : "var(--separator)"}`, background: isDone ? `${zone.color}30` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", flexShrink: 0 }}>
+                      {isDone && <span style={{ fontSize:'var(--fs-h5, 9px)', color: zone.accent, fontWeight: 700 }}>✓</span>}
                     </div>
                   </button>
                 );
@@ -986,15 +986,15 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
         {/* Titre section */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
-            <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(180,200,180,0.3)", marginBottom: 3 }}>Rituels du jour</p>
-            <p style={{ fontSize: 12, color: "rgba(180,200,180,0.45)", lineHeight: 1.4 }}>
+            <p style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(var(--text-on-dark-rgb),0.3)", marginBottom: 3 }}>Rituels du jour</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', color: "rgba(var(--text-on-dark-rgb),0.45)", lineHeight: 1.4 }}>
               {hasDegradation ? "Zones triées par priorité" : "Prenez votre bilan intérieur"}
             </p>
           </div>
           {hasDegradation && (
             <button
               onClick={() => setShowQuiz(true)}
-              style={{ fontSize: 10, color: "rgba(180,200,180,0.3)", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "5px 12px", cursor: "pointer", letterSpacing: "0.05em" }}
+              style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.3)", background: "none", border: "1px solid var(--surface-3)", borderRadius: 20, padding: "5px 12px", cursor: "pointer", letterSpacing: "0.05em" }}
             >
               ↺ Refaire le bilan
             </button>
@@ -1007,16 +1007,16 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
             onClick={() => setShowQuiz(true)}
             style={{
               width: "100%", padding: "18px 20px", borderRadius: 16, marginBottom: 16,
-              border: "1px solid rgba(200,168,130,0.25)", background: "rgba(200,168,130,0.07)",
+              border: "1px solid rgba(var(--gold-warm-rgb),0.25)", background: "rgba(var(--gold-warm-rgb),0.07)",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left",
             }}
           >
-            <span style={{ fontSize: 28 }}>🌹</span>
+            <span style={{ fontSize:'var(--fs-emoji-lg, 28px)' }}>🌹</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, color: "#C8A882", fontWeight: 500, marginBottom: 3 }}>Prendre mon bilan du jour</div>
-              <div style={{ fontSize: 11, color: "rgba(180,200,180,0.4)" }}>10 questions · 2 minutes · révèle vos zones prioritaires</div>
+              <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--gold-warm)", fontWeight: 500, marginBottom: 3 }}>Prendre mon bilan du jour</div>
+              <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>10 questions · 2 minutes · révèle vos zones prioritaires</div>
             </div>
-            <span style={{ color: "rgba(200,168,130,0.4)", fontSize: 16 }}>→</span>
+            <span style={{ color: "rgba(var(--gold-warm-rgb),0.4)", fontSize:'var(--fs-emoji-sm, 16px)' }}>→</span>
           </button>
         )}
 
@@ -1037,26 +1037,26 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
                 onClick={() => setActiveZone(zoneId)}
                 style={{
                   padding: "13px 14px", borderRadius: 13, textAlign: "left", cursor: "pointer",
-                  border: `1px solid ${doneCount > 0 ? `${zone.color}35` : isPriority ? `${zone.color}40` : "rgba(255,255,255,0.06)"}`,
-                  background: doneCount > 0 ? `${zone.color}08` : isPriority ? `${zone.color}06` : "rgba(255,255,255,0.025)",
+                  border: `1px solid ${doneCount > 0 ? `${zone.color}35` : isPriority ? `${zone.color}40` : "var(--surface-2)"}`,
+                  background: doneCount > 0 ? `${zone.color}08` : isPriority ? `${zone.color}06` : "var(--surface-1)",
                   transition: "all 0.25s ease",
                   gridColumn: isFirst ? "1 / -1" : "auto", // zone la plus urgente en pleine largeur
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, color: zone.color, fontWeight: 500, letterSpacing: "0.03em" }}>{zone.name}</span>
-                  <span style={{ fontSize: 12, color: zone.accent, fontWeight: 500 }}>{health}%</span>
+                  <span style={{ fontSize:'var(--fs-h5, 11px)', color: zone.color, fontWeight: 500, letterSpacing: "0.03em" }}>{zone.name}</span>
+                  <span style={{ fontSize:'var(--fs-h5, 12px)', color: zone.accent, fontWeight: 500 }}>{health}%</span>
                 </div>
-                <div style={{ height: 2.5, borderRadius: 2, background: "rgba(255,255,255,0.06)", marginBottom: 6, overflow: "hidden" }}>
+                <div style={{ height: 2.5, borderRadius: 2, background: "var(--surface-2)", marginBottom: 6, overflow: "hidden" }}>
                   <div style={{ height: "100%", width: `${health}%`, background: `linear-gradient(90deg, ${zone.color}, ${zone.accent})`, borderRadius: 2, transition: "width 1.2s ease" }} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 10, color: "rgba(180,200,180,0.28)" }}>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.28)" }}>
                     {doneCount}/{rituals.length} rituel{doneCount !== 1 ? "s" : ""}
                     {isPriority && !isFirst ? " · prioritaire" : ""}
                   </span>
                   {isPriority && (
-                    <span style={{ fontSize: 9, color: zone.color, background: `${zone.color}20`, padding: "2px 7px", borderRadius: 8, fontWeight: 500 }}>
+                    <span style={{ fontSize:'var(--fs-h5, 9px)', color: zone.color, background: `${zone.color}20`, padding: "2px 7px", borderRadius: 8, fontWeight: 500 }}>
                       {isFirst ? "🔴 Prioritaire" : "⚡"}
                     </span>
                   )}

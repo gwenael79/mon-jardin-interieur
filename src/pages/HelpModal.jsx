@@ -18,9 +18,9 @@ const GUIDE_STEPS = [
     subtitle: 'Votre espace personnel',
     description: 'Chaque jour, prenez soin de votre jardin intérieur en complétant vos rituels quotidiens. Chaque attention à vous-même nourrit vos zones de vie — racines, tige, feuilles, fleurs et souffle.',
     tip: '💡 Complétez au moins un rituel par jour pour maintenir votre vitalité.',
-    accent: '#e8c060',
-    bg: 'rgba(232,192,96,0.10)',
-    border: 'rgba(232,192,96,0.22)',
+    accent: 'var(--gold)',
+    bg: 'rgba(var(--gold-rgb),0.10)',
+    border: 'rgba(var(--gold-rgb),0.22)',
   },
   {
     icon: '🌻',
@@ -28,9 +28,9 @@ const GUIDE_STEPS = [
     subtitle: 'La communauté en fleurs',
     description: 'Découvrez les fleurs des autres membres. Nous sommes reliés les uns aux autres, et grâce à la bienveillance mutuelle nous grandissons ensemble.',
     tip: '💡 Activez votre visibilité dans votre profil pour apparaître dans le jardin.',
-    accent: '#96d485',
-    bg: 'rgba(150,212,133,0.10)',
-    border: 'rgba(150,212,133,0.22)',
+    accent: 'var(--green)',
+    bg: 'rgba(var(--green-rgb),0.10)',
+    border: 'rgba(var(--green-rgb),0.22)',
   },
   {
     icon: '🪴',
@@ -38,9 +38,9 @@ const GUIDE_STEPS = [
     subtitle: 'Partageons nos bonnes ondes',
     description: 'Rejoignez un réseau autour de la bienveillance. Soutenez l\'effort de chacun, nourrissez l\'égrégore collectif, et tissez des liens d\'intentions positives.',
     tip: '💡 Rejoignez un cercle avec un code d\'invitation ou créez le vôtre.',
-    accent: '#b496dc',
-    bg: 'rgba(180,150,220,0.10)',
-    border: 'rgba(180,150,220,0.22)',
+    accent: 'var(--lumens)',
+    bg: 'rgba(var(--lumens-rgb),0.10)',
+    border: 'rgba(var(--lumens-rgb),0.22)',
   },
   {
     icon: '🌿',
@@ -48,9 +48,9 @@ const GUIDE_STEPS = [
     subtitle: 'Approfondissez votre pratique',
     description: 'Accédez à des séances en visio, groupes de parole, méditations et ateliers audio pour accompagner votre croissance intérieure au quotidien.',
     tip: '💡 Les ateliers sont disponibles avec un abonnement actif.',
-    accent: '#64b4a0',
-    bg: 'rgba(100,180,160,0.10)',
-    border: 'rgba(100,180,160,0.22)',
+    accent: 'var(--zone-stem)',
+    bg: 'rgba(var(--lumens-rgb),0.10)',
+    border: 'rgba(var(--lumens-rgb),0.22)',
   },
   {
     icon: '✨',
@@ -58,9 +58,9 @@ const GUIDE_STEPS = [
     subtitle: 'Grandissez ensemble',
     description: 'Participez aux défis collectifs. Chaque défi est une invitation à explorer une nouvelle intention, partagée avec des centaines de jardiniers.',
     tip: '💡 Vous pouvez aussi proposer vos propres défis à la communauté.',
-    accent: '#e8c060',
-    bg: 'rgba(232,192,96,0.10)',
-    border: 'rgba(232,192,96,0.22)',
+    accent: 'var(--gold)',
+    bg: 'rgba(var(--gold-rgb),0.10)',
+    border: 'rgba(var(--gold-rgb),0.22)',
   },
   {
     icon: '✦',
@@ -68,9 +68,9 @@ const GUIDE_STEPS = [
     subtitle: 'Votre lumière intérieure',
     description: 'Les Lumens mesurent votre rayonnement. Vous en gagnez en complétant des rituels, en participant aux défis et en interagissant chaque jour. Votre aura grandit avec vous.',
     tip: '💡 Consultez vos Lumens depuis le bandeau doré en bas de l\'écran.',
-    accent: '#ffd864',
-    bg: 'rgba(255,216,100,0.10)',
-    border: 'rgba(255,216,100,0.22)',
+    accent: 'var(--gold)',
+    bg: 'rgba(var(--gold-rgb),0.10)',
+    border: 'rgba(var(--gold-rgb),0.22)',
   },
 ]
 
@@ -83,11 +83,11 @@ const FAQ = [
 ]
 
 const ZONES = [
-  { emoji: '🌱', name: 'Racines', color: '#96d485', desc: 'La stabilité, le sentiment de sécurité et d\'ancrage dans votre quotidien.' },
-  { emoji: '🌿', name: 'Tige',    color: '#78B4C8', desc: 'L\'énergie, la vitalité physique, votre capacité à agir.' },
-  { emoji: '🍃', name: 'Feuilles',color: '#C8894A', desc: 'Les relations, les connexions sociales et votre sentiment d\'appartenance.' },
-  { emoji: '🌸', name: 'Fleurs',  color: '#C878A0', desc: 'La créativité, l\'expression de soi, ce qui vous donne de la joie.' },
-  { emoji: '💨', name: 'Souffle', color: '#e8c060', desc: 'La clarté mentale, le recul, votre capacité à vous recentrer.' },
+  { emoji: '🌱', name: 'Racines', color: 'var(--green)', desc: 'La stabilité, le sentiment de sécurité et d\'ancrage dans votre quotidien.' },
+  { emoji: '🌿', name: 'Tige',    color: 'var(--zone-breath)', desc: 'L\'énergie, la vitalité physique, votre capacité à agir.' },
+  { emoji: '🍃', name: 'Feuilles',color: 'var(--zone-roots)', desc: 'Les relations, les connexions sociales et votre sentiment d\'appartenance.' },
+  { emoji: '🌸', name: 'Fleurs',  color: 'var(--zone-flowers)', desc: 'La créativité, l\'expression de soi, ce qui vous donne de la joie.' },
+  { emoji: '💨', name: 'Souffle', color: 'var(--gold)', desc: 'La clarté mentale, le recul, votre capacité à vous recentrer.' },
 ]
 
 // ── Onglet Guide ──────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ function GuideTab() {
         {GUIDE_STEPS.map((_,i) => (
           <div key={i} onClick={() => goTo(i, i>step?1:-1)} style={{
             flex:1, height:2, borderRadius:2, cursor:'pointer',
-            background: i <= step ? s.accent : 'rgba(255,255,255,0.10)',
+            background: i <= step ? s.accent : 'var(--surface-3)',
             transition:'background .35s ease',
           }} />
         ))}
@@ -129,16 +129,16 @@ function GuideTab() {
           <div style={{
             width:56, height:56, borderRadius:16, flexShrink:0,
             background:s.bg, border:`1px solid ${s.border}`,
-            display:'flex', alignItems:'center', justifyContent:'center', fontSize:24,
+            display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-emoji-md, 24px)',
           }}>{s.icon}</div>
           <div>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:'rgba(242,237,224,0.92)', lineHeight:1.1 }}>{s.title}</div>
-            <div style={{ fontSize:11, color:s.accent, marginTop:3, letterSpacing:'.04em' }}>{s.subtitle}</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.92)', lineHeight:1.1 }}>{s.title}</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:s.accent, marginTop:3, letterSpacing:'.04em' }}>{s.subtitle}</div>
           </div>
         </div>
 
         {/* Description */}
-        <p style={{ fontSize:13, fontWeight:300, color:'rgba(242,237,224,0.70)', lineHeight:1.80, margin:'0 0 14px' }}>
+        <p style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.70)', lineHeight:1.80, margin:'0 0 14px' }}>
           {s.description}
         </p>
 
@@ -146,29 +146,29 @@ function GuideTab() {
         <div style={{
           padding:'10px 13px', borderRadius:10,
           background:s.bg, border:`1px solid ${s.border}`,
-          fontSize:12, color:'rgba(242,237,224,0.58)', lineHeight:1.55,
+          fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.58)', lineHeight:1.55,
         }}>{s.tip}</div>
       </div>
 
       {/* Navigation */}
       <div style={{ display:'flex', alignItems:'center', gap:10, paddingTop:14, flexShrink:0 }}>
         <button onClick={() => goTo(step-1, -1)} disabled={step===0} style={{
-          width:36, height:36, borderRadius:'50%', border:'1px solid rgba(255,255,255,0.10)',
-          background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.50)',
+          width:36, height:36, borderRadius:'50%', border:'1px solid var(--surface-3)',
+          background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.50)',
           cursor: step===0 ? 'default' : 'pointer', opacity: step===0 ? 0.3 : 1,
-          fontSize:15, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+          fontSize:'var(--fs-h3, 15px)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
         }}>‹</button>
-        <div style={{ flex:1, textAlign:'center', fontSize:11, color:'rgba(242,237,224,0.25)', letterSpacing:'.08em' }}>
+        <div style={{ flex:1, textAlign:'center', fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.25)', letterSpacing:'.08em' }}>
           {step+1} / {GUIDE_STEPS.length}
         </div>
         <button onClick={() => goTo(step+1, 1)} disabled={step===GUIDE_STEPS.length-1} style={{
           padding:'9px 18px', borderRadius:20,
           border:'none', cursor: step===GUIDE_STEPS.length-1 ? 'default' : 'pointer',
           background: step===GUIDE_STEPS.length-1
-            ? 'rgba(255,255,255,0.06)'
-            : `linear-gradient(135deg, ${s.accent}, rgba(150,212,133,0.9))`,
-          color: step===GUIDE_STEPS.length-1 ? 'rgba(242,237,224,0.25)' : '#0f1f12',
-          fontSize:12, fontWeight:600, flexShrink:0,
+            ? 'var(--surface-2)'
+            : `linear-gradient(135deg, ${s.accent}, rgba(var(--green-rgb),0.9))`,
+          color: step===GUIDE_STEPS.length-1 ? 'rgba(var(--text-on-dark-rgb),0.25)' : 'var(--modal-surface)',
+          fontSize:'var(--fs-h5, 12px)', fontWeight:600, flexShrink:0,
           opacity: step===GUIDE_STEPS.length-1 ? 0.5 : 1,
         }}>{step===GUIDE_STEPS.length-1 ? '✓ Compris' : 'Suivant ›'}</button>
       </div>
@@ -184,8 +184,8 @@ function FaqTab() {
       {FAQ.map((item, i) => (
         <div key={i} style={{
           borderRadius:11, overflow:'hidden',
-          border:'1px solid rgba(255,255,255,0.07)',
-          background: open===i ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
+          border:'1px solid var(--track)',
+          background: open===i ? 'var(--surface-2)' : 'var(--surface-1)',
           transition:'background .2s',
         }}>
           <button onClick={() => setOpen(open===i ? null : i)} style={{
@@ -193,11 +193,11 @@ function FaqTab() {
             padding:'12px 14px', background:'none', border:'none', cursor:'pointer',
             fontFamily:"'Jost',sans-serif", textAlign:'left', gap:10,
           }}>
-            <span style={{ fontSize:12.5, fontWeight:400, color:'rgba(242,237,224,0.78)', lineHeight:1.5 }}>{item.q}</span>
-            <span style={{ fontSize:13, color:'rgba(242,237,224,0.28)', flexShrink:0, transition:'transform .2s', transform: open===i ? 'rotate(180deg)' : 'none' }}>▾</span>
+            <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.78)', lineHeight:1.5 }}>{item.q}</span>
+            <span style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.28)', flexShrink:0, transition:'transform .2s', transform: open===i ? 'rotate(180deg)' : 'none' }}>▾</span>
           </button>
           {open===i && (
-            <div style={{ padding:'0 14px 13px', fontSize:12, fontWeight:300, color:'rgba(242,237,224,0.54)', lineHeight:1.75 }}>
+            <div style={{ padding:'0 14px 13px', fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.54)', lineHeight:1.75 }}>
               {item.a}
             </div>
           )}
@@ -215,12 +215,12 @@ function ZonesTab() {
         <div key={i} style={{
           display:'flex', gap:13, alignItems:'flex-start',
           padding:'12px 14px', borderRadius:12,
-          background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)',
+          background:'var(--surface-1)', border:'1px solid var(--track)',
         }}>
-          <span style={{ fontSize:20, flexShrink:0 }}>{z.emoji}</span>
+          <span style={{ fontSize:'var(--fs-emoji-md, 20px)', flexShrink:0 }}>{z.emoji}</span>
           <div>
-            <div style={{ fontSize:12.5, fontWeight:600, color:z.color, marginBottom:3 }}>{z.name}</div>
-            <div style={{ fontSize:12, fontWeight:300, color:'rgba(242,237,224,0.54)', lineHeight:1.72 }}>{z.desc}</div>
+            <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:600, color:z.color, marginBottom:3 }}>{z.name}</div>
+            <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.54)', lineHeight:1.72 }}>{z.desc}</div>
           </div>
         </div>
       ))}
@@ -251,7 +251,7 @@ function ScienceTab() {
         {ONBOARDING_SLIDES.map((s,i) => (
           <div key={s.id} onClick={() => { setLeaving(true); setTimeout(()=>{ setStep(i); setLeaving(false) }, 260) }} style={{
             flex:1, height:2, borderRadius:2, cursor:'pointer',
-            background: i <= step ? slide.color : 'rgba(255,255,255,0.10)',
+            background: i <= step ? slide.color : 'var(--surface-3)',
             transition:'background .4s ease',
           }} />
         ))}
@@ -260,9 +260,9 @@ function ScienceTab() {
       <div className={leaving ? 'onb-out' : 'onb-in'} style={{ flex:1, overflowY:'auto', paddingBottom:8 }}>
         {/* Tag + emoji */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-          <span style={{ fontSize:26 }}>{slide.emoji}</span>
+          <span style={{ fontSize:'var(--fs-emoji-md, 26px)' }}>{slide.emoji}</span>
           <span style={{
-            fontSize:9, letterSpacing:'.14em', textTransform:'uppercase',
+            fontSize:'var(--fs-h5, 9px)', letterSpacing:'.14em', textTransform:'uppercase',
             color:slide.color, fontWeight:500, padding:'3px 9px', borderRadius:20,
             background:`${slide.color}15`, border:`1px solid ${slide.color}30`,
           }}>{slide.tag}</span>
@@ -271,15 +271,15 @@ function ScienceTab() {
         <div style={{
           fontFamily:"'Cormorant Garamond',serif",
           fontSize:'clamp(18px,3.5vw,24px)', fontWeight:300, lineHeight:1.22,
-          color:'rgba(242,237,224,0.93)', marginBottom:16, whiteSpace:'pre-line',
+          color:'rgba(var(--text-on-dark-rgb),0.93)', marginBottom:16, whiteSpace:'pre-line',
         }}>{slide.title}</div>
 
         {/* Body simple */}
         {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
           <>
-            <p style={{ fontSize:12.5, fontWeight:300, color:'rgba(242,237,224,0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
             {slide.highlight && (
-              <div style={{ padding:'9px 13px', borderRadius:9, background:`${slide.color}10`, border:`1px solid ${slide.color}25`, fontSize:11.5, fontWeight:500, color:slide.color, lineHeight:1.6 }}>
+              <div style={{ padding:'9px 13px', borderRadius:9, background:`${slide.color}10`, border:`1px solid ${slide.color}25`, fontSize:'var(--fs-h5, 11px)', fontWeight:500, color:slide.color, lineHeight:1.6 }}>
                 💡 {slide.highlight}
               </div>
             )}
@@ -290,11 +290,11 @@ function ScienceTab() {
         {slide.bullets && (
           <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
             {slide.bullets.map((b,i) => (
-              <div key={i} style={{ display:'flex', gap:11, alignItems:'flex-start', padding:'10px 12px', borderRadius:10, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)' }}>
-                <span style={{ fontSize:17, flexShrink:0 }}>{b.icon}</span>
+              <div key={i} style={{ display:'flex', gap:11, alignItems:'flex-start', padding:'10px 12px', borderRadius:10, background:'var(--surface-1)', border:'1px solid var(--track)' }}>
+                <span style={{ fontSize:'var(--fs-emoji-md, 17px)', flexShrink:0 }}>{b.icon}</span>
                 <div>
-                  <div style={{ fontSize:11.5, fontWeight:600, color:slide.color, marginBottom:2 }}>{b.label}</div>
-                  <div style={{ fontSize:11, fontWeight:300, color:'rgba(242,237,224,0.53)', lineHeight:1.7 }}>{b.desc}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:600, color:slide.color, marginBottom:2 }}>{b.label}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.53)', lineHeight:1.7 }}>{b.desc}</div>
                 </div>
               </div>
             ))}
@@ -304,12 +304,12 @@ function ScienceTab() {
         {/* Points */}
         {slide.points && (
           <>
-            <p style={{ fontSize:12.5, fontWeight:300, color:'rgba(242,237,224,0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
             <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
               {slide.points.map((p,i) => (
                 <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
-                  <span style={{ color:slide.color, fontSize:11, flexShrink:0, marginTop:3 }}>✦</span>
-                  <span style={{ fontSize:12, fontWeight:300, color:'rgba(242,237,224,0.64)', lineHeight:1.72 }}>{p}</span>
+                  <span style={{ color:slide.color, fontSize:'var(--fs-h5, 11px)', flexShrink:0, marginTop:3 }}>✦</span>
+                  <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.64)', lineHeight:1.72 }}>{p}</span>
                 </div>
               ))}
             </div>
@@ -326,8 +326,8 @@ function ScienceTab() {
                   {i < slide.timeline.length-1 && <div style={{ width:1, flex:1, minHeight:22, background:`${slide.color}30` }} />}
                 </div>
                 <div style={{ paddingBottom:14 }}>
-                  <div style={{ fontSize:9.5, fontWeight:600, color:slide.color, letterSpacing:'.06em', marginBottom:3, textTransform:'uppercase' }}>{t.period}</div>
-                  <div style={{ fontSize:12, fontWeight:300, color:'rgba(242,237,224,0.60)', lineHeight:1.7 }}>{t.desc}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 9px)', fontWeight:600, color:slide.color, letterSpacing:'.06em', marginBottom:3, textTransform:'uppercase' }}>{t.period}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.60)', lineHeight:1.7 }}>{t.desc}</div>
                 </div>
               </div>
             ))}
@@ -337,12 +337,12 @@ function ScienceTab() {
         {/* Features */}
         {slide.features && (
           <>
-            <p style={{ fontSize:12.5, fontWeight:300, color:'rgba(242,237,224,0.73)', lineHeight:1.82, margin:'0 0 16px' }}>{slide.body}</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.73)', lineHeight:1.82, margin:'0 0 16px' }}>{slide.body}</p>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {slide.features.map((f,i) => (
                 <div key={i} style={{ display:'flex', gap:10, alignItems:'center' }}>
-                  <span style={{ fontSize:14, width:30, height:30, borderRadius:'50%', flexShrink:0, background:`${slide.color}15`, border:`1px solid ${slide.color}25`, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</span>
-                  <span style={{ fontSize:12, fontWeight:400, color:'rgba(242,237,224,0.73)' }}>{f.text}</span>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 14px)', width:30, height:30, borderRadius:'50%', flexShrink:0, background:`${slide.color}15`, border:`1px solid ${slide.color}25`, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</span>
+                  <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.73)' }}>{f.text}</span>
                 </div>
               ))}
             </div>
@@ -353,17 +353,17 @@ function ScienceTab() {
       {/* Navigation */}
       <div style={{ display:'flex', gap:7, paddingTop:12, flexShrink:0 }}>
         <button onClick={() => go(-1)} disabled={step===0} style={{
-          padding:'10px 14px', borderRadius:9, border:'1px solid rgba(255,255,255,0.10)',
-          background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.32)',
-          fontSize:12, cursor: step===0 ? 'default' : 'pointer',
+          padding:'10px 14px', borderRadius:9, border:'1px solid var(--surface-3)',
+          background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.32)',
+          fontSize:'var(--fs-h5, 12px)', cursor: step===0 ? 'default' : 'pointer',
           opacity: step===0 ? 0.3 : 1, fontFamily:"'Jost',sans-serif",
         }}>←</button>
         <button onClick={() => go(1)} disabled={isLast} style={{
           flex:1, padding:'10px', borderRadius:9,
-          border:`1px solid ${isLast ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.12)'}`,
-          background:'rgba(255,255,255,0.04)',
-          color: isLast ? 'rgba(242,237,224,0.18)' : 'rgba(242,237,224,0.62)',
-          fontSize:12, cursor: isLast ? 'default' : 'pointer',
+          border:`1px solid ${isLast ? 'var(--surface-2)' : 'var(--surface-3)'}`,
+          background:'var(--surface-2)',
+          color: isLast ? 'rgba(var(--text-on-dark-rgb),0.18)' : 'rgba(var(--text-on-dark-rgb),0.62)',
+          fontSize:'var(--fs-h5, 12px)', cursor: isLast ? 'default' : 'pointer',
           fontFamily:"'Jost',sans-serif",
         }}>{isLast ? '✓ Fin du parcours' : 'Suivant →'}</button>
       </div>
@@ -385,7 +385,7 @@ export function HelpModal({ onClose }) {
     }}>
       <style>{ONB_STYLES}</style>
 
-      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }}
+      <div style={{ position:'absolute', inset:0, background:'var(--overlay)', backdropFilter:'blur(4px)' }}
            onClick={onClose} />
 
       <div style={{
@@ -393,23 +393,22 @@ export function HelpModal({ onClose }) {
         borderRadius:22, padding:'0 0 24px',
         maxHeight:'88vh', width:'100%', maxWidth:420,
         display:'flex', flexDirection:'column',
-        border:'1px solid rgba(255,255,255,0.10)',
-        boxShadow:'0 32px 80px rgba(0,0,0,0.55)',
+        border:'1px solid var(--surface-3)',
+        boxShadow:'0 32px 80px var(--overlay)',
         fontFamily:"'Jost',sans-serif",
       }}>
         {/* Poignée */}
-        <div style={{ width:32, height:3, background:'rgba(255,255,255,0.15)', borderRadius:100, margin:'14px auto 0' }} />
+        <div style={{ width:32, height:3, background:'var(--separator)', borderRadius:100, margin:'14px auto 0' }} />
 
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px 0' }}>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:21, fontWeight:300, color:'rgba(242,237,224,0.88)' }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 21px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.88)' }}>
             Aide
           </div>
           <button onClick={onClose} style={{
-            background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.10)',
+            background:'var(--track)', border:'1px solid var(--surface-3)',
             borderRadius:'50%', width:28, height:28, cursor:'pointer',
-            color:'rgba(242,237,224,0.50)', fontSize:13,
-            display:'flex', alignItems:'center', justifyContent:'center',
+            color:'rgba(var(--text-on-dark-rgb),0.50)', fontSize:'var(--fs-h4, 13px)', display:'flex', alignItems:'center', justifyContent:'center',
           }}>✕</button>
         </div>
 
@@ -418,11 +417,11 @@ export function HelpModal({ onClose }) {
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               padding:'6px 12px', borderRadius:20, cursor:'pointer',
-              fontFamily:"'Jost',sans-serif", fontSize:11.5, fontWeight: tab===t.id ? 500 : 300,
+              fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 11px)', fontWeight: tab===t.id ? 500 : 300,
               whiteSpace:'nowrap',
-              background: tab===t.id ? 'rgba(150,212,133,0.14)' : 'rgba(255,255,255,0.04)',
-              color: tab===t.id ? '#96d485' : 'rgba(242,237,224,0.42)',
-              border: tab===t.id ? '1px solid rgba(150,212,133,0.25)' : '1px solid rgba(255,255,255,0.07)',
+              background: tab===t.id ? 'rgba(var(--green-rgb),0.14)' : 'var(--surface-2)',
+              color: tab===t.id ? 'var(--green)' : 'rgba(var(--text-on-dark-rgb),0.42)',
+              border: tab===t.id ? '1px solid rgba(var(--green-rgb),0.25)' : '1px solid var(--track)',
               transition:'all .18s',
             }}>{t.label}</button>
           ))}

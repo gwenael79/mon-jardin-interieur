@@ -10,7 +10,7 @@ export const ONBOARDING_SLIDES = [
     title: 'Le stress d\'usure,\nun ennemi discret',
     body: 'Contrairement au stress aigu, le stress d\'usure s\'accumule silencieusement. Fatigue, irritabilité, perte d\'élan… il s\'installe sans prévenir et altère notre équilibre sans que l\'on s\'en rende compte.',
     highlight: 'Il touche 7 personnes sur 10 dans leur vie quotidienne.',
-    color: '#78B4C8',
+    color: 'var(--zone-breath)',
     visual: 'wave',
   },
   {
@@ -23,7 +23,7 @@ export const ONBOARDING_SLIDES = [
       { icon: '👁', label: 'Pas visible', desc: 'Le bien-être intérieur ne se mesure pas dans un miroir.' },
       { icon: '📅', label: 'Pas immédiat', desc: 'On abandonne souvent avant de percevoir les bénéfices.' },
     ],
-    color: '#C8894A',
+    color: 'var(--zone-roots)',
     visual: 'barriers',
   },
   {
@@ -37,7 +37,7 @@ export const ONBOARDING_SLIDES = [
       'Renforce la neuroplasticité : le cerveau se reconfigure positivement',
       'Effet cumulatif : chaque jour ajoute une couche de résilience',
     ],
-    color: '#96d485',
+    color: 'var(--green)',
     visual: 'brain',
   },
   {
@@ -50,7 +50,7 @@ export const ONBOARDING_SLIDES = [
       { period: 'Après 3 semaines', desc: 'Moins de réactivité émotionnelle, meilleure qualité de sommeil.' },
       { period: 'Après 2 mois', desc: 'Une résilience renforcée face aux imprévus du quotidien.' },
     ],
-    color: '#C878A0',
+    color: 'var(--zone-flowers)',
     visual: 'growth',
   },
   {
@@ -64,7 +64,7 @@ export const ONBOARDING_SLIDES = [
       { icon: '📊', text: 'Votre progression visible au quotidien' },
       { icon: '🌿', text: 'Une plante qui grandit avec vous' },
     ],
-    color: '#e8c060',
+    color: 'var(--gold)',
     visual: 'flower',
   },
 ]
@@ -86,10 +86,10 @@ function SlideVisual({ slide }) {
           animation: `onbPulse ${3+i*0.5}s ease-in-out ${i*0.3}s infinite`,
         }} />
       ))}
-      <div style={{ fontSize:100, animation:'onbFloat 4s ease-in-out infinite', zIndex:1 }}>🌊</div>
+      <div style={{ fontSize:'var(--fs-emoji-lg, 100px)', animation:'onbFloat 4s ease-in-out infinite', zIndex:1 }}>🌊</div>
       <div style={{ position:'absolute', bottom:'15%', left:'50%', transform:'translateX(-50%)', textAlign:'center' }}>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:42, fontWeight:300, color:c, lineHeight:1 }}>7/10</div>
-        <div style={{ fontSize:11, color:c+'99', letterSpacing:'.12em', textTransform:'uppercase', marginTop:4 }}>personnes touchées</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h1, 42px)', fontWeight:300, color:c, lineHeight:1 }}>7/10</div>
+        <div style={{ fontSize:'var(--fs-h5, 11px)', color:c+'99', letterSpacing:'.12em', textTransform:'uppercase', marginTop:4 }}>personnes touchées</div>
       </div>
     </div>
   )
@@ -103,8 +103,8 @@ function SlideVisual({ slide }) {
           borderLeft:`3px solid ${c}`,
           borderRadius:'0 12px 12px 0',
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize:22, fontWeight:300,
-          color:'rgba(242,237,224,0.75)',
+          fontSize:'var(--fs-h2, 22px)', fontWeight:300,
+          color:'rgba(var(--text-on-dark-rgb),0.75)',
           animation:`onbIn .5s ease ${i*0.15}s both`,
           position:'relative', overflow:'hidden',
         }}>
@@ -118,7 +118,7 @@ function SlideVisual({ slide }) {
   if (slide.visual === 'brain') return (
     <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
       <div style={{ position:'relative', textAlign:'center' }}>
-        <div style={{ fontSize:110, animation:'onbFloat 3s ease-in-out infinite', lineHeight:1 }}>🧠</div>
+        <div style={{ fontSize:'var(--fs-emoji-lg, 110px)', animation:'onbFloat 3s ease-in-out infinite', lineHeight:1 }}>🧠</div>
         {[
           { label:'Dopamine', angle:-60, dist:140 },
           { label:'Cortisol ↓', angle:0, dist:155 },
@@ -135,7 +135,7 @@ function SlideVisual({ slide }) {
               padding:'6px 14px',
               background:`${c}18`, border:`1px solid ${c}40`,
               borderRadius:100,
-              fontSize:12, color:c, fontWeight:500,
+              fontSize:'var(--fs-h5, 12px)', color:c, fontWeight:500,
               animation:`onbIn .4s ease ${i*0.2+0.3}s both`,
               whiteSpace:'nowrap',
             }}>{label}</div>
@@ -155,10 +155,10 @@ function SlideVisual({ slide }) {
         ].map(({label, pct, emoji}, i) => (
           <div key={i} style={{ width:'100%', marginBottom:28, animation:`onbIn .5s ease ${i*0.2}s both` }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
-              <span style={{ fontSize:12, color:'rgba(242,237,224,0.55)', letterSpacing:'.05em' }}>{emoji} {label}</span>
-              <span style={{ fontSize:12, color:c, fontWeight:600 }}>{pct}%</span>
+              <span style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.55)', letterSpacing:'.05em' }}>{emoji} {label}</span>
+              <span style={{ fontSize:'var(--fs-h5, 12px)', color:c, fontWeight:600 }}>{pct}%</span>
             </div>
-            <div style={{ height:6, borderRadius:100, background:'rgba(255,255,255,0.07)', overflow:'hidden' }}>
+            <div style={{ height:6, borderRadius:100, background:'var(--track)', overflow:'hidden' }}>
               <div style={{
                 height:'100%', width:`${pct}%`, borderRadius:100,
                 background:`linear-gradient(90deg, ${c}88, ${c})`,
@@ -184,19 +184,19 @@ function SlideVisual({ slide }) {
         }} />
       ))}
       <div style={{ textAlign:'center', zIndex:1 }}>
-        <div style={{ fontSize:120, animation:'onbFloat 3.5s ease-in-out infinite', lineHeight:1 }}>🌸</div>
+        <div style={{ fontSize:'var(--fs-emoji-lg, 120px)', animation:'onbFloat 3.5s ease-in-out infinite', lineHeight:1 }}>🌸</div>
         <div style={{
           marginTop:20,
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize:18, fontWeight:300,
-          color:'rgba(242,237,224,0.55)',
+          fontSize:'var(--fs-h3, 18px)', fontWeight:300,
+          color:'rgba(var(--text-on-dark-rgb),0.55)',
           fontStyle:'italic',
         }}>Votre jardin intérieur vous attend</div>
       </div>
     </div>
   )
 
-  return <div style={{ fontSize:80, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}>{slide.emoji}</div>
+  return <div style={{ fontSize:'var(--fs-emoji-lg, 80px)', display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}>{slide.emoji}</div>
 }
 
 // ── Contenu texte droite ──────────────────────────────────────────────────────
@@ -207,7 +207,7 @@ function SlideContent({ slide, leaving }) {
 
       {/* Tag */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:28 }}>
-        <span style={{ fontSize:11, letterSpacing:'.16em', textTransform:'uppercase', color:c, fontWeight:600,
+        <span style={{ fontSize:'var(--fs-h5, 11px)', letterSpacing:'.16em', textTransform:'uppercase', color:c, fontWeight:600,
           padding:'5px 14px', borderRadius:100, background:`${c}15`, border:`1px solid ${c}30` }}>
           {slide.tag}
         </span>
@@ -218,7 +218,7 @@ function SlideContent({ slide, leaving }) {
         fontFamily:"'Cormorant Garamond',serif",
         fontSize:'clamp(32px, 3.5vw, 52px)',
         fontWeight:300, lineHeight:1.15,
-        color:'rgba(242,237,224,0.96)',
+        color:'rgba(var(--text-on-dark-rgb),0.96)',
         marginBottom:32, whiteSpace:'pre-line',
         letterSpacing:'-0.01em',
       }}>{slide.title}</div>
@@ -226,14 +226,14 @@ function SlideContent({ slide, leaving }) {
       {/* Body simple */}
       {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
         <>
-          <p style={{ fontSize:16, fontWeight:300, color:'rgba(242,237,224,0.62)', lineHeight:1.85, margin:'0 0 24px', maxWidth:480 }}>
+          <p style={{ fontSize:'var(--fs-h3, 16px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.62)', lineHeight:1.85, margin:'0 0 24px', maxWidth:480 }}>
             {slide.body}
           </p>
           {slide.highlight && (
             <div style={{
               padding:'16px 20px', borderRadius:14,
               background:`${c}12`, border:`1px solid ${c}28`,
-              fontSize:15, fontWeight:500, color:c, lineHeight:1.6, maxWidth:480,
+              fontSize:'var(--fs-h3, 15px)', fontWeight:500, color:c, lineHeight:1.6, maxWidth:480,
             }}>💡 {slide.highlight}</div>
           )}
         </>
@@ -246,13 +246,13 @@ function SlideContent({ slide, leaving }) {
             <div key={i} style={{
               display:'flex', gap:16, alignItems:'flex-start',
               padding:'16px 18px', borderRadius:14,
-              background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+              background:'var(--surface-2)', border:'1px solid var(--surface-3)',
               animation:`onbIn .4s ease ${i*.1+.1}s both`,
             }}>
-              <span style={{ fontSize:22, flexShrink:0 }}>{b.icon}</span>
+              <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>{b.icon}</span>
               <div>
-                <div style={{ fontSize:14, fontWeight:600, color:c, marginBottom:5 }}>{b.label}</div>
-                <div style={{ fontSize:13, fontWeight:300, color:'rgba(242,237,224,0.55)', lineHeight:1.7 }}>{b.desc}</div>
+                <div style={{ fontSize:'var(--fs-h4, 14px)', fontWeight:600, color:c, marginBottom:5 }}>{b.label}</div>
+                <div style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.55)', lineHeight:1.7 }}>{b.desc}</div>
               </div>
             </div>
           ))}
@@ -262,14 +262,14 @@ function SlideContent({ slide, leaving }) {
       {/* Points */}
       {slide.points && (
         <>
-          <p style={{ fontSize:15, fontWeight:300, color:'rgba(242,237,224,0.62)', lineHeight:1.85, margin:'0 0 20px', maxWidth:480 }}>
+          <p style={{ fontSize:'var(--fs-h3, 15px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.62)', lineHeight:1.85, margin:'0 0 20px', maxWidth:480 }}>
             {slide.body}
           </p>
           <div style={{ display:'flex', flexDirection:'column', gap:12, maxWidth:480 }}>
             {slide.points.map((p,i) => (
               <div key={i} style={{ display:'flex', gap:12, alignItems:'flex-start', animation:`onbIn .4s ease ${i*.1+.15}s both` }}>
-                <span style={{ color:c, fontSize:14, flexShrink:0, marginTop:3 }}>✦</span>
-                <span style={{ fontSize:14, fontWeight:300, color:'rgba(242,237,224,0.68)', lineHeight:1.7 }}>{p}</span>
+                <span style={{ color:c, fontSize:'var(--fs-emoji-sm, 14px)', flexShrink:0, marginTop:3 }}>✦</span>
+                <span style={{ fontSize:'var(--fs-h4, 14px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.68)', lineHeight:1.7 }}>{p}</span>
               </div>
             ))}
           </div>
@@ -288,8 +288,8 @@ function SlideContent({ slide, leaving }) {
                 )}
               </div>
               <div style={{ paddingBottom:24 }}>
-                <div style={{ fontSize:11, fontWeight:600, color:c, letterSpacing:'.08em', marginBottom:6, textTransform:'uppercase' }}>{t.period}</div>
-                <div style={{ fontSize:14, fontWeight:300, color:'rgba(242,237,224,0.62)', lineHeight:1.75 }}>{t.desc}</div>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:600, color:c, letterSpacing:'.08em', marginBottom:6, textTransform:'uppercase' }}>{t.period}</div>
+                <div style={{ fontSize:'var(--fs-h4, 14px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.62)', lineHeight:1.75 }}>{t.desc}</div>
               </div>
             </div>
           ))}
@@ -299,18 +299,18 @@ function SlideContent({ slide, leaving }) {
       {/* Features */}
       {slide.features && (
         <>
-          <p style={{ fontSize:16, fontWeight:300, color:'rgba(242,237,224,0.72)', lineHeight:1.85, margin:'0 0 28px', maxWidth:480 }}>
+          <p style={{ fontSize:'var(--fs-h3, 16px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.72)', lineHeight:1.85, margin:'0 0 28px', maxWidth:480 }}>
             {slide.body}
           </p>
           <div style={{ display:'flex', flexDirection:'column', gap:14, maxWidth:480 }}>
             {slide.features.map((f,i) => (
               <div key={i} style={{ display:'flex', gap:16, alignItems:'center', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
                 <span style={{
-                  fontSize:20, width:44, height:44, borderRadius:14, flexShrink:0,
+                  fontSize:'var(--fs-h2, 20px)', width:44, height:44, borderRadius:14, flexShrink:0,
                   background:`${c}15`, border:`1px solid ${c}28`,
                   display:'flex', alignItems:'center', justifyContent:'center',
                 }}>{f.icon}</span>
-                <span style={{ fontSize:15, fontWeight:400, color:'rgba(242,237,224,0.80)' }}>{f.text}</span>
+                <span style={{ fontSize:'var(--fs-h3, 15px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.80)' }}>{f.text}</span>
               </div>
             ))}
           </div>
@@ -377,7 +377,7 @@ export function OnboardingScreen({ userId, onComplete }) {
         {ONBOARDING_SLIDES.map((s,i) => (
           <div key={s.id} style={{
             flex:1, height:3,
-            background: i < step ? slide.color : i === step ? slide.color+'88' : 'rgba(255,255,255,0.08)',
+            background: i < step ? slide.color : i === step ? slide.color+'88' : 'var(--surface-3)',
             transition:'background .4s ease',
           }}>
             {i === step && (
@@ -391,7 +391,7 @@ export function OnboardingScreen({ userId, onComplete }) {
       {isMobile ? (
         /* ── MOBILE : colonne ── */
         <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'40px 24px 0', overflowY:'auto' }}>
-          <div style={{ fontSize:48, marginBottom:20, animation:'onbFloat 4s ease-in-out infinite' }}>{slide.emoji}</div>
+          <div style={{ fontSize:'var(--fs-emoji-lg, 48px)', marginBottom:20, animation:'onbFloat 4s ease-in-out infinite' }}>{slide.emoji}</div>
           <SlideContent slide={slide} leaving={leaving} />
         </div>
       ) : (
@@ -416,7 +416,7 @@ export function OnboardingScreen({ userId, onComplete }) {
             <div style={{
               position:'absolute', top:28, left:32,
               fontFamily:"'Cormorant Garamond',serif",
-              fontSize:13, color:`${slide.color}50`,
+              fontSize:'var(--fs-h4, 13px)', color:`${slide.color}50`,
               letterSpacing:'.12em',
             }}>{String(step+1).padStart(2,'0')} / {String(ONBOARDING_SLIDES.length).padStart(2,'0')}</div>
 
@@ -436,22 +436,21 @@ export function OnboardingScreen({ userId, onComplete }) {
               {step > 0 && (
                 <button onClick={prev} style={{
                   width:48, height:48, borderRadius:14, flexShrink:0,
-                  border:`1px solid rgba(255,255,255,0.10)`,
-                  background:'rgba(255,255,255,0.04)',
-                  color:'rgba(242,237,224,0.40)', fontSize:16,
-                  cursor:'pointer', fontFamily:"'Jost',sans-serif",
+                  border:`1px solid var(--surface-3)`,
+                  background:'var(--surface-2)',
+                  color:'rgba(var(--text-on-dark-rgb),0.40)', fontSize:'var(--fs-h3, 16px)', cursor:'pointer', fontFamily:"'Jost',sans-serif",
                   display:'flex', alignItems:'center', justifyContent:'center',
                   transition:'all .2s',
                 }}>←</button>
               )}
               <button onClick={next} disabled={loading} style={{
                 flex:1, padding:'16px 28px', borderRadius:14,
-                border:`1px solid ${isLast ? slide.color+'70' : 'rgba(255,255,255,0.12)'}`,
+                border:`1px solid ${isLast ? slide.color+'70' : 'var(--surface-3)'}`,
                 background: isLast
                   ? `linear-gradient(135deg, ${slide.color}30, ${slide.color}15)`
-                  : 'rgba(255,255,255,0.06)',
-                color: isLast ? slide.color : 'rgba(242,237,224,0.80)',
-                fontSize: 15, fontWeight: isLast ? 500 : 400,
+                  : 'var(--surface-2)',
+                color: isLast ? slide.color : 'rgba(var(--text-on-dark-rgb),0.80)',
+                fontSize:'var(--fs-h3, 15px)', fontWeight: isLast ? 500 : 400,
                 letterSpacing: isLast ? '.08em' : '.03em',
                 cursor:'pointer', fontFamily:"'Jost',sans-serif",
                 transition:'all .25s',
@@ -468,16 +467,16 @@ export function OnboardingScreen({ userId, onComplete }) {
         <div style={{ padding:'16px 24px 36px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
           {step > 0 && (
             <button onClick={prev} style={{
-              padding:'14px 18px', borderRadius:12, border:'1px solid rgba(255,255,255,0.10)',
-              background:'rgba(255,255,255,0.04)', color:'rgba(242,237,224,0.40)',
-              fontSize:13, cursor:'pointer', fontFamily:"'Jost',sans-serif", flexShrink:0,
+              padding:'14px 18px', borderRadius:12, border:'1px solid var(--surface-3)',
+              background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.40)',
+              fontSize:'var(--fs-h4, 13px)', cursor:'pointer', fontFamily:"'Jost',sans-serif", flexShrink:0,
             }}>←</button>
           )}
           <button onClick={next} disabled={loading} style={{
             flex:1, padding:'15px 20px', borderRadius:12,
-            border:`1px solid ${isLast ? slide.color+'60' : 'rgba(255,255,255,0.12)'}`,
-            background: isLast ? `linear-gradient(135deg,${slide.color}28,${slide.color}12)` : 'rgba(255,255,255,0.05)',
-            color: isLast ? slide.color : 'rgba(242,237,224,0.75)',
+            border:`1px solid ${isLast ? slide.color+'60' : 'var(--surface-3)'}`,
+            background: isLast ? `linear-gradient(135deg,${slide.color}28,${slide.color}12)` : 'var(--surface-2)',
+            color: isLast ? slide.color : 'rgba(var(--text-on-dark-rgb),0.75)',
             fontSize: isLast ? 14 : 13, fontWeight: isLast ? 500 : 400,
             cursor:'pointer', fontFamily:"'Jost',sans-serif",
           }}>

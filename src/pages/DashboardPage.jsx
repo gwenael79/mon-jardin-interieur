@@ -43,21 +43,21 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
 
   const NAV_ITEMS = [
     { id:'bilan',    icon:'🌹', label:'Bilan du matin',      sub: bilanDone ? `Complété aujourd'hui ✦` : 'Prendre soin de soi commence ici', action:'bilan',
-      accent:'#C8A882', accentBg:'rgba(200,168,130,0.12)', done: bilanDone },
+      accent:'var(--gold-warm)', accentBg:'rgba(var(--gold-warm-rgb),0.12)', done: bilanDone },
     { id:'jardin',   icon:'🌸', label:'Ma Fleur',             sub: todayPlant?.health != null ? `Vitalité ${todayPlant.health}%` : 'Votre plante du jour', action:'screen',
-      accent:'#96d485', accentBg:'rgba(150,212,133,0.10)' },
+      accent:'var(--green)', accentBg:'rgba(var(--green-rgb),0.10)' },
     { id:'champ',    icon:'🌻', label:'Jardin Collectif',     sub: gardenFlowerCount != null ? `${gardenFlowerCount} fleurs actives` : 'La communauté', action:'screen',
-      accent:'#e8c060', accentBg:'rgba(255,200,80,0.09)' },
+      accent:'var(--gold)', accentBg:'rgba(var(--gold-rgb),0.09)' },
     { id:'club',     icon:'👨‍👩‍👧‍👦', label:'Club des Jardiniers',  sub: stats?.myCircleCount > 0 ? `${stats.myCircleCount} groupes` : 'Vos groupes', action:'screen',
-      accent:'#82c8a0', accentBg:'rgba(130,200,160,0.10)' },
+      accent:'var(--zone-stem)', accentBg:'rgba(var(--zone-stem-rgb),0.10)' },
     { id:'ateliers', icon:'📖', label:'Ateliers',             sub: 'Pratiques & exercices', action:'screen',
-      accent:'#78c4a0', accentBg:'rgba(100,180,140,0.09)' },
+      accent:'var(--zone-stem)', accentBg:'rgba(var(--zone-stem-rgb),0.09)' },
     { id:'defis',    icon:'✨', label:'Défis',                sub: communityStats?.totalDefis > 0 ? `${communityStats.totalDefis} défis actifs` : 'Challenges du moment', action:'screen',
-      accent:'#b4a0f0', accentBg:'rgba(180,140,255,0.09)' },
+      accent:'var(--lumens)', accentBg:'rgba(var(--lumens-rgb),0.09)' },
     { id:'jardinotheque', icon:'🌿', label:'Jardinothèque', sub:'Ressources & boutique', action:'screen',
-      accent:'#82c8a0', accentBg:'rgba(130,200,160,0.09)' },
+      accent:'var(--zone-stem)', accentBg:'rgba(var(--zone-stem-rgb),0.09)' },
     { id:'lumens',   icon:'✦',  label:'Lumens',               sub: lumens ? `${lumens.available} disponibles` : 'Votre lumière', action:'lumens',
-      accent:'#e8c060', accentBg:'rgba(232,192,96,0.10)' },
+      accent:'var(--gold)', accentBg:'rgba(var(--gold-rgb),0.10)' },
   ]
 
   const badges = {
@@ -79,7 +79,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
     }}>
       {/* Titre discret */}
       <div style={{
-        fontSize:9, letterSpacing:'0.18em', color:'var(--text3)',
+        fontSize:'var(--fs-h5, 9px)', letterSpacing:'0.18em', color:'var(--text3)',
         fontFamily:"'Jost', sans-serif", textTransform:'uppercase',
         paddingLeft:4, paddingBottom:2, flexShrink:0,
       }}>Mon Jardin</div>
@@ -103,8 +103,8 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
               borderRadius:13,
               background: isActive
                 ? `${item.accentBg.replace(/[\d.]+\)$/, '0.22)')} `
-                : item.done ? 'rgba(255,255,255,0.015)' : item.accentBg,
-              border: `1px solid ${isActive ? item.accent + '55' : item.done ? 'rgba(255,255,255,0.05)' : item.accent + '33'}`,
+                : item.done ? 'var(--surface-1)' : item.accentBg,
+              border: `1px solid ${isActive ? item.accent + '55' : item.done ? 'var(--surface-2)' : item.accent + '33'}`,
               cursor: item.done ? 'default' : 'pointer',
               WebkitTapHighlightColor:'transparent',
               transition:'all .15s ease',
@@ -136,7 +136,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
             {/* Texte */}
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{
-                fontSize:15, fontWeight:600,
+                fontSize:'var(--fs-h3, 15px)', fontWeight:600,
                 fontFamily:"'Cormorant Garamond', 'Georgia', serif",
                 letterSpacing:'0.01em',
                 color: item.done ? 'var(--text3)' : isActive ? 'var(--cream)' : 'var(--text2)',
@@ -144,8 +144,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
                 marginBottom:1,
               }}>{item.label}</div>
               <div style={{
-                fontSize:10,
-                fontFamily:"'Jost', sans-serif",
+                fontSize:'var(--fs-h5, 10px)', fontFamily:"'Jost', sans-serif",
                 color: item.done ? 'var(--text3)' : 'var(--text3)',
                 letterSpacing:'0.02em',
                 animation: item.id === 'bilan' && !item.done ? 'navPulse 2.5s ease-in-out infinite' : 'none',
@@ -161,7 +160,7 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
                 padding:'3px 9px', borderRadius:100,
                 background: `${item.accent}18`,
                 border:`1px solid ${item.accent}50`,
-                fontSize:11, fontWeight:700,
+                fontSize:'var(--fs-h5, 11px)', fontWeight:700,
                 color: item.accent,
                 fontFamily:"'Jost', sans-serif",
                 letterSpacing:'-0.01em',
@@ -174,11 +173,11 @@ function NavHub({ active, onNavigate, onBilan, onLumens, lumens, todayPlant, sta
                 background:'var(--green3)',
                 border:'1px solid var(--greenT)',
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:10, color:'var(--greenT)',
+                fontSize:'var(--fs-h5, 10px)', color:'var(--greenT)',
               }}>✓</div>
             )}
             {!badge && !item.done && (
-              <div style={{ flexShrink:0, fontSize:14, color:`${item.accent}40` }}>›</div>
+              <div style={{ flexShrink:0, fontSize:'var(--fs-h4, 14px)', color:`${item.accent}40` }}>›</div>
             )}
           </div>
         )
@@ -239,7 +238,7 @@ function ProfileModal({ user, onClose }) {
         <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--border2)', marginBottom:16, marginTop:4 }}>
           {[['profil','🌸 Mon profil'],['bibliotheque','🎧 Ma bibliothèque']].map(([id,lbl]) => (
             <button key={id} onClick={() => setTab(id)}
-              style={{ padding:'8px 16px', fontSize:11, letterSpacing:'.06em', background:'none', border:'none',
+              style={{ padding:'8px 16px', fontSize:'var(--fs-h5, 11px)', letterSpacing:'.06em', background:'none', border:'none',
                 borderBottom: tab===id ? '2px solid var(--green)' : '2px solid transparent',
                 color: tab===id ? 'var(--green)' : 'var(--text3)', cursor:'pointer',
                 fontFamily:"'Jost',sans-serif", marginBottom:-1, transition:'all .2s' }}>
@@ -274,7 +273,7 @@ function ProfileModal({ user, onClose }) {
             maxLength={30}
             disabled={loading}
           />
-          <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>
+          <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:4 }}>
             Votre identité dans la communauté · {name && flowerName ? `${name}·${flowerName}` : 'Prénom·NomDeFleur'}
           </div>
         </div>
@@ -282,12 +281,12 @@ function ProfileModal({ user, onClose }) {
         {/* Toggle visibilité Le Jardin */}
         <div style={{
           marginTop:16, padding:'12px 14px',
-          background:'rgba(255,255,255,0.03)', border:'1px solid var(--border2)',
+          background:'var(--surface-1)', border:'1px solid var(--border2)',
           borderRadius:10, display:'flex', alignItems:'center', justifyContent:'space-between', gap:12
         }}>
           <div>
-            <div style={{ fontSize:12, color:'var(--text2)' }}>🌿 Visible dans Le Jardin</div>
-            <div style={{ fontSize:10, color:'var(--text3)', marginTop:3 }}>
+            <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)' }}>🌿 Visible dans Le Jardin</div>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:3 }}>
               Les autres personnes peuvent vous envoyer un ❤️
             </div>
           </div>
@@ -295,8 +294,8 @@ function ProfileModal({ user, onClose }) {
             onClick={() => !loading && setVisibility(v => !v)}
             style={{
               width:44, height:24, borderRadius:100, flexShrink:0, cursor:'pointer',
-              background: visibility ? 'var(--green2)' : 'rgba(255,255,255,0.08)',
-              border: `1px solid ${visibility ? 'var(--greenT)' : 'rgba(255,255,255,0.12)'}`,
+              background: visibility ? 'var(--green2)' : 'var(--surface-3)',
+              border: `1px solid ${visibility ? 'var(--greenT)' : 'var(--surface-3)'}`,
               position:'relative', transition:'all .25s',
               WebkitTapHighlightColor:'transparent',
             }}
@@ -304,7 +303,7 @@ function ProfileModal({ user, onClose }) {
             <div style={{
               position:'absolute', top:3, left: visibility ? 22 : 3,
               width:16, height:16, borderRadius:'50%',
-              background: visibility ? 'var(--green)' : 'rgba(255,255,255,0.25)',
+              background: visibility ? 'var(--green)' : 'var(--border)',
               transition:'left .25s, background .25s',
             }} />
           </div>
@@ -584,10 +583,10 @@ export default function DashboardPage() {
         {/* ── MODAL LUMENS (accessible via NavHub) ── */}
         {showLumensModal && (
           <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
+            <div style={{ position:'absolute', inset:0, background:'var(--overlay)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
             <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', borderBottom:'none' }}>
-              <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
-              <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:14, cursor:'pointer', lineHeight:1 }}>✕</button>
+              <div style={{ width:36, height:3, background:'var(--separator)', borderRadius:100, margin:'0 auto 18px' }} />
+              <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:'var(--fs-h4, 14px)', cursor:'pointer', lineHeight:1 }}>✕</button>
               <LumensCard
                 lumens={lumens}
                 userId={user?.id}
@@ -633,9 +632,9 @@ export default function DashboardPage() {
               <div
                 className="sb-item"
                 onClick={() => setActive('nav')}
-                style={{ flexDirection:'column', gap:4, padding:'8px 18px', fontSize:11, minWidth:72, letterSpacing:'0.04em' }}
+                style={{ flexDirection:'column', gap:4, padding:'8px 18px', fontSize:'var(--fs-h5, 11px)', minWidth:72, letterSpacing:'0.04em' }}
               >
-                <span style={{ fontSize:22 }}>🧭</span>
+                <span style={{ fontSize:'var(--fs-emoji-md, 22px)' }}>🧭</span>
                 Navigation
               </div>
             ) : null
@@ -705,9 +704,9 @@ export default function DashboardPage() {
           {/* ── MODAL LUMENS DESKTOP ── */}
           {!isMobile && showLumensModal && (
             <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
-              <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', boxShadow:'0 24px 80px rgba(0,0,0,0.5)' }}>
-                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:12, right:12, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:14, cursor:'pointer', lineHeight:1 }}>✕</button>
+              <div style={{ position:'absolute', inset:0, background:'var(--overlay)', backdropFilter:'blur(4px)' }} onClick={() => setShowLumensModal(false)} />
+              <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:20, padding:'28px 24px', width:'100%', maxWidth:460, maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', boxShadow:'0 24px 80px var(--overlay)' }}>
+                <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:12, right:12, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:'var(--fs-h4, 14px)', cursor:'pointer', lineHeight:1 }}>✕</button>
                 <LumensCard
                   lumens={lumens}
                   userId={user?.id}
@@ -727,42 +726,42 @@ export default function DashboardPage() {
               style={{
                 display:'flex', alignItems:'center', justifyContent:'space-between',
                 padding:'9px 14px', borderRadius:10, cursor:'pointer',
-                background: showPrefsAccordion ? 'rgba(255,255,255,0.06)' : 'transparent',
-                border:'1px solid rgba(255,255,255,0.07)',
+                background: showPrefsAccordion ? 'var(--surface-2)' : 'transparent',
+                border:'1px solid var(--track)',
                 transition:'all .2s', WebkitTapHighlightColor:'transparent',
               }}
             >
               <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <span style={{ fontSize:13 }}>⚙️</span>
-                <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.05em', fontFamily:'Jost,sans-serif' }}>Gérer mes préférences</span>
+                <span style={{ fontSize:'var(--fs-emoji-sm, 13px)' }}>⚙️</span>
+                <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', letterSpacing:'.05em', fontFamily:'Jost,sans-serif' }}>Gérer mes préférences</span>
               </div>
-              <span style={{ fontSize:10, color:'var(--text3)', transition:'transform .2s', display:'inline-block', transform: showPrefsAccordion ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+              <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', transition:'transform .2s', display:'inline-block', transform: showPrefsAccordion ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
             </div>
 
             {/* Contenu accordéon */}
             {showPrefsAccordion && (
-              <div style={{ display:'flex', flexDirection:'column', gap:2, paddingLeft:8, borderLeft:'1px solid rgba(255,255,255,0.06)', marginLeft:6 }}>
+              <div style={{ display:'flex', flexDirection:'column', gap:2, paddingLeft:8, borderLeft:'1px solid var(--surface-2)', marginLeft:6 }}>
 
                 {/* Modifier profil */}
                 <div
                   onClick={() => { setShowPrefsAccordion(false); setShowProfileModal(true) }}
                   style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}
                 >
-                  <span style={{ fontSize:12 }}>✏️</span>
-                  <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Modifier mon profil</span>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 12px)' }}>✏️</span>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Modifier mon profil</span>
                 </div>
 
                 {/* Abonnement */}
                 <div
                   onClick={() => { setShowPrefsAccordion(false); window.openAccessModal?.() }}
                   style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}
                 >
-                  <span style={{ fontSize:12 }}>🌸</span>
-                  <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Abonnement</span>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 12px)' }}>🌸</span>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Abonnement</span>
                 </div>
 
                 {/* Notifications */}
@@ -775,13 +774,13 @@ export default function DashboardPage() {
                   <div
                     onClick={() => { setShowPrefsAccordion(false); window.location.hash = 'admin' }}
                     style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', position:'relative', WebkitTapHighlightColor:'transparent' }}
-                    onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                    onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
                     onMouseLeave={e => e.currentTarget.style.background='transparent'}
                   >
-                    <span style={{ fontSize:12 }}>🛡️</span>
-                    <span style={{ fontSize:10, color:'var(--gold-warm)', fontFamily:'Jost,sans-serif' }}>Administration</span>
+                    <span style={{ fontSize:'var(--fs-emoji-sm, 12px)' }}>🛡️</span>
+                    <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold-warm)', fontFamily:'Jost,sans-serif' }}>Administration</span>
                     {pendingReports > 0 && (
-                      <div style={{ background:'var(--red)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                      <div style={{ background:'var(--red)', color:'var(--text-on-dark)', fontSize:'var(--fs-h5, 9px)', fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
                         {pendingReports}
                       </div>
                     )}
@@ -792,11 +791,11 @@ export default function DashboardPage() {
                 <div
                   onClick={signOut}
                   style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 10px', borderRadius:8, cursor:'pointer', WebkitTapHighlightColor:'transparent' }}
-                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                  onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
                   onMouseLeave={e => e.currentTarget.style.background='transparent'}
                 >
-                  <span style={{ fontSize:12 }}>⎋</span>
-                  <span style={{ fontSize:10, color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Se déconnecter</span>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 12px)' }}>⎋</span>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>Se déconnecter</span>
                 </div>
 
               </div>
@@ -810,11 +809,11 @@ export default function DashboardPage() {
           <div className="topbar">
             {isMobile ? (
               <div style={{ display:'flex', flexDirection:'column', gap:2, marginTop:20, padding:'8px 0 10px' }}>
-                <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:28, fontWeight:300, color:'var(--cream)', letterSpacing:'0.01em', lineHeight:1 }}>
+                <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 28px)', fontWeight:300, color:'var(--cream)', letterSpacing:'0.01em', lineHeight:1 }}>
                   Mon <em style={{ fontStyle:'italic', color:'var(--gold)' }}>Jardin</em> Intérieur
                 </div>
                 {effectiveActive !== 'nav' && (
-                  <div style={{ fontSize:11, color:'var(--gold)', opacity:0.6, letterSpacing:'0.08em', textTransform:'uppercase' }}>
+                  <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--gold)', opacity:0.6, letterSpacing:'0.08em', textTransform:'uppercase' }}>
                     {topbar.title}
                   </div>
                 )}
@@ -833,7 +832,7 @@ export default function DashboardPage() {
                   width:36, height:36, borderRadius:'50%', flexShrink:0,
                   display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer',
                   background:'var(--bg3)', border:'1px solid var(--border)',
-                  fontSize:17, WebkitTapHighlightColor:'transparent',
+                  fontSize:'var(--fs-h3, 17px)', WebkitTapHighlightColor:'transparent',
                   transition:'background .2s',
                 }}
               >⚙️</div>
@@ -848,15 +847,15 @@ export default function DashboardPage() {
                 <div onClick={() => setShowAccessModal(true)} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer',
                   padding: '10px 24px', borderRadius: 24,
-                  background: 'linear-gradient(90deg, color-mix(in srgb, var(--gold) 13%, transparent), rgba(180,160,240,0.13))',
+                  background: 'linear-gradient(90deg, color-mix(in srgb, var(--gold) 13%, transparent), rgba(var(--lumens-rgb),0.13))',
                   border: '1px solid color-mix(in srgb, var(--gold) 28%, transparent)',
                 }}>
-                  <span style={{ fontSize: 15 }}>✨</span>
-                  <span style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.4 }}>
+                  <span style={{ fontSize:'var(--fs-h3, 15px)' }}>✨</span>
+                  <span style={{ fontSize:'var(--fs-h4, 13px)', color: 'var(--text2)', lineHeight: 1.4 }}>
                     Accédez à tout l'univers de votre jardin intérieur en rejoignant l'offre{' '}
                     <strong style={{ color: 'var(--gold)' }}>Premium</strong>
                   </span>
-                  <span style={{ fontSize: 13, color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>→</span>
+                  <span style={{ fontSize:'var(--fs-h4, 13px)', color: 'var(--gold)', fontWeight: 700, flexShrink: 0 }}>→</span>
                 </div>
               </div>
             )}
@@ -921,9 +920,9 @@ export default function DashboardPage() {
               </div>
               {showMjRight && (
                 <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
-                  <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.55)', backdropFilter:'blur(4px)' }} onClick={() => setShowMjRight(false)} />
+                  <div style={{ position:'absolute', inset:0, background:'var(--overlay)', backdropFilter:'blur(4px)' }} onClick={() => setShowMjRight(false)} />
                   <div style={{ position:'relative', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border)', borderBottom:'none' }}>
-                    <div style={{ width:36, height:3, background:'rgba(255,255,255,0.2)', borderRadius:100, margin:'0 auto 18px' }} />
+                    <div style={{ width:36, height:3, background:'var(--separator)', borderRadius:100, margin:'0 auto 18px' }} />
                     <LumensCard
                       lumens={lumens}
                       userId={user?.id}
@@ -931,7 +930,7 @@ export default function DashboardPage() {
                       onRefresh={refresh}
                     />
                     <div className="slabel" style={{ marginTop:20 }}>Confidentialité</div>
-                    <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>Souhaitez-vous apparaître dans le jardin collectif ?</div>
+                    <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>Souhaitez-vous apparaître dans le jardin collectif ?</div>
                   </div>
                 </div>
               )}
@@ -942,7 +941,7 @@ export default function DashboardPage() {
             <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
               {/* Backdrop */}
               <div
-                style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.60)', backdropFilter:'blur(4px)' }}
+                style={{ position:'absolute', inset:0, background:'var(--overlay)', backdropFilter:'blur(4px)' }}
                 onClick={() => setShowSettingsDrawer(false)}
               />
               {/* Panel */}
@@ -953,7 +952,7 @@ export default function DashboardPage() {
                 maxHeight:'90vh', overflowY:'auto',
               }}>
                 {/* Handle */}
-                <div style={{ width:36, height:3, background:'rgba(255,255,255,0.18)', borderRadius:100, margin:'14px auto 0' }} />
+                <div style={{ width:36, height:3, background:'var(--separator)', borderRadius:100, margin:'14px auto 0' }} />
 
                 {/* ─ Carte profil ─ */}
                 {(() => {
@@ -966,7 +965,7 @@ export default function DashboardPage() {
                   const xpPct   = Math.min(100, Math.round((xp / xpNext) * 100))
                   const flowerName = profile?.flower_name ?? null
                   return (
-                    <div style={{ margin:'18px 18px 0', padding:'14px 16px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14 }}>
+                    <div style={{ margin:'18px 18px 0', padding:'14px 16px', background:'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:14 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                         {/* Avatar */}
                         <div style={{
@@ -974,31 +973,31 @@ export default function DashboardPage() {
                           background:'linear-gradient(135deg, color-mix(in srgb, var(--gold) 25%, transparent), var(--green3))',
                           border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)',
                           display:'flex', alignItems:'center', justifyContent:'center',
-                          fontSize:20, color:'var(--gold)', fontWeight:600,
+                          fontSize:'var(--fs-h3, 20px)', color:'var(--gold)', fontWeight:600,
                         }}>{initial}</div>
                         {/* Infos */}
                         <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:15, color:'var(--cream)', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                          <div style={{ fontSize:'var(--fs-h3, 15px)', color:'var(--cream)', fontWeight:500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                             {name ?? email}
                           </div>
                           {flowerName && (
-                            <div style={{ fontSize:11, color:'var(--gold)', marginTop:1 }}>🌸 {flowerName}</div>
+                            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--gold)', marginTop:1 }}>🌸 {flowerName}</div>
                           )}
                           {name && (
-                            <div style={{ fontSize:10, color:'var(--text3)', marginTop:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{email}</div>
+                            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{email}</div>
                           )}
                         </div>
                         {/* Niveau */}
                         <div style={{ textAlign:'center', flexShrink:0 }}>
-                          <div style={{ fontSize:18, fontWeight:600, color:'var(--gold)', lineHeight:1 }}>{level}</div>
-                          <div style={{ fontSize:9, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em' }}>Niveau</div>
+                          <div style={{ fontSize:'var(--fs-h2, 18px)', fontWeight:600, color:'var(--gold)', lineHeight:1 }}>{level}</div>
+                          <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em' }}>Niveau</div>
                         </div>
                       </div>
                       {/* Barre XP */}
-                      <div style={{ marginTop:10, height:3, background:'rgba(255,255,255,0.07)', borderRadius:100, overflow:'hidden' }}>
+                      <div style={{ marginTop:10, height:3, background:'var(--track)', borderRadius:100, overflow:'hidden' }}>
                         <div style={{ height:'100%', width: xpPct + '%', background:'linear-gradient(90deg,var(--green),var(--gold))', borderRadius:100, transition:'width .4s' }} />
                       </div>
-                      <div style={{ fontSize:9, color:'var(--text3)', marginTop:3, textAlign:'right' }}>{xp} / {xpNext} XP</div>
+                      <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginTop:3, textAlign:'right' }}>{xp} / {xpNext} XP</div>
                     </div>
                   )
                 })()}
@@ -1011,23 +1010,23 @@ export default function DashboardPage() {
                     onClick={() => { setShowSettingsDrawer(false); setTimeout(() => setShowProfileModal(true), 180) }}
                     style={{
                       display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
-                      background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                      background:'var(--surface-2)', border:'1px solid var(--surface-3)',
                       borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
                     }}
                   >
-                    <span style={{ fontSize:18 }}>✏️</span>
+                    <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>✏️</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'var(--cream)', fontWeight:500 }}>Modifier mon profil</div>
-                      <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>Nom, fleur, visibilité…</div>
+                      <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--cream)', fontWeight:500 }}>Modifier mon profil</div>
+                      <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:1 }}>Nom, fleur, visibilité…</div>
                     </div>
-                    <span style={{ fontSize:12, color:'var(--text3)' }}>›</span>
+                    <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)' }}>›</span>
                   </div>
 
                   {/* Notifications push — masqué sur iOS hors PWA */}
                   {!(/iphone|ipad|ipod/i.test(navigator.userAgent) && !window.matchMedia('(display-mode: standalone)').matches) && (
                     <div style={{
                       padding:'13px 16px',
-                      background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)',
+                      background:'var(--surface-2)', border:'1px solid var(--surface-3)',
                       borderRadius:12,
                     }}>
                       <PushNotificationButton userId={user?.id} />
@@ -1043,12 +1042,12 @@ export default function DashboardPage() {
                       borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
                     }}
                   >
-                    <span style={{ fontSize:18 }}>🌸</span>
+                    <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>🌸</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'var(--gold)', fontWeight:500 }}>Abonnement</div>
-                      <div style={{ fontSize:10, color:'var(--gold-warm)', marginTop:1 }}>Gérer votre accès</div>
+                      <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--gold)', fontWeight:500 }}>Abonnement</div>
+                      <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold-warm)', marginTop:1 }}>Gérer votre accès</div>
                     </div>
-                    <span style={{ fontSize:12, color:'var(--gold-warm)' }}>›</span>
+                    <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--gold-warm)' }}>›</span>
                   </div>
 
                   {/* Administration (admin uniquement) */}
@@ -1057,18 +1056,18 @@ export default function DashboardPage() {
                       onClick={() => { setShowSettingsDrawer(false); window.location.hash = 'admin' }}
                       style={{
                         display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
-                        background:'rgba(255,200,100,0.07)', border:'1px solid rgba(255,200,100,0.20)',
+                        background:'rgba(var(--gold-rgb),0.07)', border:'1px solid rgba(var(--gold-rgb),0.20)',
                         borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
                         position:'relative',
                       }}
                     >
-                      <span style={{ fontSize:18 }}>⚙️</span>
+                      <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>⚙️</span>
                       <div style={{ flex:1 }}>
-                        <div style={{ fontSize:13, color:'var(--gold-warm)', fontWeight:500 }}>Administration</div>
-                        <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>Gestion de la plateforme</div>
+                        <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--gold-warm)', fontWeight:500 }}>Administration</div>
+                        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:1 }}>Gestion de la plateforme</div>
                       </div>
                       {pendingReports > 0 && (
-                        <div style={{ background:'var(--red)', color:'#fff', fontSize:9, fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
+                        <div style={{ background:'var(--red)', color:'var(--text-on-dark)', fontSize:'var(--fs-h5, 9px)', fontWeight:600, minWidth:16, height:16, borderRadius:100, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 4px' }}>
                           {pendingReports}
                         </div>
                       )}
@@ -1084,9 +1083,9 @@ export default function DashboardPage() {
                       borderRadius:12, cursor:'pointer', WebkitTapHighlightColor:'transparent',
                     }}
                   >
-                    <span style={{ fontSize:18 }}>⎋</span>
+                    <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>⎋</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'var(--red)', fontWeight:500 }}>Se déconnecter</div>
+                      <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--red)', fontWeight:500 }}>Se déconnecter</div>
                     </div>
                   </div>
                 </div>

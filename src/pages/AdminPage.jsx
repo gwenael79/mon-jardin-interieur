@@ -1355,71 +1355,88 @@ function BoutiqueEditor({ showToast }) {
 // ThemeEditor — à intégrer dans AdminPage.jsx
 // Composant autonome, appelle supabase directement
 
-const PRESETS = [
-  {
-    name: 'Forêt', emoji: '🌿',
-    vars: { '--bg':'#1a2e1a','--bg2':'#213d21','--bg3':'#274827','--text':'#f2ede0','--text2':'rgba(242,237,224,0.85)','--text3':'rgba(242,237,224,0.55)','--green':'#96d485','--gold':'#e8d4a8','--cream':'#f2ede0','--gold-warm':'#C8A882','--border':'rgba(255,255,255,0.14)','--border2':'rgba(255,255,255,0.08)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Nuit', emoji: '🌙',
-    vars: { '--bg':'#0d1520','--bg2':'#131d2e','--bg3':'#1a2640','--text':'#e8eaf0','--text2':'rgba(232,234,240,0.85)','--text3':'rgba(232,234,240,0.50)','--green':'#7eb8f7','--gold':'#c9d4f0','--cream':'#e8eaf0','--gold-warm':'#a8b8d8','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Aube', emoji: '🌸',
-    vars: { '--bg':'#2a1a1e','--bg2':'#3d2128','--bg3':'#4a2730','--text':'#f5ede8','--text2':'rgba(245,237,232,0.85)','--text3':'rgba(245,237,232,0.50)','--green':'#e8a0a8','--gold':'#f0d4c0','--cream':'#f5ede8','--gold-warm':'#d4a882','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Terre', emoji: '🏜',
-    vars: { '--bg':'#1e1a0e','--bg2':'#2a2410','--bg3':'#352e14','--text':'#f0ead8','--text2':'rgba(240,234,216,0.85)','--text3':'rgba(240,234,216,0.50)','--green':'#d4a855','--gold':'#e8d4a8','--cream':'#f0ead8','--gold-warm':'#c8944a','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Océan', emoji: '🌊',
-    vars: { '--bg':'#0a1a22','--bg2':'#0f2530','--bg3':'#14303e','--text':'#e0eff5','--text2':'rgba(224,239,245,0.85)','--text3':'rgba(224,239,245,0.50)','--green':'#5bc8d8','--gold':'#a8d4e8','--cream':'#e0eff5','--gold-warm':'#78b4cc','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Pastel', emoji: '🌷',
-    vars: { '--bg':'#1e1a28','--bg2':'#2a2438','--bg3':'#342e48','--text':'#f0ecf8','--text2':'rgba(240,236,248,0.88)','--text3':'rgba(240,236,248,0.52)','--green':'#c4a8e8','--gold':'#f0c8e0','--cream':'#f0ecf8','--gold-warm':'#e8a8c4','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.08)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Brume', emoji: '🌫',
-    vars: { '--bg':'#181820','--bg2':'#20202e','--bg3':'#282838','--text':'#ebebf2','--text2':'rgba(235,235,242,0.85)','--text3':'rgba(235,235,242,0.48)','--green':'#a8c8e8','--gold':'#d8cce8','--cream':'#ebebf2','--gold-warm':'#b8a8d0','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Ambre', emoji: '🍂',
-    vars: { '--bg':'#1e1408','--bg2':'#2a1c0c','--bg3':'#352412','--text':'#f5e8d0','--text2':'rgba(245,232,208,0.88)','--text3':'rgba(245,232,208,0.52)','--green':'#e8a040','--gold':'#f0cc80','--cream':'#f5e8d0','--gold-warm':'#d48030','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
-  {
-    name: 'Minuit', emoji: '🔮',
-    vars: { '--bg':'#100c1e','--bg2':'#18142c','--bg3':'#201a38','--text':'#ece8f8','--text2':'rgba(236,232,248,0.85)','--text3':'rgba(236,232,248,0.48)','--green':'#b090f0','--gold':'#e0c8f8','--cream':'#ece8f8','--gold-warm':'#c8a0e0','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4' }
-  },
+const CUSTOM_PRESETS_KEY = 'mji_custom_presets'
+
+// ── Presets sombres ────────────────────────────────────────────────────────
+const PRESETS_DARK = [
+  { name:'Forêt',  emoji:'🌿', vars:{ '--bg':'#1a2e1a','--bg2':'#213d21','--bg3':'#274827','--text':'#f2ede0','--text2':'rgba(242,237,224,0.85)','--text3':'rgba(242,237,224,0.55)','--cream':'#f2ede0','--green':'#96d485','--gold':'#e8d4a8','--gold-warm':'#C8A882','--red':'#e05050','--border':'rgba(255,255,255,0.14)','--border2':'rgba(255,255,255,0.08)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.65)','--overlay-dark':'rgba(6,14,7,0.97)','--modal-bg':'linear-gradient(170deg,#213d21 0%,#1a2e1a 100%)','--modal-surface':'linear-gradient(160deg,#0e1a0f 0%,#060d07 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.30)','--shadow':'0 4px 16px rgba(0,0,0,0.45)','--lumens':'#b4a0f0','--text-on-dark':'#f2ede0','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Nuit',   emoji:'🌙', vars:{ '--bg':'#0d1520','--bg2':'#131d2e','--bg3':'#1a2640','--text':'#e8eaf0','--text2':'rgba(232,234,240,0.85)','--text3':'rgba(232,234,240,0.50)','--cream':'#e8eaf0','--green':'#7eb8f7','--gold':'#c9d4f0','--gold-warm':'#a8b8d8','--red':'#e07070','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.70)','--overlay-dark':'rgba(4,8,18,0.97)','--modal-bg':'linear-gradient(170deg,#131d2e 0%,#0d1520 100%)','--modal-surface':'linear-gradient(160deg,#080d18 0%,#040810 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.40)','--shadow':'0 4px 16px rgba(0,0,0,0.55)','--lumens':'#a090e8','--text-on-dark':'#e8eaf0','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Aube',   emoji:'🌸', vars:{ '--bg':'#2a1a1e','--bg2':'#3d2128','--bg3':'#4a2730','--text':'#f5ede8','--text2':'rgba(245,237,232,0.85)','--text3':'rgba(245,237,232,0.50)','--cream':'#f5ede8','--green':'#e8a0a8','--gold':'#f0d4c0','--gold-warm':'#d4a882','--red':'#e08080','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.65)','--overlay-dark':'rgba(16,6,8,0.97)','--modal-bg':'linear-gradient(170deg,#3d2128 0%,#2a1a1e 100%)','--modal-surface':'linear-gradient(160deg,#1a0c10 0%,#0e0608 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.35)','--shadow':'0 4px 16px rgba(0,0,0,0.50)','--lumens':'#c8a0d0','--text-on-dark':'#f5ede8','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Terre',  emoji:'🏜️', vars:{ '--bg':'#1e1a0e','--bg2':'#2a2410','--bg3':'#352e14','--text':'#f0ead8','--text2':'rgba(240,234,216,0.85)','--text3':'rgba(240,234,216,0.50)','--cream':'#f0ead8','--green':'#d4a855','--gold':'#e8d4a8','--gold-warm':'#c8944a','--red':'#d06040','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.65)','--overlay-dark':'rgba(10,8,4,0.97)','--modal-bg':'linear-gradient(170deg,#2a2410 0%,#1e1a0e 100%)','--modal-surface':'linear-gradient(160deg,#100e06 0%,#080604 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.35)','--shadow':'0 4px 16px rgba(0,0,0,0.50)','--lumens':'#a0b8e0','--text-on-dark':'#f0ead8','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Océan',  emoji:'🌊', vars:{ '--bg':'#0a1a22','--bg2':'#0f2530','--bg3':'#14303e','--text':'#e0eff5','--text2':'rgba(224,239,245,0.85)','--text3':'rgba(224,239,245,0.50)','--cream':'#e0eff5','--green':'#5bc8d8','--gold':'#a8d4e8','--gold-warm':'#78b4cc','--red':'#e08080','--border':'rgba(255,255,255,0.12)','--border2':'rgba(255,255,255,0.07)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.70)','--overlay-dark':'rgba(4,10,14,0.97)','--modal-bg':'linear-gradient(170deg,#0f2530 0%,#0a1a22 100%)','--modal-surface':'linear-gradient(160deg,#061018 0%,#040810 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.40)','--shadow':'0 4px 16px rgba(0,0,0,0.55)','--lumens':'#88c8d8','--text-on-dark':'#e0eff5','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Ambre',  emoji:'🍂', vars:{ '--bg':'#1e1408','--bg2':'#2a1c0c','--bg3':'#352412','--text':'#f5e8d0','--text2':'rgba(245,232,208,0.88)','--text3':'rgba(245,232,208,0.52)','--cream':'#f5e8d0','--green':'#e8a040','--gold':'#f0cc80','--gold-warm':'#d48030','--red':'#e06030','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.65)','--overlay-dark':'rgba(10,6,2,0.97)','--modal-bg':'linear-gradient(170deg,#2a1c0c 0%,#1e1408 100%)','--modal-surface':'linear-gradient(160deg,#100a04 0%,#080402 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.35)','--shadow':'0 4px 16px rgba(0,0,0,0.50)','--lumens':'#d0a860','--text-on-dark':'#f5e8d0','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Minuit', emoji:'🔮', vars:{ '--bg':'#100c1e','--bg2':'#18142c','--bg3':'#201a38','--text':'#ece8f8','--text2':'rgba(236,232,248,0.85)','--text3':'rgba(236,232,248,0.48)','--cream':'#ece8f8','--green':'#b090f0','--gold':'#e0c8f8','--gold-warm':'#c8a0e0','--red':'#e090c0','--border':'rgba(255,255,255,0.13)','--border2':'rgba(255,255,255,0.07)','--surface-1':'rgba(255,255,255,0.03)','--surface-2':'rgba(255,255,255,0.05)','--surface-3':'rgba(255,255,255,0.08)','--surface-hover':'rgba(255,255,255,0.05)','--overlay':'rgba(0,0,0,0.72)','--overlay-dark':'rgba(6,4,14,0.97)','--modal-bg':'linear-gradient(170deg,#18142c 0%,#100c1e 100%)','--modal-surface':'linear-gradient(160deg,#0c0818 0%,#060410 100%)','--separator':'rgba(255,255,255,0.18)','--track':'rgba(255,255,255,0.07)','--shadow-sm':'0 1px 3px rgba(0,0,0,0.45)','--shadow':'0 4px 16px rgba(0,0,0,0.60)','--lumens':'#c8a8f8','--text-on-dark':'#ece8f8','--zone-roots':'#C8894A','--zone-stem':'#5AAF78','--zone-leaves':'#4A9E5C','--zone-flowers':'#D4779A','--zone-breath':'#6ABBE4','--badge-lvl1':'#C8F0B8','--badge-lvl2':'#82C8F0','--badge-lvl3':'#F6C453','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
 ]
 
+// ── Presets clairs ─────────────────────────────────────────────────────────
+const PRESETS_LIGHT = [
+  { name:'Kaki',       emoji:'🌾', vars:{ '--bg':'#EEEACB','--bg2':'#f7f5e4','--bg3':'#e4e0b8','--text':'#2e3020','--text2':'rgba(46,48,32,0.78)','--text3':'rgba(46,48,32,0.45)','--cream':'#2e3020','--green':'#5a7a3a','--gold':'#8a6030','--gold-warm':'#a07840','--red':'#b84040','--border':'rgba(46,48,32,0.18)','--border2':'rgba(46,48,32,0.10)','--surface-1':'rgba(46,48,32,0.04)','--surface-2':'rgba(46,48,32,0.07)','--surface-3':'rgba(46,48,32,0.11)','--surface-hover':'rgba(46,48,32,0.06)','--overlay':'rgba(20,22,10,0.55)','--overlay-dark':'rgba(20,22,10,0.92)','--modal-bg':'linear-gradient(170deg,#f7f5e4 0%,#EEEACB 100%)','--modal-surface':'linear-gradient(160deg,#d8d4a0 0%,#c8c490 100%)','--separator':'rgba(46,48,32,0.15)','--track':'rgba(46,48,32,0.10)','--shadow-sm':'0 1px 3px rgba(46,48,32,0.08)','--shadow':'0 4px 14px rgba(46,48,32,0.12)','--lumens':'#7060b0','--text-on-dark':'#2e3020','--zone-roots':'#B86A30','--zone-stem':'#4A8C58','--zone-leaves':'#3A8048','--zone-flowers':'#C05888','--zone-breath':'#4090B8','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Crème',      emoji:'☁️',  vars:{ '--bg':'#f9f6ed','--bg2':'#ffffff','--bg3':'#f0ece0','--text':'#2a2820','--text2':'rgba(42,40,32,0.75)','--text3':'rgba(42,40,32,0.42)','--cream':'#2a2820','--green':'#4a7c50','--gold':'#8c6828','--gold-warm':'#a07838','--red':'#b84038','--border':'rgba(42,40,32,0.14)','--border2':'rgba(42,40,32,0.08)','--surface-1':'rgba(42,40,32,0.04)','--surface-2':'rgba(42,40,32,0.06)','--surface-3':'rgba(42,40,32,0.10)','--surface-hover':'rgba(42,40,32,0.05)','--overlay':'rgba(20,18,10,0.55)','--overlay-dark':'rgba(20,18,10,0.92)','--modal-bg':'linear-gradient(170deg,#ffffff 0%,#f9f6ed 100%)','--modal-surface':'linear-gradient(160deg,#e8e4d8 0%,#d8d4c8 100%)','--separator':'rgba(42,40,32,0.14)','--track':'rgba(42,40,32,0.09)','--shadow-sm':'0 1px 3px rgba(42,40,32,0.07)','--shadow':'0 4px 14px rgba(42,40,32,0.11)','--lumens':'#6858a8','--text-on-dark':'#2a2820','--zone-roots':'#B87040','--zone-stem':'#4A9060','--zone-leaves':'#3A8850','--zone-flowers':'#C06090','--zone-breath':'#4898C0','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Sable',      emoji:'🏖️', vars:{ '--bg':'#f0e8d8','--bg2':'#f8f2e8','--bg3':'#e6dcc8','--text':'#2c2618','--text2':'rgba(44,38,24,0.76)','--text3':'rgba(44,38,24,0.44)','--cream':'#2c2618','--green':'#607840','--gold':'#906030','--gold-warm':'#a87040','--red':'#a83828','--border':'rgba(44,38,24,0.15)','--border2':'rgba(44,38,24,0.08)','--surface-1':'rgba(44,38,24,0.04)','--surface-2':'rgba(44,38,24,0.07)','--surface-3':'rgba(44,38,24,0.11)','--surface-hover':'rgba(44,38,24,0.06)','--overlay':'rgba(20,14,8,0.55)','--overlay-dark':'rgba(20,14,8,0.93)','--modal-bg':'linear-gradient(170deg,#f8f2e8 0%,#f0e8d8 100%)','--modal-surface':'linear-gradient(160deg,#d8cdb8 0%,#c8bda8 100%)','--separator':'rgba(44,38,24,0.15)','--track':'rgba(44,38,24,0.09)','--shadow-sm':'0 1px 3px rgba(44,38,24,0.08)','--shadow':'0 4px 14px rgba(44,38,24,0.13)','--lumens':'#806898','--text-on-dark':'#2c2618','--zone-roots':'#C07840','--zone-stem':'#508050','--zone-leaves':'#407848','--zone-flowers':'#B85880','--zone-breath':'#4888B0','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Terracotta', emoji:'🏺', vars:{ '--bg':'#f2e8e0','--bg2':'#faf4ef','--bg3':'#e8dbd0','--text':'#2e2018','--text2':'rgba(46,32,24,0.76)','--text3':'rgba(46,32,24,0.44)','--cream':'#2e2018','--green':'#D7A28C','--gold':'#BA8383','--gold-warm':'#c07060','--red':'#a83828','--border':'rgba(46,32,24,0.14)','--border2':'rgba(46,32,24,0.08)','--surface-1':'rgba(46,32,24,0.04)','--surface-2':'rgba(46,32,24,0.07)','--surface-3':'rgba(46,32,24,0.11)','--surface-hover':'rgba(46,32,24,0.06)','--overlay':'rgba(20,10,6,0.55)','--overlay-dark':'rgba(20,10,6,0.93)','--modal-bg':'linear-gradient(170deg,#faf4ef 0%,#f2e8e0 100%)','--modal-surface':'linear-gradient(160deg,#d8c8c0 0%,#c8b8b0 100%)','--separator':'rgba(46,32,24,0.14)','--track':'rgba(46,32,24,0.09)','--shadow-sm':'0 1px 3px rgba(46,32,24,0.08)','--shadow':'0 4px 14px rgba(46,32,24,0.13)','--lumens':'#907080','--text-on-dark':'#2e2018','--zone-roots':'#D7A28C','--zone-stem':'#A1A27E','--zone-leaves':'#8a9068','--zone-flowers':'#BA8383','--zone-breath':'#A1A27E','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Olive',      emoji:'🫒', vars:{ '--bg':'#edecd8','--bg2':'#f5f4e8','--bg3':'#e0dec8','--text':'#282c18','--text2':'rgba(40,44,24,0.76)','--text3':'rgba(40,44,24,0.44)','--cream':'#282c18','--green':'#A1A27E','--gold':'#8c7830','--gold-warm':'#a08840','--red':'#a83828','--border':'rgba(40,44,24,0.15)','--border2':'rgba(40,44,24,0.08)','--surface-1':'rgba(40,44,24,0.04)','--surface-2':'rgba(40,44,24,0.07)','--surface-3':'rgba(40,44,24,0.11)','--surface-hover':'rgba(40,44,24,0.06)','--overlay':'rgba(16,18,8,0.55)','--overlay-dark':'rgba(16,18,8,0.93)','--modal-bg':'linear-gradient(170deg,#f5f4e8 0%,#edecd8 100%)','--modal-surface':'linear-gradient(160deg,#d4d2c0 0%,#c4c2b0 100%)','--separator':'rgba(40,44,24,0.15)','--track':'rgba(40,44,24,0.09)','--shadow-sm':'0 1px 3px rgba(40,44,24,0.08)','--shadow':'0 4px 14px rgba(40,44,24,0.12)','--lumens':'#806898','--text-on-dark':'#282c18','--zone-roots':'#C8894A','--zone-stem':'#6a8858','--zone-leaves':'#588050','--zone-flowers':'#C06888','--zone-breath':'#5090B0','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Brume',      emoji:'🌫️', vars:{ '--bg':'#eeeef4','--bg2':'#f8f8fc','--bg3':'#e4e4ec','--text':'#222230','--text2':'rgba(34,34,48,0.74)','--text3':'rgba(34,34,48,0.42)','--cream':'#222230','--green':'#5870a0','--gold':'#806848','--gold-warm':'#907858','--red':'#a03848','--border':'rgba(34,34,48,0.13)','--border2':'rgba(34,34,48,0.07)','--surface-1':'rgba(34,34,48,0.04)','--surface-2':'rgba(34,34,48,0.06)','--surface-3':'rgba(34,34,48,0.10)','--surface-hover':'rgba(34,34,48,0.05)','--overlay':'rgba(14,14,24,0.55)','--overlay-dark':'rgba(14,14,24,0.92)','--modal-bg':'linear-gradient(170deg,#f8f8fc 0%,#eeeef4 100%)','--modal-surface':'linear-gradient(160deg,#d8d8e4 0%,#c8c8d8 100%)','--separator':'rgba(34,34,48,0.13)','--track':'rgba(34,34,48,0.08)','--shadow-sm':'0 1px 3px rgba(34,34,48,0.07)','--shadow':'0 4px 14px rgba(34,34,48,0.11)','--lumens':'#7060a8','--text-on-dark':'#222230','--zone-roots':'#C08060','--zone-stem':'#5898A0','--zone-leaves':'#489080','--zone-flowers':'#B068A0','--zone-breath':'#5888C0','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+  { name:'Zen',        emoji:'🍃', vars:{ '--bg':'#F5F2EC','--bg2':'#FDFBF8','--bg3':'#EDE9E1','--text':'#3C3028','--text2':'rgba(60,48,40,0.78)','--text3':'rgba(60,48,40,0.44)','--cream':'#3C3028','--green':'#6B8F71','--gold':'#A08060','--gold-warm':'#B8906A','--red':'#B05850','--border':'rgba(60,48,40,0.16)','--border2':'rgba(60,48,40,0.09)','--surface-1':'rgba(60,48,40,0.04)','--surface-2':'rgba(60,48,40,0.07)','--surface-3':'rgba(60,48,40,0.11)','--surface-hover':'rgba(60,48,40,0.06)','--overlay':'rgba(30,24,18,0.52)','--overlay-dark':'rgba(30,24,18,0.92)','--modal-bg':'linear-gradient(170deg,#FDFBF8 0%,#F5F2EC 100%)','--modal-surface':'linear-gradient(160deg,#E8E4DC 0%,#D8D4CC 100%)','--separator':'rgba(60,48,40,0.12)','--track':'rgba(60,48,40,0.08)','--shadow-sm':'0 1px 3px rgba(60,48,40,0.07)','--shadow':'0 4px 14px rgba(60,48,40,0.10)','--lumens':'#8878B8','--text-on-dark':'#F0ECE4','--zone-roots':'#C07848','--zone-stem':'#5A9068','--zone-leaves':'#488860','--zone-flowers':'#B86880','--zone-breath':'#5898B8','--badge-lvl1':'#4A9E5C','--badge-lvl2':'#3A7FB0','--badge-lvl3':'#A07820','--fs-h1':'32px','--fs-h2':'24px','--fs-h3':'18px','--fs-h4':'14px','--fs-h5':'11px','--fs-emoji-sm':'14px','--fs-emoji-md':'20px','--fs-emoji-lg':'28px' } },
+]
+
+const PRESETS = [...PRESETS_DARK, ...PRESETS_LIGHT]
 const VAR_LABELS = {
-  '--bg':             { label: 'Fond principal',           group: 'Fonds' },
-  '--bg2':            { label: 'Fond secondaire',          group: 'Fonds' },
-  '--bg3':            { label: 'Fond tertiaire',           group: 'Fonds' },
-  '--text':           { label: 'Texte principal',          group: 'Textes' },
-  '--text2':          { label: 'Texte secondaire',         group: 'Textes' },
-  '--text3':          { label: 'Texte atténué',            group: 'Textes' },
-  '--cream':          { label: 'Texte clair (titres UI)',  group: 'Textes' },
-  '--green':          { label: 'Accent principal',         group: 'Accents' },
-  '--green2':         { label: 'Accent fond (médium)',     group: 'Accents' },
-  '--green3':         { label: 'Accent fond (léger)',      group: 'Accents' },
-  '--greenT':         { label: 'Accent bordure',           group: 'Accents' },
-  '--gold':           { label: 'Accent doré',              group: 'Accents' },
-  '--gold-warm':      { label: 'Doré chaud (bilan, CTA)', group: 'Accents' },
-  '--border':         { label: 'Bordure forte',            group: 'Bordures' },
-  '--border2':        { label: 'Bordure légère',           group: 'Bordures' },
-  '--zone-roots':     { label: 'Zone Racines',             group: 'Zones rituels' },
-  '--zone-stem':      { label: 'Zone Tige',                group: 'Zones rituels' },
-  '--zone-leaves':    { label: 'Zone Feuilles',            group: 'Zones rituels' },
-  '--zone-flowers':   { label: 'Zone Fleurs',              group: 'Zones rituels' },
-  '--zone-breath':    { label: 'Zone Souffle',             group: 'Zones rituels' },
-  '--font-body':      { label: 'Police corps',             group: 'Typographie' },
-  '--font-serif':     { label: 'Police titres',            group: 'Typographie' },
-  '--font-size-base': { label: 'Taille base (px)',         group: 'Typographie' },
-  '--font-size-sm':   { label: 'Taille petite (px)',       group: 'Typographie' },
-  '--font-size-lg':   { label: 'Taille grande (px)',       group: 'Typographie' },
+  // ── Fonds structuraux ──
+  '--bg':              { label: 'Fond page',                group: 'Fonds',          usage: 'Fond principal de toutes les pages' },
+  '--bg2':             { label: 'Fond app-bar',             group: 'Fonds',          usage: 'Topbar, sidebar, navigation' },
+  '--bg3':             { label: 'Fond tertiaire',           group: 'Fonds',          usage: 'En-têtes de tableau, zones séparées' },
+  '--card':            { label: 'Fond carte',               group: 'Fonds',          usage: 'Cartes isolées et widgets' },
+  // ── Surfaces superposées ──
+  '--surface-1':       { label: 'Surface légère',           group: 'Surfaces',       usage: 'Cartes discrètes, listes de fond' },
+  '--surface-2':       { label: 'Surface médium',           group: 'Surfaces',       usage: 'Cartes interactives, items sélectionnables' },
+  '--surface-3':       { label: 'Surface forte',            group: 'Surfaces',       usage: 'Boutons ghost, inputs, tags' },
+  '--surface-hover':   { label: 'Survol',                   group: 'Surfaces',       usage: 'Hover sur items de menu et listes' },
+  '--separator':       { label: 'Séparateur',               group: 'Surfaces',       usage: 'Drag handles, lignes de séparation' },
+  '--track':           { label: 'Piste progress',           group: 'Surfaces',       usage: 'Fond des barres de progression / vitalité' },
+  // ── Overlays & modals ──
+  '--overlay':         { label: 'Fond modal',               group: 'Overlays',       usage: 'Fond semi-transparent derrière modals et bottom sheets' },
+  '--overlay-dark':    { label: 'Fond plein écran',         group: 'Overlays',       usage: 'Bilan du jour, écran de bienvenue (WelcomeScreen)' },
+  '--modal-bg':        { label: 'Surface modal général',    group: 'Overlays',       usage: 'Fond du modal Lumens, préférences, aide' },
+  '--modal-surface':   { label: 'Surface modal rituel',     group: 'Overlays',       usage: 'Fond du drawer de rituel et quiz de bilan' },
+  // ── Textes ──
+  '--text':            { label: 'Texte principal',          group: 'Textes',         usage: 'Corps de texte, titres de cartes' },
+  '--text2':           { label: 'Texte secondaire',         group: 'Textes',         usage: 'Sous-titres, descriptions, métadonnées' },
+  '--text3':           { label: 'Texte atténué',            group: 'Textes',         usage: 'Labels, dates, infos périphériques' },
+  '--cream':           { label: 'Texte titre UI',           group: 'Textes',         usage: 'Titre "Mon Jardin Intérieur" dans la topbar' },
+  '--text-on-dark':    { label: 'Texte sur fond sombre',    group: 'Textes',         usage: 'Tout texte dans les modals et rituels à fond sombre' },
+  // ── Accents ──
+  '--green':           { label: 'Accent principal',         group: 'Accents',        usage: 'Bouton primaire, tab actif, badge succès, Ma Fleur nav' },
+  '--green2':          { label: 'Fond accent médium',       group: 'Accents',        usage: 'Fond de badge vert, fond de bouton secondaire' },
+  '--green3':          { label: 'Fond accent léger',        group: 'Accents',        usage: 'Fond très léger sur cartes actives' },
+  '--greenT':          { label: 'Bordure accent',           group: 'Accents',        usage: 'Bordure des éléments à accent vert' },
+  '--gold':            { label: 'Accent doré',              group: 'Accents',        usage: 'Titre serif, prix, Lumens, Jardin Collectif nav' },
+  '--gold-warm':       { label: 'Doré chaud',               group: 'Accents',        usage: 'Bilan du jour, CTA principal, card premium' },
+  '--red':             { label: 'Danger / erreur',          group: 'Accents',        usage: 'Messages d\'erreur, suppression, signalement' },
+  '--lumens':          { label: 'Lumens (violet)',          group: 'Accents',        usage: 'Icône Lumens, badge violet, Défis nav, lecteur audio' },
+  // ── Bordures & ombres ──
+  '--border':          { label: 'Bordure forte',            group: 'Bordures',       usage: 'Bordure des modals, cartes mises en avant' },
+  '--border2':         { label: 'Bordure légère',           group: 'Bordures',       usage: 'Séparation entre éléments de liste, grilles' },
+  '--shadow-sm':       { label: 'Ombre légère',             group: 'Bordures',       usage: 'Élévation légère sur cartes et boutons' },
+  '--shadow':          { label: 'Ombre forte',              group: 'Bordures',       usage: 'Élévation forte : modals, drawers, toasts' },
+  // ── Zones rituels ──
+  '--zone-roots':      { label: 'Zone Racines',             group: 'Zones rituels',  usage: 'Cartes, badges et barres de la zone Racines' },
+  '--zone-stem':       { label: 'Zone Tige',                group: 'Zones rituels',  usage: 'Cartes, badges et barres de la zone Tige' },
+  '--zone-leaves':     { label: 'Zone Feuilles',            group: 'Zones rituels',  usage: 'Cartes, badges et barres de la zone Feuilles' },
+  '--zone-flowers':    { label: 'Zone Fleurs',              group: 'Zones rituels',  usage: 'Cartes, badges et barres de la zone Fleurs' },
+  '--zone-breath':     { label: 'Zone Souffle',             group: 'Zones rituels',  usage: 'Cartes, badges et barres de la zone Souffle' },
+  // ── Tailles de titres ──
+  '--fs-h1':           { label: 'H1 — Grand titre',         group: 'Tailles',        usage: '"Mon Jardin Intérieur", titres de section majeurs' },
+  '--fs-h2':           { label: 'H2 — Titre section',       group: 'Tailles',        usage: '"Prenez soin de vous", titres d\'écran' },
+  '--fs-h3':           { label: 'H3 — Sous-titre',          group: 'Tailles',        usage: 'Titres de rituels, noms de zones' },
+  '--fs-h4':           { label: 'H4 — Titre carte',         group: 'Tailles',        usage: 'Noms d\'exercices, titres de cartes' },
+  '--fs-h5':           { label: 'H5 — Label renforcé',      group: 'Tailles',        usage: 'Labels uppercase, navigation, badges texte' },
+  '--fs-emoji-sm':     { label: 'Emoji petit',               group: 'Tailles',        usage: 'Icônes inline dans les listes, badges (12-16px)' },
+  '--fs-emoji-md':     { label: 'Emoji médium',              group: 'Tailles',        usage: 'Icônes de boutons, nav items, cartes (18-22px)' },
+  '--fs-emoji-lg':     { label: 'Emoji grand',               group: 'Tailles',        usage: 'Icônes décoratives, zone icons, fleur (26-32px)' },
+  // ── Badges niveaux ──
+  '--badge-lvl1':      { label: 'Badge Basique',            group: 'Badges',         usage: 'Badge niveau 1 🌱 Basique (vert clair)' },
+  '--badge-lvl2':      { label: 'Badge Cool',               group: 'Badges',         usage: 'Badge niveau 2 🌿 Cool (bleu clair)' },
+  '--badge-lvl3':      { label: 'Badge Extra',              group: 'Badges',         usage: 'Badge niveau 3 🌟 Extra (or)' },
 }
 
 function ThemeEditor({ showToast }) {
@@ -1427,7 +1444,16 @@ function ThemeEditor({ showToast }) {
   const [loading,  setLoading]  = useState(true)
   const [saving,   setSaving]   = useState(false)
   const [changed,  setChanged]  = useState(false)
-  const [preview,  setPreview]  = useState(null) // preset en survol
+  const [preview,  setPreview]  = useState(null)
+
+  // ── Presets custom (stockés en localStorage) ────────────────────────────
+  const [customPresets,  setCustomPresets]  = useState(() => {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_PRESETS_KEY) || '[]') } catch { return [] }
+  })
+  const [showSavePreset, setShowSavePreset] = useState(false)
+  const [newPresetName,  setNewPresetName]  = useState('')
+  const [newPresetEmoji, setNewPresetEmoji] = useState('✨')
+  const [presetTab,      setPresetTab]      = useState('dark') // 'dark' | 'light' | 'custom'
 
   // Charge les valeurs actuelles
   useEffect(() => {
@@ -1443,25 +1469,79 @@ function ThemeEditor({ showToast }) {
   // hoverVars : vars temporaires lors du survol d'un preset (preview uniquement)
   const [hoverVars, setHoverVars] = useState(null)
 
-  const updateVar = (key, val) => {
-    const updates = { [key]: val }
-    if (key === '--green') {
-      const derived = deriveFromGreen(val)
-      Object.assign(updates, derived)
-    }
-    setVars(v => ({ ...v, ...updates }))
-    setChanged(true)
-    // Pas de setProperty ici — les changements restent dans le preview uniquement
+  // ── Google Fonts — chargement dynamique ────────────────────────────────────
+  const FONT_URLS = {
+    "'Jost',sans-serif":                 'https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&display=swap',
+    "'Inter',sans-serif":                'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap',
+    "'Lato',sans-serif":                 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap',
+    "'Nunito',sans-serif":               'https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500&display=swap',
+    "'DM Sans',sans-serif":              'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap',
+    "'Cormorant Garamond',serif":        'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap',
+    "'Playfair Display',serif":          'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap',
+    "'Lora',serif":                      'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&display=swap',
+    "'Libre Baskerville',serif":         'https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap',
+    "'EB Garamond',serif":               'https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap',
+  }
+
+  const loadFont = (val) => {
+    const url = FONT_URLS[val]
+    if (!url || document.querySelector(`link[data-mji-font="${val}"]`)) return
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = url
+    link.setAttribute('data-mji-font', val)
+    document.head.appendChild(link)
+  }
+
+  // ── Application immédiate sur :root ────────────────────────────────────────
+  // Gère aussi les polices (body / serif) en temps réel
+  const applyToRoot = (updates) => {
+    const root = document.documentElement
+    Object.entries(updates).forEach(([k, v]) => {
+      if (!k.startsWith('--')) return
+      root.style.setProperty(k, v)
+      if (k === '--font-body') {
+        document.body.style.fontFamily = v
+        let s = document.getElementById('mji-font-body-override')
+        if (!s) { s = document.createElement('style'); s.id = 'mji-font-body-override'; document.head.appendChild(s) }
+        s.textContent = `body, .adm-root, button, input, select, textarea { font-family: ${v} !important; }`
+        loadFont(v)
+      }
+      if (k === '--font-serif') {
+        let s = document.getElementById('mji-font-serif-override')
+        if (!s) { s = document.createElement('style'); s.id = 'mji-font-serif-override'; document.head.appendChild(s) }
+        s.textContent = `.adm-logo, .adm-stat-val, [style*="Cormorant"], [style*="serif"] { font-family: ${v} !important; }`
+        loadFont(v)
+      }
+    })
+    // Dériver les RGB automatiquement
+    const rgbPairs = [
+      ['--green','--green-rgb'],['--gold','--gold-rgb'],['--gold-warm','--gold-warm-rgb'],
+      ['--red','--red-rgb'],['--lumens','--lumens-rgb'],['--text-on-dark','--text-on-dark-rgb'],
+    ]
+    rgbPairs.forEach(([hexVar, rgbVar]) => {
+      const hex = updates[hexVar]
+      if (hex?.startsWith('#') && hex.length === 7) {
+        const rgb = [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)].join(',')
+        root.style.setProperty(rgbVar, rgb)
+      }
+    })
   }
 
   const deriveFromGreen = (g) => {
     if (!g || !g.startsWith('#') || g.length !== 7) return {}
     const rgb = parseInt(g.slice(1,3),16)+','+parseInt(g.slice(3,5),16)+','+parseInt(g.slice(5,7),16)
-    return {
-      '--green2': `rgba(${rgb},0.22)`,
-      '--green3': `rgba(${rgb},0.11)`,
-      '--greenT': `rgba(${rgb},0.48)`,
-    }
+    return { '--green2':`rgba(${rgb},0.22)`, '--green3':`rgba(${rgb},0.11)`, '--greenT':`rgba(${rgb},0.48)` }
+  }
+
+  const updateVar = (key, val) => {
+    const updates = { [key]: val }
+    if (key === '--green') Object.assign(updates, deriveFromGreen(val))
+    setVars(v => ({ ...v, ...updates }))
+    setChanged(true)
+    // Polices : charger le fichier Google Fonts silencieusement pour que la preview fonctionne
+    if (key === '--font-body' || key === '--font-serif') loadFont(val)
+    // ⚠ PAS d'applyToRoot ici — les changements restent dans la preview uniquement
   }
 
   const applyPreset = (preset) => {
@@ -1470,10 +1550,13 @@ function ThemeEditor({ showToast }) {
     setVars(v => ({ ...v, ...full }))
     setHoverVars(null)
     setChanged(true)
-    // Pas de setProperty — visible dans le preview seulement
+    // Charger les polices du preset pour la preview
+    if (preset.vars['--font-body'])  loadFont(preset.vars['--font-body'])
+    if (preset.vars['--font-serif']) loadFont(preset.vars['--font-serif'])
+    // ⚠ PAS d'applyToRoot ici — visible dans la preview uniquement
   }
 
-  // Survol preset : mise à jour du preview uniquement via hoverVars
+  // Survol preset : mise à jour du preview scopé uniquement
   const previewPreset = (preset) => {
     if (!preset) { setHoverVars(null); setPreview(null); return }
     setPreview(preset.name)
@@ -1485,17 +1568,8 @@ function ThemeEditor({ showToast }) {
     setSaving(true)
     const derived = deriveFromGreen(vars['--green'])
     const allVars = { ...vars, ...derived }
-    // Appliquer les polices
-    if (allVars['--font-body'])      document.documentElement.style.setProperty('--font-body', allVars['--font-body'])
-    if (allVars['--font-serif'])     document.documentElement.style.setProperty('--font-serif', allVars['--font-serif'])
-    if (allVars['--font-size-base']) document.documentElement.style.setProperty('--font-size-base', allVars['--font-size-base'])
-    if (allVars['--font-size-sm'])   document.documentElement.style.setProperty('--font-size-sm', allVars['--font-size-sm'])
-    if (allVars['--font-size-lg'])   document.documentElement.style.setProperty('--font-size-lg', allVars['--font-size-lg'])
-
-    // ── 1. Appliquer immédiatement à l'app entière (optimistic) ──────────────
-    Object.entries(allVars).forEach(([k, v]) => {
-      if (k.startsWith('--')) document.documentElement.style.setProperty(k, v)
-    })
+    // Appliquer immédiatement (polices, couleurs)
+    applyToRoot(allVars)
 
     // ── 2. Persister en base ─────────────────────────────────────────────────
     // On upserte chaque clé individuellement pour éviter les erreurs de batch
@@ -1553,7 +1627,7 @@ function ThemeEditor({ showToast }) {
   }
 
   const lbl = { fontSize:10, color:'rgba(242,237,224,0.50)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:6, display:'block', fontWeight:500 }
-  const groups = ['Fonds','Textes','Accents','Bordures','Zones rituels']  // Typographie géré séparément
+  const groups = ['Fonds','Surfaces','Overlays','Textes','Accents','Bordures','Zones rituels','Tailles','Badges']
 
   if (loading) return <div style={{ fontSize:12, color:'var(--text3)', fontStyle:'italic', padding:'20px 0' }}>Chargement du thème…</div>
 
@@ -1579,31 +1653,126 @@ function ThemeEditor({ showToast }) {
             )}
           </div>
 
-          {/* Thèmes prédéfinis */}
+          {/* ── Presets avec onglets ── */}
           <div style={{ marginBottom:24 }}>
-            <span style={lbl}>Thèmes prédéfinis</span>
-            <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-              {PRESETS.map(p => (
-                <div key={p.name}
-                  onClick={() => applyPreset(p)}
-                  onMouseEnter={() => previewPreset(p)}
-                  onMouseLeave={() => previewPreset(null)}
-                  style={{
-                    display:'flex', alignItems:'center', gap:8, padding:'8px 14px',
-                    borderRadius:10, cursor:'pointer', transition:'all .2s',
-                    background: vars.theme_name === p.name ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${vars.theme_name === p.name ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.10)'}`,
-                  }}>
-                  <div style={{ display:'flex', gap:3 }}>
-                    {['--bg','--green','--gold','--gold-warm'].map(k => (
-                      <div key={k} style={{ width:12, height:12, borderRadius:'50%', background: p.vars[k], border:'1px solid rgba(255,255,255,0.15)' }} />
-                    ))}
-                  </div>
-                  <span style={{ fontSize:12, color: vars.theme_name === p.name ? '#96d485' : 'rgba(242,237,224,0.70)' }}>
-                    {p.emoji} {p.name}
-                  </span>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+              <span style={lbl}>Thèmes prédéfinis</span>
+              <div style={{ display:'flex', borderRadius:8, overflow:'hidden', border:'1px solid var(--border2)' }}>
+                {[['dark','🌙 Sombres'],['light','☀️ Clairs'],['custom','⭐ Mes thèmes']].map(([id, label]) => (
+                  <button key={id} onClick={() => setPresetTab(id)}
+                    style={{ padding:'4px 12px', fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif",
+                      border:'none', borderRight: id !== 'custom' ? '1px solid var(--border2)' : 'none',
+                      background: presetTab === id ? 'var(--green)' : 'var(--bg3,rgba(255,255,255,0.04))',
+                      color: presetTab === id ? '#fff' : 'var(--text3)',
+                      fontWeight: presetTab === id ? 500 : 400, transition:'all .15s' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Grille de presets */}
+            {(() => {
+              const list = presetTab === 'dark' ? PRESETS_DARK : presetTab === 'light' ? PRESETS_LIGHT : customPresets
+              if (presetTab === 'custom' && list.length === 0) return (
+                <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'12px 0' }}>
+                  Aucun thème custom — modifiez le thème et cliquez « Enregistrer comme thème »
                 </div>
-              ))}
+              )
+              return (
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {list.map(p => {
+                    const isActive = vars.theme_name === p.name
+                    const isPreviewing = preview === p.name
+                    return (
+                      <div key={p.name} style={{ position:'relative' }}>
+                        <div onClick={() => applyPreset(p)}
+                          onMouseEnter={() => previewPreset(p)}
+                          onMouseLeave={() => previewPreset(null)}
+                          style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 12px',
+                            borderRadius:10, cursor:'pointer', transition:'all .18s',
+                            background: isActive ? 'var(--green3,rgba(150,212,133,0.11))' : isPreviewing ? 'var(--surface-2,rgba(255,255,255,0.05))' : 'var(--surface-1,rgba(255,255,255,0.03))',
+                            border: `1px solid ${isActive ? 'var(--greenT,rgba(150,212,133,0.45))' : isPreviewing ? 'var(--border)' : 'var(--border2)'}`,
+                          }}>
+                          <div style={{ display:'flex', gap:3 }}>
+                            {['--bg','--green','--gold','--zone-flowers'].map(k => (
+                              <div key={k} style={{ width:10, height:10, borderRadius:'50%', background: p.vars[k] || '#888', border:'1px solid rgba(128,128,128,0.2)' }} />
+                            ))}
+                          </div>
+                          <span style={{ fontSize:11, color: isActive ? 'var(--green)' : 'var(--text2)', whiteSpace:'nowrap' }}>
+                            {p.emoji} {p.name}
+                          </span>
+                        </div>
+                        {presetTab === 'custom' && (
+                          <button onClick={() => {
+                              const updated = customPresets.filter(x => x.name !== p.name)
+                              setCustomPresets(updated)
+                              try { localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated)) } catch {}
+                            }}
+                            style={{ position:'absolute', top:-5, right:-5, width:16, height:16, borderRadius:'50%',
+                              background:'var(--red2,rgba(190,55,55,0.12))', border:'1px solid var(--redT,rgba(190,55,55,0.3))',
+                              color:'var(--red)', fontSize:9, cursor:'pointer', display:'flex', alignItems:'center',
+                              justifyContent:'center', lineHeight:1, padding:0 }}>✕</button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+
+            {/* Enregistrer comme thème custom */}
+            <div style={{ marginTop:12 }}>
+              {!showSavePreset ? (
+                <button onClick={() => setShowSavePreset(true)}
+                  style={{ fontSize:11, padding:'5px 12px', borderRadius:7, cursor:'pointer',
+                    fontFamily:"'Jost',sans-serif", border:'1px solid var(--border2)',
+                    background:'var(--surface-1,rgba(255,255,255,0.03))', color:'var(--text3)' }}>
+                  + Enregistrer le thème actuel
+                </button>
+              ) : (
+                <div style={{ display:'flex', gap:8, alignItems:'center', padding:'10px 12px', borderRadius:10,
+                  background:'var(--surface-1,rgba(255,255,255,0.03))', border:'1px solid var(--border2)' }}>
+                  <input value={newPresetEmoji} onChange={e => setNewPresetEmoji(e.target.value)}
+                    maxLength={4} placeholder="✨"
+                    style={{ width:38, padding:'5px 6px', borderRadius:6, border:'1px solid var(--border2)',
+                      background:'var(--bg)', color:'var(--text)', fontSize:16, textAlign:'center', outline:'none' }} />
+                  <input value={newPresetName} onChange={e => setNewPresetName(e.target.value)}
+                    placeholder="Nom du thème…"
+                    onKeyDown={e => {
+                      if (e.key !== 'Enter' || !newPresetName.trim()) return
+                      const p = { name: newPresetName.trim(), emoji: newPresetEmoji || '✨', custom: true,
+                        vars: Object.fromEntries(Object.entries(vars).filter(([k]) => k.startsWith('--'))) }
+                      const updated = [...customPresets, p]
+                      setCustomPresets(updated)
+                      try { localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated)) } catch {}
+                      setShowSavePreset(false); setNewPresetName(''); setPresetTab('custom')
+                      showToast(`✓ Thème "${p.emoji} ${p.name}" sauvegardé`)
+                    }}
+                    style={{ flex:1, padding:'6px 10px', borderRadius:6, border:'1px solid var(--border2)',
+                      background:'var(--bg)', color:'var(--text)', fontSize:12,
+                      fontFamily:"'Jost',sans-serif", outline:'none' }} />
+                  <button onClick={() => {
+                      if (!newPresetName.trim()) return
+                      const p = { name: newPresetName.trim(), emoji: newPresetEmoji || '✨', custom: true,
+                        vars: Object.fromEntries(Object.entries(vars).filter(([k]) => k.startsWith('--'))) }
+                      const updated = [...customPresets, p]
+                      setCustomPresets(updated)
+                      try { localStorage.setItem(CUSTOM_PRESETS_KEY, JSON.stringify(updated)) } catch {}
+                      setShowSavePreset(false); setNewPresetName(''); setPresetTab('custom')
+                      showToast(`✓ Thème "${p.emoji} ${p.name}" sauvegardé`)
+                    }}
+                    disabled={!newPresetName.trim()}
+                    style={{ padding:'6px 14px', borderRadius:7, fontSize:11, cursor:'pointer',
+                      fontFamily:"'Jost',sans-serif", background:'var(--green3,rgba(150,212,133,0.11))',
+                      border:'1px solid var(--greenT,rgba(150,212,133,0.35))', color:'var(--green)',
+                      opacity: newPresetName.trim() ? 1 : 0.4 }}>✓ Sauver</button>
+                  <button onClick={() => setShowSavePreset(false)}
+                    style={{ padding:'6px 10px', borderRadius:7, fontSize:11, cursor:'pointer',
+                      fontFamily:"'Jost',sans-serif", background:'transparent',
+                      border:'1px solid var(--border2)', color:'var(--text3)' }}>Annuler</button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1613,70 +1782,116 @@ function ThemeEditor({ showToast }) {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
 
               {/* Police corps */}
-              <div style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 12px' }}>
-                <div style={{ fontSize:9, color:'rgba(242,237,224,0.40)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8 }}>Police corps (Jost)</div>
+              <div style={{ borderRadius:9, background:'var(--surface-1,rgba(255,255,255,0.03))', border:'1px solid var(--border2)', padding:'12px 14px' }}>
+                <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8 }}>Police corps</div>
                 <select
                   value={vars['--font-body'] || "'Jost',sans-serif"}
                   onChange={e => updateVar('--font-body', e.target.value)}
-                  style={{ width:'100%', padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.75)', fontSize:11, outline:'none', cursor:'pointer' }}
+                  style={{ width:'100%', padding:'6px 8px', borderRadius:6, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:12, outline:'none', cursor:'pointer', fontFamily: vars['--font-body'] || "'Jost',sans-serif" }}
                 >
-                  <option value="'Jost',sans-serif">Jost (actuelle)</option>
+                  <option value="'Jost',sans-serif">Jost</option>
                   <option value="'Inter',sans-serif">Inter</option>
                   <option value="'Lato',sans-serif">Lato</option>
                   <option value="'Nunito',sans-serif">Nunito</option>
                   <option value="'DM Sans',sans-serif">DM Sans</option>
                 </select>
-                <div style={{ marginTop:8, fontSize:12, color:'rgba(242,237,224,0.45)', fontFamily: vars['--font-body'] || "'Jost',sans-serif" }}>
-                  Aperçu du texte courant
+                <div style={{ marginTop:10, padding:'8px 10px', background:'var(--bg)', border:'1px solid var(--border2)', borderRadius:7 }}>
+                  <div style={{ fontSize:13, color:'var(--text)', fontFamily: vars['--font-body'] || "'Jost',sans-serif", lineHeight:1.6 }}>
+                    Corps du texte — labels navigation
+                  </div>
+                  <div style={{ fontSize:10, color:'var(--text3)', fontFamily: vars['--font-body'] || "'Jost',sans-serif", marginTop:3, letterSpacing:'.08em', textTransform:'uppercase' }}>
+                    UPPERCASE LABEL · 10PX
+                  </div>
                 </div>
               </div>
 
               {/* Police titres */}
-              <div style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 12px' }}>
-                <div style={{ fontSize:9, color:'rgba(242,237,224,0.40)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8 }}>Police titres (Cormorant)</div>
+              <div style={{ borderRadius:9, background:'var(--surface-1,rgba(255,255,255,0.03))', border:'1px solid var(--border2)', padding:'12px 14px' }}>
+                <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:8 }}>Police titres (serif)</div>
                 <select
                   value={vars['--font-serif'] || "'Cormorant Garamond',serif"}
                   onChange={e => updateVar('--font-serif', e.target.value)}
-                  style={{ width:'100%', padding:'5px 8px', borderRadius:6, border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.75)', fontSize:11, outline:'none', cursor:'pointer' }}
+                  style={{ width:'100%', padding:'6px 8px', borderRadius:6, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text)', fontSize:12, outline:'none', cursor:'pointer', fontFamily: vars['--font-serif'] || "'Cormorant Garamond',serif" }}
                 >
-                  <option value="'Cormorant Garamond',serif">Cormorant Garamond (actuelle)</option>
+                  <option value="'Cormorant Garamond',serif">Cormorant Garamond</option>
                   <option value="'Playfair Display',serif">Playfair Display</option>
                   <option value="'Lora',serif">Lora</option>
                   <option value="'Libre Baskerville',serif">Libre Baskerville</option>
                   <option value="'EB Garamond',serif">EB Garamond</option>
                 </select>
-                <div style={{ marginTop:8, fontSize:16, color:'rgba(242,237,224,0.55)', fontFamily: vars['--font-serif'] || "'Cormorant Garamond',serif", fontWeight:300 }}>
-                  Aperçu titre
+                <div style={{ marginTop:10, padding:'8px 10px', background:'var(--bg)', border:'1px solid var(--border2)', borderRadius:7 }}>
+                  <div style={{ fontSize:22, color:'var(--gold)', fontFamily: vars['--font-serif'] || "'Cormorant Garamond',serif", fontWeight:300, lineHeight:1.2, fontStyle:'italic' }}>
+                    Mon <em>Jardin</em> Intérieur
+                  </div>
+                  <div style={{ fontSize:14, color:'var(--text2)', fontFamily: vars['--font-serif'] || "'Cormorant Garamond',serif", fontWeight:300, marginTop:4 }}>
+                    Prenez soin de vous
+                  </div>
                 </div>
               </div>
 
             </div>
 
-            {/* Tailles */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, marginTop:10 }}>
+            {/* ── Tailles de titres H1 → H5 ── */}
+            <div style={{ marginTop:10, display:'flex', flexDirection:'column', gap:6 }}>
               {[
-                { key:'--font-size-base', label:'Taille base', default:'13', unit:'px', min:11, max:18 },
-                { key:'--font-size-sm',   label:'Petite',      default:'10', unit:'px', min:8,  max:14 },
-                { key:'--font-size-lg',   label:'Grande',      default:'16', unit:'px', min:13, max:24 },
-              ].map(({ key, label, default: def, min, max }) => {
-                const raw = vars[key] || def
-                const num = parseInt(raw) || parseInt(def)
+                { key:'--fs-h1', label:'H1', def:'32', min:22, max:56, weight:300, serif:true,  sample:'Mon Jardin Intérieur' },
+                { key:'--fs-h2', label:'H2', def:'24', min:18, max:40, weight:300, serif:true,  sample:'Prenez soin de vous' },
+                { key:'--fs-h3', label:'H3', def:'18', min:14, max:28, weight:300, serif:true,  sample:'Rituel du matin' },
+                { key:'--fs-h4', label:'H4', def:'14', min:11, max:20, weight:500, serif:false, sample:'Gratitude florale' },
+                { key:'--fs-h5', label:'H5', def:'11', min:9,  max:14, weight:500, serif:false, sample:'LABELS · NAVIGATION' },
+              ].map(({ key, label, def, min, max, weight, serif, sample }) => {
+                const num = parseInt(vars[key] || def) || parseInt(def)
+                const ff = serif
+                  ? (vars['--font-serif'] || "'Cormorant Garamond',serif")
+                  : (vars['--font-body']  || "'Jost',sans-serif")
+                const col = serif ? 'var(--gold)' : 'var(--text)'
                 return (
-                  <div key={key} style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', padding:'10px 12px' }}>
-                    <div style={{ fontSize:9, color:'rgba(242,237,224,0.40)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6 }}>{label}</div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                      <input type="range" min={min} max={max} value={num}
-                        onChange={e => updateVar(key, e.target.value + 'px')}
-                        style={{ flex:1, accentColor:'#96d485', cursor:'pointer' }} />
-                      <span style={{ fontSize:11, color:'rgba(242,237,224,0.60)', width:32, textAlign:'right', flexShrink:0 }}>{num}px</span>
-                    </div>
-                    <div style={{ marginTop:6, fontSize: num, color:'rgba(242,237,224,0.45)', lineHeight:1.3 }}>
-                      Aa
+                  <div key={key} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px',
+                    borderRadius:9, background:'var(--surface-1,rgba(255,255,255,0.03))', border:'1px solid var(--border2)' }}>
+                    <span style={{ fontSize:9, fontWeight:600, color:'var(--text3)', letterSpacing:'.08em',
+                      width:20, flexShrink:0, textTransform:'uppercase' }}>{label}</span>
+                    <input type="range" min={min} max={max} value={num} step={1}
+                      onChange={e => updateVar(key, e.target.value + 'px')}
+                      style={{ flex:'0 0 120px', accentColor:'var(--green,#96d485)', cursor:'pointer' }} />
+                    <span style={{ fontSize:10, color:'var(--text3)', width:28, textAlign:'right', flexShrink:0 }}>{num}px</span>
+                    <div style={{ flex:1, fontSize:num, fontFamily:ff, fontWeight:weight,
+                      color:col, lineHeight:1.2, overflow:'hidden', whiteSpace:'nowrap',
+                      textOverflow:'ellipsis', letterSpacing: serif ? '0.01em' : label==='H5' ? '.1em' : '0' }}>
+                      {sample}
                     </div>
                   </div>
                 )
               })}
             </div>
+
+            {/* ── Tailles d'emojis ── */}
+            <div style={{ marginTop:6, display:'flex', flexDirection:'column', gap:6 }}>
+              {[
+                { key:'--fs-emoji-sm', label:'Emoji SM', def:'14', min:10, max:20, samples:['✓','🌱','⚡','✦'] },
+                { key:'--fs-emoji-md', label:'Emoji MD', def:'20', min:14, max:28, samples:['🌸','🎧','📖','✨'] },
+                { key:'--fs-emoji-lg', label:'Emoji LG', def:'28', min:20, max:48, samples:['🌿','🌹','🌻','🔮'] },
+              ].map(({ key, label, def, min, max, samples }) => {
+                const num = parseInt(vars[key] || def) || parseInt(def)
+                return (
+                  <div key={key} style={{ display:'flex', alignItems:'center', gap:12, padding:'8px 12px',
+                    borderRadius:9, background:'var(--surface-1,rgba(255,255,255,0.03))', border:'1px solid var(--border2)' }}>
+                    <span style={{ fontSize:9, fontWeight:600, color:'var(--text3)', letterSpacing:'.06em',
+                      width:52, flexShrink:0, textTransform:'uppercase' }}>{label}</span>
+                    <input type="range" min={min} max={max} value={num} step={1}
+                      onChange={e => updateVar(key, e.target.value + 'px')}
+                      style={{ flex:'0 0 120px', accentColor:'var(--green,#96d485)', cursor:'pointer' }} />
+                    <span style={{ fontSize:10, color:'var(--text3)', width:28, textAlign:'right', flexShrink:0 }}>{num}px</span>
+                    {/* Aperçu live des emojis */}
+                    <div style={{ flex:1, display:'flex', gap:10, alignItems:'center' }}>
+                      {samples.map((e,i) => (
+                        <span key={i} style={{ fontSize:num, lineHeight:1 }}>{e}</span>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
           </div>
 
           {/* Personnalisation fine — grille 3 colonnes */}
@@ -1684,30 +1899,55 @@ function ThemeEditor({ showToast }) {
             {groups.map(group => {
               const groupVars = Object.entries(VAR_LABELS).filter(([, v]) => v.group === group)
               return (
-                <div key={group} style={{ borderRadius:9, background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)', overflow:'hidden' }}>
+                <div key={group} style={{ borderRadius:9, background:'var(--surface-1,rgba(255,255,255,0.03))', border:'1px solid var(--border2)', overflow:'hidden' }}>
                   {/* En-tête groupe */}
-                  <div style={{ padding:'5px 10px', borderBottom:'1px solid rgba(255,255,255,0.05)', background:'rgba(255,255,255,0.02)' }}>
-                    <span style={{ fontSize:8, color:'rgba(242,237,224,0.35)', letterSpacing:'.12em', textTransform:'uppercase', fontWeight:500 }}>{group}</span>
+                  <div style={{ padding:'5px 10px', borderBottom:'1px solid var(--border2)', background:'var(--surface-2,rgba(255,255,255,0.04))' }}>
+                    <span style={{ fontSize:8, color:'var(--text3)', letterSpacing:'.12em', textTransform:'uppercase', fontWeight:500 }}>{group}</span>
                   </div>
-                  {/* Lignes compactes */}
+                  {/* Lignes */}
                   <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
                     {groupVars.map(([key, meta], i) => {
                       const val = vars[key] || ''
                       const isHex = val.startsWith('#')
                       return (
-                        <div key={key} style={{ display:'flex', alignItems:'center', gap:8, padding:'5px 10px', borderBottom: i < groupVars.length-1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        <div key={key} title={meta.usage}
+                          style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 10px',
+                            borderBottom: i < groupVars.length-1 ? '1px solid var(--border2)' : 'none',
+                            cursor:'default' }}>
                           {/* Swatch cliquable */}
-                          <div style={{ width:18, height:18, borderRadius:4, background: val, border:'1px solid rgba(255,255,255,0.15)', flexShrink:0, position:'relative', overflow:'hidden', cursor: isHex ? 'pointer' : 'default' }}>
+                          <div style={{ width:18, height:18, borderRadius:4, background: val,
+                            border:'1px solid var(--border)', flexShrink:0, position:'relative',
+                            overflow:'hidden', cursor: isHex ? 'pointer' : 'default' }}>
                             {isHex && (
                               <input type="color" value={val} onChange={e => updateVar(key, e.target.value)}
                                 style={{ position:'absolute', inset:0, width:'150%', height:'150%', opacity:0, cursor:'pointer', transform:'translate(-10%,-10%)' }} />
                             )}
                           </div>
-                          {/* Label */}
-                          <span style={{ fontSize:10, color:'rgba(242,237,224,0.60)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1, minWidth:0 }}>{meta.label}</span>
+                          {/* Label + var name + usage */}
+                          <div style={{ flex:1, minWidth:0, overflow:'hidden' }}>
+                            <div style={{ fontSize:10, color:'var(--text2)', fontWeight:500,
+                              overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                              {meta.label}
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:4, marginTop:1 }}>
+                              <span style={{ fontSize:8, color:'var(--green,#96d485)', fontFamily:'monospace',
+                                background:'var(--surface-2,rgba(255,255,255,0.04))',
+                                padding:'1px 4px', borderRadius:3, flexShrink:0, letterSpacing:0 }}>
+                                {key}
+                              </span>
+                              {meta.usage && (
+                                <span style={{ fontSize:8, color:'var(--text3)', overflow:'hidden',
+                                  textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                                  {meta.usage}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                           {/* Input valeur */}
                           <input value={val} onChange={e => updateVar(key, e.target.value)}
-                            style={{ width:72, padding:'3px 6px', borderRadius:4, border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', color:'rgba(242,237,224,0.55)', fontSize:9, fontFamily:'monospace', outline:'none', flexShrink:0 }} />
+                            style={{ width:72, padding:'3px 6px', borderRadius:4, border:'1px solid var(--border2)',
+                              background:'var(--bg)', color:'var(--text3)', fontSize:9,
+                              fontFamily:'monospace', outline:'none', flexShrink:0 }} />
                         </div>
                       )
                     })}

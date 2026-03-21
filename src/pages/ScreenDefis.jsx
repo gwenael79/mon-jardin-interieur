@@ -56,9 +56,9 @@ function ProposeModal({ onClose, onSubmit, initialData = null }) {
 
         {sent ? (
           <div style={{ textAlign:'center', padding:'28px 0' }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>🌿</div>
-            <div style={{ fontSize:13, color:'rgba(150,212,133,0.9)', letterSpacing:'.04em' }}>{isEdit ? 'Défi modifié !' : 'Proposition envoyée !'}</div>
-            <div style={{ fontSize:11, color:'var(--text3)', marginTop:6 }}>{isEdit ? '' : 'Elle sera examinée par notre équipe.'}</div>
+            <div style={{ fontSize:'var(--fs-emoji-lg, 32px)', marginBottom:12 }}>🌿</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--green-rgb),0.9)', letterSpacing:'.04em' }}>{isEdit ? 'Défi modifié !' : 'Proposition envoyée !'}</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginTop:6 }}>{isEdit ? '' : 'Elle sera examinée par notre équipe.'}</div>
           </div>
         ) : (
           <>
@@ -67,7 +67,7 @@ function ProposeModal({ onClose, onSubmit, initialData = null }) {
               <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
                 <div className="modal-label">Emoji</div>
                 <div
-                  style={{ width:54, height:46, borderRadius:11, border:'1px solid var(--border)', background:'rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, cursor:'text', position:'relative' }}
+                  style={{ width:54, height:46, borderRadius:11, border:'1px solid var(--border)', background:'var(--surface-2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-h2, 22px)', cursor:'text', position:'relative' }}
                   onClick={() => document.getElementById('pm-emoji').focus()}
                 >
                   {emoji || '🌿'}
@@ -123,7 +123,7 @@ function ProposeModal({ onClose, onSubmit, initialData = null }) {
             {/* Durée de l'action quotidienne */}
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               <div className="modal-label">Durée de l'action quotidienne
-                <span style={{ color:'var(--text3)', fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, fontSize:9 }}>
+                <span style={{ color:'var(--text3)', fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, fontSize:'var(--fs-h5, 9px)' }}>
                   — combien de temps activer le bouton ACTION chaque jour
                 </span>
               </div>
@@ -144,7 +144,7 @@ function ProposeModal({ onClose, onSubmit, initialData = null }) {
                   <option value="min">minutes</option>
                   <option value="h">heures</option>
                 </select>
-                <span style={{ fontSize:10, color:'var(--text3)', whiteSpace:'nowrap' }}>
+                <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', whiteSpace:'nowrap' }}>
                   = {actionMinutes < 60
                     ? `${actionMinutes} min`
                     : `${Math.floor(actionMinutes/60)}h${actionMinutes%60>0?String(actionMinutes%60).padStart(2,'0'):''}`
@@ -156,7 +156,7 @@ function ProposeModal({ onClose, onSubmit, initialData = null }) {
             {/* Périodes de disponibilité du bouton ACTION */}
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               <div className="modal-label">Périodes de disponibilité
-                <span style={{ color:'var(--text3)', fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, fontSize:9 }}>
+                <span style={{ color:'var(--text3)', fontWeight:400, textTransform:'none', letterSpacing:0, marginLeft:6, fontSize:'var(--fs-h5, 9px)' }}>
                   — quand le bouton ACTION est actif (vide = toute la journée)
                 </span>
               </div>
@@ -170,21 +170,21 @@ function ProposeModal({ onClose, onSubmit, initialData = null }) {
                       style={{
                         flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3,
                         padding:'8px 6px', borderRadius:10, cursor:'pointer', transition:'all .2s',
-                        background: active ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.04)',
-                        border:`1px solid ${active ? 'rgba(150,212,133,0.35)' : 'rgba(255,255,255,0.10)'}`,
+                        background: active ? 'rgba(var(--green-rgb),0.12)' : 'var(--surface-2)',
+                        border:`1px solid ${active ? 'rgba(var(--green-rgb),0.35)' : 'var(--surface-3)'}`,
                         userSelect:'none',
                       }}
                     >
-                      <span style={{ fontSize:16 }}>{lbl.split(' ')[0]}</span>
-                      <span style={{ fontSize:11, color: active ? 'var(--cream)' : 'var(--text3)', fontWeight: active ? 600 : 400 }}>{lbl.split(' ')[1]}</span>
-                      <span style={{ fontSize:9, color:'var(--text3)' }}>{hint}</span>
-                      {active && <span style={{ fontSize:9, color:'var(--green)' }}>✓</span>}
+                      <span style={{ fontSize:'var(--fs-emoji-sm, 16px)' }}>{lbl.split(' ')[0]}</span>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color: active ? 'var(--cream)' : 'var(--text3)', fontWeight: active ? 600 : 400 }}>{lbl.split(' ')[1]}</span>
+                      <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)' }}>{hint}</span>
+                      {active && <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--green)' }}>✓</span>}
                     </div>
                   )
                 })}
               </div>
               {periods.length === 0 && (
-                <div style={{ fontSize:10, color:'var(--text3)', fontStyle:'italic' }}>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontStyle:'italic' }}>
                   Disponible toute la journée — le bouton peut être activé à n'importe quelle heure.
                 </div>
               )}
@@ -397,16 +397,16 @@ function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
             background:color, boxShadow:`0 0 6px ${color}`,
             display:'inline-block', animation:'actionGlow 1.5s ease-in-out infinite',
           }}/>
-          <span style={{ fontSize:10, color, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.08em' }}>
+          <span style={{ fontSize:'var(--fs-h5, 10px)', color, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.08em' }}>
             ⚡ {fmtCountdown(remaining)}
           </span>
         </div>
-        <span style={{ fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:'var(--text3)', fontStyle:'italic', flex:1, textAlign:'center', paddingRight:8 }}>
+        <span style={{ fontSize:'var(--fs-h4, 13px)', fontFamily:"'Cormorant Garamond',serif", color:'var(--text3)', fontStyle:'italic', flex:1, textAlign:'center', paddingRight:8 }}>
           {emoji} {title}
         </span>
         <div
           onClick={onBack}
-          style={{ fontSize:10, color:'var(--text3)', cursor:'pointer', padding:'3px 8px', borderRadius:20, border:'1px solid rgba(255,255,255,0.10)', fontFamily:"'Jost',sans-serif", flexShrink:0 }}
+          style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', cursor:'pointer', padding:'3px 8px', borderRadius:20, border:'1px solid var(--surface-3)', fontFamily:"'Jost',sans-serif", flexShrink:0 }}
         >← retour</div>
       </div>
 
@@ -419,8 +419,8 @@ function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
 
         {names.length === 0 ? (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', flexDirection:'column', gap:8 }}>
-            <span style={{ fontSize:22, opacity:.4 }}>⚡</span>
-            <span style={{ fontSize:11, color:'var(--text3)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>
+            <span style={{ fontSize:'var(--fs-emoji-md, 22px)', opacity:.4 }}>⚡</span>
+            <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>
               Tu es le premier à agir aujourd'hui
             </span>
           </div>
@@ -431,7 +431,7 @@ function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
           }}>
             {/* Label intro */}
             <div style={{ textAlign:'center', marginBottom:20 }}>
-              <div style={{ fontSize:8, letterSpacing:'.18em', textTransform:'uppercase', color, opacity:.5, fontFamily:"'Jost',sans-serif" }}>
+              <div style={{ fontSize:'var(--fs-h5, 8px)', letterSpacing:'.18em', textTransform:'uppercase', color, opacity:.5, fontFamily:"'Jost',sans-serif" }}>
                 En action maintenant
               </div>
             </div>
@@ -447,11 +447,11 @@ function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
                     background:`color-mix(in srgb, ${color} 18%, transparent)`,
                     border:`1px solid color-mix(in srgb, ${color} 40%, transparent)`,
                     display:'inline-flex', alignItems:'center', justifyContent:'center',
-                    fontSize:12, fontWeight:700, color,
+                    fontSize:'var(--fs-h5, 12px)', fontWeight:700, color,
                     fontFamily:"'Jost',sans-serif",
                   }}>{name.charAt(0).toUpperCase()}</span>
                   <span style={{
-                    fontSize:15, color:'var(--cream)',
+                    fontSize:'var(--fs-h3, 15px)', color:'var(--cream)',
                     fontFamily:"'Cormorant Garamond',serif",
                     fontWeight:300, letterSpacing:'.04em',
                   }}>{name}</span>
@@ -459,7 +459,7 @@ function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
               </div>
             ))}
             {/* Séparateur */}
-            <div style={{ textAlign:'center', padding:'14px 0', color, opacity:.3, fontSize:18 }}>✦</div>
+            <div style={{ textAlign:'center', padding:'14px 0', color, opacity:.3, fontSize:'var(--fs-emoji-md, 18px)' }}>✦</div>
           </div>
         )}
       </div>
@@ -501,7 +501,7 @@ function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits,
           style={{
             display:'inline-flex', alignItems:'center', gap:6,
             padding:'6px 16px', borderRadius:20,
-            fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:700,
+            fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 11px)', fontWeight:700,
             letterSpacing:'.06em', cursor: (isIdle && inPeriod) || isRunning ? 'pointer' : 'not-allowed',
             transition:'all .2s',
             ...(isDone ? {
@@ -530,13 +530,13 @@ function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits,
             : `⚡ ACTION · ${fmtDuration(actionDurationMin)}`}
         </div>
         {daysCount > 0 && (
-          <span style={{ fontSize:10, color:'var(--text3)', fontFamily:"'Jost',sans-serif" }}>
+          <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontFamily:"'Jost',sans-serif" }}>
             {daysCount} j
           </span>
         )}
       </div>
       {blockedMsg && (
-        <div style={{ fontSize:10, color:'var(--text3)', fontStyle:'italic', textAlign:'center', marginTop:4 }}>
+        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontStyle:'italic', textAlign:'center', marginTop:4 }}>
           {blockedMsg}
         </div>
       )}
@@ -605,13 +605,13 @@ function DefiCard({ d, isJoined, color, userId, toggleJoin, awardLumens, track, 
       {isAdmin && (
         <div style={{
           marginTop:6, display:'flex', alignItems:'center', gap:0,
-          borderTop:'1px solid rgba(255,255,255,0.06)',
+          borderTop:'1px solid var(--surface-2)',
           fontFamily:"'Jost',sans-serif",
         }}>
           {/* Modifier */}
           <div
             onClick={() => onEdit?.(d)}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:10, color:'var(--text3)', cursor:'pointer', transition:'color .15s', borderRight:'1px solid rgba(255,255,255,0.06)' }}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', cursor:'pointer', transition:'color .15s', borderRight:'1px solid var(--surface-2)' }}
             onMouseEnter={e => e.currentTarget.style.color='var(--gold)'}
             onMouseLeave={e => e.currentTarget.style.color='var(--text3)'}
           >
@@ -620,7 +620,7 @@ function DefiCard({ d, isJoined, color, userId, toggleJoin, awardLumens, track, 
           {/* Supprimer */}
           <div
             onClick={() => onDelete?.(d)}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:10, color:'var(--text3)', cursor:'pointer', transition:'color .15s' }}
+            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', cursor:'pointer', transition:'color .15s' }}
             onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
             onMouseLeave={e => e.currentTarget.style.color='var(--text3)'}
           >
@@ -809,7 +809,7 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   </>
 )}
         </div>
-        {isLoading && <div style={{ fontSize:13, color:'var(--text3)', padding:'20px 0' }}>Chargement des défis…</div>}
+        {isLoading && <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text3)', padding:'20px 0' }}>Chargement des défis…</div>}
         <div className="cat-filter">
           {cats.map(c => {
             const locked = !isPremium && ['Racines','Feuilles','Tige','Fleurs'].includes(c)
@@ -856,11 +856,11 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
             <div onClick={onUpgrade} style={{
               display: 'inline-flex', alignItems: 'center', gap: 10,
               padding: '8px 14px', borderRadius: 20, cursor: 'pointer',
-              background: 'rgba(232,192,96,0.08)', border: '1px solid rgba(232,192,96,0.25)',
+              background: 'rgba(var(--gold-rgb),0.08)', border: '1px solid rgba(var(--gold-rgb),0.25)',
             }}>
-              <span style={{ fontSize: 13 }}>🔒</span>
-              <span style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 500 }}>{filtered.length - 1} défis Premium</span>
-              <span style={{ fontSize: 11, color: 'var(--gold-warm)' }}>→</span>
+              <span style={{ fontSize:'var(--fs-emoji-sm, 13px)' }}>🔒</span>
+              <span style={{ fontSize:'var(--fs-h5, 12px)', color: 'var(--gold)', fontWeight: 500 }}>{filtered.length - 1} défis Premium</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', color: 'var(--gold-warm)' }}>→</span>
             </div>
           </div>
         )}
@@ -869,25 +869,25 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
       <div className="rpanel" style={{ display: isMobile ? "none" : undefined }}>
         <div className="rp-section">
           <div className="rp-slabel">Mes défis actifs</div>
-          {myDefis.length === 0 && <div style={{ fontSize:12, color:'var(--text3)', padding:'8px 0' }}>Aucun défi en cours</div>}
+          {myDefis.length === 0 && <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', padding:'8px 0' }}>Aucun défi en cours</div>}
           {myDefis.map((d,i) => {
             const pct = d.duration_days > 0
               ? Math.round(((d.days_validated ?? d.progress ?? 0) / d.duration_days) * 100)
               : (d.progress ?? 0)
             const daysVal = d.days_validated ?? Math.round((d.progress ?? 0) * d.duration_days / 100) ?? 0
             return (
-            <div key={i} style={{ marginBottom:11, padding:'11px 13px', background:'var(--green3)', border:'1px solid rgba(150,212,133,0.18)', borderRadius:13 }}>
+            <div key={i} style={{ marginBottom:11, padding:'11px 13px', background:'var(--green3)', border:'1px solid rgba(var(--green-rgb),0.18)', borderRadius:13 }}>
               <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:7 }}>
-                <span style={{ fontSize:17 }}>{d.emoji}</span>
+                <span style={{ fontSize:'var(--fs-emoji-md, 17px)' }}>{d.emoji}</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:12, color:'var(--text)' }}>{d.title}</div>
-                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{d.zone} · {d.duration_days} j</div>
+                  <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text)' }}>{d.title}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>{d.zone} · {d.duration_days} j</div>
                 </div>
               </div>
               <div style={{ height:3, background:'rgba(255,255,255,0.09)', borderRadius:100, overflow:'hidden' }}>
                 <div style={{ height:'100%', width:`${pct}%`, background:(ZONE_COLORS[d.zone]??'var(--green)'), borderRadius:100, transition:'width .4s' }} />
               </div>
-              <div style={{ fontSize:10, color:'var(--text3)', marginTop:5, display:'flex', justifyContent:'space-between' }}>
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:5, display:'flex', justifyContent:'space-between' }}>
                 <span>{daysVal} / {d.duration_days} jours validés</span>
                 <span>{pct}%</span>
               </div>
@@ -899,29 +899,29 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
           <div className="rp-slabel">Pouls de la communauté</div>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:18 }}>🌿</span>
-              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.activeGardens}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>jardins actifs</div></div>
+              <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>🌿</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', color:'var(--text)', lineHeight:1 }}>{communityStats.activeGardens}</div>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>jardins actifs</div></div>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:18 }}>✅</span>
-              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.completedRituals}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>rituels complétés</div></div>
+              <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>✅</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', color:'var(--text)', lineHeight:1 }}>{communityStats.completedRituals}</div>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>rituels complétés</div></div>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:18 }}>✨</span>
-              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.totalDefis}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>défis actifs</div></div>
+              <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>✨</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', color:'var(--text)', lineHeight:1 }}>{communityStats.totalDefis}</div>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>défis actifs</div></div>
             </div>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-              <span style={{ fontSize:18 }}>👥</span>
-              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, color:'var(--text)', lineHeight:1 }}>{communityStats.totalParticipants.toLocaleString()}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>participations</div></div>
+              <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>👥</span>
+              <div><div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', color:'var(--text)', lineHeight:1 }}>{communityStats.totalParticipants.toLocaleString()}</div>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>participations</div></div>
             </div>
           </div>
         </div>
         <div className="rp-section" style={{ marginTop:'auto' }}>
-          <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>
             "Ce dimanche dans mon jardin" · données en temps réel
           </div>
         </div>
@@ -941,7 +941,7 @@ function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade }) {
       {!isPremium && (
         <div style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(circle at center, transparent 5%, rgba(14,26,14,0.40) 25%, rgba(14,26,14,0.75) 45%, rgba(14,26,14,0.96) 65%)',
+          background: 'radial-gradient(circle at center, transparent 5%, rgba(var(--overlay-dark-rgb,6,14,7),0.40) 25%, rgba(var(--overlay-dark-rgb,6,14,7),0.75) 45%, rgba(var(--overlay-dark-rgb,6,14,7),0.96) 65%)',
           zIndex: 10,
         }} />
       )}
@@ -955,11 +955,11 @@ function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade }) {
           <div onClick={onUpgrade} style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
             padding: '8px 18px', borderRadius: 20,
-            background: 'rgba(180,160,240,0.12)', border: '1px solid rgba(180,160,240,0.30)',
+            background: 'rgba(var(--lumens-rgb),0.12)', border: '1px solid rgba(var(--lumens-rgb),0.30)',
           }}>
-            <span style={{ fontSize: 13 }}>🔒</span>
-            <span style={{ fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>Voir tout le jardin — Premium</span>
-            <span style={{ fontSize: 11, color: 'rgba(180,160,240,0.60)' }}>→</span>
+            <span style={{ fontSize:'var(--fs-emoji-sm, 13px)' }}>🔒</span>
+            <span style={{ fontSize:'var(--fs-h5, 12px)', color: 'var(--green)', fontWeight: 500 }}>Voir tout le jardin — Premium</span>
+            <span style={{ fontSize:'var(--fs-h5, 11px)', color: 'rgba(var(--lumens-rgb),0.60)' }}>→</span>
           </div>
         </div>
       )}

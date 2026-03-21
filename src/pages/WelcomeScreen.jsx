@@ -53,7 +53,7 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
       onClick={() => onDone?.()}
       style={{
         position:'fixed', inset:0, zIndex:9998,
-        background:'linear-gradient(160deg, #0e1c12 0%, #162a18 55%, #0a1510 100%)',
+        background:'var(--overlay-dark)',
         display:'flex', flexDirection:'column',
         alignItems:'center', justifyContent:'center',
         fontFamily:"'Jost',sans-serif", padding:'32px 28px',
@@ -81,19 +81,19 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
           fontFamily:"'Cormorant Garamond',serif",
           fontSize:'clamp(32px,7vw,48px)',
           fontWeight:300, lineHeight:1.1,
-          color:'rgba(242,237,224,0.92)',
+          color:'rgba(var(--text-on-dark-rgb),0.92)',
           marginBottom:firstName ? 6 : 16,
         }}>
           {greeting}
           {firstName && (
-            <span style={{ color:'#96d485', fontWeight:500, display:'block' }}>{firstName}</span>
+            <span style={{ color:'var(--green)', fontWeight:500, display:'block' }}>{firstName}</span>
           )}
         </div>
 
         {/* Phrase */}
         <div className="wc-a3" style={{
-          fontSize:15, fontWeight:300,
-          color:'rgba(242,237,224,0.45)',
+          fontSize:'var(--fs-h3, 15px)', fontWeight:300,
+          color:'rgba(var(--text-on-dark-rgb),0.45)',
           fontStyle:'italic', lineHeight:1.7,
         }}>
           {phrase}

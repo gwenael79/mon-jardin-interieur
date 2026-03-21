@@ -12,7 +12,7 @@ html,body,#root{height:100%;width:100%}
 
 /* LEFT */
 .auth-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 64px;position:relative;overflow:hidden}
-.auth-left-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(150,212,133,0.12),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(122,173,110,0.04),transparent 50%);pointer-events:none}
+.auth-left-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(var(--green-rgb),0.12),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(var(--green-rgb),0.04),transparent 50%);pointer-events:none}
 .auth-logo{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:300;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:60px}
 .auth-logo em{font-style:normal;color:var(--green)}
 .auth-hero-title{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;line-height:1.15;color:var(--text);margin-bottom:24px}
@@ -35,11 +35,11 @@ html,body,#root{height:100%;width:100%}
 .auth-tab.active{color:var(--cream);border-bottom-color:var(--green)}
 .auth-field{margin-bottom:16px}
 .auth-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:block}
-.auth-input{width:100%;padding:11px 14px;background:rgba(255,255,255,.08);border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+.auth-input{width:100%;padding:11px 14px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
 .auth-input:focus{border-color:var(--greenT);background:var(--green3)}
 .auth-input::placeholder{color:var(--text3)}
 .auth-hint{font-size:10px;color:var(--text3);margin-top:5px;letter-spacing:.02em}
-.auth-error{font-size:10px;color:rgba(210,110,110,.8);padding:8px 12px;background:rgba(210,110,110,.06);border:1px solid rgba(210,110,110,.15);border-radius:8px;margin-bottom:16px}
+.auth-error{font-size:10px;color:rgba(var(--red-rgb),.8);padding:8px 12px;background:rgba(var(--red-rgb),.06);border:1px solid rgba(var(--red-rgb),.15);border-radius:8px;margin-bottom:16px}
 .auth-submit{width:100%;padding:13px;background:linear-gradient(135deg,var(--green2),var(--green3));border:1px solid var(--greenT);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:var(--cream);cursor:pointer;transition:all .2s;margin-top:8px}
 .auth-submit:hover{background:linear-gradient(135deg,var(--green2),var(--green3));filter:brightness(1.15);border-color:var(--green)}
 .auth-submit:disabled{opacity:.5;cursor:default}
@@ -62,7 +62,7 @@ html,body,#root{height:100%;width:100%}
     justify-content:flex-start;
   }
   .auth-left-bg{
-    background:radial-gradient(ellipse at 50% 80%,rgba(150,212,133,0.10),transparent 60%);
+    background:radial-gradient(ellipse at 50% 80%,rgba(var(--green-rgb),0.10),transparent 60%);
   }
   .auth-logo{margin-bottom:24px;font-size:11px}
   .auth-hero-title{font-size:36px;margin-bottom:14px}
@@ -296,7 +296,7 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
                   <div className="auth-hint">
                     8 caractères minimum · 1 majuscule · 1 minuscule
                     {newPassword.length > 0 && (
-                      <span style={{ marginLeft:6, color: /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && newPassword.length >= 8 ? 'rgba(150,212,133,0.8)' : 'rgba(210,110,110,0.8)' }}>
+                      <span style={{ marginLeft:6, color: /[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && newPassword.length >= 8 ? 'rgba(var(--green-rgb),0.8)' : 'rgba(var(--red-rgb),0.8)' }}>
                         {/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) && newPassword.length >= 8 ? '✓ Valide' : [newPassword.length < 8 && '8 car. min', !/[A-Z]/.test(newPassword) && '1 maj.', !/[a-z]/.test(newPassword) && '1 min.'].filter(Boolean).join(' · ')}
                       </span>
                     )}

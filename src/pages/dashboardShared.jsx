@@ -168,7 +168,7 @@ export function LumenBadge({ amount }) {
           ? 'color-mix(in srgb, var(--gold) 15%, transparent)'
           : 'var(--red2)',
         border: `1px solid ${isGain ? 'color-mix(in srgb, var(--gold) 40%, transparent)' : 'var(--redT)'}`,
-        fontSize: 10, fontWeight: 600, letterSpacing: '.04em',
+        fontSize:'var(--fs-h5, 10px)', fontWeight: 600, letterSpacing: '.04em',
         fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap',
         color: isGain ? 'var(--gold)' : 'var(--red)',
         pointerEvents: 'none',
@@ -376,9 +376,9 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
   }
 
   const tabStyle = (id) => ({
-    flex:1, textAlign:'center', padding:'7px', borderRadius:9, fontSize:11, cursor:'pointer',
-    background: tab===id ? 'color-mix(in srgb, var(--gold) 15%, transparent)' : 'rgba(255,255,255,0.04)',
-    border: `1px solid ${tab===id ? 'color-mix(in srgb, var(--gold) 35%, transparent)' : 'rgba(255,255,255,0.08)'}`,
+    flex:1, textAlign:'center', padding:'7px', borderRadius:9, fontSize:'var(--fs-h5, 11px)', cursor:'pointer',
+    background: tab===id ? 'color-mix(in srgb, var(--gold) 15%, transparent)' : 'var(--surface-2)',
+    border: `1px solid ${tab===id ? 'color-mix(in srgb, var(--gold) 35%, transparent)' : 'var(--surface-3)'}`,
     color: tab===id ? 'var(--gold)' : 'var(--text3)',
     transition:'all .2s',
   })
@@ -387,7 +387,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
     width:'100%', boxSizing:'border-box',
     background:'rgba(0,0,0,0.3)', border:'1px solid var(--border2)',
     borderRadius:8, padding:'8px 10px', color:'var(--text2)',
-    fontSize:13, outline:'none',
+    fontSize:'var(--fs-h4, 13px)', outline:'none',
   }
 
   return (
@@ -397,13 +397,13 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
       <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px', background:'color-mix(in srgb, var(--gold) 7%, transparent)', borderRadius:12, border:'1px solid color-mix(in srgb, var(--gold) 18%, transparent)' }}>
         <LumenOrb total={available} level={level} size={36} />
         <div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'var(--gold)', lineHeight:1 }}>
-            {available} <span style={{ fontSize:14 }}>✦</span>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--gold)', lineHeight:1 }}>
+            {available} <span style={{ fontSize:'var(--fs-emoji-sm, 14px)' }}>✦</span>
           </div>
-          <div style={{ fontSize:10, color: LEVEL_COLOR[level] ?? 'var(--gold)', marginTop:3, letterSpacing:'.06em' }}>
+          <div style={{ fontSize:'var(--fs-h5, 10px)', color: LEVEL_COLOR[level] ?? 'var(--gold)', marginTop:3, letterSpacing:'.06em' }}>
             {LEVEL_LABELS[level] ?? level}
           </div>
-          <div style={{ fontSize:9, color:'var(--gold-warm)', marginTop:2 }}>
+          <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--gold-warm)', marginTop:2 }}>
             {total} ✦ total
           </div>
         </div>
@@ -420,10 +420,10 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
       {tab === 'history' && (
         <div style={{ display:'flex', flexDirection:'column', gap:6, maxHeight:220, overflowY:'auto' }}>
           {loadingH && (
-            <div style={{ fontSize:11, color:'var(--text3)', textAlign:'center', padding:12 }}>Chargement…</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', textAlign:'center', padding:12 }}>Chargement…</div>
           )}
           {!loadingH && history.length === 0 && (
-            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>Aucune activité pour l'instant</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>Aucune activité pour l'instant</div>
           )}
           {history.map((h, i) => {
             const amt    = h.amount ?? h.delta ?? h.lumens ?? 0
@@ -464,13 +464,13 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
             const icon = amt > 0 ? '🌱' : '🍂'
 
             return (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(255,255,255,0.03)', borderRadius:9, border:'1px solid var(--border2)' }}>
-                <span style={{ fontSize:13, fontWeight:600, minWidth:44, color: amt > 0 ? 'var(--green)' : 'var(--red)', flexShrink:0 }}>
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'var(--surface-1)', borderRadius:9, border:'1px solid var(--border2)' }}>
+                <span style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:600, minWidth:44, color: amt > 0 ? 'var(--green)' : 'var(--red)', flexShrink:0 }}>
                   {amt > 0 ? `+${amt}` : amt} ✦
                 </span>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:11, color:'var(--text2)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
-                  {date && <div style={{ fontSize:9, color:'var(--text3)', opacity:0.5, marginTop:2 }}>{timeAgo(date)}</div>}
+                  <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text2)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
+                  {date && <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', opacity:0.5, marginTop:2 }}>{timeAgo(date)}</div>}
                 </div>
               </div>
             )
@@ -481,7 +481,7 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
       {/* ══ ONGLET ACHETER ══ */}
       {tab === 'buy' && (
         <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-          <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', marginBottom:2 }}>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', marginBottom:2 }}>
             Chaque pack crédite votre soleil en Lumens ✦
           </div>
           {LUMEN_PACKS.map(p => {
@@ -490,18 +490,18 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
               <div
                 key={p.lumens}
                 onClick={() => !buyingPack && handleBuyLumens(p)}
-                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'rgba(255,255,255,0.04)', border:'1px solid var(--border2)', borderRadius:10, cursor: buyingPack ? 'default' : 'pointer', transition:'all .2s', gap:8, opacity: buyingPack && !isLoading ? 0.5 : 1 }}
+                style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 12px', background:'var(--surface-2)', border:'1px solid var(--border2)', borderRadius:10, cursor: buyingPack ? 'default' : 'pointer', transition:'all .2s', gap:8, opacity: buyingPack && !isLoading ? 0.5 : 1 }}
                 onMouseEnter={e => { if (!buyingPack) e.currentTarget.style.background='color-mix(in srgb, var(--gold) 9%, transparent)' }}
-                onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.04)'}
+                onMouseLeave={e => e.currentTarget.style.background='var(--surface-2)'}
               >
                 <div style={{ display:'flex', alignItems:'center', gap:10, flex:1 }}>
-                  <span style={{ fontSize:20 }}>{p.icon}</span>
+                  <span style={{ fontSize:'var(--fs-emoji-md, 20px)' }}>{p.icon}</span>
                   <div>
-                    <div style={{ fontSize:12, color:'var(--text2)', fontWeight:500 }}>{p.label}</div>
-                    <div style={{ fontSize:11, color:'var(--gold-warm)', marginTop:1 }}>{p.lumens} ✦</div>
+                    <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)', fontWeight:500 }}>{p.label}</div>
+                    <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--gold-warm)', marginTop:1 }}>{p.lumens} ✦</div>
                   </div>
                 </div>
-                <div style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, fontSize:12, fontWeight:600, color:'var(--gold)', background:'color-mix(in srgb, var(--gold) 12%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)' }}>
+                <div style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, fontSize:'var(--fs-h5, 12px)', fontWeight:600, color:'var(--gold)', background:'color-mix(in srgb, var(--gold) 12%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)' }}>
                   {isLoading ? '…' : p.price + ' €'}
                 </div>
               </div>
@@ -515,39 +515,39 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
 
           {/* Envoyer */}
-          <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:'12px', border:'1px solid var(--border2)' }}>
-            <div style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Envoyer des Lumens</div>
+          <div style={{ background:'var(--surface-1)', borderRadius:10, padding:'12px', border:'1px solid var(--border2)' }}>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Envoyer des Lumens</div>
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
               <input
                 type="number" min={1} max={available} value={transferAmt}
                 onChange={e => setTransferAmt(Number(e.target.value))}
                 style={{ ...inputStyle, flex:1 }}
               />
-              <span style={{ fontSize:12, color:'var(--gold)' }}>✦</span>
+              <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--gold)' }}>✦</span>
             </div>
             {exportCode ? (
               <div style={{ background:'color-mix(in srgb, var(--gold) 10%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 30%, transparent)', borderRadius:8, padding:'10px', textAlign:'center' }}>
-                <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>Code de transfert</div>
-                <div style={{ fontSize:22, fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:'var(--gold)', letterSpacing:'4px' }}>{exportCode}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:4 }}>Valable 48h</div>
-                <div style={{ fontSize:11, color:'var(--text3)', marginTop:6, cursor:'pointer', textDecoration:'underline' }}
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:4 }}>Code de transfert</div>
+                <div style={{ fontSize:'var(--fs-h2, 22px)', fontFamily:"'Cormorant Garamond',serif", fontWeight:600, color:'var(--gold)', letterSpacing:'4px' }}>{exportCode}</div>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:4 }}>Valable 48h</div>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginTop:6, cursor:'pointer', textDecoration:'underline' }}
                   onClick={() => navigator.clipboard.writeText(exportCode)}>Copier</div>
               </div>
             ) : (
               <div onClick={!loading ? handleExport : undefined}
-                style={{ textAlign:'center', padding:'8px', background:'color-mix(in srgb, var(--gold) 10%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 25%, transparent)', borderRadius:8, fontSize:12, color:'var(--gold)', cursor:loading?'default':'pointer', opacity: transferAmt > available ? 0.4 : 1 }}>
+                style={{ textAlign:'center', padding:'8px', background:'color-mix(in srgb, var(--gold) 10%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 25%, transparent)', borderRadius:8, fontSize:'var(--fs-h5, 12px)', color:'var(--gold)', cursor:loading?'default':'pointer', opacity: transferAmt > available ? 0.4 : 1 }}>
                 {loading ? '…' : 'Générer un code'}
               </div>
             )}
             {exportCode && (
-              <div style={{ fontSize:11, color:'var(--text3)', textAlign:'center', marginTop:6, cursor:'pointer' }}
+              <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', textAlign:'center', marginTop:6, cursor:'pointer' }}
                 onClick={() => setExportCode(null)}>Nouveau code</div>
             )}
           </div>
 
           {/* Recevoir */}
-          <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:'12px', border:'1px solid var(--border2)' }}>
-            <div style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Recevoir des Lumens</div>
+          <div style={{ background:'var(--surface-1)', borderRadius:10, padding:'12px', border:'1px solid var(--border2)' }}>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8 }}>Recevoir des Lumens</div>
             <input
               value={importInput}
               onChange={e => setImportInput(e.target.value.toUpperCase())}
@@ -555,11 +555,11 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
               style={{ ...inputStyle, letterSpacing:'3px', marginBottom:8 }}
             />
             <div onClick={handleImport}
-              style={{ textAlign:'center', padding:'9px', background: importInput.trim().length > 0 ? 'color-mix(in srgb, var(--green) 18%, transparent)' : 'color-mix(in srgb, var(--green) 6%, transparent)', border:'1px solid color-mix(in srgb, var(--green) 30%, transparent)', borderRadius:8, fontSize:12, color:'var(--green)', cursor: importInput.trim().length > 0 ? 'pointer' : 'default', transition:'all .2s' }}>
+              style={{ textAlign:'center', padding:'9px', background: importInput.trim().length > 0 ? 'color-mix(in srgb, var(--green) 18%, transparent)' : 'color-mix(in srgb, var(--green) 6%, transparent)', border:'1px solid color-mix(in srgb, var(--green) 30%, transparent)', borderRadius:8, fontSize:'var(--fs-h5, 12px)', color:'var(--green)', cursor: importInput.trim().length > 0 ? 'pointer' : 'default', transition:'all .2s' }}>
               {loading ? '…' : 'Utiliser ce code'}
             </div>
-            {importStatus === 'success' && <div style={{ fontSize:12, color:'var(--green)', marginTop:8 }}>✓ Lumens reçus avec succès</div>}
-            {importStatus === 'error'   && <div style={{ fontSize:12, color:'var(--red)', marginTop:8 }}>Code invalide ou expiré</div>}
+            {importStatus === 'success' && <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--green)', marginTop:8 }}>✓ Lumens reçus avec succès</div>}
+            {importStatus === 'error'   && <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--red)', marginTop:8 }}>Code invalide ou expiré</div>}
           </div>
         </div>
       )}

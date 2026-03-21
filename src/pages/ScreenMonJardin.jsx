@@ -15,8 +15,8 @@ import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_ritue
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
   sunsetH: 20, sunsetM: 0,
-  petalColor1: '#e8789a',
-  petalColor2: '#f0a8be',
+  petalColor1: 'var(--zone-flowers)',
+  petalColor2: 'var(--zone-flowers)',
   petalShape: 'round',
 }
 
@@ -28,9 +28,9 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
   const [tooltip, setTooltip] = useState(false)
 
   // Couleurs selon état : actif, passé (grisé), verrouillé
-  const bg  = isPast ? 'rgba(255,255,255,0.03)' : unlocked ? bgU  : 'rgba(255,255,255,0.04)'
-  const bd  = isPast ? 'rgba(255,255,255,0.06)' : unlocked ? bdU  : 'rgba(255,255,255,0.08)'
-  const col = isPast ? 'rgba(255,255,255,0.20)' : unlocked ? colorU : 'rgba(255,255,255,0.22)'
+  const bg  = isPast ? 'var(--surface-1)' : unlocked ? bgU  : 'var(--surface-2)'
+  const bd  = isPast ? 'var(--surface-2)' : unlocked ? bdU  : 'var(--surface-3)'
+  const col = isPast ? 'var(--separator)' : unlocked ? colorU : 'var(--separator)'
   const op  = isPast ? 0.35 : unlocked ? 1 : 0.65
 
   return (
@@ -48,11 +48,11 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
         onMouseEnter={e => { if (unlocked && !isPast) e.currentTarget.style.background = bgU.replace('0.14','0.24') }}
         onMouseLeave={e => { e.currentTarget.style.background = bg }}
       >
-        <span style={{ fontSize:13, position:'relative', lineHeight:1 }}>
+        <span style={{ fontSize:'var(--fs-h4, 13px)', position:'relative', lineHeight:1 }}>
           {isPast ? <span style={{ filter:'grayscale(1)', opacity:0.4 }}>{badge}</span> : badge}
-          {!unlocked && <span style={{ position:'absolute', top:-2, right:-4, fontSize:6 }}>🔒</span>}
+          {!unlocked && <span style={{ position:'absolute', top:-2, right:-4, fontSize:'var(--fs-h5, 6px)' }}>🔒</span>}
         </span>
-        <span style={{ fontSize:11, color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
+        <span style={{ fontSize:'var(--fs-h5, 11px)', color: col, fontWeight: isCurrent ? 600 : 400, letterSpacing:'.03em' }}>{label}</span>
       </div>
 
       {tooltip && !unlocked && (
@@ -61,15 +61,15 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
           style={{
             position:'absolute', bottom:'calc(100% + 8px)', left:'50%', transform:'translateX(-50%)',
             width:164, padding:'9px 11px', borderRadius:10, zIndex:50,
-            background:'rgba(14,9,4,0.97)', border:'1px solid rgba(200,140,40,0.35)',
-            boxShadow:'0 4px 20px rgba(0,0,0,0.6)',
-            fontSize:9, color:'var(--gold)', lineHeight:1.6, textAlign:'center',
+            background:'var(--overlay-dark)', border:'1px solid rgba(var(--gold-rgb),0.35)',
+            boxShadow:'0 4px 20px var(--overlay)',
+            fontSize:'var(--fs-h5, 9px)', color:'var(--gold)', lineHeight:1.6, textAlign:'center',
           }}>
           🔒 {unlockInfo}
           <div style={{
             position:'absolute', bottom:-5, left:'50%',
-            width:8, height:8, background:'rgba(14,9,4,0.97)',
-            border:'1px solid rgba(200,140,40,0.35)', borderTop:'none', borderLeft:'none',
+            width:8, height:8, background:'var(--overlay-dark)',
+            border:'1px solid rgba(var(--gold-rgb),0.35)', borderTop:'none', borderLeft:'none',
             transform:'translateX(-50%) rotate(45deg)',
           }}/>
         </div>
@@ -81,9 +81,9 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
 /* ── Données de tous les niveaux ── */
 const ALL_COLORS = [
   // Niveau 1 — teintes douces et classiques (4 couleurs)
-  { c1:'#e8789a', c2:'#f0a8be', name:'Rose',      lvl:1 },
-  { c1:'#8878e8', c2:'#b0a8f8', name:'Lilas',     lvl:1 },
-  { c1:'#e89038', c2:'#f8c068', name:'Soleil',    lvl:1 },
+  { c1:'var(--zone-flowers)', c2:'var(--zone-flowers)', name:'Rose',      lvl:1 },
+  { c1:'var(--lumens)', c2:'var(--lumens)', name:'Lilas',     lvl:1 },
+  { c1:'#e89038', c2:'var(--gold)', name:'Soleil',    lvl:1 },
   { c1:'#48c878', c2:'#88e8a8', name:'Émeraude',  lvl:1 },
   // Niveau 2 — teintes vives et saturées (4 nouvelles couleurs)
   { c1:'#e83030', c2:'#f87060', name:'Écarlate',  lvl:2 },
@@ -91,7 +91,7 @@ const ALL_COLORS = [
   { c1:'#c020a0', c2:'#e060d0', name:'Magenta',   lvl:2 },
   { c1:'#208850', c2:'#40c880', name:'Jungle',    lvl:2 },
   // Niveau 3 — teintes rares et précieuses (7 nouvelles couleurs)
-  { c1:'#b89010', c2:'#e8c840', name:'Or',        lvl:3 },
+  { c1:'#b89010', c2:'var(--gold)', name:'Or',        lvl:3 },
   { c1:'#101888', c2:'#3848d8', name:'Saphir',    lvl:3 },
   { c1:'#601060', c2:'#a040a0', name:'Améthyste', lvl:3 },
   { c1:'#108088', c2:'#30c0c8', name:'Turquoise', lvl:3 },
@@ -117,28 +117,28 @@ const ALL_SHAPES = [
 ]
 
 const LEVEL_META = {
-  1: { label:'Niveau 1', color:'#96d48a', bg:'rgba(80,160,60,0.12)', border:'rgba(100,180,80,0.25)', badge:'🌱' },
-  2: { label:'Niveau 2', color:'#82c8f0', bg:'rgba(60,140,200,0.12)', border:'rgba(80,160,220,0.25)', badge:'🌿' },
-  3: { label:'Niveau 3', color:'#e8c060', bg:'rgba(200,160,40,0.12)', border:'rgba(220,180,60,0.25)', badge:'🌟' },
+  1: { label:'Niveau 1', color:'var(--green)', bg:'rgba(var(--green-rgb),0.12)', border:'rgba(var(--green-rgb),0.25)', badge:'🌱' },
+  2: { label:'Niveau 2', color:'var(--zone-breath)', bg:'rgba(var(--zone-breath-rgb),0.12)', border:'rgba(var(--zone-stem-rgb),0.25)', badge:'🌿' },
+  3: { label:'Niveau 3', color:'var(--gold)', bg:'rgba(var(--gold-rgb),0.12)', border:'rgba(var(--gold-rgb),0.25)', badge:'🌟' },
 }
 
 function AccordionSection({ title, icon, isOpen, onToggle, children, accent }) {
   return (
-    <div style={{ borderRadius:12, overflow:'hidden', marginBottom:6, border:`1px solid ${isOpen ? (accent||'rgba(255,255,255,0.12)') : 'rgba(255,255,255,0.07)'}`, transition:'border-color .2s' }}>
+    <div style={{ borderRadius:12, overflow:'hidden', marginBottom:6, border:`1px solid ${isOpen ? (accent||'var(--surface-3)') : 'var(--track)'}`, transition:'border-color .2s' }}>
       <div onClick={onToggle} style={{
         display:'flex', alignItems:'center', justifyContent:'space-between',
         padding:'10px 14px', cursor:'pointer', userSelect:'none',
-        background: isOpen ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)',
+        background: isOpen ? 'var(--surface-2)' : 'var(--surface-1)',
         transition:'background .2s',
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:14 }}>{icon}</span>
-          <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.06em' }}>{title}</span>
+          <span style={{ fontSize:'var(--fs-emoji-sm, 14px)' }}>{icon}</span>
+          <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', letterSpacing:'.06em' }}>{title}</span>
         </div>
-        <span style={{ fontSize:10, color:'rgba(255,255,255,0.3)', transform: isOpen ? 'rotate(180deg)' : 'none', transition:'transform .2s' }}>▾</span>
+        <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--border)', transform: isOpen ? 'rotate(180deg)' : 'none', transition:'transform .2s' }}>▾</span>
       </div>
       {isOpen && (
-        <div style={{ padding:'12px 14px', background:'rgba(255,255,255,0.02)' }}>
+        <div style={{ padding:'12px 14px', background:'var(--surface-1)' }}>
           {children}
         </div>
       )}
@@ -165,16 +165,16 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
 
         {/* En-tête compact */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <div style={{ fontSize:13, color:'var(--text2)', fontWeight:400, letterSpacing:'.04em' }}>🌸 Ma fleur</div>
+          <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text2)', fontWeight:400, letterSpacing:'.04em' }}>🌸 Ma fleur</div>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <div style={{
               display:'flex', alignItems:'center', gap:5, padding:'3px 10px', borderRadius:20,
               background: meta.bg, border: `1px solid ${meta.border}`,
             }}>
-              <span style={{ fontSize:11 }}>{meta.badge}</span>
-              <span style={{ fontSize:9, color: meta.color }}>{isAdmin ? '⚙ Admin' : meta.label}</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)' }}>{meta.badge}</span>
+              <span style={{ fontSize:'var(--fs-h5, 9px)', color: meta.color }}>{isAdmin ? '⚙ Admin' : meta.label}</span>
             </div>
-            <div onClick={onClose} style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'rgba(255,255,255,0.06)', color:'rgba(238,232,218,0.45)', fontSize:12 }}>✕</div>
+            <div onClick={onClose} style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)' }}>✕</div>
           </div>
         </div>
 
@@ -191,7 +191,7 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
             const lm = LEVEL_META[lv]
             return (
               <div key={lv} style={{ marginBottom: lv < visibleTiers.at(-1) ? 10 : 0 }}>
-                {isAdmin && <div style={{ fontSize:8, color: lm.color, marginBottom:6, letterSpacing:'.08em' }}>{lm.badge} {lm.label}</div>}
+                {isAdmin && <div style={{ fontSize:'var(--fs-h5, 8px)', color: lm.color, marginBottom:6, letterSpacing:'.08em' }}>{lm.badge} {lm.label}</div>}
                 <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                   {lvColors.map(p => {
                     const active = s.petalColor1 === p.c1
@@ -201,12 +201,12 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
                         style={{
                           width:34, height:34, borderRadius:'50%', cursor:'pointer',
                           background: `linear-gradient(135deg,${p.c1},${p.c2})`,
-                          border: active ? '2px solid #c8f0b8' : '2px solid rgba(255,255,255,0.1)',
-                          boxShadow: active ? '0 0 0 3px rgba(150,212,133,0.35)' : 'none',
+                          border: active ? '2px solid var(--badge-lvl1)' : '2px solid var(--surface-3)',
+                          boxShadow: active ? '0 0 0 3px rgba(var(--green-rgb),0.35)' : 'none',
                           display:'flex', alignItems:'center', justifyContent:'center',
                           transition:'all .15s', flexShrink:0,
                         }}>
-                        {active && <span style={{ fontSize:13, color:'white', textShadow:'0 1px 3px rgba(0,0,0,0.6)' }}>✓</span>}
+                        {active && <span style={{ fontSize:'var(--fs-h4, 13px)', color:'white', textShadow:'0 1px 3px var(--overlay)' }}>✓</span>}
                       </div>
                     )
                   })}
@@ -229,7 +229,7 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
             const lm = LEVEL_META[lv]
             return (
               <div key={lv} style={{ marginBottom: lv < visibleTiers.at(-1) ? 10 : 0 }}>
-                {isAdmin && <div style={{ fontSize:8, color: lm.color, marginBottom:6, letterSpacing:'.08em' }}>{lm.badge} {lm.label}</div>}
+                {isAdmin && <div style={{ fontSize:'var(--fs-h5, 8px)', color: lm.color, marginBottom:6, letterSpacing:'.08em' }}>{lm.badge} {lm.label}</div>}
                 <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
                   {lvShapes.map(ps => {
                     const active = s.petalShape === ps.id
@@ -238,12 +238,12 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
                         onClick={() => set('petalShape', ps.id)}
                         style={{
                           minWidth:60, padding:'7px 8px', borderRadius:10, textAlign:'center', cursor:'pointer',
-                          border: active ? '1px solid var(--greenT)' : '1px solid rgba(255,255,255,0.10)',
-                          background: active ? 'var(--green2)' : 'rgba(255,255,255,0.03)',
+                          border: active ? '1px solid var(--greenT)' : '1px solid var(--surface-3)',
+                          background: active ? 'var(--green2)' : 'var(--surface-1)',
                           transition:'all .15s',
                         }}>
-                        <div style={{ fontSize:15, marginBottom:2 }}>{ps.icon}</div>
-                        <div style={{ fontSize:8, color: active ? '#c8f0b8' : 'var(--text2)' }}>{ps.label}</div>
+                        <div style={{ fontSize:'var(--fs-emoji-sm, 15px)', marginBottom:2 }}>{ps.icon}</div>
+                        <div style={{ fontSize:'var(--fs-h5, 8px)', color: active ? 'var(--badge-lvl1)' : 'var(--text2)' }}>{ps.label}</div>
                       </div>
                     )
                   })}
@@ -262,18 +262,18 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
         >
           <div style={{ display:'flex', gap:12 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:9, color:'var(--text3)', marginBottom:5 }}>🌅 Lever</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:5 }}>🌅 Lever</div>
               <div style={{ display:'flex', gap:5, alignItems:'center' }}>
                 <input type="number" min={4} max={11} value={s.sunriseH} onChange={e => set('sunriseH',+e.target.value)} className="modal-input" style={{ width:48, textAlign:'center', padding:'6px 4px' }}/>
-                <span style={{ color:'var(--text3)', fontSize:10 }}>h</span>
+                <span style={{ color:'var(--text3)', fontSize:'var(--fs-h5, 10px)' }}>h</span>
                 <input type="number" min={0} max={59} value={s.sunriseM} onChange={e => set('sunriseM',+e.target.value)} className="modal-input" style={{ width:48, textAlign:'center', padding:'6px 4px' }}/>
               </div>
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:9, color:'var(--text3)', marginBottom:5 }}>🌇 Coucher</div>
+              <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:5 }}>🌇 Coucher</div>
               <div style={{ display:'flex', gap:5, alignItems:'center' }}>
                 <input type="number" min={15} max={23} value={s.sunsetH} onChange={e => set('sunsetH',+e.target.value)} className="modal-input" style={{ width:48, textAlign:'center', padding:'6px 4px' }}/>
-                <span style={{ color:'var(--text3)', fontSize:10 }}>h</span>
+                <span style={{ color:'var(--text3)', fontSize:'var(--fs-h5, 10px)' }}>h</span>
                 <input type="number" min={0} max={59} value={s.sunsetM} onChange={e => set('sunsetM',+e.target.value)} className="modal-input" style={{ width:48, textAlign:'center', padding:'6px 4px' }}/>
               </div>
             </div>
@@ -286,9 +286,9 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
               const pct = Math.max(0, Math.min(1,(h-rise)/(set2-rise)))
               const isD = h>=rise && h<=set2
               return <>
-                <div style={{ position:'absolute', left:'2%', top:'50%', transform:'translateY(-50%)', fontSize:8, color:'var(--text3)' }}>{s.sunriseH}h{String(s.sunriseM).padStart(2,'0')}</div>
-                <div style={{ position:'absolute', right:'2%', top:'50%', transform:'translateY(-50%)', fontSize:8, color:'var(--text3)' }}>{s.sunsetH}h{String(s.sunsetM).padStart(2,'0')}</div>
-                <div style={{ position:'absolute', left:`${pct*76+12}%`, top:'50%', transform:'translate(-50%,-50%)', fontSize:16, filter:isD?'none':'grayscale(1) opacity(0.4)' }}>☀️</div>
+                <div style={{ position:'absolute', left:'2%', top:'50%', transform:'translateY(-50%)', fontSize:'var(--fs-h5, 8px)', color:'var(--text3)' }}>{s.sunriseH}h{String(s.sunriseM).padStart(2,'0')}</div>
+                <div style={{ position:'absolute', right:'2%', top:'50%', transform:'translateY(-50%)', fontSize:'var(--fs-h5, 8px)', color:'var(--text3)' }}>{s.sunsetH}h{String(s.sunsetM).padStart(2,'0')}</div>
+                <div style={{ position:'absolute', left:`${pct*76+12}%`, top:'50%', transform:'translate(-50%,-50%)', fontSize:'var(--fs-emoji-sm, 16px)', filter:isD?'none':'grayscale(1) opacity(0.4)' }}>☀️</div>
               </>
             })()}
           </div>
@@ -322,7 +322,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const sunY  = 18 + 58 * (1 - Math.sin(dp * Math.PI))
 
   /* ── Couleurs pétales personnalisées ── */
-  const h2r = h => { const v = parseInt((h || '#e8789a').replace('#',''), 16); return [(v>>16)&255,(v>>8)&255,v&255] }
+  const h2r = h => { const v = parseInt((h || 'var(--zone-flowers)').replace('#',''), 16); return [(v>>16)&255,(v>>8)&255,v&255] }
   const [r1,g1,b1]  = h2r(gs.petalColor1)
   const [r2,g2,b2]  = h2r(gs.petalColor2)
   const pC1   = `rgba(${r1},${g1},${b1},${0.78+0.18*r})`
@@ -591,7 +591,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
             <line x1={0} y1={0} x2={0} y2={fallH*0.82}
               stroke={"rgba("+r2+","+g2+","+b2+",0.48)"} strokeWidth={1.1} strokeLinecap="round"/>
             {[fallH*0.15, fallH*0.34, fallH*0.52, fallH*0.68].map((yb,j) =>
-              <ellipse key={j} cx={0} cy={yb} rx={fallW*0.15} ry={fallW*0.05} fill="rgba(255,195,40,0.88)"/>
+              <ellipse key={j} cx={0} cy={yb} rx={fallW*0.15} ry={fallW*0.05} fill="rgba(var(--gold-rgb),0.88)"/>
             )}
           </g>
         })}
@@ -752,17 +752,17 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           <stop offset="100%" stopColor="rgba(10,5,2,0.98)"/>
         </linearGradient>
         <radialGradient id={id+'sh'} cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor={isG ? 'rgba(255,128,18,0.45)' : 'rgba(255,218,78,0.32)'}/>
-          <stop offset="100%" stopColor="rgba(255,190,60,0)"/>
+          <stop offset="0%"   stopColor={isG ? 'rgba(255,128,18,0.45)' : 'rgba(var(--gold-rgb),0.32)'}/>
+          <stop offset="100%" stopColor="rgba(var(--gold-rgb),0)"/>
         </radialGradient>
         <radialGradient id={id+'lh'} cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor="rgba(246,196,83,0)" />
-          <stop offset="40%"  stopColor={lumensLevel === 'rayonnement' ? 'rgba(246,196,83,0.22)' : lumensLevel === 'aura' ? 'rgba(246,196,83,0.14)' : lumensLevel === 'halo' ? 'rgba(246,196,83,0.08)' : 'rgba(246,196,83,0)'} />
-          <stop offset="100%" stopColor="rgba(246,196,83,0)" />
+          <stop offset="0%"   stopColor="rgba(var(--gold-rgb),0)" />
+          <stop offset="40%"  stopColor={lumensLevel === 'rayonnement' ? 'rgba(var(--gold-rgb),0.22)' : lumensLevel === 'aura' ? 'rgba(var(--gold-rgb),0.14)' : lumensLevel === 'halo' ? 'rgba(var(--gold-rgb),0.08)' : 'rgba(var(--gold-rgb),0)'} />
+          <stop offset="100%" stopColor="rgba(var(--gold-rgb),0)" />
         </radialGradient>
         <radialGradient id={id+'pi'} cx="40%" cy="38%" r="62%">
           <stop offset="0%"   stopColor="rgba(255,242,98,1)"/>
-          <stop offset="100%" stopColor="rgba(218,146,46,0.92)"/>
+          <stop offset="100%" stopColor="rgba(var(--gold-rgb),0.92)"/>
         </radialGradient>
         <radialGradient id={id+'p1'} cx="50%" cy="78%" r="62%">
           <stop offset="0%"   stopColor={pInr}/>
@@ -868,7 +868,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                 return <line key={i}
                   x1={sunX+Math.cos(rad)*ra1} y1={sunY+Math.sin(rad)*ra1}
                   x2={sunX+Math.cos(rad)*ra2} y2={sunY+Math.sin(rad)*ra2}
-                  stroke={isG?'rgba(255,152,28,0.62)':'rgba(255,222,78,0.52)'}
+                  stroke={isG?'rgba(255,152,28,0.62)':'rgba(var(--gold-rgb),0.52)'}
                   strokeWidth={isG?1.5:1.1} strokeLinecap="round"/>
               })}
             </g>
@@ -1075,8 +1075,8 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           {stage === 'seed' && (
             <g>
               {/* graine dans le sol */}
-              <ellipse cx={cx} cy={gY+3} rx={5} ry={3.5} fill="rgba(118,72,28,0.75)" />
-              <ellipse cx={cx-1} cy={gY+2} rx={3} ry={2} fill="rgba(155,100,50,0.35)" />
+              <ellipse cx={cx} cy={gY+3} rx={5} ry={3.5} fill="rgba(var(--zone-roots-rgb),0.75)" />
+              <ellipse cx={cx-1} cy={gY+2} rx={3} ry={2} fill="rgba(var(--zone-roots-rgb),0.35)" />
               {/* germe minuscule qui sort */}
               <path d={`M${cx},${gY+1} Q${cx+4},${gY-6} ${cx+2},${gY-12}`}
                 stroke={`rgba(68,148,48,${0.5+r*3})`} strokeWidth={1.6} strokeLinecap="round" fill="none"/>
@@ -1260,11 +1260,11 @@ const memberEmoji = n => MEMBER_EMOJIS[n] ?? '🌿'
 const GESTURE_EMOJI = { water:'💧', sun:'☀️', seed:'🌱' }
 const GESTURE_LABEL = { water:'une goutte', sun:'un rayon', seed:'une graine' }
 const ZONE_DISPLAY  = {
-  zone_racines:  { name:'Racines',  icon:'🌱', color:'#C8894A' },
-  zone_tige:     { name:'Tige',     icon:'🌿', color:'#5AAF78' },
-  zone_feuilles: { name:'Feuilles', icon:'🍃', color:'#4A9E5C' },
-  zone_fleurs:   { name:'Fleurs',   icon:'🌸', color:'#D4779A' },
-  zone_souffle:  { name:'Souffle',  icon:'🌬️', color:'#6ABBE4' },
+  zone_racines:  { name:'Racines',  icon:'🌱', color:'var(--zone-roots)' },
+  zone_tige:     { name:'Tige',     icon:'🌿', color:'var(--zone-stem)' },
+  zone_feuilles: { name:'Feuilles', icon:'🍃', color:'var(--zone-leaves)' },
+  zone_fleurs:   { name:'Fleurs',   icon:'🌸', color:'var(--zone-flowers)' },
+  zone_souffle:  { name:'Souffle',  icon:'🌬️', color:'var(--zone-breath)' },
 }
 
 function timeAgo(iso) {
@@ -1279,8 +1279,8 @@ function formatDate(iso) {
 }
 
 const ZONES = [
-  { key:'zone_racines',  icon:'🌱', name:'Racines',  color:'#96d485' },
-  { key:'zone_tige',     icon:'🌿', name:'Tige',     color:'#7ad490' },
+  { key:'zone_racines',  icon:'🌱', name:'Racines',  color:'var(--green)' },
+  { key:'zone_tige',     icon:'🌿', name:'Tige',     color:'var(--green)' },
   { key:'zone_feuilles', icon:'🍃', name:'Feuilles', color:'#60d475' },
   { key:'zone_fleurs',   icon:'🌸', name:'Fleurs',   color:'#e088a8' },
   { key:'zone_souffle',  icon:'🌬️', name:'Souffle',  color:'#88b8e8' },
@@ -1313,13 +1313,13 @@ function InviteModal({ circle, onClose, onCopied }) {
       <div className="modal">
         <div className="modal-title">Inviter dans {circle?.name} 🌿</div>
 
-        <div style={{ fontSize:12, color:'var(--text3)', lineHeight:1.6 }}>
+        <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', lineHeight:1.6 }}>
           Partagez ce code avec les personnes que vous souhaitez inviter dans votre groupe.
         </div>
 
-        <div style={{ background:'rgba(150,212,133,0.08)', border:'1px solid var(--greenT)', borderRadius:14, padding:'18px 20px', textAlign:'center' }}>
-          <div style={{ fontSize:9, letterSpacing:'.15em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Code d'invitation</div>
-          <div style={{ fontFamily:'monospace', fontSize:28, letterSpacing:'.3em', color:'var(--text)', fontWeight:300 }}>{code}</div>
+        <div style={{ background:'rgba(var(--green-rgb),0.08)', border:'1px solid var(--greenT)', borderRadius:14, padding:'18px 20px', textAlign:'center' }}>
+          <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'.15em', textTransform:'uppercase', color:'var(--text3)', marginBottom:8 }}>Code d'invitation</div>
+          <div style={{ fontFamily:'monospace', fontSize:'var(--fs-h1, 28px)', letterSpacing:'.3em', color:'var(--text)', fontWeight:300 }}>{code}</div>
         </div>
 
         <div style={{ display:'flex', gap:10 }}>
@@ -1331,7 +1331,7 @@ function InviteModal({ circle, onClose, onCopied }) {
           </button>
         </div>
 
-        <div style={{ fontSize:10, color:'var(--text3)', textAlign:'center', lineHeight:1.6 }}>
+        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', textAlign:'center', lineHeight:1.6 }}>
           {circle?.memberCount ?? 0}/{circle?.max_members ?? 8} membres · {circle?.is_open ? 'Groupe ouvert' : 'Sur invitation uniquement'}
         </div>
 
@@ -1644,7 +1644,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
                     <div
                       className="cb-join"
                       onClick={() => quitter(c.id)}
-                      style={{ background:'rgba(210,110,110,0.12)', border:'1px solid rgba(210,110,110,0.3)', color:'rgba(210,110,110,0.85)', cursor:'pointer' }}
+                      style={{ background:'rgba(var(--zone-flowers-rgb),0.12)', border:'1px solid rgba(var(--zone-flowers-rgb),0.3)', color:'rgba(var(--zone-flowers-rgb),0.85)', cursor:'pointer' }}
                     >
                       Se désinscrire
                     </div>
@@ -1657,7 +1657,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
 
         <div className="slabel">Activité récente</div>
         {activity.length === 0 ? (
-          <div style={{ fontSize:12, color:'var(--text3)', padding:'12px 0', fontStyle:'italic' }}>
+          <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', padding:'12px 0', fontStyle:'italic' }}>
             Aucune activité récente dans ce groupe.
           </div>
         ) : activity.map((a, i) => (
@@ -1677,25 +1677,25 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
           <div className="rp-slabel">Ma communauté · {proximityMembers.length}</div>
 
           {proximityLoading && (
-            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>Calcul des proximités…</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>Calcul des proximités…</div>
           )}
 
           {!proximityLoading && proximityMembers.length === 0 && (
-            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', padding:'8px 0' }}>
               Pas encore d'interactions ce mois-ci.
             </div>
           )}
 
           <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
             {proximityMembers.slice(0, 50).map((m, i) => (
-              <div key={m.userId} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background:'rgba(255,255,255,0.04)', border:'1px solid var(--border2)', borderRadius:10 }}>
-                <div style={{ fontSize:9, color:'var(--text3)', width:16, textAlign:'right', flexShrink:0 }}>{i+1}</div>
-                <div style={{ width:24, height:24, borderRadius:'50%', background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>
+              <div key={m.userId} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', background:'var(--surface-2)', border:'1px solid var(--border2)', borderRadius:10 }}>
+                <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', width:16, textAlign:'right', flexShrink:0 }}>{i+1}</div>
+                <div style={{ width:24, height:24, borderRadius:'50%', background:'rgba(var(--green-rgb),0.12)', border:'1px solid rgba(var(--green-rgb),0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-h5, 12px)', flexShrink:0 }}>
                   {memberEmoji(m.name)}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, color:'var(--text2)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
-                  <div style={{ fontSize:9, color:'var(--text3)', marginTop:1 }}>{m.score} interactions</div>
+                  <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginTop:1 }}>{m.score} interactions</div>
                 </div>
                 {m.userId !== userId && (
                   <div style={{ display:'flex', gap:3, flexShrink:0 }}>
@@ -1704,7 +1704,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
                         className={'mr-gesture-btn' + (sentGestures.has(`${m.userId}-${type}`) ? ' sent' : '')}
                         onClick={() => !sentGestures.has(`${m.userId}-${type}`) && handleSendGesture(m.userId, type)}
                         title={`Envoyer ${type}`}
-                        style={{ fontSize:11, padding:'2px 5px' }}
+                        style={{ fontSize:'var(--fs-h5, 11px)', padding:'2px 5px' }}
                       >{type}</div>
                     ))}
                   </div>
@@ -1721,7 +1721,7 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
               <div className="gi-text" style={{ flex:1 }}>
                 <b>{g.users?.display_name ?? '?'}</b> t'a envoyé {GESTURE_LABEL[g.type]}
                 {g.target_zone && ZONE_DISPLAY[g.target_zone] && (
-                  <span style={{ marginLeft:6, fontSize:9, padding:'1px 6px', borderRadius:10,
+                  <span style={{ marginLeft:6, fontSize:'var(--fs-h5, 9px)', padding:'1px 6px', borderRadius:10,
                     background:`${ZONE_DISPLAY[g.target_zone].color}20`,
                     border:`1px solid ${ZONE_DISPLAY[g.target_zone].color}45`,
                     color:ZONE_DISPLAY[g.target_zone].color }}>
@@ -1744,17 +1744,17 @@ function ScreenCercle({ userId, openCreate, onCreateClose, openInvite, onInviteC
             const label = isToday ? `Ce soir ${heure}` : isTomorrow ? `Demain ${heure}` : d.toLocaleDateString('fr-FR', { weekday:'short', day:'numeric' }) + ` ${heure}`
             const nbPart = c.collectif_participants?.[0]?.count ?? 0
             return (
-              <div key={c.id} style={{ display:'flex', alignItems:'center', gap:9, marginBottom:9, padding:'8px 10px', background:'rgba(255,255,255,0.05)', borderRadius:10, border:'1px solid var(--border2)' }}>
-                <span style={{ fontSize:15 }}>{c.emoji}</span>
+              <div key={c.id} style={{ display:'flex', alignItems:'center', gap:9, marginBottom:9, padding:'8px 10px', background:'var(--surface-2)', borderRadius:10, border:'1px solid var(--border2)' }}>
+                <span style={{ fontSize:'var(--fs-emoji-sm, 15px)' }}>{c.emoji}</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:12, color:'var(--text2)' }}>{c.title}</div>
-                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:2 }}>{label} · {nbPart} pers.</div>
+                  <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)' }}>{c.title}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>{label} · {nbPart} pers.</div>
                 </div>
               </div>
             )
           })}
           {collectifs.length === 0 && (
-            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Aucun collectif prévu.</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>Aucun collectif prévu.</div>
           )}
         </div>
       </div>
@@ -1830,11 +1830,11 @@ function JournalComposer({ userId, plantId, onSaved }) {
 ───────────────────────────────────────── */
 
 const PLANT_ZONES = {
-  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'#C8894A', accent:'#EDBE87', bg:'#120A03' },
-  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'#5AAF78', accent:'#9DDBB4', bg:'#060F08' },
-  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'#4A9E5C', accent:'#88D4A0', bg:'#060C08' },
-  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'#D4779A', accent:'#F2B8CC', bg:'#0E0508' },
-  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'#6ABBE4', accent:'#B0DEFA', bg:'#03090E' },
+  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'var(--zone-roots)', accent:'var(--gold-warm)', bg:'#120A03' },
+  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'var(--zone-stem)', accent:'#9DDBB4', bg:'#060F08' },
+  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'var(--zone-leaves)', accent:'var(--green)', bg:'#060C08' },
+  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'var(--zone-flowers)', accent:'var(--zone-flowers)', bg:'#0E0508' },
+  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'var(--zone-breath)', accent:'var(--zone-breath)', bg:'#03090E' },
 }
 
 // Correspondance zone → clé DB pour la mise à jour de la plante
@@ -2034,38 +2034,38 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
   if (!mode) return (
     <div style={{ animation:'fadeUp 0.3s ease both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
-        <button onClick={onBack} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
-        <span style={{ fontSize:26 }}>{ritual.icon}</span>
-        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:20, color:'#EEF0E8', fontWeight:400, lineHeight:1.1 }}>{ritual.text}</h3>
+        <span style={{ fontSize:'var(--fs-emoji-md, 26px)' }}>{ritual.icon}</span>
+        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color:'var(--text-on-dark)', fontWeight:400, lineHeight:1.1 }}>{ritual.text}</h3>
       </div>
-      <p style={{ fontSize:11.5, color:'rgba(180,200,180,0.35)', fontStyle:'italic', marginBottom:22, lineHeight:1.5 }}>Comment souhaitez-vous aborder ce rituel aujourd'hui ?</p>
+      <p style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.35)', fontStyle:'italic', marginBottom:22, lineHeight:1.5 }}>Comment souhaitez-vous aborder ce rituel aujourd'hui ?</p>
       <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
         <button onClick={onComplete} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${zone.color}35`, background:`${zone.color}0C`, display:'flex', alignItems:'center', gap:12 }}>
-          <span style={{ fontSize:22, flexShrink:0 }}>✅</span>
+          <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>✅</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, color:zone.accent, fontWeight:500, marginBottom:2 }}>Je sais quoi faire</div>
-            <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)' }}>Je le marque comme accompli directement.</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color:zone.accent, fontWeight:500, marginBottom:2 }}>Je sais quoi faire</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.4)' }}>Je le marque comme accompli directement.</div>
           </div>
-          <span style={{ color:'rgba(180,200,180,0.25)', fontSize:14 }}>→</span>
+          <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
-        <button onClick={() => setMode('quick')} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', display:'flex', alignItems:'center', gap:12 }}>
-          <span style={{ fontSize:22, flexShrink:0 }}>💡</span>
+        <button onClick={() => setMode('quick')} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid var(--surface-3)', background:'var(--surface-1)', display:'flex', alignItems:'center', gap:12 }}>
+          <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>💡</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, color:'#EEF0E8', fontWeight:500, marginBottom:2 }}>J'ai besoin d'un coup de pouce</div>
-            <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)' }}>3 exercices rapides · 1 à 3 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text-on-dark)', fontWeight:500, marginBottom:2 }}>J'ai besoin d'un coup de pouce</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.4)' }}>3 exercices rapides · 1 à 3 minutes</div>
           </div>
-          <span style={{ color:'rgba(180,200,180,0.25)', fontSize:14 }}>→</span>
+          <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
-        <button onClick={() => setMode('deep')} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', display:'flex', alignItems:'center', gap:12 }}>
-          <span style={{ fontSize:22, flexShrink:0 }}>🌿</span>
+        <button onClick={() => setMode('deep')} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid var(--surface-3)', background:'var(--surface-1)', display:'flex', alignItems:'center', gap:12 }}>
+          <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>🌿</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, color:'#EEF0E8', fontWeight:500, marginBottom:2 }}>Je prends du temps pour ça</div>
-            <div style={{ fontSize:11, color:'rgba(180,200,180,0.4)' }}>3 pratiques profondes · 10 à 30 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text-on-dark)', fontWeight:500, marginBottom:2 }}>Je prends du temps pour ça</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.4)' }}>3 pratiques profondes · 10 à 30 minutes</div>
           </div>
-          <span style={{ color:'rgba(180,200,180,0.25)', fontSize:14 }}>→</span>
+          <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
       </div>
     </div>
@@ -2073,27 +2073,27 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
 
   const exercises  = mode === 'quick' ? ritual.quick : ritual.deep
   const modeLabel  = mode === 'quick' ? 'Coup de pouce · 1–3 min' : 'Pratique profonde · 10–30 min'
-  const modeColor  = mode === 'quick' ? '#FFD080' : '#B0DEFA'
+  const modeColor  = mode === 'quick' ? 'var(--gold)' : 'var(--zone-breath)'
 
   return (
     <div style={{ animation:'fadeUp 0.28s ease both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <button onClick={() => setMode(null)} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(180,200,180,0.45)', fontSize:12, cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
-        <button onClick={onBack} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={() => setMode(null)} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       </div>
       <div style={{ marginBottom:6 }}>
-        <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:modeColor, fontWeight:500 }}>{modeLabel}</span>
+        <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:modeColor, fontWeight:500 }}>{modeLabel}</span>
       </div>
-      <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:18, color:'#EEF0E8', fontWeight:400, marginBottom:18, lineHeight:1.2 }}>Choisissez un exercice</h3>
+      <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color:'var(--text-on-dark)', fontWeight:400, marginBottom:18, lineHeight:1.2 }}>Choisissez un exercice</h3>
       <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
         {exercises.map((ex, i) => (
-          <button key={i} onClick={() => setActiveEx(ex)} style={{ padding:'14px 15px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid rgba(255,255,255,0.08)', background:'rgba(255,255,255,0.03)', display:'flex', alignItems:'center', gap:12 }}>
-            <span style={{ fontSize:22, flexShrink:0 }}>{ex.icon}</span>
+          <button key={i} onClick={() => setActiveEx(ex)} style={{ padding:'14px 15px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid var(--surface-3)', background:'var(--surface-1)', display:'flex', alignItems:'center', gap:12 }}>
+            <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>{ex.icon}</span>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, color:'#D8EED8', fontWeight:500, marginBottom:2 }}>{ex.title}</div>
-              <span style={{ fontSize:10, color:modeColor, fontWeight:500, background:`${modeColor}18`, padding:'2px 8px', borderRadius:10 }}>⏱ {ex.dur}</span>
+              <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text-on-dark)', fontWeight:500, marginBottom:2 }}>{ex.title}</div>
+              <span style={{ fontSize:'var(--fs-h5, 10px)', color:modeColor, fontWeight:500, background:`${modeColor}18`, padding:'2px 8px', borderRadius:10 }}>⏱ {ex.dur}</span>
             </div>
-            <span style={{ color:'rgba(180,200,180,0.25)', fontSize:14 }}>→</span>
+            <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
           </button>
         ))}
       </div>
@@ -2110,10 +2110,10 @@ function QuickExerciseModal({ quickRitual, onClose, onToggleRitual }) {
 
   return (
     <div
-      style={{ position:'fixed', inset:0, zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.70)', backdropFilter:'blur(10px)', padding:20 }}
+      style={{ position:'fixed', inset:0, zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--overlay)', backdropFilter:'blur(10px)', padding:20 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{ width:'100%', maxWidth:480, background:'linear-gradient(160deg,#0e1a0f 0%,#060d07 100%)', border:'1px solid rgba(150,212,133,0.13)', borderRadius:22, padding:'28px 26px', animation:'fadeUp 0.28s ease' }}>
+      <div style={{ width:'100%', maxWidth:480, background:'var(--modal-surface)', border:'1px solid rgba(var(--green-rgb),0.13)', borderRadius:22, padding:'28px 26px', animation:'fadeUp 0.28s ease' }}>
         <ExerciseDetail
           exercise={exercise}
           zone={zone}
@@ -2137,26 +2137,26 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
   const handleComplete = (ritualId) => { onToggle(ritualId); setActiveRitual(null) }
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
-      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid rgba(255,255,255,0.07)', background:`linear-gradient(175deg,${zone.bg} 0%,#080E0A 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
+    <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--overlay)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
+      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,${zone.bg} 0%,#080E0A 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
         {activeRitual ? (
           <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} initialMode={initialMode} zoneAlreadyDone={rituals.some(r => completed[r.id])} />
         ) : (
           <>
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18 }}>
               <div>
-                <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, fontWeight:500, display:'block', marginBottom:4 }}>{zone.subtitle}</span>
-                <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:28, color:'#EEF0E8', fontWeight:300, lineHeight:1.05 }}>{zone.name}</h2>
+                <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, fontWeight:500, display:'block', marginBottom:4 }}>{zone.subtitle}</span>
+                <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 28px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.05 }}>{zone.name}</h2>
               </div>
               <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                 <div style={{ textAlign:'right' }}>
-                  <span style={{ fontSize:10, color:'rgba(180,200,180,0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
-                  <span style={{ fontSize:22, color:zone.accent, fontWeight:300 }}>{Math.round(pct)}<span style={{ fontSize:12, opacity:0.6 }}>%</span></span>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--text-on-dark-rgb),0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
+                  <span style={{ fontSize:'var(--fs-h2, 22px)', color:zone.accent, fontWeight:300 }}>{Math.round(pct)}<span style={{ fontSize:'var(--fs-h5, 12px)', opacity:0.6 }}>%</span></span>
                 </div>
-                <button onClick={onClose} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+                <button onClick={onClose} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
               </div>
             </div>
-            <div style={{ height:3, borderRadius:2, background:'rgba(255,255,255,0.07)', marginBottom:22, overflow:'hidden' }}>
+            <div style={{ height:3, borderRadius:2, background:'var(--track)', marginBottom:22, overflow:'hidden' }}>
               <div style={{ height:'100%', borderRadius:2, background:`linear-gradient(90deg,${zone.color},${zone.accent})`, width:`${pct}%`, transition:'width 0.7s ease' }} />
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -2166,8 +2166,8 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
                 return (
                   <button key={r.id} onClick={() => { if (!isDone) setActiveRitual(r) }}
                     style={{ display:'flex', alignItems:'stretch', gap:0, padding:0, borderRadius:14,
-                      border:`1px solid ${isDone ? zone.color+'45' : 'rgba(255,255,255,0.08)'}`,
-                      background: isDone ? `${zone.color}0e` : 'rgba(255,255,255,0.03)',
+                      border:`1px solid ${isDone ? zone.color+'45' : 'var(--surface-3)'}`,
+                      background: isDone ? `${zone.color}0e` : 'var(--surface-1)',
                       cursor: isDone ? 'default' : 'pointer', textAlign:'left',
                       transition:'all 0.22s', opacity: isDone ? 0.7 : 1, overflow:'hidden' }}>
 
@@ -2178,21 +2178,21 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
                     <div style={{ flex:1, padding:'22px 18px 18px', display:'flex', flexDirection:'column', gap:10, minWidth:0 }}>
                       <div style={{
                         fontSize: fs,
-                        color: isDone ? 'rgba(200,230,200,0.70)' : '#EEF0E8',
+                        color: isDone ? 'rgba(var(--text-on-dark-rgb),0.70)' : 'var(--text-on-dark)',
                         fontWeight: 300,
                         lineHeight: 1.3,
                         letterSpacing: fs >= 20 ? '-0.02em' : '-0.01em',
                         fontFamily: "'Jost', sans-serif",
                       }}>{r.text}</div>
                       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                        <span style={{ fontSize:10, color: isDone ? zone.color+'aa' : 'rgba(180,200,180,0.25)', letterSpacing:'0.04em' }}>
+                        <span style={{ fontSize:'var(--fs-h5, 10px)', color: isDone ? zone.color+'aa' : 'rgba(var(--text-on-dark-rgb),0.25)', letterSpacing:'0.04em' }}>
                           {isDone ? '✓ Complété' : `${r.icon}  Explorer →`}
                         </span>
                         <div style={{ width:20, height:20, borderRadius:'50%',
-                          border:`1.5px solid ${isDone ? zone.color : 'rgba(255,255,255,0.15)'}`,
+                          border:`1.5px solid ${isDone ? zone.color : 'var(--separator)'}`,
                           background: isDone ? `${zone.color}30` : 'transparent',
                           display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          {isDone && <span style={{ fontSize:9, color:zone.accent, fontWeight:700 }}>✓</span>}
+                          {isDone && <span style={{ fontSize:'var(--fs-h5, 9px)', color:zone.accent, fontWeight:700 }}>✓</span>}
                         </div>
                       </div>
                     </div>
@@ -2200,7 +2200,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
                 )
               })}
             </div>
-            <button onClick={onClose} style={{ marginTop:22, width:'100%', padding:'13px', borderRadius:12, border:`1px solid ${zone.color}40`, background:`${zone.color}10`, color:zone.accent, fontSize:13, fontWeight:500, letterSpacing:'0.06em', cursor:'pointer', fontFamily:"'Jost',sans-serif", transition:'all 0.2s' }}>
+            <button onClick={onClose} style={{ marginTop:22, width:'100%', padding:'13px', borderRadius:12, border:`1px solid ${zone.color}40`, background:`${zone.color}10`, color:zone.accent, fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'0.06em', cursor:'pointer', fontFamily:"'Jost',sans-serif", transition:'all 0.2s' }}>
               ✓ Enregistrer
             </button>
           </>
@@ -2275,26 +2275,26 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   // ── Écran de résultat ────────────────────────────────────────────────────────
   if (result) {
     const { deg, recommendation } = result
-    const ZONE_COLORS = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
+    const ZONE_COLORS = { roots:'var(--zone-roots)', stem:'var(--zone-stem)', leaves:'var(--zone-breath)', flowers:'var(--zone-flowers)', breath:'var(--lumens)' }
     const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
     return (
-      <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(6,14,7,0.97)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
+      <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
         <div style={{ textAlign:'center', maxWidth:380, width:'100%', animation:'fadeUp 0.5s ease both' }}>
 
           {/* Icône */}
-          <div style={{ fontSize:48, marginBottom:20 }}>
+          <div style={{ fontSize:'var(--fs-emoji-lg, 48px)', marginBottom:20 }}>
             {recommendation.type === 'good' ? '✨' : '🌿'}
           </div>
 
           {/* Message principal */}
-          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:26, color:'#EEF0E8', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
             {recommendation.message}
           </h2>
 
-          <div style={{ width:40, height:1, background:'rgba(200,168,130,0.3)', margin:'16px auto' }} />
+          <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
 
           {/* Suggestion */}
-          <p style={{ color:'rgba(180,200,180,0.6)', fontSize:13, lineHeight:1.8, marginBottom:28, fontStyle:'italic' }}>
+          <p style={{ color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.8, marginBottom:28, fontStyle:'italic' }}>
             {recommendation.sub}
           </p>
 
@@ -2302,15 +2302,15 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
           {recommendation.zones.length > 0 && (
             <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:32, flexWrap:'wrap' }}>
               {recommendation.zones.map(zoneId => {
-                const color = ZONE_COLORS[zoneId] ?? '#96d48a'
+                const color = ZONE_COLORS[zoneId] ?? 'var(--green)'
                 const name  = ZONE_NAMES[zoneId] ?? zoneId
                 const degVal = deg[zoneId] ?? 50
                 return (
                   <div key={zoneId} style={{ padding:'8px 16px', borderRadius:50, background:`${color}15`, border:`1px solid ${color}50`, display:'flex', alignItems:'center', gap:8 }}>
-                    <div style={{ width:28, height:4, borderRadius:2, background:'rgba(255,255,255,0.1)', overflow:'hidden' }}>
+                    <div style={{ width:28, height:4, borderRadius:2, background:'var(--surface-3)', overflow:'hidden' }}>
                       <div style={{ height:'100%', width:`${100 - degVal}%`, background:color, borderRadius:2 }} />
                     </div>
-                    <span style={{ fontSize:12, color, fontWeight:500 }}>{name}</span>
+                    <span style={{ fontSize:'var(--fs-h5, 12px)', color, fontWeight:500 }}>{name}</span>
                   </div>
                 )
               })}
@@ -2320,13 +2320,13 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
           {/* CTA */}
           <button
             onClick={() => { onComplete(result.deg, {}); onDismiss?.() }}
-            style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(150,212,133,0.35)', background:'rgba(150,212,133,0.1)', color:'#96d48a', fontSize:13, cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, fontFamily:"'Jost',sans-serif" }}
+            style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(var(--green-rgb),0.35)', background:'rgba(var(--green-rgb),0.1)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, fontFamily:"'Jost',sans-serif" }}
           >
             Voir mes rituels du jour →
           </button>
           <button
             onClick={onSkip}
-            style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(180,200,180,0.3)', fontSize:12, cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
+            style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--text-on-dark-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
           >
             Fermer
           </button>
@@ -2337,17 +2337,17 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
 
   // Écran d'accueil
   if (step === -1) return (
-    <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(6,14,7,0.96)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
-      <button onClick={onSkip} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1, flexShrink:0 }} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:13, cursor:'pointer', lineHeight:1 }}>✕</button>
+    <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
+      <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1 }}>✕</button>
       <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
-        <div style={{ fontSize:52, marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
-        <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:36, color:'#EEF0E8', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'#C8A882' }}>sentez-vous</em> aujourd'hui ?</h2>
-        <div style={{ width:40, height:1, background:'rgba(200,168,130,0.3)', margin:'16px auto' }} />
-        <p style={{ color:'rgba(180,200,180,0.5)', fontSize:13, lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
-        <p style={{ color:'rgba(180,200,180,0.3)', fontSize:11.5, lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
-        <button onClick={startQuiz} style={{ padding:'13px 40px', borderRadius:50, border:'1px solid rgba(200,168,130,0.35)', background:'rgba(200,168,130,0.1)', color:'#C8A882', fontSize:13, cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:10 }}>Commencer le bilan</button>
-        <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(180,200,180,0.3)', fontSize:12, cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
-        <p style={{ color:'rgba(180,200,180,0.2)', fontSize:10, marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
+        <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
+        <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
+        <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
+        <p style={{ color:'rgba(var(--text-on-dark-rgb),0.5)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
+        <p style={{ color:'rgba(var(--text-on-dark-rgb),0.3)', fontSize:'var(--fs-h5, 11px)', lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
+        <button onClick={startQuiz} style={{ padding:'13px 40px', borderRadius:50, border:'1px solid rgba(var(--gold-warm-rgb),0.35)', background:'rgba(var(--gold-warm-rgb),0.1)', color:'var(--gold-warm)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:10 }}>Commencer le bilan</button>
+        <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--text-on-dark-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
+        <p style={{ color:'rgba(var(--text-on-dark-rgb),0.2)', fontSize:'var(--fs-h5, 10px)', marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
       </div>
     </div>
   )
@@ -2357,29 +2357,29 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   const progress = (step + 1) / PLANT_QUESTIONS.length
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:500, background:'linear-gradient(170deg,#060E07 0%,#080E0A 60%,#060810 100%)', display:'flex', flexDirection:'column' }}>
-      <div style={{ height:2, background:'rgba(255,255,255,0.05)', flexShrink:0 }}>
+    <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', display:'flex', flexDirection:'column' }}>
+      <div style={{ height:2, background:'var(--surface-2)', flexShrink:0 }}>
         <div style={{ height:'100%', width:`${progress*100}%`, background:`linear-gradient(90deg,${zone.color},${zone.accent})`, borderRadius:'0 1px 1px 0', transition:'width 0.5s ease' }} />
       </div>
       <div style={{ padding:'16px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <span style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
+        <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:11, color:'rgba(180,200,180,0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
-          <button onClick={onSkip} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(180,200,180,0.6)', fontSize:12, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
+          <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         </div>
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
-        <div style={{ fontSize:36, marginBottom:12 }}>{q.icon}</div>
-        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:24, color:'#EEF0E8', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
-        <p style={{ fontSize:12, color:'rgba(180,200,180,0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
+        <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom:12 }}>{q.icon}</div>
+        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 24px)', color:'var(--text-on-dark)', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
+        <p style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {q.answers.map((ans, i) => {
             const sel = selected === i
             return (
-              <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color+'55' : 'rgba(255,255,255,0.07)'}`, background: sel ? 'rgba(60,160,80,0.08)' : 'rgba(255,255,255,0.025)', boxShadow: sel ? `0 0 0 1px ${zone.color}30` : 'none', transition:'all 0.18s ease' }}>
-                <span style={{ fontSize:18 }}>{ans.emoji}</span>
-                <span style={{ flex:1, fontSize:13, color: sel ? '#D8EED8' : 'rgba(190,210,190,0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
-                <div style={{ width:18, height:18, borderRadius:'50%', border:`1.5px solid ${sel ? zone.color : 'rgba(255,255,255,0.15)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
+              <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color+'55' : 'var(--track)'}`, background: sel ? 'rgba(var(--green-rgb),0.08)' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}30` : 'none', transition:'all 0.18s ease' }}>
+                <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{ans.emoji}</span>
+                <span style={{ flex:1, fontSize:'var(--fs-h4, 13px)', color: sel ? 'var(--text-on-dark)' : 'rgba(var(--text-on-dark-rgb),0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
+                <div style={{ width:18, height:18, borderRadius:'50%', border:`1.5px solid ${sel ? zone.color : 'var(--separator)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
                   {sel && <div style={{ width:6, height:6, borderRadius:'50%', background:zone.accent }} />}
                 </div>
               </button>
@@ -2388,7 +2388,7 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
         </div>
       </div>
       <div style={{ padding:'0 24px 40px', maxWidth:440, width:'100%', margin:'0 auto' }}>
-        <button onClick={next} disabled={selected === null} style={{ width:'100%', padding:14, borderRadius:12, border:`1px solid ${selected !== null ? zone.color+'40' : 'rgba(255,255,255,0.06)'}`, background: selected !== null ? 'rgba(60,160,80,0.12)' : 'rgba(255,255,255,0.03)', color: selected !== null ? zone.accent : 'rgba(255,255,255,0.2)', fontSize:13, cursor: selected !== null ? 'pointer' : 'not-allowed', fontWeight:500, letterSpacing:'0.06em', transition:'all 0.25s' }}>
+        <button onClick={next} disabled={selected === null} style={{ width:'100%', padding:14, borderRadius:12, border:`1px solid ${selected !== null ? zone.color+'40' : 'var(--surface-2)'}`, background: selected !== null ? 'rgba(var(--green-rgb),0.12)' : 'var(--surface-1)', color: selected !== null ? zone.accent : 'var(--separator)', fontSize:'var(--fs-h4, 13px)', cursor: selected !== null ? 'pointer' : 'not-allowed', fontWeight:500, letterSpacing:'0.06em', transition:'all 0.25s' }}>
           {step === PLANT_QUESTIONS.length - 1 ? 'Voir mes rituels →' : 'Suivant →'}
         </button>
       </div>
@@ -2436,17 +2436,17 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
   // Supprime l'ancien algo de fit — remplacé par CSS clamp + fondu
 
   const rec          = getBilanRecommendation(degradation)
-  const ZONE_COLORS  = { roots:'#C8894A', stem:'#5AAF78', leaves:'#78B4C8', flowers:'#C878A0', breath:'#8878C8' }
+  const ZONE_COLORS  = { roots:'var(--zone-roots)', stem:'var(--zone-stem)', leaves:'var(--zone-breath)', flowers:'var(--zone-flowers)', breath:'var(--lumens)' }
   const ZONE_NAMES   = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
-  const primaryColor = rec.zones.length > 0 ? (ZONE_COLORS[rec.zones[0]] ?? '#96d48a') : '#96d48a'
+  const primaryColor = rec.zones.length > 0 ? (ZONE_COLORS[rec.zones[0]] ?? 'var(--green)') : 'var(--green)'
   const isGood       = rec.type === 'good'
 
   return (
     <div ref={containerRef}
       style={{
         padding:'10px 14px', borderRadius:12,
-        background: isGood ? 'rgba(150,212,133,0.05)' : `${primaryColor}07`,
-        border:`1px solid ${isGood ? 'rgba(150,212,133,0.20)' : primaryColor + '30'}`,
+        background: isGood ? 'rgba(var(--green-rgb),0.05)' : `${primaryColor}07`,
+        border:`1px solid ${isGood ? 'rgba(var(--green-rgb),0.20)' : primaryColor + '30'}`,
         animation:'fadeUp 0.4s ease both',
         ...(fillHeight
           ? { flex:'1 1 0', display:'flex', flexDirection:'column', minHeight:0, overflow:'hidden' }
@@ -2456,20 +2456,20 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
 
       {/* En-tête */}
       <div className="bic-header" style={{ display:'flex', alignItems:'center', gap:8, marginBottom: (loading || insight) ? 8 : 0, flexShrink:0 }}>
-        <span style={{ fontSize:18 }}>{isGood ? '✨' : '🌿'}</span>
+        <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{isGood ? '✨' : '🌿'}</span>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:13, color: isGood ? 'rgba(150,212,133,0.90)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
+          <div style={{ fontSize:'var(--fs-h4, 13px)', color: isGood ? 'rgba(var(--green-rgb),0.90)' : primaryColor, fontWeight:600, letterSpacing:'0.04em' }}>
             {isGood ? 'Votre jardin est en équilibre' : 'Votre jardin intérieur vous parle'}
           </div>
         </div>
         {!isGood && rec.zones.length > 0 && (
           <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
-            <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
+            <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', letterSpacing:'0.05em', fontStyle:'italic', whiteSpace:'nowrap' }}>
               Zone(s) à prendre soin :
             </div>
             <div style={{ display:'flex', gap:5 }}>
               {rec.zones.map(zoneId => (
-                <span key={zoneId} style={{ fontSize:10, padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
+                <span key={zoneId} style={{ fontSize:'var(--fs-h5, 10px)', padding:'2px 8px', borderRadius:50, background:`${ZONE_COLORS[zoneId]}18`, border:`1px solid ${ZONE_COLORS[zoneId]}40`, color:ZONE_COLORS[zoneId], fontWeight:500 }}>
                   {ZONE_NAMES[zoneId]}
                 </span>
               ))}
@@ -2483,10 +2483,10 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ display:'flex', gap:3 }}>
             {[0,1,2].map(i => (
-              <div key={i} style={{ width:4, height:4, borderRadius:'50%', background: isGood ? 'rgba(150,212,133,0.5)' : primaryColor + '80', animation:'navPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.2) + 's' }} />
+              <div key={i} style={{ width:4, height:4, borderRadius:'50%', background: isGood ? 'rgba(var(--green-rgb),0.5)' : primaryColor + '80', animation:'navPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.2) + 's' }} />
             ))}
           </div>
-          <span style={{ fontSize:11, color:'rgba(180,200,180,0.35)', fontStyle:'italic' }}>Lecture de votre jardin…</span>
+          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.35)', fontStyle:'italic' }}>Lecture de votre jardin…</span>
         </div>
       )}
 
@@ -2509,7 +2509,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
       )}
 
       {!loading && error && (
-        <p style={{ fontSize:11, color:'rgba(180,200,180,0.30)', lineHeight:1.6, margin:0, fontStyle:'italic' }}>
+        <p style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.30)', lineHeight:1.6, margin:0, fontStyle:'italic' }}>
           Votre jardin a été entendu. Explorez les rituels qui vous appellent aujourd'hui.
         </p>
       )}
@@ -2668,10 +2668,10 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
         {/* En-tête section */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
           <div>
-            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'var(--text2)', marginBottom:4 }}>
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 20px)', fontWeight:400, color:'var(--text2)', marginBottom:4 }}>
               Prenez soin de vous
             </p>
-            <p style={{ fontSize:11, color:'var(--text3)', lineHeight:1.5 }}>
+            <p style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.5 }}>
               Agissez au quotidien avec vos rituels
               {hasDegradation && <span style={{ color:'var(--text3)', opacity:0.55 }}> · {doneCount}/{totalRituals} accomplis</span>}
             </p>
@@ -2679,7 +2679,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
           {bilanDoneToday && hasDegradation && (
             <button
               onClick={() => onOpenBilan?.()}
-              style={{ fontSize:10, color:'rgba(180,200,180,0.5)', background:'none', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:36, touchAction:'manipulation' }}
+              style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--text-on-dark-rgb),0.5)', background:'none', border:'1px solid var(--surface-3)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:36, touchAction:'manipulation' }}
             >
               ↺ Refaire le bilan
             </button>
@@ -2706,7 +2706,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                   padding: isMobile ? '12px 12px 10px' : '14px 14px 12px',
                   borderRadius:14, textAlign:'left', cursor:'pointer',
                   background: `linear-gradient(145deg, ${zone.color}12 0%, ${zone.bg} 60%)`,
-                  border:`1px solid ${isPriority ? zone.color + '50' : allDone ? zone.color + '35' : 'rgba(255,255,255,0.07)'}`,
+                  border:`1px solid ${isPriority ? zone.color + '50' : allDone ? zone.color + '35' : 'var(--track)'}`,
                   boxShadow: isPriority ? `0 0 18px ${zone.color}22, inset 0 1px 0 ${zone.color}18` : allDone ? `0 0 12px ${zone.color}18` : 'none',
                   width:'100%', display:'flex', flexDirection:'column', gap:0,
                   transition:'all .2s ease',
@@ -2723,26 +2723,26 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                     {/* Ligne haute : icône + nom + % alignés */}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
                       <div style={{ display:'flex', alignItems:'center', gap:8, flex:1, minWidth:0 }}>
-                        <span style={{ fontSize:22, lineHeight:1, flexShrink:0 }}>{zoneIcons[zoneId]}</span>
-                        <span style={{ fontSize:13, color: zone.accent, fontWeight:700, letterSpacing:'0.04em', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{zone.name}</span>
+                        <span style={{ fontSize:'var(--fs-h2, 22px)', lineHeight:1, flexShrink:0 }}>{zoneIcons[zoneId]}</span>
+                        <span style={{ fontSize:'var(--fs-h4, 13px)', color: zone.accent, fontWeight:700, letterSpacing:'0.04em', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{zone.name}</span>
                       </div>
                       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2, flexShrink:0, paddingLeft:8 }}>
-                        <span style={{ fontSize:18, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:10, opacity:0.6 }}>%</span></span>
-                        {allDone && <span style={{ fontSize:12, color: zone.accent }}>✓</span>}
-                        {isPriority && !allDone && <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 6px', borderRadius:10, whiteSpace:'nowrap' }}>⚡ priorité</span>}
+                        <span style={{ fontSize:'var(--fs-h3, 18px)', fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:'var(--fs-h5, 10px)', opacity:0.6 }}>%</span></span>
+                        {allDone && <span style={{ fontSize:'var(--fs-h5, 12px)', color: zone.accent }}>✓</span>}
+                        {isPriority && !allDone && <span style={{ fontSize:'var(--fs-h5, 8px)', color: zone.color, background:`${zone.color}22`, padding:'1px 6px', borderRadius:10, whiteSpace:'nowrap' }}>⚡ priorité</span>}
                       </div>
                     </div>
                     {/* Barre */}
-                    <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:7 }}>
+                    <div style={{ height:3, borderRadius:3, background:'var(--surface-2)', overflow:'hidden', marginBottom:7 }}>
                       <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`, borderRadius:3, transition:'width .6s ease', boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none' }} />
                     </div>
                     {/* Compteur + flèche */}
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.28)' }}>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--border)' }}>
                         {doneCnt > 0 ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span> : <span>{doneCnt}</span>}
-                        <span style={{ color:'rgba(255,255,255,0.18)' }}>/{rituals.length}</span>
+                        <span style={{ color:'var(--separator)' }}>/{rituals.length}</span>
                       </span>
-                      <span style={{ fontSize:12, color:'rgba(255,255,255,0.20)' }}>›</span>
+                      <span style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--separator)' }}>›</span>
                     </div>
                   </>
                 ) : (
@@ -2750,25 +2750,25 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                     {/* Desktop — layout colonne original */}
                     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:10 }}>
                       <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                        <span style={{ fontSize:22, lineHeight:1 }}>{zoneIcons[zoneId]}</span>
-                        <span style={{ fontSize:13, color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
-                        <span style={{ fontSize:11, color:'rgba(255,255,255,0.30)', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>
+                        <span style={{ fontSize:'var(--fs-h2, 22px)', lineHeight:1 }}>{zoneIcons[zoneId]}</span>
+                        <span style={{ fontSize:'var(--fs-h4, 13px)', color: zone.accent, fontWeight:600, letterSpacing:'0.05em', marginTop:5 }}>{zone.name.toUpperCase()}</span>
+                        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--border)', letterSpacing:'0.02em', marginTop:2 }}>{zone.subtitle}</span>
                       </div>
                       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3 }}>
-                        <span style={{ fontSize:20, fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:11, opacity:0.6 }}>%</span></span>
-                        {isPriority && !allDone && <span style={{ fontSize:8, color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>}
-                        {allDone && <span style={{ fontSize:11, color: zone.accent }}>✓</span>}
+                        <span style={{ fontSize:'var(--fs-h2, 20px)', fontFamily:"'Cormorant Garamond',serif", color: zone.accent, fontWeight:600, lineHeight:1 }}>{health}<span style={{ fontSize:'var(--fs-h5, 11px)', opacity:0.6 }}>%</span></span>
+                        {isPriority && !allDone && <span style={{ fontSize:'var(--fs-h5, 8px)', color: zone.color, background:`${zone.color}22`, padding:'1px 5px', borderRadius:10, letterSpacing:'0.04em', whiteSpace:'nowrap' }}>Priorité</span>}
+                        {allDone && <span style={{ fontSize:'var(--fs-h5, 11px)', color: zone.accent }}>✓</span>}
                       </div>
                     </div>
-                    <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.06)', overflow:'hidden', marginBottom:6 }}>
+                    <div style={{ height:3, borderRadius:3, background:'var(--surface-2)', overflow:'hidden', marginBottom:6 }}>
                       <div style={{ height:'100%', width:`${health}%`, background:`linear-gradient(90deg, ${zone.color}70, ${zone.color})`, borderRadius:3, transition:'width .6s ease', boxShadow: health > 50 ? `0 0 6px ${zone.color}80` : 'none' }} />
                     </div>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.25)' }}>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--border)' }}>
                         {doneCnt > 0 ? <span style={{ color: zone.color + 'cc' }}>{doneCnt}</span> : <span>{doneCnt}</span>}
-                        <span style={{ color:'rgba(255,255,255,0.18)' }}>/{rituals.length} rituels</span>
+                        <span style={{ color:'var(--separator)' }}>/{rituals.length} rituels</span>
                       </span>
-                      <span style={{ fontSize:11, color:'rgba(255,255,255,0.18)' }}>›</span>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--separator)' }}>›</span>
                     </div>
                   </>
                 )}
@@ -2784,37 +2784,37 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                   position:'relative', overflow:'hidden',
                   padding: isMobile ? '14px 14px 12px' : '16px 16px 14px',
                   borderRadius:14, textAlign:'left', cursor:'pointer',
-                  background:'linear-gradient(160deg, rgba(44,34,8,0.97) 0%, rgba(28,22,6,0.99) 100%)',
-                  border:'1px solid rgba(232,196,100,0.45)',
-                  boxShadow:'0 2px 24px rgba(232,196,100,0.14), 0 1px 0 rgba(255,230,120,0.12) inset',
+                  background:'var(--modal-surface)',
+                  border:'1px solid rgba(var(--gold-rgb),0.45)',
+                  boxShadow:'0 2px 24px rgba(var(--gold-rgb),0.14), 0 1px 0 rgba(var(--gold-rgb),0.12) inset',
                   width:'100%', display:'flex', flexDirection:'column', gap:0,
                   transition:'all .25s ease',
                 }}
               >
-                <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 0%, rgba(232,196,100,0.14) 0%, transparent 65%)', pointerEvents:'none' }} />
-                <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, transparent, rgba(255,222,100,0.35), transparent)', pointerEvents:'none' }} />
+                <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 30% 0%, rgba(var(--gold-rgb),0.14) 0%, transparent 65%)', pointerEvents:'none' }} />
+                <div style={{ position:'absolute', top:0, left:0, right:0, height:1, background:'linear-gradient(90deg, transparent, rgba(var(--gold-rgb),0.35), transparent)', pointerEvents:'none' }} />
 
                 {/* Ligne haute icône + badge : desktop uniquement */}
                 {!isMobile && (
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-                  <div style={{ width:36, height:36, borderRadius:'50%', flexShrink:0, background:'rgba(232,196,100,0.14)', border:'1px solid rgba(232,196,100,0.40)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 12px rgba(232,196,100,0.22)' }}>
+                  <div style={{ width:36, height:36, borderRadius:'50%', flexShrink:0, background:'rgba(var(--gold-rgb),0.14)', border:'1px solid rgba(var(--gold-rgb),0.40)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 0 12px rgba(var(--gold-rgb),0.22)' }}>
                     <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
-                      <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
-                      <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
-                      <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
-                      <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
-                      <line x1="10" y1="2" x2="10" y2="3.2" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                      <line x1="10" y1="16.8" x2="10" y2="18" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                      <line x1="2" y1="10" x2="3.2" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
-                      <line x1="16.8" y1="10" x2="18" y2="10" stroke="rgba(255,222,100,0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <circle cx="10" cy="10" r="8.5" stroke="rgba(var(--gold-rgb),0.85)" strokeWidth="1.4"/>
+                      <circle cx="10" cy="10" r="1.2" fill="rgba(var(--gold-rgb),0.90)"/>
+                      <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(var(--gold-rgb),0.90)" strokeWidth="1.4" strokeLinecap="round"/>
+                      <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(var(--gold-rgb),0.70)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="10" y1="2" x2="10" y2="3.2" stroke="rgba(var(--gold-rgb),0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="10" y1="16.8" x2="10" y2="18" stroke="rgba(var(--gold-rgb),0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="2" y1="10" x2="3.2" y2="10" stroke="rgba(var(--gold-rgb),0.45)" strokeWidth="1.2" strokeLinecap="round"/>
+                      <line x1="16.8" y1="10" x2="18" y2="10" stroke="rgba(var(--gold-rgb),0.45)" strokeWidth="1.2" strokeLinecap="round"/>
                     </svg>
                   </div>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:2 }}>
-                    <span style={{ fontSize:9, color:'rgba(255,200,60,0.88)', fontWeight:600, background:'rgba(232,196,100,0.12)', border:'1px solid rgba(232,196,100,0.28)', padding:'3px 8px', borderRadius:20, letterSpacing:'0.06em', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4 }}>
-                      <span style={{ fontSize:11 }}>{quickRitual.ritualIcon}</span>
+                    <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--gold-rgb),0.88)', fontWeight:600, background:'rgba(var(--gold-rgb),0.12)', border:'1px solid rgba(var(--gold-rgb),0.28)', padding:'3px 8px', borderRadius:20, letterSpacing:'0.06em', whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:4 }}>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)' }}>{quickRitual.ritualIcon}</span>
                       <span>1–3 min</span>
                     </span>
-                    <span style={{ fontSize:8, color:'rgba(232,196,100,0.40)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
+                    <span style={{ fontSize:'var(--fs-h5, 8px)', color:'rgba(var(--gold-rgb),0.40)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
                   </div>
                 </div>
                 )}
@@ -2823,30 +2823,30 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
                   /* Mobile : horloge + titre sur ligne 1, zone + restantes sur ligne 2 */
                   <div style={{ marginBottom:8 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                      <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'rgba(232,196,100,0.14)', border:'1px solid rgba(232,196,100,0.40)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'rgba(var(--gold-rgb),0.14)', border:'1px solid rgba(var(--gold-rgb),0.40)', display:'flex', alignItems:'center', justifyContent:'center' }}>
                         <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                          <circle cx="10" cy="10" r="8.5" stroke="rgba(255,222,100,0.85)" strokeWidth="1.4"/>
-                          <circle cx="10" cy="10" r="1.2" fill="rgba(255,222,100,0.90)"/>
-                          <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(255,222,100,0.90)" strokeWidth="1.4" strokeLinecap="round"/>
-                          <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(255,222,100,0.70)" strokeWidth="1.2" strokeLinecap="round"/>
+                          <circle cx="10" cy="10" r="8.5" stroke="rgba(var(--gold-rgb),0.85)" strokeWidth="1.4"/>
+                          <circle cx="10" cy="10" r="1.2" fill="rgba(var(--gold-rgb),0.90)"/>
+                          <line x1="10" y1="10" x2="10" y2="4.5" stroke="rgba(var(--gold-rgb),0.90)" strokeWidth="1.4" strokeLinecap="round"/>
+                          <line x1="10" y1="10" x2="13.8" y2="12.2" stroke="rgba(var(--gold-rgb),0.70)" strokeWidth="1.2" strokeLinecap="round"/>
                         </svg>
                       </div>
-                      <span style={{ fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--gold)', lineHeight:1.2 }}>Une action rapide</span>
+                      <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--gold)', lineHeight:1.2 }}>Une action rapide</span>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                      <span style={{ fontSize:12, fontWeight:600, color:'var(--gold-warm)' }}>{quickRitual.zoneName}</span>
-                      <span style={{ fontSize:9, color:'rgba(232,196,100,0.45)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
+                      <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:600, color:'var(--gold-warm)' }}>{quickRitual.zoneName}</span>
+                      <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--gold-rgb),0.45)', letterSpacing:'0.04em' }}>{quickZonesRemaining}/5 restantes</span>
                     </div>
                   </div>
                 ) : (
                   /* Desktop : layout colonne original */
                   <div style={{ marginBottom:8 }}>
-                    <div style={{ fontSize:12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--gold)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
-                    <div style={{ fontSize:13, fontWeight:600, letterSpacing:'0.01em', color:'var(--gold-warm)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
+                    <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--gold)', marginBottom:3, lineHeight:1.2 }}>Une action rapide</div>
+                    <div style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:600, letterSpacing:'0.01em', color:'var(--gold-warm)', lineHeight:1.3 }}>{quickRitual.zoneName}</div>
                   </div>
                 )}
 
-                <div style={{ height:1, background:'rgba(232,196,100,0.18)', borderRadius:1 }} />
+                <div style={{ height:1, background:'rgba(var(--gold-rgb),0.18)', borderRadius:1 }} />
               </button>
 
               {showQuickModal && (
@@ -2864,27 +2864,27 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
               padding: isMobile ? '14px 12px 12px' : '16px 16px 14px',
               borderRadius:14, textAlign:'left',
               background:'var(--bg2)',
-              border:'1px solid rgba(150,212,133,0.20)',
+              border:'1px solid rgba(var(--green-rgb),0.20)',
               width:'100%', display:'flex', flexDirection:'column', gap:0,
             }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
                 <div style={{
                   width: isMobile ? 32 : 36, height: isMobile ? 32 : 36, borderRadius:'50%',
-                  background:'rgba(150,212,133,0.12)', border:'1px solid rgba(150,212,133,0.30)',
+                  background:'rgba(var(--green-rgb),0.12)', border:'1px solid rgba(var(--green-rgb),0.30)',
                   display:'flex', alignItems:'center', justifyContent:'center',
                 }}>
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                    <circle cx="9" cy="9" r="7.5" stroke="rgba(150,212,133,0.70)" strokeWidth="1.3"/>
-                    <path d="M5.5 9.2L7.8 11.5L12.5 6.5" stroke="rgba(150,212,133,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="9" cy="9" r="7.5" stroke="rgba(var(--green-rgb),0.70)" strokeWidth="1.3"/>
+                    <path d="M5.5 9.2L7.8 11.5L12.5 6.5" stroke="rgba(var(--green-rgb),0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <span style={{ fontSize:9, color:'rgba(150,212,133,0.55)', letterSpacing:'0.06em' }}>5/5</span>
+                <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--green-rgb),0.55)', letterSpacing:'0.06em' }}>5/5</span>
               </div>
-              <div style={{ fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(150,212,133,0.60)', marginBottom:3 }}>
+              <div style={{ fontSize: isMobile ? 11 : 12, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'rgba(var(--green-rgb),0.60)', marginBottom:3 }}>
                 Actions du jour
               </div>
-              <div style={{ height:1, background:'rgba(150,212,133,0.10)', marginBottom:8, borderRadius:1 }} />
-              <div style={{ fontSize: isMobile ? 10 : 11, color:'rgba(150,212,133,0.45)', lineHeight:1.4, fontStyle:'italic' }}>
+              <div style={{ height:1, background:'rgba(var(--green-rgb),0.10)', marginBottom:8, borderRadius:1 }} />
+              <div style={{ fontSize: isMobile ? 10 : 11, color:'rgba(var(--green-rgb),0.45)', lineHeight:1.4, fontStyle:'italic' }}>
                 Toutes les zones accomplies ✦
               </div>
             </div>
@@ -2936,28 +2936,28 @@ function StreakMessage({ streak }) {
   ]
   const phrase = (PHRASES.find(([k]) => streak >= k) ?? PHRASES[PHRASES.length - 1])[1]
 
-  const color = streak >= 30 ? '#e8c060'
-              : streak >= 14 ? '#c4a7f0'
-              : streak >= 7  ? '#82c8f0'
-              : streak >= 3  ? '#96d48a'
+  const color = streak >= 30 ? 'var(--gold)'
+              : streak >= 14 ? 'var(--lumens)'
+              : streak >= 7  ? 'var(--zone-breath)'
+              : streak >= 3  ? 'var(--green)'
               :                '#d4ecc8'
   const glow = streak >= 7 ? '0 0 14px ' + color + 'aa' : 'none'
 
   return (
     <div style={{ display:'flex', alignItems:'center', gap:12, marginLeft:4 }}>
       <div style={{ display:'flex', alignItems:'baseline', gap:4, flexShrink:0 }}>
-        <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:38, fontWeight:400, lineHeight:1, letterSpacing:'-1px', color, textShadow:glow }}>{streak}</span>
-        <span style={{ fontSize:11, color:'var(--text3)', paddingBottom:3 }}>j.</span>
+        <span style={{ fontFamily:"'Playfair Display','Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 38px)', fontWeight:400, lineHeight:1, letterSpacing:'-1px', color, textShadow:glow }}>{streak}</span>
+        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', paddingBottom:3 }}>j.</span>
       </div>
       {!isMobile && (
         <div style={{ display:'flex', flexDirection:'column', gap:2, overflow:'hidden', minWidth:0 }}>
           {streak > 1 && (
-            <span style={{ fontSize:11.5, color:'var(--text3)', whiteSpace:'nowrap' }}>
+            <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', whiteSpace:'nowrap' }}>
               Vous êtes à{' '}
               <strong style={{ color, fontWeight:600 }}>{streak} jour{streak > 1 ? 's' : ''} consécutifs</strong>
             </span>
           )}
-          <em className='streak-phrase' style={{ fontSize:20, fontWeight:300, fontStyle:'italic', color:'var(--text)' }}>
+          <em className='streak-phrase' style={{ fontSize:'var(--fs-h2, 20px)', fontWeight:300, fontStyle:'italic', color:'var(--text)' }}>
             {phrase}
           </em>
         </div>
@@ -3063,7 +3063,7 @@ function BoiteAGraines({ userId, inline }) {
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 15 : 16, color:'var(--green)', lineHeight:1.2 }}>
               🌱 Boîte à graines
             </div>
-            <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginTop:3 }}>
+            <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginTop:3 }}>
               Estime de soi · chaque soir
             </div>
           </div>
@@ -3073,11 +3073,11 @@ function BoiteAGraines({ userId, inline }) {
               style={{
                 display:'flex', alignItems:'center', gap:5, flexShrink:0,
                 minHeight: 44, padding:'0 14px', borderRadius:100,
-                background:'rgba(150,212,133,0.10)', border:'1px solid rgba(150,212,133,0.25)',
-                cursor:'pointer', fontSize:11, color:'var(--green)',
+                background:'rgba(var(--green-rgb),0.10)', border:'1px solid rgba(var(--green-rgb),0.25)',
+                cursor:'pointer', fontSize:'var(--fs-h5, 11px)', color:'var(--green)',
               }}
             >
-              <span style={{ fontSize:14 }}>🫙</span>
+              <span style={{ fontSize:'var(--fs-emoji-sm, 14px)' }}>🫙</span>
               <span>Voir mes graines</span>
             </div>
           )}
@@ -3085,8 +3085,8 @@ function BoiteAGraines({ userId, inline }) {
 
         {/* Contenu selon état */}
         {savedToday ? (
-          <div style={{ background:'rgba(150,212,133,0.06)', border:'1px solid rgba(150,212,133,0.15)', borderRadius:10, padding:'12px 14px' }}>
-            <div style={{ fontSize:9, color:'rgba(150,212,133,0.5)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6 }}>
+          <div style={{ background:'rgba(var(--green-rgb),0.06)', border:'1px solid rgba(var(--green-rgb),0.15)', borderRadius:10, padding:'12px 14px' }}>
+            <div style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--green-rgb),0.5)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6 }}>
               ✓ Graine du jour plantée
             </div>
             <div style={{ fontSize: isMobile ? 13 : 13, color:'var(--text2)', lineHeight:1.6, fontStyle:'italic' }}>
@@ -3095,17 +3095,17 @@ function BoiteAGraines({ userId, inline }) {
             {todayEntry?.tags?.length > 0 && (
               <div style={{ display:'flex', gap:6, marginTop:8 }}>
                 {GRAINE_TAGS.filter(t => todayEntry.tags.includes(t.id)).map(t => (
-                  <span key={t.id} style={{ fontSize:18 }}>{t.emoji}</span>
+                  <span key={t.id} style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{t.emoji}</span>
                 ))}
               </div>
             )}
-            <div style={{ fontSize:9, color:'var(--text3)', opacity:0.5, marginTop:8 }}>
+            <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', opacity:0.5, marginTop:8 }}>
               Reviens demain soir pour planter une nouvelle graine 🌿
             </div>
           </div>
         ) : (
           <>
-            <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.6, fontStyle:'italic' }}>
               {tip}
             </div>
             <textarea
@@ -3115,7 +3115,7 @@ function BoiteAGraines({ userId, inline }) {
               maxLength={400}
               style={{
                 width: '100%', boxSizing: 'border-box',
-                background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(150,212,133,0.15)',
+                background: 'var(--surface-3)', border: '1px solid rgba(var(--green-rgb),0.15)',
                 borderRadius: 9, padding: '10px 12px', resize: 'none',
                 height: isMobile ? 96 : 80,
                 fontSize: isMobile ? 14 : 12,
@@ -3133,30 +3133,29 @@ function BoiteAGraines({ userId, inline }) {
                     display:'flex', alignItems:'center', justifyContent:'center', gap:6,
                     minHeight:44, padding:'0 16px', borderRadius:100,
                     fontSize: isMobile ? 13 : 12, cursor:'pointer',
-                    background: tags.includes(t.id) ? 'rgba(255,100,100,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${tags.includes(t.id) ? 'rgba(255,100,100,0.35)' : 'rgba(255,255,255,0.08)'}`,
-                    color: tags.includes(t.id) ? 'rgba(255,180,180,0.9)' : 'var(--text3)',
+                    background: tags.includes(t.id) ? 'rgba(var(--red-rgb),0.12)' : 'var(--surface-2)',
+                    border: `1px solid ${tags.includes(t.id) ? 'rgba(var(--red-rgb),0.35)' : 'var(--surface-3)'}`,
+                    color: tags.includes(t.id) ? 'rgba(var(--zone-flowers-rgb),0.9)' : 'var(--text3)',
                     transition:'all .15s', userSelect:'none', WebkitTapHighlightColor:'transparent',
                   }}
                 >
-                  <span style={{ fontSize:18 }}>{t.emoji}</span>
-                  <span style={{ fontSize:11 }}>{t.label}</span>
+                  <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{t.emoji}</span>
+                  <span style={{ fontSize:'var(--fs-h5, 11px)' }}>{t.label}</span>
                 </div>
               ))}
             </div>
 
             {/* Footer */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-              <span style={{ fontSize:9, color:'var(--text3)', opacity:0.5, flex:1 }}>
+              <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', opacity:0.5, flex:1 }}>
                 {text.length > 0 ? `${text.length}/400` : 'Privé · visible uniquement par vous'}
               </span>
               <button
                 onClick={handleSave}
                 disabled={!text.trim() || saving}
                 style={{
-                  minHeight: 44, padding:'0 22px', borderRadius: 9, fontSize: 13,
-                  background: text.trim() ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: `1px solid ${text.trim() ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                  minHeight: 44, padding:'0 22px', borderRadius: 9, fontSize:'var(--fs-h4, 13px)', background: text.trim() ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-2)',
+                  border: `1px solid ${text.trim() ? 'rgba(var(--green-rgb),0.4)' : 'var(--surface-3)'}`,
                   color: text.trim() ? 'var(--cream)' : 'var(--text3)',
                   cursor: text.trim() ? 'pointer' : 'default',
                   fontFamily: 'Jost, sans-serif', transition: 'all .15s',
@@ -3175,7 +3174,7 @@ function BoiteAGraines({ userId, inline }) {
       {showModal && (
         <div
           style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 300,
+            position: 'fixed', inset: 0, background: 'var(--overlay)', zIndex: 300,
             display: 'flex',
             alignItems: isMobile ? 'flex-end' : 'center',
             justifyContent: 'center',
@@ -3187,7 +3186,7 @@ function BoiteAGraines({ userId, inline }) {
             onClick={e => e.stopPropagation()}
             style={{
               background: 'linear-gradient(160deg, var(--bg2) 0%, var(--bg) 100%)',
-              border: '1px solid rgba(150,212,133,0.25)',
+              border: '1px solid rgba(var(--green-rgb),0.25)',
               borderRadius: isMobile ? '18px 18px 0 0' : 18,
               padding: isMobile ? '20px 18px 32px' : 28,
               width: '100%', maxWidth: isMobile ? '100%' : 480,
@@ -3197,7 +3196,7 @@ function BoiteAGraines({ userId, inline }) {
           >
             {/* Handle mobile drag indicator */}
             {isMobile && (
-              <div style={{ width:40, height:4, borderRadius:2, background:'rgba(255,255,255,0.15)', margin:'-4px auto 4px' }} />
+              <div style={{ width:40, height:4, borderRadius:2, background:'var(--separator)', margin:'-4px auto 4px' }} />
             )}
 
             {/* Header modal */}
@@ -3206,19 +3205,19 @@ function BoiteAGraines({ userId, inline }) {
                 <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 24, color:'var(--cream)', lineHeight:1.2 }}>
                   🫙 Mes graines
                 </div>
-                <div style={{ fontSize:11, color:'var(--text3)', marginTop:4 }}>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginTop:4 }}>
                   {graines.length} réussite{graines.length > 1 ? 's' : ''} semée{graines.length > 1 ? 's' : ''}
                 </div>
               </div>
               <div
                 onClick={() => setShowModal(false)}
-                style={{ minWidth:44, minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, color:'var(--text3)', cursor:'pointer' }}
+                style={{ minWidth:44, minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-h3, 18px)', color:'var(--text3)', cursor:'pointer' }}
               >✕</div>
             </div>
 
             {/* Message d'ancrage */}
             <div style={{
-              background: 'rgba(150,212,133,0.06)', border: '1px solid rgba(150,212,133,0.15)',
+              background: 'rgba(var(--green-rgb),0.06)', border: '1px solid rgba(var(--green-rgb),0.15)',
               borderRadius: 10, padding: '10px 14px',
               fontSize: isMobile ? 13 : 12, color: 'var(--text3)', lineHeight: 1.7, fontStyle: 'italic',
             }}>
@@ -3228,10 +3227,10 @@ function BoiteAGraines({ userId, inline }) {
             {/* Liste des graines */}
             <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, flex: 1, WebkitOverflowScrolling:'touch' }}>
               {loadingG && (
-                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:12, padding:20 }}>Chargement…</div>
+                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:'var(--fs-h5, 12px)', padding:20 }}>Chargement…</div>
               )}
               {!loadingG && graines.length === 0 && (
-                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:12, fontStyle:'italic', padding:20 }}>
+                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:'var(--fs-h5, 12px)', fontStyle:'italic', padding:20 }}>
                   Aucune graine pour l'instant — reviens ce soir 🌙
                 </div>
               )}
@@ -3242,15 +3241,15 @@ function BoiteAGraines({ userId, inline }) {
                   <div key={g.id} style={{
                     padding: isMobile ? '12px' : '12px 14px',
                     background: i === 0 && today === g.created_at?.slice(0,10)
-                      ? 'rgba(150,212,133,0.08)'
-                      : 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${i === 0 && today === g.created_at?.slice(0,10) ? 'rgba(150,212,133,0.2)' : 'rgba(255,255,255,0.06)'}`,
+                      ? 'rgba(var(--green-rgb),0.08)'
+                      : 'var(--surface-1)',
+                    border: `1px solid ${i === 0 && today === g.created_at?.slice(0,10) ? 'rgba(var(--green-rgb),0.2)' : 'var(--surface-2)'}`,
                     borderRadius: 10,
                   }}>
-                    <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:5 }}>
+                    <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:5 }}>
                       {label}
                       {i === 0 && today === g.created_at?.slice(0,10) && (
-                        <span style={{ marginLeft:8, color:'rgba(150,212,133,0.6)' }}>· aujourd'hui</span>
+                        <span style={{ marginLeft:8, color:'rgba(var(--green-rgb),0.6)' }}>· aujourd'hui</span>
                       )}
                     </div>
                     <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -3260,7 +3259,7 @@ function BoiteAGraines({ userId, inline }) {
                       {g.tags?.length > 0 && (
                         <div style={{ display:'flex', gap:4, flexShrink:0 }}>
                           {GRAINE_TAGS.filter(t => g.tags.includes(t.id)).map(t => (
-                            <span key={t.id} title={t.label} style={{ fontSize:22 }}>{t.emoji}</span>
+                            <span key={t.id} title={t.label} style={{ fontSize:'var(--fs-emoji-md, 22px)' }}>{t.emoji}</span>
                           ))}
                         </div>
                       )}
@@ -3273,7 +3272,7 @@ function BoiteAGraines({ userId, inline }) {
             {/* Bas de modal — bouton fermer */}
             <div
               onClick={() => setShowModal(false)}
-              style={{ textAlign:'center', minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:9, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', fontSize:12, color:'rgba(238,232,218,0.4)', cursor:'pointer' }}
+              style={{ textAlign:'center', minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:9, background:'var(--surface-2)', border:'1px solid var(--surface-3)', fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.4)', cursor:'pointer' }}
             >
               Fermer
             </div>
@@ -3318,7 +3317,7 @@ function WakeUpParticle({ x, y, color, char, vx: initVx, vy: initVy, dur: initDu
   if (char) return (
     <div style={{
       position:'fixed', left: pos.x - 10, top: pos.y - 10,
-      fontSize:18, opacity: pos.o, pointerEvents:'none', zIndex:9999,
+      fontSize:'var(--fs-emoji-md, 18px)', opacity: pos.o, pointerEvents:'none', zIndex:9999,
       transform:`rotate(${pos.rot}rad)`, transition:'none', userSelect:'none',
     }}>{char}</div>
   )
@@ -3390,7 +3389,7 @@ function EgregoreCard({ intention, progress, isMobile, onJoin, onBurst }) {
     <div style={{
       borderRadius:16,
       border:`1px solid ${isDone ? 'var(--greenT)' : 'var(--border2)'}`,
-      background: isDone ? 'var(--green3)' : 'rgba(255,255,255,0.02)',
+      background: isDone ? 'var(--green3)' : 'var(--surface-1)',
       transition:'all .3s',
       overflow:'hidden',
     }}>
@@ -3398,10 +3397,10 @@ function EgregoreCard({ intention, progress, isMobile, onJoin, onBurst }) {
       <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
         <div style={{
           width:42, height:42, borderRadius:13,
-          background: isDone ? 'var(--green3)' : 'rgba(255,255,255,0.06)',
+          background: isDone ? 'var(--green3)' : 'var(--surface-2)',
           border:`1px solid ${isDone ? 'var(--greenT)' : 'var(--border)'}`,
           display:'flex', alignItems:'center', justifyContent:'center',
-          fontSize:20, flexShrink:0,
+          fontSize:'var(--fs-emoji-md, 20px)', flexShrink:0,
         }}>
           {isDone ? '✓' : '🌸'}
         </div>
@@ -3431,14 +3430,13 @@ function EgregoreCard({ intention, progress, isMobile, onJoin, onBurst }) {
           <button
             onClick={() => setOpen(o => !o)}
             style={{
-              background: isDone ? 'rgba(255,255,255,0.04)' : 'var(--green3)',
+              background: isDone ? 'var(--surface-2)' : 'var(--green3)',
               border:`1px solid ${isDone ? 'var(--border2)' : 'var(--greenT)'}`,
               borderRadius:100,
               width:32, height:32,
               display:'flex', alignItems:'center', justifyContent:'center',
               cursor:'pointer', flexShrink:0,
-              fontSize:14,
-              color: isDone ? 'var(--text3)' : 'var(--gold)',
+              fontSize:'var(--fs-h4, 14px)', color: isDone ? 'var(--text3)' : 'var(--gold)',
               transition:'transform .25s',
               transform: open ? 'rotate(180deg)' : 'none',
             }}
@@ -3458,7 +3456,7 @@ function EgregoreCard({ intention, progress, isMobile, onJoin, onBurst }) {
             whiteSpace:'nowrap',
           }}>Rejoindre</button>
         )}
-        {isDone && <span style={{ fontSize:18, color:'var(--green)' }}>✓</span>}
+        {isDone && <span style={{ fontSize:'var(--fs-h3, 18px)', color:'var(--green)' }}>✓</span>}
       </div>
 
       {/* Accordéon — description complète */}
@@ -3686,13 +3684,13 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
     } catch(e) { console.warn('egregore', e) }
   }
 
-  const zColor = suggestedRitual?.zoneColor ?? '#96d485'
+  const zColor = suggestedRitual?.zoneColor ?? 'var(--green)'
   const [particles, setParticles] = useState([])
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:500, background:'rgba(0,0,0,0.80)', backdropFilter: isMobile ? 'none' : 'blur(10px)', display:'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent:'center', padding: isMobile ? 0 : 20 }} onClick={e => { if (e.target === e.currentTarget) doClose() }}>
+    <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay)', backdropFilter: isMobile ? 'none' : 'blur(10px)', display:'flex', alignItems: isMobile ? 'flex-end' : 'center', justifyContent:'center', padding: isMobile ? 0 : 20 }} onClick={e => { if (e.target === e.currentTarget) doClose() }}>
       <div style={{ width:'100%', maxWidth: isMobile ? '100%' : 560, maxHeight: isMobile ? '94vh' : '88vh', overflowY:'auto', background:'linear-gradient(170deg, var(--bg2) 0%, var(--bg) 100%)', border:'1px solid var(--greenT)', borderRadius: isMobile ? '22px 22px 0 0' : 24, borderBottom: isMobile ? 'none' : undefined, opacity: closing ? 0 : 1, transition:'opacity .3s, transform .3s', transform: closing ? (isMobile ? 'translateY(30px)' : 'scale(.97)') : 'none', animation: closing ? 'none' : 'fadeUp 0.35s cubic-bezier(0.34,1.3,0.64,1)' }}>
-        {isMobile && <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 0' }}><div style={{ width:36, height:3, borderRadius:2, background:'rgba(255,255,255,.18)' }}/></div>}
+        {isMobile && <div style={{ display:'flex', justifyContent:'center', padding:'10px 0 0' }}><div style={{ width:36, height:3, borderRadius:2, background:'var(--separator)' }}/></div>}
 
         {/* Header */}
         <div style={{ padding: isMobile ? '14px 20px 0' : '26px 28px 0' }}>
@@ -3705,18 +3703,18 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 2 minutes pour prendre soin de votre jardin intérieur
               </div>
             </div>
-            <button onClick={doClose} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:22, cursor:'pointer', padding:'2px 0 0 14px', lineHeight:1, flexShrink:0 }}>x</button>
+            <button onClick={doClose} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:'var(--fs-h2, 22px)', cursor:'pointer', padding:'2px 0 0 14px', lineHeight:1, flexShrink:0 }}>x</button>
           </div>
           <div style={{ marginBottom:6 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
-              <span style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase' }}>Progression</span>
-              <span style={{ fontSize:11, fontWeight:500, color: doneCount===4 ? 'var(--green)' : 'var(--text3)' }}>{doneCount===4 ? 'Tout accompli !' : `${doneCount} / 4`}</span>
+              <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', letterSpacing:'.08em', textTransform:'uppercase' }}>Progression</span>
+              <span style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:500, color: doneCount===4 ? 'var(--green)' : 'var(--text3)' }}>{doneCount===4 ? 'Tout accompli !' : `${doneCount} / 4`}</span>
             </div>
-            <div style={{ height:3, borderRadius:3, background:'rgba(255,255,255,0.07)', overflow:'hidden' }}>
+            <div style={{ height:3, borderRadius:3, background:'var(--track)', overflow:'hidden' }}>
               <div style={{ height:'100%', borderRadius:3, width:`${(doneCount/4)*100}%`, background:'linear-gradient(90deg, var(--green), var(--green))', transition:'width .5s ease' }}/>
             </div>
           </div>
-          {confetti && <div style={{ textAlign:'center', padding:'8px 0 2px', fontSize:14, color:'var(--green)', fontStyle:'italic' }}>Magnifique — votre jardin rayonne aujourd'hui.</div>}
+          {confetti && <div style={{ textAlign:'center', padding:'8px 0 2px', fontSize:'var(--fs-h4, 14px)', color:'var(--green)', fontStyle:'italic' }}>Magnifique — votre jardin rayonne aujourd'hui.</div>}
         </div>
 
         {/* Actions */}
@@ -3728,16 +3726,16 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
             const doneZones = zoneMap.filter(zId => (PLANT_RITUALS[zId] ?? []).some(r => completedRituals?.[r.id])).length
             const remainingZones = 5 - doneZones
             return (
-          <div style={{ borderRadius:16, border:`1px solid ${progress.ritual ? zColor+'35' : 'rgba(255,255,255,0.07)'}`, background: progress.ritual ? `${zColor}08` : 'rgba(255,255,255,0.02)', overflow:'hidden', transition:'all .3s' }}>
+          <div style={{ borderRadius:16, border:`1px solid ${progress.ritual ? zColor+'35' : 'var(--track)'}`, background: progress.ritual ? `${zColor}08` : 'var(--surface-1)', overflow:'hidden', transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:42, height:42, borderRadius:13, background:`${zColor}18`, border:`1px solid ${zColor}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background:`${zColor}18`, border:`1px solid ${zColor}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-emoji-md, 20px)', flexShrink:0 }}>
                 {progress.ritual ? '✓' : (suggestedRitual?.icon ?? '🌱')}
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <span style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'var(--text3)' : 'var(--text)', fontWeight:500 }}>Mon rituel rapide</span>
                   {!progress.ritual && (
-                    <span style={{ fontSize:9, color:'rgba(238,232,218,0.35)', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.10)', borderRadius:20, padding:'1px 7px', whiteSpace:'nowrap', flexShrink:0 }}>
+                    <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--text-on-dark-rgb),0.35)', background:'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:20, padding:'1px 7px', whiteSpace:'nowrap', flexShrink:0 }}>
                       {remainingZones}/5
                     </span>
                   )}
@@ -3750,19 +3748,19 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 )}
               </div>
               {!progress.ritual && (
-                <button onClick={exerciseActive ? handleCompleteRitual : handleStartRitual} style={{ background: exerciseActive ? `${zColor}22` : `${zColor}12`, border:`1px solid ${zColor}${exerciseActive ? '55' : '28'}`, borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color: exerciseActive ? '#fff' : '#c8f0b8', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
+                <button onClick={exerciseActive ? handleCompleteRitual : handleStartRitual} style={{ background: exerciseActive ? `${zColor}22` : `${zColor}12`, border:`1px solid ${zColor}${exerciseActive ? '55' : '28'}`, borderRadius:100, padding:'7px 14px', fontSize: isMobile ? 13 : 12, color: exerciseActive ? '#fff' : 'var(--badge-lvl1)', cursor:'pointer', flexShrink:0, fontWeight:500, whiteSpace:'nowrap' }}>
                   {exerciseActive ? 'Terminer' : 'Demarrer'}
                 </button>
               )}
-              {progress.ritual && <span style={{ fontSize:18, color:zColor }}>✓</span>}
+              {progress.ritual && <span style={{ fontSize:'var(--fs-h3, 18px)', color:zColor }}>✓</span>}
             </div>
             {exerciseActive && suggestedRitual?.quick?.[0] && (
               <div style={{ margin:'0 16px 14px', padding:'14px 16px', borderRadius:12, background:`${zColor}0c`, border:`1px solid ${zColor}20` }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                  <span style={{ fontSize:18 }}>{suggestedRitual.quick[0].icon}</span>
+                  <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{suggestedRitual.quick[0].icon}</span>
                   <div>
                     <div style={{ fontSize: isMobile ? 14 : 13, color:'var(--text2)', fontWeight:500 }}>{suggestedRitual.quick[0].title}</div>
-                    <div style={{ fontSize:11, color:zColor }}>{suggestedRitual.quick[0].dur}</div>
+                    <div style={{ fontSize:'var(--fs-h5, 11px)', color:zColor }}>{suggestedRitual.quick[0].dur}</div>
                   </div>
                 </div>
                 <div style={{ fontSize: isMobile ? 13 : 12, color:'var(--text3)', lineHeight:1.65 }}>{suggestedRitual.quick[0].desc}</div>
@@ -3773,9 +3771,9 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           })()}
 
           {/* 2 Fleurs */}
-          <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? 'var(--zone-flowers)' : flowersExhausted ? 'var(--border2)' : 'var(--border2)'}`, background: progress.flowers ? 'rgba(255,255,255,0.03)' : flowersExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
+          <div style={{ borderRadius:16, border:`1px solid ${progress.flowers ? 'var(--zone-flowers)' : flowersExhausted ? 'var(--border2)' : 'var(--border2)'}`, background: progress.flowers ? 'var(--surface-1)' : flowersExhausted ? 'var(--surface-1)' : 'var(--surface-1)', opacity: flowersExhausted && !progress.flowers ? 0.45 : 1, transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:42, height:42, borderRadius:13, background: flowersExhausted && !progress.flowers ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)', border:`1px solid ${flowersExhausted && !progress.flowers ? 'var(--border2)' : 'var(--zone-flowers)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background: flowersExhausted && !progress.flowers ? 'var(--surface-2)' : 'var(--surface-3)', border:`1px solid ${flowersExhausted && !progress.flowers ? 'var(--border2)' : 'var(--zone-flowers)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-emoji-md, 20px)', flexShrink:0 }}>
                 {progress.flowers ? '✓' : flowersExhausted ? '🚫' : '💐'}
               </div>
               <div style={{ flex:1 }}>
@@ -3788,20 +3786,20 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                       : `Ces jardins ont besoin d'un peu d'énergie`}
                 </div>
               </div>
-              {progress.flowers && <span style={{ fontSize:18, color:'var(--zone-flowers)' }}>✓</span>}
+              {progress.flowers && <span style={{ fontSize:'var(--fs-h3, 18px)', color:'var(--zone-flowers)' }}>✓</span>}
             </div>
             {!progress.flowers && !flowersExhausted && weakestPeople.length > 0 && (
               <div style={{ padding:'0 16px 14px', display:'flex', flexDirection:'column', gap:10 }}>
-                <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic', lineHeight:1.6, textAlign:'center', padding:'0 4px' }}>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', lineHeight:1.6, textAlign:'center', padding:'0 4px' }}>
                   Un élan bienveillant, sans attente de retour — comme de la lumière partagée.
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                 {weakestPeople.map(p => {
                   const sent = flowersSent.has(p.id)
                   return (
-                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.04)', border:`1px solid ${sent ? 'var(--zone-flowers)' : 'var(--border2)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
-                      <span style={{ fontSize:11, fontWeight:600, color: sent ? 'var(--zone-flowers)' : 'var(--text3)', letterSpacing:'.02em' }}>{sent ? '✓' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
-                      <span style={{ fontSize:22, lineHeight:1 }}>{sent ? '🌿' : '💐'}</span>
+                    <button key={p.id} onClick={() => handleSendFlower(p.id)} style={{ flex:1, padding:'10px 8px', borderRadius:12, background: sent ? 'var(--surface-2)' : 'var(--surface-2)', border:`1px solid ${sent ? 'var(--zone-flowers)' : 'var(--border2)'}`, cursor: sent ? 'default' : 'pointer', transition:'all .2s', display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                      <span style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:600, color: sent ? 'var(--zone-flowers)' : 'var(--text3)', letterSpacing:'.02em' }}>{sent ? '✓' : `${p.vitalite ?? p.health ?? '—'}%`}</span>
+                      <span style={{ fontSize:'var(--fs-h2, 22px)', lineHeight:1 }}>{sent ? '🌿' : '💐'}</span>
                       <span style={{ fontSize: isMobile ? 10 : 9, color: sent ? 'var(--zone-flowers)' : 'var(--text3)', lineHeight:1.2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>
                         {sent ? 'Soutenu' : (p.display_name?.split(' ')[0] ?? 'Jardinier')}
                       </span>
@@ -3814,9 +3812,9 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
           </div>
 
           {/* 3 Pensee */}
-          <div style={{ borderRadius:16, border:`1px solid ${progress.thought ? 'var(--gold)' : thoughtExhausted ? 'var(--border2)' : 'var(--border2)'}`, background: progress.thought ? 'rgba(255,255,255,0.03)' : thoughtExhausted ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)', opacity: thoughtExhausted && !progress.thought ? 0.45 : 1, transition:'all .3s' }}>
+          <div style={{ borderRadius:16, border:`1px solid ${progress.thought ? 'var(--gold)' : thoughtExhausted ? 'var(--border2)' : 'var(--border2)'}`, background: progress.thought ? 'var(--surface-1)' : thoughtExhausted ? 'var(--surface-1)' : 'var(--surface-1)', opacity: thoughtExhausted && !progress.thought ? 0.45 : 1, transition:'all .3s' }}>
             <div style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:42, height:42, borderRadius:13, background: thoughtExhausted && !progress.thought ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)', border:`1px solid ${thoughtExhausted && !progress.thought ? 'var(--border2)' : 'var(--gold)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+              <div style={{ width:42, height:42, borderRadius:13, background: thoughtExhausted && !progress.thought ? 'var(--surface-2)' : 'var(--surface-3)', border:`1px solid ${thoughtExhausted && !progress.thought ? 'var(--border2)' : 'var(--gold)'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-emoji-md, 20px)', flexShrink:0 }}>
                 {progress.thought ? '✓' : thoughtExhausted ? '🚫' : '💌'}
               </div>
               <div style={{ flex:1 }}>
@@ -3836,7 +3834,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                   Lui offrir 🌿
                 </button>
               )}
-              {progress.thought && <span style={{ fontSize:18, color:'var(--gold)' }}>✓</span>}
+              {progress.thought && <span style={{ fontSize:'var(--fs-h3, 18px)', color:'var(--gold)' }}>✓</span>}
             </div>
           </div>
 
@@ -3899,7 +3897,7 @@ function useWakeUpTrigger({ userId }) {
 
 // ── Composant réutilisable : colonne fleur ───────────────────────────────────
 function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, profile, userId, setGardenTier, setShowGardenSettings, streak = 0 }) {
-  const streakColor = streak >= 30 ? '#e8c060' : streak >= 14 ? '#c4a7f0' : streak >= 7 ? '#82c8f0' : '#96d48a'
+  const streakColor = streak >= 30 ? 'var(--gold)' : streak >= 14 ? 'var(--lumens)' : streak >= 7 ? 'var(--zone-breath)' : 'var(--green)'
   return (
     <div style={{
       flex:'1 1 0', minWidth:0,
@@ -3914,21 +3912,21 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
             position:'absolute', top:10, right:10, zIndex:10,
             display:'flex', flexDirection:'column', alignItems:'center',
             padding:'4px 8px', borderRadius:10,
-            background:'rgba(10,20,12,0.65)',
+            background:'rgba(var(--overlay-dark-rgb,6,14,7),0.65)',
             border:`1px solid ${streakColor}25`,
             gap:0,
           }}>
-            <span style={{ fontSize:11, color:`${streakColor}cc`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', lineHeight:1.4 }}>👍 {streak} jour{streak > 1 ? 's' : ''}</span>
-            <span style={{ fontSize:8, color:`${streakColor}66`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', letterSpacing:'.05em', lineHeight:1.3 }}>CONSÉCUTIFS</span>
+            <span style={{ fontSize:'var(--fs-h5, 11px)', color:`${streakColor}cc`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', lineHeight:1.4 }}>👍 {streak} jour{streak > 1 ? 's' : ''}</span>
+            <span style={{ fontSize:'var(--fs-h5, 8px)', color:`${streakColor}66`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', letterSpacing:'.05em', lineHeight:1.3 }}>CONSÉCUTIFS</span>
           </div>
         )}
         <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
           <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'#e8f5e0', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'var(--text-on-dark)', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'var(--text3)', marginBottom:4 }}>%</span>
           </div>
-          <div style={{ fontSize:8, letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(150,212,133,0.55)', fontWeight:500 }}>Vitalité</div>
-          <div style={{ fontSize:9, letterSpacing:'0.08em', color:'rgba(255,255,255,0.28)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
+          <div style={{ fontSize:'var(--fs-h5, 8px)', letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(var(--green-rgb),0.55)', fontWeight:500 }}>Vitalité</div>
+          <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'0.08em', color:'var(--border)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
         </div>
       </div>
       <div style={{
@@ -3937,11 +3935,11 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
         borderTop:'1px solid var(--border2)',
         background:'var(--bg)', flexShrink:0,
       }}>
-        <span style={{ fontSize:11, color:'var(--text3)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
+        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
         {[
-          { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'#96d48a', bgU:'rgba(80,160,60,0.14)',  bdU:'rgba(100,180,80,0.30)'  },
-          { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'#82c8f0', bgU:'rgba(60,140,200,0.14)', bdU:'rgba(80,160,220,0.30)'  },
-          { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3',    colorU:'#e8c060', bgU:'rgba(200,160,40,0.14)', bdU:'rgba(220,180,60,0.30)'  },
+          { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'var(--green)', bgU:'rgba(var(--green-rgb),0.14)',  bdU:'rgba(var(--green-rgb),0.30)'  },
+          { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'var(--zone-breath)', bgU:'rgba(var(--zone-breath-rgb),0.14)', bdU:'rgba(var(--zone-stem-rgb),0.30)'  },
+          { lv:3, label:'Extra',   badge:'🌟', unlockInfo:'Atteignez le niveau 3',    colorU:'var(--gold)', bgU:'rgba(var(--gold-rgb),0.14)', bdU:'rgba(var(--gold-rgb),0.30)'  },
         ].map(cfg => (
           <LevelBadge key={cfg.lv} {...cfg}
             unlocked={(profile?.level ?? 1) >= cfg.lv || userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
@@ -3997,7 +3995,7 @@ function MessageJardin({ profile, isMobile }) {
         fontWeight:700, fontStyle:'italic',
         lineHeight:1.35, maxWidth:320, letterSpacing:'0.01em',
       }}>
-        <span style={{ color:'#96d485' }}>{namePart}</span>
+        <span style={{ color:'var(--green)' }}>{namePart}</span>
         <span style={{ color:'var(--text)' }}>{restPart}</span>
       </div>
     </div>
@@ -4209,8 +4207,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           sunriseM: data.sunrise_m ?? 0,
           sunsetH:  data.sunset_h  ?? 20,
           sunsetM:  data.sunset_m  ?? 0,
-          petalColor1: data.petal_color1 ?? '#e8789a',
-          petalColor2: data.petal_color2 ?? '#f0a8be',
+          petalColor1: data.petal_color1 ?? 'var(--zone-flowers)',
+          petalColor2: data.petal_color2 ?? 'var(--zone-flowers)',
           petalShape:  data.petal_shape  ?? 'round',
         })
       })
@@ -4222,7 +4220,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   if (isLoading) return (
     <div className="content">
     <div className="mj-layout" style={{ alignItems:'center', justifyContent:'center' }}>
-      <div style={{ fontSize:13, color:'var(--text3)', letterSpacing:'.1em' }}>Votre jardin se réveille…</div>
+      <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text3)', letterSpacing:'.1em' }}>Votre jardin se réveille…</div>
     </div>
     </div>
   )
@@ -4293,25 +4291,25 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               padding:'12px 20px', borderRadius:14, cursor:'pointer',
               marginBottom:10,
               background: timeContext === 'matin'
-                ? 'linear-gradient(135deg,rgba(232,192,96,0.15),rgba(232,192,96,0.06))'
+                ? 'linear-gradient(135deg,rgba(var(--gold-rgb),0.15),rgba(var(--gold-rgb),0.06))'
                 : timeContext === 'aprem'
-                ? 'linear-gradient(135deg,rgba(150,212,133,0.12),rgba(150,212,133,0.05))'
-                : 'linear-gradient(135deg,rgba(180,160,240,0.12),rgba(180,160,240,0.05))',
+                ? 'linear-gradient(135deg,rgba(var(--green-rgb),0.12),rgba(var(--green-rgb),0.05))'
+                : 'linear-gradient(135deg,rgba(var(--lumens-rgb),0.12),rgba(var(--lumens-rgb),0.05))',
               border: timeContext === 'matin'
-                ? '1px solid rgba(232,192,96,0.30)'
+                ? '1px solid rgba(var(--gold-rgb),0.30)'
                 : timeContext === 'aprem'
-                ? '1px solid rgba(150,212,133,0.25)'
-                : '1px solid rgba(180,160,240,0.25)',
+                ? '1px solid rgba(var(--green-rgb),0.25)'
+                : '1px solid rgba(var(--lumens-rgb),0.25)',
               WebkitTapHighlightColor:'transparent',
             }}
           >
-            <span style={{ fontSize:16 }}>⚡</span>
+            <span style={{ fontSize:'var(--fs-emoji-sm, 16px)' }}>⚡</span>
             <span style={{
-              fontSize:13, fontWeight:500, letterSpacing:'.04em',
+              fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'.04em',
               fontFamily:"'Jost',sans-serif",
-              color: timeContext === 'matin' ? '#e8c060'
-                : timeContext === 'aprem' ? '#96d485'
-                : 'rgba(180,160,240,0.9)',
+              color: timeContext === 'matin' ? 'var(--gold)'
+                : timeContext === 'aprem' ? 'var(--green)'
+                : 'rgba(var(--lumens-rgb),0.9)',
             }}>
               {timeContext === 'matin' ? 'Mon jardin en express'
                 : timeContext === 'aprem' ? 'Une micro-pause qui compte'
@@ -4344,29 +4342,29 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               {!bilanDoneToday ? (
                 <button onClick={() => onOpenBilan?.()}
                   style={{ width:'100%', padding: isMobile ? '14px 16px' : '14px 18px', borderRadius:14,
-                    border:'1px solid rgba(200,168,130,0.25)', background:'rgba(200,168,130,0.07)',
+                    border:'1px solid rgba(var(--gold-warm-rgb),0.25)', background:'rgba(var(--gold-warm-rgb),0.07)',
                     cursor:'pointer', display:'flex', alignItems:'center', gap:12, textAlign:'left',
                     minHeight: isMobile ? 56 : 'auto', flexShrink:0 }}>
                   <span style={{ fontSize: isMobile ? 26 : 24 }}>🌹</span>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize: isMobile ? 14 : 13, color:'#C8A882', fontWeight:500, marginBottom:2 }}>Faire mon bilan du jour</div>
-                    <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(180,200,180,0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
+                    <div style={{ fontSize: isMobile ? 14 : 13, color:'var(--gold-warm)', fontWeight:500, marginBottom:2 }}>Faire mon bilan du jour</div>
+                    <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(var(--text-on-dark-rgb),0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
                   </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(232,192,96,0.12)', border:'1px solid rgba(232,192,96,0.30)', fontSize:11, color:'#e8c060', fontWeight:600, flexShrink:0 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(var(--gold-rgb),0.12)', border:'1px solid rgba(var(--gold-rgb),0.30)', fontSize:'var(--fs-h5, 11px)', color:'var(--gold)', fontWeight:600, flexShrink:0 }}>
                     +3 ✦
                   </div>
                 </button>
               ) : (
                 <div>
                   <div style={{ width:'100%', padding:'12px 16px', borderRadius:14,
-                    border:'1px solid rgba(255,255,255,0.06)', background:'rgba(255,255,255,0.02)',
+                    border:'1px solid var(--surface-2)', background:'var(--surface-1)',
                     display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
-                    <span style={{ fontSize:22, filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
+                    <span style={{ fontSize:'var(--fs-emoji-md, 22px)', filter:'grayscale(1)', opacity:0.4 }}>🌹</span>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, color:'var(--text3)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
-                      <div style={{ fontSize:10, color:'var(--text3)', opacity:0.4, fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
+                      <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text3)', fontWeight:500, marginBottom:1 }}>Bilan du matin ✓</div>
+                      <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', opacity:0.4, fontStyle:'italic' }}>Demain nous ferons le point ✦</div>
                     </div>
-                    <div style={{ fontSize:14, color:'rgba(150,212,133,0.35)' }}>✓</div>
+                    <div style={{ fontSize:'var(--fs-h4, 14px)', color:'rgba(var(--green-rgb),0.35)' }}>✓</div>
                   </div>
 
                 </div>
@@ -4379,28 +4377,28 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                     display:'flex', alignItems:'center', justifyContent:'center', gap:10,
                     padding:'13px 20px', borderRadius:13, cursor:'pointer',
                     background: timeContext === 'matin'
-                      ? 'linear-gradient(135deg,rgba(232,192,96,0.14),rgba(232,192,96,0.06))'
+                      ? 'linear-gradient(135deg,rgba(var(--gold-rgb),0.14),rgba(var(--gold-rgb),0.06))'
                       : timeContext === 'aprem'
-                      ? 'linear-gradient(135deg,rgba(150,212,133,0.12),rgba(150,212,133,0.05))'
-                      : 'linear-gradient(135deg,rgba(180,160,240,0.12),rgba(180,160,240,0.05))',
+                      ? 'linear-gradient(135deg,rgba(var(--green-rgb),0.12),rgba(var(--green-rgb),0.05))'
+                      : 'linear-gradient(135deg,rgba(var(--lumens-rgb),0.12),rgba(var(--lumens-rgb),0.05))',
                     border: timeContext === 'matin'
-                      ? '1px solid rgba(232,192,96,0.32)'
+                      ? '1px solid rgba(var(--gold-rgb),0.32)'
                       : timeContext === 'aprem'
-                      ? '1px solid rgba(150,212,133,0.28)'
-                      : '1px solid rgba(180,160,240,0.28)',
+                      ? '1px solid rgba(var(--green-rgb),0.28)'
+                      : '1px solid rgba(var(--lumens-rgb),0.28)',
                     WebkitTapHighlightColor:'transparent',
                     transition:'all .18s ease',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.opacity = '.82'; e.currentTarget.style.transform = 'translateY(-1px)' }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '1';   e.currentTarget.style.transform = 'none' }}
                 >
-                  <span style={{ fontSize:16 }}>⚡</span>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 16px)' }}>⚡</span>
                   <span style={{
-                    fontSize:13, fontWeight:500, letterSpacing:'.04em',
+                    fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'.04em',
                     fontFamily:"'Jost',sans-serif",
                     color: timeContext === 'matin' ? 'var(--gold)'
                       : timeContext === 'aprem' ? 'var(--green)'
-                      : 'rgba(180,160,240,0.9)',
+                      : 'rgba(var(--lumens-rgb),0.9)',
                   }}>
                     {timeContext === 'matin' ? 'Mon jardin en express'
                       : timeContext === 'aprem' ? 'Une micro-pause qui compte'
@@ -4451,16 +4449,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                   style={{
                     display:'flex', alignItems:'center', justifyContent:'center', gap:10,
                     padding:'13px 20px', borderRadius:13, cursor:'pointer',
-                    background:'linear-gradient(135deg,rgba(150,212,133,0.12),rgba(150,212,133,0.05))',
-                    border:'1px solid rgba(150,212,133,0.28)',
+                    background:'linear-gradient(135deg,rgba(var(--green-rgb),0.12),rgba(var(--green-rgb),0.05))',
+                    border:'1px solid rgba(var(--green-rgb),0.28)',
                     WebkitTapHighlightColor:'transparent',
                     transition:'all .18s ease',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.opacity='.82'; e.currentTarget.style.transform='translateY(-1px)' }}
                   onMouseLeave={e => { e.currentTarget.style.opacity='1';   e.currentTarget.style.transform='none' }}
                 >
-                  <span style={{ fontSize:16 }}>⚡</span>
-                  <span style={{ fontSize:13, fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'var(--green)' }}>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 16px)' }}>⚡</span>
+                  <span style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'var(--green)' }}>
                     Une micro-pause qui compte
                   </span>
                 </div>
@@ -4476,7 +4474,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               {/* Mobile : fleur seule */}
               <div style={{
                 borderRadius:16, overflow:'hidden',
-                border:'1px solid rgba(150,212,133,0.08)',
+                border:'1px solid rgba(var(--green-rgb),0.08)',
                 background:'var(--bg)',
                 flexShrink:0,
               }}>
@@ -4490,7 +4488,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             <div style={{
               display:'flex', flexDirection:'row',
               alignItems:'stretch', borderRadius:16, overflow:'hidden',
-              border:'1px solid rgba(150,212,133,0.08)',
+              border:'1px solid rgba(var(--green-rgb),0.08)',
               background:'linear-gradient(160deg, var(--green3) 0%, var(--bg) 100%)',
               flexShrink:0, minHeight:360,
             }}>
@@ -4507,16 +4505,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                   style={{
                     display:'flex', alignItems:'center', justifyContent:'center', gap:10,
                     padding:'13px 20px', borderRadius:13, cursor:'pointer',
-                    background:'linear-gradient(135deg,rgba(180,160,240,0.12),rgba(180,160,240,0.05))',
-                    border:'1px solid rgba(180,160,240,0.28)',
+                    background:'linear-gradient(135deg,rgba(var(--lumens-rgb),0.12),rgba(var(--lumens-rgb),0.05))',
+                    border:'1px solid rgba(var(--lumens-rgb),0.28)',
                     WebkitTapHighlightColor:'transparent',
                     transition:'all .18s ease',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.opacity='.82'; e.currentTarget.style.transform='translateY(-1px)' }}
                   onMouseLeave={e => { e.currentTarget.style.opacity='1';   e.currentTarget.style.transform='none' }}
                 >
-                  <span style={{ fontSize:16 }}>⚡</span>
-                  <span style={{ fontSize:13, fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'rgba(180,160,240,0.9)' }}>
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 16px)' }}>⚡</span>
+                  <span style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'rgba(var(--lumens-rgb),0.9)' }}>
                     Un instant pour mon jardin
                   </span>
                 </div>
@@ -4546,7 +4544,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
         {/* ── CONFIDENTIALITÉ ── */}
         <div className="slabel" style={{ marginTop:20 }}>Confidentialité</div>
-        <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>
+        <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>
           Souhaitez-vous apparaître dans le jardin collectif ?
         </div>
         {PRIVACY_FIELDS.map(p => (

@@ -46,15 +46,15 @@ export function MaBibliotheque({ userId }) {
   const audioAchats = achats.filter(a => a.produits?.type === 'digital')
 
   if (loading) return (
-    <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic', padding:'20px 0' }}>
+    <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.30)', fontStyle:'italic', padding:'20px 0' }}>
       Chargement de votre bibliothèque…
     </div>
   )
 
   if (audioAchats.length === 0) return (
     <div style={{ textAlign:'center', padding:'32px 0' }}>
-      <div style={{ fontSize:32, opacity:.2, marginBottom:12 }}>🎧</div>
-      <div style={{ fontSize:12, color:'rgba(242,237,224,0.30)', fontStyle:'italic' }}>
+      <div style={{ fontSize:'var(--fs-emoji-lg, 32px)', opacity:.2, marginBottom:12 }}>🎧</div>
+      <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.30)', fontStyle:'italic' }}>
         Votre bibliothèque est vide.<br/>Vos achats apparaîtront ici.
       </div>
     </div>
@@ -67,35 +67,35 @@ export function MaBibliotheque({ userId }) {
         return (
           <div key={a.id} style={{
             borderRadius:14, overflow:'hidden',
-            border:'1px solid rgba(255,255,255,0.07)',
-            background:'rgba(255,255,255,0.03)',
+            border:'1px solid var(--track)',
+            background:'var(--surface-1)',
           }}>
             {/* Info produit */}
             <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px' }}>
               {/* Pochette */}
               <div style={{
                 width:52, height:52, borderRadius:10, flexShrink:0,
-                background:'rgba(180,160,240,0.10)',
-                border:'1px solid rgba(180,160,240,0.20)',
+                background:'rgba(var(--lumens-rgb),0.10)',
+                border:'1px solid rgba(var(--lumens-rgb),0.20)',
                 display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
               }}>
                 {p.image_url
                   ? <img src={p.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                  : <span style={{ fontSize:22, opacity:.5 }}>🎧</span>
+                  : <span style={{ fontSize:'var(--fs-emoji-md, 22px)', opacity:.5 }}>🎧</span>
                 }
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:14, color:'rgba(242,237,224,0.88)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
-                <div style={{ fontSize:10, color:'rgba(180,160,240,0.60)', marginTop:2, textTransform:'uppercase', letterSpacing:'.06em' }}>{p.categorie}</div>
+                <div style={{ fontSize:'var(--fs-h4, 14px)', color:'rgba(var(--text-on-dark-rgb),0.88)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
+                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--lumens-rgb),0.60)', marginTop:2, textTransform:'uppercase', letterSpacing:'.06em' }}>{p.categorie}</div>
               </div>
               {/* Bouton play/stop */}
               <button
                 onClick={() => setPlaying(playing === p.id ? null : p.id)}
                 style={{
                   width:40, height:40, borderRadius:'50%', flexShrink:0,
-                  background: playing === p.id ? 'rgba(180,160,240,0.25)' : 'rgba(180,160,240,0.10)',
-                  border:`1px solid ${playing === p.id ? 'rgba(180,160,240,0.50)' : 'rgba(180,160,240,0.25)'}`,
-                  color:'#b4a0f0', fontSize:16, cursor:'pointer',
+                  background: playing === p.id ? 'rgba(var(--lumens-rgb),0.25)' : 'rgba(var(--lumens-rgb),0.10)',
+                  border:`1px solid ${playing === p.id ? 'rgba(var(--lumens-rgb),0.50)' : 'rgba(var(--lumens-rgb),0.25)'}`,
+                  color:'var(--lumens)', fontSize:'var(--fs-emoji-sm, 16px)', cursor:'pointer',
                   display:'flex', alignItems:'center', justifyContent:'center',
                   transition:'all .2s',
                 }}
@@ -229,14 +229,14 @@ function SecureAudioPlayer({ produitId, userId, titre, onClose }) {
 
       {status === 'loading' && (
         <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 0' }}>
-          <div style={{ width:24, height:24, borderRadius:'50%', border:'2px solid rgba(180,160,240,0.30)', borderTop:'2px solid #b4a0f0', animation:'spin 1s linear infinite' }}/>
-          <div style={{ fontSize:12, color:'rgba(242,237,224,0.40)', fontStyle:'italic' }}>Chargement sécurisé…</div>
+          <div style={{ width:24, height:24, borderRadius:'50%', border:'2px solid rgba(var(--lumens-rgb),0.30)', borderTop:'2px solid var(--lumens)', animation:'spin 1s linear infinite' }}/>
+          <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.40)', fontStyle:'italic' }}>Chargement sécurisé…</div>
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       )}
 
       {status === 'error' && (
-        <div style={{ fontSize:12, color:'#e87060', padding:'10px 0' }}>✗ {errMsg}</div>
+        <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--red)', padding:'10px 0' }}>✗ {errMsg}</div>
       )}
 
       {status === 'ready' && (
@@ -244,40 +244,40 @@ function SecureAudioPlayer({ produitId, userId, titre, onClose }) {
           {/* Barre de progression cliquable */}
           <div
             onClick={seek}
-            style={{ height:4, background:'rgba(255,255,255,0.08)', borderRadius:2, cursor:'pointer', position:'relative' }}>
-            <div style={{ height:'100%', width:`${duration ? (progress/duration)*100 : 0}%`, background:'#b4a0f0', borderRadius:2, transition:'width .5s linear' }}/>
+            style={{ height:4, background:'var(--surface-3)', borderRadius:2, cursor:'pointer', position:'relative' }}>
+            <div style={{ height:'100%', width:`${duration ? (progress/duration)*100 : 0}%`, background:'var(--lumens)', borderRadius:2, transition:'width .5s linear' }}/>
           </div>
 
           {/* Contrôles */}
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
             {/* Rewind 10s */}
             <button onClick={() => audioRef.current && (audioRef.current.currentTime -= 10)}
-              style={{ background:'none', border:'none', color:'rgba(180,160,240,0.55)', fontSize:18, cursor:'pointer', padding:0 }}>⏮</button>
+              style={{ background:'none', border:'none', color:'rgba(var(--lumens-rgb),0.55)', fontSize:'var(--fs-emoji-sm, 18px)', cursor:'pointer', padding:0 }}>⏮</button>
 
             {/* Play/Pause */}
             <button onClick={togglePlay}
-              style={{ width:36, height:36, borderRadius:'50%', background:'rgba(180,160,240,0.15)', border:'1px solid rgba(180,160,240,0.35)', color:'#b4a0f0', fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              style={{ width:36, height:36, borderRadius:'50%', background:'rgba(var(--lumens-rgb),0.15)', border:'1px solid rgba(var(--lumens-rgb),0.35)', color:'var(--lumens)', fontSize:'var(--fs-emoji-sm, 16px)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
               {isPlaying ? '⏸' : '▶'}
             </button>
 
             {/* Forward 10s */}
             <button onClick={() => audioRef.current && (audioRef.current.currentTime += 10)}
-              style={{ background:'none', border:'none', color:'rgba(180,160,240,0.55)', fontSize:18, cursor:'pointer', padding:0 }}>⏭</button>
+              style={{ background:'none', border:'none', color:'rgba(var(--lumens-rgb),0.55)', fontSize:'var(--fs-emoji-sm, 18px)', cursor:'pointer', padding:0 }}>⏭</button>
 
             {/* Temps */}
-            <div style={{ fontSize:11, color:'rgba(242,237,224,0.40)', flex:1 }}>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.40)', flex:1 }}>
               {fmt(progress)} / {fmt(duration)}
             </div>
 
             {/* Volume */}
             <input type="range" min="0" max="1" step="0.05" value={volume}
               onChange={e => { const v = parseFloat(e.target.value); setVolume(v); if(audioRef.current) audioRef.current.volume = v }}
-              style={{ width:64, accentColor:'#b4a0f0' }}
+              style={{ width:64, accentColor:'var(--lumens)' }}
             />
           </div>
 
           {/* Mention anti-download */}
-          <div style={{ fontSize:9, color:'rgba(242,237,224,0.18)', letterSpacing:'.04em', textAlign:'center' }}>
+          <div style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--text-on-dark-rgb),0.18)', letterSpacing:'.04em', textAlign:'center' }}>
             Lecture protégée · Téléchargement non autorisé
           </div>
         </div>
