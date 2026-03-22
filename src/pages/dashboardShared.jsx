@@ -230,7 +230,12 @@ export function timeAgo(iso) {
   if (m < 1) return 'à l\'instant'
   if (m < 60) return `il y a ${m} min`
   if (m < 1440) return `il y a ${Math.floor(m/60)}h`
-  return 'hier'
+  const d = Math.floor(m / 1440)
+  if (d === 1) return 'hier'
+  if (d < 7) return `il y a ${d} jours`
+  if (d < 30) return `il y a ${Math.floor(d/7)} sem.`
+  if (d < 365) return `il y a ${Math.floor(d/30)} mois`
+  return `il y a ${Math.floor(d/365)} an${Math.floor(d/365) > 1 ? 's' : ''}`
 }
 
 export function formatDate(iso) {
@@ -255,7 +260,6 @@ const LUMEN_PACKS = [
 
 export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
   const [buyingPack, setBuyingPack] = useState(null)
-  const [showInfo, setShowInfo] = useState(false)
 
   async function handleBuyLumens(pack) {
     if (buyingPack) return
@@ -408,35 +412,6 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
             {total} ✦ total
           </div>
         </div>
-      </div>
-
-      {/* ── Bloc info Lumens ── */}
-      <div style={{ border:'1px solid color-mix(in srgb, var(--gold) 15%, transparent)', borderRadius:10, overflow:'hidden' }}>
-        <div
-          onClick={() => setShowInfo(p => !p)}
-          style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 12px', cursor:'pointer', background:'color-mix(in srgb, var(--gold) 5%, transparent)' }}
-        >
-          <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold)', letterSpacing:'.06em', fontWeight:500 }}>✦ Infos +</span>
-          <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold)', transition:'transform .2s', display:'inline-block', transform: showInfo ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
-        </div>
-        {showInfo && (
-          <div style={{ padding:'10px 12px 12px', display:'flex', flexDirection:'column', gap:5, background:'color-mix(in srgb, var(--gold) 3%, transparent)' }}>
-            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', lineHeight:1.6 }}>
-              Gagnez des Lumens chaque jour en vous connectant, en complétant vos rituels et en participant à la communauté.
-            </div>
-            <div style={{ display:'flex', flexDirection:'column', gap:4, marginTop:2 }}>
-              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
-                <span>📖</span><span>Accéder à des <span style={{ color:'var(--gold)', fontWeight:500 }}>ateliers exclusifs</span></span>
-              </div>
-              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
-                <span>🌿</span><span>Débloquer des produits dans la <span style={{ color:'var(--gold)', fontWeight:500 }}>Jardinothèque</span></span>
-              </div>
-              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
-                <span>✨</span><span>Faire <span style={{ color:'var(--gold)', fontWeight:500 }}>rayonner votre aura</span> dans le jardin collectif</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Onglets ── */}
