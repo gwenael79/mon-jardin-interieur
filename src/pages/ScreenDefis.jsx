@@ -3,7 +3,7 @@ import { useAnalytics } from '../hooks/useAnalytics'
 //  ScreenDefis.jsx  —  Écran "Défis"
 //  Contient : ProposeModal, ScreenDefis, ScreenJardinCollectif
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { supabase } from '../core/supabaseClient'
 import { useDefi } from '../hooks/useDefi'
 import CommunityGarden from '../components/CommunityGarden'
@@ -468,7 +468,7 @@ function CreditsView({ defiId, color, title, emoji, remaining, onBack }) {
 }
 
 /* ── Badge ACTION (reçoit l'état depuis DefiCard) ── */
-function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits, color, actionDurationMin, actionPeriods }) {
+function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits, color, actionDurationMin, actionPeriods, inline = false }) {
   const isRunning = status === 'running'
   const isDone    = status === 'done'
   const isIdle    = status === 'idle'
@@ -484,7 +484,7 @@ function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits,
     : null
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4, marginTop:8 }}>
+    <div style={{ display:'flex', flexDirection: inline ? 'row' : 'column', alignItems:'center', gap:4, marginTop: inline ? 0 : 8 }}>
       <style>{`
         @keyframes actionPulse {
           0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, ${color} 40%, transparent); }
@@ -500,9 +500,9 @@ function ActionBadge({ status, remaining, daysCount, startAction, onOpenCredits,
           onClick={isIdle && inPeriod ? startAction : isRunning ? onOpenCredits : undefined}
           style={{
             display:'inline-flex', alignItems:'center', gap:6,
-            padding:'6px 16px', borderRadius:20,
-            fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 11px)', fontWeight:700,
-            letterSpacing:'.06em', cursor: (isIdle && inPeriod) || isRunning ? 'pointer' : 'not-allowed',
+            padding:'3px 10px', borderRadius:20,
+            fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 10px)', fontWeight:500,
+            letterSpacing:'.04em', cursor: (isIdle && inPeriod) || isRunning ? 'pointer' : 'not-allowed',
             transition:'all .2s',
             ...(isDone ? {
               background:'var(--green3)', border:'1px solid var(--greenT)', color:'var(--green)',
@@ -587,12 +587,25 @@ function DefiCard({ d, isJoined, color, userId, toggleJoin, awardLumens, track, 
         <div className="dc-dur">{d.duration_days} j</div>
       </div>
       <div className="dc-desc">{d.description}</div>
+      {/* Ligne unique : participants + barre + action/rejoindre */}
       <div className="dc-foot">
         <div className="dc-participants">{(d.participantCount??0).toLocaleString()} pers.</div>
         <div className="dc-bar">
           <div className="dc-bar-fill" style={{ width:`${pct}%`, background:color+'88', transition:'width .4s' }} />
         </div>
-        {isJoined
+        {isJoined && d.action_duration_minutes
+          ? <ActionBadge
+              status={status}
+              remaining={remaining}
+              daysCount={daysCount}
+              startAction={() => { startAction(); setShowCredits(true) }}
+              onOpenCredits={() => setShowCredits(true)}
+              color={color}
+              actionDurationMin={d.action_duration_minutes}
+              actionPeriods={d.action_periods ?? null}
+              inline
+            />
+          : isJoined
           ? <div className="dc-joined" onClick={() => { toggleJoin(d.id); awardLumens?.(-2, 'leave_defi', { defi_id: d.id }) }} style={{ cursor:'pointer' }}>✓ En cours</div>
           : <div style={{ display:'flex', alignItems:'center', gap:5 }}>
               <LumenBadge amount={2} />
@@ -603,42 +616,10 @@ function DefiCard({ d, isJoined, color, userId, toggleJoin, awardLumens, track, 
             </div>}
       </div>
       {isAdmin && (
-        <div style={{
-          marginTop:6, display:'flex', alignItems:'center', gap:0,
-          borderTop:'1px solid var(--surface-2)',
-          fontFamily:"'Jost',sans-serif",
-        }}>
-          {/* Modifier */}
-          <div
-            onClick={() => onEdit?.(d)}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', cursor:'pointer', transition:'color .15s', borderRight:'1px solid var(--surface-2)' }}
-            onMouseEnter={e => e.currentTarget.style.color='var(--gold)'}
-            onMouseLeave={e => e.currentTarget.style.color='var(--text3)'}
-          >
-            ✏️ Modifier
-          </div>
-          {/* Supprimer */}
-          <div
-            onClick={() => onDelete?.(d)}
-            style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:5, padding:'6px 0', fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', cursor:'pointer', transition:'color .15s' }}
-            onMouseEnter={e => e.currentTarget.style.color='var(--red)'}
-            onMouseLeave={e => e.currentTarget.style.color='var(--text3)'}
-          >
-            🗑 Supprimer
-          </div>
+        <div className="dc-admin">
+          <button className="dc-admin-btn" onClick={() => onEdit?.(d)}>✏️ Modifier</button>
+          <button className="dc-admin-btn del" onClick={() => onDelete?.(d)}>🗑 Supprimer</button>
         </div>
-      )}
-      {isJoined && d.action_duration_minutes && (
-        <ActionBadge
-          status={status}
-          remaining={remaining}
-          daysCount={daysCount}
-          startAction={() => { startAction(); setShowCredits(true) }}
-          onOpenCredits={() => setShowCredits(true)}
-          color={color}
-          actionDurationMin={d.action_duration_minutes}
-          actionPeriods={d.action_periods ?? null}
-        />
       )}
     </div>
   )
@@ -651,6 +632,7 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   const [showPropose, setShowPropose] = useState(false)
   const [editDefi, setEditDefi]       = useState(null)
   const [refreshKey, setRefreshKey]   = useState(0)
+  const [dismissedIds, setDismissedIds] = useState(new Set())
   const cats = ['Tous','Souffle','Racines','Feuilles','Tige','Fleurs']
   const { defis: rawDefis, featured: rawFeatured, myDefis, joinedIds, communityStats, isLoading, toggleJoin, proposeDefi, reload: reloadDefis } = useDefi(userId)
   const [periodsMap, setPeriodsMap] = useState({})
@@ -672,7 +654,14 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   const filtered = cat === 'Tous'
   ? defis.filter(d => !d.is_featured)
   : defis.filter(d => d.zone === cat && !d.is_featured)
-  const visibleDefis = isPremium ? filtered : filtered.slice(0, 1)
+
+  // Défis visibles : rejoints + non écartés, ordre original, 6 max
+  const visibleDefis = useMemo(() => {
+    const notDismissed = filtered.filter(d => !dismissedIds.has(d.id))
+    const joined = notDismissed.filter(d => joinedIds.has(d.id))
+    const others = notDismissed.filter(d => !joinedIds.has(d.id))
+    return [...joined, ...others].slice(0, 6)
+  }, [filtered, dismissedIds, joinedIds])
   const featuredJoined = featured ? joinedIds.has(featured.id) : false
 
   useEffect(() => {
@@ -824,44 +813,56 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
           })}
         </div>
         <div className="slabel">{cat==='Tous'?'Tous les défis':`Zone ${cat}`} · {filtered.length} disponibles</div>
-        <div className="defis-grid">
+        <div className="defis-grid-2col">
           {visibleDefis.map((d,i) => {
             const isJoined = joinedIds.has(d.id)
             const color = ZONE_COLORS[d.zone] ?? 'var(--green)'
             return (
-              <DefiCard
-                key={d.id??i}
-                d={d}
-                isJoined={isJoined}
-                color={color}
-                userId={userId}
-                toggleJoin={toggleJoin}
-                awardLumens={awardLumens}
-                track={track}
-                joinedIds={joinedIds}
-                isAdmin={ADMIN_IDS.includes(userId)}
-                onEdit={defi => setEditDefi(defi)}
-                onDelete={async defi => {
-                  if (!confirm(`Supprimer "${defi.title}" ? Cette action est irréversible.`)) return
-                  await supabase.from('defis').delete().eq('id', defi.id)
-                  setRefreshKey(k => k + 1)
-                }}
-              />
+              <div key={d.id??i} style={{ position:'relative' }}>
+                <DefiCard
+                  d={d}
+                  isJoined={isJoined}
+                  color={color}
+                  userId={userId}
+                  toggleJoin={toggleJoin}
+                  awardLumens={awardLumens}
+                  track={track}
+                  joinedIds={joinedIds}
+                  isAdmin={ADMIN_IDS.includes(userId)}
+                  onEdit={defi => setEditDefi(defi)}
+                  onDelete={async defi => {
+                    if (!confirm(`Supprimer "${defi.title}" ? Cette action est irréversible.`)) return
+                    await supabase.from('defis').delete().eq('id', defi.id)
+                    setRefreshKey(k => k + 1)
+                  }}
+                />
+                {/* Bouton écarter — n'apparaît que si pas rejoint */}
+                {!isJoined && (
+                  <button
+                    onClick={() => setDismissedIds(s => new Set([...s, d.id]))}
+                    title="Ne pas afficher ce défi"
+                    style={{
+                      position:'absolute', top:6, right:6,
+                      background:'none', border:'none', cursor:'pointer',
+                      fontSize:10, color:'var(--text3)',
+                      opacity:0.3, lineHeight:1, padding:'3px 5px',
+                      transition:'opacity .15s', fontFamily:"'Jost',sans-serif",
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.opacity='0.8'}
+                    onMouseLeave={e => e.currentTarget.style.opacity='0.3'}
+                  >✕</button>
+                )}
+              </div>
             )
           })}
         </div>
-        {/* Verrou premium — défis masqués */}
-        {!isPremium && filtered.length > 1 && (
-          <div style={{ marginTop: 12 }}>
-            <div onClick={onUpgrade} style={{
-              display: 'inline-flex', alignItems: 'center', gap: 10,
-              padding: '8px 14px', borderRadius: 20, cursor: 'pointer',
-              background: 'rgba(var(--gold-rgb),0.08)', border: '1px solid rgba(var(--gold-rgb),0.25)',
-            }}>
-              <span style={{ fontSize:'var(--fs-emoji-sm, 13px)' }}>🔒</span>
-              <span style={{ fontSize:'var(--fs-h5, 12px)', color: 'var(--gold)', fontWeight: 500 }}>{filtered.length - 1} défis Premium</span>
-              <span style={{ fontSize:'var(--fs-h5, 11px)', color: 'var(--gold-warm)' }}>→</span>
-            </div>
+        {/* Recharger de nouveaux défis */}
+        {visibleDefis.filter(d => !joinedIds.has(d.id)).length === 0 && filtered.filter(d => !joinedIds.has(d.id)).length > 0 && (
+          <div style={{ marginTop:8, textAlign:'center' }}>
+            <button onClick={() => setDismissedIds(new Set())}
+              style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', background:'none', border:'1px solid var(--border2)', borderRadius:20, padding:'5px 14px', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
+              🔄 Voir d'autres défis
+            </button>
           </div>
         )}
       </div>

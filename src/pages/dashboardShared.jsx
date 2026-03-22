@@ -165,12 +165,12 @@ export function LumenBadge({ amount }) {
         display: 'inline-flex', alignItems: 'center', gap: 6,
         padding: '4px 10px 4px 6px', borderRadius: 100,
         background: isGain
-          ? 'color-mix(in srgb, var(--gold) 15%, transparent)'
+          ? 'rgba(212,146,10,0.12)'
           : 'var(--red2)',
-        border: `1px solid ${isGain ? 'color-mix(in srgb, var(--gold) 40%, transparent)' : 'var(--redT)'}`,
+        border: `1px solid ${isGain ? 'rgba(212,146,10,0.35)' : 'var(--redT)'}`,
         fontSize:'var(--fs-h5, 10px)', fontWeight: 600, letterSpacing: '.04em',
         fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap',
-        color: isGain ? 'var(--gold)' : 'var(--red)',
+        color: isGain ? '#D4920A' : 'var(--red)',
         pointerEvents: 'none',
         animation: isGain ? 'lumenBadgePulse 3s ease-in-out infinite' : 'none',
       }}>
@@ -178,10 +178,10 @@ export function LumenBadge({ amount }) {
         <span style={{
           width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
           background: isGain
-            ? 'radial-gradient(circle at 35% 35%, color-mix(in srgb, var(--gold) 90%, white), var(--gold), var(--gold-warm))'
+            ? 'radial-gradient(circle at 35% 35%, #FFFAE0 0%, #F5C842 30%, #D4920A 65%, #8A5E0A 100%)'
             : 'radial-gradient(circle at 35% 35%, #ffd8d8, #e08080, #c05050)',
           boxShadow: isGain
-            ? 'color-mix(in srgb, var(--gold) 70%, transparent) 0 0 5px, color-mix(in srgb, var(--gold) 30%, transparent) 0 0 10px'
+            ? '0 0 5px rgba(212,146,10,0.7), 0 0 10px rgba(212,146,10,0.3)'
             : '0 0 5px var(--redT)',
           display: 'inline-block',
           animation: isGain ? 'lumenOrbPulse 3s ease-in-out infinite' : 'none',
@@ -230,12 +230,7 @@ export function timeAgo(iso) {
   if (m < 1) return 'à l\'instant'
   if (m < 60) return `il y a ${m} min`
   if (m < 1440) return `il y a ${Math.floor(m/60)}h`
-  const d = Math.floor(m / 1440)
-  if (d === 1) return 'hier'
-  if (d < 7) return `il y a ${d} jours`
-  if (d < 30) return `il y a ${Math.floor(d/7)} sem.`
-  if (d < 365) return `il y a ${Math.floor(d/30)} mois`
-  return `il y a ${Math.floor(d/365)} an${Math.floor(d/365) > 1 ? 's' : ''}`
+  return 'hier'
 }
 
 export function formatDate(iso) {
@@ -310,9 +305,8 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
       .from('lumen_transactions')
       .select('*')
       .eq('user_id', userId)
-      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
-      .limit(100)
+      .limit(20)
       .then(({ data }) => { setHistory(data ?? []); setLoadingH(false) })
   }
 
@@ -369,9 +363,8 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
           .from('lumen_transactions')
           .select('*')
           .eq('user_id', userId)
-          .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
           .order('created_at', { ascending: false })
-          .limit(100)
+          .limit(20)
         setHistory(newHistory ?? [])
         if (onRefresh) onRefresh()
         setRefreshTick(t => t + 1)

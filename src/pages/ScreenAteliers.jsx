@@ -406,7 +406,7 @@ function ReviewsPanel({ atelier, reviews, totalCount }) {
       <button onClick={() => setOpen(v => !v)} style={{ background:'none', border:'none', cursor:'pointer', padding:0, display:'flex', alignItems:'center', gap:6 }}>
         <div style={{ display:'flex', gap:2 }}>
           {[1,2,3,4,5].map(s => (
-            <span key={s} style={{ fontSize:'var(--fs-h5, 11px)', color: s <= Math.round(avg) ? 'var(--gold)' : 'var(--text3)' }}>★</span>
+            <span key={s} style={{ fontSize:'var(--fs-h5, 11px)', color: s <= Math.round(avg) ? '#D4920A' : 'var(--text3)' }}>★</span>
           ))}
         </div>
         <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>
@@ -422,7 +422,7 @@ function ReviewsPanel({ atelier, reviews, totalCount }) {
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:3 }}>
                 <div style={{ display:'flex', gap:1 }}>
                   {[1,2,3,4,5].map(s => (
-                    <span key={s} style={{ fontSize:'var(--fs-h5, 10px)', color: s <= r.rating ? 'var(--gold)' : 'var(--text3)' }}>★</span>
+                    <span key={s} style={{ fontSize:'var(--fs-h5, 10px)', color: s <= r.rating ? '#D4920A' : 'var(--text3)' }}>★</span>
                   ))}
                 </div>
                 <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', fontFamily:'Jost,sans-serif' }}>
@@ -475,7 +475,7 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
       {/* LIGNE 1 — titre + prix + countdown */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
         <div style={{ flex:1 }}>
-          <div style={{ fontSize:'var(--fs-h3, 15px)', fontWeight:400, color:'var(--text-on-dark)', lineHeight:1.3 }}>{atelier.title}</div>
+          <div style={{ fontSize:'var(--fs-h3, 15px)', fontWeight:400, color:'var(--text)', lineHeight:1.3 }}>{atelier.title}</div>
           <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:3 }}>{getThemeEmoji(atelier.theme)} {atelier.theme}</div>
           {atelier.animator?.display_name && (
             <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic', marginTop:2 }}>Par {atelier.animator.display_name}{atelier.animator.profession ? ` · ${atelier.animator.profession}` : ''}</div>
@@ -980,7 +980,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   const displayed = applySearch(tab === 'upcoming' ? upcoming : tab === 'mine' ? (isAnimator ? mine : myInscriptions) : past)
   const visibleDisplayed = (!isPremium && tab === 'upcoming') ? displayed.slice(0, 1) : displayed
 
-  const sStyle = { width:'100%', padding:'8px 10px', background:'var(--bg2)', border:'1px solid var(--border2)', borderRadius:8, fontSize:'var(--fs-h5, 11px)', fontFamily:'Jost,sans-serif', color:'var(--text-on-dark)', outline:'none', colorScheme:'dark' }
+  const sStyle = { width:'100%', padding:'8px 10px', background:'var(--surface-1)', border:'1px solid var(--border2)', borderRadius:8, fontSize:'var(--fs-h5, 11px)', fontFamily:'Jost,sans-serif', color:'var(--text)', outline:'none' }
 
   return (
     <div style={{ flex:1, overflow: isMobile ? 'auto' : 'hidden', display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:0 }} className='at-layout'>
@@ -1032,7 +1032,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
             </div>
             {invitations.map(inv => (
               <div key={inv.id} style={{ padding:'8px 10px', borderRadius:9, background:'rgba(var(--gold-warm-rgb),0.06)', border:'1px solid rgba(var(--gold-warm-rgb),0.18)', marginBottom:6 }}>
-                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text-on-dark)', marginBottom:2, lineHeight:1.3 }}>{getThemeEmoji(inv.atelier?.theme)} <b>{inv.atelier?.title}</b></div>
+                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text)', marginBottom:2, lineHeight:1.3 }}>{getThemeEmoji(inv.atelier?.theme)} <b>{inv.atelier?.title}</b></div>
                 <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:6 }}>
                   {inv.atelier?.starts_at ? new Date(inv.atelier.starts_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : ''}
                 </div>
@@ -1073,11 +1073,11 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
             <div key={a.id} onClick={() => { setTab('past') }} style={{ padding:'9px 10px', borderRadius:9, background:'var(--surface-1)', border:'1px solid var(--track)', marginBottom:7, cursor:'pointer', transition:'all .2s' }}
               onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
               onMouseLeave={e => e.currentTarget.style.background='var(--surface-1)'}>
-              <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text-on-dark)', marginBottom:2, lineHeight:1.3 }}>{a.title}</div>
+              <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text)', marginBottom:2, lineHeight:1.3 }}>{a.title}</div>
               <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', marginBottom:5 }}>{getThemeEmoji(a.theme)} {a.theme}</div>
               <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:3 }}>
                 {[1,2,3,4,5].map(s => (
-                  <span key={s} style={{ fontSize:'var(--fs-h5, 10px)', color: s <= Math.round(a.avgRating) ? 'var(--gold)' : 'var(--text3)' }}>★</span>
+                  <span key={s} style={{ fontSize:'var(--fs-h5, 10px)', color: s <= Math.round(a.avgRating) ? '#D4920A' : 'var(--text3)' }}>★</span>
                 ))}
                 <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--gold-rgb),0.7)', marginLeft:2 }}>{a.avgRating.toFixed(1)}</span>
                 <span style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)' }}>· {a.reviewCount} avis</span>

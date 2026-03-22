@@ -108,7 +108,7 @@ const CATEGORIES = {
 
 // ── Emoji par catégorie ──────────────────────────────────────────────────────
 const CAT_EMOJI = {
-  'Audio':'🎧', 'Formation':'📚', 'E-book':'📖', 'Méditation':'🧘', 'Guide':'📖',
+  'Audio':'🎧', 'Formation':'📚', 'E-book':'📖', 'Partenaires':'🤝', 'Méditation':'🧘', 'Guide':'📖',
   'Livres':'📕', 'Bijoux':'💍', 'Pierres':'💎', 'Huiles essentielles':'🌸',
   'Accessoires':'🎀', 'Autres':'✨',
 }
@@ -134,6 +134,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
   const [selected,      setSelected]      = useState(null)
   const [showPartenaire, setShowPartenaire] = useState(false)
   const [partenaire,     setPartenaire]     = useState(null)
+  const [vendeurFilter,  setVendeurFilter]  = useState('Tous')
   const [achatIds,      setAchatIds]      = useState(new Set()) // produits déjà achetés
 
   useEffect(() => {
@@ -168,11 +169,20 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
   // Reset catégorie au changement d'onglet
   useEffect(() => { setCat('Tous') }, [tab])
 
+  // Liste dynamique des vendeurs pour le tab courant
+  const vendeurs = useMemo(() => {
+    const noms = produits
+      .filter(p => p.type === tab && p.vendeur_nom)
+      .map(p => p.vendeur_nom)
+    return ['Tous', ...Array.from(new Set(noms)).sort()]
+  }, [produits, tab])
+
   const filtered = useMemo(() =>
     produits.filter(p =>
       p.type === tab &&
-      (cat === 'Tous' || p.categorie === cat)
-    ), [produits, tab, cat]
+      (cat === 'Tous' || p.categorie === cat) &&
+      (vendeurFilter === 'Tous' || p.vendeur_nom === vendeurFilter)
+    ), [produits, tab, cat, vendeurFilter]
   )
 
   const tc = TYPE_CONFIG[tab]
@@ -202,14 +212,14 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
         <div className="jt-tabs">
           {Object.entries(TYPE_CONFIG).filter(([k]) => k === 'digital').map(([k, v]) => (
             <button key={k} className={'jt-tab' + (tab===k ? ' active' : '')}
-              onClick={() => setTab(k)}
+              onClick={() => { setTab(k); setVendeurFilter('Tous') }}
               style={{ color: tab===k ? v.color : undefined, borderBottomColor: tab===k ? v.color : undefined }}>
               {v.icon} {v.label}
             </button>
           ))}
         </div>
 
-        {/* ── Filtres catégories ── */}
+        {/* ── Filtres catégories + partenaire ── */}
         <div className="jt-filters">
           {CATEGORIES[tab].map(c => (
             <button key={c} className={'jt-filter' + (cat===c ? ' active' : '')} onClick={() => setCat(c)}
@@ -217,6 +227,24 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
               {c !== 'Tous' ? (CAT_EMOJI[c] ?? '') + ' ' : ''}{c}
             </button>
           ))}
+          {vendeurs.length > 1 && (
+            <select
+              value={vendeurFilter}
+              onChange={e => setVendeurFilter(e.target.value)}
+              style={{
+                padding:'5px 10px', borderRadius:20, border:`1px solid ${vendeurFilter !== 'Tous' ? tc.color+'50' : 'var(--border2)'}`,
+                background: vendeurFilter !== 'Tous' ? tc.bg : 'var(--surface-1)',
+                color: vendeurFilter !== 'Tous' ? tc.color : 'var(--text3)',
+                fontSize:'var(--fs-h5, 11px)', cursor:'pointer', outline:'none',
+                fontFamily:"'Jost',sans-serif",
+              }}
+            >
+              <option value="Tous">🤝 Faites votre choix</option>
+              {vendeurs.filter(v => v !== 'Tous').map(v => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* ── Grille ── */}
