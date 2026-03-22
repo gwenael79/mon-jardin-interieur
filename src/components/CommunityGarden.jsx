@@ -222,7 +222,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
 
     /* ── NIVEAU 1 : ellipses classiques (rendu original) ── */
     if (ps === 'round') {
-      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
+      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
       return <g>
         {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
           const rad=a*Math.PI/180
@@ -240,7 +240,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
       </g>
     }
     if (ps === 'wide') {
-      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
+      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
       return <g>
         {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
           const rad=a*Math.PI/180

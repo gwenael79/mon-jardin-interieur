@@ -310,8 +310,9 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
       .from('lumen_transactions')
       .select('*')
       .eq('user_id', userId)
+      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(100)
       .then(({ data }) => { setHistory(data ?? []); setLoadingH(false) })
   }
 
@@ -368,8 +369,9 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
           .from('lumen_transactions')
           .select('*')
           .eq('user_id', userId)
+          .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
           .order('created_at', { ascending: false })
-          .limit(20)
+          .limit(100)
         setHistory(newHistory ?? [])
         if (onRefresh) onRefresh()
         setRefreshTick(t => t + 1)
