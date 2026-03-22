@@ -160,24 +160,24 @@ export function DailyQuizModal({ onComplete, onSkip }) {
   if (step === -1) return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
-      background: "rgba(6, 14, 7, 0.96)", backdropFilter: "blur(16px)",
+      background: "var(--quiz-modal-bg, rgba(6,14,7,0.96))", backdropFilter: "blur(16px)",
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", padding: "40px 28px",
     }}>
-      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1 }}>✕</button>
+      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1 }}>✕</button>
       <div style={{
         textAlign: "center", maxWidth: 340,
         opacity: visible ? 1 : 0, transition: "opacity 0.5s ease",
       }}>
         <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom: 24, display: "inline-block", animation: "pulse 3s ease-in-out infinite" }}>🌹</div>
-        <h2 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize:'var(--fs-h1, 36px)', color: "var(--text-on-dark)", fontWeight: 300, lineHeight: 1.1, marginBottom: 12 }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize:'var(--fs-h1, 36px)', color: "var(--quiz-modal-text)", fontWeight: 300, lineHeight: 1.1, marginBottom: 12 }}>
           Comment vous<br /><em style={{ fontStyle: "italic", color: "var(--gold-warm)" }}>sentez-vous</em> aujourd'hui ?
         </h2>
         <div style={{ width: 40, height: 1, background: "rgba(var(--gold-warm-rgb),0.3)", margin: "16px auto" }} />
-        <p style={{ color: "rgba(var(--text-on-dark-rgb),0.5)", fontSize:'var(--fs-h4, 13px)', lineHeight: 1.7, marginBottom: 6 }}>
+        <p style={{ color: "rgba(var(--quiz-modal-text-rgb),0.5)", fontSize:'var(--fs-h4, 13px)', lineHeight: 1.7, marginBottom: 6 }}>
           Dix questions pour prendre votre pouls intérieur.
         </p>
-        <p style={{ color: "rgba(var(--text-on-dark-rgb),0.3)", fontSize:'var(--fs-h5, 11px)', lineHeight: 1.7, marginBottom: 32 }}>
+        <p style={{ color: "rgba(var(--quiz-modal-text-rgb),0.3)", fontSize:'var(--fs-h5, 11px)', lineHeight: 1.7, marginBottom: 32 }}>
           Votre plante reflétera votre état et vous révèlera les zones à soigner en priorité.
         </p>
         <button
@@ -188,11 +188,11 @@ export function DailyQuizModal({ onComplete, onSkip }) {
         </button>
         <button
           onClick={onSkip}
-          style={{ padding: "10px", borderRadius: 50, border: "none", background: "none", color: "rgba(var(--text-on-dark-rgb),0.3)", fontSize:'var(--fs-h5, 12px)', cursor: "pointer", letterSpacing: "0.05em", width: "100%" }}
+          style={{ padding: "10px", borderRadius: 50, border: "none", background: "none", color: "rgba(var(--quiz-modal-text-rgb),0.3)", fontSize:'var(--fs-h5, 12px)', cursor: "pointer", letterSpacing: "0.05em", width: "100%" }}
         >
           Passer pour aujourd'hui
         </button>
-        <p style={{ color: "rgba(var(--text-on-dark-rgb),0.2)", fontSize:'var(--fs-h5, 10px)', marginTop: 12 }}>Environ 2 minutes · Confidentiel</p>
+        <p style={{ color: "rgba(var(--quiz-modal-text-rgb),0.2)", fontSize:'var(--fs-h5, 10px)', marginTop: 12 }}>Environ 2 minutes · Confidentiel</p>
       </div>
     </div>
   );
@@ -204,7 +204,7 @@ export function DailyQuizModal({ onComplete, onSkip }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 500,
-      background:'var(--overlay-dark)',
+      background:'var(--quiz-modal-bg, var(--overlay-dark))',
       display: "flex", flexDirection: "column",
     }}>
       {/* Barre de progression */}
@@ -218,10 +218,10 @@ export function DailyQuizModal({ onComplete, onSkip }) {
           {zone.name} · {q.theme}
         </span>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <span style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.3)" }}>
+        <span style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--quiz-modal-text-rgb),0.3)" }}>
           {step + 1} <span style={{ opacity: 0.4 }}>/ 10</span>
         </span>
-        <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.55)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         </div>
       </div>
 
@@ -233,8 +233,8 @@ export function DailyQuizModal({ onComplete, onSkip }) {
         transition: "opacity 0.28s ease, transform 0.28s ease",
       }}>
         <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom: 12 }}>{q.icon}</div>
-        <h3 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize:'var(--fs-h2, 24px)', color: "var(--text-on-dark)", fontWeight: 400, lineHeight: 1.25, marginBottom: 6 }}>{q.text}</h3>
-        <p style={{ fontSize:'var(--fs-h5, 12px)', color: "rgba(var(--text-on-dark-rgb),0.4)", lineHeight: 1.6, marginBottom: 20, fontStyle: "italic" }}>{q.sub}</p>
+        <h3 style={{ fontFamily: "'Cormorant Garamond', 'Georgia', serif", fontSize:'var(--fs-h2, 24px)', color: "var(--quiz-modal-text)", fontWeight: 400, lineHeight: 1.25, marginBottom: 6 }}>{q.text}</h3>
+        <p style={{ fontSize:'var(--fs-h5, 12px)', color: "rgba(var(--quiz-modal-text-rgb),0.4)", lineHeight: 1.6, marginBottom: 20, fontStyle: "italic" }}>{q.sub}</p>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {q.answers.map((ans, i) => {
@@ -249,7 +249,7 @@ export function DailyQuizModal({ onComplete, onSkip }) {
                 transition: "all 0.18s ease",
               }}>
                 <span style={{ fontSize:'var(--fs-emoji-sm, 18px)' }}>{ans.emoji}</span>
-                <span style={{ flex: 1, fontSize:'var(--fs-h4, 13px)', color: sel ? "var(--text-on-dark)" : "rgba(var(--text-on-dark-rgb),0.6)", fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
+                <span style={{ flex: 1, fontSize:'var(--fs-h4, 13px)', color: sel ? "var(--quiz-modal-text)" : "rgba(var(--quiz-modal-text-rgb),0.6)", fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
                 <div style={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${sel ? zone.color : "var(--separator)"}`, background: sel ? `${zone.color}30` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.18s", flexShrink: 0 }}>
                   {sel && <div style={{ width: 6, height: 6, borderRadius: "50%", background: zone.accent }} />}
                 </div>
@@ -466,8 +466,8 @@ function BreathingTool({ exercise, color, accent }) {
           fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'0.20em',
           fontFamily:"'Jost',sans-serif", minHeight:20,
           color: phase === 'done' ? 'var(--green)'
-               : isExpanding      ? 'rgba(var(--text-on-dark-rgb),0.88)'
-               :                    'rgba(var(--text-on-dark-rgb),0.70)',
+               : isExpanding      ? 'rgba(var(--ritual-modal-text-rgb),0.88)'
+               :                    'rgba(var(--ritual-modal-text-rgb),0.70)',
           animation: isActive ? 'labelFade .35s ease both' : 'none',
           transition:'color .4s ease',
         }}
@@ -505,7 +505,7 @@ function BreathingTool({ exercise, color, accent }) {
       {/* ── Phase ready : résumé rythme + bouton ── */}
       {phase === 'ready' && (
         <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.22)', marginBottom:16, letterSpacing:'.07em', lineHeight:1.8 }}>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.22)', marginBottom:16, letterSpacing:'.07em', lineHeight:1.8 }}>
             {[
               `${timings.inhale}s inspire`,
               timings.hold      > 0 ? `${timings.hold}s retenir`      : null,
@@ -580,8 +580,8 @@ function GratitudeTool({ exercise, color, accent }) {
   const placeholder = exercise.title ? `Répondez à ${exercise.title.toLowerCase()}…` : "Écrivez librement, sans filtre…"
   return (
     <div style={{ padding:'8px 0' }}>
-      <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.60)', lineHeight:1.7, marginBottom:12, fontStyle:'italic' }}>{prompt}</div>
-      <textarea value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.85)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
+      <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--ritual-modal-text-rgb),0.60)', lineHeight:1.7, marginBottom:12, fontStyle:'italic' }}>{prompt}</div>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} style={{ width:'100%', minHeight:88, padding:'12px 14px', borderRadius:12, border:`1px solid ${color}25`, background:'var(--surface-2)', color:'rgba(var(--ritual-modal-text-rgb),0.85)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, resize:'vertical', fontFamily:"'Jost',sans-serif", outline:'none', boxSizing:'border-box' }} />
       {text.length > 10 && !saved && <button onClick={() => setSaved(true)} style={{ marginTop:8, padding:'8px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✓ Noté ✓</button>}
       {saved && <div style={{ marginTop:8, fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ C'est fait 🌱</div>}
     </div>
@@ -595,7 +595,7 @@ function MovementTool({ exercise, color, accent }) {
   // Si une seule étape, afficher le texte complet avec bouton "Fait"
   if (steps.length < 2) return (
     <div style={{ padding:'8px 0' }}>
-      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.85)', lineHeight:1.8, fontWeight:300, marginBottom:14 }}>{exercise.desc}</p>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--ritual-modal-text-rgb),0.85)', lineHeight:1.8, fontWeight:300, marginBottom:14 }}>{exercise.desc}</p>
       {!done
         ? <button onClick={() => setDone(true)} style={{ padding:'9px 20px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ C'est fait</button>
         : <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ Mouvement accompli 🌿</div>
@@ -605,10 +605,10 @@ function MovementTool({ exercise, color, accent }) {
   return (
     <div style={{ padding:'8px 0' }}>
       <div style={{ display:'flex', gap:4, marginBottom:12 }}>{steps.map((_,i) => <div key={i} style={{ flex:1, height:3, borderRadius:2, background: i <= step ? color : 'var(--surface-3)', transition:'background .3s' }} />)}</div>
-      <div style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--text-on-dark-rgb),0.30)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:8 }}>Étape {step+1} / {steps.length}</div>
-      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.85)', lineHeight:1.8, minHeight:60, fontWeight:300, marginBottom:14 }}>{steps[step]}</p>
+      <div style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--ritual-modal-text-rgb),0.30)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:8 }}>Étape {step+1} / {steps.length}</div>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--ritual-modal-text-rgb),0.85)', lineHeight:1.8, minHeight:60, fontWeight:300, marginBottom:14 }}>{steps[step]}</p>
       <div style={{ display:'flex', gap:8 }}>
-        {step > 0 && <button onClick={() => setStep(s => s-1)} style={{ padding:'9px 16px', borderRadius:100, border:'1px solid var(--surface-3)', background:'transparent', color:'rgba(var(--text-on-dark-rgb),0.40)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>← Préc.</button>}
+        {step > 0 && <button onClick={() => setStep(s => s-1)} style={{ padding:'9px 16px', borderRadius:100, border:'1px solid var(--surface-3)', background:'transparent', color:'rgba(var(--ritual-modal-text-rgb),0.40)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>← Préc.</button>}
         {step < steps.length-1
           ? <button onClick={() => setStep(s => s+1)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}40`, background:`${color}18`, color, fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>Suivant →</button>
           : <button onClick={() => setDone(true)} style={{ flex:1, padding:'9px 16px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}25`, color, fontSize:'var(--fs-h5, 12px)', cursor:'pointer', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>✓ Terminé</button>
@@ -635,11 +635,11 @@ function VisualisationTool({ exercise, color, accent }) {
     <div style={{ padding:'8px 0' }}>
       {!started ? (
         <div style={{ textAlign:'center', paddingTop:8 }}>
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.30)', marginBottom:12, fontStyle:'italic' }}>Le texte va se dérouler doucement…</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.30)', marginBottom:12, fontStyle:'italic' }}>Le texte va se dérouler doucement…</div>
           <button onClick={start} style={{ padding:'10px 24px', borderRadius:100, border:`1px solid ${color}50`, background:`${color}18`, color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>▶ Commencer</button>
         </div>
       ) : (
-        <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.80)', lineHeight:1.9, minHeight:80, fontWeight:300, fontStyle:'italic' }}>
+        <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--ritual-modal-text-rgb),0.80)', lineHeight:1.9, minHeight:80, fontWeight:300, fontStyle:'italic' }}>
           {words.slice(0, wordIdx).join(' ')}{!done && <span style={{ opacity:0.4 }}>|</span>}
           {done && <div style={{ marginTop:8, fontSize:'var(--fs-h5, 12px)', color:'var(--green)' }}>✓ Visualisation complète 🌿</div>}
         </p>
@@ -679,20 +679,20 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
 
   return (
     <div style={{ animation:'fadeUp 0.28s ease both' }}>
-      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', marginBottom:16, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--ritual-modal-text-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', marginBottom:16, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
 
       {/* En-tête */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
         <span style={{ fontSize:'var(--fs-emoji-md, 24px)' }}>{exercise.icon}</span>
         <div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 19px)', color:'var(--text-on-dark)', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 19px)', color:'#000000', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
           <span style={{ fontSize:'var(--fs-h5, 10px)', color:accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
         </div>
       </div>
       <div style={{ height:1, background:'var(--track)', margin:'10px 0' }} />
 
       {/* Description — toujours visible */}
-      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.75)', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'#000000', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
 
       {/* Outil interactif — affiché après clic sur Commencer */}
       {toolEnabled && !started && (
@@ -756,16 +756,16 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
   if (!mode) return (
     <div style={{ animation: "fadeUp 0.3s ease both" }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
-        <button onClick={onBack} style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"none", color:"rgba(var(--text-on-dark-rgb),0.45)", fontSize:'var(--fs-h5, 12px)', cursor:"pointer", padding:0, letterSpacing:"0.05em" }}>
+        <button onClick={onBack} style={{ display:"flex", alignItems:"center", gap:8, background:"none", border:"none", color:"rgba(var(--ritual-modal-text-rgb),0.45)", fontSize:'var(--fs-h5, 12px)', cursor:"pointer", padding:0, letterSpacing:"0.05em" }}>
           ← Retour
         </button>
-        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         <span style={{ fontSize:'var(--fs-emoji-md, 26px)' }}>{ritual.icon}</span>
-        <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color: "var(--text-on-dark)", fontWeight: 400, lineHeight: 1.1 }}>{ritual.text}</h3>
+        <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color: "#000000", fontWeight: 400, lineHeight: 1.1 }}>{ritual.text}</h3>
       </div>
-      <p style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.35)", fontStyle: "italic", marginBottom: 22, lineHeight: 1.5 }}>
+      <p style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.35)", fontStyle: "italic", marginBottom: 22, lineHeight: 1.5 }}>
         Comment souhaitez-vous aborder ce rituel aujourd'hui ?
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
@@ -774,29 +774,29 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>✅</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize:'var(--fs-h4, 13px)', color: zone.accent, fontWeight: 500, marginBottom: 2 }}>Je sais quoi faire</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>Je le marque comme accompli directement.</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.4)" }}>Je le marque comme accompli directement.</div>
           </div>
-          <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+          <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
 
         {/* Coup de pouce */}
         <button onClick={() => setMode("quick")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid var(--surface-3)", background: "var(--surface-1)", display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>💡</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--text-on-dark)", fontWeight: 500, marginBottom: 2 }}>J'ai besoin d'un coup de pouce</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>3 exercices rapides · 1 à 3 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "#000000", fontWeight: 500, marginBottom: 2 }}>J'ai besoin d'un coup de pouce</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.4)" }}>3 exercices rapides · 1 à 3 minutes</div>
           </div>
-          <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+          <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
 
         {/* Je prends du temps */}
         <button onClick={() => setMode("deep")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid var(--surface-3)", background: "var(--surface-1)", display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>🌿</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--text-on-dark)", fontWeight: 500, marginBottom: 2 }}>Je prends du temps pour ça</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>3 pratiques profondes · 10 à 30 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "#000000", fontWeight: 500, marginBottom: 2 }}>Je prends du temps pour ça</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.4)" }}>3 pratiques profondes · 10 à 30 minutes</div>
           </div>
-          <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+          <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
       </div>
     </div>
@@ -809,13 +809,13 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
 
   return (
     <div style={{ animation: "fadeUp 0.28s ease both" }}>
-      <button onClick={() => setMode(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "rgba(var(--text-on-dark-rgb),0.45)", fontSize:'var(--fs-h5, 12px)', cursor: "pointer", marginBottom: 20, padding: 0, letterSpacing: "0.05em" }}>
+      <button onClick={() => setMode(null)} style={{ display: "flex", alignItems: "center", gap: 8, background: "none", border: "none", color: "rgba(var(--ritual-modal-text-rgb),0.45)", fontSize:'var(--fs-h5, 12px)', cursor: "pointer", marginBottom: 20, padding: 0, letterSpacing: "0.05em" }}>
         ← Retour
       </button>
       <div style={{ marginBottom: 6 }}>
         <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: modeColor, fontWeight: 500 }}>{modeLabel}</span>
       </div>
-      <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color: "var(--text-on-dark)", fontWeight: 400, marginBottom: 18, lineHeight: 1.2 }}>Choisissez un exercice</h3>
+      <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color: "#000000", fontWeight: 400, marginBottom: 18, lineHeight: 1.2 }}>Choisissez un exercice</h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {exercises.map((ex, i) => (
           <button key={i} onClick={() => setActiveEx(ex)} style={{
@@ -825,10 +825,10 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
           }}>
             <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>{ex.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--text-on-dark)", fontWeight: 500, marginBottom: 2 }}>{ex.title}</div>
+              <div style={{ fontSize:'var(--fs-h4, 13px)', color: "#000000", fontWeight: 500, marginBottom: 2 }}>{ex.title}</div>
               <span style={{ fontSize:'var(--fs-h5, 10px)', color: modeColor, fontWeight: 500, background: `${modeColor}18`, padding: "2px 8px", borderRadius: 10 }}>⏱ {ex.dur}</span>
             </div>
-            <span style={{ color: "rgba(var(--text-on-dark-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+            <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
           </button>
         ))}
       </div>
@@ -856,13 +856,17 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
 
   return (
     <div
-      style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "var(--overlay)", backdropFilter: "blur(12px)" }}
+      className="ritual-modal-backdrop"
       onClick={!activeRitual ? onClose : undefined}
     >
       <div
-        style={{ width: "100%", maxWidth: 440, borderRadius: "22px 22px 0 0", padding: "28px 24px 48px", border: "1px solid var(--track)", borderBottom: "none", background: `linear-gradient(175deg, ${zone.bg} 0%, #080E0A 100%)`, maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.4s cubic-bezier(0.34,1.4,0.64,1)" }}
+        className="ritual-modal-sheet"
+        style={{ background: `linear-gradient(175deg, var(--ritual-modal-bg-start, #06100A) 0%, var(--ritual-modal-bg-end, #030808) 100%)`, borderColor: zone.color + '20' }}
         onClick={e => e.stopPropagation()}
       >
+        {/* Lueur de zone en haut */}
+        <div style={{ position:'absolute', top:0, left:0, right:0, height:120, background:`radial-gradient(ellipse at 50% 0%, ${zone.color}18 0%, transparent 70%)`, pointerEvents:'none', borderRadius:'22px 22px 0 0' }} />
+
         {activeRitual ? (
           <RitualExercises
             ritual={activeRitual}
@@ -873,46 +877,50 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
         ) : (
           <>
             {/* Header zone */}
-            <div style={{ position:'relative', display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 }}>
-              <div>
-                <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: zone.color, fontWeight: 500, display: "block", marginBottom: 4 }}>{zone.subtitle}</span>
-                <h2 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 28px)', color: "var(--text-on-dark)", fontWeight: 300, lineHeight: 1.05 }}>{zone.name}</h2>
+            <div className="ritual-modal-header">
+              <div style={{ display:'flex', alignItems:'center', gap:12, flex:1 }}>
+                <div className="ritual-modal-zone-icon" style={{ background:`${zone.color}18`, borderColor:`${zone.color}30`, color:zone.color }}>
+                  {{ roots:'🌱', stem:'🌿', leaves:'🍃', flowers:'🌸', breath:'🌬️' }[zoneId] ?? '🌿'}
+                </div>
+                <div>
+                  <span className="ritual-modal-subtitle" style={{ color:zone.color }}>{zone.subtitle}</span>
+                  <h2 className="ritual-modal-title">{zone.name}</h2>
+                </div>
               </div>
-              <div style={{ textAlign: "right", paddingRight: 36 }}>
-                <span style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.3)", display: "block", marginBottom: 4 }}>{done}/{rituals.length} rituels</span>
-                <span style={{ fontSize:'var(--fs-h2, 22px)', color: zone.accent, fontWeight: 300 }}>{Math.round(pct)}<span style={{ fontSize:'var(--fs-h5, 12px)', opacity:0.6 }}>%</span></span>
+              <div className="ritual-modal-pct">
+                <span className="ritual-modal-pct-count" style={{ color:zone.accent }}>{Math.round(pct)}<span className="ritual-modal-pct-sign">%</span></span>
+                <span className="ritual-modal-pct-label">{done}/{rituals.length} rituels</span>
               </div>
-              <button onClick={onClose} style={{ position:'absolute', top:14, right:14, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.55)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+              <button onClick={onClose} className="ritual-modal-close">✕</button>
             </div>
 
             {/* Progress bar */}
-            <div style={{ height: 3, borderRadius: 2, background: "var(--track)", marginBottom: 22, overflow: "hidden" }}>
-              <div style={{ height: "100%", borderRadius: 2, background: `linear-gradient(90deg, ${zone.color}, ${zone.accent})`, width: `${pct}%`, transition: "width 0.7s ease" }} />
+            <div className="ritual-modal-bar">
+              <div className="ritual-modal-bar-fill" style={{ background:`linear-gradient(90deg, ${zone.color}, ${zone.accent})`, width:`${pct}%` }} />
             </div>
 
             {/* Liste des rituels */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            <div className="ritual-modal-list">
               {rituals.map(r => {
                 const isDone = !!completed[r.id];
                 return (
                   <button
                     key={r.id}
                     onClick={() => { if (!isDone) setActiveRitual(r); else onToggle(r.id); }}
+                    className={"ritual-item" + (isDone ? " done" : "")}
                     style={{
-                      display: "flex", alignItems: "center", gap: 12,
-                      padding: "14px 15px", borderRadius: 12,
-                      border: `1px solid ${isDone ? `${zone.color}45` : "var(--surface-2)"}`,
-                      background: isDone ? `${zone.color}10` : "var(--surface-1)",
-                      cursor: "pointer", textAlign: "left", transition: "all 0.22s",
+                      borderColor: isDone ? zone.color + '45' : 'var(--ritual-item-border, var(--surface-2))',
+                      background: isDone ? zone.color + '14' : 'var(--ritual-item-bg, var(--surface-1))',
                     }}
                   >
-                    <span style={{ fontSize:'var(--fs-emoji-sm, 18px)', flexShrink: 0 }}>{r.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize:'var(--fs-h4, 13px)', color: isDone ? "var(--text-on-dark)" : "rgba(var(--text-on-dark-rgb),0.58)", fontWeight: isDone ? 500 : 300, lineHeight: 1.3 }}>{r.text}</div>
-                      {!isDone && <div style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.28)", marginTop: 2 }}>Toucher pour explorer →</div>}
+                    <span className="ritual-item-icon">{r.icon}</span>
+                    <div className="ritual-item-body">
+                      <div className="ritual-item-text" style={{ color: isDone ? '#000000' : '#000000', fontWeight: isDone ? 500 : 300 }}>{r.text}</div>
+                      {!isDone && <div className="ritual-item-hint">Explorer →</div>}
+                      {isDone && <div className="ritual-item-done-label" style={{ color:zone.color }}>✓ Complété</div>}
                     </div>
-                    <div style={{ width: 20, height: 20, borderRadius: "50%", border: `1.5px solid ${isDone ? zone.color : "var(--separator)"}`, background: isDone ? `${zone.color}30` : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", flexShrink: 0 }}>
-                      {isDone && <span style={{ fontSize:'var(--fs-h5, 9px)', color: zone.accent, fontWeight: 700 }}>✓</span>}
+                    <div className="ritual-item-check" style={{ borderColor: isDone ? zone.color : 'var(--separator)', background: isDone ? zone.color + '30' : 'transparent' }}>
+                      {isDone && <span style={{ fontSize:'var(--fs-h5, 9px)', color:zone.accent, fontWeight:700 }}>✓</span>}
                     </div>
                   </button>
                 );
@@ -986,15 +994,15 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
         {/* Titre section */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
-            <p style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(var(--text-on-dark-rgb),0.3)", marginBottom: 3 }}>Rituels du jour</p>
-            <p style={{ fontSize:'var(--fs-h5, 12px)', color: "rgba(var(--text-on-dark-rgb),0.45)", lineHeight: 1.4 }}>
+            <p style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(var(--ritual-modal-text-rgb),0.3)", marginBottom: 3 }}>Rituels du jour</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', color: "rgba(var(--ritual-modal-text-rgb),0.45)", lineHeight: 1.4 }}>
               {hasDegradation ? "Zones triées par priorité" : "Prenez votre bilan intérieur"}
             </p>
           </div>
           {hasDegradation && (
             <button
               onClick={() => setShowQuiz(true)}
-              style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.3)", background: "none", border: "1px solid var(--surface-3)", borderRadius: 20, padding: "5px 12px", cursor: "pointer", letterSpacing: "0.05em" }}
+              style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--ritual-modal-text-rgb),0.3)", background: "none", border: "1px solid var(--surface-3)", borderRadius: 20, padding: "5px 12px", cursor: "pointer", letterSpacing: "0.05em" }}
             >
               ↺ Refaire le bilan
             </button>
@@ -1014,7 +1022,7 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
             <span style={{ fontSize:'var(--fs-emoji-lg, 28px)' }}>🌹</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--gold-warm)", fontWeight: 500, marginBottom: 3 }}>Prendre mon bilan du jour</div>
-              <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--text-on-dark-rgb),0.4)" }}>10 questions · 2 minutes · révèle vos zones prioritaires</div>
+              <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.4)" }}>10 questions · 2 minutes · révèle vos zones prioritaires</div>
             </div>
             <span style={{ color: "rgba(var(--gold-warm-rgb),0.4)", fontSize:'var(--fs-emoji-sm, 16px)' }}>→</span>
           </button>
@@ -1051,7 +1059,7 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
                   <div style={{ height: "100%", width: `${health}%`, background: `linear-gradient(90deg, ${zone.color}, ${zone.accent})`, borderRadius: 2, transition: "width 1.2s ease" }} />
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--text-on-dark-rgb),0.28)" }}>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color: "rgba(var(--ritual-modal-text-rgb),0.28)" }}>
                     {doneCount}/{rituals.length} rituel{doneCount !== 1 ? "s" : ""}
                     {isPriority && !isFirst ? " · prioritaire" : ""}
                   </span>

@@ -1830,11 +1830,11 @@ function JournalComposer({ userId, plantId, onSaved }) {
 ───────────────────────────────────────── */
 
 const PLANT_ZONES = {
-  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'var(--zone-roots)', accent:'var(--gold-warm)', bg:'var(--zone-roots-bg, #120A03)', modalBg:'var(--zone-roots-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
-  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'var(--zone-stem)', accent:'#9DDBB4', bg:'var(--zone-stem-bg, #060F08)', modalBg:'var(--zone-stem-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
-  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'var(--zone-leaves)', accent:'var(--green)', bg:'var(--zone-leaves-bg, #060C08)', modalBg:'var(--zone-leaves-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
-  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'var(--zone-flowers)', accent:'var(--zone-flowers)', bg:'var(--zone-flowers-bg, #0E0508)', modalBg:'var(--zone-flowers-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
-  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'var(--zone-breath)', accent:'var(--zone-breath)', bg:'var(--zone-breath-bg, #03090E)', modalBg:'var(--zone-breath-bg)', cardBg:'var(--zone-card-bg, var(--bg3))' },
+  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'var(--zone-roots)', accent:'var(--gold-warm)',  },
+  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'var(--zone-stem)', accent:'#9DDBB4',  },
+  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'var(--zone-leaves)', accent:'var(--green)',  },
+  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'var(--zone-flowers)', accent:'var(--zone-flowers)',  },
+  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'var(--zone-breath)', accent:'var(--zone-breath)',  },
 }
 
 // Correspondance zone → clé DB pour la mise à jour de la plante
@@ -2138,7 +2138,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--overlay)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
-      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,${zone.modalBg} 0%,var(--overlay-dark) 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,var(--ritual-modal-bg-start, #06100A) 0%,var(--ritual-modal-bg-end, #030808) 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
         {activeRitual ? (
           <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} initialMode={initialMode} zoneAlreadyDone={rituals.some(r => completed[r.id])} />
         ) : (
@@ -2338,7 +2338,7 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   // Écran d'accueil
   if (step === -1) return (
     <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
-      <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1 }}>✕</button>
+      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
         <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
         <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
@@ -3908,25 +3908,18 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
       <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
         <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
         {streak >= 1 && (
-          <div style={{
-            position:'absolute', top:10, right:10, zIndex:10,
-            display:'flex', flexDirection:'column', alignItems:'center',
-            padding:'4px 8px', borderRadius:10,
-            background:'rgba(var(--overlay-dark-rgb,6,14,7),0.65)',
-            border:`1px solid ${streakColor}25`,
-            gap:0,
-          }}>
-            <span style={{ fontSize:'var(--fs-h5, 11px)', color:`${streakColor}cc`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', lineHeight:1.4 }}>👍 {streak} jour{streak > 1 ? 's' : ''}</span>
-            <span style={{ fontSize:'var(--fs-h5, 8px)', color:`${streakColor}66`, fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', letterSpacing:'.05em', lineHeight:1.3 }}>CONSÉCUTIFS</span>
+          <div className="streak-pill" style={{ borderColor: streakColor + '40' }}>
+            <span className="streak-pill-count">👍 {streak} jour{streak > 1 ? 's' : ''}</span>
+            <span className="streak-pill-label">CONSÉCUTIFS</span>
           </div>
         )}
-        <div style={{ position:'absolute', top:14, left:16, pointerEvents:'none', zIndex:10 }}>
+        <div className="ph-health-overlay">
           <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 38 : 54, fontWeight:300, color:'var(--text-on-dark)', letterSpacing:-2, lineHeight:1 }}>{plant?.health ?? 5}</span>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:300, color:'var(--text3)', marginBottom:4 }}>%</span>
+            <span className="ph-health-value" style={{ fontSize: isMobile ? 38 : 54 }}>{plant?.health ?? 5}</span>
+            <span className="ph-health-pct" style={{ fontSize: isMobile ? 18 : 22 }}>%</span>
           </div>
-          <div style={{ fontSize:'var(--fs-h5, 8px)', letterSpacing:'0.28em', textTransform:'uppercase', color:'rgba(var(--green-rgb),0.55)', fontWeight:500 }}>Vitalité</div>
-          <div style={{ fontSize:'var(--fs-h5, 9px)', letterSpacing:'0.08em', color:'var(--border)', textTransform:'capitalize', marginTop:4 }}>{todayLabel}</div>
+          <div className="ph-health-label">Vitalité</div>
+          <div className="ph-health-date">{todayLabel}</div>
         </div>
       </div>
       <div style={{
@@ -3934,8 +3927,14 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
         padding:'10px 14px 11px',
         borderTop:'1px solid var(--border2)',
         background:'var(--bg)', flexShrink:0,
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: isMobile ? 8 : undefined,
       }}>
-        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.06em', whiteSpace:'nowrap', flexShrink:0 }}>✦ Personnalisez :</span>
+        <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.06em', whiteSpace: isMobile ? 'normal' : 'nowrap', flexShrink:0 }}>
+          {isMobile ? 'Personnalisez votre fleur facilement :' : '✦ Personnalisez :'}
+        </span>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
         {[
           { lv:1, label:'Basique', badge:'🌱', unlockInfo:'Disponible dès le départ', colorU:'var(--green)', bgU:'rgba(var(--green-rgb),0.14)',  bdU:'rgba(var(--green-rgb),0.30)'  },
           { lv:2, label:'Cool',    badge:'🌿', unlockInfo:'Atteignez le niveau 2',    colorU:'var(--zone-breath)', bgU:'rgba(var(--zone-breath-rgb),0.14)', bdU:'rgba(var(--zone-stem-rgb),0.30)'  },
@@ -3948,6 +3947,7 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
             onOpen={() => { setGardenTier(cfg.lv); setShowGardenSettings(true) }}
           />
         ))}
+        </div>
       </div>
     </div>
   )

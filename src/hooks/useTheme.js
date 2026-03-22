@@ -55,14 +55,21 @@ export const CSS_VARS = [
   // ── Zones rituels ──────────────────────────────────────────────────────────
   '--zone-roots', '--zone-stem', '--zone-leaves',
   '--zone-flowers', '--zone-breath',
-  // Fonds des cards de zone (gradient sombre)
-  '--zone-roots-bg', '--zone-stem-bg', '--zone-leaves-bg',
-  '--zone-flowers-bg', '--zone-breath-bg',
-  // Fond des cards (partagé entre toutes les zones)
-  '--zone-card-bg',
   // Textes des cards de zone
-  '--zone-card-text',       // titre zone (RACINES, TIGE...) et pourcentage
-  '--zone-card-text-sub',   // sous-titre, compteur rituels, flèche
+  '--zone-card-text',
+  '--zone-card-text-sub',
+  // Modal de rituel (RitualZoneModal + ExerciseDetail)
+  '--ritual-modal-bg-start',
+  '--ritual-modal-bg-end',
+  '--ritual-modal-text',
+  '--ritual-modal-text-rgb',
+  '--ritual-item-bg',
+  '--ritual-item-border',
+  '--ritual-bar-bg',
+  // Modal quiz bilan (DailyQuizModal)
+  '--quiz-modal-bg',
+  '--quiz-modal-text',
+  '--quiz-modal-text-rgb',
 
   // ── Ombres ─────────────────────────────────────────────────────────────────
   '--shadow-sm', '--shadow',
@@ -157,6 +164,9 @@ export function applyTheme(settings) {
     ['--red',            '--red-rgb'],
     ['--lumens',         '--lumens-rgb'],
     ['--text-on-dark',   '--text-on-dark-rgb'],
+    // Modal rituel
+    ['--ritual-modal-text', '--ritual-modal-text-rgb'],
+    ['--quiz-modal-text',   '--quiz-modal-text-rgb'],
     // Zones rituels
     ['--zone-roots',     '--zone-roots-rgb'],
     ['--zone-stem',      '--zone-stem-rgb'],
@@ -168,8 +178,10 @@ export function applyTheme(settings) {
     ['--badge-lvl2',     '--badge-lvl2-rgb'],
     ['--badge-lvl3',     '--badge-lvl3-rgb'],
   ]
+  const forceRederive = ['--ritual-modal-text-rgb', '--quiz-modal-text-rgb']
   rgbPairs.forEach(([hexVar, rgbVar]) => {
-    if (settings[hexVar]?.startsWith('#') && !settings[rgbVar]) {
+    const shouldDerive = settings[hexVar]?.startsWith('#') && (!settings[rgbVar] || forceRederive.includes(rgbVar))
+    if (shouldDerive) {
       const rgb = hexToRgb(settings[hexVar])
       if (rgb) root.style.setProperty(rgbVar, rgb)
     }
@@ -215,9 +227,29 @@ const FS_DEFAULTS = {
   '--zone-leaves-bg':   '#060C08',
   '--zone-flowers-bg':  '#0E0508',
   '--zone-breath-bg':   '#03090E',
-  '--zone-card-bg':     'var(--bg3)',  // fond des cards de zone — suit --bg3 par défaut
-  '--zone-card-text':   'var(--text)', // titre + % des cards de zone
-  '--zone-card-text-sub': 'var(--text3)', // sous-titres + compteurs des cards de zone
+  // Modals de rituel — fallback si absent de la base
+  '--ritual-modal-bg-start':  '#06100A',
+  '--ritual-modal-bg-end':    '#030808',
+  '--ritual-modal-text':      '#EEF0E8',
+  '--ritual-item-bg':         'rgba(255,255,255,0.04)',
+  '--ritual-item-border':     'rgba(255,255,255,0.08)',
+  '--ritual-bar-bg':          'rgba(255,255,255,0.08)',
+  '--quiz-modal-bg':          'rgba(6,14,7,0.96)',
+  '--quiz-modal-text':        '#EEF0E8',
+  // Cards de zone
+  '--zone-card-bg':           'var(--bg3)',
+  '--zone-card-text':         'var(--text)',
+  '--zone-card-text-sub':     'var(--text3)',
+  '--ritual-modal-bg-start':  '#06100A',
+  '--ritual-modal-bg-end':    '#030808',
+  '--ritual-modal-text':      '#EEF0E8',
+  '--ritual-modal-text-rgb':  '238,240,232',
+  '--ritual-item-bg':         'rgba(255,255,255,0.04)',
+  '--ritual-item-border':     'rgba(255,255,255,0.08)',
+  '--ritual-bar-bg':          'rgba(255,255,255,0.08)',
+  '--quiz-modal-bg':          'rgba(6,14,7,0.96)',
+  '--quiz-modal-text':        '#EEF0E8',
+  '--quiz-modal-text-rgb':    '238,240,232',
   // Navigation — tailles de police
   '--nav-fs-logo':     '18px',
   '--nav-fs-section':  '10px',
