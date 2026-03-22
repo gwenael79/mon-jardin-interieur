@@ -29,7 +29,7 @@ export const CSS_VARS = [
   '--separator', '--track',
 
   // ── Textes ─────────────────────────────────────────────────────────────────
-  '--text', '--text2', '--text3', '--cream',
+  '--text', '--text-rgb', '--text2', '--text3', '--cream',
 
   // ── Accent principal — couleur + composantes RGB ───────────────────────────
   '--green', '--green-rgb',       // ex: '#96d485' et '150,212,133'
@@ -158,6 +158,7 @@ export function applyTheme(settings) {
   // 2. Dériver les composantes RGB automatiquement si la var hex est présente
   //    et que la var RGB n'est pas déjà fournie explicitement
   const rgbPairs = [
+    ['--text',           '--text-rgb'],
     ['--green',          '--green-rgb'],
     ['--gold',           '--gold-rgb'],
     ['--gold-warm',      '--gold-warm-rgb'],

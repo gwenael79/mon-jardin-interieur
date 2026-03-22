@@ -132,13 +132,13 @@ function GuideTab() {
             display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-emoji-md, 24px)',
           }}>{s.icon}</div>
           <div>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.92)', lineHeight:1.1 }}>{s.title}</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', fontWeight:400, color:'rgba(var(--text-rgb),0.92)', lineHeight:1.1 }}>{s.title}</div>
             <div style={{ fontSize:'var(--fs-h5, 11px)', color:s.accent, marginTop:3, letterSpacing:'.04em' }}>{s.subtitle}</div>
           </div>
         </div>
 
         {/* Description */}
-        <p style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.70)', lineHeight:1.80, margin:'0 0 14px' }}>
+        <p style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:300, color:'rgba(var(--text-rgb),0.70)', lineHeight:1.80, margin:'0 0 14px' }}>
           {s.description}
         </p>
 
@@ -146,7 +146,7 @@ function GuideTab() {
         <div style={{
           padding:'10px 13px', borderRadius:10,
           background:s.bg, border:`1px solid ${s.border}`,
-          fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.58)', lineHeight:1.55,
+          fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-rgb),0.58)', lineHeight:1.55,
         }}>{s.tip}</div>
       </div>
 
@@ -154,11 +154,11 @@ function GuideTab() {
       <div style={{ display:'flex', alignItems:'center', gap:10, paddingTop:14, flexShrink:0 }}>
         <button onClick={() => goTo(step-1, -1)} disabled={step===0} style={{
           width:36, height:36, borderRadius:'50%', border:'1px solid var(--surface-3)',
-          background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.50)',
+          background:'var(--surface-2)', color:'rgba(var(--text-rgb),0.50)',
           cursor: step===0 ? 'default' : 'pointer', opacity: step===0 ? 0.3 : 1,
           fontSize:'var(--fs-h3, 15px)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
         }}>‹</button>
-        <div style={{ flex:1, textAlign:'center', fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.25)', letterSpacing:'.08em' }}>
+        <div style={{ flex:1, textAlign:'center', fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-rgb),0.25)', letterSpacing:'.08em' }}>
           {step+1} / {GUIDE_STEPS.length}
         </div>
         <button onClick={() => goTo(step+1, 1)} disabled={step===GUIDE_STEPS.length-1} style={{
@@ -167,7 +167,7 @@ function GuideTab() {
           background: step===GUIDE_STEPS.length-1
             ? 'var(--surface-2)'
             : `linear-gradient(135deg, ${s.accent}, rgba(var(--green-rgb),0.9))`,
-          color: step===GUIDE_STEPS.length-1 ? 'rgba(var(--text-on-dark-rgb),0.25)' : 'var(--modal-surface)',
+          color: step===GUIDE_STEPS.length-1 ? 'rgba(var(--text-rgb),0.25)' : 'var(--modal-surface)',
           fontSize:'var(--fs-h5, 12px)', fontWeight:600, flexShrink:0,
           opacity: step===GUIDE_STEPS.length-1 ? 0.5 : 1,
         }}>{step===GUIDE_STEPS.length-1 ? '✓ Compris' : 'Suivant ›'}</button>
@@ -193,11 +193,11 @@ function FaqTab() {
             padding:'12px 14px', background:'none', border:'none', cursor:'pointer',
             fontFamily:"'Jost',sans-serif", textAlign:'left', gap:10,
           }}>
-            <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.78)', lineHeight:1.5 }}>{item.q}</span>
-            <span style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-on-dark-rgb),0.28)', flexShrink:0, transition:'transform .2s', transform: open===i ? 'rotate(180deg)' : 'none' }}>▾</span>
+            <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:400, color:'rgba(var(--text-rgb),0.78)', lineHeight:1.5 }}>{item.q}</span>
+            <span style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--text-rgb),0.28)', flexShrink:0, transition:'transform .2s', transform: open===i ? 'rotate(180deg)' : 'none' }}>▾</span>
           </button>
           {open===i && (
-            <div style={{ padding:'0 14px 13px', fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.54)', lineHeight:1.75 }}>
+            <div style={{ padding:'0 14px 13px', fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.54)', lineHeight:1.75 }}>
               {item.a}
             </div>
           )}
@@ -220,7 +220,7 @@ function ZonesTab() {
           <span style={{ fontSize:'var(--fs-emoji-md, 20px)', flexShrink:0 }}>{z.emoji}</span>
           <div>
             <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:600, color:z.color, marginBottom:3 }}>{z.name}</div>
-            <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.54)', lineHeight:1.72 }}>{z.desc}</div>
+            <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.54)', lineHeight:1.72 }}>{z.desc}</div>
           </div>
         </div>
       ))}
@@ -271,13 +271,13 @@ function ScienceTab() {
         <div style={{
           fontFamily:"'Cormorant Garamond',serif",
           fontSize:'clamp(18px,3.5vw,24px)', fontWeight:300, lineHeight:1.22,
-          color:'rgba(var(--text-on-dark-rgb),0.93)', marginBottom:16, whiteSpace:'pre-line',
+          color:'rgba(var(--text-rgb),0.93)', marginBottom:16, whiteSpace:'pre-line',
         }}>{slide.title}</div>
 
         {/* Body simple */}
         {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
           <>
-            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
             {slide.highlight && (
               <div style={{ padding:'9px 13px', borderRadius:9, background:`${slide.color}10`, border:`1px solid ${slide.color}25`, fontSize:'var(--fs-h5, 11px)', fontWeight:500, color:slide.color, lineHeight:1.6 }}>
                 💡 {slide.highlight}
@@ -294,7 +294,7 @@ function ScienceTab() {
                 <span style={{ fontSize:'var(--fs-emoji-md, 17px)', flexShrink:0 }}>{b.icon}</span>
                 <div>
                   <div style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:600, color:slide.color, marginBottom:2 }}>{b.label}</div>
-                  <div style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.53)', lineHeight:1.7 }}>{b.desc}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 11px)', fontWeight:300, color:'rgba(var(--text-rgb),0.53)', lineHeight:1.7 }}>{b.desc}</div>
                 </div>
               </div>
             ))}
@@ -304,12 +304,12 @@ function ScienceTab() {
         {/* Points */}
         {slide.points && (
           <>
-            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.66)', lineHeight:1.82, margin:'0 0 13px' }}>{slide.body}</p>
             <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
               {slide.points.map((p,i) => (
                 <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
                   <span style={{ color:slide.color, fontSize:'var(--fs-h5, 11px)', flexShrink:0, marginTop:3 }}>✦</span>
-                  <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.64)', lineHeight:1.72 }}>{p}</span>
+                  <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.64)', lineHeight:1.72 }}>{p}</span>
                 </div>
               ))}
             </div>
@@ -327,7 +327,7 @@ function ScienceTab() {
                 </div>
                 <div style={{ paddingBottom:14 }}>
                   <div style={{ fontSize:'var(--fs-h5, 9px)', fontWeight:600, color:slide.color, letterSpacing:'.06em', marginBottom:3, textTransform:'uppercase' }}>{t.period}</div>
-                  <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.60)', lineHeight:1.7 }}>{t.desc}</div>
+                  <div style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.60)', lineHeight:1.7 }}>{t.desc}</div>
                 </div>
               </div>
             ))}
@@ -337,12 +337,12 @@ function ScienceTab() {
         {/* Features */}
         {slide.features && (
           <>
-            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.73)', lineHeight:1.82, margin:'0 0 16px' }}>{slide.body}</p>
+            <p style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:300, color:'rgba(var(--text-rgb),0.73)', lineHeight:1.82, margin:'0 0 16px' }}>{slide.body}</p>
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {slide.features.map((f,i) => (
                 <div key={i} style={{ display:'flex', gap:10, alignItems:'center' }}>
                   <span style={{ fontSize:'var(--fs-emoji-sm, 14px)', width:30, height:30, borderRadius:'50%', flexShrink:0, background:`${slide.color}15`, border:`1px solid ${slide.color}25`, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</span>
-                  <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:400, color:'rgba(var(--text-on-dark-rgb),0.73)' }}>{f.text}</span>
+                  <span style={{ fontSize:'var(--fs-h5, 12px)', fontWeight:400, color:'rgba(var(--text-rgb),0.73)' }}>{f.text}</span>
                 </div>
               ))}
             </div>
@@ -354,7 +354,7 @@ function ScienceTab() {
       <div style={{ display:'flex', gap:7, paddingTop:12, flexShrink:0 }}>
         <button onClick={() => go(-1)} disabled={step===0} style={{
           padding:'10px 14px', borderRadius:9, border:'1px solid var(--surface-3)',
-          background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.32)',
+          background:'var(--surface-2)', color:'rgba(var(--text-rgb),0.32)',
           fontSize:'var(--fs-h5, 12px)', cursor: step===0 ? 'default' : 'pointer',
           opacity: step===0 ? 0.3 : 1, fontFamily:"'Jost',sans-serif",
         }}>←</button>
@@ -362,7 +362,7 @@ function ScienceTab() {
           flex:1, padding:'10px', borderRadius:9,
           border:`1px solid ${isLast ? 'var(--surface-2)' : 'var(--surface-3)'}`,
           background:'var(--surface-2)',
-          color: isLast ? 'rgba(var(--text-on-dark-rgb),0.18)' : 'rgba(var(--text-on-dark-rgb),0.62)',
+          color: isLast ? 'rgba(var(--text-rgb),0.18)' : 'rgba(var(--text-rgb),0.62)',
           fontSize:'var(--fs-h5, 12px)', cursor: isLast ? 'default' : 'pointer',
           fontFamily:"'Jost',sans-serif",
         }}>{isLast ? '✓ Fin du parcours' : 'Suivant →'}</button>
@@ -391,7 +391,7 @@ export function HelpModal({ onClose }) {
       <div style={{
         position:'relative', background:'var(--bg)',
         borderRadius:22, padding:'0 0 24px',
-        maxHeight:'88vh', width:'100%', maxWidth:420,
+        maxHeight:'88vh', width:'100%', maxWidth:460,
         display:'flex', flexDirection:'column',
         border:'1px solid var(--surface-3)',
         boxShadow:'0 32px 80px var(--overlay)',
@@ -402,13 +402,13 @@ export function HelpModal({ onClose }) {
 
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 20px 0' }}>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 21px)', fontWeight:300, color:'rgba(var(--text-on-dark-rgb),0.88)' }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 21px)', fontWeight:300, color:'rgba(var(--text-rgb),0.88)' }}>
             Aide
           </div>
           <button onClick={onClose} style={{
             background:'var(--track)', border:'1px solid var(--surface-3)',
             borderRadius:'50%', width:28, height:28, cursor:'pointer',
-            color:'rgba(var(--text-on-dark-rgb),0.50)', fontSize:'var(--fs-h4, 13px)', display:'flex', alignItems:'center', justifyContent:'center',
+            color:'rgba(var(--text-rgb),0.50)', fontSize:'var(--fs-h4, 13px)', display:'flex', alignItems:'center', justifyContent:'center',
           }}>✕</button>
         </div>
 
@@ -420,7 +420,7 @@ export function HelpModal({ onClose }) {
               fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 11px)', fontWeight: tab===t.id ? 500 : 300,
               whiteSpace:'nowrap',
               background: tab===t.id ? 'rgba(var(--green-rgb),0.14)' : 'var(--surface-2)',
-              color: tab===t.id ? 'var(--green)' : 'rgba(var(--text-on-dark-rgb),0.42)',
+              color: tab===t.id ? 'var(--green)' : 'rgba(var(--text-rgb),0.42)',
               border: tab===t.id ? '1px solid rgba(var(--green-rgb),0.25)' : '1px solid var(--track)',
               transition:'all .18s',
             }}>{t.label}</button>
