@@ -498,6 +498,7 @@ export default function DashboardPage() {
   const [showPrefsAccordion, setShowPrefsAccordion] = useState(false)
   const [showMjRight,        setShowMjRight]        = useState(false)
   const [showLumensModal,    setShowLumensModal]    = useState(false)
+  const [showLumenInfo,      setShowLumenInfo]      = useState(false)
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false)
   const [showHelp,           setShowHelp]           = useState(false)
 
@@ -692,13 +693,36 @@ export default function DashboardPage() {
 
           {/* ── LUMENS ── */}
           {lumens && (
-            <div className="sb-lumen-bar" onClick={() => setShowLumensModal(true)} style={{ cursor:'pointer' }}>
-              <LumenOrb total={lumens.available} level={lumens.level} size={22} />
-              <div style={{ flex:1 }}>
-                <div className="sb-lumen-label">Lumens</div>
-                <div className="sb-lumen-level">{lumens.level === 'faible' ? 'Lumière faible' : lumens.level === 'halo' ? 'Halo visible' : lumens.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}</div>
+            <div style={{ position:'relative' }}>
+              <div className="sb-lumen-bar" onClick={() => setShowLumensModal(true)} style={{ cursor:'pointer' }}>
+                <LumenOrb total={lumens.available} level={lumens.level} size={22} />
+                <div style={{ flex:1 }}>
+                  <div className="sb-lumen-label">Lumens</div>
+                  <div className="sb-lumen-level">{lumens.level === 'faible' ? 'Lumière faible' : lumens.level === 'halo' ? 'Halo visible' : lumens.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}</div>
+                </div>
+                <div className="sb-lumen-count">{lumens.available} ✦</div>
               </div>
-              <div className="sb-lumen-count">{lumens.available} ✦</div>
+              {/* Bouton info Lumens */}
+              <div className="lumen-info-btn" onClick={e => { e.stopPropagation(); setShowLumenInfo(p => !p) }} title="Qu'est-ce que les Lumens ?">?</div>
+              {showLumenInfo && (
+                <div className="lumen-info-tooltip" onClick={() => setShowLumenInfo(false)}>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h3, 16px)', color:'var(--gold)', marginBottom:6, fontWeight:300 }}>✦ Les Lumens</div>
+                  <p style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text2)', lineHeight:1.7, margin:0 }}>
+                    Les Lumens sont votre énergie intérieure. Vous en gagnez chaque jour en vous connectant, en complétant des rituels, en participant à la communauté.
+                  </p>
+                  <div style={{ margin:'10px 0 0', display:'flex', flexDirection:'column', gap:5 }}>
+                    <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
+                      <span>📖</span><span>Accéder à des <strong style={{ color:'var(--gold)' }}>ateliers exclusifs</strong></span>
+                    </div>
+                    <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
+                      <span>🌿</span><span>Débloquer des produits dans la <strong style={{ color:'var(--gold)' }}>Jardinothèque</strong></span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', lineHeight:1.6, margin:'8px 0 0', fontStyle:'italic' }}>
+                    Plus vous en accumulez, plus votre aura rayonne dans le jardin collectif.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

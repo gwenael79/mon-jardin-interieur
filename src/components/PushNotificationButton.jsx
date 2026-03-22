@@ -94,15 +94,15 @@ export default function PushNotificationButton({ userId, compact = false }) {
           background: 'transparent', transition: 'background .2s',
           WebkitTapHighlightColor: 'transparent',
         }}
-        onMouseEnter={e => { if (!compact) e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+        onMouseEnter={e => { if (!compact) e.currentTarget.style.background = 'var(--surface-2)' }}
         onMouseLeave={e => { if (!compact) e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ fontSize: compact ? 12 : 14 }}>{isSubscribed ? '🔔' : '🔕'}</span>
-        <span style={{ fontSize: 10, color: 'rgba(242,237,224,0.45)', fontFamily: 'Jost,sans-serif' }}>
+        <span style={{ fontSize: 'var(--fs-h5, 10px)', color: 'var(--text3)', fontFamily: 'Jost,sans-serif' }}>
           {isSubscribed ? 'Notifications' : 'Notifications'}
         </span>
         {isSubscribed && (
-          <span style={{ fontSize: 9, color: 'rgba(150,212,133,0.6)', fontFamily: 'Jost,sans-serif' }}>activées</span>
+          <span style={{ fontSize: 'var(--fs-h5, 10px)', color: 'var(--green)', fontFamily: 'Jost,sans-serif' }}>activées</span>
         )}
       </div>
 
@@ -127,19 +127,19 @@ export default function PushNotificationButton({ userId, compact = false }) {
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 300, color: '#f2ede0' }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 300, color: 'var(--text)' }}>
                   Notifications
                 </div>
-                <div style={{ fontSize: 10, color: 'rgba(242,237,224,0.35)', letterSpacing: '.08em', marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.08em', marginTop: 2 }}>
                   RAPPELS DOUX POUR VOTRE JARDIN
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'rgba(242,237,224,0.3)', fontSize: 18, cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer' }}>✕</button>
             </div>
 
             {/* Horaires */}
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 9, letterSpacing: '.1em', color: 'rgba(242,237,224,0.4)', textTransform: 'uppercase', marginBottom: 10 }}>
+              <div style={{ fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 10 }}>
                 Horaire de rappel
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -152,26 +152,26 @@ export default function PushNotificationButton({ userId, compact = false }) {
                       style={{
                         flex: 1, textAlign: 'center', padding: '12px 8px',
                         borderRadius: 12, cursor: 'pointer',
-                        background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        background: active ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-1)',
+                        border: `1px solid ${active ? 'rgba(var(--green-rgb),0.4)' : 'var(--border2)'}`,
                         transition: 'all .2s',
                       }}
                     >
                       <div style={{ fontSize: 22, marginBottom: 4 }}>{h.emoji}</div>
                       <div style={{ fontSize: 11, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.5)', fontWeight: active ? 500 : 300 }}>{h.label}</div>
-                      <div style={{ fontSize: 9, color: 'rgba(242,237,224,0.25)', marginTop: 2 }}>{h.heure}</div>
+                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2 }}>{h.heure}</div>
                     </div>
                   )
                 })}
               </div>
-              <div style={{ fontSize: 9, color: 'rgba(242,237,224,0.2)', marginTop: 8, fontStyle: 'italic' }}>
+              <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 8, fontStyle: 'italic' }}>
                 Optionnel — sélectionnez un ou plusieurs créneaux
               </div>
             </div>
 
             {/* Son */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 9, letterSpacing: '.1em', color: 'rgba(242,237,224,0.4)', textTransform: 'uppercase', marginBottom: 10 }}>
+              <div style={{ fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 10 }}>
                 Son de notification
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -184,8 +184,8 @@ export default function PushNotificationButton({ userId, compact = false }) {
                       style={{
                         flex: 1, textAlign: 'center', padding: '12px 8px',
                         borderRadius: 12, cursor: 'pointer',
-                        background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        background: active ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-1)',
+                        border: `1px solid ${active ? 'rgba(var(--green-rgb),0.4)' : 'var(--border2)'}`,
                         transition: 'all .2s',
                       }}
                     >
@@ -203,9 +203,9 @@ export default function PushNotificationButton({ userId, compact = false }) {
               disabled={saving || saved}
               style={{
                 width: '100%', padding: '13px', borderRadius: 100,
-                background: saved ? 'rgba(150,212,133,0.3)' : 'rgba(150,212,133,0.2)',
-                border: '1px solid rgba(150,212,133,0.4)',
-                color: '#c8f0b8', fontSize: 11, letterSpacing: '.08em',
+                background: saved ? 'rgba(var(--green-rgb),0.3)' : 'rgba(var(--green-rgb),0.2)',
+                border: '1px solid rgba(var(--green-rgb),0.4)',
+                color: 'var(--green)', fontSize: 11, letterSpacing: '.08em',
                 fontFamily: 'Jost,sans-serif', cursor: saving ? 'wait' : 'pointer',
                 transition: 'all .2s', marginBottom: 8,
               }}
@@ -218,8 +218,8 @@ export default function PushNotificationButton({ userId, compact = false }) {
                 onClick={handleDisable}
                 style={{
                   width: '100%', padding: '10px', borderRadius: 100,
-                  background: 'transparent', border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'rgba(242,237,224,0.25)', fontSize: 10, letterSpacing: '.08em',
+                  background: 'transparent', border: '1px solid var(--border2)',
+                  color: 'var(--text3)', fontSize: 10, letterSpacing: '.08em',
                   fontFamily: 'Jost,sans-serif', cursor: 'pointer',
                 }}
               >
