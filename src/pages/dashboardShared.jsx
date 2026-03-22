@@ -255,6 +255,7 @@ const LUMEN_PACKS = [
 
 export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
   const [buyingPack, setBuyingPack] = useState(null)
+  const [showInfo, setShowInfo] = useState(false)
 
   async function handleBuyLumens(pack) {
     if (buyingPack) return
@@ -410,22 +411,32 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
       </div>
 
       {/* ── Bloc info Lumens ── */}
-      <div style={{ background:'color-mix(in srgb, var(--gold) 5%, transparent)', border:'1px solid color-mix(in srgb, var(--gold) 15%, transparent)', borderRadius:10, padding:'10px 12px', display:'flex', flexDirection:'column', gap:5 }}>
-        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold)', letterSpacing:'.06em', fontWeight:500, marginBottom:2 }}>✦ À quoi servent les Lumens ?</div>
-        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', lineHeight:1.6 }}>
-          Gagnez des Lumens chaque jour en vous connectant, en complétant vos rituels et en participant à la communauté.
+      <div style={{ border:'1px solid color-mix(in srgb, var(--gold) 15%, transparent)', borderRadius:10, overflow:'hidden' }}>
+        <div
+          onClick={() => setShowInfo(p => !p)}
+          style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 12px', cursor:'pointer', background:'color-mix(in srgb, var(--gold) 5%, transparent)' }}
+        >
+          <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold)', letterSpacing:'.06em', fontWeight:500 }}>✦ Infos +</span>
+          <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--gold)', transition:'transform .2s', display:'inline-block', transform: showInfo ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
         </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:4, marginTop:2 }}>
-          <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
-            <span>📖</span><span>Accéder à des <span style={{ color:'var(--gold)', fontWeight:500 }}>ateliers exclusifs</span></span>
+        {showInfo && (
+          <div style={{ padding:'10px 12px 12px', display:'flex', flexDirection:'column', gap:5, background:'color-mix(in srgb, var(--gold) 3%, transparent)' }}>
+            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', lineHeight:1.6 }}>
+              Gagnez des Lumens chaque jour en vous connectant, en complétant vos rituels et en participant à la communauté.
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:4, marginTop:2 }}>
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
+                <span>📖</span><span>Accéder à des <span style={{ color:'var(--gold)', fontWeight:500 }}>ateliers exclusifs</span></span>
+              </div>
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
+                <span>🌿</span><span>Débloquer des produits dans la <span style={{ color:'var(--gold)', fontWeight:500 }}>Jardinothèque</span></span>
+              </div>
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
+                <span>✨</span><span>Faire <span style={{ color:'var(--gold)', fontWeight:500 }}>rayonner votre aura</span> dans le jardin collectif</span>
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
-            <span>🌿</span><span>Débloquer des produits dans la <span style={{ color:'var(--gold)', fontWeight:500 }}>Jardinothèque</span></span>
-          </div>
-          <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text2)', display:'flex', alignItems:'center', gap:6 }}>
-            <span>✨</span><span>Faire <span style={{ color:'var(--gold)', fontWeight:500 }}>rayonner votre aura</span> dans le jardin collectif</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ── Onglets ── */}

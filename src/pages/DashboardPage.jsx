@@ -703,8 +703,8 @@ export default function DashboardPage() {
                 <div className="sb-lumen-count">{lumens.available} ✦</div>
               </div>
               {/* Bouton info Lumens */}
-              <div className="lumen-info-btn" onClick={e => { e.stopPropagation(); setShowLumenInfo(p => !p) }} title="Qu'est-ce que les Lumens ?">?</div>
-              {showLumenInfo && (
+              {!isMobile && <div className="lumen-info-btn" onClick={e => { e.stopPropagation(); setShowLumenInfo(p => !p) }} title="Qu'est-ce que les Lumens ?">?</div>}
+              {!isMobile && showLumenInfo && (
                 <div className="lumen-info-tooltip" onClick={() => setShowLumenInfo(false)}>
                   <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h3, 16px)', color:'var(--gold)', marginBottom:6, fontWeight:300 }}>✦ Les Lumens</div>
                   <p style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text2)', lineHeight:1.7, margin:0 }}>
