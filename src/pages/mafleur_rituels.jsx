@@ -685,14 +685,14 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
         <span style={{ fontSize:'var(--fs-emoji-md, 24px)' }}>{exercise.icon}</span>
         <div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 19px)', color:'#000000', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 19px)', color:'var(--ritual-modal-text)', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
           <span style={{ fontSize:'var(--fs-h5, 10px)', color:accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
         </div>
       </div>
       <div style={{ height:1, background:'var(--track)', margin:'10px 0' }} />
 
       {/* Description — toujours visible */}
-      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'#000000', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
+      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--ritual-modal-text)', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
 
       {/* Outil interactif — affiché après clic sur Commencer */}
       {toolEnabled && !started && (
@@ -763,7 +763,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         <span style={{ fontSize:'var(--fs-emoji-md, 26px)' }}>{ritual.icon}</span>
-        <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color: "#000000", fontWeight: 400, lineHeight: 1.1 }}>{ritual.text}</h3>
+        <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color: "var(--ritual-modal-text)", fontWeight: 400, lineHeight: 1.1 }}>{ritual.text}</h3>
       </div>
       <p style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.35)", fontStyle: "italic", marginBottom: 22, lineHeight: 1.5 }}>
         Comment souhaitez-vous aborder ce rituel aujourd'hui ?
@@ -783,7 +783,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
         <button onClick={() => setMode("quick")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid var(--surface-3)", background: "var(--surface-1)", display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>💡</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "#000000", fontWeight: 500, marginBottom: 2 }}>J'ai besoin d'un coup de pouce</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--ritual-modal-text)", fontWeight: 500, marginBottom: 2 }}>J'ai besoin d'un coup de pouce</div>
             <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.4)" }}>3 exercices rapides · 1 à 3 minutes</div>
           </div>
           <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
@@ -793,7 +793,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
         <button onClick={() => setMode("deep")} style={{ padding: "14px 16px", borderRadius: 12, textAlign: "left", cursor: "pointer", border: "1px solid var(--surface-3)", background: "var(--surface-1)", display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>🌿</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "#000000", fontWeight: 500, marginBottom: 2 }}>Je prends du temps pour ça</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--ritual-modal-text)", fontWeight: 500, marginBottom: 2 }}>Je prends du temps pour ça</div>
             <div style={{ fontSize:'var(--fs-h5, 11px)', color: "rgba(var(--ritual-modal-text-rgb),0.4)" }}>3 pratiques profondes · 10 à 30 minutes</div>
           </div>
           <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
@@ -815,7 +815,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
       <div style={{ marginBottom: 6 }}>
         <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform: "uppercase", letterSpacing: "0.12em", color: modeColor, fontWeight: 500 }}>{modeLabel}</span>
       </div>
-      <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color: "#000000", fontWeight: 400, marginBottom: 18, lineHeight: 1.2 }}>Choisissez un exercice</h3>
+      <h3 style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color: "var(--ritual-modal-text)", fontWeight: 400, marginBottom: 18, lineHeight: 1.2 }}>Choisissez un exercice</h3>
       <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         {exercises.map((ex, i) => (
           <button key={i} onClick={() => setActiveEx(ex)} style={{
@@ -825,7 +825,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
           }}>
             <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink: 0 }}>{ex.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize:'var(--fs-h4, 13px)', color: "#000000", fontWeight: 500, marginBottom: 2 }}>{ex.title}</div>
+              <div style={{ fontSize:'var(--fs-h4, 13px)', color: "var(--ritual-modal-text)", fontWeight: 500, marginBottom: 2 }}>{ex.title}</div>
               <span style={{ fontSize:'var(--fs-h5, 10px)', color: modeColor, fontWeight: 500, background: `${modeColor}18`, padding: "2px 8px", borderRadius: 10 }}>⏱ {ex.dur}</span>
             </div>
             <span style={{ color: "rgba(var(--ritual-modal-text-rgb),0.25)", fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
@@ -915,7 +915,7 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
                   >
                     <span className="ritual-item-icon">{r.icon}</span>
                     <div className="ritual-item-body">
-                      <div className="ritual-item-text" style={{ color: isDone ? '#000000' : '#000000', fontWeight: isDone ? 500 : 300 }}>{r.text}</div>
+                      <div className="ritual-item-text" style={{ color: isDone ? 'var(--ritual-modal-text)' : 'var(--ritual-modal-text)', fontWeight: isDone ? 500 : 300 }}>{r.text}</div>
                       {!isDone && <div className="ritual-item-hint">Explorer →</div>}
                       {isDone && <div className="ritual-item-done-label" style={{ color:zone.color }}>✓ Complété</div>}
                     </div>

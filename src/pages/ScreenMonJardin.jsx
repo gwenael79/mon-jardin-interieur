@@ -174,7 +174,7 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
               <span style={{ fontSize:'var(--fs-h5, 11px)' }}>{meta.badge}</span>
               <span style={{ fontSize:'var(--fs-h5, 9px)', color: meta.color }}>{isAdmin ? '⚙ Admin' : meta.label}</span>
             </div>
-            <div onClick={onClose} style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--surface-2)', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)' }}>✕</div>
+            <div onClick={onClose} style={{ width:24, height:24, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--surface-2)', color:'rgba(var(--ritual-modal-text-rgb),0.45)', fontSize:'var(--fs-h5, 12px)' }}>✕</div>
           </div>
         </div>
 
@@ -2034,38 +2034,38 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
   if (!mode) return (
     <div style={{ animation:'fadeUp 0.3s ease both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
-        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--ritual-modal-text-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       </div>
       <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
         <span style={{ fontSize:'var(--fs-emoji-md, 26px)' }}>{ritual.icon}</span>
-        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color:'var(--text-on-dark)', fontWeight:400, lineHeight:1.1 }}>{ritual.text}</h3>
+        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 20px)', color:'var(--ritual-modal-text)', fontWeight:400, lineHeight:1.1 }}>{ritual.text}</h3>
       </div>
-      <p style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.35)', fontStyle:'italic', marginBottom:22, lineHeight:1.5 }}>Comment souhaitez-vous aborder ce rituel aujourd'hui ?</p>
+      <p style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.35)', fontStyle:'italic', marginBottom:22, lineHeight:1.5 }}>Comment souhaitez-vous aborder ce rituel aujourd'hui ?</p>
       <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
         <button onClick={onComplete} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${zone.color}35`, background:`${zone.color}0C`, display:'flex', alignItems:'center', gap:12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>✅</span>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:'var(--fs-h4, 13px)', color:zone.accent, fontWeight:500, marginBottom:2 }}>Je sais quoi faire</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.4)' }}>Je le marque comme accompli directement.</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)' }}>Je le marque comme accompli directement.</div>
           </div>
-          <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+          <span style={{ color:'rgba(var(--ritual-modal-text-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
         <button onClick={() => setMode('quick')} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid var(--surface-3)', background:'var(--surface-1)', display:'flex', alignItems:'center', gap:12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>💡</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text-on-dark)', fontWeight:500, marginBottom:2 }}>J'ai besoin d'un coup de pouce</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.4)' }}>3 exercices rapides · 1 à 3 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--ritual-modal-text)', fontWeight:500, marginBottom:2 }}>J'ai besoin d'un coup de pouce</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)' }}>3 exercices rapides · 1 à 3 minutes</div>
           </div>
-          <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+          <span style={{ color:'rgba(var(--ritual-modal-text-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
         <button onClick={() => setMode('deep')} style={{ padding:'14px 16px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid var(--surface-3)', background:'var(--surface-1)', display:'flex', alignItems:'center', gap:12 }}>
           <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>🌿</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text-on-dark)', fontWeight:500, marginBottom:2 }}>Je prends du temps pour ça</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.4)' }}>3 pratiques profondes · 10 à 30 minutes</div>
+            <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--ritual-modal-text)', fontWeight:500, marginBottom:2 }}>Je prends du temps pour ça</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)' }}>3 pratiques profondes · 10 à 30 minutes</div>
           </div>
-          <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+          <span style={{ color:'rgba(var(--ritual-modal-text-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
         </button>
       </div>
     </div>
@@ -2078,22 +2078,22 @@ function RitualExercises({ ritual, zone, onComplete, onBack, initialMode }) {
   return (
     <div style={{ animation:'fadeUp 0.28s ease both' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-        <button onClick={() => setMode(null)} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--text-on-dark-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
-        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <button onClick={() => setMode(null)} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--ritual-modal-text-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', padding:0, letterSpacing:'0.05em' }}>← Retour</button>
+        <button onClick={onBack} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       </div>
       <div style={{ marginBottom:6 }}>
         <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:modeColor, fontWeight:500 }}>{modeLabel}</span>
       </div>
-      <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color:'var(--text-on-dark)', fontWeight:400, marginBottom:18, lineHeight:1.2 }}>Choisissez un exercice</h3>
+      <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 18px)', color:'var(--ritual-modal-text)', fontWeight:400, marginBottom:18, lineHeight:1.2 }}>Choisissez un exercice</h3>
       <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
         {exercises.map((ex, i) => (
           <button key={i} onClick={() => setActiveEx(ex)} style={{ padding:'14px 15px', borderRadius:12, textAlign:'left', cursor:'pointer', border:'1px solid var(--surface-3)', background:'var(--surface-1)', display:'flex', alignItems:'center', gap:12 }}>
             <span style={{ fontSize:'var(--fs-emoji-md, 22px)', flexShrink:0 }}>{ex.icon}</span>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text-on-dark)', fontWeight:500, marginBottom:2 }}>{ex.title}</div>
+              <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--ritual-modal-text)', fontWeight:500, marginBottom:2 }}>{ex.title}</div>
               <span style={{ fontSize:'var(--fs-h5, 10px)', color:modeColor, fontWeight:500, background:`${modeColor}18`, padding:'2px 8px', borderRadius:10 }}>⏱ {ex.dur}</span>
             </div>
-            <span style={{ color:'rgba(var(--text-on-dark-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
+            <span style={{ color:'rgba(var(--ritual-modal-text-rgb),0.25)', fontSize:'var(--fs-emoji-sm, 14px)' }}>→</span>
           </button>
         ))}
       </div>
@@ -2146,14 +2146,14 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:18 }}>
               <div>
                 <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, fontWeight:500, display:'block', marginBottom:4 }}>{zone.subtitle}</span>
-                <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 28px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.05 }}>{zone.name}</h2>
+                <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 28px)', color:'var(--ritual-modal-text)', fontWeight:300, lineHeight:1.05 }}>{zone.name}</h2>
               </div>
               <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                 <div style={{ textAlign:'right' }}>
-                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--text-on-dark-rgb),0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
+                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--ritual-modal-text-rgb),0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
                   <span style={{ fontSize:'var(--fs-h2, 22px)', color:zone.accent, fontWeight:300 }}>{Math.round(pct)}<span style={{ fontSize:'var(--fs-h5, 12px)', opacity:0.6 }}>%</span></span>
                 </div>
-                <button onClick={onClose} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+                <button onClick={onClose} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
               </div>
             </div>
             <div style={{ height:3, borderRadius:2, background:'var(--track)', marginBottom:22, overflow:'hidden' }}>
@@ -2178,14 +2178,14 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
                     <div style={{ flex:1, padding:'22px 18px 18px', display:'flex', flexDirection:'column', gap:10, minWidth:0 }}>
                       <div style={{
                         fontSize: fs,
-                        color: isDone ? 'rgba(var(--text-on-dark-rgb),0.70)' : 'var(--text-on-dark)',
+                        color: isDone ? 'rgba(var(--ritual-modal-text-rgb),0.70)' : 'var(--ritual-modal-text)',
                         fontWeight: 300,
                         lineHeight: 1.3,
                         letterSpacing: fs >= 20 ? '-0.02em' : '-0.01em',
                         fontFamily: "'Jost', sans-serif",
                       }}>{r.text}</div>
                       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                        <span style={{ fontSize:'var(--fs-h5, 10px)', color: isDone ? zone.color+'aa' : 'rgba(var(--text-on-dark-rgb),0.25)', letterSpacing:'0.04em' }}>
+                        <span style={{ fontSize:'var(--fs-h5, 10px)', color: isDone ? zone.color+'aa' : 'rgba(var(--ritual-modal-text-rgb),0.25)', letterSpacing:'0.04em' }}>
                           {isDone ? '✓ Complété' : `${r.icon}  Explorer →`}
                         </span>
                         <div style={{ width:20, height:20, borderRadius:'50%',
@@ -2287,14 +2287,14 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
           </div>
 
           {/* Message principal */}
-          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--ritual-modal-text)', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
             {recommendation.message}
           </h2>
 
           <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
 
           {/* Suggestion */}
-          <p style={{ color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.8, marginBottom:28, fontStyle:'italic' }}>
+          <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.8, marginBottom:28, fontStyle:'italic' }}>
             {recommendation.sub}
           </p>
 
@@ -2326,7 +2326,7 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
           </button>
           <button
             onClick={onSkip}
-            style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--text-on-dark-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
+            style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--ritual-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
           >
             Fermer
           </button>
@@ -2338,16 +2338,16 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   // Écran d'accueil
   if (step === -1) return (
     <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
-      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
       <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
         <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
-        <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--text-on-dark)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
+        <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--ritual-modal-text)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
         <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
-        <p style={{ color:'rgba(var(--text-on-dark-rgb),0.5)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
-        <p style={{ color:'rgba(var(--text-on-dark-rgb),0.3)', fontSize:'var(--fs-h5, 11px)', lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
+        <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.5)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
+        <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 11px)', lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
         <button onClick={startQuiz} style={{ padding:'13px 40px', borderRadius:50, border:'1px solid rgba(var(--gold-warm-rgb),0.35)', background:'rgba(var(--gold-warm-rgb),0.1)', color:'var(--gold-warm)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:10 }}>Commencer le bilan</button>
-        <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--text-on-dark-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
-        <p style={{ color:'rgba(var(--text-on-dark-rgb),0.2)', fontSize:'var(--fs-h5, 10px)', marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
+        <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--ritual-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
+        <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.2)', fontSize:'var(--fs-h5, 10px)', marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
       </div>
     </div>
   )
@@ -2364,21 +2364,21 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
       <div style={{ padding:'16px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
-          <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--text-on-dark-rgb),0.6)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
+          <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         </div>
       </div>
       <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
         <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom:12 }}>{q.icon}</div>
-        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 24px)', color:'var(--text-on-dark)', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
-        <p style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
+        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 24px)', color:'var(--ritual-modal-text)', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
+        <p style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {q.answers.map((ans, i) => {
             const sel = selected === i
             return (
               <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color+'55' : 'var(--track)'}`, background: sel ? 'rgba(var(--green-rgb),0.08)' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}30` : 'none', transition:'all 0.18s ease' }}>
                 <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{ans.emoji}</span>
-                <span style={{ flex:1, fontSize:'var(--fs-h4, 13px)', color: sel ? 'var(--text-on-dark)' : 'rgba(var(--text-on-dark-rgb),0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
+                <span style={{ flex:1, fontSize:'var(--fs-h4, 13px)', color: sel ? 'var(--ritual-modal-text)' : 'rgba(var(--ritual-modal-text-rgb),0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
                 <div style={{ width:18, height:18, borderRadius:'50%', border:`1.5px solid ${sel ? zone.color : 'var(--separator)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
                   {sel && <div style={{ width:6, height:6, borderRadius:'50%', background:zone.accent }} />}
                 </div>
@@ -2486,7 +2486,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
               <div key={i} style={{ width:4, height:4, borderRadius:'50%', background: isGood ? 'rgba(var(--green-rgb),0.5)' : primaryColor + '80', animation:'navPulse 1.4s ease-in-out infinite', animationDelay: (i * 0.2) + 's' }} />
             ))}
           </div>
-          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.35)', fontStyle:'italic' }}>Lecture de votre jardin…</span>
+          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.35)', fontStyle:'italic' }}>Lecture de votre jardin…</span>
         </div>
       )}
 
@@ -2509,7 +2509,7 @@ function BilanInsightCard({ degradation, fillHeight = false }) {
       )}
 
       {!loading && error && (
-        <p style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--text-on-dark-rgb),0.30)', lineHeight:1.6, margin:0, fontStyle:'italic' }}>
+        <p style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.30)', lineHeight:1.6, margin:0, fontStyle:'italic' }}>
           Votre jardin a été entendu. Explorez les rituels qui vous appellent aujourd'hui.
         </p>
       )}
@@ -2679,7 +2679,7 @@ function RitualsSection({ userId, degradation, completedRituals, onToggleRitual,
           {bilanDoneToday && hasDegradation && (
             <button
               onClick={() => onOpenBilan?.()}
-              style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--text-on-dark-rgb),0.5)', background:'none', border:'1px solid var(--surface-3)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:36, touchAction:'manipulation' }}
+              style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--ritual-modal-text-rgb),0.5)', background:'none', border:'1px solid var(--surface-3)', borderRadius:20, padding:'8px 14px', cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", WebkitTapHighlightColor:'transparent', minHeight:36, touchAction:'manipulation' }}
             >
               ↺ Refaire le bilan
             </button>
@@ -3272,7 +3272,7 @@ function BoiteAGraines({ userId, inline }) {
             {/* Bas de modal — bouton fermer */}
             <div
               onClick={() => setShowModal(false)}
-              style={{ textAlign:'center', minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:9, background:'var(--surface-2)', border:'1px solid var(--surface-3)', fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.4)', cursor:'pointer' }}
+              style={{ textAlign:'center', minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:9, background:'var(--surface-2)', border:'1px solid var(--surface-3)', fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)', cursor:'pointer' }}
             >
               Fermer
             </div>
@@ -3735,7 +3735,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
                   <span style={{ fontSize: isMobile ? 15 : 14, color: progress.ritual ? 'var(--text3)' : 'var(--text)', fontWeight:500 }}>Mon rituel rapide</span>
                   {!progress.ritual && (
-                    <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--text-on-dark-rgb),0.35)', background:'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:20, padding:'1px 7px', whiteSpace:'nowrap', flexShrink:0 }}>
+                    <span style={{ fontSize:'var(--fs-h5, 9px)', color:'rgba(var(--ritual-modal-text-rgb),0.35)', background:'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:20, padding:'1px 7px', whiteSpace:'nowrap', flexShrink:0 }}>
                       {remainingZones}/5
                     </span>
                   )}
@@ -4348,7 +4348,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                   <span style={{ fontSize: isMobile ? 26 : 24 }}>🌹</span>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize: isMobile ? 14 : 13, color:'var(--gold-warm)', fontWeight:500, marginBottom:2 }}>Faire mon bilan du jour</div>
-                    <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(var(--text-on-dark-rgb),0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
+                    <div style={{ fontSize: isMobile ? 11 : 10, color:'rgba(var(--ritual-modal-text-rgb),0.4)', fontStyle:'italic' }}>Prendre soin de soi commence ici</div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:20, background:'rgba(var(--gold-rgb),0.12)', border:'1px solid rgba(var(--gold-rgb),0.30)', fontSize:'var(--fs-h5, 11px)', color:'var(--gold)', fontWeight:600, flexShrink:0 }}>
                     +3 ✦

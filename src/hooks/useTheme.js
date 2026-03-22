@@ -208,8 +208,9 @@ const BADGE_DEFAULTS = {
   '--badge-lvl3': '#F6C453',
 }
 
-// Valeurs par défaut des tailles (si non définies en base)
+// Valeurs par défaut (si non définies en base)
 const FS_DEFAULTS = {
+  // Tailles typographie
   '--fs-h1':       '32px',
   '--fs-h2':       '24px',
   '--fs-h3':       '18px',
@@ -218,28 +219,25 @@ const FS_DEFAULTS = {
   '--fs-emoji-sm': '14px',
   '--fs-emoji-md': '20px',
   '--fs-emoji-lg': '28px',
-  // Fonds de layout (fallback si pas en base)
+  // Layout
   '--sidebar-bg':  'rgba(0,0,0,0.18)',
   '--topbar-bg':   'rgba(0,0,0,0.08)',
-  // Fonds des cards de zone (dark par défaut — s'adaptent au thème)
-  '--zone-roots-bg':    '#120A03',
-  '--zone-stem-bg':     '#060F08',
-  '--zone-leaves-bg':   '#060C08',
-  '--zone-flowers-bg':  '#0E0508',
-  '--zone-breath-bg':   '#03090E',
-  // Modals de rituel — fallback si absent de la base
-  '--ritual-modal-bg-start':  '#06100A',
-  '--ritual-modal-bg-end':    '#030808',
-  '--ritual-modal-text':      '#EEF0E8',
-  '--ritual-item-bg':         'rgba(255,255,255,0.04)',
-  '--ritual-item-border':     'rgba(255,255,255,0.08)',
-  '--ritual-bar-bg':          'rgba(255,255,255,0.08)',
-  '--quiz-modal-bg':          'rgba(6,14,7,0.96)',
-  '--quiz-modal-text':        '#EEF0E8',
+  // Navigation tailles
+  '--nav-fs-logo':     '18px',
+  '--nav-fs-section':  '10px',
+  '--nav-fs-item':     '13px',
+  '--nav-fs-icon':     '15px',
+  '--nav-fs-badge':    '9px',
+  // Navigation couleurs
+  '--nav-item-active-bg':     'rgba(150,212,133,0.11)',
+  '--nav-item-active-color':  '#96d485',
+  '--nav-item-hover-bg':      'rgba(255,255,255,0.05)',
+  '--nav-item-hover-color':   'rgba(242,237,224,0.85)',
   // Cards de zone
   '--zone-card-bg':           'var(--bg3)',
   '--zone-card-text':         'var(--text)',
   '--zone-card-text-sub':     'var(--text3)',
+  // Modal rituel
   '--ritual-modal-bg-start':  '#06100A',
   '--ritual-modal-bg-end':    '#030808',
   '--ritual-modal-text':      '#EEF0E8',
@@ -247,20 +245,10 @@ const FS_DEFAULTS = {
   '--ritual-item-bg':         'rgba(255,255,255,0.04)',
   '--ritual-item-border':     'rgba(255,255,255,0.08)',
   '--ritual-bar-bg':          'rgba(255,255,255,0.08)',
+  // Modal quiz
   '--quiz-modal-bg':          'rgba(6,14,7,0.96)',
   '--quiz-modal-text':        '#EEF0E8',
   '--quiz-modal-text-rgb':    '238,240,232',
-  // Navigation — tailles de police
-  '--nav-fs-logo':     '18px',
-  '--nav-fs-section':  '10px',
-  '--nav-fs-item':     '13px',
-  '--nav-fs-icon':     '15px',
-  '--nav-fs-badge':    '9px',
-  // Navigation items
-  '--nav-item-active-bg':     'rgba(150,212,133,0.11)',
-  '--nav-item-active-color':  '#96d485',
-  '--nav-item-hover-bg':      'rgba(255,255,255,0.05)',
-  '--nav-item-hover-color':   'rgba(242,237,224,0.85)',
 }
 
 export function useTheme() {
