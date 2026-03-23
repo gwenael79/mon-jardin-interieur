@@ -592,6 +592,7 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
       logActivity({ userId, action: 'coeur', zone: weakest.key })
+      console.log('[coeur] logNetworkActivity userId:', userId)
       logNetworkActivity(userId, 'coeur')
       window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'coeur_sent', props: { receiver_id: fleur.id, zone: weakest.key }, page: 'club', cat: 'social' } }))
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
@@ -973,17 +974,20 @@ function PoulsReseau() {
     return () => cancelAnimationFrame(animRef.current)
   }, [])
 
+  const addPulseRef = useRef(null)
+
   function addPulse() {
     const s = stateRef.current
     s.targetBpm = Math.min(120, s.bpm + 18)
     injectBeat(s.pts)
     spawnFloatRef.current?.()
   }
+  addPulseRef.current = addPulse
 
   useEffect(() => {
     const ch = supabase.channel('pouls-ecg')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
-        (payload) => { console.log('[PoulsReseau] action reçue:', payload); addPulse() })
+        (payload) => { console.log('[PoulsReseau] action reçue:', payload); addPulseRef.current?.() })
       .subscribe((status) => console.log('[PoulsReseau] status:', status))
     return () => supabase.removeChannel(ch)
   }, [])
