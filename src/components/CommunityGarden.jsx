@@ -863,6 +863,24 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
   const [winH, setWinH] = useState(window.innerHeight)
+  const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
+
+  // Realtime — étoiles sur la fleur du membre actif
+  useEffect(() => {
+    const ch = supabase.channel('garden-stars')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
+        (p) => {
+          const uid = p.new?.user_id
+          if (uid) {
+            setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
+            setTimeout(() => setStarFlashes(prev => {
+              const n = { ...prev }; delete n[uid]; return n
+            }), 2200)
+          }
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [])
 
   useEffect(() => {
     const fn = () => setWinH(window.innerHeight)
@@ -1022,7 +1040,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           </div>
         )}
 
-        {!loading && !err && (
+        {!loading && !err && (<>
+          <style>{`@keyframes cg-star-rise{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.4)}}`}</style>
+          <div style={{ position: 'relative' }}>
           <svg width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
@@ -1153,7 +1173,25 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             {/* VIGNETTE BORDS */}
             <rect width={svgW} height={svgH} fill="url(#cgVig)"/>
           </svg>
-        )}
+          {/* ── Étoiles dorées sur fleurs actives ── */}
+          {positions.filter(p => starFlashes[p.user_id]).flatMap(p =>
+            Array.from({ length: 6 }, (_, i) => (
+              <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
+                position: 'absolute',
+                left: p.x + (i - 3) * 8,
+                bottom: (svgH - groundY) + 50 + i * 8,
+                fontSize: `${11 + (i % 3) * 4}px`,
+                color: ['#FFE566','#FFD700','#FFF0A0','#FFCC00'][i % 4],
+                textShadow: '0 0 10px #FFD700',
+                pointerEvents: 'none',
+                animation: `cg-star-rise ${1.4 + i * 0.12}s ease-out forwards`,
+                animationDelay: `${i * 0.08}s`,
+                zIndex: 20,
+              }}>{['✦','✧','★','⋆','✨','💫'][i]}</div>
+            ))
+          )}
+          </div>
+        </>)}
       </div>
     </div>
   )
