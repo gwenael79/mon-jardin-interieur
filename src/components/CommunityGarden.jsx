@@ -862,6 +862,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
+  const [scrollX, setScrollX] = useState(0)
   const [winH, setWinH] = useState(window.innerHeight)
   const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
 
@@ -888,6 +889,15 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
     window.addEventListener('orientationchange', () => setTimeout(fn, 100))
     return () => { window.removeEventListener('resize', fn) }
   }, [])
+
+  // Suivi du scroll horizontal pour positionner les étoiles correctement
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onScroll = () => setScrollX(el.scrollLeft)
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [scrollRef.current])
 
   useEffect(() => {
     loadCommunityPlants()
@@ -1174,11 +1184,15 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             <rect width={svgW} height={svgH} fill="url(#cgVig)"/>
           </svg>
           {/* ── Étoiles dorées sur fleurs actives ── */}
-          {positions.filter(p => starFlashes[p.user_id]).flatMap(p =>
-            Array.from({ length: 6 }, (_, i) => (
+          {positions.filter(p => starFlashes[p.user_id]).flatMap(p => {
+            // p.x est en coordonnées SVG — on soustrait le scroll pour avoir la position écran
+            const screenX = p.x - scrollX
+            // N'afficher que si la fleur est dans la zone visible (±100px de marge)
+            if (screenX < -100 || screenX > (scrollRef.current?.clientWidth ?? window.innerWidth) + 100) return []
+            return Array.from({ length: 6 }, (_, i) => (
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
                 position: 'absolute',
-                left: p.x + (i - 3) * 8,
+                left: screenX + (i - 3) * 8,
                 bottom: (svgH - groundY) + 50 + i * 8,
                 fontSize: `${11 + (i % 3) * 4}px`,
                 color: ['#FFE566','#FFD700','#FFF0A0','#FFCC00'][i % 4],
@@ -1189,7 +1203,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
                 zIndex: 20,
               }}>{['✦','✧','★','⋆','✨','💫'][i]}</div>
             ))
-          )}
+          })}
           </div>
         </>)}
       </div>
