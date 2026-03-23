@@ -503,8 +503,10 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
               </div>
             </div>
 
-            {/* Pouls du réseau */}
-        <PoulsReseau />
+            {/* Explication étoiles */}
+        <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center', lineHeight: 1.6, fontStyle: 'italic', opacity: 0.7 }}>
+          Les étoiles ✦ s'envolent à chaque action dans le réseau — rituel, élan, défi — signes de la vie collective.
+        </div>
 
         {/* Résonance */}
             {resonance && (() => {
@@ -866,106 +868,41 @@ function Modal({ onClose, children, maxWidth = 480 }) {
 //  MODAL 1 — EGREGORE
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── PoulsReseau — battement de cœur du réseau ──────────────────────────────
-function PoulsReseau() {
-  const canvasRef  = useRef(null)
-  const stateRef   = useRef({
-    pts: [],          // tableau de hauteurs
-    bpm: 48,          // battements par minute au repos
-    targetBpm: 48,    // cible (monte à chaque action)
-    lastBeat: 0,      // timestamp dernier battement
-    phase: 0,         // phase courante dans le cycle ECG
-  })
-  const animRef = useRef(null)
-  const W = 400, H = 64, N = W
-
-  useEffect(() => {
-    stateRef.current.pts = new Array(N).fill(0.08)
-    stateRef.current.lastBeat = performance.now()
-  }, [])
-
-  // Injecter un battement ECG dans le tracé
-  function injectBeat(pts) {
-    const len = pts.length
-    // Forme ECG : P petit, QRS sharp, T arrondi
-    const beat = [0.12, 0.14, 0.12, 0.10, 0.08, 0.30, 0.90, 0.25, 0.06, 0.08,
-                  0.20, 0.38, 0.35, 0.28, 0.18, 0.12, 0.09, 0.08]
-    beat.forEach((v, i) => {
-      const pos = len - 18 + i
-      if (pos >= 0 && pos < len) pts[pos] = v
-    })
-  }
+// ── PoulsReseau — étoiles depuis la fleur ──────────────────────────────────
+function PoulsReseau({ zonesData }) {
+  const canvasRef = useRef(null)
+  const starsRef  = useRef([])
+  const animRef   = useRef(null)
+  const W = 400, H = 160
+  const CX = W / 2, CY = H / 2 + 10
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    let last = performance.now()
 
-    const draw = (now) => {
-      const s = stateRef.current
-      const dt = now - last
-      last = now
-
-      // Amortir bpm vers repos
-      s.bpm += (s.targetBpm - s.bpm) * 0.005
-      if (s.targetBpm > 48) s.targetBpm = Math.max(48, s.targetBpm - 0.3)
-
-      // Décaler le tracé
-      const speed = 0.8 + (s.bpm - 48) / 60
-      const shift = Math.round(speed)
-      for (let i = 0; i < shift; i++) {
-        s.pts.shift()
-        s.pts.push(Math.max(0.06, s.pts[s.pts.length - 1] * 0.85))
-      }
-
-      // Déclencher un battement selon bpm
-      const msPerBeat = (60 / s.bpm) * 1000
-      if (now - s.lastBeat >= msPerBeat) {
-        injectBeat(s.pts)
-        s.lastBeat = now
-      }
-
-      // Dessiner
+    const draw = () => {
       ctx.clearRect(0, 0, W, H)
 
-      // Dégradé sous la courbe
-      const grad = ctx.createLinearGradient(0, 0, 0, H)
-      grad.addColorStop(0, 'rgba(74,124,80,0.18)')
-      grad.addColorStop(1, 'rgba(74,124,80,0)')
-      ctx.beginPath()
-      for (let x = 0; x < s.pts.length; x++) {
-        const y = H - s.pts[x] * (H - 8) - 4
-        if (x === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      }
-      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath()
-      ctx.fillStyle = grad
-      ctx.fill()
+      // Mettre à jour et dessiner les étoiles
+      for (let i = starsRef.current.length - 1; i >= 0; i--) {
+        const s = starsRef.current[i]
+        s.x += s.vx
+        s.y += s.vy
+        s.life -= s.decay
+        s.size *= 0.97
+        if (s.life <= 0) { starsRef.current.splice(i, 1); continue }
 
-      // Tracé principal
-      ctx.beginPath()
-      ctx.strokeStyle = 'rgba(74,124,80,0.85)'
-      ctx.lineWidth = 1.8
-      ctx.lineJoin = 'round'
-      ctx.lineCap  = 'round'
-      for (let x = 0; x < s.pts.length; x++) {
-        const y = H - s.pts[x] * (H - 8) - 4
-        if (x === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      }
-      ctx.stroke()
-
-      // Point lumineux sur le dernier pic
-      const last10 = s.pts.slice(-20)
-      const maxH = Math.max(...last10)
-      if (maxH > 0.4) {
-        const lx = W - 20 + last10.indexOf(maxH)
-        const ly = H - maxH * (H - 8) - 4
-        ctx.beginPath()
-        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(74,124,80,0.95)'
-        ctx.fill()
+        const alpha = Math.pow(s.life, 0.5)
+        ctx.save()
+        ctx.globalAlpha = alpha
+        ctx.shadowColor = '#FFD700'
+        ctx.shadowBlur = s.glow * s.life
+        ctx.font = `${s.size}px serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(s.char, s.x, s.y)
+        ctx.restore()
       }
 
       animRef.current = requestAnimationFrame(draw)
@@ -975,72 +912,43 @@ function PoulsReseau() {
   }, [])
 
   const addPulseRef = useRef(null)
-
   function addPulse() {
-    const s = stateRef.current
-    s.targetBpm = Math.min(120, s.bpm + 18)
-    injectBeat(s.pts)
-    spawnFloatRef.current?.()
+    const CHARS = ['✦','✧','★','✦','✧','✦','⋆','✦']
+    const ZONE_COLORS = [
+      '#FFE566', '#FFD700', '#FFF0A0', '#FFCC00', '#FFE566', '#FFFAE0'
+    ]
+    const count = 12 + Math.floor(Math.random() * 10)
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const speed = 0.6 + Math.random() * 2.5
+      const color = ZONE_COLORS[Math.floor(Math.random() * ZONE_COLORS.length)]
+      starsRef.current.push({
+        x: CX + (Math.random() - 0.5) * 20,
+        y: CY + (Math.random() - 0.5) * 20,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 0.3,
+        life: 0.7 + Math.random() * 0.3,
+        decay: 0.006 + Math.random() * 0.008,
+        size: 10 + Math.random() * 18,
+        char: CHARS[Math.floor(Math.random() * CHARS.length)],
+        color,
+        glow: 18 + Math.random() * 22,
+      })
+    }
   }
   addPulseRef.current = addPulse
 
   useEffect(() => {
-    const ch = supabase.channel('pouls-ecg')
+    const ch = supabase.channel('pouls-etoiles')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
-        (payload) => { console.log('[PoulsReseau] action reçue:', payload); addPulseRef.current?.() })
-      .subscribe((status) => console.log('[PoulsReseau] status:', status))
+        () => addPulseRef.current?.())
+      .subscribe()
     return () => supabase.removeChannel(ch)
   }, [])
 
-  // Charger activité récente pour initialiser le rythme
-  useEffect(() => {
-    async function loadRecent() {
-      const since = new Date(Date.now() - 30 * 60 * 1000).toISOString()
-      const { data } = await supabase.from('network_activity')
-        .select('created_at').gte('created_at', since)
-      if (data?.length) {
-        stateRef.current.targetBpm = Math.min(90, 48 + data.length * 3)
-      }
-    }
-    loadRecent()
-  }, [])
-
-  const [floats, setFloats] = useState([])
-  const spawnFloatRef = useRef(null)
-  const EMOJIS = ['🌸','🌺','🌼','🌷','💮','✨','💫','🌿','✦']
-
-  function spawnFloat() {
-    const id = Date.now() + Math.random()
-    const x = 55 + Math.random() * 40  // % position horizontale
-    const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)]
-    setFloats(prev => [...prev.slice(-8), { id, x, emoji }])
-    setTimeout(() => setFloats(prev => prev.filter(f => f.id !== id)), 2200)
-  }
-  spawnFloatRef.current = spawnFloat
-
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ fontSize: 'var(--fs-h5, 9px)', color: 'var(--text3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
-        ✦ Pouls du réseau
-      </div>
-      <div style={{ background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border2)', overflow: 'hidden', position: 'relative' }}>
-        <canvas ref={canvasRef} width={W} height={H} style={{ width: '100%', height: H, display: 'block' }} />
-        {/* Particules flottantes */}
-        <style>{`
-          @keyframes float-up {
-            0%   { transform: translateY(0) scale(1);   opacity: 1; }
-            100% { transform: translateY(-48px) scale(0.6); opacity: 0; }
-          }
-        `}</style>
-        {floats.map(f => (
-          <div key={f.id} style={{
-            position: 'absolute', bottom: 8, left: f.x + '%',
-            fontSize: 14, pointerEvents: 'none', userSelect: 'none',
-            animation: 'float-up 2.2s ease-out forwards',
-          }}>{f.emoji}</div>
-        ))}
-      </div>
-    </div>
+    <canvas ref={canvasRef} width={W} height={H}
+      style={{ width: '100%', height: '100%', display: 'block' }} />
   )
 }
 
@@ -1130,9 +1038,14 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
     <Modal onClose={onClose} maxWidth={500}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '8px 24px 16px' }}>
 
-        {/* Fleur décorative */}
-        <div ref={svgRef}>
-          <FleurSimple zonesData={zonesData} size={isMobile ? 220 : 260} />
+        {/* Fleur décorative + étoiles superposées */}
+        <div style={{ position: 'relative', width: isMobile ? 220 : 260, height: isMobile ? 220 : 260 }}>
+          <div ref={svgRef} style={{ width: '100%', height: '100%' }}>
+            <FleurSimple zonesData={zonesData} size={isMobile ? 220 : 260} />
+          </div>
+          <div style={{ position: 'absolute', inset: -30, pointerEvents: 'none' }}>
+            <PoulsReseau />
+          </div>
         </div>
 
         {/* Compteur fleurs */}
@@ -1165,11 +1078,8 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
           transition: 'all .2s', WebkitTapHighlightColor: 'transparent',
           width: '100%', justifyContent: 'center',
         }}>
-          {!isPremium ? '🔒 Rejoindre l\'intention — Premium' : joined ? '✓ Vous nourrissez l\'intention' : '🌸 Rejoindre l\'intention collective'}
+          {!isPremium ? '🔒 Rejoindre l\'intention — Premium' : joined ? '✓ Vous nourrissez l\'intention' : '🌸 Je participe à l\'intention collective'}
         </div>
-
-        {/* Pouls du réseau */}
-        <PoulsReseau />
 
         {/* Résonance */}
         {resonance && (() => {
