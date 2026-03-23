@@ -862,6 +862,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
+  const svgRef    = useRef(null)
   const [scrollX, setScrollX] = useState(0)
   const [winH, setWinH] = useState(window.innerHeight)
   const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
@@ -1072,7 +1073,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             }
           `}</style>
           <div style={{ position: 'relative' }}>
-          <svg width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
+          <svg ref={svgRef} width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={skyA}/>
@@ -1204,9 +1205,28 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           </svg>
           {/* ── Étoiles dorées sur fleurs actives ── */}
           {positions.filter(p => starFlashes[p.user_id]).flatMap(p => {
-            const screenX = p.x - scrollX
-            if (screenX < -120 || screenX > (scrollRef.current?.clientWidth ?? window.innerWidth) + 120) return []
-            const flowerBaseY = svgH - groundY + 30
+            // Convertit les coordonnées SVG en coordonnées écran via la matrice de transformation
+            if (!svgRef.current) return []
+            const svg = svgRef.current
+            const ctm = svg.getScreenCTM()
+            if (!ctm) return []
+            // Recalcule le sommet de la fleur en coordonnées SVG (identique à FieldFlower)
+            const r          = Math.max(0, Math.min(1, (p.health ?? 50) / 100))
+            const effGroundY = groundY + (p.yOff ?? 0)
+            const stemH      = Math.min(effGroundY * 0.45, effGroundY * (0.08 + 0.38 * r))
+            const flowerTopY = effGroundY - stemH  // coordonnée SVG Y du sommet de la fleur
+            // Convertit en coordonnées écran
+            const svgPt = svg.createSVGPoint()
+            svgPt.x = p.x
+            svgPt.y = flowerTopY
+            const screenPt = svgPt.matrixTransform(ctm)
+            // Convertit en coordonnées relatives au div.relative (parent de position:absolute)
+            const divRect = svg.parentElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
+            const relX = screenPt.x - divRect.left
+            const relY = screenPt.y - divRect.top
+            // Filtre les fleurs hors du viewport visible
+            const containerW = scrollRef.current?.clientWidth ?? window.innerWidth
+            if (relX < -80 || relX > containerW + 80) return []
             const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
             const COLORS  = ['#FFE566','#FFD700','#FFF3AA','#FFB800','#FFFACD','#FFC800','#FFE000']
             const SIZES   = [13, 10, 15, 9, 12, 11, 14]
@@ -1216,8 +1236,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             return SPREADS.map((dx, i) => (
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
                 position: 'absolute',
-                left: screenX + dx,
-                bottom: flowerBaseY,
+                left: relX + dx,
+                top: relY - 10,
                 fontSize: SIZES[i],
                 color: COLORS[i],
                 pointerEvents: 'none',
