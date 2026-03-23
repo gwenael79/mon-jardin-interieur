@@ -983,8 +983,8 @@ function PoulsReseau() {
   useEffect(() => {
     const ch = supabase.channel('pouls-ecg')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
-        () => addPulse())
-      .subscribe()
+        (payload) => { console.log('[PoulsReseau] action reçue:', payload); addPulse() })
+      .subscribe((status) => console.log('[PoulsReseau] status:', status))
     return () => supabase.removeChannel(ch)
   }, [])
 

@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
 import { logActivity } from '../utils/logActivity'
+import { logNetworkActivity } from '../utils/logNetworkActivity'
 import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
@@ -4175,6 +4176,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         ritual_id:    ritualId,
       }, { onConflict: 'user_id,ritual_id,plant_id' })
       logActivity({ userId, action: 'ritual', ritual: ritualName, zone: ritualZoneStr })
+      logNetworkActivity(userId, 'ritual_complete')
       await supabase
         .from('plants')
         .update({ [dbKey]: newZoneVal, health: newHealth })

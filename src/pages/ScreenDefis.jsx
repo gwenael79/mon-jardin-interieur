@@ -1,5 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 import { useAnalytics } from '../hooks/useAnalytics'
+import { logNetworkActivity } from '../utils/logNetworkActivity'
 //  ScreenDefis.jsx  —  Écran "Défis"
 //  Contient : ProposeModal, ScreenDefis, ScreenJardinCollectif
 // ─────────────────────────────────────────────────────────────────────────────
@@ -310,6 +311,7 @@ function useActionState(defiId, userId, actionDurationMin) {
         clearInterval(timerRef.current)
         setStatus('done')
         setDaysCount(n => n + 1)
+        logNetworkActivity(userId, 'defi_validated')
         // Marquer complété en DB
         const today = todayStr()
         await supabase
