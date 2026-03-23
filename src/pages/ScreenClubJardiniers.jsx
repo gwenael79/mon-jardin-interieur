@@ -445,6 +445,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
     try {
       await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
       logActivity({ userId, action: 'merci' })
+      logNetworkActivity(userId, 'merci')
       setMercisEnvoyes(prev => [...prev, coeurId])
       onFeedRefresh?.()
     } catch(e) { console.error(e) }
@@ -592,7 +593,6 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
       logActivity({ userId, action: 'coeur', zone: weakest.key })
-      console.log('[coeur] logNetworkActivity userId:', userId)
       logNetworkActivity(userId, 'coeur')
       window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'coeur_sent', props: { receiver_id: fleur.id, zone: weakest.key }, page: 'club', cat: 'social' } }))
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
@@ -1408,6 +1408,7 @@ function ScreenClubJardiniers({ userId, awardLumens, onCoeurSeen, isPremium = fa
     try {
       await supabase.from('mercis').insert({ sender_id: userId, receiver_id: senderId, coeur_id: coeurId })
       logActivity({ userId, action: 'merci' })
+      logNetworkActivity(userId, 'merci')
       // Marque le coeur comme vu (interaction effectuée)
       await supabase.from('coeurs').update({ seen: true }).eq('id', coeurId)
       setMercisEnvoyes(prev => new Set([...prev, coeurId]))
