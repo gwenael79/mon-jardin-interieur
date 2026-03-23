@@ -1452,6 +1452,9 @@ const VAR_LABELS = {
   '--ritual-bar-bg':        { label: 'Modal rituel — barre fond', group: 'Zones rituels', usage: 'Fond de la barre de progression du modal' },
   '--quiz-modal-bg':        { label: 'Modal quiz — fond',         group: 'Zones rituels', usage: 'Fond du modal de bilan quotidien (10 questions)' },
   '--quiz-modal-text':      { label: 'Modal quiz — texte',        group: 'Zones rituels', usage: 'Couleur des textes dans le modal de bilan' },
+  // ── Carte featured (Inspiration / Défi communauté) ──
+  '--featured-title-color': { label: 'Carte défi — titre',         group: 'Zones rituels', usage: 'Couleur du titre dans la carte Inspiration / Défi communauté' },
+  '--featured-desc-color':  { label: 'Carte défi — description',   group: 'Zones rituels', usage: 'Couleur du texte de description dans la carte défi' },
   '--zone-card-text':  { label: 'Cards zones — titre',     group: 'Zones rituels',  usage: 'Couleur du titre (RACINES) et du pourcentage sur les cards' },
   '--zone-card-text-sub': { label: 'Cards zones — texte sec.', group: 'Zones rituels', usage: 'Sous-titre, compteur de rituels, flèche sur les cards' },
   // ── Tailles de titres ──

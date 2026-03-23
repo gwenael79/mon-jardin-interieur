@@ -70,6 +70,9 @@ export const CSS_VARS = [
   '--quiz-modal-bg',
   '--quiz-modal-text',
   '--quiz-modal-text-rgb',
+  // Carte featured (Inspiration / Défi communauté)
+  '--featured-title-color',
+  '--featured-desc-color',
 
   // ── Ombres ─────────────────────────────────────────────────────────────────
   '--shadow-sm', '--shadow',
@@ -250,6 +253,9 @@ const FS_DEFAULTS = {
   '--quiz-modal-bg':          'rgba(6,14,7,0.96)',
   '--quiz-modal-text':        '#EEF0E8',
   '--quiz-modal-text-rgb':    '238,240,232',
+  // Carte featured
+  '--featured-title-color':   'var(--text)',
+  '--featured-desc-color':    'var(--text3)',
 }
 
 export function useTheme() {

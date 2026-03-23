@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
 import { logActivity } from '../utils/logActivity'
+import { logNetworkActivity } from '../utils/logNetworkActivity'
 import { useIsMobile, Toast, timeAgo } from './dashboardShared'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,9 +39,10 @@ function fragileZones(plant) {
     .sort((a, b) => (plant?.[a.key] ?? 5) - (plant?.[b.key] ?? 5))
 }
 
-function petalPath(angleDeg, pct, cx = 130, cy = 130) {
+function petalPath(angleDeg, pct, cx = 130, cy = 130, minPct = 0) {
   const minR = 22, maxR = 78
-  const r    = minR + (pct / 100) * (maxR - minR)
+  const effectivePct = Math.max(pct, minPct)
+  const r    = minR + (effectivePct / 100) * (maxR - minR)
   const rad  = ((angleDeg - 90) * Math.PI) / 180
   const tip  = { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) }
   const w    = 18 + (pct / 100) * 14
@@ -128,7 +130,47 @@ function Particle({ x, y, color, char, vx: initVx, vy: initVy, dur: initDur, onD
 // ─────────────────────────────────────────────────────────────────────────────
 //  SVG FLEUR COLLECTIVE
 // ─────────────────────────────────────────────────────────────────────────────
-function FleurSVG({ zonesData, pulseKey, breathPhase, size = 260, svgRef }) {
+// ── FleurSimple — fleur décorative pour le modal Égrégore ──────────────────
+function FleurSimple({ zonesData, size = 220 }) {
+  const cx = 120, cy = 120, R = 108
+  const globalVit = Math.round(ZONES.reduce((s, z) => s + (zonesData[z.key] ?? 5), 0) / ZONES.length)
+  return (
+    <svg viewBox="0 0 240 240" width={size} height={size}>
+      <defs>
+        {ZONES.map(z => (
+          <radialGradient key={z.key} id={`fs-${z.key}`} cx="30%" cy="30%" r="70%">
+            <stop offset="0%"   stopColor={z.color} stopOpacity="0.9"/>
+            <stop offset="100%" stopColor={z.color} stopOpacity="0.3"/>
+          </radialGradient>
+        ))}
+        <radialGradient id="fs-core" cx="40%" cy="35%" r="65%">
+          <stop offset="0%"   stopColor="#FFFAE0"/><stop offset="50%" stopColor="#F5C842"/><stop offset="100%" stopColor="#D4920A"/>
+        </radialGradient>
+      </defs>
+      {ZONES.map(z => {
+        const rad = ((z.angle - 90) * Math.PI) / 180
+        const tx = cx + R * Math.cos(rad), ty = cy + R * Math.sin(rad)
+        const lRad = rad - Math.PI / 2, w = 40
+        const c1x = cx + R*.45*Math.cos(rad) + w*Math.cos(lRad), c1y = cy + R*.45*Math.sin(rad) + w*Math.sin(lRad)
+        const c2x = cx + R*.45*Math.cos(rad) - w*Math.cos(lRad), c2y = cy + R*.45*Math.sin(rad) - w*Math.sin(lRad)
+        const pct = zonesData[z.key] ?? 5
+        return <path key={z.key}
+          d={`M ${cx} ${cy} Q ${c1x} ${c1y} ${tx} ${ty} Q ${c2x} ${c2y} ${cx} ${cy} Z`}
+          fill={`url(#fs-${z.key})`} stroke={z.color} strokeWidth="0.6" strokeOpacity="0.5"
+          opacity={0.5 + (pct/100)*0.5}/>
+      })}
+      <circle cx={cx} cy={cy} r="36" fill="rgba(255,255,255,0.6)"/>
+      <circle cx={cx} cy={cy} r="33" fill="url(#fs-core)"/>
+      <text x={cx} y={cy-5} textAnchor="middle" dominantBaseline="middle"
+        fontSize="16" fontFamily="'Cormorant Garamond',serif" fill="rgba(30,20,5,0.9)" fontWeight="500">{globalVit}%</text>
+      <text x={cx} y={cy+12} textAnchor="middle" dominantBaseline="middle"
+        fontSize="6" fontFamily="Jost,sans-serif" fill="rgba(30,20,5,0.55)" letterSpacing=".1em">VITALITÉ</text>
+    </svg>
+  )
+}
+
+
+function FleurSVG({ zonesData, pulseKey, breathPhase, size = 260, svgRef, compact = false }) {
   const cx = 130, cy = 130
 
   const globalVit = Math.round(
@@ -137,7 +179,7 @@ function FleurSVG({ zonesData, pulseKey, breathPhase, size = 260, svgRef }) {
 
 
   return (
-    <svg ref={svgRef} viewBox="0 0 260 260" width={size} height={size} style={{ overflow: 'visible' }}>
+    <svg ref={svgRef} viewBox={compact ? "2 2 256 256" : "0 0 260 260"} width={size} height={size} style={{ overflow: 'hidden' }}>
       <defs>
         {ZONES.map(z => (
           <radialGradient key={z.key} id={`pg-${z.key}`} cx="50%" cy="50%" r="50%">
@@ -165,12 +207,12 @@ function FleurSVG({ zonesData, pulseKey, breathPhase, size = 260, svgRef }) {
           <g key={z.key}>
             <g style={{ transform: `scale(${breathR})`, transformOrigin: `${cx}px ${cy}px`, transition: 'transform .15s' }}>
               {isPulse && (
-                <path d={petalPath(z.angle, Math.min(100, pct + 10), cx, cy)}
+                <path d={petalPath(z.angle, Math.min(100, pct + 10), cx, cy, compact ? 60 : 0)}
                   fill={z.color} opacity=".14" filter="url(#glow2)"
                   style={{ animation: 'petal-pulse .7s ease-out forwards' }} />
               )}
               <path
-                d={petalPath(z.angle, pct, cx, cy)}
+                d={petalPath(z.angle, pct, cx, cy, compact ? 60 : 0)}
                 fill={`url(#pg-${z.key})`}
                 stroke={z.color}
                 strokeWidth={isPulse ? '1.4' : '0.7'}
@@ -385,6 +427,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
     } else {
       window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'intention_join', props: {}, page: 'club', cat: 'social' } }))
       await supabase.from('intentions_joined').insert({ user_id: userId, date: today })
+      logNetworkActivity(userId, 'intention_joined')
       setJoined(true)
       // Pulse chaque pétale en cascade
       ZONES.forEach((z, i) => {
@@ -459,7 +502,10 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
               </div>
             </div>
 
-            {/* Résonance */}
+            {/* Pouls du réseau */}
+        <PoulsReseau />
+
+        {/* Résonance */}
             {resonance && (() => {
               const z = ZONE_MAP[resonance.zone]
               const pct = (resonance.current / resonance.threshold) * 100
@@ -546,6 +592,7 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
       logActivity({ userId, action: 'coeur', zone: weakest.key })
+      logNetworkActivity(userId, 'coeur')
       window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'coeur_sent', props: { receiver_id: fleur.id, zone: weakest.key }, page: 'club', cat: 'social' } }))
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
       // Notifier le receveur
@@ -817,6 +864,183 @@ function Modal({ onClose, children, maxWidth = 480 }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  MODAL 1 — EGREGORE
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ── PoulsReseau — battement de cœur du réseau ──────────────────────────────
+function PoulsReseau() {
+  const canvasRef  = useRef(null)
+  const stateRef   = useRef({
+    pts: [],          // tableau de hauteurs
+    bpm: 48,          // battements par minute au repos
+    targetBpm: 48,    // cible (monte à chaque action)
+    lastBeat: 0,      // timestamp dernier battement
+    phase: 0,         // phase courante dans le cycle ECG
+  })
+  const animRef = useRef(null)
+  const W = 400, H = 64, N = W
+
+  useEffect(() => {
+    stateRef.current.pts = new Array(N).fill(0.08)
+    stateRef.current.lastBeat = performance.now()
+  }, [])
+
+  // Injecter un battement ECG dans le tracé
+  function injectBeat(pts) {
+    const len = pts.length
+    // Forme ECG : P petit, QRS sharp, T arrondi
+    const beat = [0.12, 0.14, 0.12, 0.10, 0.08, 0.30, 0.90, 0.25, 0.06, 0.08,
+                  0.20, 0.38, 0.35, 0.28, 0.18, 0.12, 0.09, 0.08]
+    beat.forEach((v, i) => {
+      const pos = len - 18 + i
+      if (pos >= 0 && pos < len) pts[pos] = v
+    })
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    let last = performance.now()
+
+    const draw = (now) => {
+      const s = stateRef.current
+      const dt = now - last
+      last = now
+
+      // Amortir bpm vers repos
+      s.bpm += (s.targetBpm - s.bpm) * 0.005
+      if (s.targetBpm > 48) s.targetBpm = Math.max(48, s.targetBpm - 0.3)
+
+      // Décaler le tracé
+      const speed = 0.8 + (s.bpm - 48) / 60
+      const shift = Math.round(speed)
+      for (let i = 0; i < shift; i++) {
+        s.pts.shift()
+        s.pts.push(Math.max(0.06, s.pts[s.pts.length - 1] * 0.85))
+      }
+
+      // Déclencher un battement selon bpm
+      const msPerBeat = (60 / s.bpm) * 1000
+      if (now - s.lastBeat >= msPerBeat) {
+        injectBeat(s.pts)
+        s.lastBeat = now
+      }
+
+      // Dessiner
+      ctx.clearRect(0, 0, W, H)
+
+      // Dégradé sous la courbe
+      const grad = ctx.createLinearGradient(0, 0, 0, H)
+      grad.addColorStop(0, 'rgba(74,124,80,0.18)')
+      grad.addColorStop(1, 'rgba(74,124,80,0)')
+      ctx.beginPath()
+      for (let x = 0; x < s.pts.length; x++) {
+        const y = H - s.pts[x] * (H - 8) - 4
+        if (x === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath()
+      ctx.fillStyle = grad
+      ctx.fill()
+
+      // Tracé principal
+      ctx.beginPath()
+      ctx.strokeStyle = 'rgba(74,124,80,0.85)'
+      ctx.lineWidth = 1.8
+      ctx.lineJoin = 'round'
+      ctx.lineCap  = 'round'
+      for (let x = 0; x < s.pts.length; x++) {
+        const y = H - s.pts[x] * (H - 8) - 4
+        if (x === 0) ctx.moveTo(x, y)
+        else ctx.lineTo(x, y)
+      }
+      ctx.stroke()
+
+      // Point lumineux sur le dernier pic
+      const last10 = s.pts.slice(-20)
+      const maxH = Math.max(...last10)
+      if (maxH > 0.4) {
+        const lx = W - 20 + last10.indexOf(maxH)
+        const ly = H - maxH * (H - 8) - 4
+        ctx.beginPath()
+        ctx.arc(lx, ly, 3.5, 0, Math.PI * 2)
+        ctx.fillStyle = 'rgba(74,124,80,0.95)'
+        ctx.fill()
+      }
+
+      animRef.current = requestAnimationFrame(draw)
+    }
+    animRef.current = requestAnimationFrame(draw)
+    return () => cancelAnimationFrame(animRef.current)
+  }, [])
+
+  function addPulse() {
+    const s = stateRef.current
+    s.targetBpm = Math.min(120, s.bpm + 18)
+    injectBeat(s.pts)
+    spawnFloatRef.current?.()
+  }
+
+  useEffect(() => {
+    const ch = supabase.channel('pouls-ecg')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
+        () => addPulse())
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [])
+
+  // Charger activité récente pour initialiser le rythme
+  useEffect(() => {
+    async function loadRecent() {
+      const since = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+      const { data } = await supabase.from('network_activity')
+        .select('created_at').gte('created_at', since)
+      if (data?.length) {
+        stateRef.current.targetBpm = Math.min(90, 48 + data.length * 3)
+      }
+    }
+    loadRecent()
+  }, [])
+
+  const [floats, setFloats] = useState([])
+  const spawnFloatRef = useRef(null)
+  const EMOJIS = ['🌸','🌺','🌼','🌷','💮','✨','💫','🌿','✦']
+
+  function spawnFloat() {
+    const id = Date.now() + Math.random()
+    const x = 55 + Math.random() * 40  // % position horizontale
+    const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)]
+    setFloats(prev => [...prev.slice(-8), { id, x, emoji }])
+    setTimeout(() => setFloats(prev => prev.filter(f => f.id !== id)), 2200)
+  }
+  spawnFloatRef.current = spawnFloat
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ fontSize: 'var(--fs-h5, 9px)', color: 'var(--text3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>
+        ✦ Pouls du réseau
+      </div>
+      <div style={{ background: 'var(--surface-1)', borderRadius: 10, border: '1px solid var(--border2)', overflow: 'hidden', position: 'relative' }}>
+        <canvas ref={canvasRef} width={W} height={H} style={{ width: '100%', height: H, display: 'block' }} />
+        {/* Particules flottantes */}
+        <style>{`
+          @keyframes float-up {
+            0%   { transform: translateY(0) scale(1);   opacity: 1; }
+            100% { transform: translateY(-48px) scale(0.6); opacity: 0; }
+          }
+        `}</style>
+        {floats.map(f => (
+          <div key={f.id} style={{
+            position: 'absolute', bottom: 8, left: f.x + '%',
+            fontSize: 14, pointerEvents: 'none', userSelect: 'none',
+            animation: 'float-up 2.2s ease-out forwards',
+          }}>{f.emoji}</div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+
 function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, onUpgrade }) {
   const isMobile = useIsMobile()
   const [zonesData, setZonesData]     = useState(Object.fromEntries(ZONES.map(z => [z.key, 50])))
@@ -870,7 +1094,7 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
   function spawnParticles() {
     if (!svgRef.current) return
     const rect = svgRef.current.getBoundingClientRect()
-    const scaleX = rect.width/260, scaleY = rect.height/260
+    const scaleX = rect.width/240, scaleY = rect.height/240
     const PETALS = ['🌸','🌺','🌼','🌷','💮'], STARS = ['✨','⭐','🌟','💫','✦']
     const ps = []
     ZONES.forEach(z => {
@@ -891,6 +1115,7 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
       setJoined(false)
     } else {
       await supabase.from('intentions_joined').insert({ user_id: userId, date: today })
+      logNetworkActivity(userId, 'intention_joined')
       setJoined(true)
       ZONES.forEach((z,i) => setTimeout(() => { setPulseKey(z.key); setTimeout(() => setPulseKey(null), 1800) }, i*160))
       spawnParticles()
@@ -901,25 +1126,25 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
     <Modal onClose={onClose} maxWidth={500}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '8px 24px 16px' }}>
 
-        {/* Fleur — grand format, sans vide */}
-        <div style={{ marginTop: -20, marginBottom: -28 }}>
-          <FleurSVG zonesData={zonesData} pulseKey={pulseKey} breathPhase={breathPhase} size={isMobile ? 340 : 420} svgRef={svgRef} />
+        {/* Fleur décorative */}
+        <div ref={svgRef}>
+          <FleurSimple zonesData={zonesData} size={isMobile ? 220 : 260} />
         </div>
 
         {/* Compteur fleurs */}
-        <div style={{ fontSize: isMobile ? 13 : 13, color: 'var(--text3)', letterSpacing: '.06em' }}>
-          Collectif de <span style={{ color: 'rgba(var(--green-rgb),.95)', fontWeight: 600 }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''} actives
+        <div style={{ fontSize: 13, color: 'var(--text3)', letterSpacing: '.06em' }}>
+          Collectif de <span style={{ color: 'var(--green)', fontWeight: 600 }}>{activeCount}</span> fleur{activeCount > 1 ? 's' : ''} actives
         </div>
 
         {intention && (<>
           {/* Label */}
-          <div style={{ fontSize: isMobile ? 11 : 11, color: 'rgba(var(--gold-rgb),.70)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Intention collective du jour</div>
+          <div style={{ fontSize: 11, color: 'rgba(212,146,10,0.85)', letterSpacing: '.12em', textTransform: 'uppercase' }}>✦ Intention collective du jour</div>
 
           {/* Titre de l'intention — hero */}
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 32 : 36, fontWeight: 300, color: 'var(--cream)', lineHeight: 1.1, textAlign: 'center', letterSpacing: '-.01em' }}>{intention.text}</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 32 : 36, fontWeight: 300, color: 'var(--text)', lineHeight: 1.1, textAlign: 'center', letterSpacing: '-.01em' }}>{intention.text}</div>
 
           {/* Description */}
-          <div style={{ fontSize: isMobile ? 14 : 14, color: 'var(--text3)', lineHeight: 1.7, textAlign: 'center' }}>{intention.description}</div>
+          <div style={{ fontSize: 14, color: 'var(--text3)', lineHeight: 1.7, textAlign: 'center' }}>{intention.description}</div>
         </>)}
 
         {/* Bouton rejoindre */}
@@ -928,9 +1153,9 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
           minHeight: isMobile ? 48 : 44, padding: '0 28px',
           borderRadius: 100, fontSize: isMobile ? 15 : 14,
           cursor: !isPremium ? 'not-allowed' : 'pointer',
-          background: !isPremium ? 'var(--surface-2)' : joined ? 'rgba(var(--gold-rgb),.15)' : 'rgba(var(--green-rgb),.10)',
-          border: `1px solid ${!isPremium ? 'var(--surface-3)' : joined ? 'rgba(var(--gold-rgb),.50)' : 'rgba(var(--green-rgb),.35)'}`,
-          color: !isPremium ? 'var(--text3)' : joined ? 'var(--gold)' : 'var(--cream)',
+          background: !isPremium ? 'var(--surface-2)' : joined ? 'rgba(212,146,10,0.15)' : 'rgba(var(--green-rgb),.10)',
+          border: `1px solid ${!isPremium ? 'var(--surface-3)' : joined ? 'rgba(212,146,10,0.50)' : 'rgba(var(--green-rgb),.35)'}`,
+          color: !isPremium ? 'var(--text3)' : joined ? '#D4920A' : 'var(--text)',
           fontWeight: joined ? 500 : 300,
           opacity: !isPremium ? 0.6 : 1,
           transition: 'all .2s', WebkitTapHighlightColor: 'transparent',
@@ -938,6 +1163,9 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
         }}>
           {!isPremium ? '🔒 Rejoindre l\'intention — Premium' : joined ? '✓ Vous nourrissez l\'intention' : '🌸 Rejoindre l\'intention collective'}
         </div>
+
+        {/* Pouls du réseau */}
+        <PoulsReseau />
 
         {/* Résonance */}
         {resonance && (() => {
@@ -1233,17 +1461,17 @@ function ScreenClubJardiniers({ userId, awardLumens, onCoeurSeen, isPremium = fa
                 style={{
                   flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                   padding: isMobile ? '16px 8px' : '22px 14px', borderRadius: 18, cursor: 'pointer',
-                  background: b.glow ? 'linear-gradient(135deg, rgba(var(--gold-rgb),.16), rgba(var(--green-rgb),.1))' : 'var(--surface-1)',
-                  border: `1px solid ${b.glow ? 'rgba(var(--gold-rgb),.42)' : 'var(--track)'}`,
-                  boxShadow: b.glow ? '0 0 22px rgba(var(--gold-rgb),.2), 0 0 50px rgba(var(--green-rgb),.07)' : 'none',
+                  background: b.glow ? 'linear-gradient(135deg, rgba(212,146,10,0.16), rgba(150,212,133,0.10))' : 'var(--surface-1)',
+                  border: `1px solid ${b.glow ? 'rgba(212,146,10,0.42)' : 'var(--track)'}`,
+                  boxShadow: b.glow ? '0 0 22px rgba(212,146,10,0.25), 0 0 50px rgba(150,212,133,0.10)' : 'none',
                   transition: 'all .2s', WebkitTapHighlightColor: 'transparent',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = b.glow ? 'rgba(var(--gold-rgb),.7)' : 'var(--separator)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = b.glow ? 'rgba(var(--gold-rgb),.42)' : 'var(--track)' }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.borderColor = b.glow ? 'rgba(212,146,10,0.7)' : 'var(--separator)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = b.glow ? 'rgba(212,146,10,0.42)' : 'var(--track)' }}
               >
-                <div style={{ fontSize: isMobile ? 28 : 34, lineHeight: 1, filter: b.glow ? 'drop-shadow(0 0 10px rgba(var(--gold-rgb),.65))' : 'none' }}>{b.emoji}</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 14 : 17, color: b.glow ? 'var(--gold)' : 'var(--text2)', textAlign: 'center', lineHeight: 1.2 }}>{b.label}</div>
-                <div style={{ fontSize:'var(--fs-h5, 9px)', color: b.glow ? 'var(--gold-warm)' : 'var(--text3)', textAlign: 'center' }}>{b.sub}</div>
+                <div style={{ fontSize: isMobile ? 28 : 34, lineHeight: 1, color: b.glow ? '#D4920A' : 'inherit', filter: b.glow ? 'drop-shadow(0 0 10px rgba(212,146,10,0.65))' : 'none', textShadow: b.glow ? '0 0 12px rgba(212,146,10,0.8)' : 'none' }}>{b.emoji}</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 14 : 17, color: b.glow ? '#D4920A' : 'var(--text2)', textAlign: 'center', lineHeight: 1.2 }}>{b.label}</div>
+                <div style={{ fontSize:'var(--fs-h5, 9px)', color: b.glow ? 'rgba(212,146,10,0.75)' : 'var(--text3)', textAlign: 'center' }}>{b.sub}</div>
               </div>
             ))}
           </div>
