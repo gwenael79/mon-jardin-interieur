@@ -5,22 +5,6 @@ import { plantService }     from '../services/plant.service'
 import { ritualService }    from '../services/ritual.service'
 import { useCircle } from '../hooks/useCircle'
 
-/**
- * Hook principal — charge et gère la plante du jour.
- *
- * Règle fondamentale :
- *   - Tout premier jour (aucun historique) → graine à 5% (défaut DB, rien à faire).
- *   - Nouveau jour avec historique → repart du dernier état connu.
- *   - Une ligne qui a déjà reçu un bilan n'est JAMAIS réécrite.
- *
- * Détection d'une ligne vierge :
- *   On ne se fie PAS à updated_at (trigger inopérant sur certains envs).
- *   On compare la ligne du jour avec le dernier historique :
- *     - Si health du jour = 5 (défaut DB) ET un historique existe avec health > 5
- *       → la ligne est vierge, on copie l'historique.
- *     - Si health du jour > 5 → un bilan a déjà été fait, on ne touche à rien.
- *     - Si health du jour = 5 ET aucun historique → premier jour, graine à 5%, rien à faire.
- */
 export function usePlant(userId) {
   const { activeCircle } = useCircle(userId)
   const {
@@ -47,11 +31,6 @@ export function usePlant(userId) {
 
       const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
 
-      // ── Détection de ligne vierge ─────────────────────────────────────────
-      // health = 5 = valeur par défaut DB = ligne jamais touchée par un bilan.
-      // Si un bilan a été fait, health est forcément > 5 (les rituels font monter).
-      // On ne réécrit QUE si health vaut encore 5 ET qu'un historique existe
-      // avec une valeur supérieure à copier.
       const todayIsDefault = plant?.health === 5
         && ZONE_KEYS.every(k => (plant[k] ?? 5) === 5)
 
@@ -66,14 +45,12 @@ export function usePlant(userId) {
           .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
           .eq('user_id', userId)
           .lt('date', todayKey)
-          .gt('health', 5)           // ← seulement un jour où il s'est passé quelque chose
+          .gt('health', 5)
           .order('date', { ascending: false })
           .limit(1)
           .maybeSingle()
 
         if (lastPlant) {
-          // Repart exactement là où la plante en était
-          // Fallback à 5 (valeur graine) si une zone est null en base
           const safeHealth = lastPlant.health ?? 5
           const patch = {
             health:        safeHealth,
@@ -81,7 +58,6 @@ export function usePlant(userId) {
             ...Object.fromEntries(ZONE_KEYS.map(k => [k, lastPlant[k] ?? safeHealth])),
           }
           resolvedPlant = { ...plant, ...patch }
-          // Persiste en base — avec gestion d'erreur
           if (plant?.id) {
             supabase.from('plants').update(patch).eq('id', plant.id)
               .then(({ error }) => {
@@ -89,8 +65,6 @@ export function usePlant(userId) {
               })
           }
         }
-        // Pas d'historique avec health > 5 = premier jour ou utilisateur
-        // qui n'a jamais fait de rituel → on garde la graine à 5%, rien à faire
       }
 
       setTodayPlant(resolvedPlant)
@@ -109,7 +83,6 @@ export function usePlant(userId) {
     }
   }
 
-  // ─── Compléter un rituel (avec optimistic update) ─────────
   const completeRitual = useCallback(async (ritualId) => {
     if (!todayPlant) return
 

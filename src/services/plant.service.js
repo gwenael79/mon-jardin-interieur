@@ -118,33 +118,17 @@ export const plantService = {
     )
   },
 
-  // -------------------------------------------------------------------
-  // CORRECTIF STREAK
-  // Source de verite : table `activity`
-  // Chaque ligne = une vraie action metier (rituel, bilan, bouquet, coeur, merci...)
-  // Le champ `day` est de type date (YYYY-MM-DD) -> pas de conversion timezone
-  // Fenetre elargie a 90 jours pour supporter des streaks longs
-  // -------------------------------------------------------------------
   async getStats(userId) {
-    const ninetyDaysAgo = new Date()
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-    const since = ninetyDaysAgo.toISOString().split('T')[0]
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    const [activityRows, plants, rituals] = await Promise.all([
-      query(
-        supabase
-          .from('activity')
-          .select('day')
-          .eq('user_id', userId)
-          .gte('day', since),
-        'getStats/activity'
-      ),
+    const [plants, rituals, activityRows] = await Promise.all([
       query(
         supabase
           .from('plants')
           .select('date, health')
           .eq('user_id', userId)
-          .gte('date', since)
+          .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
           .order('date', { ascending: false }),
         'getStats/plants'
       ),
@@ -153,17 +137,25 @@ export const plantService = {
           .from('rituals')
           .select('zone, completed_at')
           .eq('user_id', userId)
-          .gte('completed_at', ninetyDaysAgo.toISOString()),
+          .gte('completed_at', thirtyDaysAgo.toISOString()),
         'getStats/rituals'
+      ),
+      query(
+        supabase
+          .from('activity')
+          .select('day')
+          .eq('user_id', userId)
+          .gte('day', thirtyDaysAgo.toISOString().split('T')[0]),
+        'getStats/activity'
       ),
     ])
 
-    // Jours uniques d'activite -- `day` est deja YYYY-MM-DD, pas de conversion necessaire
-    const activeDates = new Set(activityRows.map(a => a.day))
+    // Jours valides depuis activity (vraies interactions)
+    const activityDates = new Set(activityRows.map(a => a.day))
 
     return {
       plants,
-      streak:           calculateStreak(activeDates),
+      streak:           calculateStreak(plants, activityDates),
       ritualsThisMonth: rituals.length,
       favoriteZone:     calculateFavoriteZone(rituals),
     }
@@ -183,33 +175,34 @@ async function recalculateHealth(plantId, updatedCol, updatedVal) {
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
 }
 
-// activeDates : Set<string> de dates YYYY-MM-DD issues du champ `day` de la table `activity`
-// Regles :
-//   - Aucune activite ni aujourd'hui ni hier  -> streak = 0 (reset garanti)
-//   - Pas encore d'activite aujourd'hui       -> on part d'hier (streak conserve en cours de journee)
-//   - Jour consecutif trouve                  -> on incremente et recule d'un jour
-function calculateStreak(activeDates) {
-  if (!activeDates.size) return 0
+// Un jour compte dans le streak si :
+//   1. Il est present dans activity (vraie interaction : rituel, coeur, merci, bilan, defi)
+//   OU
+//   2. activity est vide pour cet user -> fallback sur plants
+//      Dans ce cas un jour compte si health > HEALTH_DEFAULT (5)
+//      Si meme ca donne rien -> comportement original (toutes les dates plants)
+function calculateStreak(plants, activityDates) {
+  if (!plants.length) return 0
 
-  const now       = new Date()
-  const today     = now.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
-    .split('/').reverse().join('-')
-  const yesterday = new Date(now - 86400000)
-    .toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
-    .split('/').reverse().join('-')
+  const useActivity = activityDates.size > 0
 
-  // Aucune activite ni aujourd'hui ni hier -> streak casse
-  if (!activeDates.has(today) && !activeDates.has(yesterday)) return 0
+  const dates = new Set(
+    useActivity
+      ? [...activityDates]
+      : plants.filter(p => p.health > HEALTH_DEFAULT).map(p => p.date)
+  )
 
-  // On part d'aujourd'hui si actif, sinon d'hier
-  const startDate = activeDates.has(today) ? today : yesterday
-  let current = new Date(startDate + 'T12:00:00') // midi pour eviter les decalages DST
+  const effectiveDates = dates.size > 0
+    ? dates
+    : new Set(plants.map(p => p.date))
 
+  const today = new Date().toISOString().split('T')[0]
+  let current = new Date(today)
   let streak = 0
+
   while (true) {
-    const dateStr = current.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
-      .split('/').reverse().join('-')
-    if (!activeDates.has(dateStr)) break
+    const dateStr = current.toISOString().split('T')[0]
+    if (!effectiveDates.has(dateStr)) break
     streak++
     current.setDate(current.getDate() - 1)
   }
