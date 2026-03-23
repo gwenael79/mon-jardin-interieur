@@ -258,7 +258,6 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
   const [intention, setIntention]     = useState(null)
   const [joined, setJoined]           = useState(false)
   const [resonance, setResonance]     = useState(null)
-  const [flux, setFlux]               = useState([])
   const [myMessages, setMyMessages]   = useState([]) // cœurs reçus par moi
   const [mercisEnvoyes, setMercisEnvoyes] = useState([])
 
@@ -291,13 +290,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
           setTimeout(() => setPulseKey(null), 1800)
           setZonesData(prev => ({ ...prev, [z]: Math.min(100, (prev[z] ?? 50) + .5) }))
           setActiveCount(n => n + 1)
-          // Ajouter au flux
-          const zInfo = ZONE_MAP[z]
-          setFlux(prev => [{
-            id: Date.now(), icon: '💐',
-            text: `Une fleur vient d'envoyer de la lumière sur les ${zInfo?.name ?? z}`,
-            color: zInfo?.color ?? 'var(--green)', t: 'à l\'instant',
-          }, ...prev.slice(0, 8)])
+
         }
         // Si c'est pour moi
         if (payload.new?.receiver_id === userId) {
@@ -556,22 +549,7 @@ function TabEgregore({ userId, myName, feedKey, onFeedRefresh, onParticleBurst, 
         </div>
       )}
 
-      {/* ── FLUX ÉNERGIE ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ fontSize: isMobile ? 12 : 11, color: 'var(--text3)', letterSpacing: '.10em', textTransform: 'uppercase', marginBottom: 2 }}>Flux d'énergie</div>
-        {flux.length === 0 && (
-          <div style={{ fontSize: isMobile ? 14 : 13, color: 'var(--text3)', fontStyle: 'italic' }}>Le flux s'animera dès que des fleurs interagissent…</div>
-        )}
-        {flux.map((item, i) => (
-          <div key={item.id ?? i} style={{ display: 'flex', gap: 12, padding: isMobile ? '12px 14px' : '10px 14px', borderRadius: 12, background: `${item.color}07`, border: `1px solid ${item.color}15` }}>
-            <span style={{ fontSize: isMobile ? 18 : 16, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: isMobile ? 14 : 13, color: 'var(--text2)', lineHeight: 1.55 }}>{item.text}</div>
-              <div style={{ fontSize: isMobile ? 12 : 11, color: 'var(--text3)', marginTop: 3 }}>{item.t}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+
     </div>
   )
 }
@@ -608,6 +586,7 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
     finally { setSending(false) }
   }
 
+  const STAR_CHARS = ['✦','✧','★','⋆','✨']
   return (
     <div style={{
       background: isFragile ? 'rgba(var(--gold-rgb),.05)' : 'var(--surface-1)',
@@ -615,7 +594,26 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       borderRadius: 14, padding: 'clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
       position: 'relative', transition: 'border-color .2s',
+      overflow: 'hidden',
     }}>
+      {/* Étoiles dorées sur interaction membre */}
+      {showStars && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} style={{
+              position: 'absolute',
+              left: `${15 + Math.random() * 70}%`,
+              top: `${10 + Math.random() * 80}%`,
+              fontSize: `${10 + Math.floor(Math.random() * 10)}px`,
+              color: ['#FFE566','#FFD700','#FFF0A0'][i % 3],
+              textShadow: '0 0 8px #FFD700',
+              animation: 'star-float 1.8s ease-out forwards',
+              animationDelay: `${i * 0.08}s`,
+            }}>{STAR_CHARS[i % STAR_CHARS.length]}</div>
+          ))}
+          <style>{`@keyframes star-float { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-40px) scale(0.5)} }`}</style>
+        </div>
+      )}
 
       {/* Badge bouquet */}
       {bouquetMember && (
@@ -707,8 +705,17 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
 // ─────────────────────────────────────────────────────────────────────────────
 //  BOUQUET CARD — colonne droite, format vertical compact
 // ─────────────────────────────────────────────────────────────────────────────
-function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badge, onBadgeClick, expanded, pendingMercisForFleur, onMerci, intentionMode, isPremium = false, onUpgrade }) {
+function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badge, onBadgeClick, expanded, pendingMercisForFleur, onMerci, intentionMode, isPremium = false, onUpgrade, starFlash = false }) {
   const [sending, setSending] = useState(false)
+  const [showStars, setShowStars] = useState(false)
+
+  useEffect(() => {
+    if (starFlash) {
+      setShowStars(true)
+      const t = setTimeout(() => setShowStars(false), 2000)
+      return () => clearTimeout(t)
+    }
+  }, [starFlash])
   const [sentAt, setSentAt]   = useState(alreadySent ? Date.now() : null)
   const [cooldown, setCooldown] = useState(null) // texte "Xh" restant
   const plant     = fleur.plant ?? {}
@@ -941,7 +948,7 @@ function PoulsReseau({ zonesData }) {
   useEffect(() => {
     const ch = supabase.channel('pouls-etoiles')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
-        () => addPulseRef.current?.())
+        (p) => { if (p.new?.action_type === 'intention_joined') addPulseRef.current?.() })
       .subscribe()
     return () => supabase.removeChannel(ch)
   }, [])
@@ -1117,6 +1124,21 @@ function ModalJardin({ userId, myName, bouquetIds, onClose, onCoeurSent, isPremi
   const [list, setList]     = useState([])
   const [ready, setReady]   = useState(false)
   const [excluded, setExcluded] = useState(new Set())
+  const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
+
+  // Realtime — étoiles sur la fleur du membre actif
+  useEffect(() => {
+    const ch = supabase.channel('jardin-stars')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
+        (p) => {
+          const uid = p.new?.user_id
+          if (uid && uid !== userId) {
+            setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
+          }
+        })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [userId])
 
   useEffect(() => { if (userId) init() }, [userId])
 
@@ -1181,6 +1203,7 @@ function ModalJardin({ userId, myName, bouquetIds, onClose, onCoeurSent, isPremi
                   badge={0}
                   onCoeurSent={handleCoeurSent} isPremium={isPremium} onUpgrade={onUpgrade}
                   intentionMode
+                  starFlash={!!starFlashes[fleur.id]}
                 />
               ))
         }

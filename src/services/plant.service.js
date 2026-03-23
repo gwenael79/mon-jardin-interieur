@@ -33,7 +33,6 @@ export const plantService = {
 
     if (existing) return existing
 
-    // ignoreDuplicates: true ne retourne rien → on refait un select après
     await query(
       supabase
         .from('plants')
@@ -119,32 +118,52 @@ export const plantService = {
     )
   },
 
+  // -------------------------------------------------------------------
+  // CORRECTIF STREAK
+  // Source de verite : table `activity`
+  // Chaque ligne = une vraie action metier (rituel, bilan, bouquet, coeur, merci...)
+  // Le champ `day` est de type date (YYYY-MM-DD) -> pas de conversion timezone
+  // Fenetre elargie a 90 jours pour supporter des streaks longs
+  // -------------------------------------------------------------------
   async getStats(userId) {
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const ninetyDaysAgo = new Date()
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+    const since = ninetyDaysAgo.toISOString().split('T')[0]
 
-    const plants = await query(
-      supabase
-        .from('plants')
-        .select('date, health')
-        .eq('user_id', userId)
-        .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-        .order('date', { ascending: false }),
-      'getStats/plants'
-    )
+    const [activityRows, plants, rituals] = await Promise.all([
+      query(
+        supabase
+          .from('activity')
+          .select('day')
+          .eq('user_id', userId)
+          .gte('day', since),
+        'getStats/activity'
+      ),
+      query(
+        supabase
+          .from('plants')
+          .select('date, health')
+          .eq('user_id', userId)
+          .gte('date', since)
+          .order('date', { ascending: false }),
+        'getStats/plants'
+      ),
+      query(
+        supabase
+          .from('rituals')
+          .select('zone, completed_at')
+          .eq('user_id', userId)
+          .gte('completed_at', ninetyDaysAgo.toISOString()),
+        'getStats/rituals'
+      ),
+    ])
 
-    const rituals = await query(
-      supabase
-        .from('rituals')
-        .select('zone, completed_at')
-        .eq('user_id', userId)
-        .gte('completed_at', thirtyDaysAgo.toISOString()),
-      'getStats/rituals'
-    )
+    // Jours uniques d'activite -- `day` est deja YYYY-MM-DD, pas de conversion necessaire
+    const activeDates = new Set(activityRows.map(a => a.day))
 
     return {
       plants,
-      streak:           calculateStreak(plants),
+      streak:           calculateStreak(activeDates),
       ritualsThisMonth: rituals.length,
       favoriteZone:     calculateFavoriteZone(rituals),
     }
@@ -164,16 +183,33 @@ async function recalculateHealth(plantId, updatedCol, updatedVal) {
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
 }
 
-function calculateStreak(plants) {
-  if (!plants.length) return 0
-  let streak = 0
-  const today = new Date().toISOString().split('T')[0]
-  const dates = new Set(plants.map(p => p.date))
-  let current = new Date(today)
+// activeDates : Set<string> de dates YYYY-MM-DD issues du champ `day` de la table `activity`
+// Regles :
+//   - Aucune activite ni aujourd'hui ni hier  -> streak = 0 (reset garanti)
+//   - Pas encore d'activite aujourd'hui       -> on part d'hier (streak conserve en cours de journee)
+//   - Jour consecutif trouve                  -> on incremente et recule d'un jour
+function calculateStreak(activeDates) {
+  if (!activeDates.size) return 0
 
+  const now       = new Date()
+  const today     = now.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
+    .split('/').reverse().join('-')
+  const yesterday = new Date(now - 86400000)
+    .toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
+    .split('/').reverse().join('-')
+
+  // Aucune activite ni aujourd'hui ni hier -> streak casse
+  if (!activeDates.has(today) && !activeDates.has(yesterday)) return 0
+
+  // On part d'aujourd'hui si actif, sinon d'hier
+  const startDate = activeDates.has(today) ? today : yesterday
+  let current = new Date(startDate + 'T12:00:00') // midi pour eviter les decalages DST
+
+  let streak = 0
   while (true) {
-    const dateStr = current.toISOString().split('T')[0]
-    if (!dates.has(dateStr)) break
+    const dateStr = current.toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
+      .split('/').reverse().join('-')
+    if (!activeDates.has(dateStr)) break
     streak++
     current.setDate(current.getDate() - 1)
   }
