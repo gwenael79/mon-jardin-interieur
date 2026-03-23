@@ -876,7 +876,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
             setTimeout(() => setStarFlashes(prev => {
               const n = { ...prev }; delete n[uid]; return n
-            }), 2200)
+            }), 4000)
           }
         })
       .subscribe()
@@ -1051,7 +1051,26 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         )}
 
         {!loading && !err && (<>
-          <style>{`@keyframes cg-star-rise{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.4)}}`}</style>
+          <style>{`
+            @keyframes cg-star-float-0 {
+              0%   { opacity:0; transform: translateY(0px)   scale(0.6) rotate(-8deg); }
+              15%  { opacity:1; }
+              60%  { opacity:0.9; transform: translateY(-55px)  scale(1.1) rotate(6deg); }
+              100% { opacity:0; transform: translateY(-90px)  scale(0.5) rotate(15deg); }
+            }
+            @keyframes cg-star-float-1 {
+              0%   { opacity:0; transform: translateY(0px)   scale(0.5) rotate(10deg); }
+              20%  { opacity:1; }
+              55%  { opacity:0.8; transform: translateY(-65px)  scale(1.2) rotate(-5deg); }
+              100% { opacity:0; transform: translateY(-100px) scale(0.4) rotate(-20deg); }
+            }
+            @keyframes cg-star-float-2 {
+              0%   { opacity:0; transform: translateY(0px)   scale(0.7) rotate(0deg); }
+              10%  { opacity:1; }
+              65%  { opacity:0.85; transform: translateY(-50px)  scale(1.0) rotate(12deg); }
+              100% { opacity:0; transform: translateY(-85px)  scale(0.35) rotate(25deg); }
+            }
+          `}</style>
           <div style={{ position: 'relative' }}>
           <svg width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
@@ -1185,23 +1204,28 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           </svg>
           {/* ── Étoiles dorées sur fleurs actives ── */}
           {positions.filter(p => starFlashes[p.user_id]).flatMap(p => {
-            // p.x est en coordonnées SVG — on soustrait le scroll pour avoir la position écran
             const screenX = p.x - scrollX
-            // N'afficher que si la fleur est dans la zone visible (±100px de marge)
-            if (screenX < -100 || screenX > (scrollRef.current?.clientWidth ?? window.innerWidth) + 100) return []
-            return Array.from({ length: 6 }, (_, i) => (
+            if (screenX < -120 || screenX > (scrollRef.current?.clientWidth ?? window.innerWidth) + 120) return []
+            const flowerBaseY = svgH - groundY + 30
+            const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
+            const COLORS  = ['#FFE566','#FFD700','#FFF3AA','#FFB800','#FFFACD','#FFC800','#FFE000']
+            const SIZES   = [13, 10, 15, 9, 12, 11, 14]
+            const SPREADS = [-28, -14, -6, 0, 8, 18, 30]
+            const DELAYS  = [0, 0.12, 0.06, 0.22, 0.04, 0.18, 0.10]
+            const DURS    = [3.2, 2.8, 3.6, 2.5, 3.0, 3.4, 2.6]
+            return SPREADS.map((dx, i) => (
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
                 position: 'absolute',
-                left: screenX + (i - 3) * 8,
-                bottom: (svgH - groundY) + 50 + i * 8,
-                fontSize: `${11 + (i % 3) * 4}px`,
-                color: ['#FFE566','#FFD700','#FFF0A0','#FFCC00'][i % 4],
-                textShadow: '0 0 10px #FFD700',
+                left: screenX + dx,
+                bottom: flowerBaseY,
+                fontSize: SIZES[i],
+                color: COLORS[i],
                 pointerEvents: 'none',
-                animation: `cg-star-rise ${1.4 + i * 0.12}s ease-out forwards`,
-                animationDelay: `${i * 0.08}s`,
+                animation: `cg-star-float-${i % 3} ${DURS[i]}s cubic-bezier(0.25,0.46,0.45,0.94) ${DELAYS[i]}s forwards`,
+                opacity: 0,
                 zIndex: 20,
-              }}>{['✦','✧','★','⋆','✨','💫'][i]}</div>
+                userSelect: 'none',
+              }}>{GLYPHS[i]}</div>
             ))
           })}
           </div>
