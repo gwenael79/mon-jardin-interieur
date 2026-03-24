@@ -875,10 +875,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         (p) => {
           const uid = p.new?.user_id
           if (uid) {
-            console.log('[debug] plantsRef.length=', plantsRef.current.length, 'uid=', uid)
             if (plantsRef.current.length === 0) {
               loadCommunityPlants().then(d => {
-                console.log('[debug] après chargement plants=', d.length)
                 plantsRef.current = d
                 setPlants(d)
                 setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
@@ -887,7 +885,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
                 }), 4000)
               })
             } else {
-              console.log('[debug] plants déjà chargés, on affiche')
               setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
               setTimeout(() => setStarFlashes(prev => {
                 const n = { ...prev }; delete n[uid]; return n
@@ -1047,7 +1044,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         style={{
           position:'absolute', inset:0,
           overflowX:'auto',
-          overflowY:'hidden',
+          overflowY:'visible',
           height: svgH,
           scrollbarWidth:'thin',
           scrollbarColor:'rgba(120,120,120,0.3) transparent',
@@ -1232,7 +1229,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             let relX, relY
             const svg = svgRef.current
             const ctm = svg?.getScreenCTM?.()
-            console.log('[star-pos] svg=', !!svg, 'ctm=', !!ctm, 'loading=', loading)
 
             if (svg && ctm) {
               // position:fixed → coordonnées viewport directes via getScreenCTM
@@ -1240,8 +1236,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               svgPt.x = p.x
               svgPt.y = flowerTopSvgY
               const screenPt = svgPt.matrixTransform(ctm)
-              relX = screenPt.x
-              relY = screenPt.y
+              const scrollRect2 = scrollRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 }
+              relX = screenPt.x - scrollRect2.left + (scrollRef.current?.scrollLeft ?? 0)
+              relY = screenPt.y - scrollRect2.top
             } else {
               const svgRect    = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH, left: 0, top: 0 }
               const scaleX     = svgRect.width  / svgW
@@ -1264,7 +1261,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const DURS    = [3.2, 2.8, 3.6, 2.5, 3.0, 3.4, 2.6]
             return SPREADS.map((dx, i) => (
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
-                position: 'fixed',
+                position: 'absolute',
                 left: relX + dx,
                 top: relY,
                 fontSize: SIZES[i],
@@ -1272,7 +1269,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
                 pointerEvents: 'none',
                 animation: `cg-star-float-${i % 3} ${DURS[i]}s cubic-bezier(0.25,0.46,0.45,0.94) ${DELAYS[i]}s forwards`,
                 opacity: 0,
-                zIndex: 9999,
+                zIndex: 20,
                 userSelect: 'none',
               }}>{GLYPHS[i]}</div>
             ))
