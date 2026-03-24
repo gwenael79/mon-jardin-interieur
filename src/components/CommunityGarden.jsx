@@ -1226,8 +1226,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const r          = Math.max(0, Math.min(1, (p.health ?? 50) / 100))
             const effGroundY = groundY + (p.yOff ?? 0)
             const stemH      = Math.min(effGroundY * 0.45, effGroundY * (0.08 + 0.38 * r))
-            // Partir du tiers supérieur de la tige — fiable quelle que soit la taille
-            const flowerTopSvgY = effGroundY - stemH * 0.7
+            // Partir de la base de la fleur (sol) — les étoiles montent à travers la plante
+            const flowerTopSvgY = effGroundY
 
             let relX, relY
             const svg = svgRef.current
