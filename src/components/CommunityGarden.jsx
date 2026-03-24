@@ -1231,6 +1231,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             let relX, relY
             const svg = svgRef.current
             const ctm = svg?.getScreenCTM?.()
+            console.log('[star-pos] svg=', !!svg, 'ctm=', !!ctm, 'loading=', loading)
 
             if (svg && ctm) {
               // Conversion coordonnées SVG → écran via matrice
