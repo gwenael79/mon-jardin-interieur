@@ -998,7 +998,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
       minHeight: embedded ? svgH : undefined,
       background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
       overflow:'hidden',
-      display:'flex', flexDirection:'column',
+      display:'flex', flexDirection:'column', position: 'relative',
       backdropFilter: embedded ? 'none' : 'blur(10px)',
       animation: embedded ? 'none' : 'cgFadeIn 0.38s ease',
       padding:'0',
@@ -1087,7 +1087,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               100% { opacity:0; transform: translateY(-85px)  scale(0.35) rotate(25deg); }
             }
           `}</style>
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', overflow: 'visible' }}>
           <svg ref={svgRef} width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
@@ -1267,7 +1267,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const DURS    = [3.2, 2.8, 3.6, 2.5, 3.0, 3.4, 2.6]
             return SPREADS.map((dx, i) => (
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
-                position: 'absolute',
+                position: 'fixed',
                 left: relX + dx,
                 top: relY - 10,
                 fontSize: SIZES[i],
@@ -1275,7 +1275,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
                 pointerEvents: 'none',
                 animation: `cg-star-float-${i % 3} ${DURS[i]}s cubic-bezier(0.25,0.46,0.45,0.94) ${DELAYS[i]}s forwards`,
                 opacity: 0,
-                zIndex: 20,
+                zIndex: 9999,
                 userSelect: 'none',
               }}>{GLYPHS[i]}</div>
             ))
