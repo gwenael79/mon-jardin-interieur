@@ -874,10 +874,14 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         (p) => {
           const uid = p.new?.user_id
           if (uid) {
-            setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
-            setTimeout(() => setStarFlashes(prev => {
-              const n = { ...prev }; delete n[uid]; return n
-            }), 4000)
+            // Recharge les plants pour avoir les positions à jour avant d'afficher les étoiles
+            loadCommunityPlants().then(d => {
+              setPlants(d)
+              setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
+              setTimeout(() => setStarFlashes(prev => {
+                const n = { ...prev }; delete n[uid]; return n
+              }), 4000)
+            })
           }
         })
       .subscribe()
@@ -1217,8 +1221,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const ctm = svg?.getScreenCTM?.()
 
             if (svg && ctm) {
-              // PC — conversion précise via matrice SVG
-              const svgPt = svg.createSVGPoint()
+              // Lecture du scroll courant directement depuis le DOM (plus fiable que le state)
+              const currentScrollX = scrollRef.current?.scrollLeft ?? 0
+              const svgPt    = svg.createSVGPoint()
               svgPt.x = p.x
               svgPt.y = flowerTopSvgY
               const screenPt = svgPt.matrixTransform(ctm)
@@ -1226,11 +1231,12 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               relX = screenPt.x - divRect.left
               relY = screenPt.y - divRect.top
             } else {
-              // Mobile fallback — calcul manuel depuis les coordonnées SVG
-              // Le SVG est rendu width=svgW, height=svgH dans un conteneur scrollable
-              // Les coordonnées SVG sont 1:1 avec les pixels CSS (pas de scaling)
-              relX = p.x - scrollX
-              relY = flowerTopSvgY
+              const currentScrollX = scrollRef.current?.scrollLeft ?? 0
+              const svgRect = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH }
+              const scaleX  = svgRect.width  / svgW
+              const scaleY  = svgRect.height / svgH
+              relX = p.x * scaleX - currentScrollX * scaleX
+              relY = flowerTopSvgY * scaleY
             }
 
             // Filtre les fleurs hors du viewport visible
