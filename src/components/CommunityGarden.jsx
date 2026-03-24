@@ -1243,7 +1243,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               const screenPt = svgPt.matrixTransform(ctm)
               relX = screenPt.x
               relY = screenPt.y
-              setDebugInfo(`relX=${Math.round(relX)} relY=${Math.round(relY)} winH=${window.innerHeight} winW=${window.innerWidth} filter=${relX < containerRect.left - 80 || relX > containerRect.right + 80 ? 'HORS' : 'OK'}`)
             } else {
               const svgRect    = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH, left: 0, top: 0 }
               const scaleX     = svgRect.width  / svgW
@@ -1255,6 +1254,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
 
             // Filtre les fleurs hors du viewport visible
             const containerRect = scrollRef.current?.getBoundingClientRect() ?? { left: 0, right: window.innerWidth }
+            setDebugInfo(`relX=${Math.round(relX)} relY=${Math.round(relY)} winH=${window.innerHeight} winW=${window.innerWidth} filter=${relX < containerRect.left - 80 || relX > containerRect.right + 80 ? 'HORS' : 'OK'}`)
             if (relX < containerRect.left - 80 || relX > containerRect.right + 80) return []
 
             const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
