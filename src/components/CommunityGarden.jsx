@@ -1244,6 +1244,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               // Position relative au conteneur scrollable (ce qui est visible)
               relX = screenPt.x - scrollRect.left
               relY = screenPt.y - scrollRect.top
+              console.log('[star-pos] CTM relX=', Math.round(relX), 'relY=', Math.round(relY), 'containerW=', scrollRef.current?.clientWidth, 'scrollRect=', Math.round(scrollRect.left), Math.round(scrollRect.top))
             } else {
               const svgRect = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH }
               const scrollRect = scrollRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 }
