@@ -867,6 +867,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [scrollX, setScrollX] = useState(0)
   const [winH, setWinH] = useState(window.innerHeight)
   const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
+  const [debugInfo, setDebugInfo] = useState('')
 
   // Realtime — étoiles sur la fleur du membre actif
   useEffect(() => {
@@ -1242,7 +1243,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               const screenPt = svgPt.matrixTransform(ctm)
               relX = screenPt.x
               relY = screenPt.y
-              console.log('[star] relX=', Math.round(relX), 'relY=', Math.round(relY), 'winH=', window.innerHeight, 'winW=', window.innerWidth)
+              setDebugInfo(`relX=${Math.round(relX)} relY=${Math.round(relY)} winH=${window.innerHeight} winW=${window.innerWidth} filter=${relX < containerRect.left - 80 || relX > containerRect.right + 80 ? 'HORS' : 'OK'}`)
             } else {
               const svgRect    = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH, left: 0, top: 0 }
               const scaleX     = svgRect.width  / svgW
@@ -1279,6 +1280,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           })}
           </div>
         </>)}
+        {debugInfo && <div style={{position:'fixed',top:10,left:10,background:'rgba(0,0,0,0.8)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,zIndex:99999,maxWidth:'90vw',wordBreak:'break-all'}}>{debugInfo}</div>}
       </div>
     </div>
   )
