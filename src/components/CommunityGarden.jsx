@@ -859,12 +859,9 @@ function GrassLayer({ svgW, groundY }) {
 ───────────────────────────────────────────────────── */
 export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [plants,  setPlants]  = useState([])
-  const plantsRef = useRef([])  // ref synchrone accessible dans les callbacks realtime
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
-  const svgRef    = useRef(null)
-  const [scrollX, setScrollX] = useState(0)
   const [winH, setWinH] = useState(window.innerHeight)
   const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
 
@@ -875,21 +872,10 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         (p) => {
           const uid = p.new?.user_id
           if (uid) {
-            if (plantsRef.current.length === 0) {
-              loadCommunityPlants().then(d => {
-                plantsRef.current = d
-                setPlants(d)
-                setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
-                setTimeout(() => setStarFlashes(prev => {
-                  const n = { ...prev }; delete n[uid]; return n
-                }), 4000)
-              })
-            } else {
-              setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
-              setTimeout(() => setStarFlashes(prev => {
-                const n = { ...prev }; delete n[uid]; return n
-              }), 4000)
-            }
+            setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
+            setTimeout(() => setStarFlashes(prev => {
+              const n = { ...prev }; delete n[uid]; return n
+            }), 2200)
           }
         })
       .subscribe()
@@ -903,18 +889,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
     return () => { window.removeEventListener('resize', fn) }
   }, [])
 
-  // Suivi du scroll horizontal pour positionner les étoiles correctement
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const onScroll = () => setScrollX(el.scrollLeft)
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [scrollRef.current])
-
   useEffect(() => {
     loadCommunityPlants()
-      .then(d  => { plantsRef.current = d; setPlants(d); setLoading(false) })
+      .then(d  => { setPlants(d); setLoading(false) })
       .catch(e => { setErr(e.message); setLoading(false) })
   }, [])
 
@@ -995,7 +972,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
       minHeight: embedded ? svgH : undefined,
       background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
       overflow:'hidden',
-      display:'flex', flexDirection:'column', position: 'relative',
+      display:'flex', flexDirection:'column',
       backdropFilter: embedded ? 'none' : 'blur(10px)',
       animation: embedded ? 'none' : 'cgFadeIn 0.38s ease',
       padding:'0',
@@ -1044,7 +1021,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         style={{
           position:'absolute', inset:0,
           overflowX:'auto',
-          overflowY:'visible',
+          overflowY:'hidden',
           height: svgH,
           scrollbarWidth:'thin',
           scrollbarColor:'rgba(120,120,120,0.3) transparent',
@@ -1064,28 +1041,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         )}
 
         {!loading && !err && (<>
-          <style>{`
-            @keyframes cg-star-float-0 {
-              0%   { opacity:0; transform: translateY(0px)    scale(0.6) rotate(-8deg); }
-              12%  { opacity:1; }
-              60%  { opacity:0.9; transform: translateY(-110px) scale(1.1) rotate(6deg); }
-              100% { opacity:0; transform: translateY(-180px) scale(0.5) rotate(15deg); }
-            }
-            @keyframes cg-star-float-1 {
-              0%   { opacity:0; transform: translateY(0px)    scale(0.5) rotate(10deg); }
-              15%  { opacity:1; }
-              55%  { opacity:0.8; transform: translateY(-130px) scale(1.2) rotate(-5deg); }
-              100% { opacity:0; transform: translateY(-200px) scale(0.4) rotate(-20deg); }
-            }
-            @keyframes cg-star-float-2 {
-              0%   { opacity:0; transform: translateY(0px)    scale(0.7) rotate(0deg); }
-              10%  { opacity:1; }
-              65%  { opacity:0.85; transform: translateY(-100px) scale(1.0) rotate(12deg); }
-              100% { opacity:0; transform: translateY(-165px) scale(0.35) rotate(25deg); }
-            }
-          `}</style>
-          <div style={{ position: 'relative', overflow: 'visible' }}>
-          <svg ref={svgRef} width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
+          <style>{`@keyframes cg-star-rise{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.4)}}`}</style>
+          <div style={{ position: 'relative' }}>
+          <svg width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={skyA}/>
@@ -1216,67 +1174,24 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             <rect width={svgW} height={svgH} fill="url(#cgVig)"/>
           </svg>
           {/* ── Étoiles dorées sur fleurs actives ── */}
-          {(() => { const active = positions.filter(p => starFlashes[p.user_id]); if(active.length) console.log('[render] étoiles à afficher:', active.length, 'positions total:', positions.length, 'starFlashes:', Object.keys(starFlashes)); return null })()}
-          {positions.filter(p => starFlashes[p.user_id]).flatMap(p => {
-            // Calcul de la position en coordonnées relatives au div.relative
-            // Stratégie : scroll-aware + fallback si getScreenCTM indisponible (mobile)
-            const r          = Math.max(0, Math.min(1, (p.health ?? 50) / 100))
-            const effGroundY = groundY + (p.yOff ?? 0)
-            const stemH      = Math.min(effGroundY * 0.45, effGroundY * (0.08 + 0.38 * r))
-            // Partir de la base de la fleur (sol) — les étoiles montent à travers la plante
-            const flowerTopSvgY = effGroundY
-
-            let relX, relY
-            const svg = svgRef.current
-            const ctm = svg?.getScreenCTM?.()
-
-            if (svg && ctm) {
-              // position:fixed → coordonnées viewport directes via getScreenCTM
-              const svgPt    = svg.createSVGPoint()
-              svgPt.x = p.x
-              svgPt.y = flowerTopSvgY
-              const screenPt = svgPt.matrixTransform(ctm)
-              const scrollRect2 = scrollRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 }
-              relX = screenPt.x - scrollRect2.left + (scrollRef.current?.scrollLeft ?? 0)
-              relY = screenPt.y - scrollRect2.top
-            } else {
-              const svgRect    = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH, left: 0, top: 0 }
-              const scaleX     = svgRect.width  / svgW
-              const scaleY     = svgRect.height / svgH
-              const scrollLeft = scrollRef.current?.scrollLeft ?? 0
-              relX = svgRect.left + p.x * scaleX - scrollLeft * scaleX
-              relY = svgRect.top  + flowerTopSvgY * scaleY
-            }
-
-            // Filtre les fleurs hors du viewport visible
-            const containerRect = scrollRef.current?.getBoundingClientRect() ?? { left: 0, right: window.innerWidth }
-            setDebugInfo(`relX=${Math.round(relX)} relY=${Math.round(relY)} winH=${window.innerHeight} winW=${window.innerWidth} filter=${relX < containerRect.left - 80 || relX > containerRect.right + 80 ? 'HORS' : 'OK'}`)
-            if (relX < containerRect.left - 80 || relX > containerRect.right + 80) return []
-
-            const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
-            const COLORS  = ['#FFE566','#FFD700','#FFF3AA','#FFB800','#FFFACD','#FFC800','#FFE000']
-            const SIZES   = [13, 10, 15, 9, 12, 11, 14]
-            const SPREADS = [-28, -14, -6, 0, 8, 18, 30]
-            const DELAYS  = [0, 0.12, 0.06, 0.22, 0.04, 0.18, 0.10]
-            const DURS    = [3.2, 2.8, 3.6, 2.5, 3.0, 3.4, 2.6]
-            return SPREADS.map((dx, i) => (
+          {positions.filter(p => starFlashes[p.user_id]).flatMap(p =>
+            Array.from({ length: 6 }, (_, i) => (
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
                 position: 'absolute',
-                left: relX + dx,
-                top: relY,
-                fontSize: SIZES[i],
-                color: COLORS[i],
+                left: p.x + (i - 3) * 8,
+                bottom: (svgH - groundY) + 50 + i * 8,
+                fontSize: `${11 + (i % 3) * 4}px`,
+                color: ['#FFE566','#FFD700','#FFF0A0','#FFCC00'][i % 4],
+                textShadow: '0 0 10px #FFD700',
                 pointerEvents: 'none',
-                animation: `cg-star-float-${i % 3} ${DURS[i]}s cubic-bezier(0.25,0.46,0.45,0.94) ${DELAYS[i]}s forwards`,
-                opacity: 0,
+                animation: `cg-star-rise ${1.4 + i * 0.12}s ease-out forwards`,
+                animationDelay: `${i * 0.08}s`,
                 zIndex: 20,
-                userSelect: 'none',
-              }}>{GLYPHS[i]}</div>
+              }}>{['✦','✧','★','⋆','✨','💫'][i]}</div>
             ))
-          })}
+          )}
           </div>
         </>)}
-
       </div>
     </div>
   )
