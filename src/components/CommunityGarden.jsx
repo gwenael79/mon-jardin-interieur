@@ -859,6 +859,7 @@ function GrassLayer({ svgW, groundY }) {
 ───────────────────────────────────────────────────── */
 export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [plants,  setPlants]  = useState([])
+  const plantsRef = useRef([])  // ref synchrone accessible dans les callbacks realtime
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
@@ -874,14 +875,24 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         (p) => {
           const uid = p.new?.user_id
           if (uid) {
-            // Recharge les plants pour avoir les positions à jour avant d'afficher les étoiles
-            loadCommunityPlants().then(d => {
-              setPlants(d)
+            console.log('[debug] plantsRef.length=', plantsRef.current.length, 'uid=', uid)
+            if (plantsRef.current.length === 0) {
+              loadCommunityPlants().then(d => {
+                console.log('[debug] après chargement plants=', d.length)
+                plantsRef.current = d
+                setPlants(d)
+                setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
+                setTimeout(() => setStarFlashes(prev => {
+                  const n = { ...prev }; delete n[uid]; return n
+                }), 4000)
+              })
+            } else {
+              console.log('[debug] plants déjà chargés, on affiche')
               setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
               setTimeout(() => setStarFlashes(prev => {
                 const n = { ...prev }; delete n[uid]; return n
               }), 4000)
-            })
+            }
           }
         })
       .subscribe()
@@ -906,7 +917,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
 
   useEffect(() => {
     loadCommunityPlants()
-      .then(d  => { setPlants(d); setLoading(false) })
+      .then(d  => { plantsRef.current = d; setPlants(d); setLoading(false) })
       .catch(e => { setErr(e.message); setLoading(false) })
   }, [])
 
@@ -1208,6 +1219,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             <rect width={svgW} height={svgH} fill="url(#cgVig)"/>
           </svg>
           {/* ── Étoiles dorées sur fleurs actives ── */}
+          {(() => { const active = positions.filter(p => starFlashes[p.user_id]); if(active.length) console.log('[render] étoiles à afficher:', active.length, 'positions total:', positions.length, 'starFlashes:', Object.keys(starFlashes)); return null })()}
           {positions.filter(p => starFlashes[p.user_id]).flatMap(p => {
             // Calcul de la position en coordonnées relatives au div.relative
             // Stratégie : scroll-aware + fallback si getScreenCTM indisponible (mobile)
