@@ -1205,28 +1205,38 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           </svg>
           {/* ── Étoiles dorées sur fleurs actives ── */}
           {positions.filter(p => starFlashes[p.user_id]).flatMap(p => {
-            // Convertit les coordonnées SVG en coordonnées écran via la matrice de transformation
-            if (!svgRef.current) return []
-            const svg = svgRef.current
-            const ctm = svg.getScreenCTM()
-            if (!ctm) return []
-            // Recalcule le sommet de la fleur en coordonnées SVG (identique à FieldFlower)
+            // Calcul de la position en coordonnées relatives au div.relative
+            // Stratégie : scroll-aware + fallback si getScreenCTM indisponible (mobile)
             const r          = Math.max(0, Math.min(1, (p.health ?? 50) / 100))
             const effGroundY = groundY + (p.yOff ?? 0)
             const stemH      = Math.min(effGroundY * 0.45, effGroundY * (0.08 + 0.38 * r))
-            const flowerTopY = effGroundY - stemH  // coordonnée SVG Y du sommet de la fleur
-            // Convertit en coordonnées écran
-            const svgPt = svg.createSVGPoint()
-            svgPt.x = p.x
-            svgPt.y = flowerTopY
-            const screenPt = svgPt.matrixTransform(ctm)
-            // Convertit en coordonnées relatives au div.relative (parent de position:absolute)
-            const divRect = svg.parentElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
-            const relX = screenPt.x - divRect.left
-            const relY = screenPt.y - divRect.top
+            const flowerTopSvgY = effGroundY - stemH
+
+            let relX, relY
+            const svg = svgRef.current
+            const ctm = svg?.getScreenCTM?.()
+
+            if (svg && ctm) {
+              // PC — conversion précise via matrice SVG
+              const svgPt = svg.createSVGPoint()
+              svgPt.x = p.x
+              svgPt.y = flowerTopSvgY
+              const screenPt = svgPt.matrixTransform(ctm)
+              const divRect  = svg.parentElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
+              relX = screenPt.x - divRect.left
+              relY = screenPt.y - divRect.top
+            } else {
+              // Mobile fallback — calcul manuel depuis les coordonnées SVG
+              // Le SVG est rendu width=svgW, height=svgH dans un conteneur scrollable
+              // Les coordonnées SVG sont 1:1 avec les pixels CSS (pas de scaling)
+              relX = p.x - scrollX
+              relY = flowerTopSvgY
+            }
+
             // Filtre les fleurs hors du viewport visible
             const containerW = scrollRef.current?.clientWidth ?? window.innerWidth
             if (relX < -80 || relX > containerW + 80) return []
+
             const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
             const COLORS  = ['#FFE566','#FFD700','#FFF3AA','#FFB800','#FFFACD','#FFC800','#FFE000']
             const SIZES   = [13, 10, 15, 9, 12, 11, 14]
