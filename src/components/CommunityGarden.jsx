@@ -1233,22 +1233,23 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const ctm = svg?.getScreenCTM?.()
 
             if (svg && ctm) {
-              const currentScrollX = scrollRef.current?.scrollLeft ?? 0
+              // Conversion coordonnées SVG → écran via matrice
               const svgPt    = svg.createSVGPoint()
               svgPt.x = p.x
               svgPt.y = flowerTopSvgY
               const screenPt = svgPt.matrixTransform(ctm)
-              const divRect  = svg.parentElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
-              relX = screenPt.x - divRect.left
-              relY = screenPt.y - divRect.top
-              console.log('[star-pos] CTM relX=', Math.round(relX), 'relY=', Math.round(relY), 'divRect=', Math.round(divRect.left), Math.round(divRect.top), 'screen=', Math.round(screenPt.x), Math.round(screenPt.y), 'containerW=', scrollRef.current?.clientWidth)
+              // scrollRef est le conteneur scrollable — sa position écran sert de référence
+              const scrollRect = scrollRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 }
+              // Position relative au conteneur scrollable (ce qui est visible)
+              relX = screenPt.x - scrollRect.left
+              relY = screenPt.y - scrollRect.top
             } else {
-              const currentScrollX = scrollRef.current?.scrollLeft ?? 0
               const svgRect = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH }
+              const scrollRect = scrollRef.current?.getBoundingClientRect() ?? { left: 0, top: 0 }
               const scaleX  = svgRect.width  / svgW
               const scaleY  = svgRect.height / svgH
-              relX = p.x * scaleX - currentScrollX * scaleX
-              relY = flowerTopSvgY * scaleY
+              relX = p.x * scaleX - (scrollRef.current?.scrollLeft ?? 0) * scaleX
+              relY = flowerTopSvgY * scaleY - scrollRect.top
             }
 
             // Filtre les fleurs hors du viewport visible
