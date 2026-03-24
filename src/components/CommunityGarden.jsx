@@ -1250,6 +1250,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               const scaleY  = svgRect.height / svgH
               relX = p.x * scaleX - (scrollRef.current?.scrollLeft ?? 0) * scaleX
               relY = flowerTopSvgY * scaleY - scrollRect.top
+              console.log('[star-pos] ELSE relX=', Math.round(relX), 'relY=', Math.round(relY), 'svg=', !!svg, 'ctm=', !!ctm, 'scaleX=', scaleX.toFixed(2))
             }
 
             // Filtre les fleurs hors du viewport visible
