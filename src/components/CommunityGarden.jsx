@@ -1242,6 +1242,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               const screenPt = svgPt.matrixTransform(ctm)
               relX = screenPt.x
               relY = screenPt.y
+              console.log('[star] relX=', Math.round(relX), 'relY=', Math.round(relY), 'winH=', window.innerHeight, 'winW=', window.innerWidth)
             } else {
               const svgRect    = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH, left: 0, top: 0 }
               const scaleX     = svgRect.width  / svgW
