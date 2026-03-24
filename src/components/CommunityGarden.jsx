@@ -1269,7 +1269,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
                 position: 'fixed',
                 left: relX + dx,
-                top: relY - 10,
+                top: relY + 20,
                 fontSize: SIZES[i],
                 color: COLORS[i],
                 pointerEvents: 'none',
