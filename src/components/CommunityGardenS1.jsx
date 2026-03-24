@@ -863,85 +863,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
   const [winH, setWinH] = useState(window.innerHeight)
-  const canvasRef   = useRef(null)
-  const particlesRef = useRef([])
-  const positionsRef = useRef([])
-  const svgElRef     = useRef(null)
-  const rafRef       = useRef(null)
-
-  // Met à jour positionsRef quand positions change
-  useEffect(() => { positionsRef.current = positions }, [positions])
-
-  // Boucle d'animation canvas
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    function resize() {
-      canvas.width  = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const now = Date.now()
-      particlesRef.current = particlesRef.current.filter(p => now < p.end)
-      particlesRef.current.forEach(p => {
-        const t = (now - p.start) / (p.end - p.start)
-        const y = p.y - t * p.rise
-        const alpha = t < 0.15 ? t / 0.15 : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1
-        ctx.globalAlpha = alpha
-        ctx.font = `${p.size}px serif`
-        ctx.fillStyle = p.color
-        ctx.save()
-        ctx.translate(p.x, y)
-        ctx.rotate(p.rot + t * p.spin)
-        ctx.fillText(p.char, 0, 0)
-        ctx.restore()
-      })
-      ctx.globalAlpha = 1
-      rafRef.current = requestAnimationFrame(draw)
-    }
-    rafRef.current = requestAnimationFrame(draw)
-    return () => {
-      cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('resize', resize)
-    }
-  }, [])
-
-  function spawnStars(uid) {
-    const pos = positionsRef.current.find(p => p.user_id === uid)
-    if (!pos || !svgElRef.current) return
-    const svg  = svgElRef.current
-    const ctm  = svg.getScreenCTM()
-    if (!ctm) return
-    const r         = Math.max(0, Math.min(1, (pos.health ?? 50) / 100))
-    const effGY     = (svg.viewBox?.baseVal?.height ?? 400) - 20 + (pos.yOff ?? 0)
-    const stemH     = Math.min(effGY * 0.45, effGY * (0.08 + 0.38 * r))
-    const svgPt     = svg.createSVGPoint()
-    svgPt.x = pos.x
-    svgPt.y = effGY - stemH * 0.5
-    const sc    = svgPt.matrixTransform(ctm)
-    const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
-    const COLORS  = ['#FFE566','#FFD700','#FFF3AA','#FFB800','#FFFACD','#FFC800','#FFE000']
-    const now = Date.now()
-    for (let i = 0; i < 7; i++) {
-      particlesRef.current.push({
-        x:     sc.x + (Math.random() - 0.5) * 40,
-        y:     sc.y,
-        rise:  120 + Math.random() * 100,
-        size:  9 + Math.floor(Math.random() * 8),
-        char:  GLYPHS[i],
-        color: COLORS[i],
-        rot:   (Math.random() - 0.5) * 0.5,
-        spin:  (Math.random() - 0.5) * 2,
-        start: now + i * 80,
-        end:   now + i * 80 + 2800 + Math.random() * 800,
-      })
-    }
-  }
+  const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
 
   // Realtime — étoiles sur la fleur du membre actif
   useEffect(() => {
@@ -949,7 +871,12 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
         (p) => {
           const uid = p.new?.user_id
-          if (uid) spawnStars(uid)
+          if (uid) {
+            setStarFlashes(prev => ({ ...prev, [uid]: Date.now() }))
+            setTimeout(() => setStarFlashes(prev => {
+              const n = { ...prev }; delete n[uid]; return n
+            }), 2200)
+          }
         })
       .subscribe()
     return () => supabase.removeChannel(ch)
@@ -1114,8 +1041,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         )}
 
         {!loading && !err && (<>
+          <style>{`@keyframes cg-star-rise{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(0.4)}}`}</style>
           <div style={{ position: 'relative' }}>
-          <svg ref={svgElRef} width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
+          <svg width={svgW} height={svgH} style={{display:'block', minHeight:svgH}} viewBox={`0 0 ${svgW} ${svgH}`} preserveAspectRatio="xMidYMax meet" fill="none">
             <defs>
               <linearGradient id="cgSky"  x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%"   stopColor={skyA}/>
@@ -1245,10 +1173,26 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             {/* VIGNETTE BORDS */}
             <rect width={svgW} height={svgH} fill="url(#cgVig)"/>
           </svg>
+          {/* ── Étoiles dorées sur fleurs actives ── */}
+          {positions.filter(p => starFlashes[p.user_id]).flatMap(p =>
+            Array.from({ length: 6 }, (_, i) => (
+              <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
+                position: 'absolute',
+                left: p.x + (i - 3) * 8,
+                bottom: (svgH - groundY) + 50 + i * 8,
+                fontSize: `${11 + (i % 3) * 4}px`,
+                color: ['#FFE566','#FFD700','#FFF0A0','#FFCC00'][i % 4],
+                textShadow: '0 0 10px #FFD700',
+                pointerEvents: 'none',
+                animation: `cg-star-rise ${1.4 + i * 0.12}s ease-out forwards`,
+                animationDelay: `${i * 0.08}s`,
+                zIndex: 20,
+              }}>{['✦','✧','★','⋆','✨','💫'][i]}</div>
+            ))
+          )}
           </div>
         </>)}
       </div>
-      <canvas ref={canvasRef} style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:9999 }} />
     </div>
   )
 }
