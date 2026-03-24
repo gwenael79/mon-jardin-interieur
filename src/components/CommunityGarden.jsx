@@ -867,7 +867,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const [scrollX, setScrollX] = useState(0)
   const [winH, setWinH] = useState(window.innerHeight)
   const [starFlashes, setStarFlashes] = useState({}) // { userId: timestamp }
-  const [debugInfo, setDebugInfo] = useState('')
 
   // Realtime — étoiles sur la fleur du membre actif
   useEffect(() => {
@@ -1280,7 +1279,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
           })}
           </div>
         </>)}
-        {debugInfo && <div style={{position:'fixed',top:10,left:10,background:'rgba(0,0,0,0.8)',color:'#fff',padding:'8px 12px',borderRadius:8,fontSize:12,zIndex:99999,maxWidth:'90vw',wordBreak:'break-all'}}>{debugInfo}</div>}
+
       </div>
     </div>
   )
