@@ -1069,22 +1069,22 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
         {!loading && !err && (<>
           <style>{`
             @keyframes cg-star-float-0 {
-              0%   { opacity:0; transform: translateY(0px)   scale(0.6) rotate(-8deg); }
-              15%  { opacity:1; }
-              60%  { opacity:0.9; transform: translateY(-55px)  scale(1.1) rotate(6deg); }
-              100% { opacity:0; transform: translateY(-90px)  scale(0.5) rotate(15deg); }
+              0%   { opacity:0; transform: translateY(0px)    scale(0.6) rotate(-8deg); }
+              12%  { opacity:1; }
+              60%  { opacity:0.9; transform: translateY(-110px) scale(1.1) rotate(6deg); }
+              100% { opacity:0; transform: translateY(-180px) scale(0.5) rotate(15deg); }
             }
             @keyframes cg-star-float-1 {
-              0%   { opacity:0; transform: translateY(0px)   scale(0.5) rotate(10deg); }
-              20%  { opacity:1; }
-              55%  { opacity:0.8; transform: translateY(-65px)  scale(1.2) rotate(-5deg); }
-              100% { opacity:0; transform: translateY(-100px) scale(0.4) rotate(-20deg); }
+              0%   { opacity:0; transform: translateY(0px)    scale(0.5) rotate(10deg); }
+              15%  { opacity:1; }
+              55%  { opacity:0.8; transform: translateY(-130px) scale(1.2) rotate(-5deg); }
+              100% { opacity:0; transform: translateY(-200px) scale(0.4) rotate(-20deg); }
             }
             @keyframes cg-star-float-2 {
-              0%   { opacity:0; transform: translateY(0px)   scale(0.7) rotate(0deg); }
+              0%   { opacity:0; transform: translateY(0px)    scale(0.7) rotate(0deg); }
               10%  { opacity:1; }
-              65%  { opacity:0.85; transform: translateY(-50px)  scale(1.0) rotate(12deg); }
-              100% { opacity:0; transform: translateY(-85px)  scale(0.35) rotate(25deg); }
+              65%  { opacity:0.85; transform: translateY(-100px) scale(1.0) rotate(12deg); }
+              100% { opacity:0; transform: translateY(-165px) scale(0.35) rotate(25deg); }
             }
           `}</style>
           <div style={{ position: 'relative', overflow: 'visible' }}>
