@@ -1233,7 +1233,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const ctm = svg?.getScreenCTM?.()
 
             if (svg && ctm) {
-              // Lecture du scroll courant directement depuis le DOM (plus fiable que le state)
               const currentScrollX = scrollRef.current?.scrollLeft ?? 0
               const svgPt    = svg.createSVGPoint()
               svgPt.x = p.x
@@ -1242,6 +1241,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               const divRect  = svg.parentElement?.getBoundingClientRect() ?? { left: 0, top: 0 }
               relX = screenPt.x - divRect.left
               relY = screenPt.y - divRect.top
+              console.log('[star-pos] CTM relX=', Math.round(relX), 'relY=', Math.round(relY), 'divRect=', Math.round(divRect.left), Math.round(divRect.top), 'screen=', Math.round(screenPt.x), Math.round(screenPt.y), 'containerW=', scrollRef.current?.clientWidth)
             } else {
               const currentScrollX = scrollRef.current?.scrollLeft ?? 0
               const svgRect = svg?.getBoundingClientRect() ?? { width: svgW, height: svgH }
