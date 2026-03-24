@@ -1226,7 +1226,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
             const r          = Math.max(0, Math.min(1, (p.health ?? 50) / 100))
             const effGroundY = groundY + (p.yOff ?? 0)
             const stemH      = Math.min(effGroundY * 0.45, effGroundY * (0.08 + 0.38 * r))
-            const flowerTopSvgY = effGroundY - stemH
+            // Partir du tiers supérieur de la tige — fiable quelle que soit la taille
+            const flowerTopSvgY = effGroundY - stemH * 0.7
 
             let relX, relY
             const svg = svgRef.current
@@ -1269,7 +1270,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
               <div key={`${p.user_id}-${i}-${starFlashes[p.user_id]}`} style={{
                 position: 'fixed',
                 left: relX + dx,
-                top: relY + 20,
+                top: relY,
                 fontSize: SIZES[i],
                 color: COLORS[i],
                 pointerEvents: 'none',
