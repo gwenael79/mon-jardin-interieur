@@ -869,9 +869,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
   const svgElRef     = useRef(null)
   const rafRef       = useRef(null)
 
-  // Met à jour positionsRef quand positions change
-  useEffect(() => { positionsRef.current = positions }, [positions])
-
   // Boucle d'animation canvas
   useEffect(() => {
     const canvas = canvasRef.current
@@ -1034,6 +1031,9 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
       })
       .sort((a,b) => a.yOff - b.yOff)
   }, [plants, currentUserId, svgW])
+
+  // Met à jour positionsRef quand positions change
+  useEffect(() => { positionsRef.current = positions }, [positions])
 
   return (
     <div style={{
