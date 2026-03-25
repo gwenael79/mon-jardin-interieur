@@ -881,24 +881,61 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
     resize()
     window.addEventListener('resize', resize)
 
+    function drawStar(cx, cy, spikes, outer, inner) {
+      let rot = -Math.PI / 2
+      const step = Math.PI / spikes
+      ctx.beginPath()
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner
+        ctx.lineTo(cx + Math.cos(rot) * r, cy + Math.sin(rot) * r)
+        rot += step
+      }
+      ctx.closePath()
+      ctx.fill()
+    }
+
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       const now = Date.now()
       particlesRef.current = particlesRef.current.filter(p => now < p.end)
       particlesRef.current.forEach(p => {
+        if (now < p.start) return
         const t = (now - p.start) / (p.end - p.start)
-        const y = p.y - t * p.rise
-        const alpha = t < 0.15 ? t / 0.15 : t > 0.7 ? 1 - (t - 0.7) / 0.3 : 1
-        ctx.globalAlpha = alpha
-        ctx.font = `${p.size}px serif`
-        ctx.fillStyle = p.color
+        if (t < 0 || t > 1) return
+
+        // Montée ease-out naturelle
+        const ease = 1 - Math.pow(1 - t, 2.8)
+        const y = p.y - ease * p.rise
+
+        // Dérive sinusoïdale horizontale
+        const x = p.x + Math.sin(t * Math.PI * p.waveFreq + p.wavePhase) * p.waveAmp
+
+        // Alpha en sinus + légère scintillation
+        const baseAlpha = Math.sin(t * Math.PI)
+        const twinkle   = 1 - 0.18 * Math.sin(t * Math.PI * 7 + p.twinklePhase)
+        const alpha      = Math.min(1, baseAlpha * twinkle)
+
         ctx.save()
-        ctx.translate(p.x, y)
+        ctx.globalAlpha = alpha
+        ctx.translate(x, y)
         ctx.rotate(p.rot + t * p.spin)
-        ctx.fillText(p.char, 0, 0)
+
+        // Halo lumineux externe
+        ctx.shadowBlur  = p.size * 3.5
+        ctx.shadowColor = p.color
+        ctx.fillStyle   = p.color
+        drawStar(0, 0, p.spikes, p.size, p.size * p.innerRatio)
+
+        // Centre blanc brillant
+        ctx.shadowBlur  = p.size * 2
+        ctx.shadowColor = '#FFFFFF'
+        ctx.fillStyle   = '#FFFFFF'
+        drawStar(0, 0, p.spikes, p.size * 0.38, p.size * 0.38 * p.innerRatio)
+
         ctx.restore()
       })
-      ctx.globalAlpha = 1
+      ctx.globalAlpha  = 1
+      ctx.shadowBlur   = 0
       rafRef.current = requestAnimationFrame(draw)
     }
     rafRef.current = requestAnimationFrame(draw)
@@ -914,28 +951,36 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
     const svg  = svgElRef.current
     const ctm  = svg.getScreenCTM()
     if (!ctm) return
-    const r         = Math.max(0, Math.min(1, (pos.health ?? 50) / 100))
-    const effGY     = (svg.viewBox?.baseVal?.height ?? 400) - 20 + (pos.yOff ?? 0)
-    const stemH     = Math.min(effGY * 0.45, effGY * (0.08 + 0.38 * r))
-    const svgPt     = svg.createSVGPoint()
+    const r     = Math.max(0, Math.min(1, (pos.health ?? 50) / 100))
+    const effGY = (svg.viewBox?.baseVal?.height ?? 400) - 20 + (pos.yOff ?? 0)
+    const stemH = Math.min(effGY * 0.45, effGY * (0.08 + 0.38 * r))
+    const svgPt = svg.createSVGPoint()
     svgPt.x = pos.x
     svgPt.y = effGY - stemH * 0.5
-    const sc    = svgPt.matrixTransform(ctm)
-    const GLYPHS  = ['✦','✧','✶','⋆','✦','✧','✶']
-    const COLORS  = ['#FFE566','#FFD700','#FFF3AA','#FFB800','#FFFACD','#FFC800','#FFE000']
+    const sc = svgPt.matrixTransform(ctm)
+
+    const COLORS = ['#FFE566','#FFD700','#FFFDE0','#FFB800','#FFFFFF','#FFC800','#FFE8A0','#FFF5CC','#FFD040','#FFFACD']
     const now = Date.now()
-    for (let i = 0; i < 7; i++) {
+    const COUNT = 13
+    for (let i = 0; i < COUNT; i++) {
+      const delay    = i * 55 + Math.random() * 35
+      const duration = 2400 + Math.random() * 1400
       particlesRef.current.push({
-        x:     sc.x + (Math.random() - 0.5) * 40,
-        y:     sc.y,
-        rise:  120 + Math.random() * 100,
-        size:  9 + Math.floor(Math.random() * 8),
-        char:  GLYPHS[i],
-        color: COLORS[i],
-        rot:   (Math.random() - 0.5) * 0.5,
-        spin:  (Math.random() - 0.5) * 2,
-        start: now + i * 80,
-        end:   now + i * 80 + 2800 + Math.random() * 800,
+        x:            sc.x + (Math.random() - 0.5) * 28,
+        y:            sc.y - Math.random() * 8,
+        rise:         150 + Math.random() * 130,
+        size:         3.5 + Math.random() * 7.5,
+        innerRatio:   0.32 + Math.random() * 0.16,
+        spikes:       Math.random() < 0.35 ? 4 : 5,
+        color:        COLORS[Math.floor(Math.random() * COLORS.length)],
+        rot:          Math.random() * Math.PI * 2,
+        spin:         (Math.random() - 0.5) * 3.5,
+        waveFreq:     1.4 + Math.random() * 1.8,
+        waveAmp:      7 + Math.random() * 20,
+        wavePhase:    Math.random() * Math.PI * 2,
+        twinklePhase: Math.random() * Math.PI * 2,
+        start:        now + delay,
+        end:          now + delay + duration,
       })
     }
   }
