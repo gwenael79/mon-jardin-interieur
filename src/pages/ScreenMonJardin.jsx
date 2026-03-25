@@ -2245,7 +2245,112 @@ function getBilanRecommendation(degradation) {
     zones: top.map(([id]) => id),
   }
 }
+function BilanClosingPhrase({ answers, degradation }) {
+  const [phrase,  setPhrase]  = useState(null)
+  const [loading, setLoading] = useState(true)
 
+  const cacheKey = 'bilan-closing-v1-'
+    + new Date().toISOString().slice(0, 10)
+    + '-' + Object.values(answers).join('')
+
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem(cacheKey)
+      if (cached) { setPhrase(cached); setLoading(false); return }
+    } catch {}
+
+    const answersSummary = PLANT_QUESTIONS.map(q => {
+      const idx = answers[q.id]
+      if (idx === undefined) return null
+      return { zone: q.zone, theme: q.theme, answer: q.answers[idx].label }
+    }).filter(Boolean)
+
+    fetch(SUPABASE_FN_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        action:          'generate_closing_phrase',
+        answers_summary: answersSummary,
+        degradation,
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        const p = data.phrase ?? null
+        setPhrase(p)
+        if (p) try { sessionStorage.setItem(cacheKey, p) } catch {}
+      })
+      .catch(() => setPhrase(null))
+      .finally(() => setLoading(false))
+  }, [])
+
+if (loading) return (
+  <div style={{
+    padding:'18px 22px', borderRadius:14,
+    background:'rgba(var(--gold-warm-rgb),0.06)',
+    border:'1px solid rgba(var(--gold-warm-rgb),0.18)',
+    display:'flex', flexDirection:'column',
+    alignItems:'center', gap:10,
+    minHeight:90, justifyContent:'center',
+  }}>
+    <style>{`
+      @keyframes grow {
+        0%,100% { transform: scaleY(0.6); opacity:.4 }
+        50%      { transform: scaleY(1.0); opacity:1 }
+      }
+    `}</style>
+
+    {/* Petite plante qui grandit */}
+    <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:22 }}>
+      {[0,1,2,3,4].map(i => (
+        <div key={i} style={{
+          width:3, borderRadius:2,
+          height: [10,16,22,16,10][i],
+          background:'rgba(var(--gold-warm-rgb),0.50)',
+          transformOrigin:'bottom',
+          animation:`grow 1.6s ease-in-out infinite`,
+          animationDelay: (i * 0.18) + 's',
+        }}/>
+      ))}
+    </div>
+
+    <span style={{
+      fontSize:'var(--fs-h5, 11px)',
+      color:'rgba(var(--quiz-modal-text-rgb),0.35)',
+      fontStyle:'italic', letterSpacing:'.03em',
+    }}>
+      Votre jardin vous répond…
+    </span>
+  </div>
+)
+
+  if (!phrase) return null
+
+  return (
+    <div style={{
+      padding:'18px 22px', borderRadius:14,
+      background:'rgba(var(--gold-warm-rgb),0.06)',
+      border:'1px solid rgba(var(--gold-warm-rgb),0.18)',
+      animation:'fadeUp 0.5s ease both',
+      position:'relative', overflow:'hidden',
+    }}>
+      <div style={{
+        position:'absolute', left:0, top:'20%', bottom:'20%',
+        width:2, borderRadius:2,
+        background:'linear-gradient(180deg, transparent, rgba(var(--gold-warm-rgb),0.5), transparent)',
+      }}/>
+      <p style={{
+        fontFamily:"'Cormorant Garamond','Georgia',serif",
+        fontSize:'clamp(15px, 1.4vw, 19px)',
+        color:'rgba(var(--ritual-modal-text-rgb),0.85)',
+        lineHeight:1.7, fontStyle:'italic', fontWeight:300,
+        margin:0, paddingLeft:14,
+      }}>
+        {phrase}
+      </p>
+    </div>
+  )
+}
 function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   const [step,          setStep]          = useState(-1)
   const [answers,       setAnswers]       = useState({})
@@ -2253,84 +2358,68 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   const [transitioning, setTransitioning] = useState(false)
   const [visible,       setVisible]       = useState(true)
   const [result,        setResult]        = useState(null)  // écran de résultat
+  const isMobile = useIsMobile()
 
   const startQuiz = () => { setVisible(false); setTimeout(() => { setStep(0); setVisible(true) }, 250) }
-  const choose    = (idx) => { if (!transitioning) setSelected(idx) }
-
-  const next = () => {
-    if (selected === null || transitioning) return
+const choose = (idx) => {
+  if (transitioning) return
+  setSelected(idx)
+  // Auto-avance après 320ms — laisse le temps de voir la sélection
+  setTimeout(() => {
     setTransitioning(true); setVisible(false)
     const q          = PLANT_QUESTIONS[step]
-    const newAnswers = { ...answers, [q.id]: selected }
+    const newAnswers = { ...answers, [q.id]: idx }
     setTimeout(() => {
       if (step < PLANT_QUESTIONS.length - 1) {
-        setStep(step + 1); setAnswers(newAnswers); setSelected(null); setTransitioning(false); setVisible(true)
+        setStep(s => s + 1); setAnswers(newAnswers); setSelected(null); setTransitioning(false); setVisible(true)
       } else {
-        // Affiche l'écran de résultat avant de fermer
         const deg = computeDegradation(newAnswers)
-        setResult({ deg, recommendation: getBilanRecommendation(deg) })
+        setResult({ deg, answers: newAnswers, recommendation: getBilanRecommendation(deg) })
       }
     }, 280)
-  }
+  }, 320)
+}
+ 
 
   // ── Écran de résultat ────────────────────────────────────────────────────────
   if (result) {
-    const { deg, recommendation } = result
+    const { deg, answers, recommendation } = result
     const ZONE_COLORS = { roots:'var(--zone-roots)', stem:'var(--zone-stem)', leaves:'var(--zone-breath)', flowers:'var(--zone-flowers)', breath:'var(--lumens)' }
     const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
     return (
-      <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
-        <div style={{ textAlign:'center', maxWidth:380, width:'100%', animation:'fadeUp 0.5s ease both' }}>
+      <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', overflowY:'auto', padding:'40px 28px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', animation:'fadeUp 0.35s ease both' }}>
+          <div style={{ textAlign:'center', maxWidth:380, width:'100%' }}>
 
-          {/* Icône */}
-          <div style={{ fontSize:'var(--fs-emoji-lg, 48px)', marginBottom:20 }}>
-            {recommendation.type === 'good' ? '✨' : '🌿'}
-          </div>
-
-          {/* Message principal */}
-          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--ritual-modal-text)', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
-            {recommendation.message}
-          </h2>
-
-          <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
-
-          {/* Suggestion */}
-          <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.8, marginBottom:28, fontStyle:'italic' }}>
-            {recommendation.sub}
-          </p>
-
-          {/* Zones prioritaires */}
-          {recommendation.zones.length > 0 && (
-            <div style={{ display:'flex', justifyContent:'center', gap:10, marginBottom:32, flexWrap:'wrap' }}>
-              {recommendation.zones.map(zoneId => {
-                const color = ZONE_COLORS[zoneId] ?? 'var(--green)'
-                const name  = ZONE_NAMES[zoneId] ?? zoneId
-                const degVal = deg[zoneId] ?? 50
-                return (
-                  <div key={zoneId} style={{ padding:'8px 16px', borderRadius:50, background:`${color}15`, border:`1px solid ${color}50`, display:'flex', alignItems:'center', gap:8 }}>
-                    <div style={{ width:28, height:4, borderRadius:2, background:'var(--surface-3)', overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${100 - degVal}%`, background:color, borderRadius:2 }} />
-                    </div>
-                    <span style={{ fontSize:'var(--fs-h5, 12px)', color, fontWeight:500 }}>{name}</span>
-                  </div>
-                )
-              })}
+            {/* Icône */}
+            <div style={{ fontSize:'var(--fs-emoji-lg, 48px)', marginBottom:20 }}>
+              {recommendation.type === 'good' ? '✨' : '🌿'}
             </div>
-          )}
 
-          {/* CTA */}
-          <button
-            onClick={() => { onComplete(result.deg, {}); onDismiss?.() }}
-            style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(var(--green-rgb),0.35)', background:'rgba(var(--green-rgb),0.1)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, fontFamily:"'Jost',sans-serif" }}
-          >
-            Voir mes rituels du jour →
-          </button>
-          <button
-            onClick={onSkip}
-            style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--ritual-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
-          >
-            Fermer
-          </button>
+            {/* Message principal */}
+            <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--quiz-modal-text)', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
+              {recommendation.message}
+            </h2>
+
+            <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
+
+            {/* Phrase personnalisée */}
+            <BilanClosingPhrase answers={answers} degradation={deg} />
+
+            {/* CTA */}
+            <button
+              onClick={() => { onComplete(result.deg, {}); onDismiss?.() }}
+              style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(var(--green-rgb),0.35)', background:'rgba(var(--green-rgb),0.1)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, marginTop:24, fontFamily:"'Jost',sans-serif" }}
+            >
+              Voir mes rituels du jour →
+            </button>
+            <button
+              onClick={onSkip}
+              style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
+            >
+              Fermer
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -2338,17 +2427,19 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
 
   // Écran d'accueil
   if (step === -1) return (
-    <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', backdropFilter:'blur(16px)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 28px' }}>
-      <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
-      <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
-        <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
-        <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--ritual-modal-text)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
-        <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
-        <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.5)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
-        <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 11px)', lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
-        <button onClick={startQuiz} style={{ padding:'13px 40px', borderRadius:50, border:'1px solid rgba(var(--gold-warm-rgb),0.35)', background:'rgba(var(--gold-warm-rgb),0.1)', color:'var(--gold-warm)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:10 }}>Commencer le bilan</button>
-        <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--ritual-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
-        <p style={{ color:'rgba(var(--ritual-modal-text-rgb),0.2)', fontSize:'var(--fs-h5, 10px)', marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
+    <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'40px 28px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', position:'relative' }}>
+        <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+        <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
+          <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
+          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--quiz-modal-text)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
+          <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
+          <p style={{ color:'rgba(var(--quiz-modal-text-rgb),0.5)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
+          <p style={{ color:'rgba(var(--quiz-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 11px)', lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
+          <button onClick={startQuiz} style={{ padding:'13px 40px', borderRadius:50, border:'1px solid rgba(var(--gold-warm-rgb),0.35)', background:'rgba(var(--gold-warm-rgb),0.1)', color:'var(--gold-warm)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:10 }}>Commencer le bilan</button>
+          <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
+          <p style={{ color:'rgba(var(--quiz-modal-text-rgb),0.2)', fontSize:'var(--fs-h5, 10px)', marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
+        </div>
       </div>
     </div>
   )
@@ -2358,40 +2449,48 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
   const progress = (step + 1) / PLANT_QUESTIONS.length
 
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:500, background:'var(--overlay-dark)', display:'flex', flexDirection:'column' }}>
-      <div style={{ height:2, background:'var(--surface-2)', flexShrink:0 }}>
-        <div style={{ height:'100%', width:`${progress*100}%`, background:`linear-gradient(90deg,${zone.color},${zone.accent})`, borderRadius:'0 1px 1px 0', transition:'width 0.5s ease' }} />
-      </div>
-      <div style={{ padding:'16px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
-          <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
-        </div>
-      </div>
-      <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
-        <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom:12 }}>{q.icon}</div>
-        <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 24px)', color:'var(--ritual-modal-text)', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
-        <p style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
-        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          {q.answers.map((ans, i) => {
-            const sel = selected === i
+    <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : '88vh', maxHeight:'88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)' }}>
+        <div style={{ display:'flex', gap:3, padding:'12px 20px 0', flexShrink:0 }}>
+          {PLANT_QUESTIONS.map((_, i) => {
+            const done    = i < step
+            const current = i === step
+            const zColor  = PLANT_ZONES[PLANT_QUESTIONS[i].zone].color
             return (
-              <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color+'55' : 'var(--track)'}`, background: sel ? 'rgba(var(--green-rgb),0.08)' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}30` : 'none', transition:'all 0.18s ease' }}>
-                <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{ans.emoji}</span>
-                <span style={{ flex:1, fontSize:'var(--fs-h4, 13px)', color: sel ? 'var(--ritual-modal-text)' : 'rgba(var(--ritual-modal-text-rgb),0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
-                <div style={{ width:18, height:18, borderRadius:'50%', border:`1.5px solid ${sel ? zone.color : 'var(--separator)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
-                  {sel && <div style={{ width:6, height:6, borderRadius:'50%', background:zone.accent }} />}
-                </div>
-              </button>
+              <div key={i} style={{
+                flex:1, height:3, borderRadius:2,
+                background: done ? zColor : current ? zColor + '55' : 'var(--surface-3)',
+                transition:'background 0.4s ease',
+              }}/>
             )
           })}
         </div>
-      </div>
-      <div style={{ padding:'0 24px 40px', maxWidth:440, width:'100%', margin:'0 auto' }}>
-        <button onClick={next} disabled={selected === null} style={{ width:'100%', padding:14, borderRadius:12, border:`1px solid ${selected !== null ? zone.color+'40' : 'var(--surface-2)'}`, background: selected !== null ? 'rgba(var(--green-rgb),0.12)' : 'var(--surface-1)', color: selected !== null ? zone.accent : 'var(--separator)', fontSize:'var(--fs-h4, 13px)', cursor: selected !== null ? 'pointer' : 'not-allowed', fontWeight:500, letterSpacing:'0.06em', transition:'all 0.25s' }}>
-          {step === PLANT_QUESTIONS.length - 1 ? 'Voir mes rituels →' : 'Suivant →'}
-        </button>
+        <div style={{ padding:'16px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--quiz-modal-text-rgb),0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
+            <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.6)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+          </div>
+        </div>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
+          <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom:12 }}>{q.icon}</div>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 24px)', color:'var(--quiz-modal-text)', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
+          <p style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--quiz-modal-text-rgb),0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {q.answers.map((ans, i) => {
+              const sel = selected === i
+              return (
+                <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color+'55' : 'var(--track)'}`, background: sel ? 'rgba(var(--green-rgb),0.08)' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}30` : 'none', transition:'all 0.18s ease' }}>
+                  <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{ans.emoji}</span>
+                  <span style={{ flex:1, fontSize:'var(--fs-h4, 13px)', color: sel ? 'var(--quiz-modal-text)' : 'rgba(var(--quiz-modal-text-rgb),0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
+                  <div style={{ width:18, height:18, borderRadius:'50%', border:`1.5px solid ${sel ? zone.color : 'var(--separator)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
+                    {sel && <div style={{ width:6, height:6, borderRadius:'50%', background:zone.accent }} />}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )

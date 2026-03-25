@@ -142,6 +142,18 @@ export default function App() {
 
   // ── Routing ──────────────────────────────────────────────
 
+  // 🧪 TEST — accès direct via ?test-onboarding dans l'URL (retirer avant prod)
+  const isTestOnboarding = new URLSearchParams(window.location.search).has('test-onboarding')
+  if (isTestOnboarding) return (
+    <OnboardingScreen
+      userId={null}
+      onComplete={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        window.location.reload()
+      }}
+    />
+  )
+
   // 0. Retour depuis lien email reset
   if (isRecovery === 'expired') return <AuthPage initialView="reset" resetError="Votre lien a expiré. Demandez un nouveau lien." onPasswordUpdated={() => setIsRecovery(false)} />
   if (isRecovery) return <AuthPage initialView="newpassword" onPasswordUpdated={() => setIsRecovery(false)} />
