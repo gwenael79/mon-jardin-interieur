@@ -759,7 +759,7 @@ function SlidesEducatives({ onComplete }) {
 
       {/* Image hero pleine largeur — occupe ~38% de la hauteur */}
       <div style={{
-        flexShrink:0, height: isMobile ? '32%' : '40%', position:'relative', overflow:'hidden',
+        flexShrink:0, height: isMobile ? '30%' : '40%', position:'relative', overflow:'hidden',
         opacity: leaving ? 0 : 1,
         transition:'opacity .28s ease',
       }}>
