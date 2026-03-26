@@ -754,7 +754,7 @@ function SlidesEducatives({ onComplete }) {
   }
 
   const inner = (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'visible', fontFamily:"'Jost',sans-serif" }}>
+    <div style={{ display:'flex', flexDirection:'column', minHeight:'100vh', overflow:'visible', fontFamily:"'Jost',sans-serif" }}>
       <style>{ONB_STYLES}</style>
 
       {/* Image hero pleine largeur — occupe ~38% de la hauteur */}
@@ -800,13 +800,14 @@ function SlidesEducatives({ onComplete }) {
 
       {/* Zone texte + bouton — flex colonne, no overflow */}
       <div style={{
-        flex:1, minHeight:0, display:'flex', flexDirection:'column',
-        padding: isMobile ? '16px 24px 0' : '20px 40px 0',
-        overflow:'hidden',
-        opacity: leaving ? 0 : 1,
-        transform: leaving ? 'translateY(-8px)' : 'none',
-        transition:'opacity .28s ease, transform .28s ease',
-      }}>
+  flex:1,
+  display:'flex',
+  flexDirection:'column',
+  padding: isMobile ? '16px 24px 0' : '20px 40px 0',
+  overflowY:'auto',
+  paddingBottom:'80px',
+  WebkitOverflowScrolling:'touch',   // ✅ fluide sur mobile
+}}>
 
         {/* Titre — grand */}
         <h2 style={{
