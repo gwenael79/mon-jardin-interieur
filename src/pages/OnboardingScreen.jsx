@@ -820,7 +820,7 @@ function SlidesEducatives({ onComplete }) {
         {/* Contenu selon type */}
 
         {/* ── Contenu compacté selon type ── */}
-        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'center', gap: isMobile ? 8 : 10 }}>
+        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'cenflex-start', overflowY:'auto', gap: isMobile ? 8 : 10, paddingBottom:'12px'  }}>
 
           {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
             <>
@@ -850,7 +850,7 @@ function SlidesEducatives({ onComplete }) {
                   <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
                   <div style={{ padding:'9px 12px', flex:1 }}>
                     <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
-                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.45 }}>{b.desc}</div>
+                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(55, 43, 19, 0.55)', lineHeight:1.45 }}>{b.desc}</div>
                   </div>
                 </div>
               ))}
