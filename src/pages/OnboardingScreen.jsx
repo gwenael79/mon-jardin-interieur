@@ -368,6 +368,7 @@ function ModalShell({ children, onClick, wide = false }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function StepIntention({ onSelect }) {
   const [selected, setSelected] = useState(null)
+  const isMobile = window.innerWidth < 768
 
   function choose(i) {
     setSelected(i)
@@ -376,14 +377,14 @@ function StepIntention({ onSelect }) {
 
   return (
     <ModalShell>
-      <div style={{ padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center' }}>
+      <div style={{ padding: isMobile ? '24px 20px' : '40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
         <div style={{ maxWidth:400, width:'100%' }}>
 
-        <div className="s0" style={{ textAlign:'center', marginBottom:36 }}>
+        <div className="s0" style={{ textAlign:'center', marginBottom: isMobile ? 20 : 36 }}>
           <img src="/icons/icon-192.png" alt="" style={{ width:48, height:48, mixBlendMode:'luminosity', opacity:.55 }}/>
         </div>
 
-        <div className="s1" style={{ textAlign:'center', marginBottom:32 }}>
+        <div className="s1" style={{ textAlign:'center', marginBottom: isMobile ? 20 : 32 }}>
           <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,4.5vw,38px)', fontWeight:300, lineHeight:1.2, color:'var(--text)', marginBottom:10 }}>
             Qu'est-ce qui vous<br/>
             <em style={{ color:'var(--gold-warm)', fontStyle:'italic' }}>amène ici aujourd'hui ?</em>
@@ -393,13 +394,13 @@ function StepIntention({ onSelect }) {
           </p>
         </div>
 
-        <div className="s2" style={{ display:'flex', flexDirection:'column', gap:8 }}>
+        <div className="s2" style={{ display:'flex', flexDirection:'column', gap: isMobile ? 6 : 8 }}>
           {INTENTIONS.map((item,i) => {
             const sel = selected === i
             return (
               <button key={i} onClick={() => choose(i)} style={{
                 display:'flex', alignItems:'center', gap:14,
-                padding:'15px 20px', borderRadius:14,
+                padding: isMobile ? '12px 16px' : '15px 20px', borderRadius:14,
                 background: sel ? 'rgba(184,140,60,0.14)' : 'rgba(0,0,0,0.04)',
                 border: sel
                   ? '2px solid rgba(184,140,60,0.65)'
@@ -434,7 +435,7 @@ function StepIntention({ onSelect }) {
           })}
         </div>
 
-        <div className="s5" style={{ textAlign:'center', marginTop:24 }}>
+        <div className="s5" style={{ textAlign:'center', marginTop: isMobile ? 16 : 24 }}>
           <button onClick={() => onSelect(null)} style={{ background:'none', border:'none', cursor:'pointer', fontSize:'var(--fs-h5,11px)', color:'var(--text3)', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', opacity:.6 }}>
             Passer cette étape
           </button>
@@ -450,13 +451,14 @@ function StepIntention({ onSelect }) {
 //  ÉTAPE MÉTAPHORE — pont entre l'intention et la fleur
 // ─────────────────────────────────────────────────────────────────────────────
 function StepMetaphore({ onNext }) {
+  const isMobile = window.innerWidth < 768
 
   return (
     <ModalShell>
       <div style={{ display:'flex', flexDirection:'column', width:'100%', height:'100%' }}>
 
         {/* Titre */}
-        <div className="s0" style={{ padding:'24px 32px 16px', textAlign:'center', flexShrink:0 }}>
+        <div className="s0" style={{ padding: isMobile ? '18px 20px 10px' : '24px 32px 16px', textAlign:'center', flexShrink:0 }}>
           <h2 style={{
             fontFamily:"'Cormorant Garamond',serif",
             fontSize:'clamp(30px,3.5vw,48px)',
@@ -495,24 +497,25 @@ function StepMetaphore({ onNext }) {
 </div>
         
 
-             <div style={{
-    fontFamily:"'Cormorant Garamond',serif",
-    fontSize:'clamp(16px, 2.5vw, 20px)',
-    fontWeight:300,
-    lineHeight:1.7,
-    textAlign:'center',
-    color:'#000',
-    margin:10,
-    maxWidth:500
-  }}>
-
-              <p>Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
+          <div style={{
+            fontFamily:"'Cormorant Garamond',serif",
+            fontSize: isMobile ? 'clamp(15px, 4vw, 18px)' : 'clamp(16px, 2.5vw, 20px)',
+            fontWeight:300,
+            lineHeight:1.7,
+            textAlign:'center',
+            color:'#000',
+            padding: isMobile ? '0 20px' : '0 32px',
+            margin: isMobile ? '8px 0' : '10px 0',
+            maxWidth:500,
+            alignSelf:'center',
+          }}>
+            <p style={{ margin: isMobile ? '0 0 16px' : '0 0 20px' }}>
+              Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
               Elle grandit quand vous prenez soin de vous.
               Elle vous rappelle, chaque jour, que vous méritez cette attention.
             </p>
-
             <button onClick={onNext} style={{
-              padding:'15px 40px', borderRadius:50, border:'none',
+              padding: isMobile ? '13px 32px' : '15px 40px', borderRadius:50, border:'none',
               background:'linear-gradient(135deg, #c8a0b0, #a07888)',
               color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
               letterSpacing:'.08em', cursor:'pointer',
@@ -525,8 +528,6 @@ function StepMetaphore({ onNext }) {
             >
               Je choisis ma fleur →
             </button>
-
-          
         </div>
 </div>
       
@@ -612,6 +613,7 @@ function StepGraine({ intention, onPlant }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function StepCommunaute({ onComplete }) {
   const [count, setCount] = useState(null)
+  const isMobile = window.innerWidth < 768
 
   useEffect(() => {
     supabase
@@ -631,11 +633,11 @@ function StepCommunaute({ onComplete }) {
 
   return (
     <ModalShell onClick={null}>
-      <div style={{ padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ maxWidth:380, width:'100%', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:28 }}>
+      <div style={{ padding: isMobile ? '24px 20px' : '40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+        <div style={{ maxWidth:380, width:'100%', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap: isMobile ? 16 : 28 }}>
 
         {/* Champ de fleurs SVG */}
-        <div className="s0" style={{ width:'100%', maxWidth:320, height:160, position:'relative', overflow:'hidden' }}>
+        <div className="s0" style={{ width:'100%', maxWidth:320, height: isMobile ? 110 : 160, position:'relative', overflow:'hidden' }}>
           <svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
             {/* Sol */}
             <ellipse cx="160" cy="155" rx="165" ry="12" fill="rgba(var(--green-rgb),0.12)"/>
@@ -691,7 +693,7 @@ function StepCommunaute({ onComplete }) {
         </div>
 
         <div className="s2">
-          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(24px,4.5vw,36px)', fontWeight:300, lineHeight:1.4, color:'var(--text)', marginBottom:14 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 'clamp(22px,5vw,28px)' : 'clamp(24px,4.5vw,36px)', fontWeight:300, lineHeight:1.4, color:'var(--text)', marginBottom: isMobile ? 8 : 14 }}>
             En ce moment,<br/>
             <span style={{ color:'var(--green)', fontWeight:400 }}>
               {count !== null ? count : '…'} {count !== null ? (count === 1 ? 'personne cultive' : 'personnes cultivent') : ''}
@@ -705,7 +707,9 @@ function StepCommunaute({ onComplete }) {
 
         <div className="s4" style={{ width:'100%', display:'flex', flexDirection:'column', alignItems:'center', gap:0 }}>
           <button onClick={onComplete} style={{
-            padding:'18px 52px', borderRadius:50,
+            padding: isMobile ? '15px 28px' : '18px 52px',
+            width: isMobile ? '100%' : 'auto',
+            borderRadius:50,
             border:'none',
             background:'linear-gradient(135deg, #c8a0b0, #a07888)',
             color:'#fff',
