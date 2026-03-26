@@ -482,7 +482,7 @@ function StepMetaphore({ onNext }) {
         {/* Image + overlay */}
         <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0 }}>
           <img
-            src="/fleurs.png"
+            src="/miroir2.png"
             alt="Votre reflet intérieur"
             style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', display:'block' }}
           />
@@ -754,204 +754,162 @@ function SlidesEducatives({ onComplete }) {
   }
 
   const inner = (
-    <div style={{ display:'flex', flexDirection:'column', minHeight:0, flex:1, fontFamily:"'Jost',sans-serif" }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden', fontFamily:"'Jost',sans-serif" }}>
       <style>{ONB_STYLES}</style>
 
-      {/* Barre progression */}
-      <div style={{ display:'flex', gap:3, flexShrink:0 }}>
-        {ONBOARDING_SLIDES.map((s,i) => (
-          <div key={s.id} style={{
-            flex:1, height:3,
-            background: i < step ? c : i === step ? c+'88' : 'var(--surface-3)',
-            transition:'background .4s ease',
-            borderRadius: i===0 && !isMobile ? '24px 0 0 0' : i===ONBOARDING_SLIDES.length-1 && !isMobile ? '0 24px 0 0' : 0,
-          }}>
-            {i === step && <div style={{ height:'100%', background:c, animation:'progressBar .3s ease both', borderRadius:'inherit' }}/>}
-          </div>
-        ))}
-      </div>
-
-      {/* Corps — scrollable */}
+      {/* Image hero pleine largeur — occupe ~38% de la hauteur */}
       <div style={{
-        flex:1, minHeight:0, overflowY:'auto',
-        padding: isMobile ? '32px 24px 0' : '40px 52px 0',
+        flexShrink:0, height: isMobile ? '36%' : '40%', position:'relative', overflow:'hidden',
         opacity: leaving ? 0 : 1,
-        transform: leaving ? 'translateY(-10px)' : 'none',
-        transition:'opacity .28s ease, transform .28s ease',
-        scrollbarWidth:'thin',
-        scrollbarColor:'rgba(0,0,0,0.15) transparent',
+        transition:'opacity .28s ease',
       }}>
-        {/* Pastille tag + numéro */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
+        <img
+          src="/champs.png"
+          alt=""
+          style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 30%', display:'block' }}
+        />
+        {/* Dégradé bas pour fondu avec le fond */}
+        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 50%, #faf5f2 100%)' }}/>
+
+        {/* Barre progression en overlay haut */}
+        <div style={{ position:'absolute', top:0, left:0, right:0, display:'flex', gap:3 }}>
+          {ONBOARDING_SLIDES.map((s,i) => (
+            <div key={s.id} style={{
+              flex:1, height:3,
+              background: i < step ? c : i === step ? c+'88' : 'rgba(255,255,255,0.35)',
+              transition:'background .4s ease',
+            }}>
+              {i === step && <div style={{ height:'100%', background:c, animation:'progressBar .3s ease both' }}/>}
+            </div>
+          ))}
+        </div>
+
+        {/* Tag + numéro en overlay bas */}
+        <div style={{ position:'absolute', bottom:12, left:16, right:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <span style={{
-            fontSize:'var(--fs-h5,11px)', letterSpacing:'.16em', textTransform:'uppercase',
-            color:c, fontWeight:600, padding:'5px 14px', borderRadius:100,
-            background:`${c}15`, border:`1px solid ${c}28`,
+            fontSize:'var(--fs-h5,11px)', letterSpacing:'.14em', textTransform:'uppercase',
+            color:c, fontWeight:600, padding:'4px 12px', borderRadius:100,
+            background:'rgba(255,255,255,0.82)', border:`1px solid ${c}40`,
+            backdropFilter:'blur(6px)',
           }}>{slide.tag}</span>
-          <span style={{ fontSize:'var(--fs-h5,11px)', color:'var(--text3)', letterSpacing:'.08em' }}>
+          <span style={{ fontSize:'var(--fs-h5,11px)', color:'rgba(60,50,40,0.55)', letterSpacing:'.08em', background:'rgba(255,255,255,0.70)', padding:'3px 10px', borderRadius:100, backdropFilter:'blur(4px)' }}>
             {String(step+1).padStart(2,'0')} / {String(ONBOARDING_SLIDES.length).padStart(2,'0')}
           </span>
         </div>
+      </div>
 
-        {/* Icône SVG */}
-        <div style={{ marginBottom:20, lineHeight:1, animation:'onbFloat 4s ease-in-out infinite', display:'inline-block' }}>
-          
-        </div>
+      {/* Zone texte + bouton — flex colonne, no overflow */}
+      <div style={{
+        flex:1, minHeight:0, display:'flex', flexDirection:'column',
+        padding: isMobile ? '16px 24px 0' : '20px 40px 0',
+        opacity: leaving ? 0 : 1,
+        transform: leaving ? 'translateY(-8px)' : 'none',
+        transition:'opacity .28s ease, transform .28s ease',
+      }}>
 
-        {/* Titre */}
+        {/* Titre — grand */}
         <h2 style={{
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize: isMobile ? 'clamp(28px,7vw,38px)' : 'clamp(32px,3vw,46px)',
-          fontWeight:300, lineHeight:1.15,
-          color:'var(--text)', marginBottom:28,
+          fontSize: isMobile ? 'clamp(28px,8vw,42px)' : 'clamp(34px,3.5vw,52px)',
+          fontWeight:300, lineHeight:1.1,
+          color:'var(--text)', marginBottom: isMobile ? 12 : 16,
           whiteSpace:'pre-line', letterSpacing:'-0.01em',
+          flexShrink:0,
         }}>{slide.title}</h2>
 
         {/* Contenu selon type */}
 
-        {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
-          <div>
-            <p style={{ fontSize:'var(--fs-h3,16px)', fontWeight:300, color:'var(--text2)', lineHeight:1.9, marginBottom:20 }}>
-              {slide.body}
-            </p>
-            {slide.highlight && (
-              <div style={{ padding:'16px 20px', borderRadius:14, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,14px)', fontWeight:500, color:c, lineHeight:1.6 }}>
-                 {slide.highlight}
-              </div>
-            )}
-          </div>
-        )}
+        {/* ── Contenu compacté selon type ── */}
+        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'center', gap: isMobile ? 8 : 10 }}>
 
-        {/* ── BULLETS (slide 2 — freins) ── */}
-        {slide.bullets && (
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            {slide.bullets.map((b,i) => (
-              <div key={i} style={{
-                display:'flex', gap:0, alignItems:'stretch',
-                borderRadius:14, overflow:'hidden',
-                background:'rgba(255,255,255,0.65)',
-                border:'1px solid rgba(0,0,0,0.09)',
-                boxShadow:'0 2px 8px rgba(0,0,0,0.05)',
-                animation:`onbIn .4s ease ${i*.12+.1}s both`,
-              }}>
-                {/* Accent gauche coloré */}
-                <div style={{ width:4, flexShrink:0, background:c }}/>
-                {/* Icône */}
-                <div style={{
-                  width:48, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:20,
-                  background:`${c}12`,
-                  borderRight:'1px solid rgba(0,0,0,0.06)',
-                }}>
-                  {b.icon}
+          {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
+            <>
+              <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:0 }}>
+                {slide.body}
+              </p>
+              {slide.highlight && (
+                <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
+                   {slide.highlight}
                 </div>
-                {/* Texte */}
-                <div style={{ padding:'11px 14px', flex:1 }}>
-                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:3 }}>{b.label}</div>
-                  <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.55 }}>{b.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </>
+          )}
 
-        {/* ── POINTS (slide 3 — science) ── */}
-        {slide.points && (
-          <div>
-            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:0, borderRadius:16, overflow:'hidden', border:'1px solid rgba(0,0,0,0.09)', background:'rgba(255,255,255,0.55)' }}>
-              {slide.points.map((p,i) => (
+          {slide.bullets && (
+            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+              {slide.bullets.map((b,i) => (
                 <div key={i} style={{
-                  display:'flex', gap:14, alignItems:'center',
-                  padding:'14px 18px',
-                  borderBottom: i < slide.points.length-1 ? '1px solid rgba(0,0,0,0.07)' : 'none',
-                  animation:`onbIn .4s ease ${i*.1+.15}s both`,
-                }}>
-                  <div style={{
-                    width:28, height:28, borderRadius:'50%', flexShrink:0,
-                    background:`${c}18`, border:`1.5px solid ${c}50`,
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:11, fontWeight:700, color:c,
-                  }}>{i+1}</div>
-                  <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.80)', lineHeight:1.6 }}>{p}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── TIMELINE (slide 4 — bénéfices) ── */}
-        {slide.timeline && (
-          <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
-            {slide.timeline.map((t,i) => (
-              <div key={i} style={{
-                display:'flex', gap:0, alignItems:'stretch',
-                animation:`onbIn .4s ease ${i*.14+.1}s both`,
-              }}>
-                {/* Colonne gauche — dot + trait */}
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:32, flexShrink:0, paddingTop:4 }}>
-                  <div style={{
-                    width:14, height:14, borderRadius:'50%', flexShrink:0,
-                    background:c, border:`3px solid ${c}30`,
-                    boxShadow:`0 0 0 3px ${c}15`,
-                  }}/>
-                  {i < slide.timeline.length-1 && (
-                    <div style={{ width:2, flex:1, minHeight:28, background:`linear-gradient(${c}60, ${c}18)`, margin:'4px 0' }}/>
-                  )}
-                </div>
-                {/* Contenu */}
-                <div style={{
-                  flex:1, paddingLeft:16, paddingBottom: i < slide.timeline.length-1 ? 24 : 0,
-                }}>
-                  <div style={{
-                    display:'inline-block',
-                    fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c,
-                    letterSpacing:'.10em', marginBottom:6, textTransform:'uppercase',
-                    padding:'3px 10px', borderRadius:50,
-                    background:`${c}12`, border:`1px solid ${c}30`,
-                  }}>{t.period}</div>
-                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.70)', lineHeight:1.75 }}>{t.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ── FEATURES (slide 5 — promesse) ── */}
-        {slide.features && (
-          <div>
-            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {slide.features.map((f,i) => (
-                <div key={i} style={{
-                  display:'flex', gap:14, alignItems:'center',
-                  padding:'14px 18px', borderRadius:14,
+                  display:'flex', gap:0, alignItems:'stretch',
+                  borderRadius:12, overflow:'hidden',
                   background:'rgba(255,255,255,0.65)',
-                  border:'1px solid rgba(0,0,0,0.08)',
-                  boxShadow:'0 2px 8px rgba(0,0,0,0.04)',
-                  animation:`onbIn .4s ease ${i*.1+.1}s both`,
+                  border:'1px solid rgba(0,0,0,0.09)',
+                  boxShadow:'0 2px 6px rgba(0,0,0,0.04)',
+                  animation:`onbIn .4s ease ${i*.12+.1}s both`,
                 }}>
-                  <div style={{
-                    width:42, height:42, borderRadius:12, flexShrink:0,
-                    background:`${c}18`, border:`1.5px solid ${c}35`,
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:20,
-                  }}>{f.icon}</div>
-                  <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.5 }}>{f.text}</span>
+                  <div style={{ width:4, flexShrink:0, background:c }}/>
+                  <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
+                  <div style={{ padding:'9px 12px', flex:1 }}>
+                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
+                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.45 }}>{b.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        <div style={{ height:32 }}/>
+          {slide.points && (
+            <>
+              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:0, borderRadius:14, overflow:'hidden', border:'1px solid rgba(0,0,0,0.09)', background:'rgba(255,255,255,0.55)' }}>
+                {slide.points.map((p,i) => (
+                  <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'11px 14px', borderBottom: i < slide.points.length-1 ? '1px solid rgba(0,0,0,0.07)' : 'none', animation:`onbIn .4s ease ${i*.1+.15}s both` }}>
+                    <div style={{ width:24, height:24, borderRadius:'50%', flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}50`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:c }}>{i+1}</div>
+                    <span style={{ fontSize:'var(--fs-h4,12px)', fontWeight:400, color:'rgba(30,25,15,0.80)', lineHeight:1.5 }}>{p}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {slide.timeline && (
+            <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+              {slide.timeline.map((t,i) => (
+                <div key={i} style={{ display:'flex', gap:0, alignItems:'stretch', animation:`onbIn .4s ease ${i*.14+.1}s both` }}>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:28, flexShrink:0, paddingTop:4 }}>
+                    <div style={{ width:12, height:12, borderRadius:'50%', flexShrink:0, background:c, border:`3px solid ${c}30` }}/>
+                    {i < slide.timeline.length-1 && <div style={{ width:2, flex:1, minHeight:20, background:`linear-gradient(${c}60, ${c}18)`, margin:'3px 0' }}/>}
+                  </div>
+                  <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
+                    <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
+                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.70)', lineHeight:1.6 }}>{t.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {slide.features && (
+            <>
+              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+                {slide.features.map((f,i) => (
+                  <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
+                    <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
+                    <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.4 }}>{f.text}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
       </div>
 
-      {/* Navigation — fixée en bas */}
-      <div style={{ padding: isMobile ? '12px 20px 28px' : '14px 48px 24px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+      {/* Navigation — fixée en bas, compacte */}
+      <div style={{ padding: isMobile ? '10px 24px 20px' : '12px 40px 20px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
         {step > 0 && (
           <button onClick={prev} style={{
-            width:46, height:46, borderRadius:50, flexShrink:0,
+            width:44, height:44, borderRadius:50, flexShrink:0,
             border:'2px solid rgba(0,0,0,0.14)', background:'transparent',
             color:'rgba(0,0,0,0.45)', fontSize:18, cursor:'pointer',
             fontFamily:"'Jost',sans-serif",
@@ -963,7 +921,7 @@ function SlidesEducatives({ onComplete }) {
           >←</button>
         )}
         <button onClick={next} style={{
-          flex:1, padding:'15px 28px', borderRadius:50,
+          flex:1, padding:'14px 28px', borderRadius:50,
           border:'none',
           background: isLast
             ? 'linear-gradient(135deg, #c8a0b0, #a07888)'
@@ -973,14 +931,14 @@ function SlidesEducatives({ onComplete }) {
           letterSpacing:'.08em',
           cursor:'pointer', fontFamily:"'Jost',sans-serif",
           boxShadow: isLast
-            ? '0 6px 22px rgba(160,120,136,0.40), 0 2px 6px rgba(160,120,136,0.20)'
+            ? '0 6px 22px rgba(160,120,136,0.40)'
             : '0 4px 16px rgba(122,152,112,0.38)',
           transition:'all .25s ease',
         }}
           onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.opacity='.9' }}
           onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.opacity='1' }}
         >
-          {isLast ? '  Et vous ?' : 'Continuer →'}
+          {isLast ? '🌸 Et vous ?' : 'Continuer →'}
         </button>
       </div>
     </div>
