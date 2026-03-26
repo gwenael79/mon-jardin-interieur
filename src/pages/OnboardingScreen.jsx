@@ -759,7 +759,7 @@ function SlidesEducatives({ onComplete }) {
 
       {/* Image hero pleine largeur — occupe ~38% de la hauteur */}
       <div style={{
-        flexShrink:0, height: isMobile ? '36%' : '40%', position:'relative', overflow:'hidden',
+        flexShrink:0, minHeight: isMobile ? 220 : 280, position:'relative', overflow:'hidden',
         opacity: leaving ? 0 : 1,
         transition:'opacity .28s ease',
       }}>
@@ -811,7 +811,7 @@ function SlidesEducatives({ onComplete }) {
         {/* Titre — grand */}
         <h2 style={{
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize: isMobile ? 'clamp(22px,6vw,30px)' : 'clamp(26px,2.5vw,36px)',
+          fontSize: isMobile ? 'clamp(20px,5.5vw,26px)' : 'clamp(26px,2.5vw,36px)',
           fontWeight:300, lineHeight:1.15,
           color:'var(--text)', marginBottom: isMobile ? 10 : 12,
           whiteSpace:'pre-line', letterSpacing:'-0.01em',
@@ -821,7 +821,7 @@ function SlidesEducatives({ onComplete }) {
         {/* Contenu selon type */}
 
         {/* ── Contenu compacté selon type ── */}
-        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'cenflex-start', overflowY:'auto', gap: isMobile ? 8 : 10, paddingBottom:'12px'  }}>
+        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'cenflex-start', overflowY:'auto', gap: isMobile ? 6 : 8, paddingBottom:'12px'  }}>
 
           {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
             <>
