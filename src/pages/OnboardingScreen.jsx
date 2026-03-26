@@ -1,6 +1,7 @@
 // src/pages/OnboardingScreen.jsx
 import { useState, useEffect } from 'react'
 import { supabase } from '../core/supabaseClient'
+import { useTheme } from '../hooks/useTheme'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DONNÉES SLIDES
@@ -435,6 +436,87 @@ function StepIntention({ onSelect }) {
         </div>
 
         </div>
+      </div>
+    </ModalShell>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ÉTAPE MÉTAPHORE — pont entre l'intention et la fleur
+// ─────────────────────────────────────────────────────────────────────────────
+function StepMetaphore({ onNext }) {
+  const [showOverlay, setShowOverlay] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowOverlay(true), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
+  return (
+    <ModalShell>
+      <div style={{ display:'flex', flexDirection:'column', width:'100%', height:'100%' }}>
+
+        {/* Titre */}
+        <div className="s0" style={{ padding:'24px 32px 16px', textAlign:'center', flexShrink:0 }}>
+          <h2 style={{
+            fontFamily:"'Cormorant Garamond',serif",
+            fontSize:'clamp(22px,3.5vw,30px)',
+            fontWeight:300, lineHeight:1.2,
+            color:'rgba(30,25,15,0.92)', margin:0,
+          }}>
+            Votre fleur,{' '}
+            <em style={{ color:'#c07840', fontStyle:'italic' }}>votre miroir intérieur</em>
+          </h2>
+        </div>
+
+        {/* Image + overlay */}
+        <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0 }}>
+          <img
+            src="/fleurs.png"
+            alt="Votre reflet intérieur"
+            style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', display:'block' }}
+          />
+
+          {/* Overlay après 3s */}
+          <div style={{
+            position:'absolute', inset:0,
+            background:'rgba(255,252,248,0.84)',
+            backdropFilter:'blur(2px)',
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            padding:'28px 36px', gap:24,
+            opacity: showOverlay ? 1 : 0,
+            transform: showOverlay ? 'none' : 'translateY(10px)',
+            transition:'opacity .8s ease, transform .8s ease',
+          }}>
+
+            <p style={{
+              fontFamily:"'Cormorant Garamond',serif",
+              fontSize:'clamp(17px,2vw,22px)', fontWeight:300, lineHeight:1.85,
+              color:'rgba(30,25,15,0.78)', margin:0, textAlign:'center',
+            }}>
+              Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
+              Elle grandit quand vous prenez soin de vous.
+              Elle vous rappelle, chaque jour, que vous méritez cette attention.
+            </p>
+
+            <button onClick={onNext} style={{
+              padding:'15px 40px', borderRadius:50, border:'none',
+              background:'linear-gradient(135deg, #c89050, #a07030)',
+              color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
+              letterSpacing:'.08em', cursor:'pointer',
+              fontFamily:"'Jost',sans-serif",
+              boxShadow:'0 6px 22px rgba(160,112,48,0.40)',
+              transition:'all .28s ease', whiteSpace:'nowrap',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,112,48,0.48)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 22px rgba(160,112,48,0.40)' }}
+            >
+              Je choisis ma fleur →
+            </button>
+
+          </div>
+        </div>
+
       </div>
     </ModalShell>
   )
@@ -925,7 +1007,8 @@ function SlidesEducatives({ onComplete }) {
 //  Flow : 5 slides éducatives → intention → graine → communauté
 // ─────────────────────────────────────────────────────────────────────────────
 export function OnboardingScreen({ userId, onComplete }) {
-  // phase 0 = slides, 1 = intention, 2 = graine, 3 = communauté
+  useTheme() // applique les CSS vars du thème dès l'onboarding
+  // phase 0=slides 1=intention 2=metaphore 3=graine 4=communauté
   const [phase,     setPhase]     = useState(0)
   const [intention, setIntention] = useState(null)
 
@@ -951,12 +1034,13 @@ export function OnboardingScreen({ userId, onComplete }) {
     } catch (e) {
       console.warn('[onboarding] save error', e)
     }
-    setPhase(3)
+    setPhase(4)
   }
 
   if (phase === 0) return <SlidesEducatives onComplete={() => setPhase(1)} />
   if (phase === 1) return <StepIntention onSelect={handleIntention} />
-  if (phase === 2) return <StepGraine intention={intention} onPlant={handlePlant} />
-  if (phase === 3) return <StepCommunaute onComplete={onComplete} />
+  if (phase === 2) return <StepMetaphore onNext={() => setPhase(3)} />
+  if (phase === 3) return <StepGraine intention={intention} onPlant={handlePlant} />
+  if (phase === 4) return <StepCommunaute onComplete={onComplete} />
   return null
 }
