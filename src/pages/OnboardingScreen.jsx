@@ -475,7 +475,12 @@ function StepMetaphore({ onNext }) {
         </div>
 
         {/* Image + overlay */}
-        <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0 }}>
+        <div style={{ 
+  width:'100%',
+  height:'clamp(220px, 45vh, 420px)',   // 🔥 solution parfaite
+  position:'relative',
+  overflow:'hidden'
+}}>
           <img
             src="/miroir2.png"
             alt="Votre reflet intérieur"
