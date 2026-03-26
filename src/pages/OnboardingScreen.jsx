@@ -540,34 +540,35 @@ function StepMetaphore({ onNext }) {
 function StepGraine({ intention, onPlant }) {
   const [selected, setSelected] = useState(0)
   const color = SEED_COLORS[selected]
+  const isMobile = window.innerWidth < 768
 
   return (
     <ModalShell>
-      <div style={{ padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ maxWidth:380, width:'100%', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:24 }}>
+      <div style={{ padding: isMobile ? '24px 20px' : '40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'center' : 'flex-start' }}>
+        <div style={{ maxWidth:380, width:'100%', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap: isMobile ? 16 : 24 }}>
 
         {intention !== null && (
-          <div className="s0" style={{ padding:'7px 16px', borderRadius:50, background:'var(--surface-2)', border:'1px solid var(--surface-3)', fontSize:'var(--fs-h5,11px)', color:'var(--text3)', fontStyle:'italic' }}>
+          <div className="s0" style={{ padding:'6px 14px', borderRadius:50, background:'var(--surface-2)', border:'1px solid var(--surface-3)', fontSize:'var(--fs-h5,11px)', color:'var(--text3)', fontStyle:'italic' }}>
             {INTENTIONS[intention]?.label}
           </div>
         )}
 
-        <div className="s1" style={{ width:88, height:88, borderRadius:'50%', background:`radial-gradient(circle at 38% 38%, ${color.hex2}, ${color.hex})`, boxShadow:`0 0 40px ${color.hex}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:40, animation:'fleurFloat 4s ease-in-out infinite', transition:'all .4s ease' }}>🌸</div>
+        <div className="s1" style={{ width: isMobile ? 72 : 88, height: isMobile ? 72 : 88, borderRadius:'50%', background:`radial-gradient(circle at 38% 38%, ${color.hex2}, ${color.hex})`, boxShadow:`0 0 40px ${color.hex}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 32 : 40, animation:'fleurFloat 4s ease-in-out infinite', transition:'all .4s ease' }}>🌸</div>
 
         <div className="s2">
-          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(22px,3.8vw,32px)', fontWeight:300, lineHeight:1.25, color:'var(--text)', marginBottom:7 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? '26px' : 'clamp(22px,3.8vw,32px)', fontWeight:300, lineHeight:1.25, color:'var(--text)', marginBottom:6 }}>
             Choisissez la couleur<br/>
             <em style={{ color: color.hex, fontStyle:'italic', transition:'color .4s' }}>de votre première fleur</em>
           </h2>
-          <p style={{ fontSize:'var(--fs-h5,11px)', color:'var(--text3)', fontStyle:'italic' }}>
+          <p style={{ fontSize:'var(--fs-h5,11px)', color:'var(--text3)', fontStyle:'italic', margin:0 }}>
             Vous pourrez la modifier à tout moment
           </p>
         </div>
 
-        <div className="s3" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+        <div className="s3" style={{ display:'flex', gap: isMobile ? 10 : 12, justifyContent:'center', flexWrap:'wrap', maxWidth: isMobile ? 280 : 'none' }}>
           {SEED_COLORS.map((col,i) => (
             <button key={i} onClick={() => setSelected(i)} title={col.label} style={{
-              width:42, height:42, borderRadius:'50%', cursor:'pointer', padding:0,
+              width: isMobile ? 38 : 42, height: isMobile ? 38 : 42, borderRadius:'50%', cursor:'pointer', padding:0,
               background:`radial-gradient(circle at 38% 38%, ${col.hex2}, ${col.hex})`,
               border: selected === i ? '2px solid var(--text)' : '2px solid var(--surface-3)',
               boxShadow: selected === i ? `0 0 0 3px ${col.hex}40` : 'none',
@@ -583,7 +584,7 @@ function StepGraine({ intention, onPlant }) {
 
         <div className="s4" style={{ width:'100%' }}>
           <button onClick={() => onPlant(selected)} style={{
-            width:'100%', padding:'17px 28px', borderRadius:50,
+            width:'100%', padding: isMobile ? '15px 20px' : '17px 28px', borderRadius:50,
             border:'none',
             background:`linear-gradient(135deg, ${color.hex}, ${color.hex}bb)`,
             color:'rgba(30,20,10,0.82)',
