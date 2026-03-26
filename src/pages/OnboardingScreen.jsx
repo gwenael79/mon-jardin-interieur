@@ -802,6 +802,7 @@ function SlidesEducatives({ onComplete }) {
       <div style={{
         flex:1, minHeight:0, display:'flex', flexDirection:'column',
         padding: isMobile ? '16px 24px 0' : '20px 40px 0',
+        overflow:'hidden',
         opacity: leaving ? 0 : 1,
         transform: leaving ? 'translateY(-8px)' : 'none',
         transition:'opacity .28s ease, transform .28s ease',
@@ -810,9 +811,9 @@ function SlidesEducatives({ onComplete }) {
         {/* Titre — grand */}
         <h2 style={{
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize: isMobile ? 'clamp(28px,8vw,42px)' : 'clamp(34px,3.5vw,52px)',
-          fontWeight:300, lineHeight:1.1,
-          color:'var(--text)', marginBottom: isMobile ? 12 : 16,
+          fontSize: isMobile ? 'clamp(22px,6vw,30px)' : 'clamp(26px,2.5vw,36px)',
+          fontWeight:300, lineHeight:1.15,
+          color:'var(--text)', marginBottom: isMobile ? 10 : 12,
           whiteSpace:'pre-line', letterSpacing:'-0.01em',
           flexShrink:0,
         }}>{slide.title}</h2>
