@@ -9,23 +9,108 @@ import { useTheme } from '../hooks/useTheme'
 // ─────────────────────────────────────────────────────────────────────────────
 //  ICÔNES SVG — remplacent les emojis pour un rendu cohérent partout
 // ─────────────────────────────────────────────────────────────────────────────
+const SLIDE_ICONS = {
+  wave: (color) => (
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <circle cx="28" cy="28" r="27" fill={color+'18'} stroke={color+'40'} strokeWidth="1"/>
+      <path d="M10 28 Q16 20 22 28 Q28 36 34 28 Q40 20 46 28" stroke={color} strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <path d="M10 34 Q16 26 22 34 Q28 42 34 34 Q40 26 46 34" stroke={color+'70'} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    </svg>
+  ),
+  barriers: (color) => (
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <circle cx="28" cy="28" r="27" fill={color+'18'} stroke={color+'40'} strokeWidth="1"/>
+      <rect x="14" y="18" width="28" height="5" rx="2.5" fill={color+'60'}/>
+      <rect x="14" y="26" width="28" height="5" rx="2.5" fill={color+'80'}/>
+      <rect x="14" y="34" width="28" height="5" rx="2.5" fill={color}/>
+    </svg>
+  ),
+  brain: (color) => (
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <circle cx="28" cy="28" r="27" fill={color+'18'} stroke={color+'40'} strokeWidth="1"/>
+      <path d="M20 30 C20 24 24 20 28 20 C32 20 36 24 36 30 C36 34 34 37 30 38 L28 40 L26 38 C22 37 20 34 20 30Z" stroke={color} strokeWidth="1.8" fill={color+'15'} strokeLinejoin="round"/>
+      <path d="M28 20 L28 24M22 26 L26 28M34 26 L30 28" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  growth: (color) => (
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <circle cx="28" cy="28" r="27" fill={color+'18'} stroke={color+'40'} strokeWidth="1"/>
+      <path d="M28 40 L28 22" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+      <path d="M28 30 C28 30 22 26 18 28" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+      <path d="M28 24 C28 24 34 20 38 22" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+      <circle cx="28" cy="40" r="2.5" fill={color}/>
+    </svg>
+  ),
+  flower: (color) => (
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+      <circle cx="28" cy="28" r="27" fill={color+'18'} stroke={color+'40'} strokeWidth="1"/>
+      {[0,60,120,180,240,300].map((a,i) => {
+        const r = a*Math.PI/180
+        return <ellipse key={i} cx={28+Math.cos(r)*9} cy={28+Math.sin(r)*9} rx="6" ry="4"
+          fill={color+'80'} transform={`rotate(${a+90},${28+Math.cos(r)*9},${28+Math.sin(r)*9})`}/>
+      })}
+      <circle cx="28" cy="28" r="5" fill={color}/>
+    </svg>
+  ),
+}
+
+const BULLET_ICONS = {
+  time: (color) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <circle cx="11" cy="11" r="9" stroke={color} strokeWidth="1.5" fill={color+'15'}/>
+      <path d="M11 7 L11 11 L14 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  eye: (color) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M3 11 C5 7 8 5 11 5 C14 5 17 7 19 11 C17 15 14 17 11 17 C8 17 5 15 3 11Z" stroke={color} strokeWidth="1.5" fill={color+'15'}/>
+      <circle cx="11" cy="11" r="2.5" fill={color}/>
+    </svg>
+  ),
+  calendar: (color) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <rect x="3" y="5" width="16" height="14" rx="2" stroke={color} strokeWidth="1.5" fill={color+'15'}/>
+      <path d="M3 9 L19 9" stroke={color} strokeWidth="1.5"/>
+      <path d="M7 3 L7 7M15 3 L15 7" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  ritual: (color) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M11 3 L13 8 L19 8 L14 12 L16 18 L11 14 L6 18 L8 12 L3 8 L9 8Z" stroke={color} strokeWidth="1.5" fill={color+'20'} strokeLinejoin="round"/>
+    </svg>
+  ),
+  chart: (color) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M4 17 L4 12 L8 12 L8 17M10 17 L10 8 L14 8 L14 17M16 17 L16 5 L20 5 L20 17" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M3 17 L21 17" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  ),
+  plant: (color) => (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M11 19 L11 10" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M11 14 C11 14 7 12 5 8 C8 8 11 11 11 11" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      <path d="M11 11 C11 11 15 8 17 5 C14 5 11 8 11 8" stroke={color} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+    </svg>
+  ),
+}
+
 export const ONBOARDING_SLIDES = [
   {
     id: 'stress', tag: 'Le saviez-vous ?',
     title: 'Le stress d\'usure,\nun ennemi discret',
     body: 'Contrairement au stress aigu, le stress d\'usure s\'accumule silencieusement. Fatigue, irritabilité, perte d\'élan… il s\'installe sans prévenir et altère notre équilibre sans que l\'on s\'en rende compte.',
     highlight: 'Il touche 7 personnes sur 10 dans leur vie quotidienne.',
-    color: '#9ab8c8', visual: 'wave',
+    color: '#9ab8c8', visual: 'wave', iconKey: 'wave',
   },
   {
     id: 'freins', tag: 'Pourquoi on attend',
     title: 'Trois raisons pour\nlesquelles on ne fait rien',
     bullets: [
-      { icon:'⏱', label: 'Pas le temps', desc: '"Je le ferai quand j\'aurai un moment." Ce moment n\'arrive jamais.' },
-      { icon:'👁', label: 'Pas visible', desc: 'Le bien-être intérieur ne se mesure pas dans un miroir.' },
-      { icon:'📅', label: 'Pas immédiat', desc: 'On abandonne souvent avant de percevoir les bénéfices.' },
+      { iconKey: 'time',     label: 'Pas le temps', desc: '"Je le ferai quand j\'aurai un moment." Ce moment n\'arrive jamais.' },
+      { iconKey: 'eye',      label: 'Pas visible', desc: 'Le bien-être intérieur ne se mesure pas dans un miroir.' },
+      { iconKey: 'calendar', label: 'Pas immédiat', desc: 'On abandonne souvent avant de percevoir les bénéfices.' },
     ],
-    color: '#c89898', visual: 'barriers',
+    color: '#c89898', visual: 'barriers', iconKey: 'barriers',
   },
   {
     id: 'ritualisation', tag: 'La science',
@@ -36,7 +121,7 @@ export const ONBOARDING_SLIDES = [
       'Renforce la neuroplasticité : le cerveau se reconfigure positivement',
       'Effet cumulatif : chaque jour ajoute une couche de résilience',
     ],
-    color: '#7aaa88', visual: 'brain',
+    color: '#7aaa88', visual: 'brain', iconKey: 'brain',
   },
   {
     id: 'benefices', tag: 'Ce qui vous attend',
@@ -46,18 +131,18 @@ export const ONBOARDING_SLIDES = [
       { period: 'Après 3 semaines',   desc: 'Moins de réactivité émotionnelle, meilleure qualité de sommeil.' },
       { period: 'Après 2 mois',       desc: 'Une résilience renforcée face aux imprévus du quotidien.' },
     ],
-    color: '#d4a0b0', visual: 'growth',
+    color: '#d4a0b0', visual: 'growth', iconKey: 'growth',
   },
   {
     id: 'promise', tag: 'Votre jardin',
     title: '2 minutes par jour\nsuffit pour commencer',
     body: 'Pas de performance. Pas d\'exigence. Juste un espace à vous, chaque jour, pour prendre soin de ce qui compte vraiment.',
     features: [
-      { icon:'⚡', text: 'Des rituels de 2 à 5 minutes, à votre rythme' },
-      { icon:'📊', text: 'Votre progression visible au quotidien' },
-      { icon:'🌿', text: 'Une plante qui grandit avec vous' },
+      { iconKey: 'ritual', text: 'Des rituels de 2 à 5 minutes, à votre rythme' },
+      { iconKey: 'chart',  text: 'Votre progression visible au quotidien' },
+      { iconKey: 'plant',  text: 'Une plante qui grandit avec vous' },
     ],
-    color: '#c8a870', visual: 'flower',
+    color: '#c8a870', visual: 'flower', iconKey: 'flower',
   },
 ]
 
@@ -92,7 +177,7 @@ function SlideVisual({ slide }) {
           animation:`onbPulse ${3+i*0.5}s ease-in-out ${i*0.3}s infinite`,
         }}/>
       ))}
-      <div style={{ fontSize:100, animation:'onbFloat 4s ease-in-out infinite', zIndex:1 }}></div>
+      <div style={{ fontSize:100, animation:'onbFloat 4s ease-in-out infinite', zIndex:1 }}>🌊</div>
       <div style={{ position:'absolute', bottom:'15%', left:'50%', transform:'translateX(-50%)', textAlign:'center' }}>
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h1,42px)', fontWeight:300, color:c, lineHeight:1 }}>7/10</div>
         <div style={{ fontSize:'var(--fs-h5,11px)', color:c+'99', letterSpacing:'.12em', textTransform:'uppercase', marginTop:4 }}>personnes touchées</div>
@@ -102,7 +187,7 @@ function SlideVisual({ slide }) {
 
   if (slide.visual === 'barriers') return (
     <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, padding:'0 10%' }}>
-      {['⏱ Pas le temps',' Pas visible',' Pas immédiat'].map((label,i) => (
+      {['⏱ Pas le temps','👁 Pas visible','📅 Pas immédiat'].map((label,i) => (
         <div key={i} style={{
           width:'100%', padding:'18px 24px',
           background:`${c}0a`, border:`1px solid ${c}22`, borderLeft:`3px solid ${c}`,
@@ -121,7 +206,7 @@ function SlideVisual({ slide }) {
   if (slide.visual === 'brain') return (
     <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
       <div style={{ position:'relative', textAlign:'center' }}>
-        <div style={{ fontSize:110, animation:'onbFloat 3s ease-in-out infinite', lineHeight:1 }}></div>
+        <div style={{ fontSize:110, animation:'onbFloat 3s ease-in-out infinite', lineHeight:1 }}>🧠</div>
         {[{ label:'Dopamine', angle:-60, dist:140 },{ label:'Cortisol ↓', angle:0, dist:155 },{ label:'Résilience', angle:60, dist:140 }].map(({label,angle,dist},i) => {
           const rad = (angle-90)*Math.PI/180
           return (
@@ -142,7 +227,7 @@ function SlideVisual({ slide }) {
   if (slide.visual === 'growth') return (
     <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
       <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:'70%' }}>
-        {[{ label:'1ʳᵉ semaine', pct:25 },{ label:'3 semaines', pct:55 },{ label:'2 mois', pct:90 }].map(({label,pct,emoji},i) => (
+        {[{ label:'1ʳᵉ semaine', pct:25, emoji:'🌱' },{ label:'3 semaines', pct:55, emoji:'🌿' },{ label:'2 mois', pct:90, emoji:'🌸' }].map(({label,pct,emoji},i) => (
           <div key={i} style={{ width:'100%', marginBottom:28, animation:`onbIn .5s ease ${i*0.2}s both` }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
               <span style={{ fontSize:'var(--fs-h5,12px)', color:'var(--text3)', letterSpacing:'.05em' }}>{emoji} {label}</span>
@@ -168,7 +253,7 @@ function SlideVisual({ slide }) {
         }}/>
       ))}
       <div style={{ textAlign:'center', zIndex:1 }}>
-        <div style={{ fontSize:120, animation:'onbFloat 3.5s ease-in-out infinite', lineHeight:1 }}></div>
+        <div style={{ fontSize:120, animation:'onbFloat 3.5s ease-in-out infinite', lineHeight:1 }}>🌸</div>
         <div style={{ marginTop:20, fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h3,18px)', fontWeight:300, color:'var(--text3)', fontStyle:'italic' }}>
           Votre jardin intérieur vous attend
         </div>
@@ -176,7 +261,7 @@ function SlideVisual({ slide }) {
     </div>
   )
 
-  return <div style={{ fontSize:80, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}></div>
+  return <div style={{ fontSize:80, display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}>{slide.emoji}</div>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -202,7 +287,7 @@ function SlideContent({ slide, leaving }) {
           <p style={{ fontSize:'var(--fs-h3,16px)', fontWeight:300, color:'var(--text2)', lineHeight:1.85, margin:'0 0 24px', maxWidth:480 }}>{slide.body}</p>
           {slide.highlight && (
             <div style={{ padding:'16px 20px', borderRadius:14, background:`${c}12`, border:`1px solid ${c}28`, fontSize:'var(--fs-h3,15px)', fontWeight:500, color:c, lineHeight:1.6, maxWidth:480 }}>
-               {slide.highlight}
+              💡 {slide.highlight}
             </div>
           )}
         </>
@@ -418,7 +503,6 @@ function StepIntention({ onSelect }) {
                 onMouseLeave={e => { if (!sel) { e.currentTarget.style.background='rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.13)' } }}
               >
                 <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}>{item.icon}</span>
-                <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}></span>
                 <span style={{
                   fontSize:'var(--fs-h4,14px)', fontWeight: sel ? 600 : 400,
                   color: sel ? 'rgba(140,100,30,0.95)' : 'rgba(40,36,28,0.82)',
@@ -432,7 +516,7 @@ function StepIntention({ onSelect }) {
                   fontSize:12, color:'#fff', fontWeight:700,
                   transition:'all .2s',
                 }}>
-                  {sel ? '' : ''}
+                  {sel ? '✓' : ''}
                 </span>
               </button>
             )
@@ -594,7 +678,7 @@ function StepGraine({ intention, onPlant }) {
             onMouseEnter={e => { e.currentTarget.style.opacity='.88'; e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 10px 28px ${color.hex}60` }}
             onMouseLeave={e => { e.currentTarget.style.opacity='1'; e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 6px 24px ${color.hex}50` }}
           >
-             Il est temps de semer votre graine
+            🌱 Il est temps de semer votre graine
           </button>
         </div>
 
@@ -795,7 +879,7 @@ function SlidesEducatives({ onComplete }) {
 
         {/* Icône SVG */}
         <div style={{ marginBottom:20, lineHeight:1, animation:'onbFloat 4s ease-in-out infinite', display:'inline-block' }}>
-          
+          {SLIDE_ICONS[slide.iconKey]?.(c)}
         </div>
 
         {/* Titre */}
@@ -816,7 +900,7 @@ function SlidesEducatives({ onComplete }) {
             </p>
             {slide.highlight && (
               <div style={{ padding:'16px 20px', borderRadius:14, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,14px)', fontWeight:500, color:c, lineHeight:1.6 }}>
-                 {slide.highlight}
+                💡 {slide.highlight}
               </div>
             )}
           </div>
@@ -839,11 +923,10 @@ function SlidesEducatives({ onComplete }) {
                 {/* Icône */}
                 <div style={{
                   width:48, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:20,
                   background:`${c}12`,
                   borderRight:'1px solid rgba(0,0,0,0.06)',
                 }}>
-                  {b.icon}
+                  {BULLET_ICONS[b.iconKey]?.(c)}
                 </div>
                 {/* Texte */}
                 <div style={{ padding:'11px 14px', flex:1 }}>
@@ -935,8 +1018,7 @@ function SlidesEducatives({ onComplete }) {
                     width:42, height:42, borderRadius:12, flexShrink:0,
                     background:`${c}18`, border:`1.5px solid ${c}35`,
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    fontSize:20,
-                  }}>{f.icon}</div>
+                  }}>{BULLET_ICONS[f.iconKey]?.(c)}</div>
                   <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.5 }}>{f.text}</span>
                 </div>
               ))}
@@ -980,7 +1062,7 @@ function SlidesEducatives({ onComplete }) {
           onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.opacity='.9' }}
           onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.opacity='1' }}
         >
-          {isLast ? '  Et vous ?' : 'Continuer →'}
+          {isLast ? '🌱  Et vous ?' : 'Continuer →'}
         </button>
       </div>
     </div>
