@@ -754,7 +754,7 @@ function SlidesEducatives({ onComplete }) {
   }
 
   const inner = (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden', fontFamily:"'Jost',sans-serif" }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'visible', fontFamily:"'Jost',sans-serif" }}>
       <style>{ONB_STYLES}</style>
 
       {/* Image hero pleine largeur — occupe ~38% de la hauteur */}
@@ -821,7 +821,7 @@ function SlidesEducatives({ onComplete }) {
         {/* Contenu selon type */}
 
         {/* ── Contenu compacté selon type ── */}
-        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'cenflex-start', overflowY:'auto', gap: isMobile ? 6 : 8, paddingBottom:'12px'  }}>
+        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'cenflex-start', overflowY:'auto', WebkitOverflowScrolling:'touch',  gap: isMobile ? 6 : 10, paddingBottom:'12px'  }}>
 
           {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
             <>
