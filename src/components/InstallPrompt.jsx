@@ -68,181 +68,199 @@ export default function InstallPrompt() {
         @keyframes ipSlideIn   { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
         @keyframes ipSlideOut  { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(40px)} }
         @keyframes ipFloat     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-        @keyframes ipGlow      { 0%,100%{opacity:.4} 50%{opacity:.9} }
         @keyframes ipShimmer   { 0%{background-position:-200% center} 100%{background-position:200% center} }
-        @keyframes ipFadeIn    { from{opacity:0} to{opacity:1} }
 
         /* ── MOBILE : bottom-sheet ── */
         .ip-backdrop-mobile {
           position: fixed; inset: 0;
-          background: rgba(0,0,0,0.55);
+          background: rgba(0,0,0,0.50);
           backdrop-filter: blur(6px);
           z-index: 9990;
           display: flex; align-items: flex-end; justify-content: center;
         }
         .ip-card-mobile {
-          width: 100%; max-width: 480px;
-          background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 60%, var(--bg3) 100%);
-          border: 1px solid rgba(var(--green-rgb), 0.18);
+          width: 100%;
+          background: var(--card, var(--bg));
+          border: 1px solid rgba(var(--green-rgb), 0.20);
           border-bottom: none;
-          border-radius: 28px 28px 0 0;
-          padding: 10px 28px 40px;
-          font-family: 'Jost', sans-serif;
+          border-radius: 24px 24px 0 0;
+          padding: 8px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+          font-family: var(--font-body, 'Jost', sans-serif);
           position: relative; overflow: hidden;
           animation: ipSlideUp .45s cubic-bezier(.22,1,.36,1) both;
+          box-sizing: border-box;
         }
         .ip-card-mobile.out { animation: ipSlideDown .35s ease both; }
 
         /* ── DESKTOP : carte flottante bas-droite ── */
         .ip-card-desktop {
-          position: fixed; bottom: 28px; right: 28px;
-          width: 320px;
-          background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 60%, var(--bg3) 100%);
+          position: fixed; bottom: 24px; right: 24px;
+          width: min(320px, calc(100vw - 32px));
+          background: var(--card, var(--bg));
           border: 1px solid rgba(var(--green-rgb), 0.22);
           border-radius: 20px;
-          padding: 22px 22px 18px;
-          font-family: 'Jost', sans-serif;
+          padding: 20px 20px 16px;
+          font-family: var(--font-body, 'Jost', sans-serif);
           z-index: 9990;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(var(--green-rgb), 0.08);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.25), 0 0 0 1px rgba(var(--green-rgb), 0.08);
           animation: ipSlideIn .4s cubic-bezier(.22,1,.36,1) both;
         }
         .ip-card-desktop.out { animation: ipSlideOut .3s ease both; }
 
-        /* ── Grain commun ── */
-        .ip-card-mobile::before, .ip-card-desktop::before {
-          content: '';
-          position: absolute; inset: 0; pointer-events: none;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-          opacity: 0.5; border-radius: inherit;
-        }
-
         .ip-handle {
           width: 36px; height: 3px; border-radius: 100px;
-          background: rgba(255,255,255,0.15);
-          margin: 14px auto 24px;
+          background: rgba(var(--text-rgb), 0.15);
+          margin: 10px auto 20px;
         }
 
         /* ── Desktop header ── */
         .ip-desktop-header {
-          display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+          display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
           position: relative; z-index: 1;
         }
         .ip-desktop-logo {
-          width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+          width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
           border: 1px solid rgba(var(--green-rgb), 0.25);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.4);
         }
         .ip-desktop-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 17px; font-weight: 300; line-height: 1.2;
-          color: rgba(var(--text-on-dark-rgb), 0.95);
+          font-family: var(--font-serif, 'Cormorant Garamond', serif);
+          font-size: 16px; font-weight: 300; line-height: 1.2;
+          color: var(--text);
         }
         .ip-desktop-title em { font-style: italic; color: var(--green); }
         .ip-desktop-close {
           position: absolute; top: 0; right: 0;
           background: none; border: none; cursor: pointer;
-          color: rgba(var(--text-on-dark-rgb), 0.25); font-size: 16px; line-height: 1;
-          padding: 0; transition: color .2s;
+          color: rgba(var(--text-rgb), 0.30); font-size: 16px; line-height: 1;
+          padding: 4px; transition: color .2s;
         }
-        .ip-desktop-close:hover { color: rgba(var(--text-on-dark-rgb), 0.6); }
+        .ip-desktop-close:hover { color: rgba(var(--text-rgb), 0.65); }
 
         .ip-desktop-desc {
           font-size: 12px; font-weight: 300;
-          color: rgba(var(--text-on-dark-rgb), 0.45); line-height: 1.6;
-          margin-bottom: 14px; font-style: italic;
+          color: var(--text3); line-height: 1.6;
+          margin-bottom: 12px; font-style: italic;
           position: relative; z-index: 1;
         }
 
         .ip-desktop-features {
-          display: flex; flex-direction: column; gap: 7px;
-          margin-bottom: 16px; position: relative; z-index: 1;
+          display: flex; flex-direction: column; gap: 6px;
+          margin-bottom: 14px; position: relative; z-index: 1;
         }
         .ip-desktop-feature {
           display: flex; align-items: center; gap: 8px;
-          font-size: 12px; color: rgba(var(--text-on-dark-rgb), 0.65);
+          font-size: 12px; color: var(--text2);
         }
         .ip-desktop-feature span:first-child { font-size: 14px; }
 
         /* ── Logo centré mobile ── */
-        .ip-logo-wrap { display: flex; justify-content: center; margin-bottom: 18px; position: relative; z-index: 1; }
+        .ip-logo-wrap {
+          display: flex; justify-content: center;
+          margin-bottom: 14px; position: relative; z-index: 1;
+        }
         .ip-logo {
-          width: 68px; height: 68px; border-radius: 18px;
+          width: 60px; height: 60px; border-radius: 16px;
           border: 1px solid rgba(var(--green-rgb), 0.25);
-          box-shadow: 0 0 0 6px rgba(var(--green-rgb), 0.05), 0 12px 40px rgba(0,0,0,0.4);
+          box-shadow: 0 0 0 5px rgba(var(--green-rgb), 0.06), 0 10px 32px rgba(0,0,0,0.15);
           animation: ipFloat 3.5s ease-in-out infinite;
         }
 
         .ip-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 26px; font-weight: 300; line-height: 1.2;
-          color: rgba(var(--text-on-dark-rgb), 0.95);
-          text-align: center; margin-bottom: 8px;
+          font-family: var(--font-serif, 'Cormorant Garamond', serif);
+          font-size: clamp(22px, 6vw, 26px); font-weight: 300; line-height: 1.2;
+          color: var(--text);
+          text-align: center; margin-bottom: 6px;
           position: relative; z-index: 1;
         }
         .ip-title em { font-style: italic; color: var(--green); }
 
         .ip-subtitle {
           font-size: 13px; font-weight: 300;
-          color: rgba(var(--text-on-dark-rgb), 0.45);
-          text-align: center; line-height: 1.7;
-          margin-bottom: 22px; font-style: italic;
+          color: var(--text3);
+          text-align: center; line-height: 1.6;
+          margin-bottom: 18px; font-style: italic;
           position: relative; z-index: 1;
         }
 
         .ip-features {
-          display: flex; flex-direction: column; gap: 9px;
-          margin-bottom: 22px; position: relative; z-index: 1;
+          display: flex; flex-direction: column; gap: 8px;
+          margin-bottom: 18px; position: relative; z-index: 1;
         }
         .ip-feature {
-          display: flex; align-items: center; gap: 12px;
-          padding: 11px 14px;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 11px;
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 12px;
+          background: rgba(var(--text-rgb), 0.04);
+          border: 1px solid rgba(var(--text-rgb), 0.08);
+          border-radius: 10px;
         }
         .ip-feature-icon {
-          font-size: 18px; flex-shrink: 0;
-          width: 34px; height: 34px; border-radius: 9px;
-          background: rgba(var(--green-rgb), 0.08);
-          border: 1px solid rgba(var(--green-rgb), 0.15);
+          font-size: 17px; flex-shrink: 0;
+          width: 32px; height: 32px; border-radius: 8px;
+          background: rgba(var(--green-rgb), 0.10);
+          border: 1px solid rgba(var(--green-rgb), 0.18);
           display: flex; align-items: center; justify-content: center;
         }
-        .ip-feature-text { font-size: 12.5px; font-weight: 400; color: rgba(var(--text-on-dark-rgb), 0.75); line-height: 1.4; }
-        .ip-feature-text strong { display: block; font-weight: 500; color: rgba(var(--text-on-dark-rgb), 0.90); margin-bottom: 1px; }
+        .ip-feature-text { font-size: 12px; font-weight: 400; color: var(--text2); line-height: 1.4; }
+        .ip-feature-text strong { display: block; font-weight: 500; color: var(--text); margin-bottom: 1px; }
 
         .ip-btn-install {
-          width: 100%; padding: 15px;
+          width: 100%; padding: 14px;
           border: none; border-radius: 12px; cursor: pointer;
-          font-family: 'Jost', sans-serif;
-          font-size: 13px; font-weight: 500; letter-spacing: .06em;
-          color: var(--bg2);
+          font-family: var(--font-body, 'Jost', sans-serif);
+          font-size: 13px; font-weight: 500; letter-spacing: .05em;
+          color: var(--bg);
           background: linear-gradient(270deg, var(--green), color-mix(in srgb, var(--green) 75%, white), var(--green));
           background-size: 200% auto;
           animation: ipShimmer 3s linear infinite;
-          box-shadow: 0 8px 28px rgba(var(--green-rgb), 0.22);
+          box-shadow: 0 6px 24px rgba(var(--green-rgb), 0.28);
           transition: transform .2s, box-shadow .2s;
-          margin-bottom: 8px;
+          margin-bottom: 6px;
           position: relative; z-index: 1;
+          -webkit-tap-highlight-color: transparent;
         }
-        .ip-btn-install:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(var(--green-rgb), 0.32); }
+        .ip-btn-install:active { transform: scale(0.98); }
 
         .ip-btn-later {
-          width: 100%; padding: 11px;
+          width: 100%; padding: 12px;
           border: none; background: transparent; cursor: pointer;
-          font-family: 'Jost', sans-serif;
-          font-size: 11px; font-weight: 300; letter-spacing: .04em;
-          color: rgba(var(--text-on-dark-rgb), 0.25); transition: color .2s;
+          font-family: var(--font-body, 'Jost', sans-serif);
+          font-size: 12px; font-weight: 300; letter-spacing: .04em;
+          color: rgba(var(--text-rgb), 0.35); transition: color .2s;
           position: relative; z-index: 1;
+          -webkit-tap-highlight-color: transparent;
         }
-        .ip-btn-later:hover { color: rgba(var(--text-on-dark-rgb), 0.50); }
+        .ip-btn-later:active { color: rgba(var(--text-rgb), 0.60); }
 
         /* iOS guide */
-        .ip-ios-guide { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 18px; position: relative; z-index: 1; }
-        .ip-ios-step { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .ip-ios-guide {
+          background: rgba(var(--text-rgb), 0.04);
+          border: 1px solid rgba(var(--text-rgb), 0.09);
+          border-radius: 12px; padding: 12px;
+          margin-bottom: 16px; position: relative; z-index: 1;
+        }
+        .ip-ios-step {
+          display: flex; align-items: flex-start; gap: 10px;
+          padding: 7px 0;
+          border-bottom: 1px solid rgba(var(--text-rgb), 0.07);
+        }
         .ip-ios-step:last-child { border-bottom: none; padding-bottom: 0; }
-        .ip-ios-num { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; background: rgba(var(--green-rgb), 0.15); border: 1px solid rgba(var(--green-rgb), 0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--green); margin-top: 1px; }
-        .ip-ios-text { font-size: 12px; color: rgba(var(--text-on-dark-rgb), 0.65); line-height: 1.5; }
-        .ip-ios-text strong { color: rgba(var(--text-on-dark-rgb), 0.90); }
+        .ip-ios-num {
+          width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+          background: rgba(var(--green-rgb), 0.12);
+          border: 1px solid rgba(var(--green-rgb), 0.28);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 10px; font-weight: 600; color: var(--green); margin-top: 1px;
+        }
+        .ip-ios-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
+        .ip-ios-text strong { color: var(--text); }
+
+        @media (max-width: 380px) {
+          .ip-card-mobile { padding-left: 16px; padding-right: 16px; }
+          .ip-title { font-size: 20px; }
+          .ip-subtitle { font-size: 12px; margin-bottom: 14px; }
+          .ip-features { gap: 6px; margin-bottom: 14px; }
+          .ip-logo { width: 52px; height: 52px; }
+        }
       `}</style>
 
       {isMobile ? (
