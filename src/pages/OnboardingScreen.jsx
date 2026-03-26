@@ -30,13 +30,8 @@ export const ONBOARDING_SLIDES = [
   {
     id: 'ritualisation', tag: 'La science',
     title: 'Pourquoi la\nritualisation fonctionne',
-    body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin — il libère de la dopamine avant même que vous commenciez.',
-    points: [
-      'Réduit le cortisol en 3 à 4 semaines',
-      'Renforce la neuroplasticité : le cerveau se reconfigure positivement',
-      'Effet cumulatif : chaque jour ajoute une couche de résilience',
-    ],
-    color: '#7aaa88', visual: 'brain',
+    body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin, il libère de la dopamine avant même que vous commenciez. Progressivement, le cortisol diminue en quelques semaines, la neuroplasticité s’active , le cerveau se reconfigure positivement et un effet cumulatif s’installe : chaque jour renforce votre stabilité et votre résilience.',
+        color: '#7aaa88', visual: 'brain',
   },
   {
     id: 'benefices', tag: 'Ce qui vous attend',
