@@ -205,13 +205,15 @@ function SlideContent({ slide, leaving }) {
       )}
 
       {slide.bullets && (
-        <div style={{ display:'flex', flexDirection:'column', gap:14, maxWidth:480 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:10, maxWidth:480 }}>
           {slide.bullets.map((b,i) => (
-            <div key={i} style={{ display:'flex', gap:16, alignItems:'flex-start', padding:'16px 18px', borderRadius:14, background:'var(--surface-2)', border:'1px solid var(--surface-3)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
-              <span style={{ fontSize:'var(--fs-emoji-md,22px)', flexShrink:0 }}>{b.icon}</span>
-              <div>
-                <div style={{ fontSize:'var(--fs-h4,14px)', fontWeight:600, color:c, marginBottom:5 }}>{b.label}</div>
-                <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7 }}>{b.desc}</div>
+            <div key={i} style={{ display:'flex', gap:0, alignItems:'stretch', borderRadius:14, overflow:'hidden', border:'1px solid var(--surface-3)', background:'var(--surface-2)', animation:`onbIn .4s ease ${i*.12+.1}s both`, boxShadow:'0 2px 8px rgba(0,0,0,.06)' }}>
+              <div style={{ width:52, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--surface-3)', fontSize:'var(--fs-emoji-md,20px)', borderRight:'1px solid var(--surface-3)' }}>
+                {b.icon}
+              </div>
+              <div style={{ padding:'14px 18px' }}>
+                <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:700, color:c, marginBottom:4, letterSpacing:'.02em' }}>{b.label}</div>
+                <div style={{ fontSize:'var(--fs-h5,12px)', fontWeight:300, color:'var(--text2)', lineHeight:1.75, fontStyle:'italic' }}>{b.desc}</div>
               </div>
             </div>
           ))}
@@ -221,11 +223,11 @@ function SlideContent({ slide, leaving }) {
       {slide.points && (
         <>
           <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.85, margin:'0 0 20px', maxWidth:480 }}>{slide.body}</p>
-          <div style={{ display:'flex', flexDirection:'column', gap:12, maxWidth:480 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:10, maxWidth:480 }}>
             {slide.points.map((p,i) => (
-              <div key={i} style={{ display:'flex', gap:12, alignItems:'flex-start', animation:`onbIn .4s ease ${i*.1+.15}s both` }}>
-                <span style={{ color:c, fontSize:'var(--fs-emoji-sm,14px)', flexShrink:0, marginTop:3 }}>✦</span>
-                <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7 }}>{p}</span>
+              <div key={i} style={{ display:'flex', gap:14, alignItems:'center', padding:'12px 16px', borderRadius:12, background:'var(--surface-2)', borderLeft:`3px solid ${c}`, animation:`onbIn .4s ease ${i*.1+.15}s both`, boxShadow:'0 1px 6px rgba(0,0,0,.05)' }}>
+                <span style={{ width:22, height:22, borderRadius:'50%', background:'var(--surface-3)', border:`1.5px solid ${c}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:10, fontWeight:700, color:c }}>{i+1}</span>
+                <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'var(--text2)', lineHeight:1.65 }}>{p}</span>
               </div>
             ))}
           </div>
@@ -236,13 +238,13 @@ function SlideContent({ slide, leaving }) {
         <div style={{ display:'flex', flexDirection:'column', maxWidth:480 }}>
           {slide.timeline.map((t,i) => (
             <div key={i} style={{ display:'flex', gap:0, animation:`onbIn .4s ease ${i*.12+.1}s both` }}>
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginRight:18 }}>
-                <div style={{ width:10, height:10, borderRadius:'50%', background:c, flexShrink:0, marginTop:4 }}/>
-                {i < slide.timeline.length-1 && <div style={{ width:1, flex:1, minHeight:32, background:`${c}30` }}/>}
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginRight:16 }}>
+                <div style={{ width:12, height:12, borderRadius:'50%', background:c, flexShrink:0, marginTop:7, outline:`3px solid var(--surface-3)`, outlineOffset:2 }}/>
+                {i < slide.timeline.length-1 && <div style={{ width:2, flex:1, minHeight:28, background:'var(--surface-3)', marginTop:4 }}/>}
               </div>
-              <div style={{ paddingBottom:24 }}>
-                <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:600, color:c, letterSpacing:'.08em', marginBottom:6, textTransform:'uppercase' }}>{t.period}</div>
-                <div style={{ fontSize:'var(--fs-h4,14px)', fontWeight:300, color:'var(--text2)', lineHeight:1.75 }}>{t.desc}</div>
+              <div style={{ paddingBottom:22, paddingTop:2 }}>
+                <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.1em', textTransform:'uppercase', background:'var(--surface-2)', border:`1px solid ${c}`, borderRadius:100, padding:'3px 10px', marginBottom:8 }}>{t.period}</div>
+                <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'var(--text2)', lineHeight:1.8 }}>{t.desc}</div>
               </div>
             </div>
           ))}
@@ -251,12 +253,12 @@ function SlideContent({ slide, leaving }) {
 
       {slide.features && (
         <>
-          <p style={{ fontSize:'var(--fs-h3,16px)', fontWeight:300, color:'var(--text2)', lineHeight:1.85, margin:'0 0 28px', maxWidth:480 }}>{slide.body}</p>
-          <div style={{ display:'flex', flexDirection:'column', gap:14, maxWidth:480 }}>
+          <p style={{ fontSize:'var(--fs-h3,16px)', fontWeight:300, color:'var(--text2)', lineHeight:1.85, margin:'0 0 24px', maxWidth:480 }}>{slide.body}</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:10, maxWidth:480 }}>
             {slide.features.map((f,i) => (
-              <div key={i} style={{ display:'flex', gap:16, alignItems:'center', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
-                <span style={{ fontSize:'var(--fs-h2,20px)', width:44, height:44, borderRadius:14, flexShrink:0, background:`${c}15`, border:`1px solid ${c}28`, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</span>
-                <span style={{ fontSize:'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)' }}>{f.text}</span>
+              <div key={i} style={{ display:'flex', gap:14, alignItems:'center', padding:'12px 16px', borderRadius:14, background:'var(--surface-2)', border:'1px solid var(--surface-3)', animation:`onbIn .4s ease ${i*.1+.1}s both`, boxShadow:'0 2px 8px rgba(0,0,0,.06)' }}>
+                <span style={{ fontSize:'var(--fs-h2,18px)', width:40, height:40, borderRadius:12, flexShrink:0, background:'var(--surface-3)', border:`1.5px solid ${c}`, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</span>
+                <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'var(--text2)', lineHeight:1.5 }}>{f.text}</span>
               </div>
             ))}
           </div>
@@ -392,29 +394,32 @@ function StepIntention({ onSelect }) {
             return (
               <button key={i} onClick={() => choose(i)} style={{
                 display:'flex', alignItems:'center', gap:14,
-                padding:'14px 20px', borderRadius:16,
-                background: sel ? 'rgba(var(--gold-warm-rgb),0.08)' : 'var(--surface-1)',
-                border: sel ? '1.5px solid rgba(var(--gold-warm-rgb),0.50)' : '1.5px solid var(--surface-3)',
+                padding:'15px 20px', borderRadius:14,
+                background: sel ? 'rgba(184,140,60,0.14)' : 'rgba(0,0,0,0.04)',
+                border: sel
+                  ? '2px solid rgba(184,140,60,0.65)'
+                  : '2px solid rgba(0,0,0,0.13)',
                 cursor:'pointer', textAlign:'left',
-                boxShadow: sel ? '0 2px 16px rgba(var(--gold-warm-rgb),0.14)' : '0 1px 4px rgba(0,0,0,0.04)',
-                transform: sel ? 'translateX(3px)' : 'none',
-                transition:'all .22s ease', fontFamily:"'Jost',sans-serif",
+                boxShadow: sel ? '0 3px 14px rgba(184,140,60,0.18)' : 'none',
+                transform: sel ? 'translateX(4px)' : 'none',
+                transition:'all .2s ease', fontFamily:"'Jost',sans-serif",
               }}
-                onMouseEnter={e => { if (!sel) { e.currentTarget.style.background='var(--surface-2)'; e.currentTarget.style.borderColor='var(--border)' } }}
-                onMouseLeave={e => { if (!sel) { e.currentTarget.style.background='var(--surface-1)'; e.currentTarget.style.borderColor='var(--surface-3)' } }}
+                onMouseEnter={e => { if (!sel) { e.currentTarget.style.background='rgba(0,0,0,0.07)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.22)' } }}
+                onMouseLeave={e => { if (!sel) { e.currentTarget.style.background='rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.13)' } }}
               >
                 <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}>{item.icon}</span>
                 <span style={{
-                  fontSize:'var(--fs-h4,14px)', fontWeight: sel ? 500 : 300,
-                  color: sel ? 'var(--gold-warm)' : 'var(--text2)',
+                  fontSize:'var(--fs-h4,14px)', fontWeight: sel ? 600 : 400,
+                  color: sel ? 'rgba(140,100,30,0.95)' : 'rgba(40,36,28,0.82)',
                   lineHeight:1.5, flex:1, transition:'color .2s',
                 }}>{item.label}</span>
                 <span style={{
-                  width:20, height:20, borderRadius:'50%', flexShrink:0,
-                  border: sel ? 'none' : '1.5px solid var(--surface-3)',
-                  background: sel ? 'var(--gold-warm)' : 'transparent',
+                  width:22, height:22, borderRadius:'50%', flexShrink:0,
+                  border: sel ? 'none' : '2px solid rgba(0,0,0,0.18)',
+                  background: sel ? 'rgba(184,140,60,0.85)' : 'transparent',
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:11, color:'#fff', transition:'all .2s',
+                  fontSize:12, color:'#fff', fontWeight:700,
+                  transition:'all .2s',
                 }}>
                   {sel ? '✓' : ''}
                 </span>
@@ -594,32 +599,36 @@ function StepCommunaute({ onComplete }) {
           <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(24px,4.5vw,36px)', fontWeight:300, lineHeight:1.4, color:'var(--text)', marginBottom:14 }}>
             En ce moment,<br/>
             <span style={{ color:'var(--green)', fontWeight:400 }}>
-              {count !== null ? count : '…'} {count !== null ? (count === 1 ? 'jardin pousse' : 'jardins poussent') : ''}
+              {count !== null ? count : '…'} {count !== null ? (count === 1 ? 'personne cultive' : 'personnes cultivent') : ''}
             </span>
-            {count !== null && <><br/>dans notre communauté.</>}
+            {count !== null && <><br/>leur jardin intérieur dans notre communauté.</>}
           </h2>
           <p style={{ fontSize:'var(--fs-h4,13px)', color:'var(--text3)', fontStyle:'italic', lineHeight:1.8 }}>
             Pas de profils. Pas de noms.<br/>Juste une présence partagée.
           </p>
         </div>
 
-        <div className="s4">
+        <div className="s4" style={{ width:'100%', display:'flex', flexDirection:'column', alignItems:'center', gap:0 }}>
           <button onClick={onComplete} style={{
-            padding:'16px 44px', borderRadius:50,
+            padding:'18px 52px', borderRadius:50,
             border:'none',
-            background:'linear-gradient(135deg, var(--green), var(--green)bb)',
-            color:'rgba(30,20,10,0.82)',
-            fontSize:'var(--fs-h4,14px)', fontWeight:500,
-            letterSpacing:'.06em',
+            background:'linear-gradient(135deg, #7ab060, #4a8830)',
+            color:'#fff',
+            fontSize:'var(--fs-h3,16px)', fontWeight:600,
+            letterSpacing:'.10em',
             cursor:'pointer', fontFamily:"'Jost',sans-serif",
-            boxShadow:'0 6px 24px rgba(var(--green-rgb),0.35)',
-            transition:'all .25s ease',
+            boxShadow:'0 8px 28px rgba(74,136,48,0.45), 0 2px 8px rgba(74,136,48,0.25)',
+            transition:'all .28s ease',
+            position:'relative', overflow:'hidden',
           }}
-            onMouseEnter={e => { e.currentTarget.style.opacity='.88'; e.currentTarget.style.transform='translateY(-2px)' }}
-            onMouseLeave={e => { e.currentTarget.style.opacity='1'; e.currentTarget.style.transform='none' }}
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 14px 36px rgba(74,136,48,0.52), 0 4px 10px rgba(74,136,48,0.28)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 8px 28px rgba(74,136,48,0.45), 0 2px 8px rgba(74,136,48,0.25)' }}
           >
             Entrez dans votre jardin →
           </button>
+          <div style={{ fontSize:'var(--fs-h5,11px)', color:'rgba(0,0,0,0.30)', marginTop:14, fontStyle:'italic', letterSpacing:'.03em' }}>
+            Votre graine vous attend
+          </div>
         </div>
 
         </div>
@@ -653,7 +662,7 @@ function SlidesEducatives({ onComplete }) {
   }
 
   const inner = (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', fontFamily:"'Jost',sans-serif" }}>
+    <div style={{ display:'flex', flexDirection:'column', minHeight:0, flex:1, fontFamily:"'Jost',sans-serif" }}>
       <style>{ONB_STYLES}</style>
 
       {/* Barre progression */}
@@ -672,10 +681,13 @@ function SlidesEducatives({ onComplete }) {
 
       {/* Corps — scrollable */}
       <div style={{
-        flex:1, overflowY:'auto', padding: isMobile ? '32px 24px 0' : '44px 56px 0',
+        flex:1, minHeight:0, overflowY:'auto',
+        padding: isMobile ? '32px 24px 0' : '40px 52px 0',
         opacity: leaving ? 0 : 1,
         transform: leaving ? 'translateY(-10px)' : 'none',
         transition:'opacity .28s ease, transform .28s ease',
+        scrollbarWidth:'thin',
+        scrollbarColor:'rgba(0,0,0,0.15) transparent',
       }}>
         {/* Pastille tag + numéro */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
@@ -718,64 +730,121 @@ function SlidesEducatives({ onComplete }) {
           </div>
         )}
 
+        {/* ── BULLETS (slide 2 — freins) ── */}
         {slide.bullets && (
-          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             {slide.bullets.map((b,i) => (
               <div key={i} style={{
-                display:'flex', gap:16, alignItems:'flex-start',
-                padding:'16px 18px', borderRadius:14,
-                background:'var(--surface-2)', border:'1px solid var(--surface-3)',
-                animation:`onbIn .4s ease ${i*.1+.1}s both`,
+                display:'flex', gap:0, alignItems:'stretch',
+                borderRadius:14, overflow:'hidden',
+                background:'rgba(255,255,255,0.65)',
+                border:'1px solid rgba(0,0,0,0.09)',
+                boxShadow:'0 2px 8px rgba(0,0,0,0.05)',
+                animation:`onbIn .4s ease ${i*.12+.1}s both`,
               }}>
-                <span style={{ fontSize:'var(--fs-emoji-md,22px)', flexShrink:0, marginTop:1 }}>{b.icon}</span>
-                <div>
-                  <div style={{ fontSize:'var(--fs-h4,14px)', fontWeight:600, color:c, marginBottom:5 }}>{b.label}</div>
-                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7 }}>{b.desc}</div>
+                {/* Accent gauche coloré */}
+                <div style={{ width:4, flexShrink:0, background:c }}/>
+                {/* Icône */}
+                <div style={{
+                  width:48, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:18, background:`${c}12`,
+                  borderRight:'1px solid rgba(0,0,0,0.06)',
+                }}>
+                  {b.icon}
+                </div>
+                {/* Texte */}
+                <div style={{ padding:'11px 14px', flex:1 }}>
+                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:3 }}>{b.label}</div>
+                  <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.55 }}>{b.desc}</div>
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* ── POINTS (slide 3 — science) ── */}
         {slide.points && (
           <div>
-            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:0, borderRadius:16, overflow:'hidden', border:'1px solid rgba(0,0,0,0.09)', background:'rgba(255,255,255,0.55)' }}>
               {slide.points.map((p,i) => (
-                <div key={i} style={{ display:'flex', gap:12, alignItems:'flex-start', animation:`onbIn .4s ease ${i*.1+.15}s both` }}>
-                  <span style={{ color:c, fontSize:'var(--fs-emoji-sm,14px)', flexShrink:0, marginTop:4 }}>✦</span>
-                  <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7 }}>{p}</span>
+                <div key={i} style={{
+                  display:'flex', gap:14, alignItems:'center',
+                  padding:'14px 18px',
+                  borderBottom: i < slide.points.length-1 ? '1px solid rgba(0,0,0,0.07)' : 'none',
+                  animation:`onbIn .4s ease ${i*.1+.15}s both`,
+                }}>
+                  <div style={{
+                    width:28, height:28, borderRadius:'50%', flexShrink:0,
+                    background:`${c}18`, border:`1.5px solid ${c}50`,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:11, fontWeight:700, color:c,
+                  }}>{i+1}</div>
+                  <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.80)', lineHeight:1.6 }}>{p}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
+        {/* ── TIMELINE (slide 4 — bénéfices) ── */}
         {slide.timeline && (
-          <div style={{ display:'flex', flexDirection:'column' }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
             {slide.timeline.map((t,i) => (
-              <div key={i} style={{ display:'flex', gap:0, animation:`onbIn .4s ease ${i*.12+.1}s both` }}>
-                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginRight:18 }}>
-                  <div style={{ width:10, height:10, borderRadius:'50%', background:c, flexShrink:0, marginTop:4 }}/>
-                  {i < slide.timeline.length-1 && <div style={{ width:1, flex:1, minHeight:32, background:`${c}30` }}/>}
+              <div key={i} style={{
+                display:'flex', gap:0, alignItems:'stretch',
+                animation:`onbIn .4s ease ${i*.14+.1}s both`,
+              }}>
+                {/* Colonne gauche — dot + trait */}
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:32, flexShrink:0, paddingTop:4 }}>
+                  <div style={{
+                    width:14, height:14, borderRadius:'50%', flexShrink:0,
+                    background:c, border:`3px solid ${c}30`,
+                    boxShadow:`0 0 0 3px ${c}15`,
+                  }}/>
+                  {i < slide.timeline.length-1 && (
+                    <div style={{ width:2, flex:1, minHeight:28, background:`linear-gradient(${c}60, ${c}18)`, margin:'4px 0' }}/>
+                  )}
                 </div>
-                <div style={{ paddingBottom:24 }}>
-                  <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:600, color:c, letterSpacing:'.08em', marginBottom:5, textTransform:'uppercase' }}>{t.period}</div>
-                  <div style={{ fontSize:'var(--fs-h4,14px)', fontWeight:300, color:'var(--text2)', lineHeight:1.75 }}>{t.desc}</div>
+                {/* Contenu */}
+                <div style={{
+                  flex:1, paddingLeft:16, paddingBottom: i < slide.timeline.length-1 ? 24 : 0,
+                }}>
+                  <div style={{
+                    display:'inline-block',
+                    fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c,
+                    letterSpacing:'.10em', marginBottom:6, textTransform:'uppercase',
+                    padding:'3px 10px', borderRadius:50,
+                    background:`${c}12`, border:`1px solid ${c}30`,
+                  }}>{t.period}</div>
+                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.70)', lineHeight:1.75 }}>{t.desc}</div>
                 </div>
               </div>
             ))}
           </div>
         )}
 
+        {/* ── FEATURES (slide 5 — promesse) ── */}
         {slide.features && (
           <div>
-            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.9, marginBottom:24 }}>{slide.body}</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {slide.features.map((f,i) => (
-                <div key={i} style={{ display:'flex', gap:16, alignItems:'center', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
-                  <span style={{ fontSize:'var(--fs-h2,20px)', width:44, height:44, borderRadius:14, flexShrink:0, background:`${c}15`, border:`1px solid ${c}28`, display:'flex', alignItems:'center', justifyContent:'center' }}>{f.icon}</span>
-                  <span style={{ fontSize:'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)' }}>{f.text}</span>
+                <div key={i} style={{
+                  display:'flex', gap:14, alignItems:'center',
+                  padding:'14px 18px', borderRadius:14,
+                  background:'rgba(255,255,255,0.65)',
+                  border:'1px solid rgba(0,0,0,0.08)',
+                  boxShadow:'0 2px 8px rgba(0,0,0,0.04)',
+                  animation:`onbIn .4s ease ${i*.1+.1}s both`,
+                }}>
+                  <div style={{
+                    width:42, height:42, borderRadius:12, flexShrink:0,
+                    background:`${c}18`, border:`1.5px solid ${c}35`,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:20,
+                  }}>{f.icon}</div>
+                  <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.5 }}>{f.text}</span>
                 </div>
               ))}
             </div>
@@ -790,31 +859,33 @@ function SlidesEducatives({ onComplete }) {
         {step > 0 && (
           <button onClick={prev} style={{
             width:46, height:46, borderRadius:50, flexShrink:0,
-            border:'1px solid var(--surface-3)', background:'transparent',
-            color:'var(--text3)', fontSize:18, cursor:'pointer',
+            border:'2px solid rgba(0,0,0,0.14)', background:'transparent',
+            color:'rgba(0,0,0,0.45)', fontSize:18, cursor:'pointer',
             fontFamily:"'Jost',sans-serif",
             display:'flex', alignItems:'center', justifyContent:'center',
             transition:'all .2s',
           }}
-            onMouseEnter={e => { e.currentTarget.style.background='var(--surface-2)'; e.currentTarget.style.color='var(--text)' }}
-            onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='var(--text3)' }}
+            onMouseEnter={e => { e.currentTarget.style.background='rgba(0,0,0,0.06)'; e.currentTarget.style.color='rgba(0,0,0,0.70)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.28)' }}
+            onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(0,0,0,0.45)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.14)' }}
           >←</button>
         )}
         <button onClick={next} style={{
-          flex:1, padding:'14px 24px', borderRadius:50,
+          flex:1, padding:'15px 28px', borderRadius:50,
           border:'none',
           background: isLast
-            ? `linear-gradient(135deg, ${c}, ${c}bb)`
-            : `linear-gradient(135deg, var(--green), var(--green)bb)`,
-          color:'rgba(30,20,10,0.82)',
-          fontSize:'var(--fs-h4,14px)', fontWeight:500,
-          letterSpacing:'.06em',
+            ? 'linear-gradient(135deg, #7ab060, #5a9040)'
+            : 'linear-gradient(135deg, #5a9040, #4a7830)',
+          color:'#fff',
+          fontSize:'var(--fs-h4,14px)', fontWeight:600,
+          letterSpacing:'.08em',
           cursor:'pointer', fontFamily:"'Jost',sans-serif",
-          boxShadow: `0 4px 18px ${isLast ? c : 'var(--green)'}40`,
-          transition:'all .25s',
+          boxShadow: isLast
+            ? '0 6px 22px rgba(90,144,64,0.45), 0 2px 6px rgba(90,144,64,0.25)'
+            : '0 4px 16px rgba(74,120,48,0.35)',
+          transition:'all .25s ease',
         }}
-          onMouseEnter={e => { e.currentTarget.style.opacity='.88'; e.currentTarget.style.transform='translateY(-1px)' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity='1'; e.currentTarget.style.transform='none' }}
+          onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow = isLast ? '0 10px 28px rgba(90,144,64,0.50)' : '0 8px 22px rgba(74,120,48,0.42)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow = isLast ? '0 6px 22px rgba(90,144,64,0.45), 0 2px 6px rgba(90,144,64,0.25)' : '0 4px 16px rgba(74,120,48,0.35)' }}
         >
           {isLast ? '🌱  Et vous ?' : 'Continuer →'}
         </button>
@@ -835,7 +906,8 @@ function SlidesEducatives({ onComplete }) {
       <NatureBg />
       <div style={{ position:'absolute', inset:0, zIndex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
         <div style={{
-          width:'min(640px, 96vw)', maxHeight:'88vh',
+          width:'min(640px, 96vw)',
+          height:'min(680px, 88vh)',
           borderRadius:24, background:'var(--bg)',
           boxShadow:'0 24px 70px rgba(60,90,30,0.22), 0 0 0 1px rgba(100,140,60,0.12)',
           display:'flex', flexDirection:'column', overflow:'hidden',
