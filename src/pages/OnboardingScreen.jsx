@@ -450,12 +450,6 @@ function StepIntention({ onSelect }) {
 //  ÉTAPE MÉTAPHORE — pont entre l'intention et la fleur
 // ─────────────────────────────────────────────────────────────────────────────
 function StepMetaphore({ onNext }) {
-  const [showOverlay, setShowOverlay] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setShowOverlay(true), 5000)
-    return () => clearTimeout(t)
-  }, [])
 
   return (
     <ModalShell>
@@ -465,7 +459,7 @@ function StepMetaphore({ onNext }) {
         <div className="s0" style={{ padding:'24px 32px 16px', textAlign:'center', flexShrink:0 }}>
           <h2 style={{
             fontFamily:"'Cormorant Garamond',serif",
-            fontSize:'clamp(22px,3.5vw,30px)',
+            fontSize:'clamp(30px,3.5vw,48px)',
             fontWeight:300, lineHeight:1.2,
             color:'rgba(30,25,15,0.92)', margin:0,
           }}>
@@ -486,25 +480,21 @@ function StepMetaphore({ onNext }) {
             alt="Votre reflet intérieur"
             style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', display:'block' }}
           />
+</div>
+          
 
-          {/* Overlay après 3s */}
-          <div style={{
-            position:'absolute', inset:0,
-            background:'rgba(255,252,248,0.84)',
-            backdropFilter:'blur(2px)',
-            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-            padding:'28px 36px', gap:24,
-            opacity: showOverlay ? 1 : 0,
-            transform: showOverlay ? 'none' : 'translateY(10px)',
-            transition:'opacity .8s ease, transform .8s ease',
-          }}>
+             <div style={{
+    fontFamily:"'Cormorant Garamond',serif",
+    fontSize:'clamp(16px, 2.5vw, 20px)',
+    fontWeight:300,
+    lineHeight:1.7,
+    textAlign:'center',
+    color:'rgba(30,25,15,0.78)',
+    margin:10,
+    maxWidth:500
+  }}>
 
-            <p style={{
-              fontFamily:"'Cormorant Garamond',serif",
-              fontSize:'clamp(17px,2vw,22px)', fontWeight:300, lineHeight:1.85,
-              color:'rgba(30,25,15,0.78)', margin:0, textAlign:'center',
-            }}>
-              Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
+              <p>Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
               Elle grandit quand vous prenez soin de vous.
               Elle vous rappelle, chaque jour, que vous méritez cette attention.
             </p>
@@ -524,10 +514,10 @@ function StepMetaphore({ onNext }) {
               Je choisis ma fleur →
             </button>
 
-          </div>
+          
         </div>
-
-      </div>
+</div>
+      
     </ModalShell>
   )
 }
