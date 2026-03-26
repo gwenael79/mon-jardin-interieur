@@ -468,20 +468,32 @@ function StepMetaphore({ onNext }) {
           </h2>
         </div>
 
-        {/* Image + overlay */}
-        <div style={{ 
+        {/* Image */}
+        <div style={{
   width:'100%',
-  height:'clamp(220px, 45vh, 420px)',   // 🔥 solution parfaite
+  height:'clamp(220px, 45vh, 420px)',
   position:'relative',
   overflow:'hidden'
 }}>
           <img
-            src="/miroir2.png"
-            alt="Votre reflet intérieur"
-            style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', display:'block' }}
-          />
+  src="/miroir2.png"
+  alt=""
+  style={{
+    width:'100%',
+    height:'100%',
+    objectFit:'cover',
+    objectPosition:'center'
+  }}
+/>
+          {/* Fondu sur les 4 bords */}
+          <div style={{
+            position:'absolute',
+            inset:0,
+            background:`linear-gradient(to bottom, #faf5f2 0%, transparent 18%, transparent 82%, #faf5f2 100%)`,
+            pointerEvents:'none'
+          }}/>
 </div>
-          
+        
 
              <div style={{
     fontFamily:"'Cormorant Garamond',serif",
@@ -489,7 +501,7 @@ function StepMetaphore({ onNext }) {
     fontWeight:300,
     lineHeight:1.7,
     textAlign:'center',
-    color:'rgba(30,25,15,0.78)',
+    color:'#000',
     margin:10,
     maxWidth:500
   }}>
