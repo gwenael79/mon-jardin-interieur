@@ -82,8 +82,8 @@ export default function InstallPrompt() {
         }
         .ip-card-mobile {
           width: 100%; max-width: 480px;
-          background: linear-gradient(160deg, #0f2212 0%, #0a1a0c 60%, #060d07 100%);
-          border: 1px solid rgba(150,212,133,0.18);
+          background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 60%, var(--bg3) 100%);
+          border: 1px solid rgba(var(--green-rgb), 0.18);
           border-bottom: none;
           border-radius: 28px 28px 0 0;
           padding: 10px 28px 40px;
@@ -97,13 +97,13 @@ export default function InstallPrompt() {
         .ip-card-desktop {
           position: fixed; bottom: 28px; right: 28px;
           width: 320px;
-          background: linear-gradient(160deg, #0f2212 0%, #0a1a0c 60%, #060d07 100%);
-          border: 1px solid rgba(150,212,133,0.22);
+          background: linear-gradient(160deg, var(--bg) 0%, var(--bg2) 60%, var(--bg3) 100%);
+          border: 1px solid rgba(var(--green-rgb), 0.22);
           border-radius: 20px;
           padding: 22px 22px 18px;
           font-family: 'Jost', sans-serif;
           z-index: 9990;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(150,212,133,0.08);
+          box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(var(--green-rgb), 0.08);
           animation: ipSlideIn .4s cubic-bezier(.22,1,.36,1) both;
         }
         .ip-card-desktop.out { animation: ipSlideOut .3s ease both; }
@@ -129,26 +129,26 @@ export default function InstallPrompt() {
         }
         .ip-desktop-logo {
           width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
-          border: 1px solid rgba(150,212,133,0.25);
+          border: 1px solid rgba(var(--green-rgb), 0.25);
           box-shadow: 0 4px 16px rgba(0,0,0,0.4);
         }
         .ip-desktop-title {
           font-family: 'Cormorant Garamond', serif;
           font-size: 17px; font-weight: 300; line-height: 1.2;
-          color: rgba(242,237,224,0.95);
+          color: rgba(var(--text-on-dark-rgb), 0.95);
         }
-        .ip-desktop-title em { font-style: italic; color: #96d485; }
+        .ip-desktop-title em { font-style: italic; color: var(--green); }
         .ip-desktop-close {
           position: absolute; top: 0; right: 0;
           background: none; border: none; cursor: pointer;
-          color: rgba(242,237,224,0.25); font-size: 16px; line-height: 1;
+          color: rgba(var(--text-on-dark-rgb), 0.25); font-size: 16px; line-height: 1;
           padding: 0; transition: color .2s;
         }
-        .ip-desktop-close:hover { color: rgba(242,237,224,0.6); }
+        .ip-desktop-close:hover { color: rgba(var(--text-on-dark-rgb), 0.6); }
 
         .ip-desktop-desc {
           font-size: 12px; font-weight: 300;
-          color: rgba(242,237,224,0.45); line-height: 1.6;
+          color: rgba(var(--text-on-dark-rgb), 0.45); line-height: 1.6;
           margin-bottom: 14px; font-style: italic;
           position: relative; z-index: 1;
         }
@@ -159,7 +159,7 @@ export default function InstallPrompt() {
         }
         .ip-desktop-feature {
           display: flex; align-items: center; gap: 8px;
-          font-size: 12px; color: rgba(242,237,224,0.65);
+          font-size: 12px; color: rgba(var(--text-on-dark-rgb), 0.65);
         }
         .ip-desktop-feature span:first-child { font-size: 14px; }
 
@@ -167,23 +167,23 @@ export default function InstallPrompt() {
         .ip-logo-wrap { display: flex; justify-content: center; margin-bottom: 18px; position: relative; z-index: 1; }
         .ip-logo {
           width: 68px; height: 68px; border-radius: 18px;
-          border: 1px solid rgba(150,212,133,0.25);
-          box-shadow: 0 0 0 6px rgba(150,212,133,0.05), 0 12px 40px rgba(0,0,0,0.4);
+          border: 1px solid rgba(var(--green-rgb), 0.25);
+          box-shadow: 0 0 0 6px rgba(var(--green-rgb), 0.05), 0 12px 40px rgba(0,0,0,0.4);
           animation: ipFloat 3.5s ease-in-out infinite;
         }
 
         .ip-title {
           font-family: 'Cormorant Garamond', serif;
           font-size: 26px; font-weight: 300; line-height: 1.2;
-          color: rgba(242,237,224,0.95);
+          color: rgba(var(--text-on-dark-rgb), 0.95);
           text-align: center; margin-bottom: 8px;
           position: relative; z-index: 1;
         }
-        .ip-title em { font-style: italic; color: #96d485; }
+        .ip-title em { font-style: italic; color: var(--green); }
 
         .ip-subtitle {
           font-size: 13px; font-weight: 300;
-          color: rgba(242,237,224,0.45);
+          color: rgba(var(--text-on-dark-rgb), 0.45);
           text-align: center; line-height: 1.7;
           margin-bottom: 22px; font-style: italic;
           position: relative; z-index: 1;
@@ -203,46 +203,46 @@ export default function InstallPrompt() {
         .ip-feature-icon {
           font-size: 18px; flex-shrink: 0;
           width: 34px; height: 34px; border-radius: 9px;
-          background: rgba(150,212,133,0.08);
-          border: 1px solid rgba(150,212,133,0.15);
+          background: rgba(var(--green-rgb), 0.08);
+          border: 1px solid rgba(var(--green-rgb), 0.15);
           display: flex; align-items: center; justify-content: center;
         }
-        .ip-feature-text { font-size: 12.5px; font-weight: 400; color: rgba(242,237,224,0.75); line-height: 1.4; }
-        .ip-feature-text strong { display: block; font-weight: 500; color: rgba(242,237,224,0.90); margin-bottom: 1px; }
+        .ip-feature-text { font-size: 12.5px; font-weight: 400; color: rgba(var(--text-on-dark-rgb), 0.75); line-height: 1.4; }
+        .ip-feature-text strong { display: block; font-weight: 500; color: rgba(var(--text-on-dark-rgb), 0.90); margin-bottom: 1px; }
 
         .ip-btn-install {
           width: 100%; padding: 15px;
           border: none; border-radius: 12px; cursor: pointer;
           font-family: 'Jost', sans-serif;
           font-size: 13px; font-weight: 500; letter-spacing: .06em;
-          color: #0a1a0c;
-          background: linear-gradient(270deg, #96d485, #b8e8a8, #96d485);
+          color: var(--bg2);
+          background: linear-gradient(270deg, var(--green), color-mix(in srgb, var(--green) 75%, white), var(--green));
           background-size: 200% auto;
           animation: ipShimmer 3s linear infinite;
-          box-shadow: 0 8px 28px rgba(150,212,133,0.22);
+          box-shadow: 0 8px 28px rgba(var(--green-rgb), 0.22);
           transition: transform .2s, box-shadow .2s;
           margin-bottom: 8px;
           position: relative; z-index: 1;
         }
-        .ip-btn-install:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(150,212,133,0.32); }
+        .ip-btn-install:hover { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(var(--green-rgb), 0.32); }
 
         .ip-btn-later {
           width: 100%; padding: 11px;
           border: none; background: transparent; cursor: pointer;
           font-family: 'Jost', sans-serif;
           font-size: 11px; font-weight: 300; letter-spacing: .04em;
-          color: rgba(242,237,224,0.25); transition: color .2s;
+          color: rgba(var(--text-on-dark-rgb), 0.25); transition: color .2s;
           position: relative; z-index: 1;
         }
-        .ip-btn-later:hover { color: rgba(242,237,224,0.50); }
+        .ip-btn-later:hover { color: rgba(var(--text-on-dark-rgb), 0.50); }
 
         /* iOS guide */
         .ip-ios-guide { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; margin-bottom: 18px; position: relative; z-index: 1; }
         .ip-ios-step { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .ip-ios-step:last-child { border-bottom: none; padding-bottom: 0; }
-        .ip-ios-num { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; background: rgba(150,212,133,0.15); border: 1px solid rgba(150,212,133,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #96d485; margin-top: 1px; }
-        .ip-ios-text { font-size: 12px; color: rgba(242,237,224,0.65); line-height: 1.5; }
-        .ip-ios-text strong { color: rgba(242,237,224,0.90); }
+        .ip-ios-num { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; background: rgba(var(--green-rgb), 0.15); border: 1px solid rgba(var(--green-rgb), 0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--green); margin-top: 1px; }
+        .ip-ios-text { font-size: 12px; color: rgba(var(--text-on-dark-rgb), 0.65); line-height: 1.5; }
+        .ip-ios-text strong { color: rgba(var(--text-on-dark-rgb), 0.90); }
       `}</style>
 
       {isMobile ? (
