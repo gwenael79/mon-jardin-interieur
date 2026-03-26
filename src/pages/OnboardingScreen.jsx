@@ -448,7 +448,7 @@ function StepMetaphore({ onNext }) {
   const [showOverlay, setShowOverlay] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setShowOverlay(true), 3000)
+    const t = setTimeout(() => setShowOverlay(true), 5000)
     return () => clearTimeout(t)
   }, [])
 
