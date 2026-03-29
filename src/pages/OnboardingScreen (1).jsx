@@ -30,7 +30,12 @@ export const ONBOARDING_SLIDES = [
   {
     id: 'ritualisation', tag: 'La science',
     title: 'Pourquoi la\nritualisation fonctionne',
-    body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin, il libère de la dopamine avant même que vous commenciez. Progressivement, le cortisol diminue en quelques semaines, la neuroplasticité s’active , le cerveau se reconfigure positivement et un effet cumulatif s’installe : chaque jour renforce votre stabilité et votre résilience.',
+    body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin — il libère de la dopamine avant même que vous commenciez.',
+    points: [
+      'Réduit le cortisol en 3 à 4 semaines',
+      'Renforce la neuroplasticité : le cerveau se reconfigure positivement',
+      'Effet cumulatif : chaque jour ajoute une couche de résilience',
+    ],
     color: '#7aaa88', visual: 'brain',
   },
   {
@@ -338,7 +343,6 @@ function ModalShell({ children, onClick, wide = false }) {
   const isMobile = window.innerWidth < 768
   return (
     <div style={{ position:'fixed', inset:0, zIndex:9999, fontFamily:"'Jost',sans-serif" }}>
-      <style>{ANIM_STEPS}</style>
       {!isMobile && <NatureBg />}
       <div onClick={onClick} style={{
         position:'absolute', inset:0, zIndex:1,
@@ -385,7 +389,7 @@ function StepIntention({ onSelect }) {
         </div>
 
         <div className="s1" style={{ textAlign:'center', marginBottom:32 }}>
-          <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(20px,3.5vw,28px)', fontWeight:300, lineHeight:1.2, color:'var(--text)', marginBottom:8 }}>
+          <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,4.5vw,38px)', fontWeight:300, lineHeight:1.2, color:'var(--text)', marginBottom:10 }}>
             Qu'est-ce qui vous<br/>
             <em style={{ color:'var(--gold-warm)', fontStyle:'italic' }}>amène ici aujourd'hui ?</em>
           </h1>
@@ -451,17 +455,22 @@ function StepIntention({ onSelect }) {
 //  ÉTAPE MÉTAPHORE — pont entre l'intention et la fleur
 // ─────────────────────────────────────────────────────────────────────────────
 function StepMetaphore({ onNext }) {
-  const isMobile = window.innerWidth < 768
+  const [showOverlay, setShowOverlay] = useState(false)
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowOverlay(true), 5000)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
     <ModalShell>
       <div style={{ display:'flex', flexDirection:'column', width:'100%', height:'100%' }}>
 
         {/* Titre */}
-        <div className="s0" style={{ padding: isMobile ? '18px 20px 10px' : '24px 32px 16px', textAlign:'center', flexShrink:0 }}>
+        <div className="s0" style={{ padding:'24px 32px 16px', textAlign:'center', flexShrink:0 }}>
           <h2 style={{
             fontFamily:"'Cormorant Garamond',serif",
-            fontSize:'clamp(22px,3vw,36px)',
+            fontSize:'clamp(22px,3.5vw,30px)',
             fontWeight:300, lineHeight:1.2,
             color:'rgba(30,25,15,0.92)', margin:0,
           }}>
@@ -470,56 +479,52 @@ function StepMetaphore({ onNext }) {
           </h2>
         </div>
 
-        {/* Image */}
-        <div style={{
-          width:'100%',
-          height:'clamp(220px, 45vh, 420px)',
-          position:'relative',
-          overflow:'hidden',
-          flexShrink:0,
-        }}>
+        {/* Image + overlay */}
+        <div style={{ flex:1, position:'relative', overflow:'hidden', minHeight:0 }}>
           <img
-            src="/miroir2.png"
-            alt=""
-            style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center' }}
+            src="/fleurs.png"
+            alt="Votre reflet intérieur"
+            style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', display:'block' }}
           />
-          {/* Fondu haut et bas */}
+
+          {/* Overlay après 3s */}
           <div style={{
             position:'absolute', inset:0,
-            background:'linear-gradient(to bottom, #faf5f2 0%, transparent 18%, transparent 82%, #faf5f2 100%)',
-            pointerEvents:'none',
-          }}/>
-        </div>
+            background:'rgba(255,252,248,0.84)',
+            backdropFilter:'blur(2px)',
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            padding:'28px 36px', gap:24,
+            opacity: showOverlay ? 1 : 0,
+            transform: showOverlay ? 'none' : 'translateY(10px)',
+            transition:'opacity .8s ease, transform .8s ease',
+          }}>
 
-        {/* Texte + bouton */}
-        <div style={{
-          fontFamily:"'Cormorant Garamond',serif",
-          fontSize: isMobile ? 'clamp(15px, 4vw, 18px)' : 'clamp(16px, 2.5vw, 20px)',
-          fontWeight:300, lineHeight:1.7,
-          textAlign:'center', color:'#000',
-          padding: isMobile ? '0 20px' : '0 32px',
-          margin: isMobile ? '8px 0 20px' : '10px 0 28px',
-          maxWidth:500, alignSelf:'center',
-        }}>
-          <p style={{ margin: isMobile ? '0 0 16px' : '0 0 20px' }}>
-            Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
-            Elle grandit quand vous prenez soin de vous.
-            Elle vous rappelle, chaque jour, que vous méritez cette attention.
-          </p>
-          <button onClick={onNext} style={{
-            padding: isMobile ? '13px 32px' : '15px 40px', borderRadius:50, border:'none',
-            background:'linear-gradient(135deg, #c8a0b0, #a07888)',
-            color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
-            letterSpacing:'.08em', cursor:'pointer',
-            fontFamily:"'Jost',sans-serif",
-            boxShadow:'0 6px 22px rgba(160,120,136,0.40)',
-            transition:'all .28s ease', whiteSpace:'nowrap',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,120,136,0.48)' }}
-            onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 22px rgba(160,120,136,0.40)' }}
-          >
-            Je choisis ma fleur →
-          </button>
+            <p style={{
+              fontFamily:"'Cormorant Garamond',serif",
+              fontSize:'clamp(17px,2vw,22px)', fontWeight:300, lineHeight:1.85,
+              color:'rgba(30,25,15,0.78)', margin:0, textAlign:'center',
+            }}>
+              Dans Mon Jardin Intérieur, une fleur devient le reflet de votre état émotionnel.
+              Elle grandit quand vous prenez soin de vous.
+              Elle vous rappelle, chaque jour, que vous méritez cette attention.
+            </p>
+
+            <button onClick={onNext} style={{
+              padding:'15px 40px', borderRadius:50, border:'none',
+              background:'linear-gradient(135deg, #c8a0b0, #a07888)',
+              color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
+              letterSpacing:'.08em', cursor:'pointer',
+              fontFamily:"'Jost',sans-serif",
+              boxShadow:'0 6px 22px rgba(160,120,136,0.40)',
+              transition:'all .28s ease', whiteSpace:'nowrap',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,120,136,0.48)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 22px rgba(160,120,136,0.40)' }}
+            >
+              Je choisis ma fleur →
+            </button>
+
+          </div>
         </div>
 
       </div>
@@ -548,7 +553,7 @@ function StepGraine({ intention, onPlant }) {
         <div className="s1" style={{ width:88, height:88, borderRadius:'50%', background:`radial-gradient(circle at 38% 38%, ${color.hex2}, ${color.hex})`, boxShadow:`0 0 40px ${color.hex}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:40, animation:'fleurFloat 4s ease-in-out infinite', transition:'all .4s ease' }}>🌸</div>
 
         <div className="s2">
-          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,3vw,26px)', fontWeight:300, lineHeight:1.2, color:'var(--text)', marginBottom:5 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(22px,3.8vw,32px)', fontWeight:300, lineHeight:1.25, color:'var(--text)', marginBottom:7 }}>
             Choisissez la couleur<br/>
             <em style={{ color: color.hex, fontStyle:'italic', transition:'color .4s' }}>de votre première fleur</em>
           </h2>
@@ -618,6 +623,8 @@ function StepCommunaute({ onComplete }) {
       .catch(() => setCount(null))
   }, [])
 
+  const n    = count !== null ? count : '…'
+  const verb = count === 1 ? 'cultive' : 'cultivent'
 
   return (
     <ModalShell onClick={null}>
@@ -681,7 +688,7 @@ function StepCommunaute({ onComplete }) {
         </div>
 
         <div className="s2">
-          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,4vw,26px)', fontWeight:300, lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(24px,4.5vw,36px)', fontWeight:300, lineHeight:1.4, color:'var(--text)', marginBottom:14 }}>
             En ce moment,<br/>
             <span style={{ color:'var(--green)', fontWeight:400 }}>
               {count !== null ? count : '…'} {count !== null ? (count === 1 ? 'personne cultive' : 'personnes cultivent') : ''}
@@ -747,162 +754,215 @@ function SlidesEducatives({ onComplete }) {
   }
 
   const inner = (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden', fontFamily:"'Jost',sans-serif" }}>
+    <div style={{ display:'flex', flexDirection:'column', minHeight:0, flex:1, fontFamily:"'Jost',sans-serif" }}>
       <style>{ONB_STYLES}</style>
 
-      {/* Image hero pleine largeur — occupe ~38% de la hauteur */}
+      {/* Image champ — en-tête visuel */}
+      <div style={{ height: isMobile ? 180 : 200, flexShrink:0, position:'relative', overflow:'hidden',
+        borderRadius: isMobile ? 0 : '24px 24px 0 0' }}>
+        <img src="/champs.png" alt="" style={{
+          width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%',
+          display:'block', transition:'opacity .4s ease',
+        }}/>
+        {/* Dégradé bas pour fondre vers le contenu */}
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:60,
+          background:'linear-gradient(transparent, #faf5f2)' }}/>
+      </div>
+
+      {/* Barre progression */}
+      <div style={{ display:'flex', gap:3, flexShrink:0 }}>
+        {ONBOARDING_SLIDES.map((s,i) => (
+          <div key={s.id} style={{
+            flex:1, height:3,
+            background: i < step ? c : i === step ? c+'88' : 'rgba(0,0,0,0.10)',
+            transition:'background .4s ease',
+          }}>
+            {i === step && <div style={{ height:'100%', background:c, animation:'progressBar .3s ease both' }}/>}
+          </div>
+        ))}
+      </div>
+
+      {/* Corps — scrollable */}
       <div style={{
-        flexShrink:0, height: isMobile ? '36%' : '40%', position:'relative', overflow:'hidden',
+        flex:1, minHeight:0, overflowY:'auto',
+        padding: isMobile ? '32px 24px 0' : '40px 52px 0',
         opacity: leaving ? 0 : 1,
-        transition:'opacity .28s ease',
+        transform: leaving ? 'translateY(-10px)' : 'none',
+        transition:'opacity .28s ease, transform .28s ease',
+        scrollbarWidth:'thin',
+        scrollbarColor:'rgba(0,0,0,0.15) transparent',
       }}>
-        <img
-          src="/champs.png"
-          alt=""
-          style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 30%', display:'block' }}
-        />
-        {/* Dégradé bas pour fondu avec le fond */}
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 50%, #faf5f2 100%)' }}/>
-
-        {/* Barre progression en overlay haut */}
-        <div style={{ position:'absolute', top:0, left:0, right:0, display:'flex', gap:3 }}>
-          {ONBOARDING_SLIDES.map((s,i) => (
-            <div key={s.id} style={{
-              flex:1, height:3,
-              background: i < step ? c : i === step ? c+'88' : 'rgba(255,255,255,0.35)',
-              transition:'background .4s ease',
-            }}>
-              {i === step && <div style={{ height:'100%', background:c, animation:'progressBar .3s ease both' }}/>}
-            </div>
-          ))}
-        </div>
-
-        {/* Tag + numéro en overlay bas */}
-        <div style={{ position:'absolute', bottom:12, left:16, right:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+        {/* Pastille tag + numéro */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24 }}>
           <span style={{
-            fontSize:'var(--fs-h5,11px)', letterSpacing:'.14em', textTransform:'uppercase',
-            color:c, fontWeight:600, padding:'4px 12px', borderRadius:100,
-            background:'rgba(255,255,255,0.82)', border:`1px solid ${c}40`,
-            backdropFilter:'blur(6px)',
+            fontSize:'var(--fs-h5,11px)', letterSpacing:'.16em', textTransform:'uppercase',
+            color:c, fontWeight:600, padding:'5px 14px', borderRadius:100,
+            background:`${c}15`, border:`1px solid ${c}28`,
           }}>{slide.tag}</span>
-          <span style={{ fontSize:'var(--fs-h5,11px)', color:'rgba(60,50,40,0.55)', letterSpacing:'.08em', background:'rgba(255,255,255,0.70)', padding:'3px 10px', borderRadius:100, backdropFilter:'blur(4px)' }}>
+          <span style={{ fontSize:'var(--fs-h5,11px)', color:'var(--text3)', letterSpacing:'.08em' }}>
             {String(step+1).padStart(2,'0')} / {String(ONBOARDING_SLIDES.length).padStart(2,'0')}
           </span>
         </div>
-      </div>
 
-      {/* Zone texte + bouton — flex colonne, no overflow */}
-      <div style={{
-        flex:1, minHeight:0, display:'flex', flexDirection:'column',
-        padding: isMobile ? '16px 24px 0' : '20px 40px 0',
-        opacity: leaving ? 0 : 1,
-        transform: leaving ? 'translateY(-8px)' : 'none',
-        transition:'opacity .28s ease, transform .28s ease',
-      }}>
+        {/* Icône SVG */}
+        <div style={{ marginBottom:20, lineHeight:1, animation:'onbFloat 4s ease-in-out infinite', display:'inline-block' }}>
+          
+        </div>
 
-        {/* Titre — grand */}
+        {/* Titre */}
         <h2 style={{
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
-          fontWeight:300, lineHeight:1.1,
-          color:'var(--text)', marginBottom: isMobile ? 8 : 12,
+          fontSize: isMobile ? 'clamp(28px,7vw,38px)' : 'clamp(32px,3vw,46px)',
+          fontWeight:300, lineHeight:1.15,
+          color:'var(--text)', marginBottom:28,
           whiteSpace:'pre-line', letterSpacing:'-0.01em',
-          flexShrink:0,
         }}>{slide.title}</h2>
 
         {/* Contenu selon type */}
 
-        {/* ── Contenu compacté selon type ── */}
-        <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'flex-start', overflowY:'auto', WebkitOverflowScrolling:'touch', gap: isMobile ? 8 : 10, paddingBottom: isMobile ? 12 : 16 }}>
+        {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
+          <div>
+            <p style={{ fontSize:'var(--fs-h3,16px)', fontWeight:300, color:'var(--text2)', lineHeight:1.9, marginBottom:20 }}>
+              {slide.body}
+            </p>
+            {slide.highlight && (
+              <div style={{ padding:'16px 20px', borderRadius:14, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,14px)', fontWeight:500, color:c, lineHeight:1.6 }}>
+                 {slide.highlight}
+              </div>
+            )}
+          </div>
+        )}
 
-          {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
-            <>
-              <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:0 }}>
-                {slide.body}
-              </p>
-              {slide.highlight && (
-                <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
-                   {slide.highlight}
-                </div>
-              )}
-            </>
-          )}
-
-          {slide.bullets && (
-            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-              {slide.bullets.map((b,i) => (
-                <div key={i} style={{
-                  display:'flex', gap:0, alignItems:'stretch',
-                  borderRadius:12, overflow:'hidden',
-                  background:'rgba(255,255,255,0.65)',
-                  border:'1px solid rgba(0,0,0,0.09)',
-                  boxShadow:'0 2px 6px rgba(0,0,0,0.04)',
-                  animation:`onbIn .4s ease ${i*.12+.1}s both`,
+        {/* ── BULLETS (slide 2 — freins) ── */}
+        {slide.bullets && (
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {slide.bullets.map((b,i) => (
+              <div key={i} style={{
+                display:'flex', gap:0, alignItems:'stretch',
+                borderRadius:14, overflow:'hidden',
+                background:'rgba(255,255,255,0.65)',
+                border:'1px solid rgba(0,0,0,0.09)',
+                boxShadow:'0 2px 8px rgba(0,0,0,0.05)',
+                animation:`onbIn .4s ease ${i*.12+.1}s both`,
+              }}>
+                {/* Accent gauche coloré */}
+                <div style={{ width:4, flexShrink:0, background:c }}/>
+                {/* Icône */}
+                <div style={{
+                  width:48, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:20,
+                  background:`${c}12`,
+                  borderRight:'1px solid rgba(0,0,0,0.06)',
                 }}>
-                  <div style={{ width:4, flexShrink:0, background:c }}/>
-                  <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
-                  <div style={{ padding:'9px 12px', flex:1 }}>
-                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
-                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.45 }}>{b.desc}</div>
-                  </div>
+                  {b.icon}
+                </div>
+                {/* Texte */}
+                <div style={{ padding:'11px 14px', flex:1 }}>
+                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:3 }}>{b.label}</div>
+                  <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.55 }}>{b.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── POINTS (slide 3 — science) ── */}
+        {slide.points && (
+          <div>
+            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:0, borderRadius:16, overflow:'hidden', border:'1px solid rgba(0,0,0,0.09)', background:'rgba(255,255,255,0.55)' }}>
+              {slide.points.map((p,i) => (
+                <div key={i} style={{
+                  display:'flex', gap:14, alignItems:'center',
+                  padding:'14px 18px',
+                  borderBottom: i < slide.points.length-1 ? '1px solid rgba(0,0,0,0.07)' : 'none',
+                  animation:`onbIn .4s ease ${i*.1+.15}s both`,
+                }}>
+                  <div style={{
+                    width:28, height:28, borderRadius:'50%', flexShrink:0,
+                    background:`${c}18`, border:`1.5px solid ${c}50`,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:11, fontWeight:700, color:c,
+                  }}>{i+1}</div>
+                  <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.80)', lineHeight:1.6 }}>{p}</span>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {slide.points && (
-            <>
-              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
-              <div style={{ display:'flex', flexDirection:'column', gap:0, borderRadius:14, overflow:'hidden', border:'1px solid rgba(0,0,0,0.09)', background:'rgba(255,255,255,0.55)' }}>
-                {slide.points.map((p,i) => (
-                  <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'11px 14px', borderBottom: i < slide.points.length-1 ? '1px solid rgba(0,0,0,0.07)' : 'none', animation:`onbIn .4s ease ${i*.1+.15}s both` }}>
-                    <div style={{ width:24, height:24, borderRadius:'50%', flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}50`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:c }}>{i+1}</div>
-                    <span style={{ fontSize:'var(--fs-h4,12px)', fontWeight:400, color:'rgba(30,25,15,0.80)', lineHeight:1.5 }}>{p}</span>
-                  </div>
-                ))}
+        {/* ── TIMELINE (slide 4 — bénéfices) ── */}
+        {slide.timeline && (
+          <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+            {slide.timeline.map((t,i) => (
+              <div key={i} style={{
+                display:'flex', gap:0, alignItems:'stretch',
+                animation:`onbIn .4s ease ${i*.14+.1}s both`,
+              }}>
+                {/* Colonne gauche — dot + trait */}
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:32, flexShrink:0, paddingTop:4 }}>
+                  <div style={{
+                    width:14, height:14, borderRadius:'50%', flexShrink:0,
+                    background:c, border:`3px solid ${c}30`,
+                    boxShadow:`0 0 0 3px ${c}15`,
+                  }}/>
+                  {i < slide.timeline.length-1 && (
+                    <div style={{ width:2, flex:1, minHeight:28, background:`linear-gradient(${c}60, ${c}18)`, margin:'4px 0' }}/>
+                  )}
+                </div>
+                {/* Contenu */}
+                <div style={{
+                  flex:1, paddingLeft:16, paddingBottom: i < slide.timeline.length-1 ? 24 : 0,
+                }}>
+                  <div style={{
+                    display:'inline-block',
+                    fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c,
+                    letterSpacing:'.10em', marginBottom:6, textTransform:'uppercase',
+                    padding:'3px 10px', borderRadius:50,
+                    background:`${c}12`, border:`1px solid ${c}30`,
+                  }}>{t.period}</div>
+                  <div style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.70)', lineHeight:1.75 }}>{t.desc}</div>
+                </div>
               </div>
-            </>
-          )}
+            ))}
+          </div>
+        )}
 
-          {slide.timeline && (
-            <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
-              {slide.timeline.map((t,i) => (
-                <div key={i} style={{ display:'flex', gap:0, alignItems:'stretch', animation:`onbIn .4s ease ${i*.14+.1}s both` }}>
-                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:28, flexShrink:0, paddingTop:4 }}>
-                    <div style={{ width:12, height:12, borderRadius:'50%', flexShrink:0, background:c, border:`3px solid ${c}30` }}/>
-                    {i < slide.timeline.length-1 && <div style={{ width:2, flex:1, minHeight:20, background:`linear-gradient(${c}60, ${c}18)`, margin:'3px 0' }}/>}
-                  </div>
-                  <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
-                    <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
-                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.70)', lineHeight:1.6 }}>{t.desc}</div>
-                  </div>
+        {/* ── FEATURES (slide 5 — promesse) ── */}
+        {slide.features && (
+          <div>
+            <p style={{ fontSize:'var(--fs-h3,15px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.9, marginBottom:20 }}>{slide.body}</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {slide.features.map((f,i) => (
+                <div key={i} style={{
+                  display:'flex', gap:14, alignItems:'center',
+                  padding:'14px 18px', borderRadius:14,
+                  background:'rgba(255,255,255,0.65)',
+                  border:'1px solid rgba(0,0,0,0.08)',
+                  boxShadow:'0 2px 8px rgba(0,0,0,0.04)',
+                  animation:`onbIn .4s ease ${i*.1+.1}s both`,
+                }}>
+                  <div style={{
+                    width:42, height:42, borderRadius:12, flexShrink:0,
+                    background:`${c}18`, border:`1.5px solid ${c}35`,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    fontSize:20,
+                  }}>{f.icon}</div>
+                  <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.5 }}>{f.text}</span>
                 </div>
               ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {slide.features && (
-            <>
-              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
-              <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-                {slide.features.map((f,i) => (
-                  <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
-                    <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
-                    <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.4 }}>{f.text}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
+        <div style={{ height:32 }}/>
       </div>
 
-      {/* Navigation — fixée en bas, compacte */}
-      <div style={{ padding: isMobile ? '10px 24px 20px' : '12px 40px 20px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+      {/* Navigation — fixée en bas */}
+      <div style={{ padding: isMobile ? '12px 20px 28px' : '14px 48px 24px', display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
         {step > 0 && (
           <button onClick={prev} style={{
-            width:44, height:44, borderRadius:50, flexShrink:0,
+            width:46, height:46, borderRadius:50, flexShrink:0,
             border:'2px solid rgba(0,0,0,0.14)', background:'transparent',
             color:'rgba(0,0,0,0.45)', fontSize:18, cursor:'pointer',
             fontFamily:"'Jost',sans-serif",
@@ -914,7 +974,7 @@ function SlidesEducatives({ onComplete }) {
           >←</button>
         )}
         <button onClick={next} style={{
-          flex:1, padding:'14px 28px', borderRadius:50,
+          flex:1, padding:'15px 28px', borderRadius:50,
           border:'none',
           background: isLast
             ? 'linear-gradient(135deg, #c8a0b0, #a07888)'
@@ -924,14 +984,14 @@ function SlidesEducatives({ onComplete }) {
           letterSpacing:'.08em',
           cursor:'pointer', fontFamily:"'Jost',sans-serif",
           boxShadow: isLast
-            ? '0 6px 22px rgba(160,120,136,0.40)'
+            ? '0 6px 22px rgba(160,120,136,0.40), 0 2px 6px rgba(160,120,136,0.20)'
             : '0 4px 16px rgba(122,152,112,0.38)',
           transition:'all .25s ease',
         }}
           onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.opacity='.9' }}
           onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.opacity='1' }}
         >
-          {isLast ? '🌸 Et vous ?' : 'Continuer →'}
+          {isLast ? '  Et vous ?' : 'Continuer →'}
         </button>
       </div>
     </div>
@@ -951,7 +1011,7 @@ function SlidesEducatives({ onComplete }) {
       <div style={{ position:'absolute', inset:0, zIndex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
         <div style={{
           width:'min(640px, 96vw)',
-          height:'min(680px, 88vh)',
+          height:'min(760px, 92vh)',
           borderRadius:24, background:'#faf5f2',
           boxShadow:'0 24px 70px rgba(180,120,110,0.20), 0 0 0 1px rgba(200,160,150,0.15)',
           display:'flex', flexDirection:'column', overflow:'hidden',
@@ -963,13 +1023,13 @@ function SlidesEducatives({ onComplete }) {
     </div>
   )
 }
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  ÉTAPE ÉQUIPE — crédibilité professionnelle, ton chaleureux
 // ─────────────────────────────────────────────────────────────────────────────
 const EQUIPE = [
   {
     initiales: 'SL',
-    photo:      null, // ex: '/equipe/sophie.jpg'
     nom:        'Sophie L.',
     role:       'Psychologue clinicienne',
     detail:     '12 ans d\'accompagnement individuel. Spécialiste du stress chronique.',
@@ -977,7 +1037,6 @@ const EQUIPE = [
   },
   {
     initiales: 'MR',
-    photo:      null, // ex: '/equipe/marc.jpg'
     nom:        'Marc R.',
     role:       'Thérapeute corps-esprit',
     detail:     'Formé en pleine conscience et cohérence cardiaque. Praticien certifié.',
@@ -985,7 +1044,6 @@ const EQUIPE = [
   },
   {
     initiales: 'CJ',
-    photo:      null, // ex: '/equipe/claire.jpg'
     nom:        'Claire J.',
     role:       'Coach en régulation émotionnelle',
     detail:     'Accompagne les hypersensibles depuis 8 ans. Auteure de deux guides pratiques.',
@@ -994,11 +1052,10 @@ const EQUIPE = [
 ]
 
 function StepEquipe({ onNext }) {
-  const isMobile = window.innerWidth < 768
   return (
     <ModalShell>
-      <div style={{ padding: isMobile ? '24px 20px' : '40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'flex-start' : 'flex-start', overflowY:'auto', WebkitOverflowScrolling:'touch' }}>
-        <div style={{ maxWidth:400, width:'100%', display:'flex', flexDirection:'column', gap: isMobile ? 16 : 28 }}>
+      <div style={{ padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center' }}>
+        <div style={{ maxWidth:400, width:'100%', display:'flex', flexDirection:'column', gap:28 }}>
 
           {/* En-tête */}
           <div className="s0" style={{ textAlign:'center' }}>
@@ -1016,28 +1073,25 @@ function StepEquipe({ onNext }) {
           </div>
 
           {/* Cartes équipe */}
-          <div className="s1" style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
+          <div className="s1" style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {EQUIPE.map((p, i) => (
               <div key={i} style={{
                 display:'flex', gap:14, alignItems:'center',
-                padding: isMobile ? '10px 14px' : '14px 18px', borderRadius:16,
+                padding:'14px 18px', borderRadius:16,
                 background:'rgba(255,255,255,0.60)',
                 border:'1px solid rgba(0,0,0,0.08)',
                 boxShadow:'0 2px 10px rgba(0,0,0,0.05)',
                 animation:`stepIn .45s cubic-bezier(.22,1,.36,1) ${i*0.12}s both`,
               }}>
-                {/* Avatar photo ou initiales */}
+                {/* Avatar initiales */}
                 <div style={{
                   width:46, height:46, borderRadius:'50%', flexShrink:0,
                   background:`radial-gradient(circle at 38% 38%, ${p.color}88, ${p.color})`,
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  overflow:'hidden',
-                  boxShadow:`0 0 0 2px ${p.color}55`,
+                  fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600,
+                  color:'rgba(255,255,255,0.92)', letterSpacing:'.04em',
                 }}>
-                  {p.photo
-                    ? <img src={p.photo} alt={p.nom} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-                    : <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.92)', letterSpacing:'.04em' }}>{p.initiales}</span>
-                  }
+                  {p.initiales}
                 </div>
                 {/* Texte */}
                 <div style={{ flex:1, minWidth:0 }}>
@@ -1057,15 +1111,15 @@ function StepEquipe({ onNext }) {
           <div className="s2" style={{ textAlign:'center' }}>
             <p style={{
               fontFamily:"'Cormorant Garamond',serif",
-              fontSize:'clamp(14px,2vw,17px)', fontWeight:300, lineHeight:1.7,
-              color:'rgba(30,25,15,0.58)', margin: isMobile ? '0 0 14px' : '0 0 24px',
+              fontSize:'clamp(15px,2vw,18px)', fontWeight:300, lineHeight:1.7,
+              color:'rgba(30,25,15,0.58)', margin:'0 0 24px',
               fontStyle:'italic',
             }}>
               Chaque exercice a été pensé pour être court,<br/>
               doux, et réellement utile.
             </p>
             <button onClick={onNext} style={{
-              width:'100%', padding: isMobile ? '13px 20px' : '16px 28px', borderRadius:50,
+              width:'100%', padding:'16px 28px', borderRadius:50,
               border:'none',
               background:'linear-gradient(135deg, #c8a0b0, #a07888)',
               color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
@@ -1092,8 +1146,8 @@ function StepEquipe({ onNext }) {
 //  Flow : 5 slides éducatives → intention → graine → communauté
 // ─────────────────────────────────────────────────────────────────────────────
 export function OnboardingScreen({ userId, onComplete }) {
-  useTheme() // applique les CSS vars du thème dès l'onboarding
-  // phase 0=slides 1=intention 2=metaphore 3=graine 4=communauté
+  useTheme()
+  // phase 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe
   const [phase,     setPhase]     = useState(0)
   const [intention, setIntention] = useState(null)
 

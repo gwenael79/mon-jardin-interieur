@@ -963,129 +963,6 @@ function SlidesEducatives({ onComplete }) {
     </div>
   )
 }
-// ─────────────────────────────────────────────────────────────────────────────
-//  ÉTAPE ÉQUIPE — crédibilité professionnelle, ton chaleureux
-// ─────────────────────────────────────────────────────────────────────────────
-const EQUIPE = [
-  {
-    initiales: 'SL',
-    photo:      null, // ex: '/equipe/sophie.jpg'
-    nom:        'Sophie L.',
-    role:       'Psychologue clinicienne',
-    detail:     '12 ans d\'accompagnement individuel. Spécialiste du stress chronique.',
-    color:      '#d4a0b0',
-  },
-  {
-    initiales: 'MR',
-    photo:      null, // ex: '/equipe/marc.jpg'
-    nom:        'Marc R.',
-    role:       'Thérapeute corps-esprit',
-    detail:     'Formé en pleine conscience et cohérence cardiaque. Praticien certifié.',
-    color:      '#7aaa88',
-  },
-  {
-    initiales: 'CJ',
-    photo:      null, // ex: '/equipe/claire.jpg'
-    nom:        'Claire J.',
-    role:       'Coach en régulation émotionnelle',
-    detail:     'Accompagne les hypersensibles depuis 8 ans. Auteure de deux guides pratiques.',
-    color:      '#9ab8c8',
-  },
-]
-
-function StepEquipe({ onNext }) {
-  const isMobile = window.innerWidth < 768
-  return (
-    <ModalShell>
-      <div style={{ padding: isMobile ? '24px 20px' : '40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'flex-start' : 'flex-start', overflowY:'auto', WebkitOverflowScrolling:'touch' }}>
-        <div style={{ maxWidth:400, width:'100%', display:'flex', flexDirection:'column', gap: isMobile ? 16 : 28 }}>
-
-          {/* En-tête */}
-          <div className="s0" style={{ textAlign:'center' }}>
-            <p style={{
-              fontFamily:"'Cormorant Garamond',serif",
-              fontSize:'clamp(20px,3vw,26px)', fontWeight:300, lineHeight:1.4,
-              color:'rgba(30,25,15,0.88)', margin:0,
-            }}>
-              Vous n'êtes pas seul·e<br/>
-              <em style={{ color:'#c07878', fontStyle:'italic' }}>dans ce jardin.</em>
-            </p>
-            <p style={{ fontSize:'var(--fs-h5,12px)', color:'rgba(30,25,15,0.45)', marginTop:10, fontStyle:'italic' }}>
-              Une équipe de professionnels a conçu chaque rituel proposé ici.
-            </p>
-          </div>
-
-          {/* Cartes équipe */}
-          <div className="s1" style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
-            {EQUIPE.map((p, i) => (
-              <div key={i} style={{
-                display:'flex', gap:14, alignItems:'center',
-                padding: isMobile ? '10px 14px' : '14px 18px', borderRadius:16,
-                background:'rgba(255,255,255,0.60)',
-                border:'1px solid rgba(0,0,0,0.08)',
-                boxShadow:'0 2px 10px rgba(0,0,0,0.05)',
-                animation:`stepIn .45s cubic-bezier(.22,1,.36,1) ${i*0.12}s both`,
-              }}>
-                {/* Avatar photo ou initiales */}
-                <div style={{
-                  width:46, height:46, borderRadius:'50%', flexShrink:0,
-                  background:`radial-gradient(circle at 38% 38%, ${p.color}88, ${p.color})`,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  overflow:'hidden',
-                  boxShadow:`0 0 0 2px ${p.color}55`,
-                }}>
-                  {p.photo
-                    ? <img src={p.photo} alt={p.nom} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-                    : <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.92)', letterSpacing:'.04em' }}>{p.initiales}</span>
-                  }
-                </div>
-                {/* Texte */}
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap' }}>
-                    <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight:600, color:'rgba(30,25,15,0.88)' }}>{p.nom}</span>
-                    <span style={{ fontSize:'var(--fs-h5,11px)', color:p.color, fontWeight:500 }}>{p.role}</span>
-                  </div>
-                  <p style={{ fontSize:'var(--fs-h5,11px)', color:'rgba(30,25,15,0.52)', margin:'3px 0 0', lineHeight:1.5, fontStyle:'italic' }}>
-                    {p.detail}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Note de bas */}
-          <div className="s2" style={{ textAlign:'center' }}>
-            <p style={{
-              fontFamily:"'Cormorant Garamond',serif",
-              fontSize:'clamp(14px,2vw,17px)', fontWeight:300, lineHeight:1.7,
-              color:'rgba(30,25,15,0.58)', margin: isMobile ? '0 0 14px' : '0 0 24px',
-              fontStyle:'italic',
-            }}>
-              Chaque exercice a été pensé pour être court,<br/>
-              doux, et réellement utile.
-            </p>
-            <button onClick={onNext} style={{
-              width:'100%', padding: isMobile ? '13px 20px' : '16px 28px', borderRadius:50,
-              border:'none',
-              background:'linear-gradient(135deg, #c8a0b0, #a07888)',
-              color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
-              letterSpacing:'.08em', cursor:'pointer',
-              fontFamily:"'Jost',sans-serif",
-              boxShadow:'0 6px 22px rgba(160,120,136,0.38)',
-              transition:'all .28s ease',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,120,136,0.46)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 22px rgba(160,120,136,0.38)' }}
-            >
-              Je commence mon jardin
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </ModalShell>
-  )
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  OnboardingScreen — orchestration complète
@@ -1126,7 +1003,6 @@ export function OnboardingScreen({ userId, onComplete }) {
   if (phase === 1) return <StepIntention onSelect={handleIntention} />
   if (phase === 2) return <StepMetaphore onNext={() => setPhase(3)} />
   if (phase === 3) return <StepGraine intention={intention} onPlant={handlePlant} />
-  if (phase === 4) return <StepCommunaute onComplete={() => setPhase(5)} />
-  if (phase === 5) return <StepEquipe onNext={onComplete} />
+  if (phase === 4) return <StepCommunaute onComplete={onComplete} />
   return null
 }

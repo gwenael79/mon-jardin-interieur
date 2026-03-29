@@ -7,6 +7,7 @@ import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
+import { WeekOneFlow }      from './pages/WeekOneFlow'
 import InstallPrompt from './components/InstallPrompt'
 
 // ── Notifications jardin ──────────────────────────────────
@@ -29,6 +30,9 @@ export default function App() {
   const [onboarded,       setOnboarded]       = useState(null)
   const [checkingOnboard, setCheckingOnboard] = useState(false)
   const [showSlides,      setShowSlides]      = useState(false)
+
+  // ── État WeekOneFlow ─────────────────────────────────────
+  const [showWeekOne, setShowWeekOne] = useState(false)
 
   // Détecter immédiatement si on revient d'un lien reset
   const [isRecovery, setIsRecovery] = useState(() => {
@@ -63,7 +67,7 @@ export default function App() {
 
   // ── Vérifier le profil dès que l'user est connu ──────────
   useEffect(() => {
-    if (!user) { setOnboarded(null); return }
+    if (!user) { setOnboarded(null); setShowWeekOne(false); return }
     setCheckingOnboard(true)
     supabase
       .from('users')
@@ -73,11 +77,26 @@ export default function App() {
       .then(({ data }) => {
         const isOnboarded = data?.onboarded === true
         setOnboarded(isOnboarded)
-        // Nouvel utilisateur → montrer les slides avant AccessPage
         if (!isOnboarded) setShowSlides(true)
         setCheckingOnboard(false)
       })
   }, [user?.id])
+
+  // ── Vérifier si WeekOneFlow doit s'afficher ───────────────
+  useEffect(() => {
+    if (!user || onboarded !== true) return
+    const daysSinceReg = Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
+    if (daysSinceReg >= 7) return
+    supabase
+      .from('profiles')
+      .select('week_one_data')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const completedDays = data?.week_one_data?.completedDays ?? []
+        if (completedDays.length < 7) setShowWeekOne(true)
+      })
+  }, [user?.id, onboarded])
 
   // ── Écouter les changements de hash ─────────────────────
   useEffect(() => {
@@ -142,6 +161,18 @@ export default function App() {
 
   // ── Routing ──────────────────────────────────────────────
 
+  // 🧪 TEST — accès direct via ?test-weekone dans l'URL (retirer avant prod)
+  const isTestWeekOne = new URLSearchParams(window.location.search).has('test-weekone')
+  if (isTestWeekOne) return (
+    <WeekOneFlow
+      userId={user?.id ?? null}
+      onComplete={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        window.location.reload()
+      }}
+    />
+  )
+
   // 🧪 TEST — accès direct via ?test-onboarding dans l'URL (retirer avant prod)
   const isTestOnboarding = new URLSearchParams(window.location.search).has('test-onboarding')
   if (isTestOnboarding) return (
@@ -188,6 +219,14 @@ export default function App() {
   return (
     <>
       <DashboardPage />
+
+      {/* ── WeekOneFlow — 7 premiers jours ── */}
+      {showWeekOne && (
+        <WeekOneFlow
+          userId={user.id}
+          onComplete={() => setShowWeekOne(false)}
+        />
+      )}
 
       {/* ── Bannière de notification jardin ── */}
       <GardenNotificationBanner
