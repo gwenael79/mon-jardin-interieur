@@ -259,6 +259,24 @@ export default function App() {
       }}>
         Votre jardin vous attend demain.
       </p>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          marginTop: 32,
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 12,
+          fontWeight: 300,
+          color: '#c8a090',
+          background: 'none',
+          border: '1px solid rgba(180,130,100,0.25)',
+          borderRadius: 100,
+          padding: '8px 24px',
+          cursor: 'pointer',
+          letterSpacing: '0.06em',
+        }}
+      >
+        Retourner au jardin
+      </button>
     </div>
   )
 
@@ -274,7 +292,6 @@ export default function App() {
           onComplete={() => {
             setShowWeekOne(false)
             setWeekOneClosed(true)
-            window.close()
           }}
         />
       )}
