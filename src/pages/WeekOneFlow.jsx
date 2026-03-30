@@ -1,6 +1,7 @@
 // src/pages/WeekOneFlow.jsx
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../core/supabaseClient'
+import { RitualZoneModal, useRituels } from './mafleur_rituels'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Styles globaux — keyframes + responsive modal
@@ -70,6 +71,36 @@ function GlobalStyles() {
       @media (max-width: 600px) {
         .wof-backdrop { padding: 0; align-items: stretch; }
         .wof-modal    { border-radius: 0; min-height: 100dvh; min-height: 100vh; }
+      }
+
+      /* ── Override RitualZoneModal — centré au lieu de bottom-sheet ── */
+      .ritual-modal-backdrop {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1000 !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        justify-content: center !important;
+        padding: 24px 16px 40px !important;
+        background: rgba(80,40,30,0.35) !important;
+        backdrop-filter: blur(6px) !important;
+        overflow-y: auto !important;
+      }
+      .ritual-modal-sheet {
+        position: relative !important;
+        inset: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 500px !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        border-radius: 22px !important;
+        padding: 24px 20px 32px !important;
+        box-shadow: 0 24px 60px rgba(80,30,20,0.18) !important;
+        animation: stepIn 0.3s ease both !important;
+        flex-shrink: 0 !important;
       }
     `}</style>
   )
@@ -593,7 +624,7 @@ function OrganicLights() {
 
 // ── Fleur SVG ──────────────────────────────────────────────────────────────
 
-function FlowerSVG({ size = 140, animated = false, style: extraStyle, completedZones }) {
+function FlowerSVG({ size = 140, animated = false, style: extraStyle, completedZones, petalColor }) {
   const petals = [
     { zone: 'racines',  color: ZONE_COLORS.racines,  angle: 270 },
     { zone: 'tige',     color: ZONE_COLORS.tige,     angle: 54  },
@@ -602,9 +633,9 @@ function FlowerSVG({ size = 140, animated = false, style: extraStyle, completedZ
     { zone: 'souffle',  color: ZONE_COLORS.souffle,  angle: 342 },
   ]
   const cx      = size / 2
-  const petalRx = size * 0.22
-  const petalRy = size * 0.14
-  const dist    = size * 0.28
+  const petalRx = size * 0.155  // largeur pétale
+  const petalRy = size * 0.265  // longueur pétale (vers l'extérieur)
+  const dist    = size * 0.175  // distance centre → milieu pétale
 
   return (
     <svg
@@ -613,33 +644,81 @@ function FlowerSVG({ size = 140, animated = false, style: extraStyle, completedZ
       viewBox={`0 0 ${size} ${size}`}
       style={{
         display: 'block',
+        overflow: 'visible',
         ...(animated ? { animation: 'bloom 1.4s cubic-bezier(.25,.8,.25,1) both' } : {}),
         ...extraStyle,
       }}
     >
-      {petals.map((p, i) => {
+      <defs>
+        {petals.map((p) => {
+          const done = !completedZones || completedZones.includes(p.zone)
+          return (
+            <radialGradient key={`pg-${p.zone}`} id={`pg-${p.zone}`} cx="50%" cy="30%" r="70%" gradientTransform={`rotate(${p.angle + 90}, 0.5, 0.5)`}>
+              <stop offset="0%"   stopColor="#ffffff" stopOpacity={done ? "0.7" : "0"} />
+              <stop offset="35%"  stopColor={done ? (petalColor || p.color) : '#cfc4c0'} stopOpacity={done ? "1" : "0.45"} />
+              <stop offset="100%" stopColor={done ? (petalColor || p.color) : '#c0b8b5'} stopOpacity={done ? "0.75" : "0.3"} />
+            </radialGradient>
+          )
+        })}
+        <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <radialGradient id="pistilGrad" cx="38%" cy="32%" r="68%">
+          <stop offset="0%"   stopColor="#fff9f0" />
+          <stop offset="60%"  stopColor="#f2d8b8" />
+          <stop offset="100%" stopColor="#ddb888" />
+        </radialGradient>
+      </defs>
+
+      {/* Couche halo (pétales complétés seulement) */}
+      {petals.map((p) => {
+        const done = !completedZones || completedZones.includes(p.zone)
+        if (!done) return null
         const rad = (p.angle * Math.PI) / 180
         const px  = cx + dist * Math.cos(rad)
         const py  = cx + dist * Math.sin(rad)
         return (
           <ellipse
+            key={`halo-${p.zone}`}
+            cx={px} cy={py}
+            rx={petalRx * 1.2} ry={petalRy * 1.2}
+            fill={petalColor || p.color}
+            opacity={0.18}
+            filter="url(#softGlow)"
+            transform={`rotate(${p.angle + 90}, ${px}, ${py})`}
+          />
+        )
+      })}
+
+      {/* Pétales */}
+      {petals.map((p, i) => {
+        const rad  = (p.angle * Math.PI) / 180
+        const px   = cx + dist * Math.cos(rad)
+        const py   = cx + dist * Math.sin(rad)
+        const done = !completedZones || completedZones.includes(p.zone)
+        return (
+          <ellipse
             key={p.zone}
-            cx={px}
-            cy={py}
-            rx={petalRx}
-            ry={petalRy}
-            fill={p.color}
-            opacity={0.88}
+            cx={px} cy={py}
+            rx={petalRx} ry={petalRy}
+            fill={`url(#pg-${p.zone})`}
+            stroke={done ? (petalColor || p.color) : '#c8b8b4'}
+            strokeWidth={done ? 0.6 : 0.3}
+            strokeOpacity={done ? 0.45 : 0.2}
             transform={`rotate(${p.angle + 90}, ${px}, ${py})`}
             style={animated ? {
-              animation: 'petalIn 0.5s ease both',
+              animation: 'petalIn 0.55s ease both',
               animationDelay: `${0.15 + i * 0.1}s`,
             } : {}}
           />
         )
       })}
-      <circle cx={cx} cy={cx} r={size * 0.13} fill="#faf0e8" />
-      <circle cx={cx} cy={cx} r={size * 0.08} fill="#ead8c8" />
+
+      {/* Pistil */}
+      <circle cx={cx} cy={cx} r={size * 0.12}  fill="url(#pistilGrad)" />
+      <circle cx={cx} cy={cx} r={size * 0.072} fill="#f8e8d0" opacity={0.65} />
+      <circle cx={cx - size * 0.03} cy={cx - size * 0.03} r={size * 0.03} fill="#fffaf4" opacity={0.5} />
     </svg>
   )
 }
@@ -2053,23 +2132,304 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. WeekOneFlow — export principal
+// 6. GardenDashboard — tableau de bord "Ma Fleur"
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ZONE_DAYS = [
+  { day: 1, zone: 'racines',  zoneId: 'roots',   emoji: '🌱', label: 'Racines',  desc: 'Une base qui se stabilise',    color: ZONE_COLORS.racines  },
+  { day: 2, zone: 'tige',     zoneId: 'stem',    emoji: '🌿', label: 'Tige',     desc: 'Ce qui vous tient debout',     color: ZONE_COLORS.tige     },
+  { day: 3, zone: 'feuilles', zoneId: 'leaves',  emoji: '🍃', label: 'Feuilles', desc: 'Ce qui circule en vous',       color: ZONE_COLORS.feuilles },
+  { day: 4, zone: 'fleurs',   zoneId: 'flowers', emoji: '🌸', label: 'Fleurs',   desc: "Ce qui s'ouvre",               color: ZONE_COLORS.fleurs   },
+  { day: 5, zone: 'souffle',  zoneId: 'breath',  emoji: '🌬️', label: 'Souffle',  desc: 'Ce qui relie tout',            color: ZONE_COLORS.souffle  },
+  { day: 6, zone: null,       zoneId: null,      emoji: '✨', label: 'Synthèse', desc: 'Les 5 zones ensemble',         color: '#b8a090'            },
+  { day: 7, zone: null,       zoneId: null,      emoji: '🌻', label: 'Rituel',   desc: 'Votre rituel personnel',       color: '#a09080'            },
+]
+
+function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose }) {
+
+  const completedZones = ZONE_DAYS
+    .filter(z => completedDays.includes(z.day) && z.zone)
+    .map(z => z.zone)
+
+  const today   = new Date().toISOString().split('T')[0]
+  const lastCompleted = Math.max(...completedDays, 0)
+  const nextDay = Math.min(lastCompleted + 1, 7)
+
+  // Jour suivant accessible seulement le lendemain de la complétion du précédent
+  function isUnlocked(day) {
+    if (day === 1) return true
+    const prevDate = completionDates[day - 1]
+    if (!prevDate) return false
+    return today > prevDate // strict : lendemain à partir de 0h01
+  }
+
+  return (
+    <div style={{ padding: '32px 24px 80px', maxWidth: 480, margin: '0 auto' }}>
+
+      {/* Titre */}
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(11px, 2.8vw, 13px)',
+          fontWeight: 500,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#9a7060',
+          margin: '0 0 8px',
+        }}>
+          Ce qui prend forme
+        </p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(28px, 7vw, 36px)',
+          fontWeight: 700,
+          fontStyle: 'italic',
+          color: '#2a1010',
+          lineHeight: 1.15,
+          margin: '0 0 10px',
+        }}>
+          Ma Fleur
+        </h2>
+        <div style={{
+          width: 48, height: 2,
+          background: 'linear-gradient(to right, transparent, #b87c5a, transparent)',
+          margin: '0 auto 20px',
+        }} />
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontStyle: 'italic',
+          fontSize: 'clamp(19px, 5vw, 24px)',
+          color: '#5a3a2a',
+          margin: '0 0 14px',
+          lineHeight: 1.5,
+        }}>
+          Ce que vous avez commencé… continue de grandir.
+        </p>
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontStyle: 'italic',
+          fontSize: 'clamp(17px, 4.2vw, 21px)',
+          color: '#9a7060',
+          margin: '0 0 12px',
+          lineHeight: 1.5,
+        }}>
+          Votre fleur se révèle.
+        </p>
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontStyle: 'normal',
+          fontSize: 'clamp(14px, 3.5vw, 16px)',
+          color: '#a08878',
+          margin: 0,
+          lineHeight: 1.65,
+        }}>
+          Chaque jour, une partie s'éveille. Chaque zone a un rôle pour vous.
+        </p>
+      </div>
+
+      {/* Fleur */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 40 }}>
+        <FlowerSVG size={210} completedZones={completedZones} />
+      </div>
+
+      {/* Cartes zones */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {ZONE_DAYS.map((z, i) => {
+          const done      = completedDays.includes(z.day)
+          const unlocked  = isUnlocked(z.day)
+          const isCurrent = z.day === nextDay && unlocked && !done
+          const locked    = !done && !isCurrent
+          const clickable = done && z.zoneId ? () => onOpenZone(z.zoneId)
+                          : isCurrent        ? onContinue
+                          : undefined
+
+          return (
+            <div
+              key={z.day}
+              onClick={clickable}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 16,
+                padding: '14px 18px',
+                borderRadius: 14,
+                background: done
+                  ? 'rgba(255,255,255,0.75)'
+                  : isCurrent
+                    ? 'rgba(255,255,255,0.90)'
+                    : 'rgba(255,255,255,0.30)',
+                border: done
+                  ? `1.5px solid ${z.color}55`
+                  : isCurrent
+                    ? `1.5px solid ${z.color}`
+                    : '1.5px solid rgba(180,130,100,0.15)',
+                boxShadow: isCurrent
+                  ? `0 4px 20px ${z.color}44`
+                  : 'none',
+                cursor: clickable ? 'pointer' : 'default',
+                filter: locked ? 'blur(1.5px)' : 'none',
+                opacity: locked ? 0.5 : 1,
+                transition: 'all 0.3s ease',
+                animation: `softRise 600ms ${i * 80}ms cubic-bezier(0.25,0.46,0.45,0.94) both`,
+              }}
+            >
+              {/* Emoji + pastille */}
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: done ? `${z.color}22` : isCurrent ? `${z.color}18` : 'rgba(200,180,170,0.15)',
+                border: `1.5px solid ${done || isCurrent ? z.color + '55' : 'rgba(180,140,120,0.18)'}`,
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                opacity: locked ? 0.4 : 1,
+              }}>
+                {z.emoji}
+              </div>
+
+              {/* Texte */}
+              <div style={{ flex: 1 }}>
+                <p style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontWeight: 600,
+                  fontSize: 'clamp(13px, 3.2vw, 15px)',
+                  color: done || isCurrent ? '#2a1010' : '#8a7070',
+                  margin: '0 0 3px',
+                  letterSpacing: '0.02em',
+                }}>
+                  Jour {z.day} — {z.label}
+                </p>
+                <p style={{
+                  fontFamily: 'Cormorant Garamond, Georgia, serif',
+                  fontStyle: 'italic',
+                  fontSize: 'clamp(13px, 3vw, 15px)',
+                  color: done || isCurrent ? '#7a5a4a' : '#9a8a80',
+                  margin: 0,
+                }}>
+                  {z.desc}
+                </p>
+              </div>
+
+              {/* Badge statut */}
+              {done && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                  <span style={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: z.color,
+                    background: `${z.color}18`,
+                    border: `1px solid ${z.color}44`,
+                    borderRadius: 100,
+                    padding: '3px 10px',
+                  }}>
+                    Fait
+                  </span>
+                  {z.zoneId && (
+                    <span style={{
+                      fontFamily: 'Jost, sans-serif',
+                      fontSize: 10,
+                      color: 'rgba(100,70,60,0.5)',
+                      letterSpacing: '0.04em',
+                    }}>
+                      Voir les rituels →
+                    </span>
+                  )}
+                </div>
+              )}
+              {isCurrent && (
+                <span style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: '#fff',
+                  background: z.color,
+                  borderRadius: 100,
+                  padding: '3px 10px',
+                  flexShrink: 0,
+                }}>
+                  À vivre aujourd'hui
+                </span>
+              )}
+              {locked && (
+                <span style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: 16,
+                  color: '#b8a090',
+                  flexShrink: 0,
+                }}>
+                  🔒
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Bouton fermeture */}
+      <div style={{ textAlign: 'center', marginTop: 40 }}>
+        <button
+          onClick={onClose}
+          style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontStyle: 'italic',
+            fontSize: 'clamp(16px, 4vw, 19px)',
+            color: '#9a7060',
+            background: 'none',
+            border: '1px solid rgba(180,130,100,0.30)',
+            borderRadius: 100,
+            padding: '11px 32px',
+            cursor: 'pointer',
+            letterSpacing: '0.04em',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          À très bientôt
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. WeekOneFlow — export principal
 // ─────────────────────────────────────────────────────────────────────────────
 
 const INITIAL_WEEK_DATA = {
-  currentDay:    1,
-  completedDays: [],
-  answers:       {},
-  startDate:     new Date().toISOString().split('T')[0],
+  currentDay:      1,
+  completedDays:   [],
+  completionDates: {}, // { [dayNum]: 'YYYY-MM-DD' }
+  answers:         {},
+  startDate:       new Date().toISOString().split('T')[0],
 }
 
-export function WeekOneFlow({ userId, onComplete }) {
+export function WeekOneFlow({ userId, onComplete, forceGarden }) {
   const [loading,  setLoading]  = useState(true)
-  const [weekData, setWeekData] = useState(INITIAL_WEEK_DATA)
+  const [weekData, setWeekData] = useState(
+    forceGarden
+      ? { ...INITIAL_WEEK_DATA, currentDay: 2, completedDays: [1], completionDates: { 1: '2026-01-01' } }
+      : INITIAL_WEEK_DATA
+  )
   const weekDataRef = useRef(INITIAL_WEEK_DATA)
+  const [view, setView] = useState(forceGarden ? 'garden' : 'day') // 'day' | 'garden'
+  const [activeZoneId, setActiveZoneId] = useState(null)
+  const [completedRituals, setCompletedRituals] = useState({})
+  const { rituals: plantRituals } = useRituels()
+
+  function handleToggleRitual(ritualId) {
+    setCompletedRituals(prev => ({ ...prev, [ritualId]: !prev[ritualId] }))
+  }
 
   // Chargement depuis Supabase
   useEffect(() => {
+    if (forceGarden) { setLoading(false); return }
     if (!userId) { setLoading(false); return }
     ;(async () => {
       const { data, error } = await supabase
@@ -2082,6 +2442,10 @@ export function WeekOneFlow({ userId, onComplete }) {
         const saved = data.week_one_data
         setWeekData(saved)
         weekDataRef.current = saved
+        // Si au moins 1 jour complété → revenir sur GardenDashboard
+        if (saved.completedDays?.length > 0) {
+          setView('garden')
+        }
       }
       setLoading(false)
     })()
@@ -2118,17 +2482,24 @@ export function WeekOneFlow({ userId, onComplete }) {
     if (event.type === 'complete') {
       const dayNum  = current.currentDay
       const nextDay = Math.min(dayNum + 1, 7)
+      const today   = new Date().toISOString().split('T')[0]
       const updated = {
         ...current,
         currentDay:    nextDay,
         completedDays: current.completedDays.includes(dayNum)
           ? current.completedDays
           : [...current.completedDays, dayNum],
+        completionDates: {
+          ...(current.completionDates || {}),
+          [dayNum]: today,
+        },
       }
       await saveWeekData(updated)
 
       if (dayNum === 7) {
         onComplete?.()
+      } else {
+        setView('garden')
       }
     }
   }
@@ -2183,12 +2554,14 @@ export function WeekOneFlow({ userId, onComplete }) {
       <div className="wof-backdrop" style={{ zIndex: 10 }}>
         <div className="wof-modal">
 
-          {/* ── Image hero — même design que SlidesEducatives ── */}
+          {/* ── Image hero — cachée en vue garden ── */}
           <div style={{
             flexShrink: 0,
-            height: isMobile ? '36%' : '40%',
+            height: view === 'garden' ? 0 : isMobile ? '36%' : '40%',
+            minHeight: view === 'garden' ? 0 : undefined,
             position: 'relative',
             overflow: 'hidden',
+            visibility: view === 'garden' ? 'hidden' : 'visible',
           }}>
             <img
               src="/champs.png"
@@ -2240,19 +2613,54 @@ export function WeekOneFlow({ userId, onComplete }) {
             </div>
           </div>
 
-          {/* ── Contenu du jour (scrollable) ── */}
+          {/* ── Contenu (scrollable) ── */}
           <div style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch' }}>
-            <DayShell
-              key={weekData.currentDay}
-              dayIndex={dayIndex}
-              answers={weekData.answers}
-              completedDays={weekData.completedDays}
-              onDayComplete={handleDayEvent}
-            />
+            {view === 'garden' ? (
+              <GardenDashboard
+                completedDays={weekData.completedDays}
+                completionDates={weekData.completionDates || {}}
+                onContinue={() => setView('day')}
+                onOpenZone={setActiveZoneId}
+                onClose={onComplete}
+              />
+            ) : (
+              <DayShell
+                key={weekData.currentDay}
+                dayIndex={dayIndex}
+                answers={weekData.answers}
+                completedDays={weekData.completedDays}
+                onDayComplete={handleDayEvent}
+              />
+            )}
           </div>
 
         </div>
       </div>
+
+      {/* ── Modal rituels — rendu hors du backdrop pour position: fixed correct ── */}
+      {activeZoneId && (
+        <div style={{
+          '--ritual-modal-bg-start': '#fffaf7',
+          '--ritual-modal-bg-end':   '#f5ede8',
+          '--ritual-modal-text':     '#2a1010',
+          '--ritual-modal-text-rgb': '42,16,16',
+          '--surface-1':  'rgba(255,255,255,0.7)',
+          '--surface-2':  'rgba(200,170,160,0.18)',
+          '--surface-3':  'rgba(180,130,110,0.25)',
+          '--track':      'rgba(180,130,110,0.12)',
+          '--separator':  'rgba(150,100,80,0.35)',
+          '--ritual-item-border': 'rgba(180,130,100,0.20)',
+          '--ritual-item-bg':     'rgba(255,255,255,0.65)',
+        }}>
+          <RitualZoneModal
+            zoneId={activeZoneId}
+            completed={completedRituals}
+            onToggle={handleToggleRitual}
+            onClose={() => setActiveZoneId(null)}
+            plantRituals={plantRituals}
+          />
+        </div>
+      )}
     </>
   )
 }

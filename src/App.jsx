@@ -173,6 +173,19 @@ export default function App() {
     />
   )
 
+  // 🧪 TEST — accès direct au GardenDashboard via ?test-garden (retirer avant prod)
+  const isTestGarden = new URLSearchParams(window.location.search).has('test-garden')
+  if (isTestGarden) return (
+    <WeekOneFlow
+      userId={user?.id ?? null}
+      forceGarden
+      onComplete={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        window.location.reload()
+      }}
+    />
+  )
+
   // 🧪 TEST — accès direct via ?test-onboarding dans l'URL (retirer avant prod)
   const isTestOnboarding = new URLSearchParams(window.location.search).has('test-onboarding')
   if (isTestOnboarding) return (
