@@ -2429,6 +2429,8 @@ export function WeekOneFlow({ userId, onComplete, forceGarden }) {
 
   // Chargement depuis Supabase
   useEffect(() => {
+ console.log('🔍 WeekOneFlow useEffect — userId:', userId)
+
   if (forceGarden) { setLoading(false); return }
   if (!userId) return
 
@@ -2449,6 +2451,9 @@ export function WeekOneFlow({ userId, onComplete, forceGarden }) {
       .single()
 
     if (!error && data?.week_one_data) {
+console.log('✅ Données chargées:', data.week_one_data)
+  console.log('✅ completedDays:', data.week_one_data.completedDays)
+
       const saved = data.week_one_data
       setWeekData(saved)
       weekDataRef.current = saved
@@ -2456,6 +2461,8 @@ export function WeekOneFlow({ userId, onComplete, forceGarden }) {
         setView('garden')
       }
     } else {
+console.log('❌ Pas de données ou erreur:', error)
+
       weekDataRef.current = INITIAL_WEEK_DATA
     }
 
