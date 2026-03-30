@@ -32,7 +32,8 @@ export default function App() {
   const [showSlides,      setShowSlides]      = useState(false)
 
   // ── État WeekOneFlow ─────────────────────────────────────
-  const [showWeekOne, setShowWeekOne] = useState(false)
+  const [showWeekOne,   setShowWeekOne]   = useState(false)
+  const [weekOneClosed, setWeekOneClosed] = useState(false)
 
   // Détecter immédiatement si on revient d'un lien reset
   const [isRecovery, setIsRecovery] = useState(() => {
@@ -228,6 +229,39 @@ export default function App() {
   // 3. Admin
   if (ADMIN_IDS.includes(user?.id) && hash === '#admin') return <AdminPage />
 
+  // 3b. WeekOneFlow fermé → écran de sortie
+  if (weekOneClosed) return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      gap: 16,
+    }}>
+      <p style={{
+        fontFamily: 'Cormorant Garamond, serif',
+        fontSize: 24,
+        color: '#9a7060',
+        fontStyle: 'italic',
+        margin: 0,
+      }}>
+        À très bientôt 🌸
+      </p>
+      <p style={{
+        fontFamily: 'Jost, sans-serif',
+        fontSize: 13,
+        fontWeight: 300,
+        color: '#b8a090',
+        margin: 0,
+        letterSpacing: '0.04em',
+      }}>
+        Votre jardin vous attend demain.
+      </p>
+    </div>
+  )
+
   // 4. Dashboard normal + notifications jardin
   return (
     <>
@@ -237,7 +271,11 @@ export default function App() {
       {showWeekOne && (
         <WeekOneFlow
           userId={user.id}
-          onComplete={() => setShowWeekOne(false)}
+          onComplete={() => {
+            setShowWeekOne(false)
+            setWeekOneClosed(true)
+            window.close()
+          }}
         />
       )}
 
