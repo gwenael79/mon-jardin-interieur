@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../core/supabaseClient'
 import { RitualZoneModal, useRituels } from './mafleur_rituels'
+import { useAuth } from '../hooks/useAuth'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Styles globaux — keyframes + responsive modal
@@ -44,12 +45,22 @@ function GlobalStyles() {
         50%       { transform: scale(1.55); opacity: 1;    }
       }
 
+      @keyframes mosaicBloom {
+        0%   { transform: scale(0.88); opacity: 0.6; filter: brightness(0.7); }
+        55%  { transform: scale(1.05); opacity: 1;   filter: brightness(1.08); }
+        100% { transform: scale(1);   opacity: 1;   filter: brightness(1); }
+      }
+      @keyframes mosaicPulse {
+        0%, 100% { box-shadow: 0 0 0 0 transparent; }
+        50%      { box-shadow: 0 0 32px 8px rgba(200,160,112,0.35); }
+      }
+
       .wof-in { animation: stepIn 400ms ease both; }
       .wof-fl { animation: fleurFloat 6s ease-in-out infinite; }
 
       .wof-backdrop {
         position: fixed; inset: 0;
-        display: flex; align-items: center; justify-content: center;
+        display: flex; align-items: flex-start; justify-content: center;
         padding: 24px 16px;
         z-index: 10;
         overflow-y: auto;
@@ -63,6 +74,7 @@ function GlobalStyles() {
         padding: 0;
         position: relative;
         min-height: 520px;
+        height: calc(100dvh - 48px);
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
@@ -70,7 +82,7 @@ function GlobalStyles() {
       }
       @media (max-width: 600px) {
         .wof-backdrop { padding: 0; align-items: stretch; }
-        .wof-modal    { border-radius: 0; min-height: 100dvh; min-height: 100vh; }
+        .wof-modal    { border-radius: 0; min-height: 100dvh; min-height: 100vh; height: 100dvh; height: 100vh; }
       }
 
       /* ── Override RitualZoneModal — centré au lieu de bottom-sheet ── */
@@ -723,6 +735,206 @@ function FlowerSVG({ size = 140, animated = false, style: extraStyle, completedZ
   )
 }
 
+
+// ── Illustration botanique (top-view flower) ──────────────────────────────
+
+function FlowerIllustration({ size, color1 = '#e888a8', color2 = '#fce8f0' }) {
+  const cx = size / 2
+  const s  = size / 280   // scale factor, designed at 280px
+
+  const outerAngles = Array.from({ length: 8 }, (_, i) => i * 45)
+  const innerAngles = Array.from({ length: 8 }, (_, i) => i * 45 + 22.5)
+
+  // Petal paths pointing in -Y (upward), to be rotated into place
+  const outerPath = [
+    `M 0 ${-9*s}`,
+    `C ${-27*s} ${-32*s}, ${-31*s} ${-78*s}, 0 ${-118*s}`,
+    `C ${31*s} ${-78*s}, ${27*s} ${-32*s}, 0 ${-9*s}`,
+    'Z',
+  ].join(' ')
+
+  const innerPath = [
+    `M 0 ${-7*s}`,
+    `C ${-16*s} ${-25*s}, ${-19*s} ${-58*s}, 0 ${-75*s}`,
+    `C ${19*s} ${-58*s}, ${16*s} ${-25*s}, 0 ${-7*s}`,
+    'Z',
+  ].join(' ')
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block' }}>
+      <defs>
+        <radialGradient id="wof-opg" cx="50%" cy="82%" r="75%">
+          <stop offset="0%"   stopColor={color2} stopOpacity="0.45" />
+          <stop offset="30%"  stopColor={color2} />
+          <stop offset="75%"  stopColor={color1} />
+          <stop offset="100%" stopColor={color1} stopOpacity="0.80" />
+        </radialGradient>
+        <radialGradient id="wof-ipg" cx="50%" cy="82%" r="75%">
+          <stop offset="0%"   stopColor="#ffffff" />
+          <stop offset="40%"  stopColor={color2} stopOpacity="0.55" />
+          <stop offset="100%" stopColor={color2} />
+        </radialGradient>
+        <radialGradient id="wof-ctr" cx="35%" cy="30%" r="68%">
+          <stop offset="0%"   stopColor="#fffde8" />
+          <stop offset="42%"  stopColor="#f8d454" />
+          <stop offset="100%" stopColor="#d4940c" />
+        </radialGradient>
+        <filter id="wof-ps" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="1" stdDeviation="1.8" floodColor={color1} floodOpacity="0.18"/>
+        </filter>
+      </defs>
+
+      {/* Outer petals */}
+      {outerAngles.map(a => (
+        <path
+          key={`op${a}`}
+          d={outerPath}
+          fill="url(#wof-opg)"
+          stroke={color1}
+          strokeWidth={0.5}
+          strokeOpacity={0.3}
+          transform={`translate(${cx},${cx}) rotate(${a})`}
+          filter="url(#wof-ps)"
+        />
+      ))}
+
+      {/* Inner petals */}
+      {innerAngles.map(a => (
+        <path
+          key={`ip${a}`}
+          d={innerPath}
+          fill="url(#wof-ipg)"
+          stroke={color2}
+          strokeWidth={0.4}
+          strokeOpacity={0.25}
+          transform={`translate(${cx},${cx}) rotate(${a})`}
+        />
+      ))}
+
+      {/* Stamen ring */}
+      {Array.from({ length: 18 }, (_, i) => {
+        const a = (i / 18) * 2 * Math.PI
+        const d = size * 0.093
+        return (
+          <circle key={`st${i}`}
+            cx={cx + d * Math.cos(a)} cy={cx + d * Math.sin(a)}
+            r={size * 0.012} fill="#c07818" opacity={0.72}
+          />
+        )
+      })}
+
+      {/* Pistil */}
+      <circle cx={cx} cy={cx} r={size * 0.086} fill="url(#wof-ctr)" />
+      <circle cx={cx} cy={cx} r={size * 0.052} fill="#fdf4c0" opacity={0.55} />
+      <circle cx={cx - size*0.026} cy={cx - size*0.026} r={size * 0.02} fill="white" opacity={0.32} />
+    </svg>
+  )
+}
+
+// ── Mosaïque fleur 4 quadrants (B&W → couleur par zone) ───────────────────
+
+function FlowerMosaic({ completedZones, size = 248, petalColor1, petalColor2 }) {
+  const gap  = 4
+  const cell = (size - gap) / 2
+
+  const PIECES = [
+    { id: 'tl', zone: 'racines',  color: ZONE_COLORS.racines,  label: 'Racines',  dx: 0,           dy: 0            },
+    { id: 'tr', zone: 'tige',     color: ZONE_COLORS.tige,     label: 'Tige',     dx: -(cell+gap),  dy: 0            },
+    { id: 'bl', zone: 'feuilles', color: ZONE_COLORS.feuilles, label: 'Feuilles', dx: 0,            dy: -(cell+gap)  },
+    { id: 'br', zone: 'fleurs',   color: ZONE_COLORS.fleurs,   label: 'Fleurs',   dx: -(cell+gap),  dy: -(cell+gap)  },
+  ]
+
+  const souffleActive = completedZones?.includes('souffle')
+  const allRevealed   = souffleActive && PIECES.every(p => completedZones?.includes(p.zone))
+
+  const cornerRadius = { tl: '16px 3px 3px 3px', tr: '3px 16px 3px 3px', bl: '3px 3px 3px 16px', br: '3px 3px 16px 3px' }
+  const labelPos     = { tl: { top: 7, left: 7 }, tr: { top: 7, right: 7 }, bl: { bottom: 7, left: 7 }, br: { bottom: 7, right: 7 } }
+
+  return (
+    <div style={{
+      position: 'relative', width: size, height: size,
+      animation: allRevealed ? 'mosaicBloom 1.4s cubic-bezier(0.34,1.56,0.64,1) both' : 'none',
+      borderRadius: 18,
+    }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `${cell}px ${cell}px`,
+        gridTemplateRows: `${cell}px ${cell}px`,
+        gap,
+        animation: allRevealed ? 'mosaicPulse 3s ease-in-out 1.4s 2' : 'none',
+      }}>
+        {PIECES.map(p => {
+          const active = completedZones?.includes(p.zone)
+          return (
+            <div key={p.id} style={{
+              width: cell, height: cell,
+              overflow: 'hidden',
+              borderRadius: cornerRadius[p.id],
+              position: 'relative',
+              filter: active
+                ? 'none'
+                : 'grayscale(1) brightness(0.68) contrast(1.08)',
+              transition: 'filter 1.6s cubic-bezier(0.4,0,0.2,1)',
+              boxShadow: active ? `inset 0 0 0 1.5px ${p.color}55` : 'inset 0 0 0 1px rgba(140,110,100,0.18)',
+            }}>
+              {/* Tranche de la fleur */}
+              <div style={{
+                position: 'absolute',
+                left: p.dx, top: p.dy,
+                width: size, height: size,
+                pointerEvents: 'none',
+              }}>
+                <FlowerIllustration size={size} color1={petalColor1} color2={petalColor2} />
+              </div>
+
+              {/* Label de zone (apparaît à l'activation) */}
+              <div style={{
+                position: 'absolute',
+                ...labelPos[p.id],
+                fontFamily: 'Jost, sans-serif',
+                fontSize: 9,
+                fontWeight: 600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: p.color,
+                background: 'rgba(255,255,255,0.86)',
+                padding: '2px 8px',
+                borderRadius: 100,
+                opacity: active ? 1 : 0,
+                transition: 'opacity 0.8s ease 1s',
+                pointerEvents: 'none',
+              }}>
+                {p.label}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Séparateur central (croix) */}
+      <div style={{ position: 'absolute', top: cell, left: 0, right: 0, height: gap, background: '#faf5f2', pointerEvents: 'none', zIndex: 2 }} />
+      <div style={{ position: 'absolute', left: cell, top: 0, bottom: 0, width: gap, background: '#faf5f2', pointerEvents: 'none', zIndex: 2 }} />
+
+      {/* Centre — zone Souffle */}
+      <div style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: cell * 0.30, height: cell * 0.30,
+        borderRadius: '50%',
+        background: souffleActive
+          ? `radial-gradient(circle at 35% 30%, #fffde0, ${ZONE_COLORS.souffle})`
+          : 'radial-gradient(circle at 35% 30%, #e0d8d4, #b8a8a4)',
+        boxShadow: souffleActive
+          ? `0 0 0 ${gap}px #faf5f2, 0 0 18px ${ZONE_COLORS.souffle}99`
+          : `0 0 0 ${gap}px #faf5f2`,
+        filter: souffleActive ? 'none' : 'grayscale(1) brightness(0.68)',
+        transition: 'all 1.6s cubic-bezier(0.4,0,0.2,1)',
+        zIndex: 3,
+      }} />
+    </div>
+  )
+}
 
 // ── Timer de rituel ────────────────────────────────────────────────────────
 
@@ -2145,7 +2357,7 @@ const ZONE_DAYS = [
   { day: 7, zone: null,       zoneId: null,      emoji: '🌻', label: 'Rituel',   desc: 'Votre rituel personnel',       color: '#a09080'            },
 ]
 
-function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose }) {
+function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth }) {
 
   const completedZones = ZONE_DAYS
     .filter(z => completedDays.includes(z.day) && z.zone)
@@ -2227,9 +2439,50 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
         </p>
       </div>
 
-      {/* Fleur */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 40 }}>
-        <FlowerSVG size={210} completedZones={completedZones} />
+      {/* Fleur mosaïque */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40, gap: 20 }}>
+        <FlowerMosaic completedZones={completedZones} size={248} petalColor1={petalColor1} petalColor2={petalColor2} />
+
+        {/* Phrase d'encouragement — apparaît juste après l'éclosion complète */}
+        {completedZones.length >= 5 && (() => {
+          const h = plantHealth ?? 30
+          const phrase =
+            h < 40 ? { text: 'Votre fleur vient de naître. Chaque jour qui passe l\'ancre un peu plus.', sub: 'Continuez, elle vous observe.' } :
+            h < 55 ? { text: 'Votre fleur prend racine. On sent qu\'elle cherche la lumière.', sub: 'Les rituels l\'aident à grandir.' } :
+            h < 65 ? { text: 'Votre fleur est en bouton. L\'éclosion est toute proche.', sub: 'Encore quelques soins et elle s\'ouvrira pleinement.' } :
+            h < 78 ? { text: 'Votre fleur s\'épanouit. Elle reflète votre constance.', sub: 'Vous prenez soin d\'elle avec régularité.' } :
+            h < 90 ? { text: 'Votre fleur rayonne. Elle est le reflet de votre engagement.', sub: 'Continuez — elle le ressent.' } :
+                     { text: 'Votre fleur est en pleine éclosion.', sub: 'Elle reflète toute la vitalité que vous lui avez offerte.' }
+          return (
+            <div style={{
+              textAlign: 'center', maxWidth: 260,
+              animation: 'softRise 900ms 1.6s cubic-bezier(0.25,0.46,0.45,0.94) both',
+              opacity: 0,
+              animationFillMode: 'forwards',
+            }}>
+              <p style={{
+                fontFamily: 'Cormorant Garamond, Georgia, serif',
+                fontStyle: 'italic',
+                fontSize: 'clamp(16px, 4vw, 19px)',
+                color: '#5a3a2a',
+                margin: '0 0 6px',
+                lineHeight: 1.5,
+              }}>
+                {phrase.text}
+              </p>
+              <p style={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: 12,
+                fontWeight: 400,
+                color: '#a08878',
+                margin: 0,
+                letterSpacing: '0.03em',
+              }}>
+                {phrase.sub}
+              </p>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Cartes zones */}
@@ -2328,7 +2581,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
                     borderRadius: 100,
                     padding: '3px 10px',
                   }}>
-                    Fait
+                    accompli
                   </span>
                   {z.zoneId && (
                     <span style={{
@@ -2393,6 +2646,27 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
         >
           À très bientôt
         </button>
+
+        {onSignOut && (
+          <div style={{ marginTop: 20 }}>
+            <button
+              onClick={onSignOut}
+              style={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: 12,
+                fontWeight: 400,
+                color: 'rgba(120,80,60,0.45)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                letterSpacing: '0.06em',
+                padding: '4px 8px',
+              }}
+            >
+              ⎋ Se déconnecter
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2411,7 +2685,11 @@ const INITIAL_WEEK_DATA = {
 }
 
 export function WeekOneFlow({ userId, onComplete, forceGarden }) {
-  const [loading,  setLoading]  = useState(true)
+  const { signOut } = useAuth()
+  const [loading,     setLoading]     = useState(true)
+  const [plantHealth, setPlantHealth] = useState(null)
+  const [petalColor1, setPetalColor1] = useState(null)
+  const [petalColor2, setPetalColor2] = useState(null)
   const [weekData, setWeekData] = useState(
     forceGarden
       ? { ...INITIAL_WEEK_DATA, currentDay: 2, completedDays: [1], completionDates: { 1: '2026-01-01' } }
@@ -2476,6 +2754,35 @@ console.log('❌ Pas de données ou erreur:', error)
   }
 }, [userId])
 
+  // Charger la vitalité du jour (table plants)
+  useEffect(() => {
+    if (!userId) return
+    const today = new Date().toISOString().split('T')[0]
+    supabase
+      .from('plants')
+      .select('health')
+      .eq('user_id', userId)
+      .eq('date', today)
+      .maybeSingle()
+      .then(({ data }) => { if (data?.health != null) setPlantHealth(data.health) })
+  }, [userId])
+
+  // Charger la couleur de fleur choisie à l'onboarding
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('garden_settings')
+      .select('petal_color1, petal_color2')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.petal_color1) {
+          setPetalColor1(data.petal_color1)
+          setPetalColor2(data.petal_color2 ?? data.petal_color1)
+        }
+      })
+  }, [userId])
+
   // Sauvegarde dans Supabase
   const saveWeekData = useCallback(async (updated) => {
     weekDataRef.current = updated
@@ -2520,6 +2827,17 @@ console.log('❌ Pas de données ou erreur:', error)
         },
       }
       await saveWeekData(updated)
+
+      // ── Lumens d'évolution par jour complété ──────────────────────────
+      if (userId) {
+        const lumenAmount = dayNum === 7 ? 15 : dayNum === 5 ? 10 : 5
+        supabase.rpc('award_lumens', {
+          p_user_id: userId,
+          p_amount:  lumenAmount,
+          p_reason:  `week_one_day_${dayNum}`,
+          p_meta:    { day: dayNum },
+        }).catch(() => {})  // non-bloquant
+      }
 
       if (dayNum === 7) {
         onComplete?.()
@@ -2647,6 +2965,10 @@ console.log('❌ Pas de données ou erreur:', error)
                 onContinue={() => setView('day')}
                 onOpenZone={setActiveZoneId}
                 onClose={onComplete}
+                onSignOut={signOut}
+                petalColor1={petalColor1}
+                petalColor2={petalColor2}
+                plantHealth={plantHealth}
               />
             ) : (
               <DayShell
