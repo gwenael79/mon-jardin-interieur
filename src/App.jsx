@@ -242,37 +242,42 @@ export default function App() {
     }}>
       <p style={{
         fontFamily: 'Cormorant Garamond, serif',
-        fontSize: 24,
-        color: '#9a7060',
+        fontSize: 38,
+        color: '#5a3020',
         fontStyle: 'italic',
+        fontWeight: 600,
         margin: 0,
+        textAlign: 'center',
+        lineHeight: 1.3,
       }}>
         À très bientôt 🌸
       </p>
       <p style={{
         fontFamily: 'Jost, sans-serif',
-        fontSize: 13,
-        fontWeight: 300,
-        color: '#b8a090',
+        fontSize: 17,
+        fontWeight: 400,
+        color: '#7a5040',
         margin: 0,
         letterSpacing: '0.04em',
+        textAlign: 'center',
       }}>
         Votre jardin vous attend demain.
       </p>
       <button
         onClick={() => window.location.reload()}
         style={{
-          marginTop: 32,
+          marginTop: 40,
           fontFamily: 'Jost, sans-serif',
-          fontSize: 12,
-          fontWeight: 300,
-          color: '#c8a090',
-          background: 'none',
-          border: '1px solid rgba(180,130,100,0.25)',
+          fontSize: 15,
+          fontWeight: 500,
+          color: '#fff',
+          background: 'linear-gradient(135deg, #c8a0b0, #a07888)',
+          border: 'none',
           borderRadius: 100,
-          padding: '8px 24px',
+          padding: '14px 36px',
           cursor: 'pointer',
           letterSpacing: '0.06em',
+          boxShadow: '0 8px 24px rgba(160,100,120,0.3)',
         }}
       >
         Retourner au jardin
