@@ -57,6 +57,170 @@ export const ONBOARDING_SLIDES = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  INTRO GWENAËL — modal de présentation avant les slides
+// ─────────────────────────────────────────────────────────────────────────────
+function IntroGwenael({ onStart }) {
+  const [phase, setPhase] = useState(0)
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 600)
+    const t2 = setTimeout(() => setPhase(2), 1400)
+    const t3 = setTimeout(() => setPhase(3), 2200)
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+  }, [])
+
+  const fade = (visible) => ({
+    opacity:    visible ? 1 : 0,
+    transform:  visible ? 'translateY(0)' : 'translateY(10px)',
+    transition: 'opacity 900ms ease, transform 900ms ease',
+  })
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
+      zIndex: 100,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px 16px',
+      overflowY: 'auto',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: 480,
+        background: '#faf5f2',
+        borderRadius: 24,
+        boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '48px 32px 40px',
+        gap: 20,
+      }}>
+
+        {/* ── Titre ── */}
+        <h1 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(42px, 10vw, 58px)',
+          fontWeight: 600,
+          fontStyle: 'italic',
+          color: '#2a1010',
+          lineHeight: 1.1,
+          margin: 0,
+          ...fade(phase >= 1),
+        }}>
+          Bienvenue.
+        </h1>
+
+        {/* ── Signature ── */}
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 13,
+          fontWeight: 400,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: '#c8a0b0',
+          margin: 0,
+          ...fade(phase >= 1),
+        }}>
+          Gwenaël — Accompagnateur en mieux-être
+        </p>
+
+        {/* ── Séparateur ── */}
+        <div style={{
+          width: 48, height: 2,
+          background: 'linear-gradient(to right, #c8a0b0, transparent)',
+          ...fade(phase >= 1),
+        }} />
+
+        {/* ── Texte 1 ── */}
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontStyle: 'italic',
+          fontSize: 'clamp(16px, 4vw, 19px)',
+          color: '#4a2e20',
+          lineHeight: 1.8,
+          margin: 0,
+          ...fade(phase >= 2),
+        }}>
+          J'ai à cœur de faciliter l'accès pour tous à des outils simples
+          et efficaces pour trouver une voie vers une vie plus sereine.
+        </p>
+
+        {/* ── Texte 2 ── */}
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(13px, 3.2vw, 15px)',
+          fontWeight: 300,
+          color: '#7a5040',
+          lineHeight: 1.8,
+          margin: 0,
+          ...fade(phase >= 2),
+        }}>
+          Aujourd'hui, je vous accompagne à découvrir l'application :
+        </p>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontStyle: 'italic',
+          fontWeight: 600,
+          fontSize: 'clamp(28px, 7vw, 38px)',
+          color: '#5a3020',
+          textAlign: 'center',
+          lineHeight: 1.2,
+          margin: '4px 0 0',
+          ...fade(phase >= 2),
+        }}>
+          Mon Jardin Intérieur.
+        </p>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(13px, 3.2vw, 15px)',
+          fontWeight: 300,
+          color: '#7a5040',
+          lineHeight: 1.8,
+          margin: 0,
+          ...fade(phase >= 2),
+        }}>
+          Commençons ensemble par quelques actions simples pour découvrir
+          et vous familiariser avec plus qu'un outil, mais bien avec une
+          nouvelle approche de votre équilibre émotionnel.
+        </p>
+
+        {/* ── CTA ── */}
+        <div style={{
+          marginTop: 8,
+          ...fade(phase >= 3),
+          pointerEvents: phase >= 3 ? 'auto' : 'none',
+        }}>
+          <button
+            onClick={onStart}
+            style={{
+              width: '100%',
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 15,
+              fontWeight: 500,
+              letterSpacing: '0.04em',
+              color: '#fff',
+              background: 'linear-gradient(135deg, #c8a0b0, #a07888)',
+              border: 'none',
+              borderRadius: 50,
+              padding: '16px 40px',
+              cursor: 'pointer',
+              transition: 'transform 0.15s ease',
+              boxShadow: '0 8px 24px rgba(160,100,120,0.3)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+          >
+            Vous êtes prêt ? Allons-y ensemble…
+          </button>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  STYLES — partagés HelpModal + slides
 // ─────────────────────────────────────────────────────────────────────────────
 export const ONB_STYLES = `
@@ -1093,8 +1257,8 @@ function StepEquipe({ onNext }) {
 // ─────────────────────────────────────────────────────────────────────────────
 export function OnboardingScreen({ userId, onComplete }) {
   useTheme() // applique les CSS vars du thème dès l'onboarding
-  // phase 0=slides 1=intention 2=metaphore 3=graine 4=communauté
-  const [phase,     setPhase]     = useState(0)
+  // phase -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté
+  const [phase,     setPhase]     = useState(-1)
   const [intention, setIntention] = useState(null)
 
   async function handleIntention(idx) {
@@ -1122,6 +1286,7 @@ export function OnboardingScreen({ userId, onComplete }) {
     setPhase(4)
   }
 
+  if (phase === -1) return <IntroGwenael onStart={() => setPhase(0)} />
   if (phase === 0) return <SlidesEducatives onComplete={() => setPhase(1)} />
   if (phase === 1) return <StepIntention onSelect={handleIntention} />
   if (phase === 2) return <StepMetaphore onNext={() => setPhase(3)} />

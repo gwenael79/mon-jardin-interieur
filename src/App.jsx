@@ -30,6 +30,9 @@ export default function App() {
   const [onboarded,       setOnboarded]       = useState(null)
   const [checkingOnboard, setCheckingOnboard] = useState(false)
   const [showSlides,      setShowSlides]      = useState(false)
+  const [pendingOnboarding, setPendingOnboarding] = useState(
+    () => sessionStorage.getItem('pendingOnboarding') === 'true'
+  )
 
   // ── État WeekOneFlow ─────────────────────────────────────
   const [showWeekOne,   setShowWeekOne]   = useState(false)
@@ -78,7 +81,15 @@ export default function App() {
       .then(({ data }) => {
         const isOnboarded = data?.onboarded === true
         setOnboarded(isOnboarded)
-        if (!isOnboarded) setShowSlides(true)
+        if (!isOnboarded) {
+          // Pas encore onboardé → AccessPage en premier
+          setShowSlides(false)
+        } else if (sessionStorage.getItem('pendingOnboarding') === 'true') {
+          // Retour après paiement Stripe → enchaîner sur l'onboarding
+          sessionStorage.removeItem('pendingOnboarding')
+          setPendingOnboarding(false)
+          setShowSlides(true)
+        }
         setCheckingOnboard(false)
       })
   }, [user?.id])
@@ -133,11 +144,11 @@ export default function App() {
   // ── Callbacks AccessPage ─────────────────────────────────
   const handleActivateFree = async () => {
     await activateFree()
-    // Marquer comme onboardé en DB
     await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
     showToast('🌱', 'Bienvenue dans votre jardin !')
     await refresh()
     setOnboarded(true)
+    setShowSlides(true)  // → enchaîner sur l'onboarding (Gwenaël)
   }
 
   const handlePaySuccess = async ({ plan }) => {
@@ -150,6 +161,7 @@ export default function App() {
     showToast('✨', `Abonnement ${plan.label} activé !`)
     await refresh()
     setOnboarded(true)
+    setShowSlides(true)  // → enchaîner sur l'onboarding (Gwenaël)
   }
 
   // ── Chargement ───────────────────────────────────────────
@@ -167,6 +179,20 @@ export default function App() {
   if (isTestWeekOne) return (
     <WeekOneFlow
       userId={user?.id ?? null}
+      onComplete={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        window.location.reload()
+      }}
+    />
+  )
+
+  // 🧪 TEST — accès direct à un jour précis via ?test-day=N (retirer avant prod)
+  const testDayParam = new URLSearchParams(window.location.search).get('test-day')
+  const testDayNum   = testDayParam ? Math.min(Math.max(parseInt(testDayParam, 10), 1), 7) : null
+  if (testDayNum) return (
+    <WeekOneFlow
+      userId={user?.id ?? null}
+      forceDay={testDayNum}
       onComplete={() => {
         window.history.replaceState({}, '', window.location.pathname)
         window.location.reload()
@@ -206,15 +232,7 @@ export default function App() {
   // 1. Non connecté → AuthPage (pas de notifications)
   if (!user) return <AuthPage />
 
-  // 2a. Nouvel utilisateur → slides de présentation d'abord
-  if (onboarded === false && showSlides) return (
-    <OnboardingScreen
-      userId={user?.id}
-      onComplete={() => setShowSlides(false)}
-    />
-  )
-
-  // 2b. Slides terminées → AccessPage (choix plan)
+  // 2a. Nouvel utilisateur → AccessPage en premier (choix plante + abonnement)
   if (onboarded === false) return (
     <>
       <AccessPage
@@ -224,6 +242,14 @@ export default function App() {
       />
       {toast && <div style={styles.toast}><span>{toast.icon}</span><span>{toast.msg}</span></div>}
     </>
+  )
+
+  // 2b. AccessPage terminé → OnboardingScreen (Gwenaël + slides)
+  if (onboarded === true && showSlides) return (
+    <OnboardingScreen
+      userId={user?.id}
+      onComplete={() => setShowSlides(false)}
+    />
   )
 
   // 3. Admin

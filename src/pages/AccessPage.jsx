@@ -472,6 +472,7 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
       if (!url) throw new Error('URL de paiement manquante')
 
       // Redirection vers Stripe Checkout
+      sessionStorage.setItem('pendingOnboarding', 'true')
       window.location.href = url
 
     } catch (e) {
