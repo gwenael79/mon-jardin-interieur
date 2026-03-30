@@ -231,7 +231,7 @@ export default function App() {
   // 4. Dashboard normal + notifications jardin
   return (
     <>
-      <DashboardPage />
+      {!showWeekOne && <DashboardPage />}
 
       {/* ── WeekOneFlow — 7 premiers jours ── */}
       {showWeekOne && (
