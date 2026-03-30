@@ -15,6 +15,15 @@ function GlobalStyles() {
         from { opacity: 0; transform: translateY(18px); }
         to   { opacity: 1; transform: translateY(0);    }
       }
+      @keyframes softRise {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0);    }
+      }
+      .wof-soft { animation: softRise 900ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+      @keyframes pulseCursor {
+        0%, 100% { transform: scale(1);    opacity: 0.24; }
+        50%       { transform: scale(1.55); opacity: 0.40; }
+      }
       @keyframes fleurFloat {
         0%,100% { transform: translateY(0px)   rotate(0deg);    }
         40%     { transform: translateY(-8px)  rotate(1.5deg);  }
@@ -28,6 +37,10 @@ function GlobalStyles() {
       @keyframes petalIn {
         from { opacity: 0; transform: scale(0.3); }
         to   { opacity: 1; transform: scale(1);   }
+      }
+      @keyframes breathe {
+        0%, 100% { transform: scale(1);    opacity: 0.55; }
+        50%       { transform: scale(1.55); opacity: 1;    }
       }
 
       .wof-in { animation: stepIn 400ms ease both; }
@@ -130,9 +143,8 @@ export const WEEK_ONE_DATA = [
     title: 'Je commence',
     color: '#c8a0b0',
     accueil: {
-      headline: "Vous êtes là. C'est suffisant pour aujourd'hui.",
-      subtitle: 'Prenez une grande inspiration avant de continuer.',
-      pauseSeconds: 3,
+      layout: 'slide1',
+      pauseSeconds: 1,
     },
     introspection: {
       question: 'Comment vous sentez-vous là, maintenant ?',
@@ -147,20 +159,42 @@ export const WEEK_ONE_DATA = [
     },
     rituel: {
       zone: 'Racines',
-      intro: "Les racines sont le fondement. Elles tiennent, même dans la tempête.",
-      lines: [
-        'Posez les pieds à plat sur le sol.',
-        'Fermez les yeux si vous le souhaitez.',
-        '',
-        '3 cycles de respiration :',
-        '• Inspirez… 4 temps',
-        '• Retenez… 2 temps',
-        '• Expirez… 6 temps',
-      ],
-      hasTimer: true,
-      timerLabel: '3 cycles',
-      timerDuration: 36,
+      getIntro: (ans) => {
+        const feel = ans?.j1?.feel
+        if (feel === 'fatigue' || feel === 'stresse') return {
+          ctaLabel: 'Revenir à mes racines',
+          lines: [
+            "Ce que vous ressentez peut être lourd aujourd'hui.",
+            "Et dans ces moments-là,\nce n'est pas ce qui est visible\nqui a le plus besoin d'attention…",
+            "mais ce qui soutient tout le reste.",
+            "Comme une plante, il existe en vous\nune base invisible\nqui influence votre équilibre.",
+            "On va commencer doucement, par là.",
+          ],
+        }
+        if (feel === 'neutre') return {
+          ctaLabel: 'Explorer mes racines',
+          lines: [
+            "Ce que vous ressentez est peut-être\ndifficile à définir aujourd'hui.",
+            "Ni vraiment mal…\nni vraiment bien.",
+            "C'est souvent dans ces moments-là\nque quelque chose peut commencer à s'éclaircir.",
+            "Comme une plante, il existe en vous\nune base invisible\nqui soutient tout le reste.",
+            "On va simplement s'en rapprocher.",
+          ],
+        }
+        return {
+          ctaLabel: 'Approfondir mes racines',
+          lines: [
+            "Vous portez quelque chose de plus calme aujourd'hui.",
+            "C'est un terrain favorable.",
+            "Comme une plante, il existe en vous\nune base invisible\nqui soutient tout le reste.",
+            "Quand le terrain est accueillant,\nles racines peuvent s'approfondir.",
+            "On va simplement les laisser faire.",
+          ],
+        }
+      },
+      isGuided: true,
     },
+    guidedValidation: true,
     getTrace: (ans) =>
       `Vous vous sentiez ${labelFor(ans?.j1?.feel)}. Et vous avez quand même pris ce moment.`,
     ouverture: 'Demain, vous découvrirez ce qui vous porte, même quand vous vacillez.',
@@ -172,6 +206,7 @@ export const WEEK_ONE_DATA = [
     title: 'Je reviens',
     color: '#9ab8c8',
     accueil: {
+      conditioning: true,
       headline: "Vous êtes revenu·e. Votre jardin s'en souvient.",
       subtitle: 'La continuité est une forme de soin.',
       pauseSeconds: 2,
@@ -215,6 +250,7 @@ export const WEEK_ONE_DATA = [
     title: 'Je me vois',
     color: '#7aaa88',
     accueil: {
+      conditioning: true,
       headline: 'Quelque chose commence à se dessiner.',
       subtitle: "Regarder sans juger — c'est déjà beaucoup.",
       pauseSeconds: 2,
@@ -267,6 +303,7 @@ export const WEEK_ONE_DATA = [
     title: "Je m'accorde de l'espace",
     color: '#d4a0b0',
     accueil: {
+      conditioning: true,
       headline: 'Vous pouvez ralentir ici.',
       subtitle: 'Ce moment vous appartient entièrement.',
       pauseSeconds: 3,
@@ -309,10 +346,10 @@ export const WEEK_ONE_DATA = [
     title: 'Je crée un lien',
     color: '#c8a870',
     accueil: {
+      conditioning: true,
       headline: "Vous n'êtes pas seul·e aujourd'hui.",
       subtitle: 'Le lien commence souvent par un seul geste silencieux.',
       pauseSeconds: 2,
-      showZoneBadges: true,
     },
     introspection: {
       question: 'Avez-vous ressenti du lien récemment ?',
@@ -352,10 +389,10 @@ export const WEEK_ONE_DATA = [
     title: 'Je prends conscience',
     color: '#b888a0',
     accueil: {
+      conditioning: true,
       headline: 'Regardez ce qui a changé, même légèrement.',
       subtitle: "La croissance est souvent invisible jusqu'au jour où elle ne l'est plus.",
       pauseSeconds: 3,
-      showFlowerReveal: true,
     },
     introspection: {
       question: "Votre stress aujourd'hui comparé à il y a 6 jours est…",
@@ -401,10 +438,10 @@ export const WEEK_ONE_DATA = [
     color: '#c8a0b0',
     gradient: 'linear-gradient(135deg, #c8a0b0 0%, #9ab8c8 35%, #7aaa88 65%, #c8a870 100%)',
     accueil: {
+      conditioning: true,
       headline: 'Cela fait déjà une semaine.',
       subtitle: 'Vous prenez soin de vous.',
       pauseSeconds: 3,
-      showFlowerFull: true,
     },
     introspection: {
       question: "Qu'est-ce que vous remarquez chez vous ?",
@@ -728,19 +765,581 @@ function RituelTimer({ duration, label, color, onComplete }) {
 // 4. Composants d'étapes
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Orbe respiratoire ──────────────────────────────────────────────────────
+
+function BreathingOrb() {
+  const [isInhale, setIsInhale] = useState(true)
+
+  useEffect(() => {
+    const t = setInterval(() => setIsInhale((v) => !v), 5000)
+    return () => clearInterval(t)
+  }, [])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
+
+      {/* Orbe + texte centré */}
+      <div style={{ position: 'relative', width: 72, height: 72 }}>
+        <div style={{
+          width: 72,
+          height: 72,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle at 42% 38%, #fff6f2 0%, #f0c8b4 38%, #9a6070 100%)',
+          transform: isInhale ? 'scale(1.7)' : 'scale(1)',
+          boxShadow: isInhale
+            ? '0 0 55px 22px rgba(240,175,145,0.52), 0 0 90px 36px rgba(200,130,110,0.22)'
+            : '0 0 14px 4px rgba(200,140,120,0.18)',
+          transition: 'transform 5s ease-in-out, box-shadow 5s ease-in-out',
+        }} />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <p style={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 11,
+            fontWeight: 500,
+            color: '#3a1818',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            margin: 0,
+            transition: 'opacity 0.8s ease',
+            whiteSpace: 'nowrap',
+          }}>
+            {isInhale ? 'Inspirez' : 'Expirez'}
+          </p>
+        </div>
+      </div>
+
+      {/* Guidance */}
+      <p style={{
+        fontFamily: 'Cormorant Garamond, Georgia, serif',
+        fontSize: 'clamp(16px, 4vw, 20px)',
+        fontStyle: 'italic',
+        fontWeight: 400,
+        color: '#2a1e1e',
+        lineHeight: 1.65,
+        margin: 0,
+        maxWidth: 320,
+        textAlign: 'center',
+      }}>
+        Posez votre main sur le ventre et portez votre attention sur ce rythme lent.
+      </p>
+
+    </div>
+  )
+}
+
+// ── Baromètre émotionnel ───────────────────────────────────────────────────
+
+function EmotionalBarometer({ answerKey, onAnswer }) {
+  const [pos,        setPos]        = useState(0.5)
+  const [touched,    setTouched]    = useState(false)
+  const [ctaVisible, setCtaVisible] = useState(false)
+  const trackRef   = useRef(null)
+  const dragging   = useRef(false)
+  const ctaTimer   = useRef(null)
+
+  function getCursorColor(p) {
+    // #d95c5c (rouge doux) → #e8c86a (jaune chaud) → #6aaa7a (vert sauge)
+    let r, g, b
+    if (p <= 0.5) {
+      const t = p * 2
+      r = Math.round(217 + (232 - 217) * t)
+      g = Math.round(92  + (200 - 92)  * t)
+      b = Math.round(92  + (106 - 92)  * t)
+    } else {
+      const t = (p - 0.5) * 2
+      r = Math.round(232 + (106 - 232) * t)
+      g = Math.round(200 + (170 - 200) * t)
+      b = Math.round(106 + (122 - 106) * t)
+    }
+    return `rgb(${r},${g},${b})`
+  }
+
+  function posFromPointer(e) {
+    const rect = trackRef.current.getBoundingClientRect()
+    return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+  }
+
+  function handlePointerDown(e) {
+    dragging.current = true
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setPos(posFromPointer(e))
+    if (!touched) {
+      setTouched(true)
+      ctaTimer.current = setTimeout(() => setCtaVisible(true), 1400)
+    }
+  }
+
+  function handlePointerMove(e) {
+    if (!dragging.current) return
+    setPos(posFromPointer(e))
+  }
+
+  function handlePointerUp() { dragging.current = false }
+
+  useEffect(() => () => clearTimeout(ctaTimer.current), [])
+
+  function posToValue(p) {
+    if (p < 0.2) return 'fatigue'
+    if (p < 0.4) return 'stresse'
+    if (p < 0.6) return 'neutre'
+    if (p < 0.8) return 'calme'
+    return 'bien'
+  }
+
+  const color = getCursorColor(pos)
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+
+      {/* Phrase d'introduction */}
+      <p style={{
+        fontFamily: 'Cormorant Garamond, Georgia, serif',
+        fontSize: 'clamp(15px, 3.8vw, 18px)',
+        fontStyle: 'italic',
+        color: '#6a5858',
+        lineHeight: 1.7,
+        textAlign: 'center',
+        margin: '0 0 22px',
+      }}>
+        Il n'y a pas de bonne réponse.<br />
+        Juste ce qui est là aujourd'hui.
+      </p>
+
+      {/* Question */}
+      <p style={{
+        fontFamily: 'Cormorant Garamond, Georgia, serif',
+        fontSize: 'clamp(20px, 5.5vw, 26px)',
+        fontWeight: 500,
+        color: '#0f0808',
+        lineHeight: 1.45,
+        textAlign: 'center',
+        margin: '0 0 44px',
+      }}>
+        Comment vous vous sentez,<br />là, maintenant&nbsp;?
+      </p>
+
+      {/* Slider */}
+      <div style={{ width: '100%', padding: '0 2px', boxSizing: 'border-box' }}>
+
+        <div
+          ref={trackRef}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          style={{
+            position: 'relative',
+            height: 10,
+            borderRadius: 10,
+            background: 'linear-gradient(to right, #d95c5c, #e8c86a 50%, #6aaa7a)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            touchAction: 'none',
+          }}
+        >
+          {/* Curseur */}
+          <div style={{
+            position: 'absolute',
+            left: `${pos * 100}%`,
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            width: 32,
+            height: 32,
+          }}>
+            {/* Halo pulsant */}
+            <div style={{
+              position: 'absolute',
+              width: 60,
+              height: 60,
+              borderRadius: '50%',
+              top: -14,
+              left: -14,
+              backgroundColor: color,
+              animation: 'pulseCursor 4.5s ease-in-out infinite',
+              transition: 'background-color 0.5s ease',
+            }} />
+            {/* Orbe principal */}
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              backgroundColor: color,
+              boxShadow: `inset 0 0 14px rgba(255,255,255,0.75), 0 2px 18px 6px ${color}80`,
+              transition: 'background-color 0.5s ease',
+            }} />
+          </div>
+        </div>
+
+        {/* Pôles */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
+          <span style={{ fontSize: 26, lineHeight: 1 }}>😔</span>
+          <span style={{ fontSize: 26, lineHeight: 1 }}>😌</span>
+        </div>
+      </div>
+
+      {/* CTA */}
+      {ctaVisible && (
+        <div className="wof-soft" style={{ marginTop: 40 }}>
+          <PrimaryButton onClick={() => onAnswer(answerKey, posToValue(pos))}>
+            Continuer
+          </PrimaryButton>
+        </div>
+      )}
+
+    </div>
+  )
+}
+
+// ── ACCUEIL SLIDE 1 ────────────────────────────────────────────────────────
+
+function DayAccueilSlide1({ answerKey, onAnswer }) {
+  const [subSlide, setSubSlide] = useState(0)
+  const [phase,    setPhase]    = useState(0)
+
+  useEffect(() => {
+    setPhase(0)
+    let timers
+    if (subSlide === 0) {
+      // SLIDE 0 — INTRO
+      timers = [
+        setTimeout(() => setPhase(1), 1800),  // "Quelque chose en vous…"
+        setTimeout(() => setPhase(2), 3600),  // "Pas pour faire plus…"
+        setTimeout(() => setPhase(3), 5400),  // "Ce que vous allez commencer…"
+        setTimeout(() => setPhase(4), 7000),  // CTA
+      ]
+    } else if (subSlide === 1) {
+      // SLIDE 1 — ARRÊT
+      timers = [
+        setTimeout(() => setPhase(1), 1000),  // "Et pour une fois…"
+        setTimeout(() => setPhase(2), 2500),  // CTA "Prendre un instant"
+      ]
+    } else if (subSlide === 2) {
+      // SLIDE 2 — CONNEXION
+      timers = [
+        setTimeout(() => setPhase(1), 600),   // animation respiration
+        setTimeout(() => setPhase(2), 2400),  // CTA "Observer"
+      ]
+    } else {
+      // SLIDE 3 — QUESTION
+      timers = [
+        setTimeout(() => setPhase(1), 400),   // badges
+      ]
+    }
+    return () => timers.forEach(clearTimeout)
+  }, [subSlide])
+
+/* ── SLIDE 0 — INTRO ─────────────────────────────────────────── */
+  const T = 'opacity 920ms cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 920ms cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+
+  function fadeStyle(visible) {
+    return {
+      opacity:    visible ? 1 : 0,
+      transform:  visible ? 'translateY(0)' : 'translateY(10px)',
+      transition: T,
+    }
+  }
+
+  if (subSlide === 0) {
+    return (
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(24px, 6.5vw, 34px)',
+          fontWeight: 500,
+          color: '#0f0808',
+          lineHeight: 1.35,
+          margin: '0 0 32px',
+          letterSpacing: '-0.01em',
+          ...fadeStyle(true),
+        }}>
+          Vous n'êtes pas ici par hasard.
+        </p>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontStyle: 'italic',
+          color: '#2a1e1e',
+          lineHeight: 1.6,
+          margin: '0 0 28px',
+          ...fadeStyle(phase >= 1),
+        }}>
+          Quelque chose en vous<br />
+          sait qu'il est temps de ralentir.
+        </p>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontStyle: 'italic',
+          color: '#2a1e1e',
+          lineHeight: 1.6,
+          margin: '0 0 28px',
+          ...fadeStyle(phase >= 2),
+        }}>
+          Pas pour faire plus.<br />
+          Mais pour faire autrement.
+        </p>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontStyle: 'italic',
+          color: '#2a1e1e',
+          lineHeight: 1.6,
+          margin: '0 0 44px',
+          ...fadeStyle(phase >= 3),
+        }}>
+          Ce que vous allez commencer ici…<br />
+          se construit un jour à la fois.
+        </p>
+
+        <div style={{ ...fadeStyle(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+          <PrimaryButton onClick={() => setSubSlide(1)}>
+            Commencer
+          </PrimaryButton>
+        </div>
+
+      </div>
+    )
+  }
+
+  /* ── SLIDE 1 — ARRÊT ─────────────────────────────────────────── */
+  if (subSlide === 1) {
+    return (
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+        <h1 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(30px, 7.5vw, 46px)',
+          fontWeight: 500,
+          color: '#0f0808',
+          lineHeight: 1.15,
+          margin: '0 0 32px',
+          letterSpacing: '-0.01em',
+          ...fadeStyle(true),
+        }}>
+          Vous êtes là.
+        </h1>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontStyle: 'italic',
+          color: '#2a1e1e',
+          lineHeight: 1.6,
+          margin: '0 0 44px',
+          ...fadeStyle(phase >= 1),
+        }}>
+          Et pour une fois…<br />
+          vous n'avez rien à faire de plus.
+        </p>
+
+        <div style={{ ...fadeStyle(phase >= 2), pointerEvents: phase >= 2 ? 'auto' : 'none' }}>
+          <PrimaryButton onClick={() => setSubSlide(2)}>
+            Prendre un instant
+          </PrimaryButton>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── SLIDE 2 — CONNEXION ──────────────────────────────────────── */
+  if (subSlide === 2) {
+    return (
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(22px, 5.5vw, 30px)',
+          fontWeight: 400,
+          color: '#0f0808',
+          lineHeight: 1.5,
+          margin: '0 0 36px',
+          ...fadeStyle(true),
+        }}>
+          Prenez simplement un instant.
+        </p>
+
+        <div style={{ marginBottom: 36 }}>
+          <BreathingOrb />
+        </div>
+
+        <div style={{ ...fadeStyle(phase >= 1), pointerEvents: phase >= 1 ? 'auto' : 'none' }}>
+          <PrimaryButton onClick={() => setSubSlide(3)}>
+            Observer
+          </PrimaryButton>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── SLIDE 3 — BAROMÈTRE ÉMOTIONNEL ─────────────────────────── */
+  return (
+    <div className="wof-soft" style={{ padding: '32px 16px 36px' }}>
+      <EmotionalBarometer answerKey={answerKey} onAnswer={onAnswer} />
+    </div>
+  )
+}
+
+// ── Mise en condition (jours 2-7) ──────────────────────────────────────────
+
+function ConditioningAccueil({ data, answers, onConditioningComplete }) {
+  const [subSlide, setSubSlide] = useState(0)
+  const [ctaReady, setCtaReady] = useState(false)
+  const [breathCta, setBreathCta] = useState(false)
+
+  useEffect(() => {
+    setCtaReady(false)
+    setBreathCta(false)
+    let timer
+    if (subSlide === 0) {
+      timer = setTimeout(() => setCtaReady(true), data.pauseSeconds * 1000)
+    } else if (subSlide === 1) {
+      timer = setTimeout(() => setBreathCta(true), 3200)
+    }
+    return () => clearTimeout(timer)
+  }, [subSlide, data.pauseSeconds])
+
+  const prevNote = data.getPreviousNote?.(answers) || data.getNarrativeNote?.(answers)
+
+  /* ── Sub-slide 0 : accueil du jour ─── */
+  if (subSlide === 0) {
+    return (
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+        <h1 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(22px, 5.5vw, 30px)',
+          fontWeight: 500,
+          color: '#0f0808',
+          lineHeight: 1.3,
+          margin: '0 0 20px',
+          letterSpacing: '-0.01em',
+        }}>
+          {data.headline}
+        </h1>
+
+        {prevNote && (
+          <p style={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 14,
+            fontWeight: 300,
+            color: '#7a6868',
+            lineHeight: 1.65,
+            margin: '0 0 12px',
+            fontStyle: 'italic',
+          }}>
+            {prevNote}
+          </p>
+        )}
+
+        {data.subtitle && (
+          <p style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(17px, 4vw, 20px)',
+            fontStyle: 'italic',
+            color: '#4a3838',
+            lineHeight: 1.65,
+            margin: '0 0 32px',
+          }}>
+            {data.subtitle}
+          </p>
+        )}
+
+        {ctaReady && (
+          <div className="wof-soft">
+            <PrimaryButton onClick={() => setSubSlide(1)}>
+              Prendre un instant
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  /* ── Sub-slide 1 : respiration ─── */
+  if (subSlide === 1) {
+    return (
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5vw, 26px)',
+          fontWeight: 400,
+          color: '#0f0808',
+          lineHeight: 1.5,
+          margin: '0 0 36px',
+        }}>
+          Prenez simplement un instant.
+        </p>
+
+        <div style={{ marginBottom: 40 }}>
+          <BreathingOrb />
+        </div>
+
+        {breathCta && (
+          <div className="wof-soft">
+            <PrimaryButton onClick={() => setSubSlide(2)}>
+              Observer
+            </PrimaryButton>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  /* ── Sub-slide 2 : baromètre émotionnel ─── */
+  return (
+    <div className="wof-soft" style={{ padding: '32px 16px 36px' }}>
+      <EmotionalBarometer
+        answerKey="conditioning_feel"
+        onAnswer={(_, value) => onConditioningComplete(value)}
+      />
+    </div>
+  )
+}
+
 // ── ACCUEIL ────────────────────────────────────────────────────────────────
 
-function DayAccueil({ data, onNext }) {
+function DayAccueil({ data, introspectionData, answers, onAnswerFromAccueil, onConditioningComplete, onNext }) {
+  const isSlide1       = data.layout === 'slide1'
+  const isConditioning = data.conditioning === true
+
   const [ctaReady,      setCtaReady]      = useState(false)
   const [flowerVisible, setFlowerVisible] = useState(false)
 
   useEffect(() => {
+    if (isSlide1 || isConditioning) return
     const t1 = setTimeout(() => setCtaReady(true), data.pauseSeconds * 1000)
     const t2 = (data.showFlowerReveal || data.showFlowerFull)
       ? setTimeout(() => setFlowerVisible(true), (data.pauseSeconds + 0.2) * 1000)
       : null
     return () => { clearTimeout(t1); if (t2) clearTimeout(t2) }
-  }, [data.pauseSeconds, data.showFlowerReveal, data.showFlowerFull])
+  }, [isSlide1, isConditioning, data.pauseSeconds, data.showFlowerReveal, data.showFlowerFull])
+
+  if (isSlide1) {
+    return (
+      <DayAccueilSlide1
+        answerKey={introspectionData?.answerKey}
+        onAnswer={onAnswerFromAccueil}
+      />
+    )
+  }
+
+  if (isConditioning) {
+    return (
+      <ConditioningAccueil
+        data={data}
+        answers={answers}
+        onConditioningComplete={onConditioningComplete}
+      />
+    )
+  }
 
 
   return (
@@ -842,12 +1441,201 @@ function DayIntrospection({ data, onAnswer, onBack }) {
   )
 }
 
+// ── Slide de transition vers le rituel ────────────────────────────────────
+
+const TRANS = 'opacity 950ms cubic-bezier(0.25,0.46,0.45,0.94), transform 950ms cubic-bezier(0.25,0.46,0.45,0.94)'
+
+function fadeIn(visible) {
+  return {
+    opacity:    visible ? 1 : 0,
+    transform:  visible ? 'translateY(0)' : 'translateY(9px)',
+    transition: TRANS,
+  }
+}
+
+function RituelTransition({ introData, dayColor, onStart, onBack }) {
+  const { lines, ctaLabel } = introData
+  const [phase, setPhase] = useState(0)
+
+  useEffect(() => {
+    const timers = lines.map((_, i) =>
+      setTimeout(() => setPhase(i + 1), (i + 1) * 1800)
+    )
+    timers.push(setTimeout(() => setPhase(lines.length + 1), (lines.length + 1) * 1800))
+    return () => timers.forEach(clearTimeout)
+  }, [lines])
+
+  return (
+    <div style={{ textAlign: 'center', padding: '40px 16px 40px' }}>
+      <BackButton onClick={onBack} />
+
+      {lines.map((line, i) => (
+        <p key={i} style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(18px, 4.5vw, 24px)',
+          fontStyle: i === 0 ? 'normal' : 'italic',
+          fontWeight: i === 0 ? 500 : 400,
+          color: i === 0 ? '#0f0808' : '#3a2828',
+          lineHeight: 1.65,
+          whiteSpace: 'pre-line',
+          margin: '0 0 20px',
+          ...fadeIn(phase > i),
+        }}>
+          {line}
+        </p>
+      ))}
+
+      <div style={{
+        marginTop: 16,
+        ...fadeIn(phase > lines.length),
+        pointerEvents: phase > lines.length ? 'auto' : 'none',
+      }}>
+        <PrimaryButton onClick={onStart} style={{ background: `linear-gradient(135deg, ${dayColor}, ${dayColor}cc)` }}>
+          {ctaLabel}
+        </PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
+// ── Rituel guidé — Racines ─────────────────────────────────────────────────
+
+function RacinesGuidedRituel({ onNext, onBack }) {
+  const [phase, setPhase] = useState(0)
+  const phaseRefs = useRef({})
+
+  useEffect(() => {
+    const T = [0, 3000, 6200, 9500, 13500, 17000, 20800, 25000, 28500]
+    const timers = T.map((ms, i) =>
+      setTimeout(() => {
+        setPhase(i + 1)
+        // skip scroll for phase 1 — already at top
+        if (i > 0) {
+          setTimeout(() => {
+            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 300)
+        }
+      }, ms)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const S = {
+    fontFamily: 'Cormorant Garamond, Georgia, serif',
+    fontStyle:  'italic',
+    fontSize:   'clamp(19px, 4.8vw, 23px)',
+    color:      '#0f0808',
+    textAlign:  'center',
+    lineHeight: 1.85,
+    margin:     '0 0 32px',
+  }
+
+  function B({ children }) {
+    return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong>
+  }
+
+  function block(n, content) {
+    return (
+      <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
+        {content}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '16px 24px 80px' }}>
+      <BackButton onClick={onBack} />
+
+      {/* Titre */}
+      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(11px, 2.8vw, 13px)',
+          fontWeight: 500,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#9a7060',
+          margin: '0 0 8px',
+        }}>
+          Votre premier rituel
+        </p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(30px, 7.5vw, 40px)',
+          fontWeight: 700,
+          fontStyle: 'italic',
+          color: '#2a1010',
+          lineHeight: 1.15,
+          margin: '0 0 10px',
+        }}>
+          vos racines
+        </h2>
+        <div style={{
+          width: 48,
+          height: 2,
+          background: 'linear-gradient(to right, transparent, #b87c5a, transparent)',
+          margin: '0 auto',
+        }} />
+      </div>
+
+      {block(1, <p style={S}>Vous pouvez simplement <B>rester là</B>… quelques instants.</p>)}
+      {block(2, <p style={S}><B>Sentez</B> vos pieds. Leur <B>contact</B> avec le sol.</p>)}
+      {block(3, <p style={S}>Sans chercher à changer quoi que ce soit.</p>)}
+      {block(4, <>
+        <p style={S}><B>Inspirez</B> doucement… et laissez l'air <B>sortir</B>.</p>
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
+          <span style={{
+            display: 'inline-block',
+            fontSize: 'clamp(11px, 2.8vw, 13px)',
+            fontFamily: 'Jost, sans-serif',
+            fontWeight: 500,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: '#7a5c48',
+            background: 'rgba(180,130,100,0.12)',
+            border: '1px solid rgba(180,130,100,0.30)',
+            borderRadius: 100,
+            padding: '5px 14px',
+          }}>
+            2 cycles suffisent
+          </span>
+        </div>
+      </>)}
+      {block(5, <p style={S}><B>Imaginez</B> maintenant… quelque chose qui <B>descend</B> doucement sous vous.</p>)}
+      {block(6, <p style={S}>Comme des <B>racines</B>. Elles <B>s'enfoncent</B>… tranquillement.</p>)}
+      {block(7, <p style={S}>Et à chaque <B>expiration</B>… vous pouvez laisser votre <B>poids descendre</B> un peu plus.</p>)}
+      {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}><B>Rien à faire</B> de plus. <B>Juste sentir.</B></p>)}
+
+      {/* CTA */}
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
 // ── RITUEL ─────────────────────────────────────────────────────────────────
 
-function DayRituel({ data, dayColor, onNext, onBack }) {
-  const [freeChoice,    setFreeChoice]    = useState(null)
-  const [choiceStarted, setChoiceStarted] = useState(false)
-  const [timerDone,     setTimerDone]     = useState(false)
+function DayRituel({ data, answers, dayColor, onNext, onBack }) {
+  const [showTransition, setShowTransition] = useState(!!data.getIntro)
+  const [freeChoice,     setFreeChoice]     = useState(null)
+  const [choiceStarted,  setChoiceStarted]  = useState(false)
+  const [timerDone,      setTimerDone]      = useState(false)
+
+  if (showTransition) {
+    return (
+      <RituelTransition
+        introData={data.getIntro(answers)}
+        dayColor={dayColor}
+        onStart={() => setShowTransition(false)}
+        onBack={onBack}
+      />
+    )
+  }
+
+  if (data.isGuided) {
+    return <RacinesGuidedRituel onNext={onNext} onBack={onBack} />
+  }
 
   const isFree       = !!data.isFreeChoice
   const activeLines  = isFree && freeChoice ? freeChoice.lines    : data.lines
@@ -876,17 +1664,19 @@ function DayRituel({ data, dayColor, onNext, onBack }) {
         {data.zone}
       </p>
 
-      <p style={{
-        fontFamily: 'Cormorant Garamond, Georgia, serif',
-        fontSize: 'clamp(15px, 3.5vw, 18px)',
-        fontStyle: 'italic',
-        color: '#000',
-        textAlign: 'center',
-        lineHeight: 1.65,
-        margin: '0 0 20px',
-      }}>
-        {data.intro}
-      </p>
+      {(data.getIntro ? data.getIntro(answers) : [data.intro]).map((line, i) => (
+        <p key={i} style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(15px, 3.5vw, 18px)',
+          fontStyle: 'italic',
+          color: '#000',
+          textAlign: 'center',
+          lineHeight: 1.7,
+          margin: i === 0 ? '0 0 12px' : '0 0 12px',
+        }}>
+          {line}
+        </p>
+      ))}
 
       {/* Choix libre — Jour 7 */}
       {isFree && !choiceStarted && (
@@ -1054,6 +1844,112 @@ function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack }) {
   )
 }
 
+// ── VALIDATION GUIDÉE JOUR 1 ───────────────────────────────────────────────
+
+function RacinesValidation({ answers, onNext, onBack }) {
+  const [phase, setPhase] = useState(0)
+  const phaseRefs = useRef({})
+  const hasBarometer = !!answers?.j1?.feel
+
+  useEffect(() => {
+    const T = [0, 2800, 5800, hasBarometer ? 9000 : 99999, 12500]
+    const timers = T.map((ms, i) =>
+      setTimeout(() => {
+        setPhase(i + 1)
+        if (i > 0) {
+          setTimeout(() => {
+            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 300)
+        }
+      }, ms)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [hasBarometer])
+
+  const S = {
+    fontFamily: 'Cormorant Garamond, Georgia, serif',
+    fontStyle: 'italic',
+    fontSize: 'clamp(19px, 4.8vw, 23px)',
+    color: '#0f0808',
+    textAlign: 'center',
+    lineHeight: 1.85,
+    margin: '0 0 32px',
+  }
+
+  function B({ children }) {
+    return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong>
+  }
+
+  function block(n, content) {
+    return (
+      <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
+        {content}
+      </div>
+    )
+  }
+
+  const ctaPhase = hasBarometer ? 5 : 4
+
+  return (
+    <div style={{ padding: '16px 24px 80px' }}>
+      <BackButton onClick={onBack} />
+
+      {/* Titre */}
+      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(11px, 2.8vw, 13px)',
+          fontWeight: 500,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#9a7060',
+          margin: '0 0 8px',
+        }}>
+          Ce qui vient de se passer
+        </p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(30px, 7.5vw, 40px)',
+          fontWeight: 700,
+          fontStyle: 'italic',
+          color: '#2a1010',
+          lineHeight: 1.15,
+          margin: '0 0 10px',
+        }}>
+          Un retour aux racines
+        </h2>
+        <div style={{
+          width: 48, height: 2,
+          background: 'linear-gradient(to right, transparent, #b87c5a, transparent)',
+          margin: '0 auto',
+        }} />
+      </div>
+
+      {block(1, <p style={S}>Vous venez de revenir à quelque chose de <B>simple</B>. Et souvent… c'est là que tout <B>commence</B>.</p>)}
+      {block(2, <p style={S}>Quand les racines trouvent un peu plus de <B>stabilité</B>, le reste suit… <B>naturellement</B>.</p>)}
+      {hasBarometer && block(3, <p style={S}>Et déjà, quelque chose est <B>légèrement différent</B>.</p>)}
+
+      {block(hasBarometer ? 4 : 3, <>
+        <div style={{
+          width: 40, height: 1,
+          background: 'rgba(180,130,100,0.3)',
+          margin: '8px auto 40px',
+        }} />
+        <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 12px' }}>
+          <B>Demain</B>, vous allez découvrir ce qui vous tient debout…<br />même quand tout vacille.
+        </p>
+        <p style={{ ...S, margin: '0 0 48px' }}>
+          Et vous pourriez voir les choses <B>autrement</B>.
+        </p>
+      </>)}
+
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= ctaPhase), pointerEvents: phase >= ctaPhase ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={onNext}>Je reviens demain</PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. DayShell — orchestre les 5 étapes d'un jour
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1079,6 +1975,17 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
     advance()
   }
 
+  function handleConditioningComplete(value) {
+    onDayComplete({ type: 'answer', dayKey: `j${dayConfig.day}`, answerKey: 'conditioning_feel', value })
+    advance()
+  }
+
+  function handleAnswerFromAccueil(answerKey, value) {
+    onDayComplete({ type: 'answer', dayKey: `j${dayConfig.day}`, answerKey, value })
+    setStep(2)
+    setAnimKey((k) => k + 1)
+  }
+
   function handleDayDone() {
     onDayComplete({ type: 'complete' })
   }
@@ -1095,7 +2002,10 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
       {step === 0 && (
         <DayAccueil
           data={dayConfig.accueil}
+          introspectionData={dayConfig.introspection}
           answers={answers}
+          onAnswerFromAccueil={handleAnswerFromAccueil}
+          onConditioningComplete={handleConditioningComplete}
           onNext={advance}
         />
       )}
@@ -1109,12 +2019,20 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
       {step === 2 && (
         <DayRituel
           data={dayConfig.rituel}
+          answers={answers}
           dayColor={dayConfig.color}
           onNext={advance}
           onBack={goBack}
         />
       )}
-      {step === 3 && (
+      {step === 3 && dayConfig.guidedValidation && (
+        <RacinesValidation
+          answers={answers}
+          onNext={handleDayDone}
+          onBack={goBack}
+        />
+      )}
+      {step === 3 && !dayConfig.guidedValidation && (
         <DayTrace
           text={traceText}
           onNext={advance}
@@ -1323,7 +2241,7 @@ export function WeekOneFlow({ userId, onComplete }) {
           </div>
 
           {/* ── Contenu du jour (scrollable) ── */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch' }}>
             <DayShell
               key={weekData.currentDay}
               dayIndex={dayIndex}
