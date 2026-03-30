@@ -2429,27 +2429,45 @@ export function WeekOneFlow({ userId, onComplete, forceGarden }) {
 
   // Chargement depuis Supabase
   useEffect(() => {
-    if (forceGarden) { setLoading(false); return }
-    if (!userId) { setLoading(false); return }
-    ;(async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('week_one_data')
-        .eq('id', userId)
-        .single()
+  if (forceGarden) { setLoading(false); return }
+  if (!userId) return
 
-      if (!error && data?.week_one_data) {
-        const saved = data.week_one_data
-        setWeekData(saved)
-        weekDataRef.current = saved
-        // Si au moins 1 jour complété → revenir sur GardenDashboard
-        if (saved.completedDays?.length > 0) {
-          setView('garden')
-        }
-      }
+  let cancelled = false  // ← 1. flag d'annulation
+
+  const timeout = setTimeout(() => {  // ← 2. garde-fou 8s
+    if (!cancelled) {
+      weekDataRef.current = INITIAL_WEEK_DATA
       setLoading(false)
-    })()
-  }, [userId])
+    }
+  }, 8000)
+
+  ;(async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('week_one_data')
+      .eq('id', userId)
+      .single()
+
+    if (!error && data?.week_one_data) {
+      const saved = data.week_one_data
+      setWeekData(saved)
+      weekDataRef.current = saved
+      if (saved.completedDays?.length > 0) {
+        setView('garden')
+      }
+    } else {
+      weekDataRef.current = INITIAL_WEEK_DATA
+    }
+
+    clearTimeout(timeout)   // ← 3. on annule le garde-fou si fetch réussi
+    if (!cancelled) setLoading(false)
+  })()
+
+  return () => {   // ← 4. cleanup si le composant démonte pendant le fetch
+    cancelled = true
+    clearTimeout(timeout)
+  }
+}, [userId])
 
   // Sauvegarde dans Supabase
   const saveWeekData = useCallback(async (updated) => {
