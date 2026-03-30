@@ -593,7 +593,7 @@ function OrganicLights() {
 
 // ── Fleur SVG ──────────────────────────────────────────────────────────────
 
-function FlowerSVG({ size = 140, animated = false, style: extraStyle }) {
+function FlowerSVG({ size = 140, animated = false, style: extraStyle, completedZones }) {
   const petals = [
     { zone: 'racines',  color: ZONE_COLORS.racines,  angle: 270 },
     { zone: 'tige',     color: ZONE_COLORS.tige,     angle: 54  },
