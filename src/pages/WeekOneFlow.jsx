@@ -2239,13 +2239,14 @@ function MaFleurLiveModal({ onClose }) {
           </div>
         ) : (
           <>
-            {/* ── Carte PlantSVG — même rendu que l'appli ── */}
+            {/* ── Carte PlantSVG ── */}
             <div style={{
-              margin: '0 0 20px',
-              borderRadius: 0,
+              margin: '0 14px 20px',
+              borderRadius: 18,
               overflow: 'hidden',
               position: 'relative',
-              background: 'linear-gradient(180deg, #0a1628 0%, #12243e 55%, #1a3020 100%)',
+              minHeight: 420,
+              boxShadow: '0 4px 32px rgba(10,22,40,0.28), 0 1px 4px rgba(10,22,40,0.12)',
             }}>
               {/* Info overlay */}
               <div style={{
@@ -2276,8 +2277,8 @@ function MaFleurLiveModal({ onClose }) {
                 {stageLabel}
               </div>
 
-              {/* PlantSVG — identique à l'appli */}
-              <div style={{ width: '100%', lineHeight: 0 }}>
+              {/* PlantSVG — pleine hauteur comme le dashboard */}
+              <div style={{ width: '100%', height: '100%', minHeight: 420, lineHeight: 0 }}>
                 <PlantSVG
                   health={health}
                   gardenSettings={gardenSettings}

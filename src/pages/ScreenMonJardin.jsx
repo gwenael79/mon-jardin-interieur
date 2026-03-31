@@ -4005,7 +4005,13 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
       borderRight: isMobile ? 'none' : '1px solid var(--border2)',
       borderBottom: isMobile ? '1px solid var(--border2)' : 'none',
     }}>
-      <div style={{ position:'relative', flex:'1 1 0', minHeight: isMobile ? 220 : 260 }}>
+      <div style={{
+        position:'relative', flex:'1 1 0', minHeight: isMobile ? 320 : 420,
+        overflow:'hidden',
+        borderRadius: 18,
+        margin: '12px 14px 0',
+        boxShadow: '0 4px 32px rgba(10,22,40,0.22), 0 1px 4px rgba(10,22,40,0.10)',
+      }}>
         <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} compact={isMobile} />
         {streak >= 1 && (
           <div className="streak-pill" style={{ borderColor: streakColor + '40' }}>
@@ -4023,13 +4029,13 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
         </div>
       </div>
       <div style={{
-        display:'flex', alignItems:'center', gap:8, flexWrap:'wrap',
+        display:'flex', flexWrap:'wrap',
         padding:'10px 14px 11px',
         borderTop:'1px solid var(--border2)',
         background:'var(--bg)', flexShrink:0,
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: isMobile ? 'flex-start' : 'center',
-        gap: isMobile ? 8 : undefined,
+        gap: isMobile ? 8 : 8,
       }}>
         <span style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.06em', whiteSpace: isMobile ? 'normal' : 'nowrap', flexShrink:0 }}>
           {isMobile ? 'Personnalisez votre fleur facilement :' : '✦ Personnalisez :'}
