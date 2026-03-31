@@ -232,6 +232,9 @@ export default function App() {
   // 1. Non connecté → AuthPage (pas de notifications)
   if (!user) return <AuthPage />
 
+  // 2. Profil en cours de chargement → écran blanc (évite le flash DashboardPage)
+  if (onboarded === null) return null
+
   // 2a. Nouvel utilisateur → AccessPage en premier (choix plante + abonnement)
   if (onboarded === false) return (
     <>
@@ -320,10 +323,7 @@ export default function App() {
       {showWeekOne && (
         <WeekOneFlow
           userId={user.id}
-          onComplete={() => {
-            setShowWeekOne(false)
-            setWeekOneClosed(true)
-          }}
+          onComplete={() => setShowWeekOne(false)}
         />
       )}
 

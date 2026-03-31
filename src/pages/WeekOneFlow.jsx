@@ -744,68 +744,40 @@ export const WEEK_ONE_DATA = [
   {
     day: 7,
     title: 'Je fais partie',
-    color: '#c8a0b0',
+    color: '#7a9ab8',
     gradient: 'linear-gradient(135deg, #c8a0b0 0%, #9ab8c8 35%, #7aaa88 65%, #c8a870 100%)',
     accueil: {
       conditioning: true,
-      headline: 'Cela fait déjà une semaine.',
-      subtitle: 'Vous prenez soin de vous.',
+      skipBarometer: true,
+      headline: 'Votre jardin existe.',
+      subtitle: 'Mais un jardin ne pousse pas seul.',
       pauseSeconds: 1,
+      getNarrativeNote: (ans) => {
+        const notice = ans?.j7?.notice
+        const map = {
+          calme_plus:     'du calme',
+          clarte_plus:    'de la clarté',
+          presence_plus:  'de la présence',
+          energie_plus:   "de l'énergie",
+          indefinissable: "quelque chose d\u2019ind\u00e9finissable",
+        }
+        const label = map[notice]
+        return label
+          ? `Sept jours. Vous avez ressenti ${label}. Il est temps d'aller plus loin.`
+          : "Sept jours. Votre fleur a pris racine. Aujourd'hui, elle rencontre les autres."
+      },
     },
     introspection: {
-      question: "Qu'est-ce que vous remarquez chez vous ?",
-      answerKey: 'notice',
-      choices: [
-        { label: '🌊 Plus de calme',                   value: 'calme_plus'     },
-        { label: '💡 Plus de clarté',                  value: 'clarte_plus'    },
-        { label: '🌱 Plus de présence',                value: 'presence_plus'  },
-        { label: "⚡ Plus d'énergie",                  value: 'energie_plus'   },
-        { label: "✨ Quelque chose d'indéfinissable",  value: 'indefinissable' },
-      ],
+      question: '',
+      answerKey: 'communaute',
+      component: 'communaute-discovery',
     },
     rituel: {
-      zone: 'Rituel libre',
-      intro: 'Vous connaissez maintenant vos zones. Choisissez ce dont vous avez besoin.',
-      isFreeChoice: true,
-      freeChoices: [
-        {
-          label: 'Respiration',
-          desc: '3 cycles · Racines',
-          timerDuration: 36,
-          lines: [
-            'Posez les pieds au sol.',
-            '',
-            '• Inspirez… 4 temps',
-            '• Retenez… 2 temps',
-            '• Expirez… 6 temps',
-          ],
-        },
-        {
-          label: 'Ancrage',
-          desc: 'Pieds au sol · Tige',
-          timerDuration: 30,
-          lines: [
-            'Sentez le contact de vos pieds.',
-            '',
-            'Restez simplement présent·e',
-            'à cette sensation pendant 30 secondes.',
-          ],
-        },
-        {
-          label: 'Pause consciente',
-          desc: 'Corps et souffle · Fleurs',
-          timerDuration: 60,
-          lines: [
-            'Scannez votre corps de la tête aux pieds.',
-            '',
-            'Puis revenez doucement au souffle.',
-            "Laissez s'installer un silence intérieur.",
-          ],
-        },
-      ],
+      zone: 'Le Jardin Ensemble',
+      isGuided: 'communaute',
     },
     getTrace: () =>
-      "Il y a 7 jours, vous avez commencé. Aujourd'hui… vous êtes toujours là.",
+      "Vous n\u2019\u00eates pas seul\u00b7e dans ce jardin. Le reste du chemin se fait ensemble.",
     ouverture: null,
     isFinal: true,
     finalCTA: 'Entrer dans mon jardin',
@@ -2065,91 +2037,101 @@ function MaFleurLiveModal({ onClose }) {
   const [settings,    setSettings]    = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [lastRefresh, setLastRefresh] = useState(null)
+  const [openInfo,    setOpenInfo]    = useState(null)
 
   const ZONE_KEYS = [
-    { key: 'zone_racines',  label: 'Racines',  color: ZONE_COLORS.racines  },
-    { key: 'zone_tige',     label: 'Tige',     color: ZONE_COLORS.tige     },
-    { key: 'zone_feuilles', label: 'Feuilles', color: ZONE_COLORS.feuilles },
-    { key: 'zone_fleurs',   label: 'Fleurs',   color: ZONE_COLORS.fleurs   },
-    { key: 'zone_souffle',  label: 'Souffle',  color: ZONE_COLORS.souffle  },
+    { key: 'zone_racines',  label: 'Racines',  emoji: '🌱', color: ZONE_COLORS.racines,
+      info: "Votre ancrage fondamental. Elle évalue votre stabilité, votre sentiment de sécurité et votre connexion à l'essentiel du quotidien." },
+    { key: 'zone_tige',     label: 'Tige',     emoji: '🌿', color: ZONE_COLORS.tige,
+      info: "Votre structure intérieure. Elle mesure votre posture mentale et votre capacité à tenir debout, même sous la pression." },
+    { key: 'zone_feuilles', label: 'Feuilles', emoji: '🍃', color: ZONE_COLORS.feuilles,
+      info: "Votre capacité à laisser passer. Elle évalue comment vous accueillez et relâchez les émotions sans vous y accrocher." },
+    { key: 'zone_fleurs',   label: 'Fleurs',   emoji: '🌸', color: ZONE_COLORS.fleurs,
+      info: "Votre ouverture et votre vitalité. Elle reflète votre capacité à vous offrir de l'espace et à recevoir ce qui est bon pour vous." },
+    { key: 'zone_souffle',  label: 'Souffle',  emoji: '🌬️', color: ZONE_COLORS.souffle,
+      info: "Votre lien au monde. Il mesure votre connexion aux autres et à ce qui vous dépasse — le fil invisible entre vous et le reste." },
   ]
 
   async function fetchData() {
     if (!userId) { setLoading(false); return }
     setLoading(true)
 
-    const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    try {
+      const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-    const [plantRes, settingsRes, ritualsRes, profileRes] = await Promise.all([
-      supabase
-        .from('plants')
-        .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date')
-        .eq('user_id', userId)
-        .order('date', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from('garden_settings')
-        .select('petal_color1, petal_color2, petal_shape, sunrise_h, sunrise_m, sunset_h, sunset_m')
-        .eq('user_id', userId)
-        .maybeSingle(),
-      supabase
-        .from('rituals')
-        .select('zone, health_delta')
-        .eq('user_id', userId)
-        .gte('created_at', since7),
-      supabase
-        .from('profiles')
-        .select('week_one_data')
-        .eq('id', userId)
-        .maybeSingle(),
-    ])
+      // Promise.allSettled : une requête qui échoue ne bloque pas les autres
+      const [plantRes, settingsRes, ritualsRes, profileRes] = await Promise.allSettled([
+        supabase
+          .from('plants')
+          .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date')
+          .eq('user_id', userId)
+          .order('date', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('garden_settings')
+          .select('petal_color1, petal_color2, petal_shape, sunrise_h, sunrise_m, sunset_h, sunset_m')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        supabase
+          .from('rituals')
+          .select('zone, health_delta')
+          .eq('user_id', userId)
+          .gte('created_at', since7),
+        supabase
+          .from('profiles')
+          .select('week_one_data')
+          .eq('id', userId)
+          .maybeSingle(),
+      ])
 
-    let plant = plantRes.data ?? null
+      const plant0   = plantRes.status   === 'fulfilled' ? (plantRes.value.data   ?? null) : null
+      const settings0= settingsRes.status === 'fulfilled' ? (settingsRes.value.data ?? null) : null
+      const rituals  = ritualsRes.status  === 'fulfilled' ? (ritualsRes.value.data  ?? [])  : []
+      const profile0 = profileRes.status  === 'fulfilled' ? (profileRes.value.data  ?? null) : null
 
-    // Fallback 1 — rituels des 7 derniers jours
-    const rituals = ritualsRes.data ?? []
-    if (rituals.length > 0 && (!plant || plant.health < 10)) {
-      const zoneSum = { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
-      const zoneMap = { racines: 'zone_racines', tige: 'zone_tige', feuilles: 'zone_feuilles', fleurs: 'zone_fleurs', souffle: 'zone_souffle' }
-      rituals.forEach(r => {
-        const key = zoneMap[r.zone]
-        if (key) zoneSum[key] = Math.min(100, zoneSum[key] + (r.health_delta ?? 0))
-      })
-      const avgHealth = Math.round(Object.values(zoneSum).reduce((a, b) => a + b, 0) / 5)
-      plant = { ...zoneSum, health: avgHealth, date: null, _fromRituals: true }
-    }
+      let plant = plant0
 
-    // Fallback 2 — jours validés dans week_one_data (pour les utilisateurs
-    // ayant complété le programme avant que la table plants soit alimentée)
-    if (!plant || plant.health < 10) {
-      const weekData  = profileRes.data?.week_one_data
-      const completed = weekData?.completedDays ?? []
+      // Cumul semaine — applique les bonus des jours complétés si la table plants
+      // ne les intègre pas encore (health < completedDays * 35 / 5)
+      const completed = profile0?.week_one_data?.completedDays ?? []
       if (completed.length > 0) {
-        const DAY_ZONE = {
-          1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles',
-          4: 'zone_fleurs',  5: 'zone_souffle',
-        }
-        const zones = { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
-        completed.forEach(d => {
-          const key = DAY_ZONE[d]
-          if (key) zones[key] = Math.min(100, zones[key] + 35)             // +35 par zone-jour
-          if (d === 6) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, zones[k] + 10) })
-          if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, zones[k] + 15) })
-        })
-        const health = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
-        plant = { ...zones, health, date: null, _fromWeekData: true }
+        const DAY_ZONE = { 1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles', 4: 'zone_fleurs', 5: 'zone_souffle' }
+        const expectedMin = Math.round(completed.filter(d => d <= 5).length * 35 / 5)
+        const currentHealth = plant?.health ?? 0
 
-        // Écrire rétroactivement dans plants pour les prochaines consultations
-        const today = new Date().toISOString().split('T')[0]
-        supabase.from('plants')
-          .upsert({ user_id: userId, date: today, ...zones, health }, { onConflict: 'user_id,date' })
-          .catch(() => {})
+        if (currentHealth < expectedMin) {
+          // La base existante ou zéro si aucun record
+          const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
+          const zones = {
+            zone_racines:  base.zone_racines  ?? 0,
+            zone_tige:     base.zone_tige     ?? 0,
+            zone_feuilles: base.zone_feuilles ?? 0,
+            zone_fleurs:   base.zone_fleurs   ?? 0,
+            zone_souffle:  base.zone_souffle  ?? 0,
+          }
+          completed.forEach(d => {
+            const key = DAY_ZONE[d]
+            if (key) zones[key] = Math.min(100, zones[key] + 35)
+            if (d === 6) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, zones[k] + 10) })
+            if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, zones[k] + 15) })
+          })
+          const health = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
+          plant = { ...zones, health, date: plant?.date ?? null, _fromWeekData: !plant }
+          // Écrire dans plants pour les prochaines consultations
+          const today = new Date().toISOString().split('T')[0]
+          supabase.from('plants')
+            .upsert({ user_id: userId, date: today, ...zones, health }, { onConflict: 'user_id,date' })
+            .catch(() => {})
+        }
       }
+
+      setPlantData(plant)
+      setSettings(settings0)
+    } catch (_) {
+      // En cas d'erreur inattendue, on affiche quand même le modal sans data
     }
 
-    setPlantData(plant)
-    setSettings(settingsRes.data ?? null)
     setLastRefresh(new Date())
     setLoading(false)
   }
@@ -2304,28 +2286,177 @@ function MaFleurLiveModal({ onClose }) {
               </div>
             </div>
 
-            {/* ── Barres par zone ── */}
-            <div style={{ padding: '0 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* ── 3 boutons features ── */}
+            <div style={{ padding: '0 20px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                {
+                  icon: '🌹',
+                  label: 'Bilan du matin',
+                  desc: 'Évaluez vos 5 zones en quelques minutes',
+                  color: '#a07060',
+                  bg: 'rgba(184,120,100,0.08)',
+                  border: 'rgba(184,120,100,0.22)',
+                  info: "Chaque matin, répondez à dix questions sur vos cinq zones. En quelques minutes, votre fleur s'adapte et reflète fidèlement votre état du jour.",
+                },
+                {
+                  icon: '⚡',
+                  label: 'Action rapide',
+                  desc: 'Un rituel ciblé en 1 minute',
+                  color: '#5878a8',
+                  bg: 'rgba(88,120,168,0.08)',
+                  border: 'rgba(88,120,168,0.22)',
+                  info: "Quand le temps manque, un rituel d'une minute reste toujours disponible. Il cible la zone qui en a le plus besoin et maintient votre jardin vivant, même les jours chargés.",
+                },
+                {
+                  icon: '🌱',
+                  label: 'Boîte à Graines',
+                  desc: "Notez ce qui s\u2019est bien pass\u00e9 aujourd\u2019hui",
+                  color: '#507860',
+                  bg: 'rgba(80,120,96,0.08)',
+                  border: 'rgba(80,120,96,0.22)',
+                  info: "Le soir, notez une chose positive de votre journée. Chaque graine plantée nourrit votre estime de vous-même et renforce votre ancrage dans le positif.",
+                },
+              ].map(f => (
+                <div key={f.label}
+                  onClick={() => setOpenInfo(openInfo === f.label ? null : f.label)}
+                  style={{
+                    padding: '13px 16px',
+                    background: f.bg,
+                    border: `1.5px solid ${f.border}`,
+                    borderRadius: 14,
+                    cursor: 'pointer',
+                  }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>{f.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 17, fontWeight: 700, color: '#1a1010', marginBottom: 3 }}>
+                        {f.label}
+                      </div>
+                      <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, fontStyle: 'italic', color: '#3a2828', lineHeight: 1.35 }}>
+                        {f.desc}
+                      </div>
+                    </div>
+                    <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: f.color, background: `${f.bg}`, border: `1px solid ${f.border}`, borderRadius: 100, padding: '4px 9px', flexShrink: 0 }}>
+                      INFOS
+                    </span>
+                  </div>
+                  {openInfo === f.label && (
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${f.border}`, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 16, fontStyle: 'italic', color: '#1a1010', lineHeight: 1.6 }}>
+                      {f.info}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: '#b8a8b0', textAlign: 'center', margin: '4px 0 0', letterSpacing: '0.04em' }}>
+                Disponibles dans Mon Jardin → Ma Fleur
+              </p>
+            </div>
+
+            {/* ── Cards zones — grille 2 colonnes (flip 3D) ── */}
+            <div style={{
+              padding: '0 16px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 10,
+            }}>
               {ZONE_KEYS.map(z => {
                 const val = Math.round(plantData[z.key] ?? 0)
+                const flipped = openInfo === z.key
                 return (
-                  <div key={z.key}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                      <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 500, color: '#2a1828' }}>
-                        {z.label}
-                      </span>
-                      <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 600, color: z.color }}>
-                        {val} %
-                      </span>
-                    </div>
-                    <div style={{ height: 5, borderRadius: 3, background: '#ede8e4', overflow: 'hidden' }}>
+                  <div
+                    key={z.key}
+                    onClick={() => setOpenInfo(flipped ? null : z.key)}
+                    style={{
+                      perspective: 600,
+                      height: 160,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      transformStyle: 'preserve-3d',
+                      transition: 'transform 0.55s cubic-bezier(0.4,0,0.2,1)',
+                      transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                    }}>
+                      {/* ── RECTO ── */}
                       <div style={{
-                        height: '100%',
-                        width: `${val}%`,
-                        borderRadius: 3,
-                        background: z.color,
-                        transition: 'width 1.4s cubic-bezier(0.4,0,0.2,1)',
-                      }} />
+                        position: 'absolute', inset: 0,
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        background: `${z.color}14`,
+                        border: `1.5px solid ${z.color}44`,
+                        borderRadius: 16,
+                        padding: '14px 14px 12px',
+                        display: 'flex', flexDirection: 'column',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                          <div style={{
+                            width: 38, height: 38, borderRadius: '50%',
+                            background: `${z.color}28`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 19,
+                          }}>
+                            {z.emoji}
+                          </div>
+                          <span style={{
+                            fontFamily: 'Jost, sans-serif', fontSize: 9, fontWeight: 700,
+                            letterSpacing: '0.12em', textTransform: 'uppercase',
+                            color: z.color, background: `${z.color}20`,
+                            border: `1px solid ${z.color}44`,
+                            borderRadius: 100, padding: '3px 8px',
+                          }}>
+                            INFOS
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 17, fontWeight: 700, color: '#1a1010', marginBottom: 2 }}>
+                          {z.label}
+                        </div>
+                        <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 26, fontWeight: 700, color: z.color, lineHeight: 1, marginBottom: 8 }}>
+                          {val}<span style={{ fontSize: 15, fontWeight: 500 }}> %</span>
+                        </div>
+                        <div style={{ height: 6, borderRadius: 3, background: `${z.color}22`, overflow: 'hidden', marginTop: 'auto' }}>
+                          <div style={{ height: '100%', width: `${val}%`, borderRadius: 3, background: z.color, transition: 'width 1.4s cubic-bezier(0.4,0,0.2,1)' }} />
+                        </div>
+                      </div>
+
+                      {/* ── VERSO ── */}
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        backfaceVisibility: 'hidden',
+                        WebkitBackfaceVisibility: 'hidden',
+                        transform: 'rotateY(180deg)',
+                        background: `${z.color}22`,
+                        border: `1.5px solid ${z.color}66`,
+                        borderRadius: 16,
+                        padding: '14px 14px',
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                      }}>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8,
+                        }}>
+                          <span style={{ fontSize: 16 }}>{z.emoji}</span>
+                          <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 700, color: z.color }}>
+                            {z.label}
+                          </span>
+                        </div>
+                        <div style={{
+                          fontFamily: 'Cormorant Garamond, Georgia, serif',
+                          fontSize: 14, fontStyle: 'italic',
+                          color: '#1a1010', lineHeight: 1.55,
+                          flex: 1,
+                        }}>
+                          {z.info}
+                        </div>
+                        <div style={{
+                          fontFamily: 'Jost, sans-serif', fontSize: 9, fontWeight: 600,
+                          letterSpacing: '0.1em', textTransform: 'uppercase',
+                          color: z.color, opacity: 0.6, marginTop: 8, textAlign: 'right',
+                        }}>
+                          ↩ retourner
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )
@@ -2448,25 +2579,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
           <FlowerMosaic completedZones={allZones} size={200} />
         </div>
 
-        {/* Lien discret sous la fleur */}
-        <div style={{
-          textAlign: 'center', marginBottom: 24,
-          opacity: phase >= 2 ? 1 : 0,
-          transition: 'opacity 600ms ease 400ms',
-        }}>
-          <button
-            onClick={() => setShowLive(true)}
-            style={{
-              fontFamily: 'Jost, sans-serif', fontSize: 12,
-              color: '#8878a8', background: 'rgba(136,120,168,0.10)',
-              border: '1px solid rgba(136,120,168,0.28)',
-              borderRadius: 100, padding: '5px 16px',
-              cursor: 'pointer', letterSpacing: '0.08em',
-            }}
-          >
-            🌸 Voir ma vraie fleur
-          </button>
-        </div>
+        <div style={{ marginBottom: 24 }} />
 
         <div style={{ maxWidth: 340, margin: '0 auto 32px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {zones.map((z, i) => (
@@ -2543,6 +2656,10 @@ function DayIntrospection({ data, onAnswer, onBack }) {
 
   if (data.component === 'mafleur-discovery') {
     return <MaFleurDiscovery answerKey={data.answerKey} onAnswer={onAnswer} onBack={onBack} />
+  }
+
+  if (data.component === 'communaute-discovery') {
+    return <CommunauteDiscovery answerKey={data.answerKey} onAnswer={onAnswer} onBack={onBack} />
   }
 
   function confirm() {
@@ -3438,6 +3555,275 @@ Laissez-moi vous présenter         </p>
   )
 }
 
+// ── Découverte Communauté (Jour 7) ────────────────────────────────────────
+
+function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
+  const [phase, setPhase] = useState(0)
+
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => setPhase(1), 300),
+      setTimeout(() => setPhase(2), 1100),
+      setTimeout(() => setPhase(3), 2200),
+    ]
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const features = [
+    { emoji: '🌍', label: 'Le Jardin Collectif',    desc: "Un espace partagé où chaque fleur contribue au jardin commun par sa présence",                                                color: '#7a9ab8' },
+    { emoji: '🤝', label: 'Le Club des Jardiniers', desc: "Une communauté qui avance ensemble, se soutient et partage des ondes positives",                                              color: '#9a78b0' },
+    { emoji: '🎯', label: 'Les Défis',              desc: "Des challenges pour partager ensemble des mises en action et s\u2019encourager",                                              color: '#b07860' },
+    { emoji: '🌿', label: 'Les Ateliers',           desc: "Des sessions guidées pour approfondir votre mieux-\u00eatre, accompagné par des professionnels",                              color: '#607860' },
+    { emoji: '✨', label: 'Les Lumens',             desc: "L\u2019\u00e9nergie de votre engagement, visible et partageable",                                                             color: '#a8a030' },
+    { emoji: '📚', label: 'La Jardinoth\èque', desc: "Un ensemble d\u2019outils pour vous accompagner dans votre bien-\u00eatre",                                                    color: '#8878a8' },
+  ]
+
+  return (
+    <div className="wof-in" style={{ padding: '8px 0 40px' }}>
+      <BackButton onClick={onBack} />
+
+      <div style={{ textAlign: 'center', margin: '8px 0 28px', ...fadeIn(phase >= 1) }}>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(11px, 2.8vw, 13px)',
+          fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase',
+          color: '#7a9ab8', margin: '0 0 8px',
+        }}>
+          Le jardin s'ouvre
+        </p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(24px, 6vw, 32px)',
+          fontWeight: 400, fontStyle: 'italic',
+          color: '#2a1828', lineHeight: 1.25, margin: '0 0 6px',
+        }}>
+          Vous n'êtes pas seul·e
+        </h2>
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(14px, 3.5vw, 17px)',
+          fontStyle: 'italic', color: '#7a6878', margin: 0,
+        }}>
+          D'autres jardins vous attendent
+        </p>
+      </div>
+
+      <div style={{ maxWidth: 340, margin: '0 auto 32px', display: 'flex', flexDirection: 'column', gap: 8, ...fadeIn(phase >= 2) }}>
+        {features.map((f, i) => (
+          <div key={f.label} style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '13px 18px',
+            background: 'rgba(255,255,255,0.72)',
+            borderRadius: 14,
+            border: `1.5px solid ${f.color}55`,
+            opacity: phase >= 3 ? 1 : 0,
+            transform: phase >= 3 ? 'translateY(0)' : 'translateY(8px)',
+            transition: `opacity 600ms ease ${i * 120}ms, transform 600ms ease ${i * 120}ms`,
+          }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: `${f.color}22`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 20, flexShrink: 0,
+            }}>
+              {f.emoji}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: '#2a1828', marginBottom: 2 }}>
+                {f.label}
+              </div>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(14px, 3.5vw, 17px)', fontStyle: 'italic', color: '#6a5468', lineHeight: 1.3 }}>
+                {f.desc}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        display: 'flex', justifyContent: 'center',
+        opacity: phase >= 3 ? 1 : 0,
+        transition: 'opacity 600ms ease 700ms',
+      }}>
+        <PrimaryButton onClick={() => onAnswer(answerKey, 'vu')}>
+          Découvrir le jardin ensemble
+        </PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
+// ── Rituel guidé — Communauté (Jour 7) ────────────────────────────────────
+
+function CommunauteGuidedRituel({ onNext, onBack }) {
+  const [phase, setPhase] = useState(0)
+  const phaseRefs = useRef({})
+
+  useEffect(() => {
+    const T = [0, 2500, 6500, 11000, 15500, 20000, 24500, 29000, 33000]
+    const timers = T.map((ms, i) =>
+      setTimeout(() => {
+        setPhase(i + 1)
+        if (i > 0) {
+          setTimeout(() => {
+            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }, 300)
+        }
+      }, ms)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const S = {
+    fontFamily: 'Cormorant Garamond, Georgia, serif',
+    fontStyle: 'italic',
+    fontSize: 'clamp(19px, 4.8vw, 23px)',
+    color: '#0f0808',
+    textAlign: 'center',
+    lineHeight: 1.85,
+    margin: '0 0 32px',
+  }
+
+  function B({ children }) {
+    return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong>
+  }
+
+  function FeatureBadge({ label, color, bg, border }) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '-8px 0 32px' }}>
+        <span style={{
+          display: 'inline-block',
+          fontSize: 'clamp(11px, 2.8vw, 13px)',
+          fontFamily: 'Jost, sans-serif',
+          fontWeight: 500,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color, background: bg,
+          border: `1px solid ${border}`,
+          borderRadius: 100,
+          padding: '5px 16px',
+        }}>
+          {label}
+        </span>
+      </div>
+    )
+  }
+
+  function block(n, content) {
+    return (
+      <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
+        {content}
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ padding: '16px 24px 80px' }}>
+      <BackButton onClick={onBack} />
+
+      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 'clamp(11px, 2.8vw, 13px)',
+          fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase',
+          color: '#7a9ab8', margin: '0 0 8px',
+        }}>
+          Laissez-moi vous présenter
+        </p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(30px, 7.5vw, 40px)',
+          fontWeight: 700, fontStyle: 'italic',
+          color: '#0a1828', lineHeight: 1.15, margin: '0 0 10px',
+        }}>
+          le jardin ensemble
+        </h2>
+        <div style={{
+          width: 48, height: 2,
+          background: 'linear-gradient(to right, transparent, #7a9ab8, transparent)',
+          margin: '0 auto',
+        }} />
+      </div>
+
+      {block(1, <p style={S}>Votre fleur <B>existe</B>.<br />Et elle n'est pas seule.</p>)}
+
+      {block(2, <>
+        <p style={S}>Autour de vous, d'autres jardiniers <B>cultivent</B> leur espace intérieur.</p>
+        <FeatureBadge
+          label="Le Jardin Collectif"
+          color="#7a9ab8"
+          bg="rgba(122,154,184,0.10)"
+          border="rgba(122,154,184,0.28)"
+        />
+        <p style={S}>Un espace partagé où chaque fleur <B>contribue</B> au jardin commun<br />par sa seule <B>présence</B>.</p>
+      </>)}
+
+      {block(3, <>
+        <p style={S}>Vous n'avancez pas <B>seul·e</B>.</p>
+        <FeatureBadge
+          label="Le Club des Jardiniers"
+          color="#9a78b0"
+          bg="rgba(154,120,176,0.10)"
+          border="rgba(154,120,176,0.28)"
+        />
+        <p style={S}>Une communauté qui avance <B>ensemble</B>,<br />se soutient et partage des <B>ondes positives</B>.</p>
+      </>)}
+
+      {block(4, <>
+        <p style={S}>Pour ceux qui aiment <B>agir</B>…</p>
+        <FeatureBadge
+          label="Les Défis"
+          color="#b07860"
+          bg="rgba(176,120,96,0.10)"
+          border="rgba(176,120,96,0.28)"
+        />
+        <p style={S}>Des challenges pour partager ensemble des <B>mises en action</B><br />et <B>s'encourager</B> mutuellement.</p>
+      </>)}
+
+      {block(5, <>
+        <p style={S}>Pour aller plus <B>loin</B>…</p>
+        <FeatureBadge
+          label="Les Ateliers"
+          color="#607860"
+          bg="rgba(96,120,96,0.10)"
+          border="rgba(96,120,96,0.28)"
+        />
+        <p style={S}>Des sessions guidées pour approfondir votre <B>mieux-être</B>,<br />accompagné par des <B>professionnels</B>.</p>
+      </>)}
+
+      {block(6, <>
+        <p style={S}>Et enfin, une <B>énergie</B> qui se voit.</p>
+        <FeatureBadge
+          label="Les Lumens"
+          color="#a8a030"
+          bg="rgba(168,160,48,0.10)"
+          border="rgba(168,160,48,0.28)"
+        />
+        <p style={S}>L'énergie de votre <B>engagement</B>,<br />visible et <B>partageable</B>.</p>
+      </>)}
+
+      {block(7, <>
+        <p style={S}>Et pour ne jamais <B>avancer seul·e</B>…</p>
+        <FeatureBadge
+          label="La Jardinothèque"
+          color="#8878a8"
+          bg="rgba(136,120,168,0.10)"
+          border="rgba(136,120,168,0.28)"
+        />
+        <p style={S}>Un ensemble d'outils pour vous <B>accompagner</B><br />dans votre <B>bien-être</B> au quotidien.</p>
+      </>)}
+
+      {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>
+        <B>Votre jardin vous attend.</B> Et les autres jardiniers aussi.
+      </p>)}
+
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={onNext}>Je rejoins le jardin</PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
 // ── RITUEL ─────────────────────────────────────────────────────────────────
 
 function DayRituel({ data, answers, dayColor, onNext, onBack }) {
@@ -3461,8 +3847,9 @@ function DayRituel({ data, answers, dayColor, onNext, onBack }) {
   if (data.isGuided === 'feuilles') return <FeuillesGuidedRituel onNext={onNext} onBack={onBack} />
   if (data.isGuided === 'fleurs')   return <FleursGuidedRituel   onNext={onNext} onBack={onBack} />
   if (data.isGuided === 'souffle')  return <SouffleGuidedRituel  onNext={onNext} onBack={onBack} />
-  if (data.isGuided === 'jardin')   return <JardinGuidedRituel   onNext={onNext} onBack={onBack} />
-  if (data.isGuided)                return <RacinesGuidedRituel  onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'jardin')      return <JardinGuidedRituel      onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'communaute') return <CommunauteGuidedRituel  onNext={onNext} onBack={onBack} />
+  if (data.isGuided)                  return <RacinesGuidedRituel     onNext={onNext} onBack={onBack} />
 
   const isFree       = !!data.isFreeChoice
   const activeLines  = isFree && freeChoice ? freeChoice.lines    : data.lines
@@ -3585,7 +3972,7 @@ function DayRituel({ data, answers, dayColor, onNext, onBack }) {
 
 // ── TRACE ──────────────────────────────────────────────────────────────────
 
-function DayTrace({ text, onNext, onBack }) {
+function DayTrace({ text, onNext, onBack, onFleur }) {
   return (
     <div className="wof-in" style={{ padding: '8px 0 16px', textAlign: 'center' }}>
       <BackButton onClick={onBack} />
@@ -3611,7 +3998,30 @@ function DayTrace({ text, onNext, onBack }) {
         </p>
       </div>
 
-      <div style={{ marginTop: 32 }}>
+      {onFleur && (
+        <div style={{ marginTop: 24 }}>
+          <button
+            onClick={onFleur}
+            style={{
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 16,
+              fontWeight: 600,
+              color: '#fff',
+              background: 'linear-gradient(135deg, #8878a8, #a890c8)',
+              border: 'none',
+              borderRadius: 100,
+              padding: '13px 32px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 18px rgba(136,120,168,0.35)',
+              letterSpacing: '0.04em',
+            }}
+          >
+            🌸 Je découvre ma fleur
+          </button>
+        </div>
+      )}
+
+      <div style={{ marginTop: onFleur ? 16 : 32 }}>
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
     </div>
@@ -3623,7 +4033,7 @@ function DayTrace({ text, onNext, onBack }) {
 function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack }) {
   return (
     <div className="wof-in" style={{ padding: '8px 0 16px', textAlign: 'center' }}>
-      <BackButton onClick={onBack} />
+      {!isFinal && <BackButton onClick={onBack} />}
 
       {isFinal ? (
         <>
@@ -3784,6 +4194,7 @@ function RacinesValidation({ answers, onNext, onBack }) {
 function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
   const [step, setStep] = useState(0)
   const [animKey, setAnimKey] = useState(0)
+  const [showFleurModal, setShowFleurModal] = useState(false)
 
   const dayConfig = WEEK_ONE_DATA[dayIndex]
 
@@ -3826,6 +4237,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
 
   return (
     <div key={animKey}>
+      {showFleurModal && <MaFleurLiveModal onClose={() => setShowFleurModal(false)} />}
       {step === 0 && (
         <DayAccueil
           data={dayConfig.accueil}
@@ -3864,6 +4276,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
           text={traceText}
           onNext={advance}
           onBack={goBack}
+          onFleur={dayConfig.day === 6 ? () => setShowFleurModal(true) : undefined}
         />
       )}
       {step === 4 && (
@@ -3894,6 +4307,7 @@ const ZONE_DAYS = [
 ]
 
 function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth }) {
+  const [showFleurModal, setShowFleurModal] = useState(false)
 
   const completedZones = ZONE_DAYS
     .filter(z => completedDays.includes(z.day) && z.zone)
@@ -3913,6 +4327,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
 
   return (
     <div style={{ padding: '32px 24px 80px', maxWidth: 480, margin: '0 auto' }}>
+      {showFleurModal && <MaFleurLiveModal onClose={() => setShowFleurModal(false)} />}
 
       {/* Titre */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -4103,7 +4518,28 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
               </div>
 
               {/* Badge statut */}
-              {done && (
+              {done && z.day === 6 && (
+                <button
+                  onClick={e => { e.stopPropagation(); setShowFleurModal(true) }}
+                  style={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    color: '#fff',
+                    background: 'linear-gradient(135deg, #8878a8, #a890c8)',
+                    border: 'none',
+                    borderRadius: 100,
+                    padding: '6px 14px',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                    boxShadow: '0 3px 12px rgba(136,120,168,0.35)',
+                  }}
+                >
+                  🌸 Je découvre ma fleur
+                </button>
+              )}
+              {done && z.day !== 6 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                   <span style={{
                     fontFamily: 'Jost, sans-serif',
@@ -4612,6 +5048,7 @@ console.log('❌ Pas de données ou erreur:', error)
             onToggle={handleToggleRitual}
             onClose={() => setActiveZoneId(null)}
             plantRituals={plantRituals}
+            closeOnComplete
           />
         </div>
       )}

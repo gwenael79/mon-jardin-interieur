@@ -841,7 +841,7 @@ function RitualExercises({ ritual, zone, onComplete, onBack }) {
 //  Modal d'une zone (liste des rituels + exercices)
 //  Props : zoneId | completed | onToggle(ritualId) | onClose
 // ═══════════════════════════════════════════════════════════
-export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRituals = {} }) {
+export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRituals = {}, closeOnComplete = false }) {
   const zone = PLANT_ZONES[zoneId];
   const rituals = (plantRituals || {})[zoneId] || [];
   const done = rituals.filter(r => completed[r.id]).length;
@@ -849,9 +849,12 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
   const [activeRitual, setActiveRitual] = useState(null);
 
   const handleComplete = (ritualId) => {
-    track('ritual_complete', { ritual_id: ritualId }, 'jardin', 'engagement')
     onToggle(ritualId);
-    setActiveRitual(null);
+    if (closeOnComplete) {
+      setTimeout(onClose, 400);
+    } else {
+      setActiveRitual(null);
+    }
   };
 
   return (
