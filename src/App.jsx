@@ -194,8 +194,9 @@ export default function App() {
         setWeekOneClosed(true); setShowWeekOne(false)
       }}
       onAllDone={() => {
-        window.history.replaceState({}, '', window.location.pathname)
-        setShowWeekOne(false)
+        // Navigation propre — setShowWeekOne(false) serait un no-op si déjà false
+        // (cas test5 : 7 jours déjà faits, showWeekOne n'a jamais été mis à true)
+        window.location.href = window.location.pathname
       }}
     />
   )
@@ -212,8 +213,7 @@ export default function App() {
         setWeekOneClosed(true); setShowWeekOne(false)
       }}
       onAllDone={() => {
-        window.history.replaceState({}, '', window.location.pathname)
-        setShowWeekOne(false)
+        window.location.href = window.location.pathname
       }}
     />
   )
@@ -229,8 +229,7 @@ export default function App() {
         setWeekOneClosed(true); setShowWeekOne(false)
       }}
       onAllDone={() => {
-        window.history.replaceState({}, '', window.location.pathname)
-        setShowWeekOne(false)
+        window.location.href = window.location.pathname
       }}
     />
   )

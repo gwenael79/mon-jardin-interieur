@@ -11,46 +11,59 @@ html,body,#root{height:100%;width:100%}
 .auth-root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;width:100vw;color:var(--text);display:flex;overflow:hidden}
 
 /* LEFT */
-.auth-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 64px;position:relative;overflow:hidden}
+.auth-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 72px;position:relative;overflow:hidden}
 .auth-left-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(var(--green-rgb),0.12),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(var(--green-rgb),0.04),transparent 50%);pointer-events:none}
-.auth-logo{font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:300;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:60px}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:300;letter-spacing:.3em;text-transform:uppercase;color:var(--text3);margin-bottom:64px}
 .auth-logo em{font-style:normal;color:var(--green)}
-.auth-hero-title{font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300;line-height:1.15;color:var(--text);margin-bottom:24px}
+.auth-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(56px,4.5vw,80px);font-weight:300;line-height:1.15;color:var(--text);margin-bottom:28px}
 .auth-hero-title em{font-style:italic;color:var(--green)}
-.auth-hero-desc{font-size:14px;font-weight:300;color:var(--text2);line-height:1.8;max-width:420px;margin-bottom:48px}
-.auth-features{display:flex;flex-direction:column;gap:16px}
-.auth-feat{display:flex;align-items:flex-start;gap:14px}
-.af-icon{font-size:18px;flex-shrink:0;margin-top:1px}
-.af-text{font-size:14px;font-weight:300;color:var(--text2);line-height:1.6}
-.af-text b{color:var(--text);font-weight:400;display:block;margin-bottom:2px}
-.auth-tagline{margin-top:56px;font-size:11px;letter-spacing:.12em;color:var(--text3);font-style:italic}
+.auth-hero-desc{font-size:16px;font-weight:300;color:var(--text2);line-height:1.8;max-width:520px;margin-bottom:52px}
+.auth-features{display:flex;flex-direction:column;gap:20px}
+.auth-feat{display:flex;align-items:flex-start;gap:16px}
+.af-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.af-text{font-size:15px;font-weight:300;color:var(--text2);line-height:1.6}
+.af-text b{color:var(--text);font-weight:400;display:block;margin-bottom:3px}
+.auth-tagline{margin-top:60px;font-size:12px;letter-spacing:.12em;color:var(--text3);font-style:italic}
 .deco-plant{position:absolute;opacity:.12;pointer-events:none}
 
 /* RIGHT */
-.auth-right{width:440px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;padding:60px 48px}
-.auth-form-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--gold);margin-bottom:6px}
-.auth-form-sub{font-size:11px;color:var(--text3);letter-spacing:.06em;margin-bottom:36px}
+.auth-right{width:520px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;padding:60px 56px}
+.auth-form-title{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:300;color:var(--gold);margin-bottom:8px}
+.auth-form-sub{font-size:15px;color:var(--text3);letter-spacing:.03em;margin-bottom:36px}
 .auth-tabs{display:flex;gap:0;margin-bottom:32px;border-bottom:1px solid var(--border2)}
-.auth-tab{padding:8px 20px;font-size:11px;letter-spacing:.08em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
+.auth-tab{padding:10px 28px;font-size:13px;letter-spacing:.06em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
 .auth-tab.active{color:var(--cream);border-bottom-color:var(--green)}
-.auth-field{margin-bottom:16px}
-.auth-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:block}
-.auth-input{width:100%;padding:11px 14px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
+.auth-field{margin-bottom:20px}
+.auth-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;display:block}
+.auth-input{width:100%;padding:14px 18px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;font-size:15px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
 .auth-input:focus{border-color:var(--greenT);background:var(--green3)}
 .auth-input::placeholder{color:var(--text3)}
-.auth-hint{font-size:10px;color:var(--text3);margin-top:5px;letter-spacing:.02em}
-.auth-error{font-size:10px;color:rgba(var(--red-rgb),.8);padding:8px 12px;background:rgba(var(--red-rgb),.06);border:1px solid rgba(var(--red-rgb),.15);border-radius:8px;margin-bottom:16px}
-.auth-submit{width:100%;padding:13px;background:linear-gradient(135deg,var(--green2),var(--green3));border:1px solid var(--greenT);border-radius:10px;font-size:12px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:var(--cream);cursor:pointer;transition:all .2s;margin-top:8px}
+.auth-hint{font-size:12px;color:var(--text3);margin-top:6px;letter-spacing:.02em}
+.auth-error{font-size:12px;color:rgba(var(--red-rgb),.8);padding:11px 16px;background:rgba(var(--red-rgb),.06);border:1px solid rgba(var(--red-rgb),.15);border-radius:8px;margin-bottom:16px}
+.auth-submit{width:100%;padding:16px;background:linear-gradient(135deg,var(--green2),var(--green3));border:1px solid var(--greenT);border-radius:10px;font-size:14px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:var(--cream);cursor:pointer;transition:all .2s;margin-top:12px}
 .auth-submit:hover{background:linear-gradient(135deg,var(--green2),var(--green3));filter:brightness(1.15);border-color:var(--green)}
 .auth-submit:disabled{opacity:.5;cursor:default}
 .auth-success{text-align:center;padding:20px 0}
-.as-icon{font-size:40px;margin-bottom:16px}
-.as-title{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--gold);margin-bottom:10px}
-.as-text{font-size:13px;font-weight:300;color:var(--text2);line-height:1.7}
+.as-icon{font-size:48px;margin-bottom:18px}
+.as-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);margin-bottom:12px}
+.as-text{font-size:16px;font-weight:300;color:var(--text2);line-height:1.7}
 .as-email{color:var(--cream)}
-.auth-footer{margin-top:32px;font-size:9px;color:var(--text3);text-align:center;line-height:1.8}
-.auth-forgot{font-size:10px;color:var(--text3);text-align:right;margin-top:6px;cursor:pointer;letter-spacing:.02em;text-decoration:underline;opacity:.7}
+.auth-footer{margin-top:32px;font-size:12px;color:var(--text3);text-align:center;line-height:1.8}
+.auth-forgot{font-size:12px;color:var(--text3);text-align:right;margin-top:6px;cursor:pointer;letter-spacing:.02em;text-decoration:underline;opacity:.7}
 .auth-forgot:hover{opacity:1}
+
+@media(min-width:1400px){
+  .auth-left{padding:80px 96px}
+  .auth-hero-title{font-size:clamp(72px,5vw,96px)}
+  .auth-hero-desc{font-size:17px;max-width:580px}
+  .af-text{font-size:16px}
+  .auth-right{width:560px;padding:80px 68px}
+  .auth-form-title{font-size:40px}
+  .auth-form-sub{font-size:16px}
+  .auth-input{font-size:16px;padding:15px 20px}
+  .auth-label{font-size:13px}
+  .auth-submit{font-size:15px;padding:17px}
+}
 
 @media(max-width:700px){
   .auth-root{flex-direction:column;min-height:100vh;height:auto;overflow-y:auto}
@@ -101,11 +114,15 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
   const [resetSent,   setResetSent]   = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [isRecovery,  setIsRecovery]  = useState(false)  // true quand on revient du lien email
+  const hasLoggedInBefore = !!localStorage.getItem('mji_has_logged_in')
 
   async function handleSignIn(e) {
     e.preventDefault()
     setError(null); setIsLoading(true)
-    try { await signIn(email, password) }
+    try {
+      await signIn(email, password)
+      localStorage.setItem('mji_has_logged_in', '1')
+    }
     catch (err) { setError(err.message) }
     finally { setIsLoading(false) }
   }
@@ -235,7 +252,7 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
           </div>
         ) : (
           <>
-            <div className="auth-form-title">{view === 'login' ? 'Bon retour 🌿' : view === 'reset' ? 'Réinitialiser 🔑' : view === 'newpassword' ? 'Nouveau mot de passe 🔑' : 'Planter une graine 🌱'}</div>
+            <div className="auth-form-title">{view === 'login' ? (hasLoggedInBefore ? 'Bon retour 🌿' : 'Bienvenue 🌱') : view === 'reset' ? 'Réinitialiser 🔑' : view === 'newpassword' ? 'Nouveau mot de passe 🔑' : 'Planter une graine 🌱'}</div>
             <div className="auth-form-sub">{view === 'login' ? 'Votre jardin vous attend' : view === 'reset' ? 'Recevez un lien par email' : view === 'newpassword' ? 'Choisissez un nouveau mot de passe' : 'Créez votre espace de bien-être'}</div>
 
             <div className="auth-tabs">

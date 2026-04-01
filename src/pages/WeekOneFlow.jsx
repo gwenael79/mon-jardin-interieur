@@ -4961,7 +4961,7 @@ console.log('❌ Pas de données ou erreur:', error)
           </div>
 
           {/* ── Contenu (scrollable) ── */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column' }}>
             {view === 'garden' ? (
               <GardenDashboard
                 completedDays={weekData.completedDays}
@@ -4975,6 +4975,9 @@ console.log('❌ Pas de données ou erreur:', error)
                 plantHealth={plantHealth}
               />
             ) : (
+              // margin: auto haut/bas = centrage vertical quand le contenu est court,
+              // scroll normal quand il déborde (pas de safe-center nécessaire)
+              <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
               <DayShell
                 key={weekData.currentDay}
                 dayIndex={dayIndex}
@@ -4982,6 +4985,7 @@ console.log('❌ Pas de données ou erreur:', error)
                 completedDays={weekData.completedDays}
                 onDayComplete={handleDayEvent}
               />
+              </div>
             )}
           </div>
 
