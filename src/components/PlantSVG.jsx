@@ -130,7 +130,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
 
     /* ── NIVEAU 1 : ellipses classiques (rendu original) ── */
     if (ps === 'round') {
-      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
+      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
       return <g>
         {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
           const rad=a*Math.PI/180
@@ -148,7 +148,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
       </g>
     }
     if (ps === 'wide') {
-      const pRx = 8+14*r, pRy = 9+13*r, pD = 8+11*r
+      const pRx = 6+10*r, pRy = 12+18*r, pD = 8+11*r
       return <g>
         {[22.5,67.5,112.5,157.5,202.5,247.5,292.5,337.5].map((a,i) => {
           const rad=a*Math.PI/180
@@ -379,7 +379,6 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const lC1   = `rgba(${32+22*r},${105+85*r},${28+18*r},${0.65+0.3*r})`
   const lC2   = `rgba(${38+18*r},${115+72*r},${32+22*r},${0.6+0.35*r})`
   const lV    = `rgba(${55+35*r},${152+55*r},${44+22*r},0.32)`
-  const rootC = `rgba(${112+28*r},${72+26*r},${38+12*r},${0.28+0.32*r})`
 
   /* ── Ciel bleu — identique au jardin collectif ── */
   const skyHue = isDay ? Math.round(200 - dp * (1 - dp) * 4 * 60) : null
@@ -618,6 +617,126 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           })}
         </g>
 
+        {/* ── RACINES : fixes, hors plantSway, organiques ── */}
+        {r > 0.10 && (() => {
+          // Hash déterministe pour asymétrie stable
+          const rh = (a, b = 0) => {
+            let h = (2166136261 ^ b) >>> 0
+            const s = String(a)
+            for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0 }
+            return h
+          }
+          const rn = (seed, lo, hi) => lo + ((rh(seed) % 1000) / 1000) * (hi - lo)
+
+          // Profondeur pivot selon seuils progressifs
+          const pivotD = r < 0.15 ? 10
+                       : r < 0.20 ? 16
+                       : r < 0.30 ? 22
+                       : r < 0.40 ? 32
+                       : r < 0.50 ? 44
+                       : r < 0.65 ? 54
+                       : r < 0.75 ? 62
+                       : r < 0.85 ? 68 : 74
+
+          // Couleurs selon profondeur — plus sombre et transparent en profondeur
+          const cRoot0 = `rgba(${138+20*r},${88+18*r},${48+10*r},${0.22+0.28*r})`  // surface
+          const cRoot1 = `rgba(${118+15*r},${72+14*r},${36+8*r},${0.16+0.22*r})`   // intermédiaire
+          const cRoot2 = `rgba(${98+10*r},${58+10*r},${28+6*r},${0.10+0.16*r})`    // profond
+
+          // Branches : angles de départ asymétriques
+          const branches = [
+            { ang:-105, len: pivotD*0.82, sw:1.6+0.7*r, col:cRoot0, seed:'aL' },
+            { ang:-130, len: pivotD*0.65, sw:1.2+0.5*r, col:cRoot1, seed:'bL' },
+            { ang: -80, len: pivotD*0.52, sw:0.9+0.4*r, col:cRoot1, seed:'cL' },
+            { ang: 112, len: pivotD*0.78, sw:1.5+0.6*r, col:cRoot0, seed:'aR' },
+            { ang: 145, len: pivotD*0.60, sw:1.1+0.4*r, col:cRoot1, seed:'bR' },
+            { ang:  95, len: pivotD*0.48, sw:0.8+0.35*r, col:cRoot1, seed:'cR' },
+          ]
+
+          // Filtre blur pour diffusion
+          const fid = id + 'rf'
+
+          return (
+            <g clipPath={`url(#${id+'rc'})`} opacity={0.30+0.42*r}>
+              <defs>
+                <filter id={fid}><feGaussianBlur stdDeviation="1.2"/></filter>
+                <clipPath id={id+'rc'}><rect x={0} y={gY+2} width={W} height={H}/></clipPath>
+              </defs>
+
+              {/* Pivot central — légèrement courbé */}
+              {r > 0.10 && (
+                <path
+                  d={`M${cx},${gY+8} C${cx+rn('pv1',-3,3)},${gY+pivotD*0.4} ${cx+rn('pv2',-2,2)},${gY+pivotD*0.7} ${cx+rn('pv3',-2,3)},${gY+pivotD}`}
+                  stroke={cRoot0} strokeWidth={2.0+1.2*r} strokeLinecap="round" fill="none"
+                  filter={`url(#${fid})`}
+                />
+              )}
+
+              {/* Branches latérales organiques */}
+              {r > 0.15 && branches.slice(0, r < 0.20 ? 2 : r < 0.30 ? 3 : r < 0.40 ? 4 : r < 0.50 ? 5 : 6).map((b, i) => {
+                const rad = b.ang * Math.PI / 180
+                const wobble = rn(b.seed+'w', -8, 8)
+                const ex = cx + Math.cos(rad) * b.len
+                const ey = gY + 8 + Math.abs(Math.sin(rad)) * b.len
+                const mx = cx + Math.cos(rad) * b.len * 0.5 + wobble
+                const my = gY + 8 + Math.abs(Math.sin(rad)) * b.len * 0.45 + rn(b.seed+'m', -4, 4)
+                return (
+                  <g key={i}>
+                    <path
+                      d={`M${cx},${gY+8} Q${mx},${my} ${ex},${ey}`}
+                      stroke={b.col} strokeWidth={b.sw} strokeLinecap="round" fill="none"
+                      filter={`url(#${fid})`}
+                    />
+                    {/* Sous-branche — visible à partir de 40% */}
+                    {r > 0.40 && (() => {
+                      const rad2 = (b.ang + rn(b.seed+'a2',-22,22)) * Math.PI / 180
+                      const l2 = b.len * (0.38 + rn(b.seed+'l2',0,0.22))
+                      const ex2 = ex + Math.cos(rad2) * l2
+                      const ey2 = ey + Math.abs(Math.sin(rad2)) * l2 * 0.6
+                      return (
+                        <path
+                          d={`M${ex},${ey} Q${(ex+ex2)/2+rn(b.seed+'cx',-5,5)},${(ey+ey2)/2+rn(b.seed+'cy',-3,3)} ${ex2},${ey2}`}
+                          stroke={cRoot1} strokeWidth={b.sw*0.58} strokeLinecap="round" fill="none"
+                          filter={`url(#${fid})`}
+                        />
+                      )
+                    })()}
+                    {/* Radicelles fines — à partir de 65% */}
+                    {r > 0.65 && [0,1].map(k => {
+                      const rad3 = (b.ang + rn(b.seed+'r'+k,-35,35)) * Math.PI / 180
+                      const l3 = b.len * (0.18 + rn(b.seed+'l3'+k,0,0.12))
+                      const bx = ex + Math.cos(rad3) * l3 * 0.4
+                      const by = ey + Math.abs(Math.sin(rad3)) * l3 * 0.3
+                      return (
+                        <path key={k}
+                          d={`M${ex},${ey} L${bx},${by}`}
+                          stroke={cRoot2} strokeWidth={0.45} strokeLinecap="round" fill="none"
+                          filter={`url(#${fid})`}
+                        />
+                      )
+                    })}
+                  </g>
+                )
+              })}
+
+              {/* Poils absorbants — réseau fin à partir de 75% */}
+              {r > 0.75 && Array.from({ length: 10 }, (_, i) => {
+                const bx = cx + rn('ha'+i,-30,30)
+                const by = gY + 10 + rn('hb'+i,8,pivotD*0.85)
+                const dx = rn('hc'+i,-5,5)
+                const dy = rn('hd'+i,3,8)
+                return (
+                  <line key={i}
+                    x1={bx} y1={by} x2={bx+dx} y2={by+dy}
+                    stroke={cRoot2} strokeWidth={0.3} strokeLinecap="round"
+                    opacity={0.40+0.18*r}
+                  />
+                )
+              })}
+            </g>
+          )
+        })()}
+
         {/* PLANTE */}
         <g style={plantSway}>
 
@@ -672,105 +791,6 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               Tige + premières vraies feuilles, pas encore de fleur */}
           {(stage === 'young' || stage === 'bud' || stage === 'flower') && (
             <>
-              {/* Racines — système racinaire progressif et fin */}
-              {r > 0.10 && (() => {
-                // Racine pivot centrale
-                const pivotD = r > 0.55 ? 58 : r > 0.42 ? 44 : r > 0.25 ? 30 : 16
-                // Racines latérales principales (paires gauche/droite)
-                const lateralCount = r < 0.20 ? 0 : r < 0.36 ? 1 : r < 0.50 ? 2 : r < 0.68 ? 3 : 4
-                // Capillaires visibles à partir de 50%
-                const showCapillary = r > 0.50
-
-                return (
-                  <g opacity={0.38+0.30*r}>
-                    {/* Pivot central — racine principale */}
-                    <path
-                      d={`M${cx},${gY+2} C${cx-2},${gY+pivotD*0.45} ${cx+2},${gY+pivotD*0.72} ${cx},${gY+pivotD}`}
-                      stroke={rootC} strokeWidth={2.2+1.4*r} strokeLinecap="round" fill="none"
-                    />
-                    {/* Radicelle centrale fine */}
-                    {r > 0.38 && (
-                      <path
-                        d={`M${cx},${gY+pivotD*0.55} C${cx-1},${gY+pivotD*0.75} ${cx+1},${gY+pivotD*0.90} ${cx},${gY+pivotD+10}`}
-                        stroke={rootC} strokeWidth={0.7} strokeLinecap="round" fill="none" opacity={0.5}
-                      />
-                    )}
-
-                    {/* Racines latérales par paires */}
-                    {Array.from({ length: lateralCount }, (_, i) => {
-                      const t = 0.18 + (i / Math.max(lateralCount - 1, 1)) * 0.52
-                      const baseY = gY + pivotD * t
-                      const spread = 14 + i * 10 + r * 12
-                      const dropL  = 12 + i * 6 + r * 10
-                      const dropR  = 10 + i * 7 + r * 9
-                      const ctrlL  = spread * 0.6
-                      const ctrlR  = spread * 0.55
-                      // Épaisseur décroissante selon profondeur
-                      const sw = 1.2 + (1 - i / lateralCount) * 0.9 * r
-
-                      return (
-                        <g key={i}>
-                          {/* Gauche */}
-                          <path
-                            d={`M${cx},${baseY} C${cx-ctrlL},${baseY+4} ${cx-spread},${baseY+dropL*0.6} ${cx-spread+4},${baseY+dropL}`}
-                            stroke={rootC} strokeWidth={sw} strokeLinecap="round" fill="none"
-                          />
-                          {/* Droite */}
-                          <path
-                            d={`M${cx},${baseY} C${cx+ctrlR},${baseY+3} ${cx+spread-2},${baseY+dropR*0.55} ${cx+spread-6},${baseY+dropR}`}
-                            stroke={rootC} strokeWidth={sw * 0.9} strokeLinecap="round" fill="none"
-                          />
-                          {/* Capillaires gauche */}
-                          {showCapillary && i >= 1 && (
-                            <path
-                              d={`M${cx-spread*0.55},${baseY+dropL*0.45} C${cx-spread*0.8},${baseY+dropL*0.5} ${cx-spread*0.9+3},${baseY+dropL*0.65} ${cx-spread*0.85},${baseY+dropL*0.80}`}
-                              stroke={rootC} strokeWidth={0.5} strokeLinecap="round" fill="none" opacity={0.55}
-                            />
-                          )}
-                          {/* Capillaires droite */}
-                          {showCapillary && i >= 1 && (
-                            <path
-                              d={`M${cx+spread*0.50},${baseY+dropR*0.40} C${cx+spread*0.75},${baseY+dropR*0.48} ${cx+spread*0.85-2},${baseY+dropR*0.62} ${cx+spread*0.80},${baseY+dropR*0.78}`}
-                              stroke={rootC} strokeWidth={0.5} strokeLinecap="round" fill="none" opacity={0.50}
-                            />
-                          )}
-                        </g>
-                      )
-                    })}
-
-                    {/* Radicelles fines en réseau — à partir de 60% */}
-                    {r > 0.60 && [
-                      [cx - 8,  gY + pivotD * 0.30, -12, 8],
-                      [cx + 6,  gY + pivotD * 0.42,  10, 7],
-                      [cx - 4,  gY + pivotD * 0.62,  -8, 9],
-                      [cx + 10, gY + pivotD * 0.70,   9, 8],
-                    ].map(([bx, by, dx, dy], i) => (
-                      <path key={i}
-                        d={`M${bx},${by} Q${bx + dx * 0.5},${by + dy * 0.4} ${bx + dx},${by + dy}`}
-                        stroke={rootC} strokeWidth={0.4} strokeLinecap="round" fill="none" opacity={0.40 + 0.18 * r}
-                      />
-                    ))}
-
-                    {/* Poils absorbants — présence fine à 75%+ */}
-                    {r > 0.75 && [
-                      [cx - 22, gY + 22, -3, 5],
-                      [cx - 18, gY + 30,  2, 4],
-                      [cx - 28, gY + 34, -2, 6],
-                      [cx + 20, gY + 24,  3, 5],
-                      [cx + 16, gY + 32, -2, 4],
-                      [cx + 26, gY + 36,  2, 5],
-                      [cx - 6,  gY + 48, -3, 4],
-                      [cx + 4,  gY + 50,  2, 5],
-                    ].map(([bx, by, dx, dy], i) => (
-                      <path key={i}
-                        d={`M${bx},${by} L${bx + dx},${by + dy}`}
-                        stroke={rootC} strokeWidth={0.35} strokeLinecap="round" fill="none" opacity={0.35}
-                      />
-                    ))}
-                  </g>
-                )
-              })()}
-
               {/* Tige principale */}
               <path d={`M${cx},${gY} C${cx-6},${Math.round(sMY+14)} ${cx+7},${Math.round(sMY-14)} ${cx},${sTY}`}
                 stroke={stemC} strokeWidth={2.2+2*r} strokeLinecap="round" fill="none"/>

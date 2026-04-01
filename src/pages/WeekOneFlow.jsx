@@ -2239,18 +2239,16 @@ function MaFleurLiveModal({ onClose }) {
           </div>
         ) : (
           <>
-            {/* ── Carte PlantSVG ── */}
+            {/* ── PlantSVG bord-à-bord ── */}
             <div style={{
-              margin: '0 14px 20px',
-              borderRadius: 18,
-              overflow: 'hidden',
               position: 'relative',
-              minHeight: 420,
-              boxShadow: '0 4px 32px rgba(10,22,40,0.28), 0 1px 4px rgba(10,22,40,0.12)',
+              overflow: 'hidden',
+              minHeight: 340,
+              borderRadius: '18px 18px 0 0',
             }}>
               {/* Info overlay */}
               <div style={{
-                position: 'absolute', top: 14, left: 16, zIndex: 2,
+                position: 'absolute', top: 14, left: 16, zIndex: 3,
                 color: 'rgba(255,255,255,0.92)',
               }}>
                 <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 22, fontWeight: 700, lineHeight: 1 }}>
@@ -2266,7 +2264,7 @@ function MaFleurLiveModal({ onClose }) {
 
               {/* Stade badge */}
               <div style={{
-                position: 'absolute', top: 14, right: 16, zIndex: 2,
+                position: 'absolute', top: 14, right: 16, zIndex: 3,
                 background: 'rgba(255,255,255,0.12)',
                 border: '1px solid rgba(255,255,255,0.22)',
                 borderRadius: 100, padding: '4px 12px',
@@ -2277,14 +2275,23 @@ function MaFleurLiveModal({ onClose }) {
                 {stageLabel}
               </div>
 
-              {/* PlantSVG — pleine hauteur comme le dashboard */}
-              <div style={{ width: '100%', height: '100%', minHeight: 420, lineHeight: 0 }}>
+              {/* PlantSVG */}
+              <div style={{ width: '100%', minHeight: 340, lineHeight: 0 }}>
                 <PlantSVG
                   health={health}
                   gardenSettings={gardenSettings}
                   lumensLevel="halo"
                 />
               </div>
+
+              {/* Dégradé de fondu vers le background du modal */}
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0,
+                height: 90,
+                background: 'linear-gradient(to bottom, transparent, #faf5f2)',
+                zIndex: 2,
+                pointerEvents: 'none',
+              }} />
             </div>
 
             {/* ── 3 boutons features ── */}

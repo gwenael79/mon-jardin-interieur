@@ -35,8 +35,10 @@ export default function App() {
   )
 
   // ── État WeekOneFlow ─────────────────────────────────────
-  const [showWeekOne,   setShowWeekOne]   = useState(false)
-  const [weekOneClosed, setWeekOneClosed] = useState(false)
+  const [showWeekOne,    setShowWeekOne]    = useState(false)
+  const [weekOneClosed,  setWeekOneClosed]  = useState(false)
+  const [weekOneChecked, setWeekOneChecked] = useState(false)
+  const daysSinceReg = user ? Math.floor((Date.now() - new Date(user.created_at)) / 86400000) : 99
 
   // Détecter immédiatement si on revient d'un lien reset
   const [isRecovery, setIsRecovery] = useState(() => {
@@ -71,7 +73,13 @@ export default function App() {
 
   // ── Vérifier le profil dès que l'user est connu ──────────
   useEffect(() => {
-    if (!user) { setOnboarded(null); setShowWeekOne(false); return }
+    if (!user) {
+      setOnboarded(null)
+      setShowWeekOne(false)
+      setWeekOneClosed(false)
+      setWeekOneChecked(false)
+      return
+    }
     setCheckingOnboard(true)
     supabase
       .from('users')
@@ -97,8 +105,7 @@ export default function App() {
   // ── Vérifier si WeekOneFlow doit s'afficher ───────────────
   useEffect(() => {
     if (!user || onboarded !== true) return
-    const daysSinceReg = Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
-    if (daysSinceReg >= 7) return
+    if (daysSinceReg >= 7) { setWeekOneChecked(true); return }
     supabase
       .from('profiles')
       .select('week_one_data')
@@ -107,6 +114,8 @@ export default function App() {
       .then(({ data }) => {
         const completedDays = data?.week_one_data?.completedDays ?? []
         if (completedDays.length < 7) setShowWeekOne(true)
+        else setWeekOneClosed(true)
+        setWeekOneChecked(true)
       })
   }, [user?.id, onboarded])
 
@@ -235,6 +244,9 @@ export default function App() {
   // 2. Profil en cours de chargement → écran blanc (évite le flash DashboardPage)
   if (onboarded === null) return null
 
+  // 2c. WeekOne check en cours (< 7 jours) → on attend avant d'afficher quoi que ce soit
+  if (onboarded === true && daysSinceReg < 7 && !weekOneChecked) return null
+
   // 2a. Nouvel utilisateur → AccessPage en premier (choix plante + abonnement)
   if (onboarded === false) return (
     <>
@@ -258,59 +270,108 @@ export default function App() {
   // 3. Admin
   if (ADMIN_IDS.includes(user?.id) && hash === '#admin') return <AdminPage />
 
-  // 3b. WeekOneFlow fermé → écran de sortie
-  if (weekOneClosed) return (
+  // 3b. WeekOneFlow fermé → écran de repos (seulement dans les 7 premiers jours)
+  if (weekOneClosed && daysSinceReg < 7) return (
     <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column',
-      gap: 16,
+      position: 'fixed', inset: 0, zIndex: 50,
+      background: 'rgba(12,28,8,0.60)',
+      backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '16px',
     }}>
-      <p style={{
-        fontFamily: 'Cormorant Garamond, serif',
-        fontSize: 38,
-        color: '#5a3020',
-        fontStyle: 'italic',
-        fontWeight: 600,
-        margin: 0,
-        textAlign: 'center',
-        lineHeight: 1.3,
+      <style>{`
+        @keyframes floatZ {
+          0%   { opacity: 0;    transform: translateY(0px) scale(0.85); }
+          18%  { opacity: 0.92; }
+          80%  { opacity: 0.35; }
+          100% { opacity: 0;    transform: translateY(-72px) scale(1.08); }
+        }
+        .fz1 { animation: floatZ 3.2s ease-out infinite 0s; }
+        .fz2 { animation: floatZ 3.2s ease-out infinite 1.05s; }
+        .fz3 { animation: floatZ 3.2s ease-out infinite 2.1s; }
+      `}</style>
+
+      {/* ── Carte modal ── */}
+      <div style={{
+        width: '100%', maxWidth: 440,
+        borderRadius: 24, overflow: 'hidden',
+        boxShadow: '0 28px 90px rgba(0,0,0,0.50)',
+        display: 'flex', flexDirection: 'column',
+        maxHeight: 'calc(100dvh - 32px)',
       }}>
-        À très bientôt 🌸
-      </p>
-      <p style={{
-        fontFamily: 'Jost, sans-serif',
-        fontSize: 17,
-        fontWeight: 400,
-        color: '#7a5040',
-        margin: 0,
-        letterSpacing: '0.04em',
-        textAlign: 'center',
-      }}>
-        Votre jardin vous attend demain.
-      </p>
-      <button
-        onClick={() => window.location.reload()}
-        style={{
-          marginTop: 40,
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 15,
-          fontWeight: 500,
-          color: '#fff',
-          background: 'linear-gradient(135deg, #c8a0b0, #a07888)',
-          border: 'none',
-          borderRadius: 100,
-          padding: '14px 36px',
-          cursor: 'pointer',
-          letterSpacing: '0.06em',
-          boxShadow: '0 8px 24px rgba(160,100,120,0.3)',
-        }}
-      >
-        Retourner au jardin
-      </button>
+
+        {/* Zone image */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <img
+            src="/jardinier-repos.png"
+            alt=""
+            style={{
+              width: '100%', display: 'block',
+              maxHeight: '62vh', objectFit: 'cover', objectPosition: 'center 15%',
+            }}
+          />
+          {/* Z animés au-dessus de la tête */}
+          <span className="fz1" style={{
+            position: 'absolute', left: '54%', top: '24%',
+            fontFamily: 'Georgia,serif', fontSize: 22, fontStyle: 'italic', fontWeight: 'bold',
+            color: '#3a5080', pointerEvents: 'none',
+          }}>z</span>
+          <span className="fz2" style={{
+            position: 'absolute', left: '60%', top: '16%',
+            fontFamily: 'Georgia,serif', fontSize: 29, fontStyle: 'italic', fontWeight: 'bold',
+            color: '#3a5080', pointerEvents: 'none',
+          }}>z</span>
+          <span className="fz3" style={{
+            position: 'absolute', left: '66%', top: '7%',
+            fontFamily: 'Georgia,serif', fontSize: 38, fontStyle: 'italic', fontWeight: 'bold',
+            color: '#3a5080', pointerEvents: 'none',
+          }}>Z</span>
+          {/* Fondu bas */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 72,
+            background: 'linear-gradient(to bottom, transparent, #faf8f2)',
+            pointerEvents: 'none',
+          }}/>
+        </div>
+
+        {/* Zone texte + bouton */}
+        <div style={{
+          background: '#faf8f2',
+          padding: '18px 28px 30px',
+          textAlign: 'center', flexShrink: 0,
+        }}>
+          <p style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(20px, 4.5vw, 25px)',
+            fontWeight: 600, fontStyle: 'italic',
+            color: '#2a4a18', margin: '0 0 8px', lineHeight: 1.35,
+          }}>
+            Le jardinier aussi<br/>a besoin de repos.
+          </p>
+          <p style={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 13.5, color: '#5a6840',
+            margin: '0 0 22px', lineHeight: 1.65, letterSpacing: '0.02em',
+          }}>
+            Votre jardin intérieur a été semé.<br/>Laissez-le grandir en silence.
+          </p>
+          <button
+            onClick={() => { setWeekOneClosed(false); setShowWeekOne(true) }}
+            style={{
+              width: '100%',
+              fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 500,
+              color: '#fff',
+              background: 'linear-gradient(135deg, #5a9a2e, #3a7a1a)',
+              border: 'none', borderRadius: 100,
+              padding: '14px 28px', cursor: 'pointer',
+              letterSpacing: '0.06em',
+              boxShadow: '0 6px 22px rgba(60,100,20,0.35)',
+            }}
+          >
+            Revenir sur mon jardin intérieur
+          </button>
+        </div>
+      </div>
     </div>
   )
 
@@ -320,10 +381,10 @@ export default function App() {
       {!showWeekOne && <DashboardPage />}
 
       {/* ── WeekOneFlow — 7 premiers jours ── */}
-      {showWeekOne && (
+      {showWeekOne && daysSinceReg < 7 && (
         <WeekOneFlow
           userId={user.id}
-          onComplete={() => setShowWeekOne(false)}
+          onComplete={() => { setWeekOneClosed(true); setShowWeekOne(false) }}
         />
       )}
 
