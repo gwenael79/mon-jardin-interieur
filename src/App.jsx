@@ -114,7 +114,8 @@ export default function App() {
       .then(({ data }) => {
         const completedDays = data?.week_one_data?.completedDays ?? []
         if (completedDays.length < 7) setShowWeekOne(true)
-        else setWeekOneClosed(true)
+        // Si les 7 jours sont déjà validés : aller directement au dashboard
+        // (ne pas passer par la page de repos)
         setWeekOneChecked(true)
       })
   }, [user?.id, onboarded])
@@ -190,7 +191,11 @@ export default function App() {
       userId={user?.id ?? null}
       onComplete={() => {
         window.history.replaceState({}, '', window.location.pathname)
-        window.location.reload()
+        setWeekOneClosed(true); setShowWeekOne(false)
+      }}
+      onAllDone={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        setShowWeekOne(false)
       }}
     />
   )
@@ -204,7 +209,11 @@ export default function App() {
       forceDay={testDayNum}
       onComplete={() => {
         window.history.replaceState({}, '', window.location.pathname)
-        window.location.reload()
+        setWeekOneClosed(true); setShowWeekOne(false)
+      }}
+      onAllDone={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        setShowWeekOne(false)
       }}
     />
   )
@@ -217,7 +226,11 @@ export default function App() {
       forceGarden
       onComplete={() => {
         window.history.replaceState({}, '', window.location.pathname)
-        window.location.reload()
+        setWeekOneClosed(true); setShowWeekOne(false)
+      }}
+      onAllDone={() => {
+        window.history.replaceState({}, '', window.location.pathname)
+        setShowWeekOne(false)
       }}
     />
   )
@@ -385,6 +398,7 @@ export default function App() {
         <WeekOneFlow
           userId={user.id}
           onComplete={() => { setWeekOneClosed(true); setShowWeekOne(false) }}
+          onAllDone={() => { setShowWeekOne(false) }}
         />
       )}
 

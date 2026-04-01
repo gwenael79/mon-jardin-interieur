@@ -692,7 +692,7 @@ export const WEEK_ONE_DATA = [
   {
     day: 6,
     title: 'Je rencontre mon jardin',
-    color: '#8878a8',
+    color: '#1a1010',
     accueil: {
       conditioning: true,
       skipBarometer: true,
@@ -829,7 +829,7 @@ function BackButton({ onClick }) {
       style={{
         fontFamily: 'Jost, sans-serif',
         fontSize: 13,
-        color: '#b09898',
+        color: '#1a1010',
         background: 'none',
         border: 'none',
         cursor: 'pointer',
@@ -1122,7 +1122,7 @@ function FlowerMosaic({ completedZones, size = 248, petalColor1, petalColor2 }) 
                 width: size, height: size,
                 pointerEvents: 'none',
               }}>
-                <FlowerIllustration size={size} color1={petalColor1} color2={petalColor2} />
+                <FlowerIllustration size={size} color1={petalColor1 ?? undefined} color2={petalColor2 ?? undefined} />
               </div>
 
               {/* Label de zone (apparaît à l'activation) */}
@@ -1214,7 +1214,7 @@ function RituelTimer({ duration, label, color, onComplete }) {
       <p style={{
         fontFamily: 'Jost, sans-serif',
         fontSize: 12,
-        color: '#a09090',
+        color: '#1a1010',
         margin: 0,
         letterSpacing: '0.06em',
         textTransform: 'uppercase',
@@ -1279,7 +1279,7 @@ function RituelTimer({ duration, label, color, onComplete }) {
         <p style={{
           fontFamily: 'Jost, sans-serif',
           fontSize: 13,
-          color: '#9a8888',
+          color: '#1a1010',
           margin: 0,
           fontStyle: 'italic',
         }}>
@@ -1297,50 +1297,66 @@ function RituelTimer({ duration, label, color, onComplete }) {
 // ── Orbe respiratoire ──────────────────────────────────────────────────────
 
 function BreathingOrb() {
-  const [isInhale, setIsInhale] = useState(false)
+  const [countdown, setCountdown] = useState(3)   // 3 → 2 → 1 → 0 (started)
+  const [isInhale,  setIsInhale]  = useState(true)
 
   useEffect(() => {
-    const t = setInterval(() => setIsInhale((v) => !v), 5000)
-    return () => clearInterval(t)
+    const t1 = setTimeout(() => setCountdown(2), 1000)
+    const t2 = setTimeout(() => setCountdown(1), 2000)
+    const t3 = setTimeout(() => setCountdown(0), 3000)
+    return () => [t1, t2, t3].forEach(clearTimeout)
   }, [])
+
+  useEffect(() => {
+    if (countdown > 0) return
+    const t = setInterval(() => setIsInhale(v => !v), 5000)
+    return () => clearInterval(t)
+  }, [countdown])
+
+  const started = countdown === 0
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
 
-      {/* Orbe + texte centré */}
+      {/* Orbe */}
       <div style={{ position: 'relative', width: 72, height: 72 }}>
         <div style={{
-          width: 72,
-          height: 72,
+          width: 72, height: 72,
           borderRadius: '50%',
           background: 'radial-gradient(circle at 42% 38%, #fff6f2 0%, #f0c8b4 38%, #9a6070 100%)',
-          transform: isInhale ? 'scale(1.7)' : 'scale(1)',
-          boxShadow: isInhale
+          transform: started && isInhale ? 'scale(1.7)' : 'scale(1)',
+          boxShadow: started && isInhale
             ? '0 0 55px 22px rgba(240,175,145,0.52), 0 0 90px 36px rgba(200,130,110,0.22)'
             : '0 0 14px 4px rgba(200,140,120,0.18)',
-          transition: 'transform 5s ease-in-out, box-shadow 5s ease-in-out',
+          transition: started ? 'transform 5s ease-in-out, box-shadow 5s ease-in-out' : 'none',
         }} />
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none',
         }}>
-          <p style={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: 11,
-            fontWeight: 500,
-            color: '#3a1818',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            margin: 0,
-            transition: 'opacity 0.8s ease',
-            whiteSpace: 'nowrap',
-          }}>
-            {isInhale ? 'Inspirez' : 'Expirez'}
-          </p>
+          {!started ? (
+            <p key={countdown} style={{
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 26, fontWeight: 700,
+              color: '#3a1818',
+              margin: 0,
+              animation: 'stepIn 0.25s ease both',
+            }}>{countdown}</p>
+          ) : (
+            <p style={{
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 11, fontWeight: 500,
+              color: '#3a1818',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              margin: 0,
+              transition: 'opacity 0.8s ease',
+              whiteSpace: 'nowrap',
+            }}>
+              {isInhale ? 'Inspirez' : 'Expirez'}
+            </p>
+          )}
         </div>
       </div>
 
@@ -1432,7 +1448,7 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
         fontFamily: 'Cormorant Garamond, Georgia, serif',
         fontSize: 'clamp(15px, 3.8vw, 18px)',
         fontStyle: 'italic',
-        color: '#6a5858',
+        color: '#1a1010',
         lineHeight: 1.7,
         textAlign: 'center',
         margin: '0 0 22px',
@@ -1538,27 +1554,27 @@ function DayAccueilSlide1({ answerKey, onAnswer }) {
     if (subSlide === 0) {
       // SLIDE 0 — INTRO
       timers = [
-        setTimeout(() => setPhase(1), 1800),  // "Quelque chose en vous…"
-        setTimeout(() => setPhase(2), 3600),  // "Pas pour faire plus…"
-        setTimeout(() => setPhase(3), 5400),  // "Ce que vous allez commencer…"
-        setTimeout(() => setPhase(4), 7000),  // CTA
+        setTimeout(() => setPhase(1), 200),
+        setTimeout(() => setPhase(2), 400),
+        setTimeout(() => setPhase(3), 600),
+        setTimeout(() => setPhase(4), 800),
       ]
     } else if (subSlide === 1) {
       // SLIDE 1 — ARRÊT
       timers = [
-        setTimeout(() => setPhase(1), 1000),  // "Et pour une fois…"
-        setTimeout(() => setPhase(2), 2500),  // CTA "Prendre un instant"
+        setTimeout(() => setPhase(1), 200),
+        setTimeout(() => setPhase(2), 500),
       ]
     } else if (subSlide === 2) {
       // SLIDE 2 — CONNEXION
       timers = [
-        setTimeout(() => setPhase(1), 600),   // animation respiration
-        setTimeout(() => setPhase(2), 2400),  // CTA "Observer"
+        setTimeout(() => setPhase(1), 200),
+        setTimeout(() => setPhase(2), 600),
       ]
     } else {
       // SLIDE 3 — QUESTION
       timers = [
-        setTimeout(() => setPhase(1), 400),   // badges
+        setTimeout(() => setPhase(1), 150),
       ]
     }
     return () => timers.forEach(clearTimeout)
@@ -1759,7 +1775,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete }) {
             fontFamily: 'Jost, sans-serif',
             fontSize: 14,
             fontWeight: 300,
-            color: '#7a6868',
+            color: '#1a1010',
             lineHeight: 1.65,
             margin: '0 0 12px',
             fontStyle: 'italic',
@@ -2000,10 +2016,11 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
                 <span style={{
                   fontFamily: 'Jost, sans-serif',
                   fontSize: 15,
-                  fontWeight: isSelected ? 600 : 300,
+                  fontWeight: 500,
                   color: isFilled ? level.color : 'rgba(80,55,55,0.38)',
-                  transition: 'all 0.35s ease',
-                  letterSpacing: isSelected ? '0.05em' : '0',
+                  transition: 'color 0.35s ease, opacity 0.35s ease',
+                  opacity: isSelected ? 1 : isFilled ? 0.75 : 0.45,
+                  letterSpacing: '0.02em',
                 }}>
                   {level.label}
                 </span>
@@ -2206,7 +2223,7 @@ function MaFleurLiveModal({ onClose }) {
             fontFamily: 'Jost, sans-serif',
             fontSize: 11, fontWeight: 500,
             letterSpacing: '0.18em', textTransform: 'uppercase',
-            color: '#8878a8', margin: '0 0 4px',
+            color: '#1a1010', margin: '0 0 4px',
           }}>
             Ma Fleur
           </p>
@@ -2224,7 +2241,7 @@ function MaFleurLiveModal({ onClose }) {
           <div style={{
             textAlign: 'center', padding: '56px 0',
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 18, fontStyle: 'italic', color: '#b09898',
+            fontSize: 18, fontStyle: 'italic', color: '#1a1010',
           }}>
             Votre fleur arrive…
           </div>
@@ -2232,7 +2249,7 @@ function MaFleurLiveModal({ onClose }) {
           <div style={{
             textAlign: 'center', padding: '48px 32px',
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 18, fontStyle: 'italic', color: '#b09898', lineHeight: 1.7,
+            fontSize: 18, fontStyle: 'italic', color: '#1a1010', lineHeight: 1.7,
           }}>
             Votre fleur prend racine.<br />
             Commencez votre bilan demain matin<br />pour la voir grandir.
@@ -2355,7 +2372,7 @@ function MaFleurLiveModal({ onClose }) {
                   )}
                 </div>
               ))}
-              <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: '#b8a8b0', textAlign: 'center', margin: '4px 0 0', letterSpacing: '0.04em' }}>
+              <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: '#1a1010', textAlign: 'center', margin: '4px 0 0', letterSpacing: '0.04em' }}>
                 Disponibles dans Mon Jardin → Ma Fleur
               </p>
             </div>
@@ -2477,7 +2494,7 @@ function MaFleurLiveModal({ onClose }) {
                 onClick={fetchData}
                 style={{
                   fontFamily: 'Jost, sans-serif', fontSize: 12,
-                  color: '#8878a8', background: 'rgba(136,120,168,0.10)',
+                  color: '#1a1010', background: 'rgba(136,120,168,0.10)',
                   border: '1px solid rgba(136,120,168,0.28)',
                   borderRadius: 100, padding: '6px 18px',
                   cursor: 'pointer', letterSpacing: '0.06em',
@@ -2486,7 +2503,7 @@ function MaFleurLiveModal({ onClose }) {
                 ↺ Actualiser
               </button>
               {lastRefresh && (
-                <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: '#baaab4', marginTop: 6 }}>
+                <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: '#1a1010', marginTop: 6 }}>
                   Mis à jour à {lastRefresh.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               )}
@@ -2551,7 +2568,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
             fontWeight: 500,
             letterSpacing: '0.18em',
             textTransform: 'uppercase',
-            color: '#8878a8',
+            color: '#1a1010',
             margin: '0 0 8px',
           }}>
             Votre fleur
@@ -2571,7 +2588,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
             fontFamily: 'Cormorant Garamond, Georgia, serif',
             fontSize: 'clamp(14px, 3.5vw, 17px)',
             fontStyle: 'italic',
-            color: '#7a6878',
+            color: '#1a1010',
             margin: 0,
           }}>
             Elle vous attend dans votre jardin intérieur
@@ -2628,7 +2645,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
                   fontFamily: 'Cormorant Garamond, Georgia, serif',
                   fontSize: 'clamp(16px, 4vw, 19px)',
                   fontStyle: 'italic',
-                  color: '#6a5468',
+                  color: '#1a1010',
                   lineHeight: 1.3,
                 }}>
                   {z.desc}
@@ -2805,9 +2822,9 @@ function RituelTransition({ introData, dayColor, onStart, onBack }) {
 
   useEffect(() => {
     const timers = lines.map((_, i) =>
-      setTimeout(() => setPhase(i + 1), i * 1400)
+      setTimeout(() => setPhase(i + 1), i * 200)
     )
-    timers.push(setTimeout(() => setPhase(lines.length + 1), lines.length * 1400))
+    timers.push(setTimeout(() => setPhase(lines.length + 1), lines.length * 200))
     return () => timers.forEach(clearTimeout)
   }, [lines])
 
@@ -2851,18 +2868,8 @@ function RacinesGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2200, 4800, 7800, 11200, 14600, 17800, 21500, 25000]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        // skip scroll for phase 1 — already at top
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900, 1050, 1200]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -2900,7 +2907,7 @@ function RacinesGuidedRituel({ onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#9a7060',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Votre premier rituel
@@ -2937,7 +2944,7 @@ function RacinesGuidedRituel({ onNext, onBack }) {
             fontWeight: 500,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#7a5c48',
+            color: '#1a1010',
             background: 'rgba(180,130,100,0.12)',
             border: '1px solid rgba(180,130,100,0.30)',
             borderRadius: 100,
@@ -2967,17 +2974,8 @@ function TigeGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2200, 5000, 8000, 11500, 15000, 18500, 22000]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900, 1050]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -3015,7 +3013,7 @@ function TigeGuidedRituel({ onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#6a8898',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Votre deuxième rituel
@@ -3050,7 +3048,7 @@ function TigeGuidedRituel({ onNext, onBack }) {
             fontWeight: 500,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#5a7888',
+            color: '#1a1010',
             background: 'rgba(100,150,180,0.10)',
             border: '1px solid rgba(100,150,180,0.28)',
             borderRadius: 100,
@@ -3081,17 +3079,8 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2200, 5000, 8500, 12500, 16500, 20500, 24000]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900, 1050]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -3128,7 +3117,7 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#5a8868',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Votre troisième rituel
@@ -3163,7 +3152,7 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
             fontWeight: 500,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#4a7858',
+            color: '#1a1010',
             background: 'rgba(90,160,110,0.10)',
             border: '1px solid rgba(90,160,110,0.28)',
             borderRadius: 100,
@@ -3192,17 +3181,8 @@ function FleursGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2200, 5000, 8500, 12500, 16500, 20500, 24000]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900, 1050]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -3239,7 +3219,7 @@ function FleursGuidedRituel({ onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#a07888',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Votre quatrième rituel
@@ -3274,7 +3254,7 @@ function FleursGuidedRituel({ onNext, onBack }) {
             fontWeight: 500,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#906070',
+            color: '#1a1010',
             background: 'rgba(180,120,140,0.10)',
             border: '1px solid rgba(180,120,140,0.28)',
             borderRadius: 100,
@@ -3303,17 +3283,8 @@ function SouffleGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2200, 5000, 8500, 12500, 16500, 20500, 24000]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900, 1050]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -3350,7 +3321,7 @@ function SouffleGuidedRituel({ onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#8a7048',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Votre cinquième rituel
@@ -3385,7 +3356,7 @@ function SouffleGuidedRituel({ onNext, onBack }) {
             fontWeight: 500,
             letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: '#7a6038',
+            color: '#1a1010',
             background: 'rgba(180,150,90,0.10)',
             border: '1px solid rgba(180,150,90,0.28)',
             borderRadius: 100,
@@ -3414,17 +3385,8 @@ function JardinGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2500, 6000, 10500, 15000, 19500, 23500]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -3484,7 +3446,7 @@ function JardinGuidedRituel({ onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#8878a8',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
 Laissez-moi vous présenter         </p>
@@ -3578,12 +3540,12 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
   }, [])
 
   const features = [
-    { emoji: '🌍', label: 'Le Jardin Collectif',    desc: "Un espace partagé où chaque fleur contribue au jardin commun par sa présence",                                                color: '#7a9ab8' },
+    { emoji: '🌍', label: 'Le Jardin Collectif',    desc: "Un espace partagé où chaque fleur contribue au jardin commun par sa présence",                                                color: '#1a1010' },
     { emoji: '🤝', label: 'Le Club des Jardiniers', desc: "Une communauté qui avance ensemble, se soutient et partage des ondes positives",                                              color: '#9a78b0' },
     { emoji: '🎯', label: 'Les Défis',              desc: "Des challenges pour partager ensemble des mises en action et s\u2019encourager",                                              color: '#b07860' },
     { emoji: '🌿', label: 'Les Ateliers',           desc: "Des sessions guidées pour approfondir votre mieux-\u00eatre, accompagné par des professionnels",                              color: '#607860' },
     { emoji: '✨', label: 'Les Lumens',             desc: "L\u2019\u00e9nergie de votre engagement, visible et partageable",                                                             color: '#a8a030' },
-    { emoji: '📚', label: 'La Jardinoth\èque', desc: "Un ensemble d\u2019outils pour vous accompagner dans votre bien-\u00eatre",                                                    color: '#8878a8' },
+    { emoji: '📚', label: 'La Jardinoth\èque', desc: "Un ensemble d\u2019outils pour vous accompagner dans votre bien-\u00eatre",                                                    color: '#1a1010' },
   ]
 
   return (
@@ -3595,7 +3557,7 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
           fontFamily: 'Jost, sans-serif',
           fontSize: 'clamp(11px, 2.8vw, 13px)',
           fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase',
-          color: '#7a9ab8', margin: '0 0 8px',
+          color: '#1a1010', margin: '0 0 8px',
         }}>
           Le jardin s'ouvre
         </p>
@@ -3610,7 +3572,7 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(14px, 3.5vw, 17px)',
-          fontStyle: 'italic', color: '#7a6878', margin: 0,
+          fontStyle: 'italic', color: '#1a1010', margin: 0,
         }}>
           D'autres jardins vous attendent
         </p>
@@ -3640,7 +3602,7 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
               <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: '#2a1828', marginBottom: 2 }}>
                 {f.label}
               </div>
-              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(14px, 3.5vw, 17px)', fontStyle: 'italic', color: '#6a5468', lineHeight: 1.3 }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(14px, 3.5vw, 17px)', fontStyle: 'italic', color: '#1a1010', lineHeight: 1.3 }}>
                 {f.desc}
               </div>
             </div>
@@ -3668,17 +3630,8 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
   const phaseRefs = useRef({})
 
   useEffect(() => {
-    const T = [0, 2500, 6500, 11000, 15500, 20000, 24500, 29000, 33000]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, 450, 600, 750, 900, 1050, 1200]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [])
 
@@ -3734,7 +3687,7 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
           fontFamily: 'Jost, sans-serif',
           fontSize: 'clamp(11px, 2.8vw, 13px)',
           fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase',
-          color: '#7a9ab8', margin: '0 0 8px',
+          color: '#1a1010', margin: '0 0 8px',
         }}>
           Laissez-moi vous présenter
         </p>
@@ -4097,17 +4050,8 @@ function RacinesValidation({ answers, onNext, onBack }) {
   const hasBarometer = !!answers?.j1?.feel
 
   useEffect(() => {
-    const T = [0, 2800, 5800, hasBarometer ? 9000 : 99999, 12500]
-    const timers = T.map((ms, i) =>
-      setTimeout(() => {
-        setPhase(i + 1)
-        if (i > 0) {
-          setTimeout(() => {
-            phaseRefs.current[i + 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }, 300)
-        }
-      }, ms)
-    )
+    const T = [0, 150, 300, hasBarometer ? 450 : 99999, 600]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
     return () => timers.forEach(clearTimeout)
   }, [hasBarometer])
 
@@ -4147,7 +4091,7 @@ function RacinesValidation({ answers, onNext, onBack }) {
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#9a7060',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Ce qui vient de se passer
@@ -4345,7 +4289,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#9a7060',
+          color: '#1a1010',
           margin: '0 0 8px',
         }}>
           Ce qui prend forme
@@ -4380,7 +4324,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontStyle: 'italic',
           fontSize: 'clamp(17px, 4.2vw, 21px)',
-          color: '#9a7060',
+          color: '#1a1010',
           margin: '0 0 12px',
           lineHeight: 1.5,
         }}>
@@ -4614,7 +4558,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
             fontFamily: 'Cormorant Garamond, Georgia, serif',
             fontStyle: 'italic',
             fontSize: 'clamp(16px, 4vw, 19px)',
-            color: '#9a7060',
+            color: '#1a1010',
             background: 'none',
             border: '1px solid rgba(180,130,100,0.30)',
             borderRadius: 100,
@@ -4674,9 +4618,16 @@ const TEST_ANSWERS = {
   j6: { stress: 'legere_moins' },
 }
 
-export function WeekOneFlow({ userId, onComplete, forceGarden, forceDay }) {
+export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceDay }) {
   const { signOut } = useAuth()
   const [loading,     setLoading]     = useState(true)
+
+  // Déconnexion fiable : on tente signOut puis on force le rechargement
+  // peu importe le résultat (évite les états bloqués)
+  async function handleSignOut() {
+    try { await signOut() } catch (_) {}
+    window.location.href = '/'
+  }
   const [plantHealth, setPlantHealth] = useState(null)
   const [petalColor1, setPetalColor1] = useState(null)
   const [petalColor2, setPetalColor2] = useState(null)
@@ -4888,7 +4839,9 @@ console.log('❌ Pas de données ou erreur:', error)
         if (userId) {
           ;(async () => { try { await supabase.from('profiles').update({ week_one_data: updated }).eq('id', userId) } catch (_) {} })()
         }
-        onComplete?.()
+        // onAllDone = tous les 7 jours validés → aller au dashboard
+        // onComplete = fallback (compatibilité test-weekone)
+        ;(onAllDone ?? onComplete)?.()
       } else {
         setView('garden')
         if (userId) {
@@ -5016,7 +4969,7 @@ console.log('❌ Pas de données ou erreur:', error)
                 onContinue={() => setView('day')}
                 onOpenZone={setActiveZoneId}
                 onClose={onComplete}
-                onSignOut={signOut}
+                onSignOut={handleSignOut}
                 petalColor1={petalColor1}
                 petalColor2={petalColor2}
                 plantHealth={plantHealth}

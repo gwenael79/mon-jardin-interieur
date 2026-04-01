@@ -960,6 +960,11 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
     return (degradation[b] ?? 50) - (degradation[a] ?? 50);
   });
 
+  // Calcul de la santé en tenant compte des rituels complétés
+  const plantHealth = hasDegradation
+    ? computePlantHealth(degradation, completedRituals, null, plantRituals)
+    : null;
+
   const handleQuizComplete = (deg) => {
     setShowQuiz(false);
     onQuizComplete(deg);
@@ -1038,7 +1043,7 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
             const rituals = (plantRituals || {})[zoneId] || [];
             const doneCount = rituals.filter(r => completedRituals[r.id]).length;
             const deg = hasDegradation ? (degradation[zoneId] ?? 50) : 50;
-            const health = Math.max(5, 100 - deg);
+            const health = plantHealth ? plantHealth[zoneId] : Math.max(5, 100 - deg);
             const isPriority = hasDegradation && deg >= 65 && doneCount === 0;
             const isFirst = hasDegradation && index === 0 && deg >= 60;
 

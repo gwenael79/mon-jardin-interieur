@@ -28,6 +28,10 @@ import PremiumBanner            from '../components/PremiumBanner'
 import AccessPage               from './AccessPage'
 import { useTheme }             from '../hooks/useTheme'
 
+// Verrou module-level : empêche le double-award daily_login dans la même session
+// (React Strict Mode monte les composants 2x en dev, créant une race condition)
+const _dailyLoginAwarded = new Set()
+
 // ── Navigation ───────────────────────────────────────────────────────────────
 const SCREENS = [
   { id:'jardin',   icon:'🌸', label:'Ma Fleur',            Component: ScreenMonJardin        },
@@ -288,7 +292,7 @@ function ProfileModal({ user, onClose }) {
           <div>
             <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)' }}>🌿 Visible dans Le Jardin</div>
             <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:3 }}>
-              Les autres personnes peuvent vous envoyer un ❤️
+              Les autres personnes peuvent vous envoyer un 💐
             </div>
           </div>
           <div
@@ -481,15 +485,26 @@ export default function DashboardPage() {
       .then(({ count }) => setPendingReports(count ?? 0))
   }
 
-  // Connexion quotidienne — +1 Lumen/jour
+  // Connexion quotidienne — +1 Lumen/jour (1 seule fois par jour, vérifié côté Supabase)
   useEffect(() => {
     if (!user?.id || !awardLumens) return
+    // Verrou en mémoire : bloque les appels simultanés (race condition Strict Mode)
+    if (_dailyLoginAwarded.has(user.id)) return
+    _dailyLoginAwarded.add(user.id)
+
     const today = new Date().toISOString().split('T')[0]
-    const lastLogin = localStorage.getItem(`last_login_${user.id}`)
-    if (lastLogin !== today) {
-      localStorage.setItem(`last_login_${user.id}`, today)
-      awardLumens(1, 'daily_login', { date: today })
-    }
+    supabase
+      .from('lumen_transactions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('reason', 'daily_login')
+      .gte('created_at', today + 'T00:00:00.000Z')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) {
+          awardLumens(1, 'daily_login', { date: today })
+        }
+      })
   }, [user?.id])
 
   const [showCreateCircle,   setShowCreateCircle]   = useState(false)

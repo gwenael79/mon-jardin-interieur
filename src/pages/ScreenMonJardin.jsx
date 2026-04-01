@@ -4264,9 +4264,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     const delta   = computeRitualDelta(currentHealth, streak)
 
     const newZoneVal = Math.min(100, currentZone + delta)
-    const newHealth  = Math.round(
-      zoneKeys.reduce((sum, k) => sum + (k === dbKey ? newZoneVal : (plant?.[k] ?? 5)), 0) / zoneKeys.length
+    // newHealth = max entre (currentHealth + delta) et la moyenne des zones
+    // Garantit que compléter un rituel ne fait JAMAIS baisser la vitalité,
+    // même si les valeurs de zone en DB sont incohérentes avec plant.health
+    const avgHealth = Math.round(
+      zoneKeys.reduce((sum, k) => sum + (k === dbKey ? newZoneVal : (plant?.[k] ?? currentHealth)), 0) / zoneKeys.length
     )
+    const newHealth = Math.min(100, Math.max(currentHealth + delta, avgHealth))
 
     // ── Optimistic update immédiat ──
     setPlantOverride(prev => ({ ...(prev ?? plant), [dbKey]: newZoneVal, health: newHealth }))
@@ -4287,7 +4291,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         .update({ [dbKey]: newZoneVal, health: newHealth })
         .eq('id', plant.id)
     } catch (e) {
-      setPlantOverride(null)
+      // On garde l'update optimiste — les données sont dans localStorage
+      // L'échec Supabase ne doit pas pénaliser l'utilisateur visuellement
       console.warn('ritual update failed', e)
     }
   }, [_toggleRitual, completedRituals, plant, userId, recordToday])
