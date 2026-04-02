@@ -4,6 +4,7 @@ import { supabase } from '../core/supabaseClient'
 import { RitualZoneModal, useRituels } from './mafleur_rituels'
 import { useAuth } from '../hooks/useAuth'
 import { PlantSVG, DEFAULT_GARDEN_SETTINGS } from '../components/PlantSVG'
+import { LutinCompagnon, LUTIN_MESSAGES_WEEK_ONE } from '../components/LutinCompagnon'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Styles globaux — keyframes + responsive modal
@@ -4143,20 +4144,35 @@ function RacinesValidation({ answers, onNext, onBack }) {
 // 5. DayShell — orchestre les 5 étapes d'un jour
 // ─────────────────────────────────────────────────────────────────────────────
 
-function DayShell({ dayIndex, answers, completedDays, onDayComplete }) {
+const STEP_THEMES = [
+  'accueil et découverte de l\'intention du jour',
+  'introspection et questionnement intérieur',
+  'rituel et pratique de pleine conscience',
+  'intégration et trace de ce qui vient d\'être vécu',
+  'ouverture vers la suite du parcours',
+]
+
+function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChange }) {
   const [step, setStep] = useState(0)
   const [animKey, setAnimKey] = useState(0)
   const [showFleurModal, setShowFleurModal] = useState(false)
 
   const dayConfig = WEEK_ONE_DATA[dayIndex]
 
+  useEffect(() => {
+    onStepChange?.(0, STEP_THEMES[0], dayConfig)
+  }, [])
+
   function advance() {
-    setStep((s) => s + 1)
+    const next = step + 1
+    setStep(next)
     setAnimKey((k) => k + 1)
+    onStepChange?.(next, STEP_THEMES[next] ?? '', dayConfig)
   }
 
   function goBack() {
-    setStep((s) => Math.max(0, s - 1))
+    const prev = Math.max(0, step - 1)
+    setStep(prev)
     setAnimKey((k) => k + 1)
   }
 
@@ -4618,6 +4634,8 @@ const TEST_ANSWERS = {
   j6: { stress: 'legere_moins' },
 }
 
+const LUTIN_SLOTS = ['right', 'left']
+
 export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceDay }) {
   const { signOut } = useAuth()
   const [loading,     setLoading]     = useState(true)
@@ -4659,6 +4677,80 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
   const [activeZoneId, setActiveZoneId] = useState(null)
   const [completedRituals, setCompletedRituals] = useState({})
   const { rituals: plantRituals } = useRituels()
+
+  // Lutin compagnon
+  const [lutinVisible,   setLutinVisible]  = useState(false)
+  const [bubbleOpen,     setBubbleOpen]    = useState(false)
+  const [lutinMessage,   setLutinMessage]  = useState(null)
+  const [lutinLoading,   setLutinLoading]  = useState(false)
+  const [lutinSlotIdx,   setLutinSlotIdx]  = useState(0)
+  const lutinShowTimer   = useRef(null)
+  const lutinHideTimer   = useRef(null)
+
+  function pickSlotIdx(currentIdx) {
+    return currentIdx === 0 ? 1 : 0
+  }
+
+  function fetchAndShow(stepTheme, dayCfg, ans, isClick = false) {
+    const dayKey = `j${dayCfg.day}`
+    setLutinLoading(true)
+    if (!isClick) setLutinMessage(null)
+    supabase.functions.invoke('compagnon', {
+      body: {
+        day:       dayCfg.day,
+        dayTitle:  dayCfg.title,
+        zone:      dayCfg.rituel?.zone ?? '',
+        stepTheme: stepTheme,
+        feel:      ans?.j1?.feel ?? ans?.[dayKey]?.feel ?? null,
+        energy:    ans?.[dayKey]?.energy ?? null,
+      },
+    }).then(({ data }) => {
+      if (data?.message) setLutinMessage(data.message)
+    }).catch(() => {}).finally(() => setLutinLoading(false))
+  }
+
+  // Déclenché à chaque changement de step (via DayShell)
+  function handleStepChange(step, stepTheme, dayCfg) {
+    clearTimeout(lutinShowTimer.current)
+    clearTimeout(lutinHideTimer.current)
+    setBubbleOpen(false)
+    setLutinVisible(false)
+
+    setLutinSlotIdx(prev => pickSlotIdx(prev))
+
+    const ans = weekData.answers ?? {}
+    fetchAndShow(stepTheme, dayCfg, ans)
+
+    lutinShowTimer.current = setTimeout(() => {
+      setLutinVisible(true)
+      setBubbleOpen(true)
+      lutinHideTimer.current = setTimeout(() => setBubbleOpen(false), 10000)
+    }, 2000)
+  }
+
+  // Reset quand le jour change ou quand on quitte la vue day
+  useEffect(() => {
+    clearTimeout(lutinShowTimer.current)
+    clearTimeout(lutinHideTimer.current)
+    setLutinVisible(false)
+    setBubbleOpen(false)
+    setLutinMessage(null)
+  }, [weekData.currentDay, view])
+
+  useEffect(() => () => {
+    clearTimeout(lutinShowTimer.current)
+    clearTimeout(lutinHideTimer.current)
+  }, [])
+
+  function handleLutinClick() {
+    const dayIdx = Math.min(Math.max((weekData.currentDay || 1) - 1, 0), 6)
+    const dayCfg = WEEK_ONE_DATA[dayIdx]
+    const ans    = weekData.answers ?? {}
+    fetchAndShow('encouragement et accompagnement libre', dayCfg, ans, true)
+    setBubbleOpen(true)
+    clearTimeout(lutinHideTimer.current)
+    lutinHideTimer.current = setTimeout(() => setBubbleOpen(false), 10000)
+  }
 
   function handleToggleRitual(ritualId) {
     setCompletedRituals(prev => ({ ...prev, [ritualId]: !prev[ritualId] }))
@@ -4940,6 +5032,20 @@ console.log('❌ Pas de données ou erreur:', error)
               })}
             </div>
 
+
+            {/* ── Lutin Félin dans le hero ── */}
+            {view === 'day' && (
+              <LutinCompagnon
+                contained
+                message={lutinLoading ? '...' : lutinMessage ?? LUTIN_MESSAGES_WEEK_ONE[weekData.currentDay] ?? LUTIN_MESSAGES_WEEK_ONE[1]}
+                visible={lutinVisible}
+                bubbleOpen={bubbleOpen}
+                onCloseBubble={() => setBubbleOpen(false)}
+                onClickImage={handleLutinClick}
+                position={LUTIN_SLOTS[lutinSlotIdx]}
+              />
+            )}
+
             {/* Tag jour + compteur en overlay bas */}
             <div style={{ position: 'absolute', bottom: 12, left: 16, right: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{
@@ -4984,6 +5090,7 @@ console.log('❌ Pas de données ou erreur:', error)
                 answers={weekData.answers}
                 completedDays={weekData.completedDays}
                 onDayComplete={handleDayEvent}
+                onStepChange={handleStepChange}
               />
               </div>
             )}
@@ -4991,6 +5098,7 @@ console.log('❌ Pas de données ou erreur:', error)
 
         </div>
       </div>
+
 
       {/* ── Modal rituels — rendu hors du backdrop pour position: fixed correct ── */}
       {activeZoneId && (
@@ -5017,6 +5125,7 @@ console.log('❌ Pas de données ou erreur:', error)
           />
         </div>
       )}
+
     </>
   )
 }
