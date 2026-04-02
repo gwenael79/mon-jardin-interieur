@@ -1,5 +1,5 @@
 // src/pages/OnboardingScreen.jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../core/supabaseClient'
 import { useTheme } from '../hooks/useTheme'
 
@@ -13,7 +13,7 @@ export const ONBOARDING_SLIDES = [
   {
     id: 'stress', tag: 'Le saviez-vous ?',
     title: 'Le stress d\'usure,\nun ennemi discret',
-    body: 'Contrairement au stress aigu, le stress d\'usure s\'accumule silencieusement. Fatigue, irritabilité, perte d\'élan… il s\'installe sans prévenir et altère notre équilibre sans que l\'on s\'en rende compte.',
+    body: 'Il ne crie pas. Il s\'installe doucement — une fatigue qui ne part plus, une irritabilité qui grandit, un élan qui s\'efface. Le stress d\'usure s\'accumule en silence, sans que l\'on s\'en rende vraiment compte.',
     highlight: 'Il touche 7 personnes sur 10 dans leur vie quotidienne.',
     color: '#9ab8c8', visual: 'wave',
   },
@@ -61,6 +61,8 @@ export const ONBOARDING_SLIDES = [
 // ─────────────────────────────────────────────────────────────────────────────
 function IntroGwenael({ onStart }) {
   const [phase, setPhase] = useState(0)
+  const [muted, setMuted] = useState(true)
+  const videoRef = useRef(null)
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 600)
@@ -80,133 +82,61 @@ function IntroGwenael({ onStart }) {
       position: 'fixed', inset: 0,
       background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
       zIndex: 100,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px 16px',
-      overflowY: 'auto',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '8px 16px',
     }}>
+      {/* ── Vidéo ── */}
       <div style={{
         width: '100%',
         maxWidth: 480,
-        background: '#faf5f2',
         borderRadius: 24,
+        overflow: 'hidden',
         boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '48px 32px 40px',
-        gap: 20,
+        position: 'relative',
       }}>
-
-        {/* ── Titre ── */}
-        <h1 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(42px, 10vw, 58px)',
-          fontWeight: 600,
-          fontStyle: 'italic',
-          color: '#2a1010',
-          lineHeight: 1.1,
-          margin: 0,
-          ...fade(phase >= 1),
-        }}>
-          Bienvenue.
-        </h1>
-
-        {/* ── Signature ── */}
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 13,
-          fontWeight: 400,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: '#c8a0b0',
-          margin: 0,
-          ...fade(phase >= 1),
-        }}>
-          Gwenaël — Accompagnateur en mieux-être
-        </p>
-
-        {/* ── Séparateur ── */}
+        <video
+          ref={videoRef}
+          src="/Accueil_lutin.mp4"
+          autoPlay
+          playsInline
+          muted={muted}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
+        {/* ── Bouton CTA en overlay bas ── */}
         <div style={{
-          width: 48, height: 2,
-          background: 'linear-gradient(to right, #c8a0b0, transparent)',
-          ...fade(phase >= 1),
-        }} />
-
-        {/* ── Texte 1 ── */}
-        <p style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontStyle: 'italic',
-          fontSize: 'clamp(16px, 4vw, 19px)',
-          color: '#4a2e20',
-          lineHeight: 1.8,
-          margin: 0,
-          ...fade(phase >= 2),
-        }}>
-          J'ai à cœur de faciliter l'accès pour tous à des outils simples
-          et efficaces pour trouver une voie vers une vie plus sereine.
-        </p>
-
-        {/* ── Texte 2 ── */}
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(13px, 3.2vw, 15px)',
-          fontWeight: 300,
-          color: '#7a5040',
-          lineHeight: 1.8,
-          margin: 0,
-          ...fade(phase >= 2),
-        }}>
-          Aujourd'hui, je vous accompagne à découvrir l'application :
-        </p>
-
-        <p style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontStyle: 'italic',
-          fontWeight: 600,
-          fontSize: 'clamp(28px, 7vw, 38px)',
-          color: '#5a3020',
-          textAlign: 'center',
-          lineHeight: 1.2,
-          margin: '4px 0 0',
-          ...fade(phase >= 2),
-        }}>
-          Mon Jardin Intérieur.
-        </p>
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(13px, 3.2vw, 15px)',
-          fontWeight: 300,
-          color: '#7a5040',
-          lineHeight: 1.8,
-          margin: 0,
-          ...fade(phase >= 2),
-        }}>
-          Commençons ensemble par quelques actions simples pour découvrir
-          et vous familiariser avec plus qu'un outil, mais bien avec une
-          nouvelle approche de votre équilibre émotionnel.
-        </p>
-
-        {/* ── CTA ── */}
-        <div style={{
-          marginTop: 8,
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '48px 16px 16px',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%)',
+          display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
           ...fade(phase >= 3),
           pointerEvents: phase >= 3 ? 'auto' : 'none',
         }}>
+          <button
+            onClick={() => {
+              const next = !muted
+              setMuted(next)
+              if (videoRef.current) { videoRef.current.muted = !next; videoRef.current.play() }
+            }}
+            style={{
+              width: 72, height: 72, borderRadius: 50,
+              background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.5)',
+              backdropFilter: 'blur(6px)',
+              cursor: 'pointer', fontSize: 32, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            }}
+          >{muted ? '🔇' : '🔊'}</button>
           <button
             onClick={onStart}
             style={{
               width: '100%',
               fontFamily: 'Jost, sans-serif',
-              fontSize: 15,
-              fontWeight: 500,
-              letterSpacing: '0.04em',
+              fontSize: 15, fontWeight: 500, letterSpacing: '0.04em',
               color: '#fff',
               background: 'linear-gradient(135deg, #c8a0b0, #a07888)',
-              border: 'none',
-              borderRadius: 50,
-              padding: '16px 40px',
-              cursor: 'pointer',
-              transition: 'transform 0.15s ease',
-              boxShadow: '0 8px 24px rgba(160,100,120,0.3)',
+              border: 'none', borderRadius: 50, padding: '14px 24px',
+              cursor: 'pointer', transition: 'transform 0.15s ease',
+              boxShadow: '0 8px 24px rgba(160,100,120,0.4)',
             }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)' }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
@@ -214,7 +144,6 @@ function IntroGwenael({ onStart }) {
             Vous êtes prêt ? Allons-y ensemble…
           </button>
         </div>
-
       </div>
     </div>
   )
@@ -964,6 +893,141 @@ function SlidesEducatives({ onComplete }) {
         transition:'opacity .28s ease, transform .28s ease',
       }}>
 
+        {(slide.id === 'stress' || slide.id === 'freins' || slide.id === 'benefices' || slide.id === 'promise') ? (
+          /* ── Layout 2 colonnes pour stress et freins ── */
+          <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'row', gap:0, overflow:'hidden' }}>
+
+            {/* Colonne gauche */}
+            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%', position:'relative', zIndex:2, display:'flex', flexDirection:'column', overflow:'hidden', ...((slide.id === 'freins' || slide.id === 'promise') && { overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, direction:'rtl' }) }}>
+              {(slide.id === 'freins' || slide.id === 'promise') && (
+                <div style={{ direction:'ltr', display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
+                  <h2 style={{
+                    fontFamily:"'Cormorant Garamond',serif",
+                    fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
+                    fontWeight:300, lineHeight:1.1,
+                    color:'var(--text)', marginBottom: isMobile ? 8 : 12,
+                    whiteSpace:'pre-line', letterSpacing:'-0.01em',
+                    flexShrink:0,
+                  }}>{slide.title}</h2>
+                  {slide.bullets && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                      {slide.bullets.map((b,i) => (
+                        <div key={i} style={{
+                          display:'flex', gap:0, alignItems:'stretch',
+                          borderRadius:12, overflow:'hidden',
+                          background:'rgba(255,255,255,0.65)',
+                          border:'1px solid rgba(0,0,0,0.09)',
+                          boxShadow:'0 2px 6px rgba(0,0,0,0.04)',
+                          animation:`onbIn .4s ease ${i*.12+.1}s both`,
+                        }}>
+                          <div style={{ width:4, flexShrink:0, background:c }}/>
+                          <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
+                          <div style={{ padding:'9px 12px', flex:1 }}>
+                            <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
+                            <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.55)', lineHeight:1.45 }}>{b.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {slide.features && (
+                    <>
+                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:'0 0 10px' }}>{slide.body}</p>
+                      <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+                        {slide.features.map((f,i) => (
+                          <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
+                            <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
+                            <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.82)', lineHeight:1.4 }}>{f.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              {slide.id === 'stress' && (
+                <img
+                  src="/stress1.png"
+                  alt=""
+                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', marginLeft:'-20%' }}
+                />
+              )}
+              {slide.id === 'benefices' && (
+                <img
+                  src="/instructeur3.png"
+                  alt=""
+                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}
+                />
+              )}
+            </div>
+
+            {/* Colonne droite */}
+            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%', marginLeft:'-10%', position:'relative', zIndex:1, display:'flex', alignItems: (slide.id === 'stress' || slide.id === 'benefices') ? 'flex-start' : slide.id === 'promise' ? 'center' : 'flex-end', justifyContent:'center', ...((slide.id === 'stress' || slide.id === 'benefices') ? { overflowY:'auto', WebkitOverflowScrolling:'touch' } : { overflow:'hidden', flexShrink:0 }) }}>
+              {slide.id === 'stress' && (
+                <>
+                  <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
+                    <h2 style={{
+                      fontFamily:"'Cormorant Garamond',serif",
+                      fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
+                      fontWeight:300, lineHeight:1.1,
+                      color:'var(--text)', marginBottom: isMobile ? 8 : 12,
+                      whiteSpace:'pre-line', letterSpacing:'-0.01em',
+                      flexShrink:0,
+                    }}>{slide.title}</h2>
+                    <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
+                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
+                      {slide.highlight && (
+                        <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
+                           {slide.highlight}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+              {slide.id === 'freins' && (
+                <img
+                  src="/instructeur2.png"
+                  alt=""
+                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}
+                />
+              )}
+              {slide.id === 'promise' && (
+                <img
+                  src="/zen.png"
+                  alt=""
+                  style={{ width:'100%', height:'auto', objectFit:'contain', display:'block', marginLeft:'20%', animation:'onbFloat 4s ease-in-out infinite' }}
+                />
+              )}
+              {slide.id === 'benefices' && (
+                <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
+                  <h2 style={{
+                    fontFamily:"'Cormorant Garamond',serif",
+                    fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
+                    fontWeight:300, lineHeight:1.1,
+                    color:'var(--text)', marginBottom: isMobile ? 8 : 12,
+                    whiteSpace:'pre-line', letterSpacing:'-0.01em',
+                    flexShrink:0,
+                  }}>{slide.title}</h2>
+                  <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+                    {slide.timeline.map((t,i) => (
+                      <div key={i} style={{ display:'flex', gap:0, alignItems:'stretch', animation:`onbIn .4s ease ${i*.14+.1}s both` }}>
+                        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', width:28, flexShrink:0, paddingTop:4 }}>
+                          <div style={{ width:12, height:12, borderRadius:'50%', flexShrink:0, background:c, border:`3px solid ${c}30` }}/>
+                        </div>
+                        <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
+                          <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
+                          <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.70)', lineHeight:1.6 }}>{t.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+        <>
         {/* Titre — grand */}
         <h2 style={{
           fontFamily:"'Cormorant Garamond',serif",
@@ -1059,6 +1123,8 @@ function SlidesEducatives({ onComplete }) {
             </>
           )}
         </div>
+        </>
+        )}
 
       </div>
 

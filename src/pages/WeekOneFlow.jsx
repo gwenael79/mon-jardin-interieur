@@ -830,8 +830,11 @@ export const WEEK_ONE_DATA = [
     isFinal: true,
     finalCTA: 'Entrer dans mon jardin',
     helpTexts: {
-      default: "Vous avez traversé sept jours. Chaque jour avait sa couleur, sa texture.\n\nCe que vous avez cultivé ici continue de grandir, à votre rythme.",
-      rituel:  "Le jardin collectif est une invitation à sortir de l'isolement intérieur.\n\nVotre présence, votre engagement, votre pratique — tout cela rayonne au-delà de vous.\n\nBienvenue dans le jardin partagé.",
+      accueil:       "Vous avez traversé sept jours. Chaque jour avait sa couleur, sa texture.\n\nCe que vous avez cultivé ici continue de grandir, à votre rythme.",
+      introspection: "Ce que vous avez remarqué cette semaine vous appartient.\n\nAujourd'hui, regardez ce que vous emportez avec vous.",
+      rituel:        "Le jardin collectif est une invitation à sortir de l'isolement intérieur.\n\nVotre présence, votre engagement, votre pratique — tout cela rayonne au-delà de vous.\n\nBienvenue dans le jardin partagé.",
+      trace:         "Sept jours. Vous n'êtes pas seul·e dans ce jardin.\n\nLe reste du chemin se fait ensemble.",
+      ouverture:     "Votre fleur a pris racine. Votre jardin existe.\n\nMaintenant, il rencontre les autres.",
     },
   },
 ]
@@ -5337,9 +5340,8 @@ console.log('❌ Pas de données ou erreur:', error)
 
           {/* ── HelpBandeau — dernier enfant flex du modal, collé en bas ── */}
           {view !== 'garden' && (() => {
-            const helpText = currentStep === 2
-              ? currentConfig.helpTexts?.rituel
-              : currentConfig.helpTexts?.default
+            const STEP_KEYS = ['accueil', 'introspection', 'rituel', 'trace', 'ouverture']
+            const helpText = currentConfig.helpTexts?.[STEP_KEYS[currentStep]]
             return <HelpBandeau helpText={helpText} />
           })()}
 
