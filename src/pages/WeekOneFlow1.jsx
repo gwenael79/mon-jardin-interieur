@@ -57,11 +57,6 @@ function GlobalStyles() {
         50%      { box-shadow: 0 0 32px 8px rgba(200,160,112,0.35); }
       }
 
-      @keyframes helpPanelIn {
-        from { transform: translateY(100%); }
-        to   { transform: translateY(0);    }
-      }
-
       .wof-in { animation: stepIn 400ms ease both; }
       .wof-fl { animation: fleurFloat 6s ease-in-out infinite; }
 
@@ -248,13 +243,6 @@ export const WEEK_ONE_DATA = [
     getTrace: (ans) =>
       `Vous vous sentiez ${labelFor(ans?.j1?.feel)}. Et vous avez quand même pris ce moment.`,
     ouverture: 'Demain, vous découvrirez ce qui vous porte, même quand vous vacillez.',
-    helpTexts: {
-      accueil:       "Chaque jour commence par un moment d'accueil.\n\nCe n'est pas un test — c'est une invitation à revenir à vous-même.\n\nIl n'y a pas de bonne ou mauvaise façon d'être là.",
-      introspection: "Le baromètre n'est pas un jugement — c'est un relevé.\n\nNommer ce que vous ressentez, même vaguement, est déjà un acte de conscience.",
-      rituel:        "Les racines sont ce qui ne se voit pas.\n\nElles représentent votre sentiment de sécurité fondamentale — votre rapport au corps, à la terre, au présent.\n\nPrendre soin de ses racines, c'est revenir à l'essentiel : respirer, sentir, être là.",
-      trace:         "Ce que vous notez ici ne disparaît pas.\n\nVotre trace devient la mémoire vivante de votre parcours — elle sera là pour vous dans les jours difficiles.",
-      ouverture:     "Chaque fin de journée est aussi un seuil.\n\nVous avez posé la première pierre. Demain, une autre vous attend.",
-    },
   },
 
   /* ── JOUR 2 ─────────────────────────────────────────────────────────────── */
@@ -326,13 +314,6 @@ export const WEEK_ONE_DATA = [
         : "Vous avez été présent·e deux jours de suite. Votre tige commence à tenir."
     },
     ouverture: 'Juste revenir… suffit. À demain.',
-    helpTexts: {
-      accueil:       "Vous revenez. C'est déjà beaucoup.\n\nChaque retour, même hésitant, construit quelque chose de réel.\n\nLa régularité n'est pas une contrainte — c'est le soin que vous vous offrez.",
-      introspection: "Remarquer un changement — même minime — c'est affiner votre capacité d'attention.\n\nVous n'avez pas à ressentir quelque chose de spectaculaire. La subtilité compte autant.",
-      rituel:        "La tige est le lien entre le bas et le haut — entre ce qui vous ancre et ce qui vous ouvre.\n\nElle représente votre capacité à vous tenir debout face aux mouvements de la vie, sans rigidité.\n\nUne tige saine est à la fois ferme et souple.",
-      trace:         "Écrire après une pratique permet de laisser une empreinte dans la mémoire.\n\nMême quelques mots posés honnêtement ont plus de valeur que de longs discours.",
-      ouverture:     "Deux jours. Vous revenez. Votre tige commence à tenir.\n\nDemain, quelque chose de plus délicat vous sera proposé.",
-    },
   },
 
   /* ── JOUR 3 ─────────────────────────────────────────────────────────────── */
@@ -452,13 +433,6 @@ export const WEEK_ONE_DATA = [
         : "Vous avez nommé quelque chose. C'est plus courageux qu'il n'y paraît."
     },
     ouverture: 'Demain, vous allez vous accorder quelque chose de rare.',
-    helpTexts: {
-      accueil:       "Regarder sans juger est l'une des choses les plus difficiles… et les plus transformatrices.\n\nCette semaine vous invite à observer ce qui est là, sans chercher à le changer.",
-      introspection: "Se voir tel qu'on est demande du courage.\n\nCe n'est pas de la complaisance — c'est le début de toute transformation réelle.",
-      rituel:        "Les feuilles sont en perpétuel mouvement — elles reçoivent, filtrent, laissent passer.\n\nElles symbolisent votre capacité à accueillir ce qui arrive sans tout retenir.\n\nLaisser traverser n'est pas de l'indifférence — c'est une forme de sagesse.",
-      trace:         "Vous avez nommé quelque chose aujourd'hui.\n\nC'est plus courageux qu'il n'y paraît — mettre des mots sur ce qu'on voit en soi, c'est déjà commencer à le transformer.",
-      ouverture:     "Trois jours d'observation.\n\nDemain, vous allez vous accorder quelque chose de rare : de l'espace.",
-    },
   },
 
   /* ── JOUR 4 ─────────────────────────────────────────────────────────────── */
@@ -587,13 +561,6 @@ export const WEEK_ONE_DATA = [
         : "Vous venez de vous accorder de l'espace. Même peu… compte."
     },
     ouverture: 'Demain, quelque chose de nouveau entre dans votre jardin.',
-    helpTexts: {
-      accueil:       "Ralentir n'est pas reculer.\n\nDans notre culture, nous valorisons l'action. Mais c'est souvent dans le ralentissement que les choses trouvent leur juste place.",
-      introspection: "Ce que vous choisissez d'explorer aujourd'hui vous appartient entièrement.\n\nIl n'y a pas de bonne réponse — seulement votre vérité du moment.",
-      rituel:        "Les fleurs s'ouvrent quand les conditions sont réunies — elles ne peuvent pas être forcées.\n\nPrendre soin de vos fleurs, c'est créer les conditions de votre propre épanouissement.",
-      trace:         "Vous venez de vous accorder de l'espace.\n\nMême peu… compte. Chaque geste de soin envers vous-même laisse une trace que votre corps et votre esprit retiennent.",
-      ouverture:     "Quatre jours. Votre jardin intérieur prend forme.\n\nDemain, quelque chose de nouveau entre dans votre espace.",
-    },
   },
 
   /* ── JOUR 5 ─────────────────────────────────────────────────────────────── */
@@ -720,13 +687,6 @@ export const WEEK_ONE_DATA = [
       return "Vous avez pris soin… au-delà de vous. Les 5 zones de votre jardin sont maintenant actives."
     },
     ouverture: "Demain, vous allez voir quelque chose que vous n'avez pas encore vu.",
-    helpTexts: {
-      accueil:       "Le lien commence souvent par un geste invisible — une attention portée, un espace ouvert.\n\nCe que vous faites ici crée des ondes dans votre façon d'être avec les autres.",
-      introspection: "Explorer votre rapport aux autres, c'est aussi mieux vous comprendre vous-même.\n\nLe lien n'est pas une perte de soi — c'est une extension de soi.",
-      rituel:        "Le souffle est ce qui relie tout.\n\nIl circule entre vous et le monde, entre vos différentes parties, entre le présent et ce qui vient.\n\nTravailler avec le souffle, c'est apprendre à ne plus lutter contre le cours des choses.",
-      trace:         "Vous avez pris soin… au-delà de vous-même.\n\nCe geste, même silencieux, a activé quelque chose dans votre jardin.",
-      ouverture:     "Cinq zones. Toutes actives désormais.\n\nDemain, un regard différent vous attend — quelque chose que vous n'avez pas encore vu.",
-    },
   },
 
   /* ── JOUR 6 ─────────────────────────────────────────────────────────────── */
@@ -779,13 +739,6 @@ export const WEEK_ONE_DATA = [
     getTrace: () =>
       "Aujourd'hui, vous avez rencontré votre fleur. Elle vous attend chaque jour maintenant.",
     ouverture: 'Demain, un dernier regard avant de prendre votre envol.',
-    helpTexts: {
-      accueil:       "Votre fleur est unique — elle porte votre histoire, vos couleurs, vos nuances.\n\nElle est le reflet de ce que vous avez traversé et de ce que vous portez en vous.",
-      introspection: "Certaines choses ne se nomment pas facilement.\n\nPrenez le temps qu'il faut. Ce que vous ressentez est valide, même si les mots manquent.",
-      rituel:        "Rencontrer votre fleur, c'est rencontrer une partie de vous-même.\n\nLaissez cette image vous toucher — il n'y a rien à faire, juste à recevoir.",
-      trace:         "Vous avez rencontré votre fleur aujourd'hui.\n\nElle vous attend chaque jour maintenant — une présence constante dans votre jardin intérieur.",
-      ouverture:     "Six jours. Votre fleur a pris racine.\n\nDemain, un dernier regard — avant de prendre votre envol.",
-    },
   },
 
   /* ── JOUR 7 ─────────────────────────────────────────────────────────────── */
@@ -829,10 +782,6 @@ export const WEEK_ONE_DATA = [
     ouverture: null,
     isFinal: true,
     finalCTA: 'Entrer dans mon jardin',
-    helpTexts: {
-      default: "Vous avez traversé sept jours. Chaque jour avait sa couleur, sa texture.\n\nCe que vous avez cultivé ici continue de grandir, à votre rythme.",
-      rituel:  "Le jardin collectif est une invitation à sortir de l'isolement intérieur.\n\nVotre présence, votre engagement, votre pratique — tout cela rayonne au-delà de vous.\n\nBienvenue dans le jardin partagé.",
-    },
   },
 ]
 
@@ -4192,186 +4141,164 @@ function RacinesValidation({ answers, onNext, onBack }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4b. HelpBandeau — bandeau bas + panneau d'aide qui glisse vers le haut
-//     Position : 3ème enfant flex du wof-modal (après hero + scroll)
-//     Overlay/panneau en position:absolute dans le modal (position:relative)
+// 4b. HelpBandeau — bandeau bas cliquable, ouvre un panneau d'aide
 // ─────────────────────────────────────────────────────────────────────────────
 
 function HelpBandeau({ helpText }) {
   const [open, setOpen] = useState(false)
-  const bandeauRef = useRef(null)
-  const [panelRect, setPanelRect] = useState(null)
-
-  function handleOpen() {
-    // Récupère les dimensions du wof-modal (ancêtre position:relative)
-    const modal = bandeauRef.current?.closest('.wof-modal')
-    if (modal) {
-      const r = modal.getBoundingClientRect()
-      setPanelRect({ top: r.top, left: r.left, width: r.width, height: r.height })
-    }
-    setOpen(true)
-  }
 
   return (
     <>
-      {/* ── Overlay + panneau en fixed, calé sur le modal ── */}
-      {open && panelRect && (
-        <>
-          <div
+      {/* Panneau d'aide glissant */}
+      <div
+        onClick={() => setOpen(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(30,10,5,0.28)',
+          backdropFilter: open ? 'blur(3px)' : 'none',
+          WebkitBackdropFilter: open ? 'blur(3px)' : 'none',
+          zIndex: 200,
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'opacity 400ms ease',
+        }}
+      />
+      <div
+        style={{
+          position: 'fixed',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 201,
+          transform: open ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 420ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          maxWidth: 560,
+          margin: '0 auto',
+        }}
+      >
+        {/* Poignée de fermeture */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          paddingBottom: 6,
+        }}>
+          <button
             onClick={() => setOpen(false)}
             style={{
-              position: 'fixed',
-              top: panelRect.top, left: panelRect.left,
-              width: panelRect.width, height: panelRect.height,
-              background: 'rgba(20,8,4,0.32)',
-              backdropFilter: 'blur(3px)',
-              WebkitBackdropFilter: 'blur(3px)',
-              zIndex: 400,
-              borderRadius: 'inherit',
-            }}
-          />
-          <div style={{
-            position: 'fixed',
-            left: panelRect.left,
-            width: panelRect.width,
-            bottom: window.innerHeight - panelRect.top - panelRect.height,
-            zIndex: 401,
-            animation: 'helpPanelIn 380ms cubic-bezier(0.25,0.46,0.45,0.94) both',
-          }}>
-            {/* Poignée fermeture */}
-            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: 6 }}>
-              <button
-                onClick={() => setOpen(false)}
-                style={{
-                  background: 'rgba(255,255,255,0.88)',
-                  border: 'none', borderRadius: 100,
-                  padding: '5px 22px',
-                  cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: 11, fontWeight: 500,
-                  color: '#7a5a4a', letterSpacing: '0.08em', textTransform: 'uppercase',
-                  backdropFilter: 'blur(6px)',
-                  boxShadow: '0 2px 14px rgba(80,30,20,0.16)',
-                }}
-              >
-                ╲╱ Fermer
-              </button>
-            </div>
-
-            {/* Panneau */}
-            <div style={{
-              background: '#fffaf7',
-              borderRadius: '22px 22px 0 0',
-              boxShadow: '0 -8px 40px rgba(140,80,60,0.18)',
-              maxHeight: panelRect.height * 0.65,
+              background: 'rgba(255,255,255,0.85)',
+              border: 'none',
+              borderRadius: 100,
+              padding: '4px 20px',
+              cursor: 'pointer',
               display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
+              alignItems: 'center',
+              gap: 6,
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 11,
+              fontWeight: 500,
+              color: '#7a5a4a',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 2px 12px rgba(80,30,20,0.15)',
+            }}
+          >
+            <span style={{ fontSize: 14 }}>╲╱</span>
+            Fermer
+          </button>
+        </div>
+
+        {/* Contenu du panneau */}
+        <div style={{
+          background: '#fffaf7',
+          borderRadius: '22px 22px 0 0',
+          boxShadow: '0 -8px 40px rgba(140,80,60,0.18)',
+          padding: '28px 28px 48px',
+          maxHeight: '65dvh',
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}>
+          {/* En-tête */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #d4a0b0, #c8a870)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 18, flexShrink: 0,
             }}>
-              {/* Zone scrollable */}
-              <div style={{ padding: '28px 28px 24px', overflowY: 'auto', WebkitOverflowScrolling: 'touch', flex: 1, minHeight: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'linear-gradient(135deg,#d4a0b0,#c8a870)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 18, flexShrink: 0,
-                  }}>?</div>
-                  <div>
-                    <p style={{
-                      fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 500,
-                      letterSpacing: '0.16em', textTransform: 'uppercase',
-                      color: '#b8907a', margin: '0 0 2px',
-                    }}>Espace d'enseignement</p>
-                    <p style={{
-                      fontFamily: 'Cormorant Garamond, Georgia, serif',
-                      fontSize: 18, fontWeight: 600, color: '#2a1010',
-                      margin: 0, lineHeight: 1.2,
-                    }}>Pour aller plus loin</p>
-                  </div>
-                </div>
-
-                <div style={{
-                  width: '100%', height: 1,
-                  background: 'linear-gradient(to right,transparent,rgba(180,130,100,0.3),transparent)',
-                  marginBottom: 20,
-                }} />
-
-                {/* Texte à gauche — avec padding droit pour laisser place au personnage */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 180 }}>
-                  {(helpText || "Un espace pour approfondir ce que vous venez de vivre.\n\nPrenez le temps de ressentir ce qui s'est passé en vous pendant cette étape.\n\nIl n'y a rien à forcer — juste à laisser la pratique continuer de résonner.")
-                    .split('\n\n')
-                    .map((para, i) => (
-                      <p key={i} style={{
-                        fontFamily: 'Cormorant Garamond, Georgia, serif',
-                        fontSize: i === 0 ? 'clamp(17px,4.4vw,20px)' : 'clamp(14px,3.6vw,17px)',
-                        fontStyle: i === 0 ? 'normal' : 'italic',
-                        fontWeight: i === 0 ? 500 : 400,
-                        color: i === 0 ? '#1a1010' : '#5a3838',
-                        lineHeight: 1.75,
-                        margin: 0,
-                        paddingLeft: i > 0 ? 12 : 0,
-                        borderLeft: i > 0 ? '2px solid rgba(180,130,100,0.25)' : 'none',
-                      }}>
-                        {para}
-                      </p>
-                    ))
-                  }
-                </div>
-              </div>
-
-              {/* Bandeau vert + personnage en absolute par-dessus */}
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                {/* Bandeau vert */}
-                <div style={{
-                  width: '100%',
-                  height: 10,
-                  background: 'linear-gradient(to right, #4a7c4e, #2d5a30)',
-                }} />
-                {/* Personnage posé sur le bandeau */}
-                <img
-                  src="/instructeur1.png"
-                  alt="Instructeur"
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 20,
-                    width: 170,
-                    height: 240,
-                    objectFit: 'cover',
-                    objectPosition: 'center top',
-                    borderRadius: '60px 60px 0 0',
-                  }}
-                />
-              </div>
+              🌿
+            </div>
+            <div>
+              <p style={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: 10,
+                fontWeight: 500,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                color: '#b8907a',
+                margin: '0 0 2px',
+              }}>
+                Espace d'enseignement
+              </p>
+              <p style={{
+                fontFamily: 'Cormorant Garamond, Georgia, serif',
+                fontSize: 18,
+                fontWeight: 600,
+                color: '#2a1010',
+                margin: 0,
+                lineHeight: 1.2,
+              }}>
+                Pour aller plus loin
+              </p>
             </div>
           </div>
-        </>
-      )}
 
-      {/* ── Bandeau image — dans le flux scroll, après le contenu ── */}
+          <div style={{
+            width: '100%', height: 1,
+            background: 'linear-gradient(to right, transparent, rgba(180,130,100,0.3), transparent)',
+            marginBottom: 20,
+          }} />
+
+          {/* Texte d'aide */}
+          <div style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(16px, 4.2vw, 19px)',
+            fontStyle: 'italic',
+            color: '#3a2020',
+            lineHeight: 1.85,
+            whiteSpace: 'pre-line',
+          }}>
+            {helpText || "Un espace pour approfondir ce que vous venez de vivre.\n\nPrenez le temps de ressentir ce qui s'est passé en vous pendant cette étape.\n\nIl n'y a rien à forcer — juste à laisser la pratique continuer de résonner."}
+          </div>
+        </div>
+      </div>
+
+      {/* Bandeau bas — image cliquable */}
       <div
-        ref={bandeauRef}
-        onClick={handleOpen}
+        onClick={() => setOpen(true)}
         style={{
+          position: 'sticky',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
           cursor: 'pointer',
+          flexShrink: 0,
           userSelect: 'none',
           WebkitTapHighlightColor: 'transparent',
-          height: 150,
-          overflow: 'hidden',
-          flexShrink: 0,
         }}
       >
         <img
           src="/bandeau2.png"
           alt="Espace d'aide"
           style={{
-            width: '100%', height: '100%', display: 'block',
-            objectFit: 'cover', objectPosition: 'center center',
+            width: '100%',
+            display: 'block',
+            objectFit: 'cover',
             transition: 'filter 0.2s ease',
           }}
-          onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.07)' }}
+          onMouseEnter={e => { e.currentTarget.style.filter = 'brightness(1.06)' }}
           onMouseLeave={e => { e.currentTarget.style.filter = 'brightness(1)' }}
         />
       </div>
@@ -4442,8 +4369,32 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
 
   const traceText = dayConfig.getTrace(answers, completedWithCurrent)
 
+  // Texte d'aide contextuel selon l'étape et le jour
+  const helpText = (() => {
+    const step0Texts = [
+      "Chaque jour de cette semaine commence par un moment d'accueil.\n\nCe n'est pas un test — c'est une invitation à revenir à vous-même.\n\nIl n'y a pas de bonne ou mauvaise façon d'être là.",
+      "Vous revenez. C'est déjà beaucoup.\n\nChaque retour, même hésitant, construit quelque chose de réel.\n\nLa régularité n'est pas une contrainte — c'est le soin que vous vous offrez.",
+      "Regarder sans juger est l'une des choses les plus difficiles… et les plus transformatrices.\n\nCette semaine vous invite à observer ce qui est là, sans chercher à le changer.",
+      "Ralentir n'est pas reculer.\n\nDans notre culture, nous valorisons l'action. Mais c'est souvent dans le ralentissement que les choses trouvent leur juste place.",
+      "Le lien commence souvent par un geste invisible — une attention portée, un espace ouvert.\n\nCe que vous faites ici, pour vous, crée des ondes dans votre façon d'être avec les autres.",
+      "Le stress n'est pas votre ennemi. Il est un signal.\n\nCette semaine, vous avez commencé à l'écouter différemment.",
+      "Vous avez traversé sept jours. Chaque jour avait sa couleur, sa texture.\n\nCe que vous avez cultivé ici ne disparaît pas — ça continue de grandir, à votre rythme.",
+    ]
+    const step2Texts = [
+      "Les racines sont ce qui ne se voit pas.\n\nDans la tradition des jardins intérieurs, les racines représentent votre sentiment de sécurité fondamentale — votre rapport au corps, à la terre, au présent.\n\nPrendre soin de ses racines, c'est revenir à l'essentiel : respirer, sentir, être là.",
+      "La tige est le lien entre le bas et le haut — entre ce qui vous ancre et ce qui vous ouvre.\n\nElle représente votre capacité à vous tenir debout face aux mouvements de la vie, sans rigidité.\n\nUne tige saine est à la fois ferme et souple.",
+      "Les feuilles sont en perpétuel mouvement — elles reçoivent, filtrent, laissent passer.\n\nElles symbolisent votre capacité à accueillir ce qui arrive sans tout retenir.\n\nLaisser traverser n'est pas de l'indifférence — c'est une forme de sagesse.",
+      "Les fleurs s'ouvrent quand les conditions sont réunies.\n\nElles ne peuvent pas être forcées. Elles ont besoin de lumière, d'eau, de temps.\n\nPrendre soin de vos fleurs, c'est créer les conditions de votre propre épanouissement.",
+      "Le souffle est ce qui relie tout.\n\nIl circule entre vous et le monde, entre vos différentes parties, entre le présent et ce qui vient.\n\nTravailler avec le souffle, c'est apprendre à ne plus lutter contre le cours des choses.",
+      "Votre fleur est unique — elle porte votre histoire, vos couleurs, vos nuances.\n\nElle est le reflet de ce que vous avez traversé et de ce que vous portez en vous.\n\nSa naissance aujourd'hui marque le début d'un nouveau cycle.",
+      "Le jardin collectif est une invitation à sortir de l'isolement intérieur.\n\nNous grandissons tous dans un écosystème. Votre présence, votre engagement, votre pratique — tout cela rayonne au-delà de vous.\n\nBienvenue dans le jardin partagé.",
+    ]
+    if (step === 2) return step2Texts[dayConfig.day - 1] ?? step2Texts[0]
+    return step0Texts[dayConfig.day - 1] ?? step0Texts[0]
+  })()
+
   return (
-    <div key={animKey}>
+    <div key={animKey} style={{ display: 'flex', flexDirection: 'column' }}>
       {showFleurModal && <MaFleurLiveModal onClose={() => setShowFleurModal(false)} />}
       {step === 0 && (
         <DayAccueil
@@ -4495,6 +4446,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onBack={goBack}
         />
       )}
+      <HelpBandeau helpText={helpText} />
     </div>
   )
 }
@@ -4916,7 +4868,6 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
   const [activeZoneId, setActiveZoneId] = useState(null)
   const [completedRituals, setCompletedRituals] = useState({})
   const { rituals: plantRituals } = useRituels()
-  const [currentStep, setCurrentStep] = useState(0)
 
   // Lutin compagnon
   const [lutinVisible,   setLutinVisible]  = useState(false)
@@ -4951,7 +4902,6 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
 
   // Déclenché à chaque changement de step (via DayShell)
   function handleStepChange(step, stepTheme, dayCfg) {
-    setCurrentStep(step)
     clearTimeout(lutinShowTimer.current)
     clearTimeout(lutinHideTimer.current)
     setBubbleOpen(false)
@@ -5322,26 +5272,20 @@ console.log('❌ Pas de données ou erreur:', error)
                 plantHealth={plantHealth}
               />
             ) : (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <DayShell
-                  key={weekData.currentDay}
-                  dayIndex={dayIndex}
-                  answers={weekData.answers}
-                  completedDays={weekData.completedDays}
-                  onDayComplete={handleDayEvent}
-                  onStepChange={handleStepChange}
-                />
+              // margin: auto haut/bas = centrage vertical quand le contenu est court,
+              // scroll normal quand il déborde (pas de safe-center nécessaire)
+              <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+              <DayShell
+                key={weekData.currentDay}
+                dayIndex={dayIndex}
+                answers={weekData.answers}
+                completedDays={weekData.completedDays}
+                onDayComplete={handleDayEvent}
+                onStepChange={handleStepChange}
+              />
               </div>
             )}
           </div>
-
-          {/* ── HelpBandeau — dernier enfant flex du modal, collé en bas ── */}
-          {view !== 'garden' && (() => {
-            const helpText = currentStep === 2
-              ? currentConfig.helpTexts?.rituel
-              : currentConfig.helpTexts?.default
-            return <HelpBandeau helpText={helpText} />
-          })()}
 
         </div>
       </div>
