@@ -4878,6 +4878,95 @@ const TEST_ANSWERS = {
 
 const LUTIN_SLOTS = ['right', 'left']
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Écran d'accueil WeekOne — vidéo + bouton démarrer
+// ─────────────────────────────────────────────────────────────────────────────
+function WelcomeWeekOne({ onStart }) {
+  const [phase, setPhase] = useState(0)
+  const [muted, setMuted] = useState(true)
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase(1), 2200)
+    return () => clearTimeout(t)
+  }, [])
+
+  const fade = (visible) => ({
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(8px)',
+    transition: 'opacity 700ms ease, transform 700ms ease',
+    pointerEvents: visible ? 'auto' : 'none',
+  })
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
+      zIndex: 200,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '8px 16px',
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 480,
+        borderRadius: 24, overflow: 'hidden',
+        boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
+        position: 'relative',
+      }}>
+        <video
+          ref={videoRef}
+          src="/accueil2.mp4"
+          autoPlay
+          playsInline
+          muted={muted}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
+
+        {/* Bouton démarrer en overlay bas */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '48px 16px 16px',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 100%)',
+          display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end',
+          ...fade(phase >= 1),
+        }}>
+          <button
+            onClick={() => {
+              const next = !muted
+              setMuted(next)
+              if (videoRef.current) { videoRef.current.muted = !next; videoRef.current.play() }
+            }}
+            style={{
+              width: 72, height: 72, borderRadius: 50,
+              background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.5)',
+              backdropFilter: 'blur(6px)',
+              cursor: 'pointer', fontSize: 32, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            }}
+          >{muted ? '🔇' : '🔊'}</button>
+          <button
+            onClick={onStart}
+            style={{
+              width: '100%',
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 15, fontWeight: 500, letterSpacing: '0.04em',
+              color: '#fff',
+              background: 'linear-gradient(135deg, #a8c098, #7a9870)',
+              border: 'none', borderRadius: 50, padding: '14px 24px',
+              cursor: 'pointer', transition: 'transform 0.15s ease',
+              boxShadow: '0 8px 24px rgba(122,152,112,0.4)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+          >
+            Commencer mon premier jour →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceDay }) {
   const { signOut } = useAuth()
   const [loading,     setLoading]     = useState(true)
@@ -4913,6 +5002,9 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
 
   const [weekData, setWeekData] = useState(initData)
   const weekDataRef = useRef(initData)
+  const [showWelcome, setShowWelcome] = useState(
+    !forceDay && !forceGarden && initData.currentDay === 1 && initData.completedDays.length === 0
+  )
   const [view, setView] = useState(
     forceDay > 1 || forceGarden ? 'garden' : 'day'
   ) // 'day' | 'garden'
@@ -5208,6 +5300,15 @@ console.log('❌ Pas de données ou erreur:', error)
             Votre jardin se prépare…
           </p>
         </div>
+      </>
+    )
+  }
+
+  if (showWelcome) {
+    return (
+      <>
+        <GlobalStyles />
+        <WelcomeWeekOne onStart={() => setShowWelcome(false)} />
       </>
     )
   }
