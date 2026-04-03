@@ -4915,7 +4915,6 @@ function WelcomeWeekOne({ onStart }) {
         <video
           ref={videoRef}
           src="/accueil2.mp4"
-          autoPlay
           playsInline
           muted={muted}
           style={{ width: '100%', height: 'auto', display: 'block' }}
@@ -4931,9 +4930,8 @@ function WelcomeWeekOne({ onStart }) {
         }}>
           <button
             onClick={() => {
-              const next = !muted
-              setMuted(next)
-              if (videoRef.current) { videoRef.current.muted = !next; videoRef.current.play() }
+              setMuted(false)
+              if (videoRef.current) { videoRef.current.muted = false; videoRef.current.play() }
             }}
             style={{
               width: 72, height: 72, borderRadius: 50,
