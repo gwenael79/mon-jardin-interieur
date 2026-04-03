@@ -65,6 +65,69 @@ function GlobalStyles() {
       .wof-in { animation: stepIn 400ms ease both; }
       .wof-fl { animation: fleurFloat 6s ease-in-out infinite; }
 
+      @keyframes particleFloat {
+        0%   { transform: translateY(0)    scale(1);   opacity: 0; }
+        15%  { opacity: 1; }
+        85%  { opacity: 0.8; }
+        100% { transform: translateY(-80px) scale(0.5); opacity: 0; }
+      }
+      @keyframes particleTwinkle {
+        0%,100% { opacity: 0.2; transform: scale(0.8); }
+        50%     { opacity: 1;   transform: scale(1.3); }
+      }
+
+      .wof-modal--garden {
+        background-image: url('/fond.png') !important;
+        background-size: cover !important;
+        background-position: center top !important;
+        background-repeat: no-repeat !important;
+        background-color: transparent !important;
+      }
+      .wof-modal--garden .garden-overlay {
+        position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(20,10,5,0.18) 100%);
+        z-index: 0;
+      }
+      .wof-modal--garden > * { position: relative; z-index: 1; }
+
+      /* Textes lisibles sur fond illustré */
+      .wof-modal--garden p,
+      .wof-modal--garden span,
+      .wof-modal--garden div {
+        text-shadow: 0 1px 4px rgba(0,0,0,0.55);
+      }
+      .wof-modal--garden h2 {
+        text-shadow: 0 2px 8px rgba(0,0,0,0.65);
+        color: #fff !important;
+      }
+      /* Cartes jours — fond semi-transparent */
+      .wof-modal--garden .garden-day-card {
+        background: rgba(20,10,5,0.55) !important;
+        backdrop-filter: blur(8px) !important;
+        border: 1px solid rgba(255,220,150,0.25) !important;
+        color: #fff !important;
+      }
+      .wof-modal--garden .garden-day-card * {
+        color: #fff !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
+      }
+      .wof-modal--garden .garden-day-card .badge-accompli,
+      .wof-modal--garden .garden-day-card .badge-accompli * {
+        color: #1a1010 !important;
+        text-shadow: none !important;
+        -webkit-text-fill-color: #1a1010 !important;
+      }
+
+      .spark {
+        position: absolute;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ffe88a 0%, #ffb830 60%, transparent 100%);
+        pointer-events: none;
+        animation: particleTwinkle var(--dur, 2s) ease-in-out var(--delay, 0s) infinite,
+                   particleFloat var(--fdur, 4s) ease-in-out var(--delay, 0s) infinite;
+      }
+
       .wof-backdrop {
         position: fixed; inset: 0;
         display: flex; align-items: flex-start; justify-content: center;
@@ -1127,7 +1190,7 @@ function FlowerIllustration({ size, color1 = '#e888a8', color2 = '#fce8f0' }) {
 // ── Mosaïque fleur 4 quadrants (B&W → couleur par zone) ───────────────────
 
 function FlowerMosaic({ completedZones, size = 248, petalColor1, petalColor2 }) {
-  const gap  = 4
+  const gap  = 1
   const cell = (size - gap) / 2
 
   const PIECES = [
@@ -1189,10 +1252,11 @@ function FlowerMosaic({ completedZones, size = 248, petalColor1, petalColor2 }) 
                 fontWeight: 600,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: p.color,
-                background: 'rgba(255,255,255,0.86)',
+                color: '#1a1010',
+                background: 'rgba(255,255,255,0.92)',
                 padding: '2px 8px',
                 borderRadius: 100,
+                boxShadow: '0 1px 6px rgba(0,0,0,0.25)',
                 opacity: active ? 1 : 0,
                 transition: 'opacity 0.8s ease 1s',
                 pointerEvents: 'none',
@@ -4540,15 +4604,16 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
       {showFleurModal && <MaFleurLiveModal onClose={() => setShowFleurModal(false)} />}
 
       {/* Titre */}
-      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+      <div style={{ textAlign: 'center', marginBottom: 40, background: 'rgba(0,0,0,0.22)', borderRadius: 16, padding: '20px 16px 12px', backdropFilter: 'blur(2px)' }}>
         <p style={{
           fontFamily: 'Jost, sans-serif',
           fontSize: 'clamp(11px, 2.8vw, 13px)',
           fontWeight: 500,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#1a1010',
+          color: '#ffe8c0',
           margin: '0 0 8px',
+          textShadow: '0 1px 6px rgba(0,0,0,0.7)',
         }}>
           Ce qui prend forme
         </p>
@@ -4557,9 +4622,10 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
           fontSize: 'clamp(28px, 7vw, 36px)',
           fontWeight: 700,
           fontStyle: 'italic',
-          color: '#2a1010',
+          color: '#fff',
           lineHeight: 1.15,
           margin: '0 0 10px',
+          textShadow: '0 2px 12px rgba(0,0,0,0.7)',
         }}>
           Ma Fleur
         </h2>
@@ -4572,9 +4638,10 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontStyle: 'italic',
           fontSize: 'clamp(19px, 5vw, 24px)',
-          color: '#5a3a2a',
+          color: '#ffe8c8',
           margin: '0 0 14px',
           lineHeight: 1.5,
+          textShadow: '0 2px 8px rgba(0,0,0,0.65)',
         }}>
           Ce que vous avez commencé… continue de grandir.
         </p>
@@ -4582,9 +4649,10 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontStyle: 'italic',
           fontSize: 'clamp(17px, 4.2vw, 21px)',
-          color: '#1a1010',
+          color: '#fff',
           margin: '0 0 12px',
           lineHeight: 1.5,
+          textShadow: '0 2px 8px rgba(0,0,0,0.65)',
         }}>
           Votre fleur se révèle.
         </p>
@@ -4592,9 +4660,10 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontStyle: 'normal',
           fontSize: 'clamp(14px, 3.5vw, 16px)',
-          color: '#a08878',
+          color: 'rgba(255,230,200,0.85)',
           margin: 0,
           lineHeight: 1.65,
+          textShadow: '0 1px 6px rgba(0,0,0,0.6)',
         }}>
           Chaque jour, une partie s'éveille. Chaque zone a un rôle pour vous.
         </p>
@@ -4661,6 +4730,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
             <div
               key={z.day}
               onClick={clickable}
+              className="garden-day-card"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -4668,15 +4738,15 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
                 padding: '14px 18px',
                 borderRadius: 14,
                 background: done
-                  ? 'rgba(255,255,255,0.75)'
+                  ? 'rgba(20,10,5,0.58)'
                   : isCurrent
-                    ? 'rgba(255,255,255,0.90)'
-                    : 'rgba(255,255,255,0.30)',
+                    ? 'rgba(20,10,5,0.72)'
+                    : 'rgba(20,10,5,0.35)',
                 border: done
-                  ? `1.5px solid ${z.color}55`
+                  ? `1.5px solid ${z.color}88`
                   : isCurrent
                     ? `1.5px solid ${z.color}`
-                    : '1.5px solid rgba(180,130,100,0.15)',
+                    : '1.5px solid rgba(255,220,150,0.15)',
                 boxShadow: isCurrent
                   ? `0 4px 20px ${z.color}44`
                   : 'none',
@@ -4751,15 +4821,15 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
               )}
               {done && z.day !== 6 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                  <span style={{
+                  <span className="badge-accompli" style={{
                     fontFamily: 'Jost, sans-serif',
                     fontSize: 11,
-                    fontWeight: 500,
+                    fontWeight: 700,
                     letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    color: z.color,
-                    background: `${z.color}18`,
-                    border: `1px solid ${z.color}44`,
+                    color: '#1a1010',
+                    background: 'rgba(255,255,255,0.85)',
+                    border: `1px solid ${z.color}88`,
                     borderRadius: 100,
                     padding: '3px 10px',
                   }}>
@@ -4817,13 +4887,14 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
             fontStyle: 'italic',
             fontSize: 'clamp(16px, 4vw, 19px)',
             color: '#1a1010',
-            background: 'none',
-            border: '1px solid rgba(180,130,100,0.30)',
+            background: 'rgba(255,255,255,0.90)',
+            border: '1px solid rgba(255,255,255,0.6)',
             borderRadius: 100,
             padding: '11px 32px',
             cursor: 'pointer',
             letterSpacing: '0.04em',
             transition: 'all 0.2s ease',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
           }}
         >
           {lastCompleted >= 7 ? 'À très bientôt' : 'À demain'}
@@ -5340,7 +5411,27 @@ console.log('❌ Pas de données ou erreur:', error)
 
       {/* Conteneur modal */}
       <div className="wof-backdrop" style={{ zIndex: 10 }}>
-        <div className="wof-modal">
+        <div className={`wof-modal${view === 'garden' ? ' wof-modal--garden' : ''}`}>
+          {view === 'garden' && (
+            <>
+              <div className="garden-overlay" />
+              {[
+                { top:'12%', left:'8%',  dur:'2.4s', fdur:'5s',   delay:'0s'    },
+                { top:'25%', left:'72%', dur:'1.8s', fdur:'4.2s', delay:'0.6s'  },
+                { top:'40%', left:'18%', dur:'2.8s', fdur:'6s',   delay:'1.1s'  },
+                { top:'55%', left:'85%', dur:'2.1s', fdur:'4.8s', delay:'0.3s'  },
+                { top:'65%', left:'45%', dur:'3s',   fdur:'5.5s', delay:'1.7s'  },
+                { top:'30%', left:'55%', dur:'2.2s', fdur:'4.5s', delay:'0.9s'  },
+                { top:'72%', left:'25%', dur:'1.9s', fdur:'3.8s', delay:'2.1s'  },
+                { top:'18%', left:'38%', dur:'2.6s', fdur:'5.2s', delay:'1.4s'  },
+              ].map((p, i) => (
+                <div key={i} className="spark" style={{
+                  top: p.top, left: p.left,
+                  '--dur': p.dur, '--fdur': p.fdur, '--delay': p.delay,
+                }} />
+              ))}
+            </>
+          )}
 
           {/* ── Image hero — cachée en vue garden ── */}
           <div style={{
