@@ -4915,10 +4915,10 @@ function WelcomeWeekOne({ onStart }) {
         <video
           ref={videoRef}
           src="/accueil2.mp4"
+          autoPlay
           playsInline
-          muted={muted}
-          preload="auto"
-          onLoadedData={() => { if (videoRef.current) { videoRef.current.currentTime = 0 } }}
+          muted
+          loop
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
 
@@ -4933,7 +4933,11 @@ function WelcomeWeekOne({ onStart }) {
           <button
             onClick={() => {
               setMuted(false)
-              if (videoRef.current) { videoRef.current.muted = false; videoRef.current.play() }
+              if (videoRef.current) {
+                videoRef.current.muted = false
+                videoRef.current.currentTime = 0
+                videoRef.current.play()
+              }
             }}
             style={{
               width: 72, height: 72, borderRadius: 50,
