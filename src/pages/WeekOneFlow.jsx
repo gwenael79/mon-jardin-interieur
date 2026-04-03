@@ -4917,6 +4917,8 @@ function WelcomeWeekOne({ onStart }) {
           src="/accueil2.mp4"
           playsInline
           muted={muted}
+          preload="auto"
+          onLoadedData={() => { if (videoRef.current) { videoRef.current.currentTime = 0 } }}
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
 
