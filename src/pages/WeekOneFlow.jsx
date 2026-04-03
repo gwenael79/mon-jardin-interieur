@@ -5097,7 +5097,7 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
  console.log('🔍 WeekOneFlow useEffect — userId:', userId)
 
   if (forceGarden || forceDay) { setLoading(false); return }
-  if (!userId) return
+  if (!userId) { setLoading(false); return }
 
   let cancelled = false  // ← 1. flag d'annulation
 
