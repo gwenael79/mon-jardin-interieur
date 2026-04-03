@@ -313,13 +313,13 @@ export default function App() {
       }}>
 
         {/* Zone image */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative', flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}>
           <img
             src="/jardinier-repos.png"
             alt=""
             style={{
-              width: '100%', display: 'block',
-              maxHeight: '62vh', objectFit: 'cover', objectPosition: 'center 15%',
+              width: '100%', height: '100%', display: 'block',
+              objectFit: 'cover', objectPosition: 'center 15%',
             }}
           />
           {/* Z animés au-dessus de la tête */}

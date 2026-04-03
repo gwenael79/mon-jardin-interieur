@@ -1455,7 +1455,6 @@ const VAR_LABELS = {
   // ── Carte featured (Inspiration / Défi communauté) ──
   '--featured-title-color': { label: 'Carte défi — titre',         group: 'Zones rituels', usage: 'Couleur du titre dans la carte Inspiration / Défi communauté' },
   '--featured-desc-color':  { label: 'Carte défi — description',   group: 'Zones rituels', usage: 'Couleur du texte de description dans la carte défi' },
-  '--zone-card-text':  { label: 'Cards zones — titre',     group: 'Zones rituels',  usage: 'Couleur du titre (RACINES) et du pourcentage sur les cards' },
   // ── Tailles de titres ──
   '--fs-h1':           { label: 'H1 — Grand titre',         group: 'Tailles',        usage: '"Mon Jardin Intérieur", titres de section majeurs' },
   '--fs-h2':           { label: 'H2 — Titre section',       group: 'Tailles',        usage: '"Prenez soin de vous", titres d\'écran' },
