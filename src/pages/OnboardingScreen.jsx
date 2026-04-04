@@ -113,9 +113,12 @@ function IntroGwenael({ onStart }) {
         }}>
           <button
             onClick={() => {
-              const next = !muted
-              setMuted(next)
-              if (videoRef.current) { videoRef.current.muted = !next; videoRef.current.play() }
+              setMuted(false)
+              if (videoRef.current) {
+                videoRef.current.muted = false
+                videoRef.current.currentTime = 0
+                videoRef.current.play()
+              }
             }}
             style={{
               width: 72, height: 72, borderRadius: 50,
@@ -476,7 +479,7 @@ function NatureBg() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  MODAL SHELL — wrapper responsive pour toutes les étapes
 // ─────────────────────────────────────────────────────────────────────────────
-function ModalShell({ children, onClick, wide = false }) {
+function ModalShell({ children, onClick, wide = false, cardStyle = {} }) {
   const isMobile = window.innerWidth < 768
   return (
     <div style={{ position:'fixed', inset:0, zIndex:9999, fontFamily:"'Jost',sans-serif" }}>
@@ -503,6 +506,7 @@ function ModalShell({ children, onClick, wide = false }) {
           '--text3':     '#1a1208',
           '--gold-warm': '#8a6010',
           color: '#1a1208',
+          ...cardStyle,
         }}>
           {children}
         </div>
@@ -523,13 +527,21 @@ function StepIntention({ onSelect }) {
   }
 
   return (
-    <ModalShell>
-      <div style={{ padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ maxWidth:400, width:'100%' }}>
+    <ModalShell cardStyle={{
+      backgroundImage: "url('/champs.png')",
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      '--text': '#fff',
+      '--text2': 'rgba(255,255,255,0.88)',
+      '--text3': '#fff',
+      '--gold-warm': '#ffe0a0',
+      color: '#fff',
+    }}>
+      {/* Overlay dégradé pour lisibilité */}
+      <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg, rgba(20,10,5,0.45) 0%, rgba(10,5,2,0.55) 100%)', pointerEvents:'none', borderRadius:'inherit' }}/>
 
-        <div className="s0" style={{ textAlign:'center', marginBottom:36 }}>
-          <img src="/icons/icon-192.png" alt="" style={{ width:48, height:48, mixBlendMode:'luminosity', opacity:.55 }}/>
-        </div>
+      <div style={{ position:'relative', zIndex:1, padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height:'100%' }}>
+        <div style={{ maxWidth:400, width:'100%' }}>
 
         <div className="s1" style={{ textAlign:'center', marginBottom:32 }}>
           <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(20px,3.5vw,28px)', fontWeight:400, lineHeight:1.2, color:'var(--text)', marginBottom:8 }}>
@@ -548,34 +560,35 @@ function StepIntention({ onSelect }) {
               <button key={i} onClick={() => choose(i)} style={{
                 display:'flex', alignItems:'center', gap:14,
                 padding:'15px 20px', borderRadius:14,
-                background: sel ? 'rgba(184,140,60,0.14)' : 'rgba(0,0,0,0.04)',
+                background: sel ? 'rgba(255,220,130,0.22)' : 'rgba(255,255,255,0.12)',
                 border: sel
-                  ? '2px solid rgba(184,140,60,0.65)'
-                  : '2px solid rgba(0,0,0,0.13)',
+                  ? '2px solid rgba(255,210,100,0.80)'
+                  : '2px solid rgba(255,255,255,0.30)',
+                backdropFilter: 'blur(6px)',
                 cursor:'pointer', textAlign:'left',
-                boxShadow: sel ? '0 3px 14px rgba(184,140,60,0.18)' : 'none',
+                boxShadow: sel ? '0 3px 18px rgba(220,170,60,0.30)' : 'none',
                 transform: sel ? 'translateX(4px)' : 'none',
                 transition:'all .2s ease', fontFamily:"'Jost',sans-serif",
               }}
-                onMouseEnter={e => { if (!sel) { e.currentTarget.style.background='rgba(0,0,0,0.07)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.22)' } }}
-                onMouseLeave={e => { if (!sel) { e.currentTarget.style.background='rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor='rgba(0,0,0,0.13)' } }}
+                onMouseEnter={e => { if (!sel) { e.currentTarget.style.background='rgba(255,255,255,0.20)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.50)' } }}
+                onMouseLeave={e => { if (!sel) { e.currentTarget.style.background='rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.30)' } }}
               >
                 <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}>{item.icon}</span>
                 <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}></span>
                 <span style={{
                   fontSize:'var(--fs-h4,14px)', fontWeight: sel ? 600 : 400,
-                  color: sel ? 'rgba(140,100,30,0.95)' : 'rgba(40,36,28,0.82)',
+                  color: sel ? '#ffe8a0' : 'rgba(255,255,255,0.92)',
                   lineHeight:1.5, flex:1, transition:'color .2s',
                 }}>{item.label}</span>
                 <span style={{
                   width:22, height:22, borderRadius:'50%', flexShrink:0,
-                  border: sel ? 'none' : '2px solid rgba(0,0,0,0.18)',
-                  background: sel ? 'rgba(184,140,60,0.85)' : 'transparent',
+                  border: sel ? 'none' : '2px solid rgba(255,255,255,0.45)',
+                  background: sel ? 'rgba(255,200,80,0.90)' : 'transparent',
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:12, color:'#fff', fontWeight:700,
+                  fontSize:12, color:'#2a1a00', fontWeight:700,
                   transition:'all .2s',
                 }}>
-                  {sel ? '' : ''}
+                  {sel ? '✓' : ''}
                 </span>
               </button>
             )
@@ -584,14 +597,14 @@ function StepIntention({ onSelect }) {
 
         <div className="s5" style={{ textAlign:'center', marginTop:24 }}>
           <button onClick={() => onSelect(null)} style={{
-            background:'none', border:'1px solid rgba(30,20,10,0.25)', borderRadius:50,
-            cursor:'pointer', fontSize:'var(--fs-h5,12px)', color:'var(--text3)',
+            background:'none', border:'1px solid rgba(255,255,255,0.35)', borderRadius:50,
+            cursor:'pointer', fontSize:'var(--fs-h5,12px)', color:'rgba(255,255,255,0.75)',
             fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
             padding:'8px 20px',
-            transition:'border-color .2s, opacity .2s',
+            transition:'border-color .2s, color .2s',
           }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(30,20,10,0.5)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(30,20,10,0.25)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.70)'; e.currentTarget.style.color='#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.35)'; e.currentTarget.style.color='rgba(255,255,255,0.75)' }}
           >
             Passer cette étape
           </button>
