@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuthInit, useAuth } from './hooks/useAuth'
 import { AuthPage } from './pages/AuthPage'
-import DashboardPage from './pages/DashboardPage'
+import DashboardPage from './pages/DashboardV2'
 import AccessPage from './pages/AccessPage'
 import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'

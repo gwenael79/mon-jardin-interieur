@@ -454,7 +454,7 @@ const SEED_COLORS = [
 // ─────────────────────────────────────────────────────────────────────────────
 //  NATURE BACKGROUND
 // ─────────────────────────────────────────────────────────────────────────────
-function NatureBg() {
+export function NatureBg() {
   return (
     <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
       {/* Fond crème rosé — inspiré de l'ambiance des images */}

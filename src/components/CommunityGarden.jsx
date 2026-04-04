@@ -1008,6 +1008,24 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
     loadCommunityPlants()
       .then(d  => { setPlants(d); setLoading(false) })
       .catch(e => { setErr(e.message); setLoading(false) })
+
+    // Réabonnement realtime — rafraîchit le jardin quand une plante change
+    let debounce = null
+    const ch = supabase.channel('community-garden-plants')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'plants' }, () => {
+        clearTimeout(debounce)
+        debounce = setTimeout(() => {
+          loadCommunityPlants()
+            .then(d => setPlants(d))
+            .catch(() => {})
+        }, 1500)
+      })
+      .subscribe()
+
+    return () => {
+      clearTimeout(debounce)
+      supabase.removeChannel(ch)
+    }
   }, [])
 
   useEffect(() => {

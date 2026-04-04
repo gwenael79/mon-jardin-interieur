@@ -323,7 +323,17 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   const sunY  = 18 + 58 * (1 - Math.sin(dp * Math.PI))
 
   /* ── Couleurs pétales personnalisées ── */
-  const h2r = h => { const v = parseInt((h || 'var(--zone-flowers)').replace('#',''), 16); return [(v>>16)&255,(v>>8)&255,v&255] }
+  const h2r = h => {
+    let hex = h || 'var(--zone-flowers)'
+    // Résoudre les CSS variables (ex: 'var(--zone-flowers)' → '#e088a8')
+    if (hex.startsWith('var(')) {
+      hex = getComputedStyle(document.documentElement)
+        .getPropertyValue(hex.slice(4, -1).trim()).trim()
+    }
+    const v = parseInt(hex.replace('#',''), 16)
+    if (isNaN(v)) return [200, 136, 168]  // fallback rose si parsing échoue
+    return [(v>>16)&255,(v>>8)&255,v&255]
+  }
   const [r1,g1,b1]  = h2r(gs.petalColor1)
   const [r2,g2,b2]  = h2r(gs.petalColor2)
   const pC1   = `rgba(${r1},${g1},${b1},${0.78+0.18*r})`
