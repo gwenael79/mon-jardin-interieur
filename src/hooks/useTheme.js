@@ -4,6 +4,7 @@ import { supabase } from '../core/supabaseClient'
 
 const CACHE_KEY = 'mji_theme_vars'
 const CACHE_TTL = 10 * 60 * 1000
+const THEME_VERSION = 'wof-v1'   // ← incrémenter pour invalider le cache
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  CSS_VARS — liste exhaustive de toutes les variables du thème
@@ -223,9 +224,18 @@ const FS_DEFAULTS = {
   '--fs-emoji-sm': '14px',
   '--fs-emoji-md': '20px',
   '--fs-emoji-lg': '28px',
-  // Layout
-  '--sidebar-bg':  'rgba(0,0,0,0.18)',
-  '--topbar-bg':   'rgba(0,0,0,0.08)',
+  // Layout — palette WeekOneFlow
+  '--sidebar-bg':  'rgba(200,160,140,0.10)',
+  '--topbar-bg':   'rgba(200,160,140,0.06)',
+  // Surfaces
+  '--surface-1':   'rgba(255,255,255,0.70)',
+  '--surface-2':   'rgba(200,170,160,0.18)',
+  '--surface-3':   'rgba(180,130,110,0.25)',
+  '--surface-hover':'rgba(180,130,110,0.12)',
+  '--track':       'rgba(180,130,110,0.12)',
+  '--separator':   'rgba(150,100,80,0.30)',
+  '--overlay':     'rgba(80,40,30,0.35)',
+  '--overlay-dark':'rgba(30,10,5,0.88)',
   // Navigation tailles
   '--nav-fs-logo':     '18px',
   '--nav-fs-section':  '10px',
@@ -233,29 +243,32 @@ const FS_DEFAULTS = {
   '--nav-fs-icon':     '15px',
   '--nav-fs-badge':    '9px',
   // Navigation couleurs
-  '--nav-item-active-bg':     'rgba(150,212,133,0.11)',
-  '--nav-item-active-color':  '#96d485',
-  '--nav-item-hover-bg':      'rgba(255,255,255,0.05)',
-  '--nav-item-hover-color':   'rgba(242,237,224,0.85)',
+  '--nav-item-active-bg':     'rgba(122,170,136,0.14)',
+  '--nav-item-active-color':  '#5a8a68',
+  '--nav-item-hover-bg':      'rgba(180,130,110,0.07)',
+  '--nav-item-hover-color':   'rgba(26,16,16,0.85)',
   // Cards de zone
-  '--zone-card-bg':           'var(--bg3)',
-  '--zone-card-text':         'var(--text)',
-  '--zone-card-text-sub':     'var(--text3)',
-  // Modal rituel
-  '--ritual-modal-bg-start':  '#06100A',
-  '--ritual-modal-bg-end':    '#030808',
-  '--ritual-modal-text':      '#EEF0E8',
-  '--ritual-modal-text-rgb':  '238,240,232',
-  '--ritual-item-bg':         'rgba(255,255,255,0.04)',
-  '--ritual-item-border':     'rgba(255,255,255,0.08)',
-  '--ritual-bar-bg':          'rgba(255,255,255,0.08)',
+  '--zone-card-bg':           'rgba(255,255,255,0.65)',
+  '--zone-card-text':         '#1a1010',
+  '--zone-card-text-sub':     'rgba(26,16,16,0.55)',
+  // Modal rituel — fond clair WOF
+  '--ritual-modal-bg-start':  '#fffaf7',
+  '--ritual-modal-bg-end':    '#f5ede8',
+  '--ritual-modal-text':      '#2a1010',
+  '--ritual-modal-text-rgb':  '42,16,16',
+  '--ritual-item-bg':         'rgba(255,255,255,0.65)',
+  '--ritual-item-border':     'rgba(180,130,100,0.20)',
+  '--ritual-bar-bg':          'rgba(180,130,100,0.15)',
   // Modal quiz
-  '--quiz-modal-bg':          'rgba(6,14,7,0.96)',
-  '--quiz-modal-text':        '#EEF0E8',
-  '--quiz-modal-text-rgb':    '238,240,232',
+  '--quiz-modal-bg':          'rgba(252,245,240,0.97)',
+  '--quiz-modal-text':        '#1a1010',
+  '--quiz-modal-text-rgb':    '26,16,16',
   // Carte featured
-  '--featured-title-color':   'var(--text)',
-  '--featured-desc-color':    'var(--text3)',
+  '--featured-title-color':   '#1a1010',
+  '--featured-desc-color':    'rgba(26,16,16,0.65)',
+  // Ombres
+  '--shadow':    '0 4px 16px rgba(180,120,100,0.18)',
+  '--shadow-sm': '0 1px 3px rgba(180,120,100,0.12)',
 }
 
 export function useTheme() {
@@ -264,8 +277,8 @@ export function useTheme() {
     try {
       const raw = localStorage.getItem(CACHE_KEY)
       if (raw) {
-        const { vars, ts } = JSON.parse(raw)
-        if (vars) {
+        const { vars, ts, version } = JSON.parse(raw)
+        if (vars && version === THEME_VERSION) {
           applyTheme(vars)
           cacheIsFresh = ts && (Date.now() - ts < CACHE_TTL)
         }
@@ -280,7 +293,7 @@ export function useTheme() {
         const map = Object.fromEntries(data.map(r => [r.key, r.value]))
         applyTheme(map)
         try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ vars: map, ts: Date.now() }))
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ vars: map, ts: Date.now(), version: THEME_VERSION }))
         } catch {}
       })
   }, [])

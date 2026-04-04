@@ -309,7 +309,7 @@ export default function App() {
         borderRadius: 24, overflow: 'hidden',
         boxShadow: '0 28px 90px rgba(0,0,0,0.50)',
         display: 'flex', flexDirection: 'column',
-        maxHeight: 'calc(100dvh - 32px)',
+        height: 'min(580px, calc(100dvh - 32px))',
       }}>
 
         {/* Zone image */}

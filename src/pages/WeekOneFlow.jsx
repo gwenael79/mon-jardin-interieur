@@ -5199,6 +5199,7 @@ console.log('✅ Données chargées:', data.week_one_data)
       weekDataRef.current = saved
       if (saved.completedDays?.length > 0) {
         setView('garden')
+        setShowWelcome(false)
       }
     } else {
 console.log('❌ Pas de données ou erreur:', error)
