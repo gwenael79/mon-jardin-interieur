@@ -4284,7 +4284,7 @@ function AllRitualsModal({ completedRituals, onToggle, onClose }) {
   )
 }
 
-function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan }) {
+function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals }) {
   // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
   const { rituals: _rituals, loading: ritualsLoading } = useRituels()
   useEffect(() => {
@@ -4482,6 +4482,11 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [gardenTier, setGardenTier] = useState(1)
   const [showRitualsModal, setShowRitualsModal] = useState(false)
 
+  // Ouverture depuis le bandeau bas du ScreenModal (DashboardV2)
+  useEffect(() => {
+    if (openRitualsModal) { setShowRitualsModal(true); onCloseRituals?.() }
+  }, [openRitualsModal])
+
   // ── Stimulation IA ─────────────────────────────────────────
   const stimulationPayload = useMemo(() => ({
     streak:       stats?.streak           ?? 0,
@@ -4552,38 +4557,55 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       />
     )}
 
-    {/* ── Mise en page simplifiée — colonne unique ── */}
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflowY:'auto', padding: isMobile ? '24px 20px 32px' : '32px 80px 40px', gap:20, background:'#faf5f2', boxSizing:'border-box', maxWidth: isMobile ? 'none' : 640, margin:'0 auto', width:'100%' }}>
+    {/* ── Wrapper relatif pour l'image de fond ── */}
+    <div style={{ position:'relative', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+
+      {/* ── Arbre en fond pleine hauteur — desktop uniquement ── */}
+      {!isMobile && (
+        <div style={{ position:'absolute', inset:0, pointerEvents:'none', zIndex:0 }}>
+          <img src="/arbre.png" alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'left center', display:'block', opacity:1 }}/>
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to right, rgba(250,245,242,0) 0%, rgba(250,245,242,.5) 100%)' }}/>
+        </div>
+      )}
+
+    {/* ── Contenu scrollable au-dessus ── */}
+    <div style={{ position:'relative', zIndex:1, flex:1, overflowY:'auto', display:'flex', flexDirection:'column', padding: isMobile ? '24px 20px 32px' : '32px 80px 40px 80px', gap:20, boxSizing:'border-box' }}>
 
       {/* Phrase contextuelle */}
-      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:12, justifyContent:'center', textAlign:'center' }}>
         <span style={{ fontSize:26, flexShrink:0 }}>{timeIcon}</span>
         <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, fontStyle:'italic', color:'#1a1208', lineHeight:1.3 }}>{contextMessage}</span>
       </div>
 
-      {/* Fleur */}
-      <div style={{ position:'relative', borderRadius:18, overflow:'hidden', boxShadow:'0 4px 32px rgba(10,22,40,.18)', flexShrink:0, height:320 }}>
-        <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
-        {/* Vitalité */}
-        <div style={{ position:'absolute', bottom:14, left:16, display:'flex', alignItems:'baseline', gap:3 }}>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:42, fontWeight:300, color:'rgba(255,255,255,.92)', lineHeight:1 }}>{plant?.health ?? 5}</span>
-          <span style={{ fontSize:18, color:'rgba(255,255,255,.6)' }}>%</span>
-          <span style={{ fontSize:11, color:'rgba(255,255,255,.5)', marginLeft:4, letterSpacing:'.06em' }}>Vitalité</span>
+      {/* Fleur — cercle avec contours fondus */}
+      <div style={{ position:'relative', flexShrink:0, display:'flex', justifyContent:'center', alignItems:'center' }}>
+        {/* Cercle principal */}
+        <div style={{
+          position:'relative',
+          width: isMobile ? 280 : 320,
+          height: isMobile ? 280 : 320,
+          borderRadius:'50%',
+          overflow:'hidden',
+          flexShrink:0,
+          boxShadow:'0 0 0 1px rgba(200,160,150,.12), 0 8px 40px rgba(10,22,40,.14)',
+        }}>
+          <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+          {/* Fondu radial sur les bords — blend dans le fond */}
+          <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'radial-gradient(circle, rgba(250,245,242,0) 55%, rgba(250,245,242,.55) 78%, rgba(250,245,242,1) 100%)', pointerEvents:'none' }}/>
         </div>
+
         {/* Streak */}
         {streak >= 1 && (
-          <div style={{ position:'absolute', top:12, right:12, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'rgba(0,0,0,.25)', border:'1px solid rgba(255,255,255,.2)', fontSize:11, color:'rgba(255,255,255,.88)', fontFamily:"'Jost',sans-serif" }}>
+          <div style={{ position:'absolute', top:12, right: isMobile ? 12 : 16, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'rgba(0,0,0,.22)', border:'1px solid rgba(255,255,255,.18)', fontSize:11, color:'rgba(255,255,255,.88)', fontFamily:"'Jost',sans-serif" }}>
             👍 {streak} jour{streak > 1 ? 's' : ''}
           </div>
         )}
-        {/* Date */}
-        <div style={{ position:'absolute', bottom:14, right:14, fontSize:10, color:'rgba(255,255,255,.4)', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em' }}>{todayLabel}</div>
       </div>
 
       {/* Personnaliser */}
       <button
         onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
-        style={{ alignSelf:'flex-start', display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.25)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.6)', transition:'background .15s' }}
+        style={{ alignSelf:'center', display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.25)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.6)', transition:'background .15s' }}
         onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.95)'}
         onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.7)'}
       >
@@ -4601,17 +4623,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         />
       )}
 
-      {/* Je prend soin de ma fleur */}
-      <button
-        onClick={() => setShowRitualsModal(true)}
-        style={{ width:'100%', padding:'14px 20px', borderRadius:14, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#c8a0d8,#9070a8)', boxShadow:'0 8px 24px rgba(160,100,180,.35)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
-        onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 30px rgba(160,100,180,.45)' }}
-        onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 8px 24px rgba(160,100,180,.35)' }}
-      >
-        🌸 Je prend soin de ma fleur
-      </button>
 
-    </div>
+    </div>{/* fin contenu scrollable */}
+    </div>{/* fin wrapper relatif */}
     {false && <div className="mj-left" style={{ display:'none' }}>
         {/* ── Message contextuel ── */}
         <div style={{

@@ -936,38 +936,58 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
 }
 
 
-function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade }) {
+function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade, gardenFlowerCount, communityStats }) {
   const isMobile = useIsMobile()
+  const flowerCount = gardenFlowerCount ?? 0
+  const participants = communityStats?.totalParticipants ?? 0
+
   return (
-    <div className="content" style={{ flex:1, overflow:'hidden', paddingBottom: isMobile ? 64 : 0, position:'relative' }}>
-      <CommunityGarden currentUserId={userId} embedded isPremium={isPremium} />
+    <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', position:'relative' }}>
 
-      {/* Overlay flou pour les non-premium — masque les fleurs éloignées */}
-      {!isPremium && (
-        <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'radial-gradient(circle at center, transparent 5%, rgba(var(--overlay-dark-rgb,6,14,7),0.40) 25%, rgba(var(--overlay-dark-rgb,6,14,7),0.75) 45%, rgba(var(--overlay-dark-rgb,6,14,7),0.96) 65%)',
-          zIndex: 10,
-        }} />
-      )}
+      {/* Jardin — prend tout l'espace */}
+      <div style={{ flex:1, overflow:'hidden', position:'relative' }}>
+        <CommunityGarden currentUserId={userId} embedded isPremium={isPremium} />
 
-      {/* Badge premium */}
-      {!isPremium && (
-        <div style={{
-          position: 'absolute', bottom: isMobile ? 80 : 24, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 20,
-        }}>
-          <div onClick={onUpgrade} style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-            padding: '8px 18px', borderRadius: 20,
-            background: 'rgba(var(--lumens-rgb),0.12)', border: '1px solid rgba(var(--lumens-rgb),0.30)',
-          }}>
-            <span style={{ fontSize:'var(--fs-emoji-sm, 13px)' }}>🔒</span>
-            <span style={{ fontSize:'var(--fs-h5, 12px)', color: 'var(--green)', fontWeight: 500 }}>Voir tout le jardin — Premium</span>
-            <span style={{ fontSize:'var(--fs-h5, 11px)', color: 'rgba(var(--lumens-rgb),0.60)' }}>→</span>
+        {/* Overlay flou non-premium */}
+        {!isPremium && (
+          <div style={{ position:'absolute', inset:0, pointerEvents:'none', background:'radial-gradient(circle at center, transparent 5%, rgba(6,14,7,.40) 25%, rgba(6,14,7,.75) 45%, rgba(6,14,7,.96) 65%)', zIndex:10 }}/>
+        )}
+
+        {/* Badge premium */}
+        {!isPremium && (
+          <div style={{ position:'absolute', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:20 }}>
+            <div onClick={onUpgrade} style={{ display:'inline-flex', alignItems:'center', gap:8, cursor:'pointer', padding:'8px 18px', borderRadius:20, background:'rgba(207,166,74,.12)', border:'1px solid rgba(207,166,74,.30)' }}>
+              <span style={{ fontSize:13 }}>🔒</span>
+              <span style={{ fontSize:12, color:'var(--green)', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>Voir tout le jardin — Premium</span>
+              <span style={{ fontSize:11, color:'rgba(207,166,74,.6)' }}>→</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Barre d'info en bas ── */}
+      <div style={{ flexShrink:0, padding:'10px 20px', background:'rgba(200,230,200,.25)', borderTop:'1px solid rgba(96,160,100,.15)', display:'flex', alignItems:'center', justifyContent:'center', gap:24 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <span style={{ fontSize:18 }}>🌸</span>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontWeight:600, color:'#1a1208', lineHeight:1 }}>{flowerCount}</div>
+            <div style={{ fontSize:10, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', textTransform:'uppercase', marginTop:2 }}>fleurs en fleurs</div>
           </div>
         </div>
-      )}
+        {participants > 0 && (
+          <>
+            <div style={{ width:1, height:32, background:'rgba(96,160,100,.2)' }}/>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:18 }}>🌿</span>
+              <div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontWeight:600, color:'#1a1208', lineHeight:1 }}>{participants}</div>
+                <div style={{ fontSize:10, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', textTransform:'uppercase', marginTop:2 }}>jardiniers actifs</div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
     </div>
   )
 }

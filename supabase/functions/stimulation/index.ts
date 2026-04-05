@@ -95,7 +95,7 @@ const SYSTEM_PROMPT = `Tu es un accompagnateur de bien-être chaleureux et inspi
 RÈGLES ABSOLUES :
 - N'utilise JAMAIS de chiffres, scores, pourcentages ou données numériques dans ta réponse. Traduis tout en ressenti qualitatif (ex : "ta fleur rayonne", "ton ancrage s'éveille doucement", "tu commences à t'épanouir").
 - Ne jamais être générique — chaque phrase doit évoquer la réalité observée (zone, régularité, état) sans citer de nombres.
-2-3 phrases. Tutoie. Ton poétique et direct. Sans emojis.`
+2 phrases maximum, 50 mots maximum au total. Tutoie. Ton poétique et direct. Sans emojis.`
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -119,7 +119,7 @@ serve(async (req: Request) => {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
       body: JSON.stringify({
         model:       'gpt-4o-mini',
-        max_tokens:  130,
+        max_tokens:  80,
         temperature: 0.78,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },

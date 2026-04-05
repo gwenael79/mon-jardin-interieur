@@ -69,7 +69,7 @@ const SLIDES_CONFIG = [
     Component: null,
   },
   {
-    id:        'jardin',    illusKey: 'jardin',
+    id:        'jardin',    illusKey: 'jardin',   image: '/champs3.png',
     badge:     'Ma Fleur',           icon: '🌸',
     title:     'Ton jardin intérieur',
     subtitle:  'Ta fleur grandit chaque jour que tu prends soin de toi. Observe-la évoluer.',
@@ -80,7 +80,7 @@ const SLIDES_CONFIG = [
     Component: ScreenMonJardin,
   },
   {
-    id:        'champ',     illusKey: 'champ',
+    id:        'champ',     illusKey: 'champ',   image: '/collectif.png',
     badge:     'Jardin Collectif',   icon: '🌻',
     title:     'Le jardin collectif',
     subtitle:  'Les fleurs de ta communauté. Une présence partagée, sans noms, sans profils.',
@@ -113,7 +113,7 @@ const SLIDES_CONFIG = [
     Component: ScreenClubJardiniers,
   },
   {
-    id:        'ateliers',  illusKey: 'ateliers',
+    id:        'ateliers',  illusKey: 'ateliers',  image: '/champs2.png',
     badge:     'Ateliers',           icon: '📖',
     title:     'Les ateliers guidés',
     subtitle:  'Des séances thématiques pour explorer, apprendre et pratiquer.',
@@ -124,7 +124,7 @@ const SLIDES_CONFIG = [
     Component: ScreenAteliers,
   },
   {
-    id:        'bibliotheque', illusKey: 'bibliotheque',
+    id:        'bibliotheque', illusKey: 'bibliotheque', image: '/biblio.png',
     badge:     'Ma Bibliothèque',    icon: '📚',
     title:     'Ta bibliothèque personnelle',
     subtitle:  'Retrouve tes rituels, ressources et contenus sauvegardés.',
@@ -217,8 +217,19 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       style={{ position:'fixed', inset:0, display:'flex', flexDirection:'column', background:'linear-gradient(160deg,#f8f0ec,#ede5de)', zIndex:10 }}
       {...swipe}
     >
+      {/* ── Bandeau titre mobile ── */}
+      <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <img src="/icons/icon-192.png" alt="" style={{ width:26, height:26, borderRadius:'50%' }}/>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#1a1208', lineHeight:1 }}>
+            Mon <em style={{ color:'#7a4030' }}>Jardin</em>
+            <span style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontStyle:'normal', marginLeft:6 }}>Intérieur</span>
+          </div>
+        </div>
+      </div>
+
       {/* ── Barre de progression ── */}
-      <div style={{ position:'absolute', top:14, left:14, right:14, display:'flex', gap:4, zIndex:20 }}>
+      <div style={{ position:'absolute', top:48, left:14, right:14, display:'flex', gap:4, zIndex:20 }}>
         {slides.map((s, i) => (
           <div key={s.id} style={{ flex:1, height:2.5, background:'rgba(160,100,90,.18)', borderRadius:3, overflow:'hidden' }}>
             <div style={{ height:'100%', borderRadius:3, background:s.color, width: i < curIdx ? '100%' : i === curIdx ? '60%' : '0%', transition: i === curIdx ? 'none' : 'width .3s' }}/>
@@ -228,7 +239,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
 
       {/* ── Illustration ── */}
       <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden' }}>
-        <img src="/champs.png" alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
+        <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 40%, rgba(237,229,222,1) 100%)' }}/>
         <div style={{ position:'absolute', bottom:14, left:14, fontFamily:"'Jost',sans-serif", fontSize:9, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.88)', background:'rgba(0,0,0,.22)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>
           {slide.badge}
@@ -239,7 +250,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       </div>
 
       {/* ── Preview texte ── */}
-      <div style={{ flex:1, overflow:'auto', padding:'16px 20px 0', display:'flex', flexDirection:'column', gap:8 }}>
+      <div style={{ flex:1, overflow:'auto', padding:'16px 20px 20px', display:'flex', flexDirection:'column', gap:8 }}>
 
         {/* Tag */}
         <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color, flexShrink:0 }}>
@@ -247,7 +258,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
         </div>
 
         {/* Titre */}
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,7vw,34px)', fontWeight:300, color:'#1a1208', lineHeight:1.15, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', flexShrink:0 }}>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,7vw,34px)', fontWeight:300, color:'#1a1208', lineHeight:1.2, flexShrink:0 }}>
           {slide.title}
         </div>
 
@@ -314,9 +325,9 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
       {/* Carte modale */}
       <div style={{
         position:'relative', zIndex:1,
-        margin: isMobile ? 0 : '20px auto',
-        width:  isMobile ? '100%' : 'min(820px, 96vw)',
-        height: isMobile ? '100%' : 'calc(100vh - 40px)',
+        margin: isMobile ? 0 : 'auto',
+        width:  isMobile ? '100%' : slide.id === 'champ' ? 'min(92vw, calc((100vh - 40px) * 16/9))' : 'min(820px, 96vw)',
+        height: isMobile ? '100%' : slide.id === 'champ' ? 'min(calc(100vh - 40px), calc(min(92vw, (100vh - 40px) * 16/9) * 9/16))' : 'calc(100vh - 40px)',
         background:'#faf5f2', borderRadius: isMobile ? 0 : 20,
         display:'flex', flexDirection:'column', overflow:'hidden',
         boxShadow: isMobile ? 'none' : '0 32px 80px rgba(0,0,0,.30)',
@@ -329,40 +340,41 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
         <div style={{
           flexShrink:0, height:52, display:'flex', alignItems:'center',
           justifyContent:'space-between', padding:'0 18px',
-          borderBottom:'1px solid rgba(200,160,150,.18)',
-          background:'rgba(255,255,255,.6)', backdropFilter:'blur(8px)',
+          borderBottom:'1px solid rgba(96,160,100,.2)',
+          background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)',
         }}>
-          {/* Retour au slide */}
-          <button
-            onClick={onClose}
-            style={{
-              display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:100,
-              background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.3)',
-              cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:11,
-              color:'rgba(30,20,8,.55)', transition:'background .15s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.95)'}
-            onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.7)'}
-          >‹ Retour</button>
-
-          {/* Titre */}
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ fontSize:18 }}>{slide.icon}</span>
-            <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:500, color:'#1a1208' }}>{slide.badge}</div>
+          {/* Nom appli */}
+          <div onClick={onClose} style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer' }}>
+            <img src="/icons/icon-192.png" alt="" style={{ width:26, height:26, borderRadius:'50%' }}/>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#1a1208', lineHeight:1 }}>
+              Mon <em style={{ color:'#7a4030' }}>Jardin</em>
+              <span style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontStyle:'normal', marginLeft:6 }}>Intérieur</span>
+            </div>
           </div>
 
-          {/* Lumens */}
-          {screenProps?.lumens && (
-            <div
-              onClick={() => screenProps.onOpenLumens?.()}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 11px', borderRadius:100, background:'rgba(207,166,74,.09)', border:'1px solid rgba(207,166,74,.22)', cursor:'pointer', transition:'background .12s' }}
-              onMouseEnter={e => e.currentTarget.style.background='rgba(207,166,74,.18)'}
-              onMouseLeave={e => e.currentTarget.style.background='rgba(207,166,74,.09)'}
-            >
-              <div style={{ width:16, height:16, borderRadius:'50%', background:'radial-gradient(circle at 38% 35%, #ffe97a, #c8a040)', boxShadow:'0 0 6px rgba(207,166,74,.5)', flexShrink:0 }}/>
-              <span style={{ fontSize:11, fontWeight:600, color:'#c8a040', fontFamily:"'Jost',sans-serif" }}>{screenProps.lumens.available}</span>
+          {/* Titre centré */}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <span style={{ fontSize:22 }}>{slide.icon}</span>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:600, color:'#1a1208', fontStyle:'italic' }}>{slide.badge}</div>
+          </div>
+
+          {/* Date + Lumens */}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ fontSize:10, color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", letterSpacing:'.03em' }}>
+              {new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(new Date())}
             </div>
-          )}
+            {screenProps?.lumens && (
+              <div
+                onClick={() => screenProps.onOpenLumens?.()}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 11px', borderRadius:100, background:'rgba(207,166,74,.12)', border:'1px solid rgba(207,166,74,.28)', cursor:'pointer', transition:'background .12s' }}
+                onMouseEnter={e => e.currentTarget.style.background='rgba(207,166,74,.22)'}
+                onMouseLeave={e => e.currentTarget.style.background='rgba(207,166,74,.12)'}
+              >
+                <div style={{ width:16, height:16, borderRadius:'50%', background:'radial-gradient(circle at 38% 35%, #ffe97a, #c8a040)', boxShadow:'0 0 6px rgba(207,166,74,.5)', flexShrink:0 }}/>
+                <span style={{ fontSize:11, fontWeight:600, color:'#c8a040', fontFamily:"'Jost',sans-serif" }}>{screenProps.lumens.available}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Contenu du screen — prend tout l'espace restant */}
@@ -396,14 +408,23 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
           )}
         </div>
 
-        {/* Bouton retour bas */}
-        <div style={{ flexShrink:0, padding:'10px 18px 16px', display:'flex', justifyContent:'center', background:'linear-gradient(transparent, rgba(250,245,242,.95) 40%)', borderTop:'1px solid rgba(200,160,150,.12)' }}>
+        {/* Bandeau bas */}
+        <div style={{ flexShrink:0, padding:'12px 18px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderTop:'1px solid rgba(96,160,100,.2)' }}>
           <button
             onClick={onClose}
-            style={{ padding:'9px 28px', borderRadius:100, background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s' }}
+            style={{ padding:'9px 20px', borderRadius:100, background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s', flexShrink:0 }}
             onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,1)'; e.currentTarget.style.transform='translateY(-1px)' }}
             onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.8)'; e.currentTarget.style.transform='none' }}
-          >‹ Retour au slide</button>
+          >‹ Retour</button>
+
+          {slide.id === 'jardin' && (
+            <button
+              onClick={() => screenProps?.onOpenRituals?.()}
+              style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#c8a0d8,#9070a8)', boxShadow:'0 4px 16px rgba(160,100,180,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 22px rgba(160,100,180,.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 16px rgba(160,100,180,.3)' }}
+            >🌸 Je prends soin de ma fleur</button>
+          )}
         </div>
       </div>
     </div>
@@ -444,6 +465,7 @@ export default function DashboardPage() {
   const [active,              setActive]              = useState('jardin')
   const [slideIdx,            setSlideIdx]            = useState(0)
   const [showBilanModal,      setShowBilanModal]      = useState(false)
+  const [openRitualsModal,    setOpenRitualsModal]    = useState(false)
   const [bilanDoneToday,      setBilanDoneToday]      = useState(false)
   const [showWelcome,         setShowWelcome]         = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
@@ -617,10 +639,13 @@ export default function DashboardPage() {
     onOpenAccess:   () => setShowAccessModal(true),
     onUpgrade:      () => setShowAccessModal(true), // alias attendu par ScreenJardinCollectif, ScreenDefis, ScreenClubJardiniers, ScreenAteliers, ScreenJardinotheque
     onOpenProfile:  () => setShowProfileModal(true),
-    onCoeurSeen:    () => setUnreadCoeurs(0),       // attendu par ScreenClubJardiniers
-    bilanDoneToday,                    // attendu par ScreenMonJardin
+    onCoeurSeen:    () => setUnreadCoeurs(0),
+    onOpenRituals:  () => setOpenRitualsModal(true),
+    openRitualsModal,
+    onCloseRituals: () => setOpenRitualsModal(false),
+    bilanDoneToday,
     track,
-  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, unreadCoeurs, pendingInvitations, bilanDoneToday, track])
+  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, track])
 
 
   // Saut direct vers un slide (nav latérale desktop)
@@ -770,10 +795,10 @@ export default function DashboardPage() {
               {/* ── Barre supérieure ── */}
               <div style={{ flexShrink:0, height:46, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 18px', borderBottom:'1px solid rgba(200,160,150,.16)' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <img src="/icons/icon-192.png" alt="" style={{ width:24, height:24, borderRadius:'50%' }}/>
-                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:13.5, fontWeight:400, color:'#1a1208' }}>
-                    Mon <em style={{ color:'#a07060' }}>Jardin</em>
-                    <span style={{ fontSize:8.5, letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(30,20,8,.32)', fontStyle:'normal', marginLeft:5 }}>Intérieur</span>
+                  <img src="/icons/icon-192.png" alt="" style={{ width:26, height:26, borderRadius:'50%' }}/>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#1a1208', lineHeight:1 }}>
+                    Mon <em style={{ color:'#7a4030' }}>Jardin</em>
+                    <span style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontStyle:'normal', marginLeft:6 }}>Intérieur</span>
                   </div>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -796,7 +821,7 @@ export default function DashboardPage() {
 
               {/* ── Illustration pleine largeur ── */}
               <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden' }}>
-                <img key={`illus-${slideIdx}`} src="/champs.png" alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
+                <img key={`illus-${slideIdx}`} src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 40%, rgba(250,245,242,1) 100%)' }}/>
                 {/* Badge slide actuel */}
                 <div style={{ position:'absolute', bottom:12, left:18, fontFamily:"'Jost',sans-serif", fontSize:9.5, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.9)', background:'rgba(0,0,0,.24)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>{slide.badge}</div>
@@ -858,7 +883,7 @@ export default function DashboardPage() {
                     if (slide.isBilan) { setShowBilanModal(true) }
                     else { setOpenModalId(slide.id) }
                   }}
-                  style={{ flex:1, padding:'5px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:500, color:'#fff', letterSpacing:'.05em', background: slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease, box-shadow .15s ease', color:'#1a1208', fontWeight:700 }}
+                  style={{ flex:1, padding:'5px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background: slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease, box-shadow .15s ease' }}
                   onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 10px 22px ${slide.btnShadow}` }}
                   onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 6px 16px ${slide.btnShadow}` }}
                 >

@@ -602,7 +602,8 @@ function useAIMessage({ edgeFn, userId, slideId, payload, enabled }) {
 export function AIInsightBlock({ userId, edgeFn = 'stimulation', slideId, payload, color = '#b090c8', title = null, style = {}, fontSize = 22 }) {
   const { message, loading } = useAIMessage({ edgeFn, userId, slideId, payload, enabled: !!userId })
 
-  const bg = `${color}09`
+  const isMobile = useIsMobile()
+  const bg = isMobile ? 'transparent' : 'linear-gradient(to right, rgba(255,255,255,.7) 0%, rgba(255,255,255,0) 100%)'
   const bd = `${color}22`
 
   if (loading) return (
@@ -622,7 +623,7 @@ export function AIInsightBlock({ userId, edgeFn = 'stimulation', slideId, payloa
           {title}
         </div>
       )}
-      <p style={{ margin:0, fontSize, color:'rgba(30,20,8,.72)', fontFamily:"'Cormorant Garamond',serif", fontWeight:600, lineHeight:1.65, fontStyle:'italic' }}>
+      <p style={{ margin:0, fontSize: isMobile ? fontSize : 24, color:'rgba(30,20,8,.72)', fontFamily:"'Cormorant Garamond',serif", fontWeight:600, lineHeight:1.65, fontStyle:'italic', textAlign:'center' }}>
         {message}
       </p>
     </div>
