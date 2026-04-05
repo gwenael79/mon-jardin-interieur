@@ -31,6 +31,8 @@ const SYSTEM_PROMPTS: Record<string, string> = {
   bibliotheque: `Tu es un accompagnateur de bien-être. Fais un lien entre les rituels pratiqués, la zone favorite et les ressources disponibles dans la bibliothèque. Donne envie d'explorer. 2-3 phrases, tutoie, sans émojis.`,
 
   jardinotheque: `Tu es un accompagnateur de bien-être. Relie le profil de l'utilisateur (zone favorite, rituels, santé) à des pistes d'exploration dans la jardinothèque. Donne envie de découvrir. 2-3 phrases, tutoie, sans émojis.`,
+
+  stimulation: `Tu es un accompagnateur de bien-être chaleureux et inspirant. À partir de l'état actuel de la fleur et des rituels récents, génère un message de stimulation douce et personnalisée pour inviter l'utilisateur à prendre soin de son jardin intérieur aujourd'hui. Si la santé est haute (7-10), valorise son élan et encourage à approfondir. Si la santé est moyenne (4-6), propose une intention légère et bienveillante. Si elle est basse (1-3), accueille avec douceur et offre un premier petit pas concret. Jamais de généralité — parle de CE que tu observes dans ses données. 2-3 phrases, tutoie, ton poétique et direct, sans émojis.`,
 }
 
 const ZONE_LABELS: Record<string, string> = {
@@ -94,6 +96,7 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
   const defisJoined    = payload.defisJoined    ?? 0
   const communityPeople = payload.communityPeople ?? 0
   const gardenCount    = payload.gardenCount    ?? 0
+  const ritualsDone    = payload.ritualsDone    ?? 0
 
   // Résumé des bilans récents
   let bilanSummary = 'Aucun bilan récent disponible.'
@@ -125,6 +128,7 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
     plantSummary,
   ]
 
+  if (slide === 'stimulation') lines.push(`Rituels accomplis aujourd'hui : ${ritualsDone}.`)
   if (slide === 'champ')       lines.push(`${gardenCount} fleurs dans le jardin collectif, ${communityPeople} jardiniers actifs.`)
   if (slide === 'defis')       lines.push(`${defisJoined} défi${Number(defisJoined) > 1 ? 's' : ''} rejoints. ${communityPeople} participants dans la communauté.`)
   if (slide === 'club')        lines.push(circleName ? `Cercle "${circleName}" avec ${circleMembers} membres.` : 'Pas encore de cercle.')

@@ -2,7 +2,9 @@
 //  dashboardShared.jsx
 //  Utilitaires, hooks, constantes et composants UI partagés entre tous les écrans
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useSlideInsight } from '../hooks/useSlideInsight'
+import { useStimulation }  from '../hooks/useStimulation'
 import { supabase } from '../core/supabaseClient'
 import '../styles/dashboard.css'
 
@@ -564,6 +566,65 @@ export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {
         </div>
       )}
 
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AIInsightBlock — bloc IA réutilisable
+//
+//  Props:
+//    userId   : string          — identifiant utilisateur
+//    edgeFn   : string          — 'stimulation' (défaut) ou 'slide-insight'
+//    slideId  : string          — requis si edgeFn='slide-insight' (ex: 'jardin')
+//    payload  : object          — données contextuelles envoyées à l'edge function
+//    color    : string          — couleur d'accent (#rrggbb)
+//    title    : string|null     — label au-dessus du message (optionnel)
+//    style    : object          — styles additionnels sur le conteneur
+//    fontSize : number          — taille du message (défaut : 22)
+//
+//  Exemples :
+//    // Edge function dédiée "stimulation"
+//    <AIInsightBlock userId={userId} edgeFn="stimulation"
+//      payload={{ streak, ritualsMonth, favoriteZone, ritualsDone }} color="#b090c8" />
+//
+//    // Edge function "slide-insight" multi-prompt
+//    <AIInsightBlock userId={userId} edgeFn="slide-insight" slideId="jardin"
+//      payload={{ streak, ritualsMonth }} color="#60a870" />
+// ─────────────────────────────────────────────────────────────────────────────
+function useAIMessage({ edgeFn, userId, slideId, payload, enabled }) {
+  const stablePayload = useMemo(() => payload ?? {}, [JSON.stringify(payload)]) // eslint-disable-line
+  const stimulation = useStimulation({ userId, payload: stablePayload, enabled: enabled && edgeFn === 'stimulation' })
+  const insight     = useSlideInsight({ userId, slideId, payload: stablePayload, enabled: enabled && edgeFn !== 'stimulation' })
+  return edgeFn === 'stimulation' ? stimulation : insight
+}
+
+export function AIInsightBlock({ userId, edgeFn = 'stimulation', slideId, payload, color = '#b090c8', title = null, style = {}, fontSize = 22 }) {
+  const { message, loading } = useAIMessage({ edgeFn, userId, slideId, payload, enabled: !!userId })
+
+  const bg = `${color}09`
+  const bd = `${color}22`
+
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 14px', borderRadius:12, background:bg, border:`1px solid ${bd}`, ...style }}>
+      {[0, .2, .4].map(delay => (
+        <div key={delay} style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:`onbPulse 1.2s ease-in-out ${delay}s infinite` }}/>
+      ))}
+    </div>
+  )
+
+  if (!message) return null
+
+  return (
+    <div style={{ padding:'12px 16px', borderRadius:12, background:bg, border:`1px solid ${bd}`, ...style }}>
+      {title && (
+        <div style={{ fontSize:13, fontWeight:600, fontFamily:"'Jost',sans-serif", color, letterSpacing:'.04em', marginBottom:7, textTransform:'uppercase' }}>
+          {title}
+        </div>
+      )}
+      <p style={{ margin:0, fontSize, color:'rgba(30,20,8,.72)', fontFamily:"'Cormorant Garamond',serif", fontWeight:600, lineHeight:1.65, fontStyle:'italic' }}>
+        {message}
+      </p>
     </div>
   )
 }

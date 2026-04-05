@@ -59,7 +59,7 @@ const SLIDES_CONFIG = [
   {
     id:        'bilan',     illusKey: 'bilan',
     badge:     'Chaque matin',      icon: '🌹',
-    title:     'Comment te sens-tu\naujourd\'hui ?',
+    title:     'Comment te sens-tu aujourd\'hui ?',
     subtitle:  'Ton bilan quotidien en 2 minutes — humeur, énergie, intention.',
     color:     '#c87878',
     btnLabel:  'Commencer le bilan',
@@ -71,7 +71,7 @@ const SLIDES_CONFIG = [
   {
     id:        'jardin',    illusKey: 'jardin',
     badge:     'Ma Fleur',           icon: '🌸',
-    title:     'Ton jardin\nintérieur',
+    title:     'Ton jardin intérieur',
     subtitle:  'Ta fleur grandit chaque jour que tu prends soin de toi. Observe-la évoluer.',
     color:     '#b090c8',
     btnLabel:  'Soigner ma fleur',
@@ -82,7 +82,7 @@ const SLIDES_CONFIG = [
   {
     id:        'champ',     illusKey: 'champ',
     badge:     'Jardin Collectif',   icon: '🌻',
-    title:     'Le jardin\ncollectif',
+    title:     'Le jardin collectif',
     subtitle:  'Les fleurs de ta communauté. Une présence partagée, sans noms, sans profils.',
     color:     '#c8a040',
     btnLabel:  'Rejoindre le jardin',
@@ -93,7 +93,7 @@ const SLIDES_CONFIG = [
   {
     id:        'defis',     illusKey: 'defis',
     badge:     'Défis',              icon: '✨',
-    title:     'Tes défis\ndu moment',
+    title:     'Tes défis du moment',
     subtitle:  'De petits engagements hebdomadaires pour avancer, à ton rythme.',
     color:     '#9080c0',
     btnLabel:  'Voir mes défis',
@@ -104,7 +104,7 @@ const SLIDES_CONFIG = [
   {
     id:        'club',      illusKey: 'club',
     badge:     'Club des Jardiniers', icon: '👥',
-    title:     'Ton cercle\nde jardiniers',
+    title:     'Ton cercle de jardiniers',
     subtitle:  'Un espace intime pour partager, s\'encourager et grandir ensemble.',
     color:     '#6898c0',
     btnLabel:  'Rejoindre mon club',
@@ -115,7 +115,7 @@ const SLIDES_CONFIG = [
   {
     id:        'ateliers',  illusKey: 'ateliers',
     badge:     'Ateliers',           icon: '📖',
-    title:     'Les ateliers\nguidés',
+    title:     'Les ateliers guidés',
     subtitle:  'Des séances thématiques pour explorer, apprendre et pratiquer.',
     color:     '#60a870',
     btnLabel:  'Explorer les ateliers',
@@ -126,7 +126,7 @@ const SLIDES_CONFIG = [
   {
     id:        'bibliotheque', illusKey: 'bibliotheque',
     badge:     'Ma Bibliothèque',    icon: '📚',
-    title:     'Ta bibliothèque\npersonnelle',
+    title:     'Ta bibliothèque personnelle',
     subtitle:  'Retrouve tes rituels, ressources et contenus sauvegardés.',
     color:     '#a07850',
     btnLabel:  'Ouvrir ma bibliothèque',
@@ -137,7 +137,7 @@ const SLIDES_CONFIG = [
   {
     id:        'jardinotheque', illusKey: 'jardinotheque',
     badge:     'Jardinothèque',      icon: '🌿',
-    title:     'La\nJardinothèque',
+    title:     'La Jardinothèque',
     subtitle:  'Explore les pratiques, connaissances et ressources du jardin intérieur.',
     color:     '#5890a0',
     btnLabel:  'Explorer',
@@ -163,21 +163,20 @@ function useSwipe(onSwipeLeft, onSwipeRight) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SLIDE INSIGHTS — données personnalisées pour chaque slide
+//  SLIDE INSIGHTS AI — bloc IA seul (sans cards de données)
 // ─────────────────────────────────────────────────────────────────────────────
-function SlideInsights({ slideId, screenProps, bilanDoneToday, color }) {
-  const { user, todayPlant, stats, circleMembers, activeCircle, communityStats, myDefis, joinedIds, gardenFlowerCount } = screenProps ?? {}
+function SlideInsightsAI({ slideId, screenProps, color }) {
+  const { user, stats, circleMembers, activeCircle, communityStats, myDefis, joinedIds, gardenFlowerCount } = screenProps ?? {}
 
-  // ── Payload pour l'Edge Function ──
   const insightPayload = useMemo(() => ({
-    streak:          stats?.streak         ?? 0,
-    ritualsMonth:    stats?.ritualsThisMonth ?? 0,
-    favoriteZone:    stats?.favoriteZone   ?? null,
-    circleMembers:   circleMembers?.length ?? 0,
-    circleName:      activeCircle?.name    ?? null,
-    defisJoined:     joinedIds?.size       ?? myDefis?.length ?? 0,
+    streak:          stats?.streak            ?? 0,
+    ritualsMonth:    stats?.ritualsThisMonth  ?? 0,
+    favoriteZone:    stats?.favoriteZone      ?? null,
+    circleMembers:   circleMembers?.length    ?? 0,
+    circleName:      activeCircle?.name       ?? null,
+    defisJoined:     joinedIds?.size          ?? myDefis?.length ?? 0,
     communityPeople: communityStats?.totalParticipants ?? 0,
-    gardenCount:     gardenFlowerCount     ?? 0,
+    gardenCount:     gardenFlowerCount        ?? 0,
   }), [stats, circleMembers, activeCircle, joinedIds, myDefis, communityStats, gardenFlowerCount])
 
   const { message: aiMessage, loading: aiLoading } = useSlideInsight({
@@ -187,154 +186,20 @@ function SlideInsights({ slideId, screenProps, bilanDoneToday, color }) {
     enabled: !!user?.id,
   })
 
-  // ── Card stat : grand nombre + label contextuel ──
-  const statCard = (value, unit, label, sub, accent) => (
-    <div style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 16px', borderRadius:14, background:'rgba(255,255,255,.70)', border:'1px solid rgba(200,160,150,.18)', boxShadow:'0 2px 10px rgba(0,0,0,.05)' }}>
-      <div style={{ flexShrink:0, textAlign:'center', minWidth:48 }}>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:400, color: accent ?? color, lineHeight:1 }}>{value}</div>
-        {unit && <div style={{ fontSize:9, letterSpacing:'.1em', textTransform:'uppercase', color:'rgba(30,20,8,.35)', marginTop:1 }}>{unit}</div>}
-      </div>
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:13, fontWeight:500, color:'rgba(30,20,8,.85)', fontFamily:"'Jost',sans-serif", lineHeight:1.3 }}>{label}</div>
-        {sub && <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginTop:2, lineHeight:1.4 }}>{sub}</div>}
-      </div>
+  if (aiLoading) return (
+    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:12, background:`${color}08`, border:`1px solid ${color}20` }}>
+      <div style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:'onbPulse 1.2s ease-in-out 0s infinite' }}/>
+      <div style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:'onbPulse 1.2s ease-in-out .2s infinite' }}/>
+      <div style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:'onbPulse 1.2s ease-in-out .4s infinite' }}/>
     </div>
   )
 
-  // ── Card simple avec barre de progression ──
-  const barCard = (label, sub, pct, accent) => (
-    <div style={{ padding:'11px 16px', borderRadius:14, background:'rgba(255,255,255,.70)', border:'1px solid rgba(200,160,150,.18)', boxShadow:'0 2px 10px rgba(0,0,0,.05)' }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-        <div style={{ fontSize:13, fontWeight:500, color:'rgba(30,20,8,.85)', fontFamily:"'Jost',sans-serif" }}>{label}</div>
-        <div style={{ fontSize:11, color: accent ?? color, fontWeight:600, fontFamily:"'Jost',sans-serif" }}>{Math.round(pct)}%</div>
-      </div>
-      <div style={{ height:4, borderRadius:100, background:'rgba(0,0,0,.07)', overflow:'hidden' }}>
-        <div style={{ height:'100%', width:`${Math.min(100, pct)}%`, borderRadius:100, background: accent ?? color, transition:'width .6s ease' }}/>
-      </div>
-      {sub && <div style={{ fontSize:11, color:'rgba(30,20,8,.40)', marginTop:5, fontFamily:"'Jost',sans-serif" }}>{sub}</div>}
-    </div>
-  )
-
-  // ── Card texte simple ──
-  const textCard = (icon, label, sub, accent) => (
-    <div style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderRadius:14, background:'rgba(255,255,255,.70)', border:'1px solid rgba(200,160,150,.18)', boxShadow:'0 2px 10px rgba(0,0,0,.05)' }}>
-      <span style={{ fontSize:22, flexShrink:0 }}>{icon}</span>
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:13, fontWeight:500, color: accent ?? 'rgba(30,20,8,.85)', fontFamily:"'Jost',sans-serif", lineHeight:1.3 }}>{label}</div>
-        {sub && <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginTop:2, lineHeight:1.4 }}>{sub}</div>}
-      </div>
-    </div>
-  )
-
-  const zoneLabels    = { zone_racines:'Racines', zone_tige:'Tige', zone_feuilles:'Feuilles', zone_fleurs:'Fleurs', zone_souffle:'Souffle' }
-  const zoneActions   = { zone_racines:'Travaille ton ancrage et ta stabilité', zone_tige:'Renforce ton élan et ta continuité', zone_feuilles:'Ouvre-toi au monde avec légèreté', zone_fleurs:'Exprime-toi, épanouis-toi', zone_souffle:'Cultive ta paix intérieure' }
-  const favoriteZoneLabel  = stats?.favoriteZone ? zoneLabels[stats.favoriteZone]  ?? stats.favoriteZone  : null
-  const favoriteZoneAction = stats?.favoriteZone ? zoneActions[stats.favoriteZone] ?? null                : null
-
-  // ── Cards de données par slide ──
-  let chips = null
-  if (slideId === 'bilan') {
-    const streak  = stats?.streak ?? 0
-    const rituals = stats?.ritualsThisMonth ?? 0
-    const daysInMonth = new Date().getDate()
-    chips = <>
-      {streak > 0
-        ? statCard(streak, streak > 1 ? 'jours' : 'jour', `${streak > 1 ? 'jours consécutifs' : 'jour'} sans interruption`, streak >= 7 ? 'Une semaine complète — tu tiens le rythme 🔥' : streak >= 3 ? 'Tu construis une vraie habitude' : 'C\'est parti, continue !', '#c87878')
-        : textCard('🌱', 'Pas encore de série en cours', 'Commence aujourd\'hui — même 2 minutes comptent')}
-      {bilanDoneToday
-        ? textCard('✓', 'Bilan du matin complété', 'Ta journée démarre avec intention', '#4a8858')
-        : textCard('🌡️', 'Bilan du matin à faire', 'Prends 2 min pour te prendre en soin')}
-      {rituals > 0 && barCard(`${rituals} rituels ce mois`, `Soit ${Math.round(rituals / daysInMonth * 10) / 10} par jour en moyenne`, Math.min(100, (rituals / (daysInMonth * 2)) * 100))}
-    </>
-  } else if (slideId === 'jardin') {
-    const health  = todayPlant?.health ?? null
-    const streak  = stats?.streak ?? 0
-    const rituals = stats?.ritualsThisMonth ?? 0
-    const healthColor = health === null ? color : health >= 8 ? '#4a8858' : health >= 5 ? color : '#c87878'
-    const healthLabel = health === null ? 'Pas encore de données' : health >= 8 ? 'En pleine forme' : health >= 5 ? 'Elle a besoin d\'attention' : 'Elle souffre un peu'
-    const healthSub   = health === null ? 'Fais ton premier bilan !' : health >= 8 ? 'Continue comme ça — tes rituels portent leurs fruits' : health >= 5 ? 'Un rituel aujourd\'hui suffira à la ranimer' : 'Elle t\'attend — même un petit geste compte'
-    chips = <>
-      {health !== null && statCard(`${health}/10`, 'santé', healthLabel, healthSub, healthColor)}
-      {streak > 0 && statCard(streak, streak > 1 ? 'jours' : 'jour', 'de présence consécutive', streak >= 14 ? 'Exceptionnel — tu ancres une vraie pratique' : streak >= 7 ? 'Une semaine entière — bravo' : 'Belle régularité en train de s\'installer')}
-      {favoriteZoneLabel && textCard('🌿', `Zone préférée : ${favoriteZoneLabel}`, favoriteZoneAction)}
-      {rituals > 0 && rituals < 5 && textCard('✦', `${rituals} rituel${rituals > 1 ? 's' : ''} ce mois`, 'Chaque rituel renforce ta fleur — continue', color)}
-    </>
-  } else if (slideId === 'champ') {
-    const count = gardenFlowerCount ?? 0
-    const rituals = communityStats?.completedRituals ?? 0
-    chips = <>
-      {statCard(count, 'fleurs', 'fleurissent en ce moment', count > 10 ? 'Le jardin collectif est vivant et actif' : count > 0 ? 'Tu n\'es pas seul·e dans ce jardin' : 'Sois parmi les premiers à fleurir')}
-      {communityStats?.totalParticipants > 0 && statCard(communityStats.totalParticipants, 'jardiniers', 'prennent soin d\'eux', 'Ta présence enrichit le jardin de tous', color)}
-      {rituals > 0 && textCard('✦', `${rituals} rituels accomplis ensemble`, 'Ce mois-ci, la communauté avance', color)}
-    </>
-  } else if (slideId === 'defis') {
-    const joined    = joinedIds?.size ?? myDefis?.length ?? 0
-    const total     = communityStats?.totalParticipants ?? 0
-    chips = <>
-      {joined > 0
-        ? statCard(joined, joined > 1 ? 'défis' : 'défi', `défi${joined > 1 ? 's' : ''} en cours`, 'Tu t\'es engagé·e — chaque étape compte', color)
-        : textCard('✨', 'Aucun défi rejoint', 'Lance-toi — même le plus petit défi crée du mouvement', 'rgba(30,20,8,.5)')}
-      {total > 0 && statCard(total, 'personnes', 'relèvent des défis', 'Rejoins le mouvement — vous êtes plus forts ensemble')}
-    </>
-  } else if (slideId === 'club') {
-    const memberCount = circleMembers?.length ?? 0
-    const circleName  = activeCircle?.name ?? null
-    chips = <>
-      {circleName
-        ? statCard(memberCount, memberCount > 1 ? 'membres' : 'membre', `dans "${circleName}"`, memberCount > 3 ? 'Un beau cercle actif — cultivez ensemble' : memberCount > 1 ? 'Votre cercle grandit — invitez d\'autres jardiniers' : 'Tu es seul·e pour l\'instant — invite quelqu\'un')
-        : textCard('👥', 'Pas encore de cercle', 'Crée ou rejoins un cercle — la croissance est plus douce à plusieurs', 'rgba(30,20,8,.5)')}
-      {circleName && memberCount > 1 && textCard('🌸', `${memberCount - 1} jardinier${memberCount > 2 ? 's' : ''} cultivent avec toi`, 'Vos jardins intérieurs s\'enrichissent mutuellement')}
-    </>
-  } else if (slideId === 'ateliers') {
-    const rituals = stats?.ritualsThisMonth ?? 0
-    chips = <>
-      {textCard('📖', 'Des séances guidées par thème', 'Respiration, ancrage, émotions, relations… un atelier par besoin')}
-      {favoriteZoneLabel
-        ? textCard('🌿', `Ateliers pour ta zone : ${favoriteZoneLabel}`, favoriteZoneAction ?? 'Des pratiques adaptées à ce qui te parle le plus', color)
-        : textCard('🌿', 'Explore toutes les zones', 'Chaque atelier enrichit une dimension différente de toi')}
-      {rituals >= 10 && textCard('✦', 'Tu as le niveau pour les ateliers avancés', `${rituals} rituels ce mois — tu es prêt·e à aller plus loin`, color)}
-    </>
-  } else if (slideId === 'bibliotheque') {
-    const rituals = stats?.ritualsThisMonth ?? 0
-    chips = <>
-      {rituals > 0
-        ? statCard(rituals, rituals > 1 ? 'rituels' : 'rituel', `pratiqués ce mois`, rituals >= 20 ? 'Une vraie bibliothèque de pratiques se constitue' : 'Ta collection grandit — retrouve-les quand tu veux')
-        : textCard('📚', 'Ta bibliothèque t\'attend', 'Elle se remplit au fil de tes rituels et découvertes')}
-      {favoriteZoneLabel && textCard('🌿', `Ressources pour ta zone : ${favoriteZoneLabel}`, favoriteZoneAction ?? 'Du contenu sélectionné pour toi', color)}
-    </>
-  } else if (slideId === 'jardinotheque') {
-    const rituals = stats?.ritualsThisMonth ?? 0
-    chips = <>
-      {textCard('🌿', 'Toutes les pratiques du jardin intérieur', 'Pleine conscience, cohérence cardiaque, ancrage, gratitude…')}
-      {favoriteZoneLabel
-        ? textCard('✦', `Recommandé pour toi : ${favoriteZoneLabel}`, favoriteZoneAction ?? 'Des contenus qui correspondent à ton profil', color)
-        : textCard('✦', 'Découvre ce qui te ressemble', 'Chaque pratique peut devenir la tienne')}
-      {rituals >= 5 && textCard('🔍', 'Tu pratiques — approfondis maintenant', `${rituals} rituels ce mois, la théorie éclairera ta pratique`)}
-    </>
-  }
-
-  // ── Bloc IA ──
-  const aiBlock = aiLoading
-    ? (
-      <div style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 14px', borderRadius:12, background:`${color}08`, border:`1px solid ${color}20` }}>
-        <div style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:'onbPulse 1.2s ease-in-out 0s infinite' }}/>
-        <div style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:'onbPulse 1.2s ease-in-out .2s infinite' }}/>
-        <div style={{ width:5, height:5, borderRadius:'50%', background:color, opacity:.5, animation:'onbPulse 1.2s ease-in-out .4s infinite' }}/>
-      </div>
-    )
-    : aiMessage
-      ? (
-        <div style={{ padding:'11px 14px', borderRadius:12, background:`${color}08`, border:`1px solid ${color}22`, position:'relative' }}>
-          <div style={{ fontSize:11, color:color, fontWeight:500, fontFamily:"'Cormorant Garamond',serif", marginBottom:6, letterSpacing:'.02em', fontStyle:'italic' }}>Parlons de toi…</div>
-          <p style={{ margin:0, fontSize:18, color:'rgba(30,20,8,.75)', fontFamily:"'Cormorant Garamond',serif", fontWeight:400, lineHeight:1.7, fontStyle:'italic' }}>{aiMessage}</p>
-        </div>
-      )
-      : null
+  if (!aiMessage) return null
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-      {chips}
-      {aiBlock}
+    <div style={{ padding:'11px 14px', borderRadius:12, background:`${color}08`, border:`1px solid ${color}22` }}>
+      <div style={{ fontSize:26, color, fontWeight:700, fontFamily:"'Cormorant Garamond',serif", marginBottom:7, letterSpacing:'.02em', fontStyle:'italic' }}>Parlons de toi…</div>
+      <p style={{ margin:0, fontSize:24, color:'rgba(30,20,8,.75)', fontFamily:"'Cormorant Garamond',serif", fontWeight:700, lineHeight:1.65, fontStyle:'italic' }}>{aiMessage}</p>
     </div>
   )
 }
@@ -374,47 +239,55 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       </div>
 
       {/* ── Preview texte ── */}
-      <div style={{ flex:1, overflow:'hidden', padding:'16px 20px 0', display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ flex:1, overflow:'auto', padding:'16px 20px 0', display:'flex', flexDirection:'column', gap:8 }}>
 
         {/* Tag */}
-        <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color }}>
+        <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color, flexShrink:0 }}>
           {slide.icon}  {slide.badge}
         </div>
 
         {/* Titre */}
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(22px,6vw,30px)', fontWeight:300, color:'#1a1208', lineHeight:1.12, whiteSpace:'pre-line' }}>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,7vw,34px)', fontWeight:300, color:'#1a1208', lineHeight:1.15, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', flexShrink:0 }}>
           {slide.title}
         </div>
 
-        {/* Insights personnalisés */}
-        <div style={{ flex:1, overflow:'hidden' }}>
-          <SlideInsights slideId={slide.id} screenProps={screenProps} bilanDoneToday={bilanDoneToday} color={slide.color} />
+        {/* Sous-titre + analyse IA */}
+        <div style={{ fontSize:15, fontWeight:300, color:'#1a1208', lineHeight:1.7, flexShrink:0 }}>
+          {slide.subtitle}
         </div>
+        <SlideInsightsAI slideId={slide.id} screenProps={screenProps} bilanDoneToday={bilanDoneToday} color={slide.color} />
       </div>
 
       {/* ── Navigation bas ── */}
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 16px 28px', display:'flex', gap:10, background:'linear-gradient(transparent, rgba(237,229,222,.98) 38%)', zIndex:20 }}>
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 16px 28px', display:'flex', gap:8, alignItems:'center', background:'linear-gradient(transparent, rgba(237,229,222,.98) 38%)', zIndex:20 }}>
 
-        <button
-          onClick={() => onNav(-1)}
-          disabled={curIdx === 0}
-          style={{ width:48, height:48, borderRadius:'50%', flexShrink:0, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.28)', fontSize:20, color:'rgba(30,20,8,.45)', cursor: curIdx===0 ? 'default':'pointer', opacity: curIdx===0 ? 0:1, transition:'opacity .2s', display:'flex', alignItems:'center', justifyContent:'center' }}
-        >‹</button>
+        {/* Slide précédent */}
+        {curIdx > 0 && (() => { const prev = slides[curIdx-1]; return (
+          <button
+            onClick={() => onNav(-1)}
+            style={{ flexShrink:0, padding:'4px 12px', borderRadius:100, background:prev.color, border:`1px solid ${prev.color}`, fontSize:10, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s', whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}
+          >‹ {prev.badge}</button>
+        )})()}
+        {curIdx === 0 && <div style={{ flexShrink:0, width:10 }}/>}
 
+        {/* Bouton principal */}
         <button
           onClick={() => onOpenModal(slide.id)}
-          style={{ flex:1, height:48, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:500, color:'#fff', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 8px 22px ${slide.btnShadow}`, transition:'transform .15s ease' }}
+          style={{ flex:1, padding:'5px 16px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:500, color:'#fff', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease', color:'#1a1208', fontWeight:700 }}
           onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
           onMouseLeave={e => e.currentTarget.style.transform='none'}
         >
-          {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
+          {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan' : slide.btnLabel}
         </button>
 
-        <button
-          onClick={() => onNav(1)}
-          disabled={isLast}
-          style={{ width:48, height:48, borderRadius:'50%', flexShrink:0, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.28)', fontSize:20, color:'rgba(30,20,8,.45)', cursor: isLast ? 'default':'pointer', opacity: isLast ? 0:1, transition:'opacity .2s', display:'flex', alignItems:'center', justifyContent:'center' }}
-        >›</button>
+        {/* Slide suivant */}
+        {!isLast && (() => { const next = slides[curIdx+1]; return (
+          <button
+            onClick={() => onNav(1)}
+            style={{ flexShrink:0, padding:'4px 12px', borderRadius:100, background:next.color, border:`1px solid ${next.color}`, fontSize:10, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s', whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}
+          >{next.badge} ›</button>
+        )})()}
+        {isLast && <div style={{ flexShrink:0, width:10 }}/>}
       </div>
     </div>
   )
@@ -423,11 +296,9 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
 // ─────────────────────────────────────────────────────────────────────────────
 //  SCREEN MODAL — overlay plein écran qui ouvre un slide sur ses hooks
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, onClose, onNav }) {
+function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, onClose }) {
   const idx   = slides.findIndex(s => s.id === slideId)
   const slide = slides[idx]
-  const isFirst = idx === 0
-  const isLast  = idx === slides.length - 1
   if (!slide) return null
 
   const isMobile = window.innerWidth < 768
@@ -461,66 +332,37 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
           borderBottom:'1px solid rgba(200,160,150,.18)',
           background:'rgba(255,255,255,.6)', backdropFilter:'blur(8px)',
         }}>
-          {/* Prev slide */}
+          {/* Retour au slide */}
           <button
-            onClick={() => !isFirst && onNav(-1)}
+            onClick={onClose}
             style={{
-              width:36, height:36, borderRadius:'50%',
-              background: isFirst ? 'transparent' : 'rgba(255,255,255,.7)',
-              border:`1px solid ${isFirst ? 'transparent' : 'rgba(200,160,150,.3)'}`,
-              cursor: isFirst ? 'default' : 'pointer',
-              opacity: isFirst ? 0 : 1,
-              fontSize:16, color:'rgba(30,20,8,.5)',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              transition:'opacity .2s',
+              display:'flex', alignItems:'center', gap:6, padding:'6px 12px', borderRadius:100,
+              background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.3)',
+              cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:11,
+              color:'rgba(30,20,8,.55)', transition:'background .15s',
             }}
-          >‹</button>
+            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.95)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.7)'}
+          >‹ Retour</button>
 
           {/* Titre */}
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ fontSize:18 }}>{slide.icon}</span>
-            <div>
-              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:500, color:'#1a1208' }}>{slide.badge}</div>
-              <div style={{ display:'flex', gap:4, marginTop:2 }}>
-                {slides.map((s,i) => (
-                  <div key={s.id} style={{
-                    width: i === idx ? 16 : 5, height:3, borderRadius:3,
-                    background: i === idx ? slide.color : i < idx ? `${slide.color}60` : 'rgba(0,0,0,.15)',
-                    transition:'all .3s',
-                  }}/>
-                ))}
-              </div>
-            </div>
+            <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:500, color:'#1a1208' }}>{slide.badge}</div>
           </div>
 
-          {/* Next + Close */}
-          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <button
-              onClick={() => !isLast && onNav(1)}
-              style={{
-                width:36, height:36, borderRadius:'50%',
-                background: isLast ? 'transparent' : 'rgba(255,255,255,.7)',
-                border:`1px solid ${isLast ? 'transparent' : 'rgba(200,160,150,.3)'}`,
-                cursor: isLast ? 'default' : 'pointer',
-                opacity: isLast ? 0 : 1,
-                fontSize:16, color:'rgba(30,20,8,.5)',
-                display:'flex', alignItems:'center', justifyContent:'center',
-                transition:'opacity .2s',
-              }}
-            >›</button>
-            <button
-              onClick={onClose}
-              style={{
-                width:36, height:36, borderRadius:'50%',
-                background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.3)',
-                cursor:'pointer', fontSize:14, color:'rgba(30,20,8,.5)',
-                display:'flex', alignItems:'center', justifyContent:'center',
-                transition:'background .15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.95)'}
-              onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.7)'}
-            >✕</button>
-          </div>
+          {/* Lumens */}
+          {screenProps?.lumens && (
+            <div
+              onClick={() => screenProps.onOpenLumens?.()}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 11px', borderRadius:100, background:'rgba(207,166,74,.09)', border:'1px solid rgba(207,166,74,.22)', cursor:'pointer', transition:'background .12s' }}
+              onMouseEnter={e => e.currentTarget.style.background='rgba(207,166,74,.18)'}
+              onMouseLeave={e => e.currentTarget.style.background='rgba(207,166,74,.09)'}
+            >
+              <div style={{ width:16, height:16, borderRadius:'50%', background:'radial-gradient(circle at 38% 35%, #ffe97a, #c8a040)', boxShadow:'0 0 6px rgba(207,166,74,.5)', flexShrink:0 }}/>
+              <span style={{ fontSize:11, fontWeight:600, color:'#c8a040', fontFamily:"'Jost',sans-serif" }}>{screenProps.lumens.available}</span>
+            </div>
+          )}
         </div>
 
         {/* Contenu du screen — prend tout l'espace restant */}
@@ -554,50 +396,14 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
           )}
         </div>
 
-        {/* Barre de navigation bas */}
-        <div style={{
-          flexShrink:0, padding:'10px 18px 16px', display:'flex', gap:10, alignItems:'center',
-          background:'linear-gradient(transparent, rgba(250,245,242,.95) 40%)',
-          borderTop:'1px solid rgba(200,160,150,.12)',
-        }}>
+        {/* Bouton retour bas */}
+        <div style={{ flexShrink:0, padding:'10px 18px 16px', display:'flex', justifyContent:'center', background:'linear-gradient(transparent, rgba(250,245,242,.95) 40%)', borderTop:'1px solid rgba(200,160,150,.12)' }}>
           <button
-            onClick={() => !isFirst && onNav(-1)}
-            disabled={isFirst}
-            style={{
-              height:40, padding:'0 20px', borderRadius:100,
-              background: isFirst ? 'transparent' : 'rgba(255,255,255,.7)',
-              border:`1px solid ${isFirst ? 'transparent' : 'rgba(200,160,150,.3)'}`,
-              fontSize:12, color:'rgba(30,20,8,.5)',
-              cursor: isFirst ? 'default' : 'pointer',
-              opacity: isFirst ? 0 : 1,
-              transition:'opacity .2s, transform .15s',
-              fontFamily:"'Jost',sans-serif",
-            }}
-            onMouseEnter={e => { if(!isFirst) e.currentTarget.style.transform='translateY(-1px)' }}
-            onMouseLeave={e => e.currentTarget.style.transform='none'}
-          >‹ {idx > 0 ? slides[idx-1].badge : ''}</button>
-
-          <div style={{ flex:1, textAlign:'center', fontSize:10, color:'rgba(30,20,8,.25)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em' }}>
-            {idx + 1} / {slides.length}
-          </div>
-
-          <button
-            onClick={() => !isLast && onNav(1)}
-            disabled={isLast}
-            style={{
-              height:40, padding:'0 20px', borderRadius:100,
-              background: isLast ? 'rgba(200,200,190,.3)' : slide.btnGrad,
-              border:'none',
-              fontSize:12, color: isLast ? 'rgba(30,20,8,.35)' : '#fff',
-              cursor: isLast ? 'default' : 'pointer',
-              opacity: isLast ? 0 : 1,
-              transition:'opacity .2s, transform .15s',
-              fontFamily:"'Jost',sans-serif", fontWeight:500,
-              boxShadow: isLast ? 'none' : `0 4px 14px ${slide.btnShadow}`,
-            }}
-            onMouseEnter={e => { if(!isLast) e.currentTarget.style.transform='translateY(-1px)' }}
-            onMouseLeave={e => e.currentTarget.style.transform='none'}
-          >{idx < slides.length - 1 ? slides[idx+1].badge : ''} ›</button>
+            onClick={onClose}
+            style={{ padding:'9px 28px', borderRadius:100, background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,1)'; e.currentTarget.style.transform='translateY(-1px)' }}
+            onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.8)'; e.currentTarget.style.transform='none' }}
+          >‹ Retour au slide</button>
         </div>
       </div>
     </div>
@@ -1017,32 +823,34 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Titre */}
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,3vw,36px)', fontWeight:300, color:'#1a1208', lineHeight:1.12, whiteSpace:'pre-line', letterSpacing:'-0.01em', marginBottom:10 }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,3vw,38px)', fontWeight:300, color:'#1a1208', lineHeight:1.15, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', letterSpacing:'-0.01em', marginBottom:10 }}>
                   {slide.title}
                 </div>
 
                 {/* Sous-titre */}
-                <div style={{ fontSize:13, fontWeight:300, color:'rgba(30,20,8,.52)', lineHeight:1.7, marginBottom:12 }}>
+                <div style={{ fontSize:15, fontWeight:300, color:'rgba(30,20,8,.55)', lineHeight:1.7, marginBottom:12 }}>
                   {slide.subtitle}
                 </div>
 
-                {/* Insights personnalisés */}
-                <div style={{ flex:1, overflow:'hidden' }}>
-                  <SlideInsights slideId={slide.id} screenProps={screenProps} bilanDoneToday={bilanDoneToday} color={slide.color} />
+                {/* Analyse IA */}
+                <div style={{ flex:1, overflow:'auto' }}>
+                  <SlideInsightsAI slideId={slide.id} screenProps={screenProps} color={slide.color} />
                 </div>
               </div>
 
               {/* ── Navigation bas ── */}
               <div style={{ flexShrink:0, padding:'14px 24px 20px', display:'flex', gap:10, alignItems:'center', background:'linear-gradient(transparent, rgba(250,245,242,.98) 38%)' }}>
 
-                {/* Retour */}
-                <button
-                  onClick={() => handleNav(-1)}
-                  disabled={slideIdx === 0}
-                  style={{ width:44, height:44, borderRadius:'50%', flexShrink:0, background:'rgba(255,255,255,.65)', border:'1px solid rgba(200,160,150,.28)', fontSize:18, color:'rgba(30,20,8,.45)', cursor: slideIdx===0 ? 'default':'pointer', opacity: slideIdx===0 ? 0:1, transition:'opacity .2s, transform .15s', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Jost',sans-serif" }}
-                  onMouseEnter={e => { if(slideIdx>0) e.currentTarget.style.transform='translateY(-1px)' }}
-                  onMouseLeave={e => e.currentTarget.style.transform='none'}
-                >‹</button>
+                {/* Slide précédent */}
+                {slideIdx > 0 && (() => { const prev = SLIDES_CONFIG[slideIdx-1]; return (
+                  <button
+                    onClick={() => handleNav(-1)}
+                    style={{ flexShrink:0, padding:'5px 14px', borderRadius:100, background:prev.color, border:`1px solid ${prev.color}`, fontSize:11, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s, transform .15s', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}
+                    onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform='none'}
+                  >‹ {prev.badge}</button>
+                )})()}
+                {slideIdx === 0 && <div style={{ flexShrink:0, width:10 }}/>}
 
                 {/* Bouton principal : ouvre la ScreenModal */}
                 <button
@@ -1050,21 +858,23 @@ export default function DashboardPage() {
                     if (slide.isBilan) { setShowBilanModal(true) }
                     else { setOpenModalId(slide.id) }
                   }}
-                  style={{ flex:1, height:44, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:500, color:'#fff', letterSpacing:'.05em', background: slide.btnGrad, boxShadow:`0 8px 22px ${slide.btnShadow}`, transition:'transform .15s ease, box-shadow .15s ease' }}
-                  onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 12px 28px ${slide.btnShadow}` }}
-                  onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 8px 22px ${slide.btnShadow}` }}
+                  style={{ flex:1, padding:'5px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:500, color:'#fff', letterSpacing:'.05em', background: slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease, box-shadow .15s ease', color:'#1a1208', fontWeight:700 }}
+                  onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 10px 22px ${slide.btnShadow}` }}
+                  onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 6px 16px ${slide.btnShadow}` }}
                 >
-                  {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
+                  {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan' : slide.btnLabel}
                 </button>
 
-                {/* Suivant */}
-                <button
-                  onClick={() => handleNav(1)}
-                  disabled={isLast}
-                  style={{ width:44, height:44, borderRadius:'50%', flexShrink:0, background:'rgba(255,255,255,.65)', border:'1px solid rgba(200,160,150,.28)', fontSize:18, color:'rgba(30,20,8,.45)', cursor: isLast ? 'default':'pointer', opacity: isLast ? 0:1, transition:'opacity .2s, transform .15s', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:"'Jost',sans-serif" }}
-                  onMouseEnter={e => { if(!isLast) e.currentTarget.style.transform='translateY(-1px)' }}
-                  onMouseLeave={e => e.currentTarget.style.transform='none'}
-                >›</button>
+                {/* Slide suivant */}
+                {!isLast && (() => { const next = SLIDES_CONFIG[slideIdx+1]; return (
+                  <button
+                    onClick={() => handleNav(1)}
+                    style={{ flexShrink:0, padding:'5px 14px', borderRadius:100, background:next.color, border:`1px solid ${next.color}`, fontSize:11, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s, transform .15s', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}
+                    onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform='none'}
+                  >{next.badge} ›</button>
+                )})()}
+                {isLast && <div style={{ flexShrink:0, width:10 }}/>}
               </div>
 
             </div>

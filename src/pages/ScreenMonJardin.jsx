@@ -10,7 +10,7 @@ import { logNetworkActivity } from '../utils/logNetworkActivity'
 import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
-import { useIsMobile, LumenBadge, LumensCard, useProfile } from './dashboardShared'
+import { useIsMobile, LumenBadge, LumensCard, useProfile, AIInsightBlock } from './dashboardShared'
 import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_rituels'
 
 const DEFAULT_GARDEN_SETTINGS = {
@@ -1841,11 +1841,11 @@ function JournalComposer({ userId, plantId, onSaved }) {
 ───────────────────────────────────────── */
 
 const PLANT_ZONES = {
-  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    color:'var(--zone-roots)', accent:'var(--gold-warm)',  },
-  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  color:'var(--zone-stem)', accent:'#9DDBB4',  },
-  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       color:'var(--zone-leaves)', accent:'var(--green)',  },
-  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          color:'var(--zone-flowers)', accent:'var(--zone-flowers)',  },
-  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  color:'var(--zone-breath)', accent:'var(--zone-breath)',  },
+  roots:   { name:'Racines',  subtitle:'Ancrage & Énergie',    emoji:'🌱', color:'var(--zone-roots)', accent:'var(--gold-warm)',  },
+  stem:    { name:'Tige',     subtitle:'Flexibilité & Corps',  emoji:'🌿', color:'var(--zone-stem)', accent:'#9DDBB4',  },
+  leaves:  { name:'Feuilles', subtitle:'Liens & Humeur',       emoji:'🍃', color:'var(--zone-leaves)', accent:'var(--green)',  },
+  flowers: { name:'Fleurs',   subtitle:'Soin de Soi',          emoji:'🌸', color:'var(--zone-flowers)', accent:'var(--zone-flowers)',  },
+  breath:  { name:'Souffle',  subtitle:'Présence & Sérénité',  emoji:'🌬️', color:'var(--zone-breath)', accent:'var(--zone-breath)',  },
 }
 
 // Correspondance zone → clé DB pour la mise à jour de la plante
@@ -2161,8 +2161,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
               </div>
               <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
                 <div style={{ textAlign:'right' }}>
-                  <span style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--ritual-modal-text-rgb),0.3)', display:'block', marginBottom:4 }}>{done}/{rituals.length} rituels</span>
-                  <span style={{ fontSize:'var(--fs-h2, 22px)', color:zone.accent, fontWeight:300 }}>{Math.round(pct)}<span style={{ fontSize:'var(--fs-h5, 12px)', opacity:0.6 }}>%</span></span>
+                  <span style={{ fontSize:'var(--fs-h4, 13px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)', display:'block' }}>{done}/{rituals.length} rituels</span>
                 </div>
                 <button onClick={onClose} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--ritual-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
               </div>
@@ -4030,10 +4029,6 @@ function ColonneFleur({ plant, gardenSettings, lumens, isMobile, todayLabel, pro
           </div>
         )}
         <div className="ph-health-overlay">
-          <div style={{ display:'flex', alignItems:'baseline', gap:2, lineHeight:1 }}>
-            <span className="ph-health-value" style={{ fontSize: isMobile ? 38 : 54 }}>{plant?.health ?? 5}</span>
-            <span className="ph-health-pct" style={{ fontSize: isMobile ? 18 : 22 }}>%</span>
-          </div>
           <div className="ph-health-label">Vitalité</div>
           <div className="ph-health-date">{todayLabel}</div>
         </div>
@@ -4114,6 +4109,177 @@ function MessageJardin({ profile, isMobile }) {
         <span style={{ color:'var(--green)' }}>{namePart}</span>
         <span style={{ color:'var(--text)' }}>{restPart}</span>
       </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  AllRitualsModal — tous les rituels en colonne unique
+// ─────────────────────────────────────────────────────────────────────────────
+function RitualCard({ r, zone, zoneId, isDone, onOpen }) {
+  return (
+    <button
+      onClick={() => { if (!isDone) onOpen(zoneId, r.id) }}
+      style={{
+        display:'flex', alignItems:'center', gap:12, padding:'14px 16px',
+        borderRadius:14, textAlign:'left', cursor: isDone ? 'default' : 'pointer', width:'100%',
+        background: isDone ? `${zone.color}10` : '#fff',
+        border:`1px solid ${isDone ? zone.color+'30' : 'rgba(200,160,150,.18)'}`,
+        boxShadow: isDone ? 'none' : '0 1px 4px rgba(0,0,0,.05)',
+        transition:'all .18s',
+      }}
+      onMouseEnter={e => { if (!isDone) { e.currentTarget.style.boxShadow='0 3px 12px rgba(0,0,0,.09)'; e.currentTarget.style.transform='translateY(-1px)' } }}
+      onMouseLeave={e => { if (!isDone) { e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,.05)'; e.currentTarget.style.transform='none' } }}
+    >
+      <div style={{ flexShrink:0, width:32, height:32, borderRadius:'50%', background: isDone ? zone.color : `${zone.color}15`, border:`1.5px solid ${isDone ? zone.color : zone.color+'35'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color: isDone ? '#fff' : zone.color, transition:'all .2s' }}>
+        {isDone ? '✓' : zone.emoji}
+      </div>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:14, fontFamily:"'Jost',sans-serif", fontWeight: isDone ? 400 : 500, color: isDone ? 'rgba(30,20,8,.4)' : '#1a1208', lineHeight:1.35, textDecoration: isDone ? 'line-through' : 'none', textDecorationColor:`${zone.color}80` }}>{r.text}</div>
+        {r.duration && (
+          <span style={{ display:'inline-block', marginTop:5, padding:'2px 8px', borderRadius:100, fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:500, background:`${zone.color}15`, color:zone.color, letterSpacing:'.03em' }}>{r.duration}</span>
+        )}
+      </div>
+      {!isDone && (
+        <div style={{ flexShrink:0, width:26, height:26, borderRadius:'50%', background:`${zone.color}12`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:zone.color }}>›</div>
+      )}
+    </button>
+  )
+}
+
+function AllRitualsModal({ completedRituals, onToggle, onClose }) {
+  const isMobile = useIsMobile()
+  const [activeZone,     setActiveZone]     = useState(null)
+  const [activeRitualId, setActiveRitualId] = useState(null)
+  // Accordéon mobile : première zone ouverte par défaut
+  const [openZone, setOpenZone] = useState(() => Object.keys(PLANT_ZONES)[0])
+
+  const totalDone  = Object.entries(PLANT_ZONES).reduce((acc, [zoneId]) => acc + (PLANT_RITUALS[zoneId] || []).filter(r => completedRituals[r.id]).length, 0)
+  const totalCount = Object.entries(PLANT_ZONES).reduce((acc, [zoneId]) => acc + (PLANT_RITUALS[zoneId]?.length || 0), 0)
+
+  const openRitual = (zoneId, ritualId) => { setActiveZone(zoneId); setActiveRitualId(ritualId) }
+
+  const zoneEntries = Object.entries(PLANT_ZONES).filter(([zoneId]) => (PLANT_RITUALS[zoneId]?.length || 0) > 0)
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:250, background:'rgba(20,12,5,.60)', backdropFilter:'blur(10px)', display:'flex', flexDirection:'column', alignItems:'stretch' }}>
+      <div style={{ flex:1, background:'#faf5f2', margin:'24px 0 0', borderRadius:'24px 24px 0 0', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow:'0 -16px 48px rgba(0,0,0,.18)' }}>
+
+        {/* ── Header ── */}
+        <div style={{ flexShrink:0, padding:'20px 22px 16px', borderBottom:'1px solid rgba(200,160,150,.15)', background:'rgba(255,255,255,.75)', backdropFilter:'blur(8px)' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' }}>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:400, color:'#1a1208', lineHeight:1.2 }}>Prendre soin de ma fleur</div>
+              <div style={{ fontSize:11, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", marginTop:4, letterSpacing:'.04em' }}>
+                {totalDone === totalCount && totalCount > 0 ? '✦ Tout accompli aujourd\'hui' : `${totalDone} rituel${totalDone > 1 ? 's' : ''} accompli${totalDone > 1 ? 's' : ''} sur ${totalCount}`}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ flexShrink:0, width:34, height:34, borderRadius:'50%', background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.25)', cursor:'pointer', fontSize:14, color:'rgba(30,20,8,.45)', display:'flex', alignItems:'center', justifyContent:'center', marginTop:2 }}>✕</button>
+          </div>
+          <div style={{ height:3, borderRadius:3, background:'rgba(0,0,0,.07)', marginTop:14, overflow:'hidden' }}>
+            <div style={{ height:'100%', width:`${totalCount ? totalDone/totalCount*100 : 0}%`, background:'linear-gradient(90deg,#c8a0d8,#9070a8)', borderRadius:3, transition:'width .6s ease' }}/>
+          </div>
+        </div>
+
+        {/* ── Contenu ── */}
+        <div style={{ flex:1, overflowY:'auto', padding: isMobile ? '12px 0 40px' : '20px 28px 40px' }}>
+
+          {/* ══ MOBILE : accordéon ══ */}
+          {isMobile && (
+            <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+              {zoneEntries.map(([zoneId, zone]) => {
+                const rituals = PLANT_RITUALS[zoneId] || []
+                const done    = rituals.filter(r => completedRituals[r.id]).length
+                const allDone = done === rituals.length
+                const isOpen  = openZone === zoneId
+
+                return (
+                  <div key={zoneId} style={{ borderBottom:'1px solid rgba(200,160,150,.12)' }}>
+                    {/* Trigger accordéon */}
+                    <button
+                      onClick={() => setOpenZone(isOpen ? null : zoneId)}
+                      style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'16px 22px', background:'none', border:'none', cursor:'pointer', textAlign:'left' }}
+                    >
+                      <div style={{ width:38, height:38, borderRadius:'50%', background: allDone ? zone.color : `${zone.color}18`, border:`1.5px solid ${zone.color}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
+                        {allDone ? <span style={{ fontSize:16, color:'#fff' }}>✓</span> : zone.emoji}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:13, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:zone.color }}>{zone.name}</div>
+                        <div style={{ fontSize:11, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", marginTop:1 }}>{zone.subtitle}</div>
+                      </div>
+                      <div style={{ flexShrink:0, display:'flex', alignItems:'center', gap:8 }}>
+                        <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", fontWeight:600, color: allDone ? zone.color : 'rgba(30,20,8,.3)' }}>
+                          {allDone ? '✓' : `${done}/${rituals.length}`}
+                        </span>
+                        <span style={{ fontSize:14, color:'rgba(30,20,8,.3)', transform: isOpen ? 'rotate(90deg)' : 'none', transition:'transform .2s', display:'inline-block' }}>›</span>
+                      </div>
+                    </button>
+
+                    {/* Barre + Cards dépliées */}
+                    {isOpen && (
+                      <div style={{ padding:'0 22px 16px', display:'flex', flexDirection:'column', gap:8 }}>
+                        <div style={{ height:2, borderRadius:2, background:'rgba(0,0,0,.06)', marginBottom:4, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width:`${rituals.length ? done/rituals.length*100 : 0}%`, background:zone.color, borderRadius:2, transition:'width .5s ease', opacity:.8 }}/>
+                        </div>
+                        {rituals.map(r => (
+                          <RitualCard key={r.id} r={r} zone={zone} zoneId={zoneId} isDone={!!completedRituals[r.id]} onOpen={openRitual} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ══ DESKTOP : 2 colonnes ══ */}
+          {!isMobile && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24, alignItems:'start' }}>
+              {zoneEntries.map(([zoneId, zone]) => {
+                const rituals = PLANT_RITUALS[zoneId] || []
+                const done    = rituals.filter(r => completedRituals[r.id]).length
+                const allDone = done === rituals.length
+
+                return (
+                  <div key={zoneId} style={{ background:'rgba(255,255,255,.6)', borderRadius:18, border:'1px solid rgba(200,160,150,.14)', padding:'18px 18px 14px', boxShadow:'0 2px 12px rgba(0,0,0,.04)' }}>
+                    {/* En-tête zone */}
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
+                      <div style={{ width:36, height:36, borderRadius:'50%', background: allDone ? zone.color : `${zone.color}18`, border:`1.5px solid ${zone.color}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
+                        {allDone ? <span style={{ fontSize:15, color:'#fff' }}>✓</span> : zone.emoji}
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:12, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.07em', textTransform:'uppercase', color:zone.color }}>{zone.name}</div>
+                        <div style={{ fontSize:10, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", marginTop:1 }}>{zone.subtitle}</div>
+                      </div>
+                      <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", fontWeight:600, color: allDone ? zone.color : 'rgba(30,20,8,.28)' }}>
+                        {allDone ? '✓ Tout fait' : `${done}/${rituals.length}`}
+                      </span>
+                    </div>
+                    <div style={{ height:2, borderRadius:2, background:'rgba(0,0,0,.06)', marginBottom:12, overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${rituals.length ? done/rituals.length*100 : 0}%`, background:zone.color, borderRadius:2, transition:'width .5s ease', opacity:.8 }}/>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                      {rituals.map(r => (
+                        <RitualCard key={r.id} r={r} zone={zone} zoneId={zoneId} isDone={!!completedRituals[r.id]} onOpen={openRitual} />
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {activeZone && (
+        <RitualZoneModal
+          zoneId={activeZone}
+          completed={completedRituals}
+          onToggle={onToggle}
+          onClose={() => { setActiveZone(null); setActiveRitualId(null) }}
+          initialRitualId={activeRitualId}
+        />
+      )}
     </div>
   )
 }
@@ -4314,6 +4480,15 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [gardenSettings, setGardenSettings] = useState(DEFAULT_GARDEN_SETTINGS)
   const [showGardenSettings, setShowGardenSettings] = useState(false)
   const [gardenTier, setGardenTier] = useState(1)
+  const [showRitualsModal, setShowRitualsModal] = useState(false)
+
+  // ── Stimulation IA ─────────────────────────────────────────
+  const stimulationPayload = useMemo(() => ({
+    streak:       stats?.streak           ?? 0,
+    ritualsMonth: stats?.ritualsThisMonth ?? 0,
+    favoriteZone: stats?.favoriteZone     ?? null,
+    ritualsDone:  todayRituals?.length    ?? 0,
+  }), [stats, todayRituals])
 
   // Charger les settings depuis Supabase
   useEffect(() => {
@@ -4339,52 +4514,105 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const today = new Date().toISOString().split('T')[0]
   const todayLabel = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(new Date())
 
+  const saveGardenSettings = async s => {
+    setGardenSettings(s)
+    await supabase.from('garden_settings').upsert({
+      user_id: userId, sunrise_h: s.sunriseH, sunrise_m: s.sunriseM,
+      sunset_h: s.sunsetH, sunset_m: s.sunsetM,
+      petal_color1: s.petalColor1, petal_color2: s.petalColor2, petal_shape: s.petalShape,
+    }, { onConflict: 'user_id' })
+  }
+
+  const timeIcon = timeContext === 'matin' ? '🌅' : timeContext === 'aprem' ? '☀️' : '🌙'
+  const streak   = stats?.streak ?? 0
+
   if (isLoading) return (
-    <div className="content">
-    <div className="mj-layout" style={{ alignItems:'center', justifyContent:'center' }}>
-      <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text3)', letterSpacing:'.1em' }}>Votre jardin se réveille…</div>
-    </div>
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", fontSize:13 }}>
+      Votre jardin se réveille…
     </div>
   )
 
   return (
     <>
-    {showWakeUp && (
-      <WakeUpModal
-        userId={userId}
-        plant={plant}
-        completedRituals={completedRituals}
-        onToggleRitual={handleToggleRitual}
-        profile={profile}
-        onClose={setShowWakeUp}
-      />
-    )}
     {showGardenSettings && (
       <GardenSettingsModal
         settings={gardenSettings}
         level={profile?.level ?? 1}
         tier={gardenTier}
         isAdmin={userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
-        onSave={async s => {
-          setGardenSettings(s)
-          // Persiste dans Supabase
-          await supabase.from('garden_settings').upsert({
-            user_id:      userId,
-            sunrise_h:    s.sunriseH,
-            sunrise_m:    s.sunriseM,
-            sunset_h:     s.sunsetH,
-            sunset_m:     s.sunsetM,
-            petal_color1: s.petalColor1,
-            petal_color2: s.petalColor2,
-            petal_shape:  s.petalShape,
-          }, { onConflict: 'user_id' })
-        }}
+        onSave={saveGardenSettings}
         onClose={() => setShowGardenSettings(false)}
       />
     )}
-    <div className="content">
-    <div className="mj-layout">
-      <div className="mj-left">
+    {showRitualsModal && (
+      <AllRitualsModal
+        completedRituals={completedRituals}
+        onToggle={handleToggleRitual}
+        onClose={() => setShowRitualsModal(false)}
+      />
+    )}
+
+    {/* ── Mise en page simplifiée — colonne unique ── */}
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflowY:'auto', padding: isMobile ? '24px 20px 32px' : '32px 80px 40px', gap:20, background:'#faf5f2', boxSizing:'border-box', maxWidth: isMobile ? 'none' : 640, margin:'0 auto', width:'100%' }}>
+
+      {/* Phrase contextuelle */}
+      <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+        <span style={{ fontSize:26, flexShrink:0 }}>{timeIcon}</span>
+        <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, fontStyle:'italic', color:'#1a1208', lineHeight:1.3 }}>{contextMessage}</span>
+      </div>
+
+      {/* Fleur */}
+      <div style={{ position:'relative', borderRadius:18, overflow:'hidden', boxShadow:'0 4px 32px rgba(10,22,40,.18)', flexShrink:0, height:320 }}>
+        <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+        {/* Vitalité */}
+        <div style={{ position:'absolute', bottom:14, left:16, display:'flex', alignItems:'baseline', gap:3 }}>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:42, fontWeight:300, color:'rgba(255,255,255,.92)', lineHeight:1 }}>{plant?.health ?? 5}</span>
+          <span style={{ fontSize:18, color:'rgba(255,255,255,.6)' }}>%</span>
+          <span style={{ fontSize:11, color:'rgba(255,255,255,.5)', marginLeft:4, letterSpacing:'.06em' }}>Vitalité</span>
+        </div>
+        {/* Streak */}
+        {streak >= 1 && (
+          <div style={{ position:'absolute', top:12, right:12, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'rgba(0,0,0,.25)', border:'1px solid rgba(255,255,255,.2)', fontSize:11, color:'rgba(255,255,255,.88)', fontFamily:"'Jost',sans-serif" }}>
+            👍 {streak} jour{streak > 1 ? 's' : ''}
+          </div>
+        )}
+        {/* Date */}
+        <div style={{ position:'absolute', bottom:14, right:14, fontSize:10, color:'rgba(255,255,255,.4)', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em' }}>{todayLabel}</div>
+      </div>
+
+      {/* Personnaliser */}
+      <button
+        onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
+        style={{ alignSelf:'flex-start', display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.25)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.6)', transition:'background .15s' }}
+        onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.95)'}
+        onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.7)'}
+      >
+        <span style={{ fontSize:14 }}>🎨</span>
+        Personnaliser ma fleur
+      </button>
+
+      {/* Stimulation IA */}
+      {!!userId && !!plant && (
+        <AIInsightBlock
+          userId={userId}
+          edgeFn="stimulation"
+          payload={stimulationPayload}
+          color="#b090c8"
+        />
+      )}
+
+      {/* Je prend soin de ma fleur */}
+      <button
+        onClick={() => setShowRitualsModal(true)}
+        style={{ width:'100%', padding:'14px 20px', borderRadius:14, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#c8a0d8,#9070a8)', boxShadow:'0 8px 24px rgba(160,100,180,.35)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
+        onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 30px rgba(160,100,180,.45)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 8px 24px rgba(160,100,180,.35)' }}
+      >
+        🌸 Je prend soin de ma fleur
+      </button>
+
+    </div>
+    {false && <div className="mj-left" style={{ display:'none' }}>
         {/* ── Message contextuel ── */}
         <div style={{
           padding: isMobile ? '12px 4px 6px' : '10px 4px 8px',
@@ -4657,31 +4885,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           onOpenBilan={onOpenBilan}
           bilanDoneToday={bilanDoneToday}
         />
-      </div>
-
-      <div className="mj-right">
-
-        {/* ── CARD LUMENS ── */}
-        <LumensCard lumens={lumens} userId={userId} awardLumens={awardLumens} />
-
-        {/* ── CONFIDENTIALITÉ ── */}
-        <div className="slabel" style={{ marginTop:20 }}>Confidentialité</div>
-        <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', lineHeight:1.6, marginBottom:10 }}>
-          Souhaitez-vous apparaître dans le jardin collectif ?
-        </div>
-        {PRIVACY_FIELDS.map(p => (
-          <div key={p.field} className="privacy-item">
-            <div className="priv-icon">{p.icon}</div>
-            <div className="priv-label">{p.label}</div>
-            <div className={'priv-toggle ' + (settings?.[p.field] ? 'on' : 'off')} onClick={() => toggle(p.field)}>
-              <div className="pt-knob" />
-            </div>
-          </div>
-        ))}
-
-      </div>
-    </div>
-    </div>
+      </div>}
     </>
   )
 }
