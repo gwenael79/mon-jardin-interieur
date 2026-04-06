@@ -7,8 +7,9 @@ const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%;width:100%}
-/* Les CSS vars sont chargées dynamiquement via useTheme */
-.auth-root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;width:100vw;color:var(--text);display:flex;overflow:hidden}
+
+/* Override — textes forcés en sombre sur fond clair, indépendamment du thème */
+.auth-root{font-family:'Jost',sans-serif;background:var(--bg);min-height:100vh;width:100vw;display:flex;overflow:hidden;--text:#1a1a14;--text2:rgba(20,18,10,0.72);--text3:rgba(20,18,10,0.48);--cream:#1a1a14;color:#1a1a14}
 
 /* LEFT */
 .auth-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:60px 72px;position:relative;overflow:hidden}
@@ -32,7 +33,7 @@ html,body,#root{height:100%;width:100%}
 .auth-form-sub{font-size:15px;color:var(--text3);letter-spacing:.03em;margin-bottom:36px}
 .auth-tabs{display:flex;gap:0;margin-bottom:32px;border-bottom:1px solid var(--border2)}
 .auth-tab{padding:10px 28px;font-size:13px;letter-spacing:.06em;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s}
-.auth-tab.active{color:var(--cream);border-bottom-color:var(--green)}
+.auth-tab.active{color:#1a1a14;font-weight:500;border-bottom-color:var(--green)}
 .auth-field{margin-bottom:20px}
 .auth-label{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;display:block}
 .auth-input{width:100%;padding:14px 18px;background:var(--surface-3);border:1px solid var(--border);border-radius:10px;font-size:15px;font-family:'Jost',sans-serif;color:var(--text);outline:none;transition:border-color .2s}
@@ -40,14 +41,14 @@ html,body,#root{height:100%;width:100%}
 .auth-input::placeholder{color:var(--text3)}
 .auth-hint{font-size:12px;color:var(--text3);margin-top:6px;letter-spacing:.02em}
 .auth-error{font-size:12px;color:rgba(var(--red-rgb),.8);padding:11px 16px;background:rgba(var(--red-rgb),.06);border:1px solid rgba(var(--red-rgb),.15);border-radius:8px;margin-bottom:16px}
-.auth-submit{width:100%;padding:16px;background:linear-gradient(135deg,var(--green2),var(--green3));border:1px solid var(--greenT);border-radius:10px;font-size:14px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:var(--cream);cursor:pointer;transition:all .2s;margin-top:12px}
+.auth-submit{width:100%;padding:16px;background:linear-gradient(135deg,var(--green2),var(--green3));border:1px solid var(--greenT);border-radius:10px;font-size:14px;font-family:'Jost',sans-serif;letter-spacing:.1em;color:#1a1a14;cursor:pointer;transition:all .2s;margin-top:12px}
 .auth-submit:hover{background:linear-gradient(135deg,var(--green2),var(--green3));filter:brightness(1.15);border-color:var(--green)}
 .auth-submit:disabled{opacity:.5;cursor:default}
 .auth-success{text-align:center;padding:20px 0}
 .as-icon{font-size:48px;margin-bottom:18px}
 .as-title{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--gold);margin-bottom:12px}
 .as-text{font-size:16px;font-weight:300;color:var(--text2);line-height:1.7}
-.as-email{color:var(--cream)}
+.as-email{color:#1a1a14;font-weight:500}
 .auth-footer{margin-top:32px;font-size:12px;color:var(--text3);text-align:center;line-height:1.8}
 .auth-forgot{font-size:12px;color:var(--text3);text-align:right;margin-top:6px;cursor:pointer;letter-spacing:.02em;text-decoration:underline;opacity:.7}
 .auth-forgot:hover{opacity:1}
