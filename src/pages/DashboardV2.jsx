@@ -215,7 +215,6 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
   return (
     <div
       style={{ position:'fixed', inset:0, display:'flex', flexDirection:'column', background:'linear-gradient(160deg,#f8f0ec,#ede5de)', zIndex:10 }}
-      {...swipe}
     >
       {/* ── Bandeau titre mobile ── */}
       <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
@@ -237,8 +236,8 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
         ))}
       </div>
 
-      {/* ── Illustration ── */}
-      <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden' }}>
+      {/* ── Illustration — zone de swipe horizontal ── */}
+      <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
         <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 40%, rgba(237,229,222,1) 100%)' }}/>
         <div style={{ position:'absolute', bottom:14, left:14, fontFamily:"'Jost',sans-serif", fontSize:9, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.88)', background:'rgba(0,0,0,.22)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>
@@ -249,8 +248,8 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
         </div>
       </div>
 
-      {/* ── Preview texte ── */}
-      <div style={{ flex:1, overflow:'auto', padding:'16px 20px 20px', display:'flex', flexDirection:'column', gap:8 }}>
+      {/* ── Preview texte — scroll vertical natif ── */}
+      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 110px', display:'flex', flexDirection:'column', gap:8 }}>
 
         {/* Tag */}
         <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color, flexShrink:0 }}>
