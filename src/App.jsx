@@ -35,7 +35,8 @@ export default function App() {
   )
 
   // ── État WeekOneFlow ─────────────────────────────────────
-  const [showWeekOne,    setShowWeekOne]    = useState(false)
+  const [showWeekOne,          setShowWeekOne]          = useState(false)
+  const [comingFromOnboarding, setComingFromOnboarding] = useState(false)
   const [weekOneClosed,  setWeekOneClosed]  = useState(false)
   const [weekOneChecked, setWeekOneChecked] = useState(false)
   const daysSinceReg = user ? Math.floor((Date.now() - new Date(user.created_at)) / 86400000) : 99
@@ -257,7 +258,7 @@ export default function App() {
   if (onboarded === null) return null
 
   // 2c. WeekOne check en cours (< 7 jours) → on attend avant d'afficher quoi que ce soit
-  if (onboarded === true && daysSinceReg < 7 && !weekOneChecked) return null
+  if (onboarded === true && daysSinceReg < 7 && !weekOneChecked && !comingFromOnboarding) return null
 
   // 2a. Nouvel utilisateur → AccessPage en premier (choix plante + abonnement)
   if (onboarded === false) return (
@@ -275,7 +276,7 @@ export default function App() {
   if (onboarded === true && showSlides) return (
     <OnboardingScreen
       userId={user?.id}
-      onComplete={() => setShowSlides(false)}
+      onComplete={() => { setShowSlides(false); setComingFromOnboarding(true); setShowWeekOne(true) }}
     />
   )
 
@@ -283,7 +284,7 @@ export default function App() {
   if (ADMIN_IDS.includes(user?.id) && hash === '#admin') return <AdminPage />
 
   // 3b. WeekOneFlow fermé → écran de repos (seulement dans les 7 premiers jours)
-  if (weekOneClosed && daysSinceReg < 7) return (
+  if (weekOneClosed && (daysSinceReg < 7 || comingFromOnboarding)) return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 50,
       background: 'rgba(12,28,8,0.60)',
@@ -393,11 +394,11 @@ export default function App() {
       {!showWeekOne && <DashboardPage />}
 
       {/* ── WeekOneFlow — 7 premiers jours ── */}
-      {showWeekOne && daysSinceReg < 7 && (
+      {showWeekOne && (daysSinceReg < 7 || comingFromOnboarding) && (
         <WeekOneFlow
           userId={user.id}
           onComplete={() => { setWeekOneClosed(true); setShowWeekOne(false) }}
-          onAllDone={() => { setShowWeekOne(false) }}
+          onAllDone={() => { setShowWeekOne(false); setComingFromOnboarding(false) }}
         />
       )}
 
