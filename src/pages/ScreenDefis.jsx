@@ -805,7 +805,7 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
         {isLoading && <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text3)', padding:'20px 0' }}>Chargement des défis…</div>}
         <div className="cat-filter">
           {cats.map(c => {
-            const locked = !isPremium && ['Racines','Feuilles','Tige','Fleurs'].includes(c)
+            const locked = !isPremium && ['Tous','Racines','Feuilles','Tige','Fleurs'].includes(c)
             return (
               <div key={c}
                 className={'cat-btn'+(cat===c?' active':'')}

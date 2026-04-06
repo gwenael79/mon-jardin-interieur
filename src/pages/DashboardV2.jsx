@@ -46,7 +46,7 @@ import PremiumGate                   from '../components/PremiumGate'
 import PremiumBanner                 from '../components/PremiumBanner'
 import AccessPage                    from './AccessPage'
 import { ONB_STYLES, NatureBg }      from './OnboardingScreen'
-import { useSlideInsight }           from '../hooks/useSlideInsight'
+import { useSlideInsight, prefetchAllSlideInsights } from '../hooks/useSlideInsight'
 
 // Verrou anti-double award (React Strict Mode)
 const _dailyLoginAwarded = new Set()
@@ -104,7 +104,7 @@ const SLIDES_CONFIG = [
   {
     id:        'club',      illusKey: 'club',
     badge:     'Club des Jardiniers', icon: '👥',
-    title:     'Ton cercle de jardiniers',
+    title:     'Ton club de jardiniers',
     subtitle:  'Un espace intime pour partager, s\'encourager et grandir ensemble.',
     color:     '#6898c0',
     btnLabel:  'Rejoindre mon club',
@@ -175,8 +175,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
     circleMembers:   circleMembers?.length    ?? 0,
     circleName:      activeCircle?.name       ?? null,
     defisJoined:     joinedIds?.size          ?? myDefis?.length ?? 0,
-    communityPeople: communityStats?.totalParticipants ?? 0,
-    gardenCount:     gardenFlowerCount        ?? 0,
+    fleursActives:   gardenFlowerCount ?? 0,
   }), [stats, circleMembers, activeCircle, joinedIds, myDefis, communityStats, gardenFlowerCount])
 
   const { message: aiMessage, loading: aiLoading } = useSlideInsight({
@@ -240,9 +239,6 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
         <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 40%, rgba(237,229,222,1) 100%)' }}/>
-        <div style={{ position:'absolute', bottom:14, left:14, fontFamily:"'Jost',sans-serif", fontSize:9, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.88)', background:'rgba(0,0,0,.22)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>
-          {slide.badge}
-        </div>
         <div style={{ position:'absolute', bottom:14, right:14, fontFamily:"'Jost',sans-serif", fontSize:10, color:'rgba(255,255,255,.5)' }}>
           {curIdx + 1} / {slides.length}
         </div>
@@ -342,26 +338,28 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
           borderBottom:'1px solid rgba(96,160,100,.2)',
           background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)',
         }}>
-          {/* Nom appli */}
+          {/* Nom appli — logo masqué sur mobile */}
           <div onClick={onClose} style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer' }}>
-            <img src="/icons/icon-192.png" alt="" style={{ width:26, height:26, borderRadius:'50%' }}/>
+            {!isMobile && <img src="/icons/icon-192.png" alt="" style={{ width:26, height:26, borderRadius:'50%' }}/>}
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#1a1208', lineHeight:1 }}>
               Mon <em style={{ color:'#7a4030' }}>Jardin</em>
               <span style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontStyle:'normal', marginLeft:6 }}>Intérieur</span>
             </div>
           </div>
 
-          {/* Titre centré */}
+          {/* Titre centré — emoji masqué sur mobile */}
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <span style={{ fontSize:22 }}>{slide.icon}</span>
+            {!isMobile && <span style={{ fontSize:22 }}>{slide.icon}</span>}
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:600, color:'#1a1208', fontStyle:'italic' }}>{slide.badge}</div>
           </div>
 
-          {/* Date + Lumens */}
+          {/* Lumens — date masquée sur mobile */}
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <div style={{ fontSize:10, color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", letterSpacing:'.03em' }}>
-              {new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(new Date())}
-            </div>
+            {!isMobile && (
+              <div style={{ fontSize:10, color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", letterSpacing:'.03em' }}>
+                {new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(new Date())}
+              </div>
+            )}
             {screenProps?.lumens && (
               <div
                 onClick={() => screenProps.onOpenLumens?.()}
@@ -645,6 +643,24 @@ export default function DashboardPage() {
     bilanDoneToday,
     track,
   }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, track])
+
+  // ── Prefetch IA — tous les slides en parallèle dès que l'user est connu ──
+  // Les résultats sont mis en cache sessionStorage (clé = userId + slideId + date).
+  // Quand SlideInsightsAI monte, il lit le cache → zéro latence perçue.
+  useEffect(() => {
+    if (!user?.id || !screenProps) return
+    const payload = {
+      streak:          screenProps.stats?.streak            ?? 0,
+      ritualsMonth:    screenProps.stats?.ritualsThisMonth  ?? 0,
+      favoriteZone:    screenProps.stats?.favoriteZone      ?? null,
+      circleMembers:   screenProps.circleMembers?.length    ?? 0,
+      circleName:      screenProps.activeCircle?.name       ?? null,
+      defisJoined:     screenProps.joinedIds?.size          ?? screenProps.myDefis?.length ?? 0,
+      communityPeople: screenProps.communityStats?.totalParticipants ?? 0,
+      gardenCount:     screenProps.gardenFlowerCount        ?? 0,
+    }
+    prefetchAllSlideInsights({ userId: user.id, payload })
+  }, [user?.id])  // une seule fois par session — le cache gère la suite
 
 
   // Saut direct vers un slide (nav latérale desktop)
