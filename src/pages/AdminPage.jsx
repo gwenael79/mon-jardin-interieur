@@ -3113,6 +3113,135 @@ function ThemePreview({ vars = {} }) {
 }
 
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TAB QCM — synthèse des réponses au questionnaire de validation produit
+// ─────────────────────────────────────────────────────────────────────────────
+function TabQCM() {
+  const [rows,    setRows]    = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filter,  setFilter]  = useState('tous') // tous | besoin | univers | pertinence | projection
+
+  const TAG_LABELS = {
+    besoin:      '🌱 Votre vécu',
+    univers:     "🌸 L'univers de l'appli",
+    pertinence:  '✨ Ce que ça vous apporte',
+    projection:  '🌿 Et maintenant…',
+  }
+
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('id, quiz_completed_at, quiz_answers')
+      .not('quiz_answers', 'is', null)
+      .order('quiz_completed_at', { ascending: false })
+      .then(({ data }) => {
+        setRows(data ?? [])
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) return <div className="adm-empty">Chargement…</div>
+  if (rows.length === 0) return <div className="adm-empty">Aucun questionnaire complété pour l'instant.</div>
+
+  // ── Flatten toutes les réponses ──
+  const allAnswers = rows.flatMap(r => (r.quiz_answers ?? []).map(a => ({ ...a, userId: r.id })))
+
+  // ── Agrégation par question ──
+  const byQuestion = {}
+  allAnswers.forEach(a => {
+    if (!a.question) return
+    if (!byQuestion[a.question]) byQuestion[a.question] = { tag: a.tag, question: a.question, counts: {} }
+    const ans = a.answer ?? '(sans réponse)'
+    byQuestion[a.question].counts[ans] = (byQuestion[a.question].counts[ans] ?? 0) + 1
+  })
+
+  const questions = Object.values(byQuestion)
+    .filter(q => filter === 'tous' || q.tag === filter)
+
+  const total = rows.length
+
+  return (
+    <div>
+      {/* Résumé */}
+      <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:24 }}>
+        {[
+          { lbl: 'Questionnaires complétés', val: total },
+          { lbl: 'Réponses collectées',      val: allAnswers.length },
+          { lbl: 'Questions analysées',      val: Object.keys(byQuestion).length },
+        ].map(s => (
+          <div key={s.lbl} className="adm-stat-card">
+            <div className="adm-stat-val">{s.val}</div>
+            <div className="adm-stat-lbl">{s.lbl}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filtre par bloc */}
+      <div className="adm-tabs" style={{ marginBottom:20 }}>
+        {['tous', 'besoin', 'univers', 'pertinence', 'projection'].map(f => (
+          <div
+            key={f}
+            className={`adm-tab${filter === f ? ' active' : ''}`}
+            onClick={() => setFilter(f)}
+          >
+            {f === 'tous' ? '📋 Tous' : TAG_LABELS[f]}
+          </div>
+        ))}
+      </div>
+
+      {/* Questions */}
+      <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+        {questions.map((q, qi) => {
+          const entries = Object.entries(q.counts).sort((a, b) => b[1] - a[1])
+          const max = entries[0]?.[1] ?? 1
+          return (
+            <div key={qi} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid var(--border2)', borderRadius:14, padding:'16px 20px' }}>
+              {/* Tag */}
+              <div style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'var(--text3)', marginBottom:6 }}>
+                {TAG_LABELS[q.tag] ?? q.tag}
+              </div>
+              {/* Question */}
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:400, color:'var(--text)', marginBottom:14, lineHeight:1.4 }}>
+                {q.question}
+              </div>
+              {/* Réponses */}
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {entries.map(([ans, count], i) => {
+                  const pct = Math.round((count / total) * 100)
+                  const isTop = i === 0
+                  return (
+                    <div key={i}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:4 }}>
+                        <span style={{ fontSize:12, color: isTop ? 'var(--text)' : 'var(--text2)', fontWeight: isTop ? 500 : 300, fontFamily:"'Jost',sans-serif", flex:1, paddingRight:12 }}>
+                          {ans}
+                        </span>
+                        <span style={{ fontSize:11, color:'var(--text3)', fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap' }}>
+                          {count} · {pct}%
+                        </span>
+                      </div>
+                      <div style={{ height:6, borderRadius:100, background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+                        <div style={{
+                          height:'100%', borderRadius:100,
+                          width: `${(count / max) * 100}%`,
+                          background: isTop
+                            ? 'linear-gradient(90deg, #78c088, #48a868)'
+                            : 'rgba(255,255,255,0.18)',
+                          transition:'width .4s ease',
+                        }}/>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export function AdminPage() {
   useTheme()
   const { user, signOut } = useAuth()
@@ -3546,6 +3675,9 @@ export function AdminPage() {
             {pendingReviews.length > 0 && (
               <span style={{ position:'absolute', top:2, right:2, background:'rgba(246,196,83,0.35)', border:'1px solid rgba(246,196,83,0.5)', borderRadius:100, fontSize:8, padding:'1px 5px', color:'#F6C453', lineHeight:1.4 }}>{pendingReviews.length}</span>
             )}
+          </div>
+          <div className={`adm-tab${tab === 'qcm' ? ' active' : ''}`} onClick={() => setTab('qcm')}>
+            📋 QCM
           </div>
           <div className={`adm-tab${tab === 'boutique' ? ' active' : ''}`} onClick={() => setTab('boutique')}>
             🌿 Jardinothèque
@@ -4041,6 +4173,12 @@ export function AdminPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === 'qcm' && (
+          <div className="adm-section">
+            <TabQCM />
           </div>
         )}
 
