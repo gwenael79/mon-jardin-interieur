@@ -2030,9 +2030,9 @@ function VeilScreen({ onDone }) {
     video.preload = 'auto'
 
     // Dissoudre le voile après 1.8s
-    const t1 = setTimeout(() => setOpacity(0), 1800)
-    // Appeler onDone après la fin du fondu (0.9s de transition)
-    const t2 = setTimeout(() => onDone(), 2700)
+    const t1 = setTimeout(() => setOpacity(0), 4000)
+    // Appeler onDone après la fin du fondu (1.2s de transition)
+    const t2 = setTimeout(() => onDone(), 5200)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
 
@@ -2042,7 +2042,7 @@ function VeilScreen({ onDone }) {
       background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      opacity, transition: 'opacity 0.9s ease',
+      opacity, transition: 'opacity 1.2s ease',
     }}>
       {/* Particules flottantes */}
       <style>{`
