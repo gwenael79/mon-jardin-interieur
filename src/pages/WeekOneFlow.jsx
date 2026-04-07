@@ -4949,6 +4949,94 @@ const TEST_ANSWERS = {
 
 const LUTIN_SLOTS = ['right', 'left']
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Voile de transition avant le MP4 WeekOne
+// ─────────────────────────────────────────────────────────────────────────────
+function WelcomeVeil({ onDone }) {
+  const [opacity, setOpacity] = useState(1)
+
+  useEffect(() => {
+    // Précharger le MP4 en parallèle
+    const video = document.createElement('video')
+    video.src = '/accueil2.mp4'
+    video.preload = 'auto'
+
+    const t1 = setTimeout(() => setOpacity(0), 4000)
+    const t2 = setTimeout(() => onDone(), 5200)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 250,
+      background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      opacity, transition: 'opacity 1.2s ease',
+      padding: '32px 24px',
+    }}>
+      <style>{`
+        @keyframes wvFloat {
+          0%   { opacity:0; transform:translateY(0) scale(0.8); }
+          30%  { opacity:0.6; }
+          70%  { opacity:0.3; }
+          100% { opacity:0; transform:translateY(-80px) scale(1.1); }
+        }
+        @keyframes wvPulse {
+          0%,100% { opacity:0.12; transform:scale(1); }
+          50%     { opacity:0.28; transform:scale(1.08); }
+        }
+        @keyframes wvTextIn {
+          from { opacity:0; transform:translateY(16px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+        .wv-spark { position:absolute; border-radius:50%; pointer-events:none; }
+      `}</style>
+
+      {/* Lueur centrale */}
+      <div style={{
+        position:'absolute', width:320, height:320, borderRadius:'50%',
+        background:'radial-gradient(circle, rgba(168,224,64,0.10) 0%, transparent 70%)',
+        animation:'wvPulse 3s ease-in-out infinite',
+      }}/>
+
+      {/* Particules */}
+      {[
+        { left:'18%', top:'22%', size:5, delay:'0s',   dur:'3.2s' },
+        { left:'78%', top:'18%', size:4, delay:'.7s',  dur:'2.8s' },
+        { left:'55%', top:'72%', size:6, delay:'1.2s', dur:'3.5s' },
+        { left:'28%', top:'68%', size:3, delay:'.4s',  dur:'2.6s' },
+        { left:'82%', top:'52%', size:5, delay:'1.5s', dur:'4s'   },
+        { left:'12%', top:'48%', size:4, delay:'.9s',  dur:'3s'   },
+      ].map((p, i) => (
+        <div key={i} className="wv-spark" style={{
+          left:p.left, top:p.top,
+          width:p.size, height:p.size,
+          background:'rgba(168,224,64,0.50)',
+          animation:`wvFloat ${p.dur} ease-out ${p.delay} infinite`,
+        }}/>
+      ))}
+
+      {/* Phrase */}
+      <div style={{
+        position:'relative', zIndex:1, textAlign:'center', maxWidth:340,
+        animation:'wvTextIn 1.2s cubic-bezier(.22,1,.36,1) .4s both',
+      }}>
+        <div style={{
+          fontFamily:"'Cormorant Garamond',serif",
+          fontSize: 'clamp(24px, 6vw, 32px)',
+          fontWeight:300, fontStyle:'italic',
+          color:'rgba(230,220,200,0.88)',
+          lineHeight:1.4,
+        }}>
+          Poussons ensemble la petite barrière de ce jardin…
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Écran d'accueil WeekOne — vidéo + bouton démarrer
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5078,6 +5166,9 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
   const [weekData, setWeekData] = useState(initData)
   const weekDataRef = useRef(initData)
   const [showWelcome, setShowWelcome] = useState(
+    !forceDay && !forceGarden && initData.currentDay === 1 && initData.completedDays.length === 0
+  )
+  const [showVeil, setShowVeil] = useState(
     !forceDay && !forceGarden && initData.currentDay === 1 && initData.completedDays.length === 0
   )
   const [view, setView] = useState(
@@ -5380,11 +5471,14 @@ console.log('❌ Pas de données ou erreur:', error)
     )
   }
 
-  if (showWelcome) {
+  if (showWelcome || showVeil) {
     return (
       <>
         <GlobalStyles />
-        <WelcomeWeekOne onStart={() => setShowWelcome(false)} />
+        {/* WelcomeWeekOne monte sous le voile — timers démarrent immédiatement */}
+        {showWelcome && <WelcomeWeekOne onStart={() => setShowWelcome(false)} />}
+        {/* Voile par-dessus — se dissout quand les boutons sont prêts */}
+        {showVeil && <WelcomeVeil onDone={() => setShowVeil(false)} />}
       </>
     )
   }
