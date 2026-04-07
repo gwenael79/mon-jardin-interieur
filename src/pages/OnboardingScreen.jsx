@@ -2176,8 +2176,14 @@ export function OnboardingScreen({ userId, onComplete }) {
     }
   }
 
-  if (phase === -2) return <VeilScreen onDone={() => setPhase(-1)} />
-  if (phase === -1) return <IntroGwenael onStart={() => setPhase(0)} />
+  if (phase === -2 || phase === -1) return (
+    <>
+      {/* IntroGwenael monte en arrière-plan pendant le voile — les timeouts démarrent immédiatement */}
+      <IntroGwenael onStart={() => setPhase(0)} />
+      {/* Voile par-dessus — se dissout et laisse apparaître le MP4 avec boutons déjà prêts */}
+      {phase === -2 && <VeilScreen onDone={() => setPhase(-1)} />}
+    </>
+  )
   if (phase === 0)  return <SlidesEducatives onComplete={() => setPhase(1)} />
   if (phase === 1)  return <StepIntention onSelect={handleIntention} />
   if (phase === 2)  return <StepMetaphore onNext={() => setPhase(3)} />
