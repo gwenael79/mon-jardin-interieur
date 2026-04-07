@@ -1731,47 +1731,47 @@ function StepQuestionnaire({ userId, onComplete, onSkip }) {
           <div className="s0">
             <h2 style={{
               fontFamily:"'Cormorant Garamond',serif",
-              fontSize:'clamp(22px,3.5vw,30px)', fontWeight:300,
-              color:'rgba(30,25,15,0.92)', lineHeight:1.2, margin:0,
+              fontSize: isMobile ? 32 : 38, fontWeight:400,
+              color:'rgba(30,25,15,0.95)', lineHeight:1.15, margin:0,
             }}>
               Merci pour votre sincérité
             </h2>
             <p style={{
               fontFamily:"'Cormorant Garamond',serif",
-              fontSize:'clamp(15px,2.2vw,19px)', fontWeight:300,
-              color:'rgba(30,25,15,0.55)', marginTop:8, fontStyle:'italic',
+              fontSize: isMobile ? 20 : 23, fontWeight:300,
+              color:'rgba(30,25,15,0.75)', marginTop:12, fontStyle:'italic', lineHeight:1.6,
             }}>
               Vos réponses nous aident à construire quelque chose qui vous ressemble vraiment.
             </p>
           </div>
 
           <div className="s1" style={{
-            padding:'20px 24px', borderRadius:18,
+            padding: isMobile ? '22px 24px' : '24px 28px', borderRadius:18,
             background:'linear-gradient(135deg, #fef9e8, #fdf0c0)',
             border:'1.5px solid rgba(200,160,48,0.35)',
             boxShadow:'0 4px 20px rgba(200,160,48,0.15)',
-            maxWidth:360,
+            width:'100%', maxWidth:400,
           }}>
             <p style={{
               fontFamily:"'Jost',sans-serif",
-              fontSize:'var(--fs-h3,15px)', fontWeight:600,
-              color:'#7a5a08', margin:'0 0 8px',
+              fontSize: isMobile ? 20 : 20, fontWeight:600,
+              color:'#7a5a08', margin:'0 0 10px',
             }}>
               🎉 1 mois Premium offert
             </p>
             <p style={{
-              fontSize:'var(--fs-h5,12px)', fontWeight:300,
-              color:'rgba(80,60,10,0.70)', margin:0, lineHeight:1.7,
+              fontSize: isMobile ? 16 : 16, fontWeight:400,
+              color:'rgba(80,60,10,0.88)', margin:0, lineHeight:1.75,
             }}>
               Accès complet à tous les rituels, méditations et contenus pendant 30 jours. Aucune carte bancaire requise.
             </p>
           </div>
 
-          <div className="s2" style={{ width:'100%', maxWidth:360 }}>
+          <div className="s2" style={{ width:'100%', maxWidth:400 }}>
             <button onClick={onComplete} style={{
-              width:'100%', padding:'15px 28px', borderRadius:50, border:'none',
+              width:'100%', padding: isMobile ? '18px 28px' : '17px 28px', borderRadius:50, border:'none',
               background:'linear-gradient(135deg, #e8b830, #c8900a)',
-              color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
+              color:'#fff', fontSize: isMobile ? 19 : 17, fontWeight:600,
               letterSpacing:'.08em', cursor:'pointer',
               fontFamily:"'Jost',sans-serif",
               boxShadow:'0 6px 22px rgba(200,144,10,0.40)',
@@ -1780,7 +1780,7 @@ function StepQuestionnaire({ userId, onComplete, onSkip }) {
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.opacity='.9' }}
               onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.opacity='1' }}
             >
-              ✨ Entrer dans mon jardin
+              On continue ! →
             </button>
           </div>
 
@@ -2016,10 +2016,113 @@ function StepQuizIntro({ onStart, onSkip, onGoWeekOne }) {
 //  Flow : intro → 5 slides → intention → métaphore → graine → communauté →
 //         équipe → [quiz intro → quiz (1 seule fois)] → WeekOneFlow
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  VEIL SCREEN — écran de transition avant le MP4
+// ─────────────────────────────────────────────────────────────────────────────
+function VeilScreen({ onDone }) {
+  const [opacity, setOpacity] = useState(1)
+
+  useEffect(() => {
+    // Précharger le MP4 en parallèle
+    const video = document.createElement('video')
+    video.src = '/Accueil_lutin.mp4'
+    video.preload = 'auto'
+
+    // Dissoudre le voile après 1.8s
+    const t1 = setTimeout(() => setOpacity(0), 1800)
+    // Appeler onDone après la fin du fondu (0.9s de transition)
+    const t2 = setTimeout(() => onDone(), 2700)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 200,
+      background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      opacity, transition: 'opacity 0.9s ease',
+    }}>
+      {/* Particules flottantes */}
+      <style>{`
+        @keyframes veilFloat {
+          0%   { opacity:0; transform:translateY(0) scale(0.8); }
+          30%  { opacity:0.6; }
+          70%  { opacity:0.3; }
+          100% { opacity:0; transform:translateY(-80px) scale(1.1); }
+        }
+        @keyframes veilPulse {
+          0%,100% { opacity:0.15; transform:scale(1); }
+          50%     { opacity:0.35; transform:scale(1.08); }
+        }
+        @keyframes veilLogoIn {
+          from { opacity:0; transform:translateY(12px) scale(0.92); }
+          to   { opacity:1; transform:translateY(0) scale(1); }
+        }
+        .veil-spark { position:absolute; border-radius:50%; pointer-events:none; }
+      `}</style>
+
+      {/* Lueur centrale */}
+      <div style={{
+        position:'absolute', width:300, height:300, borderRadius:'50%',
+        background:'radial-gradient(circle, rgba(168,224,64,0.12) 0%, transparent 70%)',
+        animation:'veilPulse 2.8s ease-in-out infinite',
+      }}/>
+
+      {/* Particules */}
+      {[
+        { left:'20%', top:'25%', size:6, delay:'0s',   dur:'3.2s' },
+        { left:'75%', top:'20%', size:4, delay:'.6s',  dur:'2.8s' },
+        { left:'50%', top:'70%', size:5, delay:'1.1s', dur:'3.5s' },
+        { left:'30%', top:'65%', size:3, delay:'.3s',  dur:'2.5s' },
+        { left:'80%', top:'55%', size:7, delay:'1.4s', dur:'4s'   },
+        { left:'15%', top:'50%', size:4, delay:'.8s',  dur:'3s'   },
+      ].map((p, i) => (
+        <div key={i} className="veil-spark" style={{
+          left:p.left, top:p.top,
+          width:p.size, height:p.size,
+          background:'rgba(168,224,64,0.55)',
+          animation:`veilFloat ${p.dur} ease-out ${p.delay} infinite`,
+        }}/>
+      ))}
+
+      {/* Logo + nom */}
+      <div style={{
+        display:'flex', flexDirection:'column', alignItems:'center', gap:16,
+        animation:'veilLogoIn 1s cubic-bezier(.22,1,.36,1) .2s both',
+        position:'relative', zIndex:1,
+      }}>
+        <img
+          src="/icons/icon-192.png"
+          alt=""
+          style={{ width:72, height:72, borderRadius:'50%', boxShadow:'0 0 40px rgba(168,224,64,0.25)' }}
+        />
+        <div style={{ textAlign:'center' }}>
+          <div style={{
+            fontFamily:"'Cormorant Garamond',serif",
+            fontSize:28, fontWeight:300, fontStyle:'italic',
+            color:'rgba(230,220,200,0.90)', letterSpacing:'.02em', lineHeight:1.2,
+          }}>
+            Mon <em style={{ color:'rgba(168,224,64,0.80)', fontStyle:'normal' }}>Jardin</em>
+          </div>
+          <div style={{
+            fontSize:10, letterSpacing:'.22em', textTransform:'uppercase',
+            color:'rgba(230,220,200,0.35)', marginTop:6,
+            fontFamily:"'Jost',sans-serif",
+          }}>
+            Intérieur
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function OnboardingScreen({ userId, onComplete }) {
   useTheme()
-  // phase : -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=quizIntro 7=quiz
-  const [phase,        setPhase]        = useState(-1)
+  // phase : -2=voile -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=quizIntro 7=quiz
+  const [phase,        setPhase]        = useState(-2)
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
   const [quizAlready,  setQuizAlready]  = useState(false)  // true si le quiz a déjà été complété
@@ -2073,6 +2176,7 @@ export function OnboardingScreen({ userId, onComplete }) {
     }
   }
 
+  if (phase === -2) return <VeilScreen onDone={() => setPhase(-1)} />
   if (phase === -1) return <IntroGwenael onStart={() => setPhase(0)} />
   if (phase === 0)  return <SlidesEducatives onComplete={() => setPhase(1)} />
   if (phase === 1)  return <StepIntention onSelect={handleIntention} />
