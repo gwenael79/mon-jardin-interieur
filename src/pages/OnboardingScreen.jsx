@@ -878,7 +878,7 @@ function StepCommunaute({ onComplete }) {
             onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 14px 36px rgba(160,120,136,0.50), 0 4px 10px rgba(160,120,136,0.25)' }}
             onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 8px 28px rgba(160,120,136,0.42), 0 2px 8px rgba(160,120,136,0.22)' }}
           >
-            Entrez dans votre jardin →
+            Avançons ensemble ! →
           </button>
           <div style={{ fontSize:'var(--fs-h5,11px)', color:'rgba(0,0,0,0.30)', marginTop:14, fontStyle:'italic', letterSpacing:'.03em' }}>
             Votre graine vous attend
@@ -1392,7 +1392,7 @@ function StepEquipe({ onNext, onSkip }) {
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,120,136,0.46)' }}
               onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 22px rgba(160,120,136,0.38)' }}
             >
-              Je commence mon jardin 🌱
+              Bien accompagné, j'avance  🌱
             </button>
             <button onClick={onSkip} style={{
               width:'100%', padding:'10px', borderRadius:50,
@@ -1426,15 +1426,26 @@ function StepEquipe({ onNext, onSkip }) {
 //    — pas de champ `correct` —
 // ─────────────────────────────────────────────────────────────────────────────
 const QCM_QUESTIONS = [
-  // ── BLOC 1 : Le besoin (questions 1–5) ──
+
+  // ── BLOC 1 : Contexte & besoin (questions 1–6) ──
+  {
+    tag: 'contexte',
+    q: 'Pour mieux comprendre ce qui vous a amené ici, quelle phrase décrit le mieux votre quotidien en ce moment ?',
+    choices: [
+      'Je jongle entre travail, famille et obligations — peu de temps pour moi',
+      'Je traverse une période difficile et je cherche des ressources',
+      'Je vais bien mais je veux prendre soin de moi de façon plus régulière',
+      'Je suis dans une démarche de développement personnel depuis un moment',
+    ],
+  },
   {
     tag: 'besoin',
     q: 'En ce moment, comment décririez-vous votre niveau de stress au quotidien ?',
     choices: [
-      'Très élevé — je me sens souvent débordé(e)',
-      'Modéré — certains jours sont difficiles',
-      'Faible — je gère plutôt bien',
-      'Variable — ça dépend beaucoup des périodes',
+      'Très élevé — je me sens souvent débordé(e) ou à bout',
+      'Modéré — certains jours sont difficiles mais je tiens',
+      'Faible — je gère plutôt bien, c\'est plus la prévention qui m\'intéresse',
+      'Variable — des pics intenses suivis de périodes plus calmes',
     ],
   },
   {
@@ -1442,19 +1453,9 @@ const QCM_QUESTIONS = [
     q: 'Avez-vous déjà eu l\'impression que votre fatigue s\'accumule sans vraiment repartir, même après une nuit de sommeil ?',
     choices: [
       'Oui, c\'est exactement ce que je vis en ce moment',
-      'Oui, ça m\'est arrivé par périodes',
-      'Rarement, mais ça m\'est arrivé',
+      'Oui, ça m\'est arrivé par périodes — et ça peut revenir',
+      'Rarement, mais je veux éviter d\'en arriver là',
       'Non, ce n\'est pas quelque chose que j\'ai ressenti',
-    ],
-  },
-  {
-    tag: 'besoin',
-    q: 'Quand vous pensez à "prendre soin de vous", qu\'est-ce qui vous vient spontanément en tête ?',
-    choices: [
-      'Du sport ou de l\'activité physique',
-      'Un moment de calme, de silence, de respiration',
-      'Passer du temps avec des proches',
-      'Rien de précis — c\'est justement ce que je cherche',
     ],
   },
   {
@@ -1469,34 +1470,44 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'besoin',
-    q: 'Si vous avez arrêté une pratique de bien-être, quelle en était la raison principale ?',
+    q: 'Qu\'est-ce qui vous a fait abandonner — ou pourrait vous faire abandonner — une pratique de bien-être ?',
     choices: [
-      'Je ne voyais pas de résultats assez vite',
-      'Je manquais de temps ou d\'organisation',
-      'Ça me semblait artificiel ou trop contraignant',
-      'Je n\'ai pas eu ce problème — ou cette question ne me concerne pas',
+      'Ne pas voir de résultats concrets assez vite',
+      'La sensation que c\'est artificiel ou que ça ne me ressemble pas',
+      'Le manque de temps ou une mauvaise organisation',
+      'Le coût — si le rapport valeur/prix ne me convainc pas',
+    ],
+  },
+  {
+    tag: 'besoin',
+    q: 'Quand vous pensez à "prendre soin de vous", qu\'est-ce qui vous vient spontanément en tête ?',
+    choices: [
+      'Du mouvement — sport, marche, corps',
+      'Du calme — silence, respiration, méditation',
+      'Du lien — retrouver des proches, partager',
+      'Rien de précis — c\'est justement ce que je cherche',
     ],
   },
 
-  // ── BLOC 2 : L'univers (questions 6–11) ──
+  // ── BLOC 2 : L'univers (questions 7–12) ──
   {
     tag: 'univers',
     q: 'L\'idée de prendre soin de soi comme on cultive un jardin — doucement, régulièrement, sans forcer — vous parle-t-elle ?',
     choices: [
       'Oui, c\'est exactement l\'image qu\'il me faut',
-      'Plutôt oui, c\'est une belle façon de voir les choses',
-      'Un peu — mais je ne suis pas sûr(e) que ça me motive vraiment',
-      'Pas vraiment, ce n\'est pas une image qui me touche',
+      'Plutôt oui — c\'est poétique et ça change',
+      'Un peu — mais je ne suis pas sûr(e) que ça me motive durablement',
+      'Pas vraiment — ce n\'est pas une image qui me touche',
     ],
   },
   {
     tag: 'univers',
-    q: 'L\'esthétique proposée — douce, naturelle, sans gamification agressive — vous semble-t-elle adaptée à un moment de soin ?',
+    q: 'L\'univers visuel que vous venez de découvrir — doux, naturel, sans badges ni classements — vous donne plutôt envie de…',
     choices: [
-      'Oui, c\'est reposant et cela change des applis habituelles',
-      'Oui, même si j\'aurais aimé quelque chose de plus dynamique aussi',
-      'Je suis neutre — l\'apparence n\'est pas ce qui compte pour moi',
-      'Non, je préfère quelque chose de plus structuré et efficace',
+      'Revenir souvent — cette douceur est exactement ce qu\'il me faut',
+      'Essayer, même si j\'aurais aimé quelque chose de plus dynamique',
+      'Hésiter — je ne sais pas si cette atmosphère me tiendra sur la durée',
+      'Chercher autre chose — je fonctionne mieux avec des repères plus structurés',
     ],
   },
   {
@@ -1505,7 +1516,7 @@ const QCM_QUESTIONS = [
     choices: [
       'Motivant — voir quelque chose pousser me donnerait envie de continuer',
       'Sympa, sans être déterminant dans mon engagement',
-      'Neutre — je n\'ai pas besoin d\'un élément visuel pour me motiver',
+      'Neutre — je n\'ai pas besoin d\'élément visuel pour me motiver',
       'Enfantin ou trop ludique pour ce type de sujet',
     ],
   },
@@ -1516,7 +1527,7 @@ const QCM_QUESTIONS = [
       'Essentielle — c\'est exactement ce dont j\'ai besoin',
       'Rassurante — j\'ai parfois peur de "mal faire"',
       'Normale — toute bonne appli devrait être ainsi',
-      'Trop vague — j\'ai besoin de repères concrets pour progresser',
+      'Insuffisante — j\'ai besoin de métriques pour me sentir progresser',
     ],
   },
   {
@@ -1525,40 +1536,40 @@ const QCM_QUESTIONS = [
     choices: [
       'Le matin, pour bien démarrer la journée',
       'Le soir, pour décompresser avant de dormir',
-      'Dans les moments de creux ou de tension',
-      'À heure fixe, comme une habitude ancrée',
+      'Dans les moments de creux ou de tension dans la journée',
+      'À heure fixe, comme une habitude ancrée dans ma routine',
     ],
   },
   {
     tag: 'univers',
-    q: 'Si vous deviez décrire cette application à quelqu\'un de proche, vous diriez que c\'est…',
+    q: 'Si vous deviez recommander cette application à quelqu\'un de proche, vous diriez que c\'est…',
     choices: [
       'Un espace de pause et de reconnexion à soi',
-      'Un outil pour gérer le stress et l\'anxiété',
-      'Une routine de bien-être rendue simple et agréable',
-      'Je ne saurais pas encore comment la décrire',
+      'Un outil concret pour gérer le stress du quotidien',
+      'Une façon douce d\'entrer dans le développement personnel',
+      'Je ne saurais pas encore comment la présenter',
     ],
   },
 
-  // ── BLOC 3 : La pertinence (questions 12–17) ──
+  // ── BLOC 3 : Pertinence & crédibilité (questions 13–18) ──
   {
     tag: 'pertinence',
-    q: 'En 2 à 5 minutes par jour, pensez-vous qu\'une application puisse vraiment vous apporter quelque chose ?',
+    q: 'Franchement — avant d\'avoir essayé — à quel point croyez-vous qu\'un rituel de 2 à 5 minutes par jour peut changer quelque chose ?',
     choices: [
-      'Oui, si c\'est régulier, même peu peut changer beaucoup',
-      'Peut-être — je suis curieux(se) mais pas encore convaincu(e)',
-      'Difficile à croire — j\'aurais besoin de le vivre pour y croire',
-      'Non, 2 minutes me semblent insuffisantes pour un vrai impact',
+      'J\'y crois vraiment — la régularité compte plus que la durée',
+      'Je suis ouvert(e) — je réserve mon jugement à l\'usage',
+      'Je suis sceptique — ça me semble trop court pour être impactant',
+      'Je n\'y crois pas encore — il faudrait me le prouver',
     ],
   },
   {
     tag: 'pertinence',
-    q: 'La promesse "moins de réactivité émotionnelle après 3 semaines" vous semble-t-elle…',
+    q: 'Les éléments scientifiques présentés (neuroplasticité, cortisol, dopamine) vous ont-ils semblé…',
     choices: [
-      'Crédible et motivante',
-      'Possible, mais je resterai attentif(ve) à ce que je ressens vraiment',
-      'Ambitieuse — je suis sceptique mais ouvert(e)',
-      'Difficile à croire sans preuve concrète',
+      'Crédibles et rassurants — ça donne du sens à la démarche',
+      'Intéressants, mais je ne les ai pas vraiment évalués',
+      'Un peu trop techniques — j\'aurais préféré des exemples concrets',
+      'Marketing — ce genre d\'argument me rend méfiant(e)',
     ],
   },
   {
@@ -1578,7 +1589,7 @@ const QCM_QUESTIONS = [
       'Oui — l\'approche douce et sans pression est rare',
       'En partie — il me manque encore des éléments pour en être sûr(e)',
       'Pas vraiment — j\'ai déjà des outils qui me conviennent',
-      'Je ne sais pas encore — il faudrait que j\'essaie',
+      'Je ne sais pas encore — il faudrait que j\'essaie vraiment',
     ],
   },
   {
@@ -1592,45 +1603,55 @@ const QCM_QUESTIONS = [
     ],
   },
   {
-    tag: 'pertinence',
-    q: 'Qu\'est-ce qui vous ferait abandonner cette application rapidement ?',
+    tag: 'valeur',
+    q: 'Si cette application tient ses promesses, quel tarif mensuel vous semblerait juste ?',
     choices: [
-      'Ne pas ressentir de changement après quelques semaines',
-      'Des notifications trop fréquentes ou intrusives',
-      'Un contenu qui me semble trop générique ou impersonnel',
-      'Un abonnement dont le prix ne reflète pas la valeur perçue',
+      'Moins de 5 € — c\'est un service que je ne valorise pas encore très haut',
+      '5 à 9 € — raisonnable pour quelque chose d\'utile au quotidien',
+      '10 à 14 € — comparable à d\'autres abonnements bien-être que j\'utilise',
+      '15 € ou plus — si l\'impact est réel, ça vaut le prix d\'une séance',
     ],
   },
 
-  // ── BLOC 4 : La projection (questions 18–20) ──
+  // ── BLOC 4 : Projection & ressenti libre (questions 19–22) ──
   {
     tag: 'projection',
     q: 'Dans 3 mois, si vous utilisiez cette application régulièrement, ce que vous espéreriez le plus, c\'est…',
     choices: [
       'Dormir mieux et me sentir moins épuisé(e)',
-      'Réagir avec plus de recul face au stress',
-      'Avoir un rituel stable qui structure ma journée',
-      'Simplement me sentir un peu mieux dans ma peau',
+      'Réagir avec plus de recul face au stress et aux imprévus',
+      'Avoir un rituel stable qui structure et apaise ma journée',
+      'Simplement me sentir un peu mieux dans ma peau, durablement',
     ],
   },
   {
     tag: 'projection',
     q: 'Quelle est la chose qui vous a le plus surpris(e) ou intrigué(e) dans ce que vous venez de découvrir ?',
     choices: [
-      'La simplicité du concept — 2 minutes suffisent vraiment',
-      'La métaphore du jardin — je ne l\'attendais pas',
+      'La simplicité — 2 minutes, sans culpabilité ni performance',
+      'La métaphore du jardin — je ne l\'attendais pas du tout',
       'La dimension scientifique derrière quelque chose d\'aussi doux',
-      'Le fait qu\'il n\'y ait pas de pression de performance',
+      'Le fait qu\'il n\'y ait aucune pression, aucun classement',
     ],
   },
   {
     tag: 'projection',
     q: 'En toute honnêteté, à ce stade, quelle est votre envie de commencer à utiliser cette application ?',
     choices: [
-      'Forte — j\'ai hâte de voir ce que ça donne',
-      'Présente — je suis curieux(se) et prêt(e) à essayer',
-      'Timide — il me faudra quelques jours pour me faire un avis',
+      'Forte — j\'ai hâte de voir ce que ça donne concrètement',
+      'Présente — je suis curieux(se) et prêt(e) à essayer sérieusement',
+      'Timide — il me faudra quelques jours pour me faire un vrai avis',
       'Faible — quelque chose ne m\'a pas encore convaincu(e)',
+    ],
+  },
+  {
+    tag: 'verbatim',
+    q: 'En un mot ou une courte phrase, qu\'est-ce que cette découverte vous a laissé comme sentiment ?',
+    choices: [
+      'De la curiosité — j\'ai envie d\'en voir plus',
+      'De la douceur — ça m\'a fait du bien rien qu\'à découvrir',
+      'De la méfiance — je reste prudent(e) avant de juger',
+      'De l\'espoir — c\'est peut-être ce qu\'il me fallait',
     ],
   },
 ]
@@ -1914,7 +1935,7 @@ function StepQuestionnaire({ userId, onComplete, onSkip }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  INTRO QUESTIONNAIRE — slide optionnelle avant le QCM
 // ─────────────────────────────────────────────────────────────────────────────
-function StepQuizIntro({ onStart, onSkip }) {
+function StepQuizIntro({ onStart, onSkip, onGoWeekOne }) {
   const isMobile = window.innerWidth < 768
   return (
     <ModalShell>
@@ -1973,9 +1994,9 @@ function StepQuizIntro({ onStart, onSkip }) {
             onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.opacity='.9' }}
             onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.opacity='1' }}
           >
-            ✨ Je tente ma chance — c'est gratuit !
+            🌿 J'apporte mon aide
           </button>
-          <button onClick={onSkip} style={{
+          <button onClick={onGoWeekOne ?? onSkip} style={{
             width:'100%', padding:'11px', borderRadius:50,
             border:'1px solid rgba(0,0,0,0.12)', background:'transparent',
             color:'rgba(30,25,15,0.45)', fontSize:'var(--fs-h5,12px)',
@@ -1985,7 +2006,7 @@ function StepQuizIntro({ onStart, onSkip }) {
             onMouseEnter={e => { e.currentTarget.style.background='rgba(0,0,0,0.04)' }}
             onMouseLeave={e => { e.currentTarget.style.background='transparent' }}
           >
-            Non merci, aller directement à mon jardin
+            Non merci, commencer mon parcours
           </button>
         </div>
 
@@ -2070,7 +2091,7 @@ export function OnboardingScreen({ userId, onComplete }) {
   if (phase === 3)  return <StepGraine intention={intention} onPlant={handlePlant} />
   if (phase === 4)  return <StepCommunaute onComplete={() => setPhase(5)} />
   if (phase === 5)  return <StepEquipe onNext={handleEquipeNext} onSkip={onComplete} />
-  if (phase === 6)  return <StepQuizIntro onStart={() => setPhase(7)} onSkip={onComplete} />
+  if (phase === 6)  return <StepQuizIntro onStart={() => setPhase(7)} onSkip={onComplete} onGoWeekOne={onComplete} />
   if (phase === 7)  return (
     <StepQuestionnaire
       userId={userId}
