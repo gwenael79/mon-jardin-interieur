@@ -93,7 +93,7 @@ export default function App() {
     setScreen('loading')
     ;(async () => {
       const { data: userData } = await supabase
-        .from('users').select('onboarded').eq('id', user.id).maybeSingle()
+        .from('users').select('onboarded, onboarding_completed').eq('id', user.id).maybeSingle()
 
       const isOnboarded = userData?.onboarded === true
 
@@ -110,6 +110,11 @@ export default function App() {
           await refresh()
         } catch (e) { console.warn('[auto-activate]', e) }
         setScreen('flower'); return
+      }
+
+      // Si l'onboarding n'est pas terminé → retourner à l'onboarding
+      if (!userData?.onboarding_completed) {
+        setScreen('onboarding'); return
       }
 
       const daysSinceReg = Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
@@ -199,7 +204,11 @@ export default function App() {
   }
 
   if (screen === 'onboarding') {
-    return <OnboardingScreen userId={user.id} onComplete={() => setScreen('weekone')} />
+    return <OnboardingScreen userId={user.id} onComplete={async () => {
+      // Marquer l'onboarding comme terminé en base
+      await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
+      setScreen('weekone')
+    }} />
   }
 
   if (screen === 'weekone') {
