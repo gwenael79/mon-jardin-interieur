@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../core/supabaseClient'
+import { PremiumModal } from './AccessPage'
 import { useTheme } from '../hooks/useTheme'
 
 const css = `
@@ -35,7 +36,7 @@ const css = `
 }
 .eow-eyebrow {
   font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
-  color: rgba(30,20,8,.40); margin-bottom: 12px;
+  color: rgba(30,20,8,.55); margin-bottom: 12px;
 }
 .eow-title {
   font-family: 'Cormorant Garamond', serif;
@@ -44,8 +45,8 @@ const css = `
 }
 .eow-title em { font-style: italic; color: #7a4030; }
 .eow-sub {
-  font-size: 13px; font-weight: 300;
-  color: rgba(30,20,8,.50); line-height: 1.7; max-width: 380px; margin: 0 auto;
+  font-size: 14px; font-weight: 300;
+  color: rgba(30,20,8,.65); line-height: 1.7; max-width: 380px; margin: 0 auto;
 }
 
 /* ── Cards ── */
@@ -89,24 +90,24 @@ const css = `
   padding: 4px 12px; border-radius: 100px; margin-bottom: 14px;
 }
 .eow-badge-trial { background: rgba(200,144,10,.15); color: #c8900a; border: 1px solid rgba(200,144,10,.30); }
-.eow-badge-free  { background: rgba(0,0,0,.05); color: rgba(30,20,8,.45); border: 1px solid rgba(0,0,0,.10); }
+.eow-badge-free  { background: rgba(0,0,0,.07); color: rgba(26,18,8,.65); border: 1px solid rgba(0,0,0,.18); }
 .eow-badge-prem  { background: rgba(122,200,64,.12); color: #8ad048; border: 1px solid rgba(122,200,64,.25); }
 
 .eow-card-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(18px, 4vw, 22px); font-weight: 300; line-height: 1.25;
-  margin-bottom: 8px;
+  font-size: clamp(22px, 5vw, 28px); font-weight: 400; line-height: 1.2;
+  margin-bottom: 10px;
 }
-.eow-card-trial .eow-card-title  { color: rgba(30,20,8,.92); }
-.eow-card-free  .eow-card-title  { color: rgba(30,20,8,.85); }
-.eow-card-prem  .eow-card-title  { color: #f0ece4; }
+.eow-card-trial .eow-card-title  { color: #1a1208; }
+.eow-card-free  .eow-card-title  { color: #1a1208; }
+.eow-card-prem  .eow-card-title  { color: #ffffff; }
 
 .eow-card-body {
-  font-size: 12.5px; font-weight: 300; line-height: 1.7; margin-bottom: 18px;
+  font-size: 14px; font-weight: 300; line-height: 1.75; margin-bottom: 20px;
 }
-.eow-card-trial .eow-card-body  { color: rgba(60,40,10,.72); }
-.eow-card-free  .eow-card-body  { color: rgba(30,20,8,.55); }
-.eow-card-prem  .eow-card-body  { color: rgba(240,236,228,.60); }
+.eow-card-trial .eow-card-body  { color: rgba(26,18,8,.80); }
+.eow-card-free  .eow-card-body  { color: rgba(26,18,8,.72); }
+.eow-card-prem  .eow-card-body  { color: rgba(255,255,255,.80); }
 
 .eow-features {
   list-style: none; margin: 0 0 20px; padding: 0;
@@ -114,11 +115,11 @@ const css = `
 }
 .eow-features li {
   display: flex; align-items: center; gap: 9px;
-  font-size: 12px; font-weight: 300;
+  font-size: 13.5px; font-weight: 300;
 }
-.eow-card-trial .eow-features li  { color: rgba(60,40,10,.80); }
-.eow-card-free  .eow-features li  { color: rgba(30,20,8,.60); }
-.eow-card-prem  .eow-features li  { color: rgba(240,236,228,.75); }
+.eow-card-trial .eow-features li  { color: rgba(26,18,8,.88); }
+.eow-card-free  .eow-features li  { color: rgba(26,18,8,.80); }
+.eow-card-prem  .eow-features li  { color: rgba(255,255,255,.90); }
 
 .eow-check {
   width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%;
@@ -162,7 +163,7 @@ const css = `
 }
 
 .eow-note {
-  font-size: 10px; color: rgba(30,20,8,.30);
+  font-size: 11px; color: rgba(30,20,8,.45);
   text-align: center; margin-top: 28px;
   font-style: italic; animation: eow-in .6s .4s both;
 }
@@ -179,6 +180,7 @@ function CheckLight() { return <span className="eow-check eow-check-light">✓</
 export function EndOfWeekScreen({ userId, onContinue }) {
   useTheme()
   const [hasTrial, setHasTrial]       = useState(false)
+  const [showPremium, setShowPremium]  = useState(false)
   const [trialUntil, setTrialUntil]   = useState(null)
   const [loading, setLoading]         = useState(true)
 
@@ -210,7 +212,14 @@ export function EndOfWeekScreen({ userId, onContinue }) {
     : 0
 
   const handleFreePlan = () => onContinue('free')
-  const handlePremium  = () => onContinue('premium')
+  const handlePremium  = () => setShowPremium(true)
+
+  if (showPremium) return (
+    <PremiumModal
+      onSuccess={() => { setShowPremium(false); onContinue('free') }}
+      onClose={() => setShowPremium(false)}
+    />
+  )
 
   return (
     <>

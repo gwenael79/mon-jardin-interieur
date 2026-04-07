@@ -230,10 +230,10 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
         </svg>
         <div className="auth-logo">Mon <em>Jardin</em> Intérieur</div>
         <div className="auth-hero-title">Cultivez votre<br /><em>bien-être intérieur</em><br />chaque jour</div>
-        <div className="auth-hero-desc">Un espace doux pour prendre soin de vous — rituels quotidiens, cercles de confiance, et une plante qui grandit avec vous.</div>
+        <div className="auth-hero-desc">Un espace doux pour prendre soin de vous — rituels quotidiens, club de confiance, et une plante qui grandit avec vous.</div>
         <div className="auth-features">
           <div className="auth-feat"><div className="af-icon">🌱</div><div className="af-text"><b>Votre plante du jour</b>Chaque rituel accompli la fait grandir. Observez votre vitalité évoluer au fil des jours.</div></div>
-          <div className="auth-feat"><div className="af-icon">🌿</div><div className="af-text"><b>Cercles de confiance</b>Partagez votre chemin avec des proches choisis, en préservant votre intimité.</div></div>
+          <div className="auth-feat"><div className="af-icon">🌿</div><div className="af-text"><b>Club de confiance</b>Partagez votre chemin avec des proches choisis, en préservant votre intimité.</div></div>
           <div className="auth-feat"><div className="af-icon">✨</div><div className="af-text"><b>Rituels & défis</b>5 zones de bien-être, des rituels guidés, et des défis communautaires bienveillants.</div></div>
         </div>
         <div className="auth-tagline">"Chaque geste de soin est une graine plantée."</div>
@@ -277,7 +277,7 @@ export function AuthPage({ initialView = 'login', onPasswordUpdated, resetError 
                     maxLength={40}
                     autoFocus
                   />
-                  <div className="auth-hint">Visible dans vos cercles · modifiable plus tard</div>
+                  <div className="auth-hint">Visible dans le club · modifiable plus tard</div>
                 </div>
               )}
 

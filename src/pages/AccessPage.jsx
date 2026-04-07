@@ -655,3 +655,332 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
     </>
   )
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  FLOWER MODAL — composant autonome exporté
+//  Utilisé à l'inscription (App.jsx) et dans les paramètres (SettingsPanel)
+// ─────────────────────────────────────────────────────────────────────────────
+export function FlowerModal({ userId, onDone, onSkip }) {
+  const [selectedFlower, setSelectedFlower] = useState(null)
+  const [saving, setSaving]                 = useState(false)
+
+  async function handleConfirm() {
+    if (!selectedFlower || saving) return
+    setSaving(true)
+    try {
+      if (userId) {
+        await supabase.from('users').update({ flower_name: selectedFlower }).eq('id', userId)
+      }
+      onDone?.(selectedFlower)
+    } catch(e) {
+      console.warn('[FlowerModal] save error', e)
+      onDone?.(selectedFlower) // on continue quand même
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Epilogue:wght@300;400;500&display=swap');
+        @keyframes ap-fadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes ap-slideUp { from{opacity:0;transform:scale(.93) translateY(18px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .fm-overlay {
+          position:fixed; inset:0; z-index:500;
+          background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+          display:flex; align-items:center; justify-content:center; padding:20px;
+          animation:ap-fadeIn .3s ease;
+          font-family:'Epilogue',sans-serif;
+        }
+        .fm-modal {
+          background:#f8f4f0; border:1px solid rgba(200,160,150,.25);
+          border-radius:20px; width:100%; max-width:420px;
+          padding:40px 36px 36px; position:relative;
+          max-height:92vh; overflow-y:auto;
+          animation:ap-slideUp .38s cubic-bezier(.34,1.56,.64,1) both;
+          --text:#1a1208; --text2:rgba(26,18,8,.78); --text3:rgba(26,18,8,.45);
+          --green:#5a9a28; --greenT:rgba(90,154,40,.4); --green3:rgba(90,154,40,.08);
+          --border2:rgba(0,0,0,.12); --surface-1:rgba(0,0,0,.03);
+        }
+        .fm-close {
+          position:absolute; top:16px; right:18px;
+          width:32px; height:32px; border-radius:50%;
+          border:1px solid rgba(0,0,0,.12); background:none;
+          color:rgba(26,18,8,.45); cursor:pointer; font-size:14px;
+          display:flex; align-items:center; justify-content:center;
+        }
+        .fm-eyebrow { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:#5a9a28; margin-bottom:10px; }
+        .fm-h2 { font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:300; color:#1a1208; margin-bottom:6px; }
+        .fm-sub { font-size:13px; color:rgba(26,18,8,.45); line-height:1.6; margin-bottom:28px; }
+        .fm-preview {
+          text-align:center; padding:10px; margin-bottom:16px;
+          font-family:'Cormorant Garamond',serif; font-size:18px;
+          color:rgba(26,18,8,.45); letter-spacing:.04em; min-height:40px;
+        }
+        .fm-preview span { color:#1a1208; }
+        .fm-grid {
+          display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
+          max-height:260px; overflow-y:auto; margin-bottom:22px;
+          scrollbar-width:thin;
+        }
+        .fm-pill {
+          padding:8px 6px; border-radius:20px; font-size:12px; text-align:center;
+          border:1px solid rgba(0,0,0,.12); cursor:pointer; color:rgba(26,18,8,.45);
+          transition:all .18s; background:rgba(0,0,0,.03);
+        }
+        .fm-pill:hover { border-color:rgba(90,154,40,.4); color:rgba(26,18,8,.78); background:rgba(90,154,40,.08); }
+        .fm-pill.fm-sel { border-color:rgba(90,154,40,.4); background:rgba(90,154,40,.08); color:#5a9a28; }
+        .fm-cta {
+          width:100%; padding:14px; border-radius:30px;
+          font-family:'Epilogue',sans-serif; font-size:14px; font-weight:500;
+          border:none; background:#5a9a28; color:#f8f4f0;
+          cursor:pointer; margin-bottom:12px;
+        }
+        .fm-cta:disabled { opacity:.35; cursor:not-allowed; }
+        .fm-skip { font-size:11px; color:rgba(26,18,8,.35); text-align:center; cursor:pointer; text-decoration:underline; }
+        @media(max-width:768px) {
+          .fm-modal { border-radius:24px 24px 0 0; position:fixed; bottom:0; left:0; right:0; max-width:100%; padding:28px 24px 40px; }
+          .fm-overlay { align-items:flex-end; padding:0; }
+          .fm-grid { max-height:220px; }
+          .fm-pill { font-size:11px; padding:9px 4px; }
+        }
+      `}</style>
+      <div className="fm-overlay">
+        <div className="fm-modal">
+          {onSkip && <button className="fm-close" onClick={onSkip}>✕</button>}
+          <p className="fm-eyebrow">Votre identité</p>
+          <h2 className="fm-h2">Choisissez<br/>votre fleur</h2>
+          <p className="fm-sub">Ce nom vous identifiera dans la communauté. Vous serez reconnu·e comme <em style={{fontStyle:'normal',color:'rgba(26,18,8,.65)'}}>Prénom · {selectedFlower ?? '...'}</em></p>
+          <div className="fm-preview">
+            {selectedFlower
+              ? <><span>🌸</span> Votre fleur · <span>{selectedFlower}</span></>
+              : 'Sélectionnez un nom ci-dessous'}
+          </div>
+          <div className="fm-grid">
+            {FLOWER_NAMES.map(name => (
+              <div
+                key={name}
+                className={'fm-pill' + (selectedFlower === name ? ' fm-sel' : '')}
+                onClick={() => setSelectedFlower(name)}
+              >{name}</div>
+            ))}
+          </div>
+          <button className="fm-cta" onClick={handleConfirm} disabled={!selectedFlower || saving}>
+            {saving ? 'Enregistrement…' : selectedFlower ? `Continuer en tant que · ${selectedFlower} →` : 'Choisissez un nom'}
+          </button>
+          {onSkip && <div className="fm-skip" onClick={onSkip}>Passer cette étape</div>}
+        </div>
+      </div>
+    </>
+  )
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PREMIUM MODAL — modal autonome "S'abonner au Premium"
+//  Utilisé depuis le modal profil, l'EndOfWeekScreen, etc.
+// ─────────────────────────────────────────────────────────────────────────────
+export function PremiumModal({ onSuccess, onClose }) {
+  const [selectedPlan,    setSelectedPlan]    = useState(() => PLANS.find(p => p.popular) ?? null)
+  const [paying,          setPaying]          = useState(false)
+  const [solidaryAmount,  setSolidaryAmount]  = useState(40)
+  const [solidaryError,   setSolidaryError]   = useState(false)
+  const SOLIDARITY_MIN = 36
+
+  async function handlePay() {
+    if (!selectedPlan || paying) return
+    if (selectedPlan.id === 'solidarity') {
+      if (solidaryAmount < SOLIDARITY_MIN) { setSolidaryError(true); return }
+      setSolidaryError(false)
+    }
+    setPaying(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Non connecté')
+      const body = selectedPlan.id === 'solidarity'
+        ? { solidarity: true, amount: Math.round(solidaryAmount * 100), userId: user.id }
+        : { priceId: selectedPlan.id, userId: user.id }
+      const { data, error } = await supabase.functions.invoke('stripe-checkout', { body })
+      if (error || !data?.url) throw new Error(error?.message ?? 'Erreur Stripe')
+      sessionStorage.setItem('pendingOnboarding', 'true')
+      window.location.href = data.url
+    } catch (e) {
+      console.error('[PremiumModal]', e)
+      setPaying(false)
+    }
+  }
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap');
+        @keyframes pm-fadeIn  { from{opacity:0} to{opacity:1} }
+        @keyframes pm-slideUp { from{opacity:0;transform:scale(.93) translateY(18px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .pm-overlay {
+          position:fixed; inset:0; z-index:500;
+          background:rgba(0,0,0,0.72); backdrop-filter:blur(10px);
+          display:flex; align-items:center; justify-content:center; padding:20px;
+          animation:pm-fadeIn .28s ease;
+          font-family:'Jost',sans-serif;
+        }
+        .pm-modal {
+          background:linear-gradient(160deg,#f8f5f0,#f2ece5);
+          border:1px solid rgba(200,160,150,.25);
+          border-radius:24px; width:100%; max-width:440px;
+          padding:36px 32px 32px; position:relative;
+          max-height:92vh; overflow-y:auto;
+          animation:pm-slideUp .38s cubic-bezier(.34,1.56,.64,1) both;
+        }
+        .pm-close {
+          position:absolute; top:14px; right:14px;
+          width:30px; height:30px; border-radius:50%;
+          border:1px solid rgba(0,0,0,.12); background:rgba(255,255,255,.6);
+          color:rgba(30,20,8,.45); cursor:pointer; font-size:13px;
+          display:flex; align-items:center; justify-content:center;
+          transition:all .2s;
+        }
+        .pm-close:hover { border-color:rgba(200,160,150,.5); background:rgba(255,255,255,.9); }
+        .pm-plans { display:flex; flex-direction:column; gap:9px; margin:20px 0 22px; }
+        .pm-plan {
+          display:flex; align-items:center; justify-content:space-between;
+          padding:14px 16px; border-radius:14px;
+          border:1.5px solid rgba(0,0,0,.09); cursor:pointer;
+          background:rgba(255,255,255,.65); position:relative; overflow:hidden;
+          transition:all .2s;
+        }
+        .pm-plan:hover { border-color:rgba(90,154,40,.35); background:rgba(255,255,255,.9); }
+        .pm-plan.pm-sel { border-color:rgba(90,154,40,.55); background:rgba(90,154,40,.07); box-shadow:0 0 0 3px rgba(90,154,40,.10); }
+        .pm-popular {
+          position:absolute; top:-1px; right:-1px;
+          font-size:9px; font-weight:600; letter-spacing:.8px; text-transform:uppercase;
+          background:#5a9a28; color:#f8f5f0; padding:3px 10px; border-radius:0 14px 0 8px;
+        }
+        .pm-plan-label { font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:400; color:#1a1208; display:block; margin-bottom:2px; }
+        .pm-plan-desc  { font-size:13px; color:rgba(30,20,8,.65); }
+        .pm-plan-price { font-size:18px; font-weight:500; color:#1a1208; display:block; text-align:right; }
+        .pm-plan-note  { font-size:12px; color:rgba(30,20,8,.60); text-align:right; display:block; }
+        .pm-radio {
+          width:20px; height:20px; border-radius:50%; flex-shrink:0;
+          border:1.5px solid rgba(0,0,0,.20); margin-left:12px;
+          display:flex; align-items:center; justify-content:center;
+          transition:all .2s;
+        }
+        .pm-plan.pm-sel .pm-radio { background:#5a9a28; border-color:#5a9a28; }
+        .pm-radio-dot { width:8px; height:8px; border-radius:50%; background:#fff; opacity:0; transition:opacity .2s; }
+        .pm-plan.pm-sel .pm-radio-dot { opacity:1; }
+        .pm-cta {
+          width:100%; padding:15px; border-radius:50px; border:none;
+          font-family:'Jost',sans-serif; font-size:15px; font-weight:500; letter-spacing:.04em;
+          background:linear-gradient(135deg,#5a9a28,#3a7a18); color:#fff;
+          cursor:pointer; transition:all .25s; margin-bottom:12px;
+          box-shadow:0 6px 20px rgba(60,120,20,.30);
+        }
+        .pm-cta:hover { filter:brightness(1.08); box-shadow:0 8px 28px rgba(60,120,20,.40); }
+        .pm-cta:disabled { opacity:.4; cursor:not-allowed; box-shadow:none; filter:none; }
+        .pm-note { font-size:12px; color:rgba(30,20,8,.52); text-align:center; display:flex; align-items:center; justify-content:center; gap:5px; }
+        @media(max-width:600px) {
+          .pm-modal { border-radius:24px 24px 0 0; position:fixed; bottom:0; left:0; right:0; max-width:100%; padding:28px 24px 40px; }
+          .pm-overlay { align-items:flex-end; padding:0; }
+        }
+      `}</style>
+      <div className="pm-overlay" onClick={e => e.target === e.currentTarget && onClose?.()}>
+        <div className="pm-modal">
+          <button className="pm-close" onClick={onClose}>✕</button>
+
+          {/* Header */}
+          <div style={{ marginBottom:4 }}>
+            <div style={{ fontSize:10, letterSpacing:'.22em', textTransform:'uppercase', color:'#5a9a28', marginBottom:10, fontWeight:500 }}>Premium · Mon Jardin Intérieur</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:30, fontWeight:300, color:'#1a1208', lineHeight:1.15, marginBottom:8 }}>
+              Accédez à tout,<br/>sans restriction.
+            </div>
+            <div style={{ fontSize:14, color:'rgba(30,20,8,.65)', lineHeight:1.7 }}>
+              Choisissez la durée qui vous correspond. Résiliable à tout moment.
+            </div>
+          </div>
+
+          {/* Bénéfices clés */}
+          <div style={{ display:'flex', flexDirection:'column', gap:6, margin:'16px 0 4px', padding:'14px 16px', background:'rgba(90,154,40,.06)', borderRadius:12, border:'1px solid rgba(90,154,40,.15)' }}>
+            {['Club des jardiniers & jardin collectif','Défis communautaires — toutes les zones','Jardinothèque complète (méditations, hypnoses, e-books)','Ateliers guidés & accompagnements'].map(f => (
+              <div key={f} style={{ display:'flex', alignItems:'center', gap:8, fontSize:13.5, color:'rgba(30,20,8,.82)', fontFamily:"'Jost',sans-serif" }}>
+                <span style={{ color:'#5a9a28', fontSize:14, flexShrink:0 }}>✓</span>{f}
+              </div>
+            ))}
+          </div>
+
+          {/* Plans */}
+          <div className="pm-plans">
+            {PLANS.map(p => (
+              <div key={p.id} className={'pm-plan' + (selectedPlan?.id === p.id ? ' pm-sel' : '')} onClick={() => setSelectedPlan(p)}>
+                {p.popular && <div className="pm-popular">Populaire</div>}
+                <div>
+                  <span className="pm-plan-label">{p.label}</span>
+                  <span className="pm-plan-desc">{p.desc}</span>
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+                  <div>
+                    <span className="pm-plan-price">{p.price}</span>
+                    <span className="pm-plan-note">{p.note}</span>
+                  </div>
+                  <div className="pm-radio"><div className="pm-radio-dot"/></div>
+                </div>
+              </div>
+            ))}
+
+            {/* Plan solidaire */}
+            <div
+              className={'pm-plan pm-plan-solidarity' + (selectedPlan?.id === 'solidarity' ? ' pm-sel' : '')}
+              onClick={() => setSelectedPlan({ id:'solidarity', label:'Tarif solidaire', note:'/ an' })}
+              style={{ borderColor: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.60)' : 'rgba(200,160,48,.25)', background: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.07)' : 'rgba(255,255,255,.65)' }}
+            >
+              <div style={{ flex:1 }}>
+                <span className="pm-plan-label" style={{ fontSize:18 }}>Tarif solidaire ✦</span>
+                <span className="pm-plan-desc" style={{ color:'rgba(30,20,8,.68)' }}>Prix libre · minimum {SOLIDARITY_MIN} € · 12 mois</span>
+                <div style={{ fontSize:12.5, color:'rgba(30,20,8,.60)', marginTop:4, lineHeight:1.5, fontStyle:'italic' }}>
+                  Votre générosité nous aide à garder l'accès accessible à tous.
+                </div>
+                {selectedPlan?.id === 'solidarity' && (
+                  <div style={{ marginTop:10 }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <input
+                        type="number"
+                        min={SOLIDARITY_MIN}
+                        value={solidaryAmount}
+                        onChange={e => { setSolidaryAmount(+e.target.value); setSolidaryError(false) }}
+                        style={{ width:80, padding:'7px 10px', borderRadius:8, border: solidaryError ? '1.5px solid #c04a4a' : '1px solid rgba(200,160,48,.40)', background:'rgba(255,255,255,.8)', fontSize:15, fontFamily:"'Jost',sans-serif", color:'#1a1208', outline:'none', textAlign:'center' }}
+                      />
+                      <span style={{ fontSize:14, color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif" }}>€ / an</span>
+                    </div>
+                    {solidaryError && (
+                      <div style={{ fontSize:11, color:'#c04a4a', marginTop:5, fontFamily:"'Jost',sans-serif" }}>
+                        Minimum {SOLIDARITY_MIN} € pour ce tarif solidaire.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="pm-radio" style={{ borderColor: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.8)' : undefined, background: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.85)' : undefined }}>
+                <div className="pm-radio-dot"/>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <button className="pm-cta" onClick={handlePay} disabled={!selectedPlan || paying}
+            style={{ background: selectedPlan?.id === 'solidarity' ? 'linear-gradient(135deg,#c8a030,#a07820)' : 'linear-gradient(135deg,#5a9a28,#3a7a18)', boxShadow: selectedPlan?.id === 'solidarity' ? '0 6px 20px rgba(180,140,20,.30)' : '0 6px 20px rgba(60,120,20,.30)' }}
+          >
+            {paying
+              ? 'Redirection vers le paiement…'
+              : selectedPlan?.id === 'solidarity'
+                ? `Contribuer · ${solidaryAmount} € / an`
+                : selectedPlan
+                  ? `S'abonner · ${selectedPlan.price} ${selectedPlan.note}`
+                  : 'Choisissez une formule'}
+          </button>
+          <p className="pm-note"><span>🔒</span><span>Paiement sécurisé via Stripe · sans engagement</span></p>
+        </div>
+      </div>
+    </>
+  )
+}

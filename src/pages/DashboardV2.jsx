@@ -44,7 +44,7 @@ import { ScreenJardinotheque }       from './ScreenJardinotheque'
 import { HelpModal }                 from './HelpModal'
 import PremiumGate                   from '../components/PremiumGate'
 import PremiumBanner                 from '../components/PremiumBanner'
-import AccessPage                    from './AccessPage'
+import AccessPage, { PremiumModal }  from './AccessPage'
 import { ONB_STYLES, NatureBg }      from './OnboardingScreen'
 import { useSlideInsight, prefetchAllSlideInsights } from '../hooks/useSlideInsight'
 
@@ -206,7 +206,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  COMPOSANT MOBILE — slides preview plein écran, swipeable
 // ─────────────────────────────────────────────────────────────────────────────
-function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, screenProps }) {
+function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, screenProps, initial, onOpenProfile, onHelp, onSignOut }) {
   const slide  = slides[curIdx]
   const isLast = curIdx === slides.length - 1
   const swipe  = useSwipe(() => onNav(1), () => onNav(-1))
@@ -216,13 +216,28 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       style={{ position:'fixed', inset:0, display:'flex', flexDirection:'column', background:'linear-gradient(160deg,#f8f0ec,#ede5de)', zIndex:10 }}
     >
       {/* ── Bandeau titre mobile ── */}
-      <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <img src="/icons/icon-192.png" alt="" style={{ width:26, height:26, borderRadius:'50%' }}/>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#1a1208', lineHeight:1 }}>
+      <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
+        {/* Logo */}
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <img src="/icons/icon-192.png" alt="" style={{ width:24, height:24, borderRadius:'50%' }}/>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:'#1a1208', lineHeight:1 }}>
             Mon <em style={{ color:'#7a4030' }}>Jardin</em>
-            <span style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontStyle:'normal', marginLeft:6 }}>Intérieur</span>
           </div>
+        </div>
+        {/* Actions droite */}
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          {screenProps?.lumens && (
+            <div onClick={() => screenProps.onOpenLumens?.()} style={{ display:'flex', alignItems:'center', gap:3, padding:'3px 8px', borderRadius:100, background:'rgba(207,166,74,.12)', border:'1px solid rgba(207,166,74,.28)', cursor:'pointer' }}>
+              <div style={{ width:12, height:12, borderRadius:'50%', background:'radial-gradient(circle at 38% 35%,#ffe97a,#c8a040)', flexShrink:0 }}/>
+              <span style={{ fontSize:10, fontWeight:600, color:'#c8a040', fontFamily:"'Jost',sans-serif" }}>{screenProps.lumens.available}</span>
+            </div>
+          )}
+          <div onClick={onOpenProfile} style={{ padding:'3px 9px', borderRadius:100, background:'rgba(200,160,150,.12)', border:'1px solid rgba(200,160,150,.25)', fontSize:10, fontWeight:500, color:'rgba(30,20,8,.65)', cursor:'pointer', fontFamily:"'Jost',sans-serif", display:'flex', alignItems:'center', gap:4 }}>
+            <span style={{ width:16, height:16, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:8, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</span>
+            Mon profil
+          </div>
+          <div onClick={onHelp} style={{ padding:'3px 8px', borderRadius:100, background:'rgba(255,255,255,.5)', border:'1px solid rgba(200,160,150,.2)', fontSize:10, color:'rgba(30,20,8,.45)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>Aide</div>
+          <div onClick={onSignOut} style={{ padding:'3px 8px', borderRadius:100, background:'rgba(255,255,255,.5)', border:'1px solid rgba(200,160,150,.2)', fontSize:10, color:'rgba(30,20,8,.45)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✕</div>
         </div>
       </div>
 
@@ -432,6 +447,158 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
 //  COMPOSANT PRINCIPAL — DashboardV2
 //  Export identique à DashboardPage → swap transparent dans App.jsx
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  SETTINGS PANEL — vue paramètres dans le modal profil
+// ─────────────────────────────────────────────────────────────────────────────
+const FLOWER_NAMES_LIST = [
+  'Aubépine','Cèdre','Pivoine','Iris','Verveine','Jasmin','Glycine',
+  'Lilas','Noisetier','Pervenche','Sauge','Lavande','Magnolia','Acacia',
+  'Clématite','Bruyère','Capucine','Gentiane','Muguet','Orchidée','Tilleul',
+  'Violette','Camélia','Renoncule','Mimosa','Angélique','Bouleau','Eglantine',
+  'Chèvrefeuille','Coquelicot',
+]
+
+function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
+  const [editName,      setEditName]      = useState(name ?? '')
+  const [saving,        setSaving]        = useState(false)
+  const [saved,         setSaved]         = useState(false)
+  const [showFlower,    setShowFlower]    = useState(false)
+  const [showPremium,   setShowPremium]   = useState(false)
+  const [selFlower,     setSelFlower]     = useState(null)
+  const [savingFlower,  setSavingFlower]  = useState(false)
+  const [savedFlower,   setSavedFlower]   = useState(false)
+  const [currentFlower, setCurrentFlower] = useState(null)
+
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('users').select('flower_name').eq('id', userId).single()
+      .then(({ data }) => { if (data?.flower_name) setCurrentFlower(data.flower_name) })
+  }, [userId])
+
+  async function handleSaveName() {
+    if (!editName.trim() || editName.trim() === name) return
+    setSaving(true)
+    try {
+      await supabase.from('users').update({ display_name: editName.trim() }).eq('id', userId)
+      await supabase.from('profiles').update({ display_name: editName.trim() }).eq('id', userId)
+      setSaved(true)
+      onNameSaved?.(editName.trim())
+      setTimeout(() => setSaved(false), 2000)
+    } catch(e) { console.warn('[settings] save name', e) }
+    setSaving(false)
+  }
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:20 }}>
+        <div onClick={onBack} style={{ cursor:'pointer', fontSize:22, color:'rgba(30,20,8,.55)', lineHeight:1, padding:'4px 8px', borderRadius:8, transition:'background .15s' }}
+          onMouseEnter={e=>e.currentTarget.style.background='rgba(0,0,0,.06)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>←</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:400, color:'#1a1208' }}>Paramètres</div>
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+
+        {/* Nom affiché — éditable */}
+        <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+          <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Nom affiché</div>
+          <div style={{ display:'flex', gap:8 }}>
+            <input
+              value={editName}
+              onChange={e => { setEditName(e.target.value); setSaved(false) }}
+              onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+              style={{ flex:1, padding:'10px 14px', borderRadius:8, border:'1px solid rgba(200,160,150,.30)', background:'rgba(255,255,255,.8)', fontSize:15, fontFamily:"'Jost',sans-serif", color:'#1a1208', outline:'none' }}
+              placeholder="Votre nom…"
+            />
+            <button
+              onClick={handleSaveName}
+              disabled={saving || !editName.trim() || editName.trim() === name}
+              style={{ padding:'10px 16px', borderRadius:8, border:'none', background: saved ? 'rgba(122,170,80,.85)' : 'rgba(200,160,150,.35)', color: saved ? '#fff' : 'rgba(30,20,8,.65)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', transition:'all .2s', whiteSpace:'nowrap' }}
+            >
+              {saved ? '✓ Sauvé' : saving ? '…' : 'Sauvegarder'}
+            </button>
+          </div>
+        </div>
+
+        {/* Email — lecture seule */}
+        <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+          <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:6 }}>Email</div>
+          <div style={{ fontSize:15, color:'rgba(30,20,8,.72)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
+        </div>
+
+        {/* Ma fleur — picker inline */}
+        {!showFlower ? (
+          <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+            <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Mon identité florale</div>
+            {currentFlower ? (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div style={{ fontSize:16, color:'#1a1208', fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic' }}>
+                  🌸 Vous avez choisi · <strong style={{ fontStyle:'normal' }}>{currentFlower}</strong>
+                </div>
+                <div onClick={() => { setShowFlower(true); setSelFlower(currentFlower) }} style={{ padding:'6px 14px', borderRadius:100, border:'1px solid rgba(200,160,150,.30)', background:'transparent', fontSize:12, color:'rgba(30,20,8,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap' }}>
+                  Modifier
+                </div>
+              </div>
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                <div style={{ fontSize:14, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Aucune fleur choisie</div>
+                <div onClick={() => setShowFlower(true)} style={{ padding:'6px 14px', borderRadius:100, border:'1px solid rgba(200,160,150,.30)', background:'transparent', fontSize:12, color:'rgba(30,20,8,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
+                  Choisir
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.25)' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+              <div style={{ fontSize:12, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>🌸 Choisir ma fleur</div>
+              <div onClick={() => { setShowFlower(false); setSelFlower(null) }} style={{ fontSize:12, color:'rgba(30,20,8,.38)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>Annuler</div>
+            </div>
+            {selFlower && (
+              <div style={{ textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:'rgba(30,20,8,.55)', marginBottom:10 }}>
+                🌸 Votre fleur · <span style={{ color:'#1a1208', fontWeight:500 }}>{selFlower}</span>
+              </div>
+            )}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, maxHeight:180, overflowY:'auto', marginBottom:10 }}>
+              {FLOWER_NAMES_LIST.map(n => (
+                <div key={n} onClick={() => setSelFlower(n)} style={{ padding:'9px 4px', borderRadius:16, fontSize:12, textAlign:'center', cursor:'pointer', fontFamily:"'Jost',sans-serif", border: selFlower===n ? '1px solid rgba(90,154,40,.5)' : '1px solid rgba(0,0,0,.10)', background: selFlower===n ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.03)', color: selFlower===n ? '#3a7a18' : 'rgba(30,20,8,.55)', transition:'all .15s' }}>{n}</div>
+              ))}
+            </div>
+            <button
+              disabled={!selFlower || savingFlower}
+              onClick={async () => {
+                if (!selFlower || savingFlower) return
+                setSavingFlower(true)
+                try {
+                  await supabase.from('users').update({ flower_name: selFlower }).eq('id', userId)
+                  setCurrentFlower(selFlower)
+                  setSavedFlower(true)
+                  onNameSaved?.()
+                  setTimeout(() => { setShowFlower(false); setSelFlower(null); setSavedFlower(false) }, 1200)
+                } catch(e) { console.warn(e) }
+                setSavingFlower(false)
+              }}
+              style={{ width:'100%', padding:'11px', borderRadius:100, border:'none', background: savedFlower ? 'rgba(122,170,80,.85)' : 'linear-gradient(135deg,#c8a0b0,#a07888)', color:'#fff', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: selFlower ? 'pointer' : 'default', opacity: selFlower ? 1 : 0.4, transition:'all .2s' }}
+            >
+              {savedFlower ? '✓ Sauvegardé !' : savingFlower ? '…' : selFlower ? `Choisir · ${selFlower}` : 'Sélectionnez un nom'}
+            </button>
+          </div>
+        )}
+
+        {/* Abonnement */}
+        <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div>
+            <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:5 }}>Abonnement</div>
+            <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? '✦ Premium actif' : 'Version gratuite'}</div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const isMobile = useIsMobile()
   useTheme()
@@ -471,6 +638,8 @@ export default function DashboardPage() {
   const [showLumensModal,     setShowLumensModal]     = useState(false)
   const [showLumenInfo,       setShowLumenInfo]       = useState(false)
   const [showProfileModal,    setShowProfileModal]    = useState(false)
+  const [showPremiumModal,    setShowPremiumModal]    = useState(false)
+  const [profileView,         setProfileView]         = useState('main') // 'main' | 'settings'
   const [showSettingsDrawer,  setShowSettingsDrawer]  = useState(false)
   const [showHelp,            setShowHelp]            = useState(false)
   const [showPrefsAccordion,  setShowPrefsAccordion]  = useState(false)
@@ -573,12 +742,21 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user?.id || !awardLumens) return
+    const today = new Date().toISOString().split('T')[0]
+    const lsKey = `daily_login_awarded_${user.id}`
+    // Vérification localStorage d'abord — évite toute requête si déjà fait aujourd'hui
+    if (localStorage.getItem(lsKey) === today) return
+    // Verrou mémoire pour éviter double-appel dans le même cycle React
     if (_dailyLoginAwarded.has(user.id)) return
     _dailyLoginAwarded.add(user.id)
-    const today = new Date().toISOString().split('T')[0]
+    // Poser le verrou localStorage immédiatement avant la requête
+    localStorage.setItem(lsKey, today)
+    // Vérifier en base (cas où localStorage a été vidé)
     supabase.from('lumen_transactions').select('id').eq('user_id', user.id)
       .eq('reason', 'daily_login').gte('created_at', today + 'T00:00:00.000Z').maybeSingle()
-      .then(({ data }) => { if (!data) awardLumens(1, 'daily_login', { date: today }) })
+      .then(({ data }) => {
+        if (!data) awardLumens(1, 'daily_login', { date: today })
+      })
   }, [user?.id])
 
   useEffect(() => {
@@ -707,9 +885,14 @@ export default function DashboardPage() {
   }, [track])
 
   // ── Overlays communs (desktop + mobile) ──
+  // ── Identité utilisateur (utilisée dans commonOverlays et le header) ──
+  const name    = profile?.display_name ?? user?.display_name ?? null
+  const email   = user?.email ?? ''
+  const initial = (name ?? email).charAt(0).toUpperCase()
+
   const commonOverlays = (
     <>
-      {showAccessModal && <AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} />}
+      {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
       {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} onDone={() => setShowWelcome(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
@@ -733,18 +916,70 @@ export default function DashboardPage() {
         <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.25)', backdropFilter:'blur(6px)' }} onClick={() => setShowLumensModal(false)} />
           <div style={{ position:'relative', background:'linear-gradient(170deg,#f4ece6,#ede5de)', borderRadius:24, padding:'28px 24px', width:'100%', maxWidth:460, border:'1px solid rgba(200,160,150,.25)', boxShadow:'0 24px 60px rgba(180,120,100,.2)' }}>
-            <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.3)', borderRadius:'50%', width:28, height:28, cursor:'pointer', color:'rgba(30,20,8,.5)', fontSize:14 }}>✕</button>
+            <button onClick={() => setShowLumensModal(false)} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.3)', borderRadius:'50%', width:28, height:28, padding:0, cursor:'pointer', color:'rgba(30,20,8,.5)', fontSize:13, display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1 }}>✕</button>
             <LumensCard lumens={lumens} userId={user?.id} awardLumens={awardLumens} onRefresh={refresh} />
           </div>
         </div>
       )}
+      {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => setShowPremiumModal(false)} />}
       {showProfileModal && (
         <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.25)', backdropFilter:'blur(6px)' }} onClick={() => setShowProfileModal(false)} />
           <div style={{ position:'relative', background:'linear-gradient(170deg,#f4ece6,#ede5de)', borderRadius:24, padding:'24px', width:'100%', maxWidth:420, border:'1px solid rgba(200,160,150,.25)', boxShadow:'0 24px 60px rgba(180,120,100,.2)' }}>
-            <button onClick={() => setShowProfileModal(false)} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.3)', borderRadius:'50%', width:28, height:28, cursor:'pointer', color:'rgba(30,20,8,.5)' }}>✕</button>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, color:'#1a1208', marginBottom:16 }}>Mon profil</div>
-            <div style={{ fontSize:12, color:'rgba(30,20,8,.5)', fontFamily:"'Jost',sans-serif" }}>Modifiez votre profil dans les paramètres.</div>
+            <button onClick={() => { setShowProfileModal(false); setProfileView('main') }} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.3)', borderRadius:'50%', width:28, height:28, padding:0, cursor:'pointer', color:'rgba(30,20,8,.5)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, lineHeight:1 }}>✕</button>
+            {profileView === 'main' ? (<>
+            {/* Titre */}
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:'#1a1208', marginBottom:20 }}>Mon profil</div>
+
+            {/* Avatar + identité */}
+            <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20, padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:14, border:'1px solid rgba(200,160,150,.18)' }}>
+              <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</div>
+              <div>
+                <div style={{ fontSize:14, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>{name ?? 'Jardinier·ère'}</div>
+                <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
+              </div>
+            </div>
+
+            {/* Abonnement */}
+            <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <div style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>Abonnement</div>
+                <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? 'Premium actif' : 'Version gratuite'}</div>
+              </div>
+              {!isPremium && (
+                <div onClick={() => { setShowProfileModal(false); setShowPremiumModal(true) }} style={{ padding:'5px 14px', borderRadius:100, background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
+                  Passer Premium
+                </div>
+              )}
+
+            </div>
+
+            {/* Actions */}
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:4 }}>
+              <div onClick={() => setProfileView('settings')} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
+                <span style={{ fontSize:16 }}>⚙️</span>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>Paramètres du compte</div>
+                  <div style={{ fontSize:10, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif" }}>Nom, notifications, confidentialité</div>
+                </div>
+              </div>
+              <div onClick={() => { setShowProfileModal(false); setProfileView('main'); signOut() }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
+                <span style={{ fontSize:16 }}>🚪</span>
+                <div><div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Se déconnecter</div></div>
+              </div>
+            </div>
+            </>) : (
+              <SettingsPanel
+                name={name}
+                email={email}
+                isPremium={isPremium}
+                userId={user?.id}
+                onBack={() => setProfileView('main')}
+                onOpenFleur={() => { setShowProfileModal(false); setProfileView('main'); setOpenModalId('jardin') }}
+                onUpgrade={() => { setShowProfileModal(false); setProfileView('main'); setShowAccessModal(true) }}
+                onNameSaved={() => clearProfileCache(user?.id)}
+              />
+            )}
           </div>
         </div>
       )}
@@ -768,9 +1003,6 @@ export default function DashboardPage() {
   if (!isMobile) {
     const slide  = SLIDES_CONFIG[slideIdx]
     const isLast = slideIdx === SLIDES_CONFIG.length - 1
-    const name    = profile?.display_name ?? user?.display_name ?? null
-    const email   = user?.email ?? ''
-    const initial = (name ?? email).charAt(0).toUpperCase()
 
     return (
       <>
@@ -823,7 +1055,10 @@ export default function DashboardPage() {
                       <span style={{ fontSize:10.5, color:'#c8a040', fontWeight:500 }}>{lumens.available}</span>
                     </div>
                   )}
-                  <div onClick={() => setShowProfileModal(true)} title={name ?? email} style={{ width:28, height:28, borderRadius:'50%', background:'linear-gradient(135deg,rgba(200,160,176,.4),rgba(160,190,160,.4))', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:500, color:'#8a6050', cursor:'pointer', border:'1px solid rgba(200,160,150,.25)', transition:'opacity .12s' }} onMouseEnter={e=>e.currentTarget.style.opacity='.7'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>{initial}</div>
+                  <div onClick={() => setShowProfileModal(true)} style={{ padding:'3px 12px', borderRadius:100, background:'rgba(200,160,150,.12)', border:'1px solid rgba(200,160,150,.28)', fontSize:10.5, fontWeight:500, color:'rgba(30,20,8,.65)', cursor:'pointer', transition:'background .12s', fontFamily:"'Jost',sans-serif", display:'flex', alignItems:'center', gap:5 }} onMouseEnter={e=>e.currentTarget.style.background='rgba(200,160,150,.22)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(200,160,150,.12)'}>
+                    <span style={{ width:18, height:18, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</span>
+                    Mon profil
+                  </div>
                   <div onClick={() => setShowHelp(true)} style={{ padding:'3px 10px', borderRadius:100, background:'rgba(255,255,255,.5)', border:'1px solid rgba(200,160,150,.2)', fontSize:10.5, color:'rgba(30,20,8,.45)', cursor:'pointer', transition:'background .12s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.5)'}>Aide</div>
                   <div onClick={signOut} style={{ padding:'3px 10px', borderRadius:100, background:'rgba(255,255,255,.5)', border:'1px solid rgba(200,160,150,.2)', fontSize:10.5, color:'rgba(30,20,8,.45)', cursor:'pointer', transition:'background .12s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.5)'}>Quitter</div>
                   {ADMIN_IDS.includes(user?.id) && (
@@ -940,6 +1175,10 @@ export default function DashboardPage() {
         }}
         bilanDoneToday={bilanDoneToday}
         screenProps={screenProps}
+        initial={initial}
+        onOpenProfile={() => setShowProfileModal(true)}
+        onHelp={() => setShowHelp(true)}
+        onSignOut={signOut}
       />
     </>
   )

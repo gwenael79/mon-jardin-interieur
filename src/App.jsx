@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuthInit, useAuth } from './hooks/useAuth'
 import { AuthPage } from './pages/AuthPage'
 import DashboardPage from './pages/DashboardV2'
-import AccessPage from './pages/AccessPage'
+import AccessPage, { FlowerModal, PremiumModal } from './pages/AccessPage'
 import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { query, supabase } from './core/supabaseClient'
@@ -23,7 +23,8 @@ export default function App() {
   const { user, isLoading: authLoading } = useAuth()
   const { activateFree, refresh } = useSubscription()
 
-  const [screen, setScreen] = useState('loading')
+  const [screen,        setScreen]        = useState('loading')
+  const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
   const toastTimer = useRef(null)
@@ -80,6 +81,15 @@ export default function App() {
     if (params.has('test-weekone') || params.has('test-garden') || params.get('test-day')) { setScreen('weekone'); return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#admin') { setScreen('admin'); return }
 
+    // Retour depuis Stripe — annulation → rouvrir le modal premium
+    if (params.get('premium') === 'cancel') {
+      window.history.replaceState({}, '', window.location.pathname)
+      setScreen('dashboard')
+      // On ouvre le PremiumModal via un state qu'on pose après le chargement
+      sessionStorage.setItem('reopen_premium', '1')
+      return
+    }
+
     setScreen('loading')
     ;(async () => {
       const { data: userData } = await supabase
@@ -99,7 +109,7 @@ export default function App() {
           await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
           await refresh()
         } catch (e) { console.warn('[auto-activate]', e) }
-        setScreen('onboarding'); return
+        setScreen('flower'); return
       }
 
       const daysSinceReg = Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
@@ -178,6 +188,16 @@ export default function App() {
     )
   }
 
+  if (screen === 'flower') {
+    return (
+      <FlowerModal
+        userId={user.id}
+        onDone={() => setScreen('onboarding')}
+        onSkip={() => setScreen('onboarding')}
+      />
+    )
+  }
+
   if (screen === 'onboarding') {
     return <OnboardingScreen userId={user.id} onComplete={() => setScreen('weekone')} />
   }
@@ -234,6 +254,7 @@ export default function App() {
     return (
       <>
         <AccessPage
+          openModal
           onActivateFree={() => setScreen('dashboard')}
           onSuccess={handlePaySuccess}
           onBack={() => setScreen('dashboard')}
@@ -247,6 +268,12 @@ export default function App() {
   return (
     <>
       <DashboardPage />
+      {reopenPremium && (
+        <PremiumModal
+          onSuccess={() => { setReopenPremium(false); sessionStorage.removeItem('reopen_premium') }}
+          onClose={() => { setReopenPremium(false); sessionStorage.removeItem('reopen_premium') }}
+        />
+      )}
       <GardenNotificationBanner message={banner} onClose={() => setBanner(null)} />
       {plantState > 0 && (
         <div style={styles.plantFloat}>

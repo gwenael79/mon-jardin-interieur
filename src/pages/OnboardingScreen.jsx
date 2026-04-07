@@ -858,7 +858,7 @@ function StepCommunaute({ onComplete }) {
             {count !== null && <><br/>leur jardin intérieur dans notre communauté.</>}
           </h2>
           <p style={{ fontSize:'var(--fs-h4,13px)', color:'var(--text3)', fontStyle:'italic', lineHeight:1.8 }}>
-            Pas de profils. Pas de noms.<br/>Juste une présence partagée.
+            Pas de noms, pas de paroles intrusives,<br/> pas de réseaux bruyants,<br/>Juste une présence partagée, <br/>une intention de bienveillance.
           </p>
         </div>
 
@@ -878,7 +878,7 @@ function StepCommunaute({ onComplete }) {
             onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 14px 36px rgba(160,120,136,0.50), 0 4px 10px rgba(160,120,136,0.25)' }}
             onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 8px 28px rgba(160,120,136,0.42), 0 2px 8px rgba(160,120,136,0.22)' }}
           >
-            Avançons ensemble ! →
+            Entrez dans votre jardin →
           </button>
           <div style={{ fontSize:'var(--fs-h5,11px)', color:'rgba(0,0,0,0.30)', marginTop:14, fontStyle:'italic', letterSpacing:'.03em' }}>
             Votre graine vous attend
@@ -1283,11 +1283,11 @@ function SlidesEducatives({ onComplete }) {
 // ─────────────────────────────────────────────────────────────────────────────
 const EQUIPE = [
   {
-    initiales: 'SL',
-    photo:      null, // ex: '/equipe/sophie.jpg'
-    nom:        'Sophie L.',
-    role:       'Psychologue clinicienne',
-    detail:     '12 ans d\'accompagnement individuel. Spécialiste du stress chronique.',
+    initiales: 'GJ',
+    photo:      '/equipe/Gwenael.jpg', // ex: '/equipe/Gwenael.jpg'
+    nom:        'Gwenaël J.',
+    role:       'Hypnothérapeute',
+    detail:     '15 ans d\'accompagnement individuel. Spécialiste du stress et des émotions.',
     color:      '#d4a0b0',
   },
   {
@@ -1392,20 +1392,9 @@ function StepEquipe({ onNext, onSkip }) {
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,120,136,0.46)' }}
               onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 22px rgba(160,120,136,0.38)' }}
             >
-              Bien accompagné, j'avance  🌱
+              Bien accompagné, j'avance 🌱
             </button>
-            <button onClick={onSkip} style={{
-              width:'100%', padding:'10px', borderRadius:50,
-              border:'none', background:'transparent',
-              color:'rgba(30,25,15,0.38)', fontSize:'var(--fs-h5,12px)',
-              cursor:'pointer', fontFamily:"'Jost',sans-serif",
-              transition:'color .2s',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.color='rgba(30,25,15,0.60)' }}
-              onMouseLeave={e => { e.currentTarget.style.color='rgba(30,25,15,0.38)' }}
-            >
-              Passer directement au jardin
-            </button>
+
           </div>
 
         </div>
