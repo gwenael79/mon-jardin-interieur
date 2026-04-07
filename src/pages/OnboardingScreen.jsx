@@ -630,7 +630,7 @@ function StepMetaphore({ onNext }) {
         <div className="s0" style={{ padding: isMobile ? '18px 20px 10px' : '24px 32px 16px', textAlign:'center', flexShrink:0 }}>
           <h2 style={{
             fontFamily:"'Cormorant Garamond',serif",
-            fontSize:'clamp(22px,3vw,36px)',
+            fontSize: isMobile ? 32 : 36,
             fontWeight:300, lineHeight:1.2,
             color:'rgba(30,25,15,0.92)', margin:0,
           }}>
@@ -663,7 +663,7 @@ function StepMetaphore({ onNext }) {
         {/* Texte + bouton */}
         <div style={{
           fontFamily:"'Cormorant Garamond',serif",
-          fontSize: isMobile ? 'clamp(15px, 4vw, 18px)' : 'clamp(16px, 2.5vw, 20px)',
+          fontSize: isMobile ? 19 : 20,
           fontWeight:300, lineHeight:1.7,
           textAlign:'center', color:'#000',
           padding: isMobile ? '0 20px' : '0 32px',
@@ -678,7 +678,7 @@ function StepMetaphore({ onNext }) {
           <button onClick={onNext} style={{
             padding: isMobile ? '13px 32px' : '15px 40px', borderRadius:50, border:'none',
             background:'linear-gradient(135deg, #c8a0b0, #a07888)',
-            color:'#fff', fontSize:'var(--fs-h4,14px)', fontWeight:600,
+            color:'#fff', fontSize: isMobile ? 17 : 15, fontWeight:600,
             letterSpacing:'.08em', cursor:'pointer',
             fontFamily:"'Jost',sans-serif",
             boxShadow:'0 6px 22px rgba(160,120,136,0.40)',
