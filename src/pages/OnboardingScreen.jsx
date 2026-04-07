@@ -1955,7 +1955,7 @@ function StepQuizIntro({ onStart, onSkip }) {
             fontSize:'var(--fs-h3,15px)', fontWeight:400,
             color:'rgba(60,45,10,0.88)', margin:0, lineHeight:1.7,
           }}>
-            Répondez à <strong>20 questions</strong> sur ce que vous avez ressenti, ce qui vous a parlé, ce qui vous laisse sceptique. En retour, obtenez <strong style={{ color:'#c8900a' }}>1 mois de Premium offert</strong> — sans carte bancaire.
+            Répondez à <strong>22 questions</strong> sur ce que vous avez ressenti, ce qui vous a parlé, ce qui vous laisse sceptique. En retour, obtenez <strong style={{ color:'#c8900a' }}>1 mois de Premium offert</strong> — sans carte bancaire.
           </p>
         </div>
 
@@ -1993,7 +1993,7 @@ function StepQuizIntro({ onStart, onSkip }) {
           fontSize:'var(--fs-h5,11px)', color:'rgba(30,25,15,0.30)',
           fontStyle:'italic', margin:0, maxWidth:320,
         }}>
-          Questionnaire optionnel · 20 questions · ~3 minutes · pas de bonne ou mauvaise réponse
+          Questionnaire optionnel · 22 questions · ~4 minutes · pas de bonne ou mauvaise réponse
         </p>
 
       </div>

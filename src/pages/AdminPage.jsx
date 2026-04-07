@@ -3123,10 +3123,13 @@ function TabQCM() {
   const [filter,  setFilter]  = useState('tous') // tous | besoin | univers | pertinence | projection
 
   const TAG_LABELS = {
-    besoin:      '🌱 Votre vécu',
-    univers:     "🌸 L'univers de l'appli",
-    pertinence:  '✨ Ce que ça vous apporte',
-    projection:  '🌿 Et maintenant…',
+    contexte:   '🧭 Votre situation',
+    besoin:     '🌱 Votre vécu',
+    univers:    "🌸 L'univers de l'appli",
+    pertinence: '✨ Ce que ça vous apporte',
+    valeur:     '💰 La valeur perçue',
+    projection: '🌿 Et maintenant…',
+    verbatim:   '💬 Votre ressenti',
   }
 
   useEffect(() => {
@@ -3179,7 +3182,7 @@ function TabQCM() {
 
       {/* Filtre par bloc */}
       <div className="adm-tabs" style={{ marginBottom:20 }}>
-        {['tous', 'besoin', 'univers', 'pertinence', 'projection'].map(f => (
+        {['tous', 'contexte', 'besoin', 'univers', 'pertinence', 'valeur', 'projection', 'verbatim'].map(f => (
           <div
             key={f}
             className={`adm-tab${filter === f ? ' active' : ''}`}
