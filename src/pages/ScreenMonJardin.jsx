@@ -3427,81 +3427,76 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: 'linear-gradient(160deg, var(--bg2) 0%, var(--bg) 100%)',
-              border: '1px solid rgba(var(--green-rgb),0.25)',
-              borderRadius: isMobile ? '18px 18px 0 0' : 18,
-              padding: isMobile ? '20px 18px 32px' : 28,
-              width: '100%', maxWidth: isMobile ? '100%' : 480,
+              background: '#faf7f2',
+              border: '1px solid rgba(60,120,60,0.2)',
+              borderRadius: isMobile ? '20px 20px 0 0' : 20,
+              padding: isMobile ? '22px 20px 36px' : 32,
+              width: '100%', maxWidth: isMobile ? '100%' : 520,
               maxHeight: isMobile ? '88vh' : '85vh',
-              display: 'flex', flexDirection: 'column', gap: 14,
+              display: 'flex', flexDirection: 'column', gap: 16,
             }}
           >
-            {/* Handle mobile drag indicator */}
+            {/* Handle mobile */}
             {isMobile && (
-              <div style={{ width:40, height:4, borderRadius:2, background:'var(--separator)', margin:'-4px auto 4px' }} />
+              <div style={{ width:44, height:5, borderRadius:3, background:'rgba(0,0,0,0.12)', margin:'-6px auto 2px' }} />
             )}
 
-            {/* Header modal */}
+            {/* Header */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
               <div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 24, color:'var(--cream)', lineHeight:1.2, display:'flex', alignItems:'center', gap:10 }}>
-                  <TreasureChestIcon size={30} /> Mes graines
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 30, color:'#1a1208', lineHeight:1.2, display:'flex', alignItems:'center', gap:12 }}>
+                  <TreasureChestIcon size={34} /> Mon trésor
                 </div>
-                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginTop:4 }}>
+                <div style={{ fontSize: isMobile ? 15 : 16, color:'#5a6840', marginTop:5, fontFamily:"'Jost',sans-serif" }}>
                   {loadingG ? '…' : `${graines.length} réussite${graines.length > 1 ? 's' : ''} semée${graines.length > 1 ? 's' : ''}`}
                 </div>
               </div>
               <div
                 onClick={() => setShowModal(false)}
-                style={{ minWidth:44, minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-h3, 18px)', color:'var(--text3)', cursor:'pointer' }}
+                style={{ minWidth:44, minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, color:'#888', cursor:'pointer' }}
               >✕</div>
             </div>
 
             {/* Message d'ancrage */}
-            <div style={{
-              background: 'rgba(var(--green-rgb),0.06)', border: '1px solid rgba(var(--green-rgb),0.15)',
-              borderRadius: 10, padding: '10px 14px',
-              fontSize: isMobile ? 13 : 12, color: 'var(--text3)', lineHeight: 1.7, fontStyle: 'italic',
-            }}>
-              Ces moments sont réels. Tu les as vécus. Ils font partie de qui tu es.
+            <div style={{ background:'rgba(60,120,60,0.07)', border:'1px solid rgba(60,120,60,0.15)', borderRadius:12, padding:'12px 16px' }}>
+              <span style={{ fontSize: isMobile ? 17 : 18, color:'#1a1208', lineHeight:1.7, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif" }}>
+                Ces moments sont réels. Tu les as vécus. Ils font partie de qui tu es.
+              </span>
             </div>
 
-            {/* Liste des graines */}
-            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, flex: 1, WebkitOverflowScrolling:'touch' }}>
+            {/* Liste */}
+            <div style={{ overflowY:'auto', display:'flex', flexDirection:'column', gap:10, flex:1, WebkitOverflowScrolling:'touch' }}>
               {loadingG && (
-                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:'var(--fs-h5, 12px)', padding:20 }}>Chargement…</div>
+                <div style={{ textAlign:'center', color:'#888', fontSize:16, padding:24 }}>Chargement…</div>
               )}
               {!loadingG && graines.length === 0 && (
-                <div style={{ textAlign:'center', color:'var(--text3)', fontSize:'var(--fs-h5, 12px)', fontStyle:'italic', padding:20 }}>
+                <div style={{ textAlign:'center', color:'#888', fontSize:17, fontStyle:'italic', padding:24 }}>
                   Aucune graine pour l'instant — reviens ce soir 🌙
                 </div>
               )}
               {graines.map((g, i) => {
                 const d = new Date(g.created_at)
                 const label = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(d)
+                const isToday = today === g.created_at?.slice(0,10)
                 return (
                   <div key={g.id} style={{
-                    padding: isMobile ? '12px' : '12px 14px',
-                    background: i === 0 && today === g.created_at?.slice(0,10)
-                      ? 'rgba(var(--green-rgb),0.08)'
-                      : 'var(--surface-1)',
-                    border: `1px solid ${i === 0 && today === g.created_at?.slice(0,10) ? 'rgba(var(--green-rgb),0.2)' : 'var(--surface-2)'}`,
-                    borderRadius: 10,
+                    padding: isMobile ? '14px 16px' : '16px 18px',
+                    background: isToday ? 'rgba(60,120,60,0.07)' : '#fff',
+                    border: `1.5px solid ${isToday ? 'rgba(60,120,60,0.25)' : 'rgba(0,0,0,0.08)'}`,
+                    borderRadius: 14,
                   }}>
-                    <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', letterSpacing:'.07em', textTransform:'uppercase', marginBottom:5 }}>
+                    <div style={{ fontSize: isMobile ? 13 : 14, color:'#7a8060', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, fontFamily:"'Jost',sans-serif" }}>
                       {label}
-                      {i === 0 && today === g.created_at?.slice(0,10) && (
-                        <span style={{ marginLeft:8, color:'rgba(var(--green-rgb),0.6)' }}>· aujourd'hui</span>
-                      )}
+                      {isToday && <span style={{ marginLeft:8, color:'rgba(60,120,60,0.7)', fontWeight:600 }}>· aujourd'hui</span>}
                     </div>
-                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{ flex:1, fontSize: isMobile ? 14 : 13, color:'var(--text2)', lineHeight:1.65, fontStyle:'italic' }}>
-                        "{g.content}"
+                    <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
+                      <div style={{ flex:1, fontSize: isMobile ? 18 : 19, color:'#1a1208', lineHeight:1.65, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif" }}>
+                        « {g.content} »
                       </div>
                       {g.tags?.length > 0 && (
-                        <div style={{ display:'flex', gap:4, flexShrink:0 }}>
+                        <div style={{ display:'flex', gap:6, flexShrink:0, paddingTop:2 }}>
                           {GRAINE_TAGS.filter(t => g.tags.includes(t.id)).map(t => (
-                            <span key={t.id} title={t.label} style={{ fontSize:'var(--fs-emoji-md, 22px)' }}>{t.emoji}</span>
+                            <span key={t.id} title={t.label} style={{ fontSize:24 }}>{t.emoji}</span>
                           ))}
                         </div>
                       )}
@@ -3511,10 +3506,10 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
               })}
             </div>
 
-            {/* Bas de modal — bouton fermer */}
+            {/* Bouton fermer */}
             <div
               onClick={() => setShowModal(false)}
-              style={{ textAlign:'center', minHeight:44, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:9, background:'var(--surface-2)', border:'1px solid var(--surface-3)', fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--ritual-modal-text-rgb),0.4)', cursor:'pointer' }}
+              style={{ textAlign:'center', minHeight:50, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:12, background:'rgba(0,0,0,0.06)', border:'1px solid rgba(0,0,0,0.1)', fontSize: isMobile ? 16 : 17, color:'#555', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}
             >
               Fermer
             </div>
