@@ -631,7 +631,7 @@ export default function DashboardPage() {
   const [showBilanModal,      setShowBilanModal]      = useState(false)
   const [openRitualsModal,    setOpenRitualsModal]    = useState(false)
   const [bilanDoneToday,      setBilanDoneToday]      = useState(false)
-  const [showWelcome,         setShowWelcome]         = useState(false) // false par défaut, activé si conditions remplies
+  const [showWelcome,         setShowWelcome]         = useState(false)
   const [prefetchDone,        setPrefetchDone]        = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
   const [welcomeReady,        setWelcomeReady]        = useState(false)
@@ -673,17 +673,14 @@ export default function DashboardPage() {
     return false
   }, [user?.id])
 
-  // ── Effets identiques à DashboardPage ──
+  // ── WelcomeScreen — affiché à chaque connexion ──
   useEffect(() => {
-    if (!user?.id || welcomeReady) return
-    supabase.from('users').select('onboarded, created_at').eq('id', user.id).maybeSingle()
-      .then(({ data }) => {
-        setWelcomeReady(true)
-        if (!data?.onboarded || isStripeReturn) return  // pas d'écran welcome
-        const isJustCreated = data?.created_at && (Date.now() - new Date(data.created_at).getTime()) < 10 * 60 * 1000
-        setIsNewUser(!!isJustCreated)
-        setShowWelcome(true) // toujours afficher à chaque connexion
-      })
+    if (!user?.id || isStripeReturn) return
+    const createdAt = user.created_at ? new Date(user.created_at) : null
+    const isJustCreated = createdAt && (Date.now() - createdAt.getTime()) < 10 * 60 * 1000
+    setIsNewUser(!!isJustCreated)
+    setWelcomeReady(true)
+    setShowWelcome(true)
   }, [user?.id])
 
   const refreshGardenCount = useCallback(() => {
