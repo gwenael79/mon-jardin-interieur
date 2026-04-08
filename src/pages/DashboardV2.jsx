@@ -631,7 +631,7 @@ export default function DashboardPage() {
   const [showBilanModal,      setShowBilanModal]      = useState(false)
   const [openRitualsModal,    setOpenRitualsModal]    = useState(false)
   const [bilanDoneToday,      setBilanDoneToday]      = useState(false)
-  const [showWelcome,         setShowWelcome]         = useState(true)  // true par défaut, caché si conditions non remplies
+  const [showWelcome,         setShowWelcome]         = useState(false) // false par défaut, activé si conditions remplies
   const [prefetchDone,        setPrefetchDone]        = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
   const [welcomeReady,        setWelcomeReady]        = useState(false)
@@ -679,10 +679,10 @@ export default function DashboardPage() {
     supabase.from('users').select('onboarded, created_at').eq('id', user.id).maybeSingle()
       .then(({ data }) => {
         setWelcomeReady(true)
-        if (!data?.onboarded || isStripeReturn) { setShowWelcome(false); return }
+        if (!data?.onboarded || isStripeReturn) return  // pas d'écran welcome
         const isJustCreated = data?.created_at && (Date.now() - new Date(data.created_at).getTime()) < 10 * 60 * 1000
         setIsNewUser(!!isJustCreated)
-        if (!isJustCreated && !isFirstToday) setShowWelcome(false)
+        setShowWelcome(true) // toujours afficher à chaque connexion
       })
   }, [user?.id])
 
