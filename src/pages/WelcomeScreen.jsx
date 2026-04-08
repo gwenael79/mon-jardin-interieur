@@ -42,17 +42,23 @@ export function WelcomeScreen({ profile, isNewUser, onDone, prefetchDone }) {
     return pool[day % pool.length]
   }, [timeKey])
 
-  // Se ferme quand le prefetch IA est terminé (min 2s garanti côté dashboard)
+  // Durée minimale d'affichage : 5 secondes
+  const MIN_DISPLAY_MS = 5000
+  const mountedAt = useMemo(() => Date.now(), [])
+
+  // Se ferme quand le prefetch IA est terminé, mais pas avant 5s
   // Fallback : 8s max si prefetchDone n'arrive jamais
   useEffect(() => {
     if (prefetchDone) {
-      const timer = setTimeout(() => onDone?.(), 600) // léger délai pour la transition
+      const elapsed = Date.now() - mountedAt
+      const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed)
+      const timer = setTimeout(() => onDone?.(), remaining + 400)
       return () => clearTimeout(timer)
     }
   }, [prefetchDone])
 
   useEffect(() => {
-    const fallback = setTimeout(() => onDone?.(), 8000)
+    const fallback = setTimeout(() => onDone?.(), Math.max(MIN_DISPLAY_MS, 8000))
     return () => clearTimeout(fallback)
   }, [])
 
