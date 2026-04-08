@@ -112,7 +112,7 @@ export async function prefetchAllSlideInsights({ userId, payload = {} }) {
 
   const SLIDE_IDS = [
     'bilan', 'jardin', 'champ', 'defis',
-    'club', 'ateliers', 'bibliotheque', 'jardinotheque',
+    'club', 'ateliers', 'bibliotheque', 'jardinotheque', 'boite_graine',
   ]
 
   // On lance tous les appels en parallèle, sans attendre

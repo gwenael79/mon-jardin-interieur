@@ -39,6 +39,9 @@ RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs,
 
   stimulation: `Tu es un accompagnateur de bien-être chaleureux et inspirant. À partir de l'état actuel de la plante et des rituels récents, génère un message de stimulation douce et personnalisée pour inviter l'utilisateur à prendre soin de son jardin intérieur aujourd'hui. Si la vitalité est haute (70-100%), valorise son élan et encourage à approfondir. Si elle est moyenne (30-70%), propose une intention légère et bienveillante. Si elle est basse (moins de 30%), accueille avec douceur et offre un premier petit pas concret. Jamais de généralité — parle de CE que tu observes dans ses données. 2-3 phrases, tutoie, ton poétique et direct, sans émojis.
 RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante. Si c'est une graine ou une pousse, ne parle pas de zones — parle du début du chemin.`,
+
+  boite_graine: `Tu es un accompagnateur de bien-être bienveillant, spécialisé dans l'estime de soi. Ce soir, l'utilisateur va déposer une réussite dans sa boîte à graines — un moment de fierté, un geste de soin, une petite victoire. Génère un message d'invitation chaleureux et personnel qui l'encourage à reconnaître sa valeur ce soir. Si tu as accès à ses réussites passées, valorise leur accumulation comme un trésor qui grandit. Sinon, invite-le à poser la première graine. Tutoie. 2-3 phrases, ton doux et inspirant, sans émojis.
+RÈGLE ABSOLUE : ne parle jamais de zones (racines, tige, feuilles, fleurs, souffle). Reste centré sur l'estime de soi, la fierté, la valeur personnelle.`,
 }
 
 const ZONE_LABELS: Record<string, string> = {
@@ -57,6 +60,17 @@ async function getRecentBilans(supabase: ReturnType<typeof createClient>, userId
     .eq('user_id', userId)
     .order('date', { ascending: false })
     .limit(7)
+  return data ?? []
+}
+
+// ── Lecture des graines d'estime récentes ────────────────────────────────────
+async function getRecentGraines(supabase: ReturnType<typeof createClient>, userId: string) {
+  const { data } = await supabase
+    .from('graines_estime')
+    .select('content, tags, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(5)
   return data ?? []
 }
 
@@ -155,6 +169,15 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
   if (slide === 'club')         lines.push(circleName ? `Cercle "${circleName}" avec ${circleMembers} membres.` : 'Pas encore de cercle.')
   if (slide === 'ateliers')     lines.push(favoriteZone ? `Zone d'intérêt principal : ${favoriteZone}.` : '')
   if (slide === 'bibliotheque') lines.push(`${ritualsMonth} rituels pratiqués ce mois.`)
+  if (slide === 'boite_graine') {
+    const graines = (payload.graines as any[]) ?? []
+    if (graines.length === 0) {
+      lines.push(`L'utilisateur n'a pas encore déposé de graine. C'est peut-être ce soir la première fois.`)
+    } else {
+      lines.push(`${graines.length} graine${graines.length > 1 ? 's' : ''} déposée${graines.length > 1 ? 's' : ''} jusqu'ici.`)
+      lines.push(`Réussites récentes : ${graines.slice(0, 3).map((g: any) => `"${g.content}"`).join(' · ')}.`)
+    }
+  }
 
   return lines.filter(Boolean).join('\n')
 }
@@ -170,13 +193,15 @@ serve(async (req: Request) => {
     if (!userId || !slide) throw new Error('userId et slide requis')
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-    const [bilans, plant] = await Promise.all([
+    const [bilans, plant, graines] = await Promise.all([
       getRecentBilans(supabase, userId),
       getTodayPlant(supabase, userId),
+      slide === 'boite_graine' ? getRecentGraines(supabase, userId) : Promise.resolve([]),
     ])
 
+    const enrichedPayload = slide === 'boite_graine' ? { ...payload, graines } : payload
     const systemPrompt = SYSTEM_PROMPTS[slide] ?? SYSTEM_PROMPTS.bilan
-    const userContext  = buildContext(slide, payload, bilans, plant)
+    const userContext  = buildContext(slide, enrichedPayload, bilans, plant)
 
     const message = await callGPT(systemPrompt, userContext)
 

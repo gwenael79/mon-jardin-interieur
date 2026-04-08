@@ -162,9 +162,15 @@ const SLIDES_CONFIG = [
 //  SLIDE BOÎTE À GRAINES — délègue au composant existant BoiteAGraines
 // ─────────────────────────────────────────────────────────────────────────────
 function ScreenBoiteAGraine({ userId }) {
+  const { message: aiMessage, loading: aiLoading } = useSlideInsight({
+    userId,
+    slideId: 'boite_graine',
+    payload: {},
+    enabled: !!userId,
+  })
   return (
     <div style={{ height:'100%', overflowY:'auto', padding:'8px 4px 16px' }}>
-      <BoiteAGraines userId={userId} inline />
+      <BoiteAGraines userId={userId} inline aiMessage={aiMessage} aiLoading={aiLoading} />
     </div>
   )
 }
@@ -217,7 +223,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
     userId:  user?.id,
     slideId,
     payload: insightPayload,
-    enabled: !!user?.id && slideId !== 'boite_graine',
+    enabled: !!user?.id,
   })
 
   if (aiLoading) return (

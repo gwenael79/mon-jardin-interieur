@@ -3152,7 +3152,7 @@ const GRAINE_TAGS = [
   { id: 'merci', emoji: '🙏', label: 'Merci' },
 ]
 
-function BoiteAGraines({ userId, inline }) {
+function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) {
   const isMobile = useIsMobile()
   const [text, setText]             = useState('')
   const [tags, setTags]             = useState([])
@@ -3292,12 +3292,16 @@ function BoiteAGraines({ userId, inline }) {
           </div>
         )}
 
-        {/* ── CITATION DU JOUR (mode inline seulement, avant le form) ── */}
+        {/* ── MESSAGE IA ou citation (mode inline seulement) ── */}
         {inline && !savedToday && (
-          <div style={{ background:'rgba(60,120,60,0.07)', border:'1px solid rgba(60,120,60,0.18)', borderRadius:12, padding:'14px 18px', textAlign:'center' }}>
-            <span style={{ fontSize: 24, color:'#1a1208', lineHeight:1.6, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:500 }}>
-              "{tip}"
-            </span>
+          <div style={{ background:'rgba(60,120,60,0.07)', border:'1px solid rgba(60,120,60,0.18)', borderRadius:12, padding:'14px 18px', textAlign:'center', minHeight:70, display:'flex', alignItems:'center', justifyContent:'center' }}>
+            {aiLoading ? (
+              <span style={{ fontSize:13, color:'rgba(60,80,40,.4)', fontStyle:'italic' }}>…</span>
+            ) : (
+              <span style={{ fontSize: 20, color:'#1a1208', lineHeight:1.65, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:500 }}>
+                "{aiMessage ?? tip}"
+              </span>
+            )}
           </div>
         )}
 
