@@ -145,7 +145,46 @@ const SLIDES_CONFIG = [
     btnShadow: 'rgba(80,140,160,.34)',
     Component: ScreenJardinotheque,
   },
+  {
+    id:        'boite_graine', illusKey: 'boite_graine', image: '/champs.png',
+    badge:     'Boîte à graines',    icon: '🌱',
+    title:     'La boîte à graines',
+    subtitle:  'Déposez ce soir les graines de vos intentions pour demain.',
+    color:     '#4a8060',
+    btnLabel:  'Ouvrir ma boîte',
+    btnGrad:   'linear-gradient(135deg, #5a9870, #3a6850)',
+    btnShadow: 'rgba(60,120,80,.34)',
+    Component: ScreenBoiteAGraine,
+  },
 ]
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SLIDE BOÎTE À GRAINES — placeholder (à développer)
+// ─────────────────────────────────────────────────────────────────────────────
+function ScreenBoiteAGraine() {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'32px 24px', textAlign:'center', fontFamily:"'Jost',sans-serif" }}>
+      <div style={{ fontSize:52, marginBottom:20 }}>🌱</div>
+      <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:28, fontWeight:600, fontStyle:'italic', color:'#2a4a18', margin:'0 0 14px', lineHeight:1.3 }}>La boîte à graines</h2>
+      <p style={{ fontSize:14, color:'#5a6840', lineHeight:1.8, maxWidth:320, margin:0 }}>
+        Chaque soir, déposez ici les graines de vos intentions pour demain — vos désirs, vos engagements, vos petits espoirs.
+      </p>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PLAGE HORAIRE — détermine quel slide est affiché en premier
+//  matin   00:00–11:59 → bilan
+//  après-m 12:00–17:59 → ma fleur
+//  soir    18:00–23:59 → boite à graines
+// ─────────────────────────────────────────────────────────────────────────────
+function getTimeSlot() {
+  const h = new Date().getHours()
+  if (h < 12) return 'morning'
+  if (h < 18) return 'afternoon'
+  return 'evening'
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  HOOK — swipe horizontal (touch)
@@ -654,6 +693,18 @@ export default function DashboardPage() {
   const [pendingDegradation,  setPendingDegradation]  = useState(null)
   const [openModalId,         setOpenModalId]         = useState(null)   // id du slide dont la modal est ouverte
 
+  // ── Slides visibles selon la plage horaire ──
+  const visibleSlides = useMemo(() => {
+    const slot = getTimeSlot()
+    if (slot === 'morning') return SLIDES_CONFIG
+    const withoutBilan = SLIDES_CONFIG.filter(s => s.id !== 'bilan')
+    if (slot === 'afternoon') return withoutBilan
+    // soir : boite_graine en tête
+    const boite = withoutBilan.find(s => s.id === 'boite_graine')
+    const rest  = withoutBilan.filter(s => s.id !== 'boite_graine')
+    return [boite, ...rest]
+  }, [])
+
   // ── Stripe return ──
   const isStripeReturn = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
@@ -776,9 +827,9 @@ export default function DashboardPage() {
   const handleNav = useCallback((dir) => {
     setSlideIdx(prev => {
       const next = prev + dir
-      if (next < 0 || next >= SLIDES_CONFIG.length) return prev
+      if (next < 0 || next >= visibleSlides.length) return prev
       // Mettre à jour l'écran actif pour les effets analytics
-      const nextSlide = SLIDES_CONFIG[next]
+      const nextSlide = visibleSlides[next]
       if (!nextSlide.isBilan) setActive(nextSlide.id)
       track('page_view', {}, nextSlide.id, 'navigation')
       return next
@@ -846,19 +897,19 @@ export default function DashboardPage() {
   // Saut direct vers un slide (nav latérale desktop)
   const handleJump = useCallback((idx) => {
     if (idx === slideIdx) return
-    const s = SLIDES_CONFIG[idx]
+    const s = visibleSlides[idx]
     if (!s.isBilan) setActive(s.id)
     track('page_view', {}, s.id, 'navigation')
     setSlideIdx(idx)
-  }, [slideIdx, track])
+  }, [slideIdx, track, visibleSlides])
 
   // ── Navigation clavier : slides (fond) et modal (si ouverte) ──
   useEffect(() => {
     if (isMobile) return
     const onKey = (e) => {
       if (openModalId) {
-        const idx  = SLIDES_CONFIG.findIndex(s => s.id === openModalId)
-        if (e.key === 'ArrowRight' && idx < SLIDES_CONFIG.length - 1) {
+        const idx  = visibleSlides.findIndex(s => s.id === openModalId)
+        if (e.key === 'ArrowRight' && idx < visibleSlides.length - 1) {
           handleModalNav(1)
         }
         if (e.key === 'ArrowLeft' && idx > 0) handleModalNav(-1)
@@ -875,10 +926,10 @@ export default function DashboardPage() {
   // ── Navigation dans la ScreenModal ──
   const handleModalNav = useCallback((dir) => {
     setOpenModalId(prev => {
-      const idx  = SLIDES_CONFIG.findIndex(s => s.id === prev)
+      const idx  = visibleSlides.findIndex(s => s.id === prev)
       const next = idx + dir
-      if (next < 0 || next >= SLIDES_CONFIG.length) return prev
-      const s = SLIDES_CONFIG[next]
+      if (next < 0 || next >= visibleSlides.length) return prev
+      const s = visibleSlides[next]
       setSlideIdx(next)
       if (!s.isBilan) setActive(s.id)
       track('page_view', {}, s.id, 'navigation')
@@ -988,7 +1039,7 @@ export default function DashboardPage() {
       {openModalId && (
         <ScreenModal
           slideId={openModalId}
-          slides={SLIDES_CONFIG}
+          slides={visibleSlides}
           screenProps={screenProps}
           bilanDoneToday={bilanDoneToday}
           onBilan={() => setShowBilanModal(true)}
@@ -1003,8 +1054,8 @@ export default function DashboardPage() {
   //  RENDU DESKTOP — carte preview centrée sur fond nature
   // ─────────────────────────────────────────────────────────────────────────
   if (!isMobile) {
-    const slide  = SLIDES_CONFIG[slideIdx]
-    const isLast = slideIdx === SLIDES_CONFIG.length - 1
+    const slide  = visibleSlides[slideIdx]
+    const isLast = slideIdx === visibleSlides.length - 1
 
     return (
       <>
@@ -1079,7 +1130,7 @@ export default function DashboardPage() {
                 <div style={{ position:'absolute', bottom:12, left:18, fontFamily:"'Jost',sans-serif", fontSize:9.5, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.9)', background:'rgba(0,0,0,.24)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>{slide.badge}</div>
                 {/* Progress dots dans l'illus */}
                 <div style={{ position:'absolute', bottom:14, right:18, display:'flex', gap:4, alignItems:'center' }}>
-                  {SLIDES_CONFIG.map((s, i) => (
+                  {visibleSlides.map((s, i) => (
                     <div
                       key={s.id}
                       onClick={() => handleJump(i)}
@@ -1119,7 +1170,7 @@ export default function DashboardPage() {
               <div style={{ flexShrink:0, padding:'14px 24px 20px', display:'flex', gap:10, alignItems:'center', background:'linear-gradient(transparent, rgba(250,245,242,.98) 38%)' }}>
 
                 {/* Slide précédent */}
-                {slideIdx > 0 && (() => { const prev = SLIDES_CONFIG[slideIdx-1]; return (
+                {slideIdx > 0 && (() => { const prev = visibleSlides[slideIdx-1]; return (
                   <button
                     onClick={() => handleNav(-1)}
                     style={{ flexShrink:0, padding:'5px 14px', borderRadius:100, background:prev.color, border:`1px solid ${prev.color}`, fontSize:11, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s, transform .15s', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}
@@ -1143,7 +1194,7 @@ export default function DashboardPage() {
                 </button>
 
                 {/* Slide suivant */}
-                {!isLast && (() => { const next = SLIDES_CONFIG[slideIdx+1]; return (
+                {!isLast && (() => { const next = visibleSlides[slideIdx+1]; return (
                   <button
                     onClick={() => handleNav(1)}
                     style={{ flexShrink:0, padding:'5px 14px', borderRadius:100, background:next.color, border:`1px solid ${next.color}`, fontSize:11, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s, transform .15s', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}
@@ -1168,11 +1219,11 @@ export default function DashboardPage() {
     <>
       {commonOverlays}
       <MobileSlideFlow
-        slides={SLIDES_CONFIG}
+        slides={visibleSlides}
         curIdx={slideIdx}
         onNav={handleNav}
         onOpenModal={(id) => {
-          if (SLIDES_CONFIG.find(s => s.id === id)?.isBilan) setShowBilanModal(true)
+          if (visibleSlides.find(s => s.id === id)?.isBilan) setShowBilanModal(true)
           else setOpenModalId(id)
         }}
         bilanDoneToday={bilanDoneToday}
