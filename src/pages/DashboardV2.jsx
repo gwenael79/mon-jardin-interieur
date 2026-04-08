@@ -162,15 +162,9 @@ const SLIDES_CONFIG = [
 //  SLIDE BOÎTE À GRAINES — délègue au composant existant BoiteAGraines
 // ─────────────────────────────────────────────────────────────────────────────
 function ScreenBoiteAGraine({ userId }) {
-  const { message: aiMessage, loading: aiLoading } = useSlideInsight({
-    userId,
-    slideId: 'boite_graine',
-    payload: {},
-    enabled: !!userId,
-  })
   return (
     <div style={{ height:'100%', overflowY:'auto', padding:'8px 4px 16px' }}>
-      <BoiteAGraines userId={userId} inline aiMessage={aiMessage} aiLoading={aiLoading} />
+      <BoiteAGraines userId={userId} inline />
     </div>
   )
 }

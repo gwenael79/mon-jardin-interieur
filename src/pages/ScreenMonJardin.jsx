@@ -3227,7 +3227,7 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
     "Chaque graine que tu plantes aujourd'hui nourrit ta confiance de demain.",
     "Tu mérites de voir tout ce que tu accomplis.",
     "Tes réussites existent. Ce journal en est la preuve.",
-    "Revenir ici, c'est déjà prendre soin de toi.",
+    "Déposer un mot pour soi c'est déjà prendre soin de soi.",
     "Une seule chose bien faite par jour — c'est énorme.",
   ]
   const tip = ENCOURAGEMENTS[new Date().getDay() % ENCOURAGEMENTS.length]
@@ -3298,7 +3298,7 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
             {aiLoading ? (
               <span style={{ fontSize:13, color:'rgba(60,80,40,.4)', fontStyle:'italic' }}>…</span>
             ) : (
-              <span style={{ fontSize: 20, color:'#1a1208', lineHeight:1.65, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:500 }}>
+              <span style={{ fontSize: 30, color:'#1a1208', lineHeight:1.5, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:700 }}>
                 "{aiMessage ?? tip}"
               </span>
             )}
@@ -3323,7 +3323,7 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
                 ))}
               </div>
             )}
-            <div style={{ fontSize: 16, color:'#1a1208', marginTop:2 }}>
+            <div style={{ fontSize: 14, color:'#5a6840', marginTop:2, fontWeight:400 }}>
               Reviens demain soir pour planter une nouvelle graine 🌿
             </div>
           </div>
@@ -3459,8 +3459,8 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
 
             {/* Message d'ancrage */}
             <div style={{ background:'rgba(60,120,60,0.07)', border:'1px solid rgba(60,120,60,0.15)', borderRadius:12, padding:'12px 16px' }}>
-              <span style={{ fontSize: isMobile ? 17 : 18, color:'#1a1208', lineHeight:1.7, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif" }}>
-                Ces moments sont réels. Tu les as vécus. Ils font partie de qui tu es.
+              <span style={{ fontSize: 24, color:'#1a1208', lineHeight:1.7, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:700 }}>
+                Ces moments sont réels. Tu les as vécus.<br/>Ils font partie de qui tu es.
               </span>
             </div>
 
