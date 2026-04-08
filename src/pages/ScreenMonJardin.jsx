@@ -3218,18 +3218,18 @@ function BoiteAGraines({ userId, inline }) {
         {inline && (
           <div style={{ textAlign:'center', padding: isMobile ? '0 4px' : '0 8px' }}>
             <div style={{ fontSize: isMobile ? 42 : 48, lineHeight:1, marginBottom:12 }}>🫙</div>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 30, fontWeight:600, fontStyle:'italic', color:'var(--cream)', lineHeight:1.25, marginBottom:10 }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 32, fontWeight:600, fontStyle:'italic', color:'#1a1208', lineHeight:1.25, marginBottom:12 }}>
               La boîte à graines
             </div>
-            <p style={{ fontSize: isMobile ? 15 : 16, color:'var(--text2)', lineHeight:1.75, margin:'0 0 4px', fontFamily:"'Jost',sans-serif", fontWeight:300 }}>
-              Chaque soir, dépose ici <strong style={{ fontWeight:500, color:'var(--cream)' }}>une réussite de ta journée</strong> —<br/>
+            <p style={{ fontSize: isMobile ? 18 : 19, color:'#1a1208', lineHeight:1.75, margin:'0 0 8px', fontFamily:"'Jost',sans-serif", fontWeight:400 }}>
+              Chaque soir, dépose ici <strong style={{ fontWeight:600 }}>une réussite de ta journée</strong> —<br/>
               un moment dont tu es fier·e, un geste de soin, une petite victoire.
             </p>
-            <p style={{ fontSize: isMobile ? 13 : 14, color:'var(--text3)', lineHeight:1.7, margin:0, fontStyle:'italic' }}>
+            <p style={{ fontSize: isMobile ? 16 : 17, color:'#3a3a3a', lineHeight:1.75, margin:0, fontStyle:'italic' }}>
               Ces graines s'accumulent jour après jour et deviennent ton trésor — la preuve vivante de ta valeur.
               C'est ainsi que grandit l'estime de soi.
             </p>
-            <div style={{ margin:'14px auto 0', width:40, height:1, background:'rgba(var(--green-rgb),0.25)' }} />
+            <div style={{ margin:'14px auto 0', width:40, height:1, background:'rgba(0,0,0,0.12)' }} />
           </div>
         )}
 
@@ -3255,8 +3255,8 @@ function BoiteAGraines({ userId, inline }) {
         {/* ── BOUTON VOIR MES GRAINES (mode inline) ── */}
         {inline && (graines.length > 0 || savedToday) && (
           <div style={{ display:'flex', justifyContent:'center' }}>
-            <div onClick={openModal} style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 22px', borderRadius:100, background:'rgba(var(--green-rgb),0.10)', border:'1px solid rgba(var(--green-rgb),0.3)', cursor:'pointer', fontSize: isMobile ? 14 : 15, color:'var(--green)', fontFamily:"'Jost',sans-serif" }}>
-              <span style={{ fontSize:18 }}>🫙</span>
+            <div onClick={openModal} style={{ display:'flex', alignItems:'center', gap:7, padding:'12px 26px', borderRadius:100, background:'rgba(60,120,60,0.12)', border:'1px solid rgba(60,120,60,0.3)', cursor:'pointer', fontSize: isMobile ? 17 : 18, color:'#1a4a18', fontFamily:"'Jost',sans-serif", fontWeight:500 }}>
+              <span style={{ fontSize:20 }}>🫙</span>
               <span>Voir mes graines ({graines.length > 0 ? graines.length : '…'})</span>
             </div>
           </div>
@@ -3264,8 +3264,8 @@ function BoiteAGraines({ userId, inline }) {
 
         {/* ── CITATION DU JOUR (mode inline seulement, avant le form) ── */}
         {inline && !savedToday && (
-          <div style={{ background:'rgba(var(--green-rgb),0.06)', border:'1px solid rgba(var(--green-rgb),0.15)', borderRadius:12, padding:'12px 16px', textAlign:'center' }}>
-            <span style={{ fontSize: isMobile ? 14 : 15, color:'var(--text2)', lineHeight:1.7, fontStyle:'italic' }}>
+          <div style={{ background:'rgba(60,120,60,0.07)', border:'1px solid rgba(60,120,60,0.18)', borderRadius:12, padding:'14px 18px', textAlign:'center' }}>
+            <span style={{ fontSize: isMobile ? 17 : 18, color:'#2a3a20', lineHeight:1.75, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif" }}>
               "{tip}"
             </span>
           </div>
@@ -3273,23 +3273,23 @@ function BoiteAGraines({ userId, inline }) {
 
         {/* ── CONTENU SELON ÉTAT ── */}
         {savedToday ? (
-          <div style={{ background:'rgba(var(--green-rgb),0.07)', border:'1px solid rgba(var(--green-rgb),0.2)', borderRadius:14, padding: isMobile ? '16px' : '18px 20px', display:'flex', flexDirection:'column', gap:10 }}>
-            <div style={{ fontSize: isMobile ? 11 : 12, color:'rgba(var(--green-rgb),0.6)', letterSpacing:'.12em', textTransform:'uppercase', fontFamily:"'Jost',sans-serif" }}>
+          <div style={{ background:'rgba(60,120,60,0.07)', border:'1px solid rgba(60,120,60,0.2)', borderRadius:14, padding: isMobile ? '16px' : '18px 20px', display:'flex', flexDirection:'column', gap:12 }}>
+            <div style={{ fontSize: isMobile ? 12 : 13, color:'rgba(60,120,60,0.7)', letterSpacing:'.12em', textTransform:'uppercase', fontFamily:"'Jost',sans-serif" }}>
               ✓ Graine du jour plantée
             </div>
-            <div style={{ fontSize: isMobile ? 17 : 18, color:'var(--cream)', lineHeight:1.65, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:400 }}>
+            <div style={{ fontSize: isMobile ? 19 : 20, color:'#1a1208', lineHeight:1.65, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:400 }}>
               « {todayEntry?.content} »
             </div>
             {todayEntry?.tags?.length > 0 && (
               <div style={{ display:'flex', gap:8 }}>
                 {GRAINE_TAGS.filter(t => todayEntry.tags.includes(t.id)).map(t => (
-                  <span key={t.id} style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 14px', borderRadius:100, background:'rgba(var(--green-rgb),0.1)', border:'1px solid rgba(var(--green-rgb),0.2)', fontSize: isMobile ? 13 : 14, color:'var(--text2)' }}>
-                    <span style={{ fontSize:16 }}>{t.emoji}</span> {t.label}
+                  <span key={t.id} style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 16px', borderRadius:100, background:'rgba(60,120,60,0.1)', border:'1px solid rgba(60,120,60,0.2)', fontSize: isMobile ? 15 : 16, color:'#1a3a18' }}>
+                    <span style={{ fontSize:18 }}>{t.emoji}</span> {t.label}
                   </span>
                 ))}
               </div>
             )}
-            <div style={{ fontSize: isMobile ? 12 : 13, color:'var(--text3)', marginTop:4 }}>
+            <div style={{ fontSize: isMobile ? 14 : 15, color:'#5a6840', marginTop:2 }}>
               Reviens demain soir pour planter une nouvelle graine 🌿
             </div>
           </div>
@@ -3309,12 +3309,12 @@ function BoiteAGraines({ userId, inline }) {
               maxLength={400}
               style={{
                 width: '100%', boxSizing: 'border-box',
-                background: 'var(--surface-3)', border: '1px solid rgba(var(--green-rgb),0.2)',
+                background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(60,120,60,0.25)',
                 borderRadius: 12, padding: isMobile ? '14px' : '14px 16px', resize: 'none',
-                height: isMobile ? (inline ? 110 : 96) : (inline ? 100 : 80),
-                fontSize: isMobile ? (inline ? 16 : 14) : (inline ? 15 : 13),
-                fontFamily: "'Jost', sans-serif", color: 'var(--text2)',
-                outline: 'none', lineHeight: 1.7, colorScheme: 'dark',
+                height: isMobile ? (inline ? 120 : 96) : (inline ? 110 : 80),
+                fontSize: isMobile ? (inline ? 18 : 14) : (inline ? 18 : 13),
+                fontFamily: "'Jost', sans-serif", color: '#1a1208',
+                outline: 'none', lineHeight: 1.7,
               }}
             />
 
@@ -3325,18 +3325,18 @@ function BoiteAGraines({ userId, inline }) {
                   key={t.id}
                   onClick={() => toggleTag(t.id)}
                   style={{
-                    flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:7,
-                    minHeight: isMobile ? 50 : 46, borderRadius: 12,
-                    fontSize: isMobile ? (inline ? 15 : 13) : (inline ? 14 : 12),
+                    flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                    minHeight: isMobile ? 54 : 50, borderRadius: 12,
+                    fontSize: isMobile ? (inline ? 18 : 13) : (inline ? 18 : 12),
                     cursor:'pointer',
-                    background: tags.includes(t.id) ? 'rgba(var(--zone-flowers-rgb),0.15)' : 'var(--surface-2)',
-                    border: `1px solid ${tags.includes(t.id) ? 'rgba(var(--zone-flowers-rgb),0.45)' : 'var(--surface-3)'}`,
-                    color: tags.includes(t.id) ? 'var(--cream)' : 'var(--text3)',
+                    background: tags.includes(t.id) ? 'rgba(220,80,120,0.12)' : 'rgba(255,255,255,0.7)',
+                    border: `1.5px solid ${tags.includes(t.id) ? 'rgba(220,80,120,0.45)' : 'rgba(0,0,0,0.12)'}`,
+                    color: tags.includes(t.id) ? '#8a2040' : '#3a3a3a',
                     transition:'all .18s', userSelect:'none', WebkitTapHighlightColor:'transparent',
-                    fontFamily:"'Jost',sans-serif", fontWeight: tags.includes(t.id) ? 500 : 300,
+                    fontFamily:"'Jost',sans-serif", fontWeight: tags.includes(t.id) ? 600 : 400,
                   }}
                 >
-                  <span style={{ fontSize: isMobile ? 20 : 18 }}>{t.emoji}</span>
+                  <span style={{ fontSize: isMobile ? 22 : 20 }}>{t.emoji}</span>
                   <span>{t.label}</span>
                 </div>
               ))}
@@ -3344,22 +3344,22 @@ function BoiteAGraines({ userId, inline }) {
 
             {/* Footer */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
-              <span style={{ fontSize: isMobile ? 12 : 11, color:'var(--text3)', opacity:0.6, flex:1 }}>
+              <span style={{ fontSize: isMobile ? 13 : 12, color:'#7a8060', flex:1 }}>
                 {text.length > 0 ? `${text.length}/400` : '🔒 Privé · visible uniquement par toi'}
               </span>
               <button
                 onClick={handleSave}
                 disabled={!text.trim() || saving}
                 style={{
-                  minHeight: isMobile ? 50 : 46,
-                  padding: inline ? '0 32px' : '0 22px',
+                  minHeight: isMobile ? 54 : 50,
+                  padding: inline ? '0 36px' : '0 22px',
                   borderRadius: 12,
-                  fontSize: isMobile ? (inline ? 16 : 14) : (inline ? 15 : 13),
-                  background: text.trim() ? 'rgba(var(--green-rgb),0.18)' : 'var(--surface-2)',
-                  border: `1px solid ${text.trim() ? 'rgba(var(--green-rgb),0.45)' : 'var(--surface-3)'}`,
-                  color: text.trim() ? 'var(--cream)' : 'var(--text3)',
+                  fontSize: isMobile ? (inline ? 18 : 14) : (inline ? 18 : 13),
+                  background: text.trim() ? 'rgba(40,100,40,0.85)' : 'rgba(0,0,0,0.07)',
+                  border: `1px solid ${text.trim() ? 'rgba(40,100,40,0.6)' : 'rgba(0,0,0,0.1)'}`,
+                  color: text.trim() ? '#fff' : '#aaa',
                   cursor: text.trim() ? 'pointer' : 'default',
-                  fontFamily: "'Jost', sans-serif", fontWeight:500, transition: 'all .18s',
+                  fontFamily: "'Jost', sans-serif", fontWeight:600, transition: 'all .18s',
                   WebkitTapHighlightColor:'transparent',
                   width: isMobile ? '100%' : 'auto',
                   letterSpacing:'.04em',
