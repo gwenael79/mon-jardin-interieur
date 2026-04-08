@@ -110,22 +110,28 @@ html,body,#root{height:100%;width:100%}
 
 /* Boutons */
 .auth-btn-primary {
-  width:100%; padding:12px 20px; border-radius:50px; border:none;
-  background:linear-gradient(135deg,#4a8a20,#2e6808);
+  width:100%; padding:13px 24px; border-radius:50px;
+  border:1.5px solid rgba(42,104,8,.55);
+  background:rgba(42,104,8,.55);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
   color:#fff; font-size:15px; font-weight:600; letter-spacing:.02em;
   font-family:'Jost',sans-serif; cursor:pointer;
-  box-shadow:0 5px 18px rgba(42,104,8,.28);
-  transition:filter .2s; margin-bottom:8px;
+  box-shadow:0 4px 16px rgba(42,104,8,.20);
+  transition:all .2s; margin-bottom:8px;
 }
-.auth-btn-primary:hover { filter:brightness(1.08); }
+.auth-btn-primary:hover { background:rgba(42,104,8,.72); border-color:rgba(42,104,8,.72); }
 .auth-btn-ghost {
-  width:100%; padding:11px 20px; border-radius:50px;
-  border:1.5px solid rgba(15,42,8,.22); background:rgba(255,255,255,.65);
-  color:rgba(15,42,8,.85); font-size:14px; font-weight:400;
+  width:100%; padding:12px 24px; border-radius:50px;
+  border:1.5px solid rgba(255,255,255,.55);
+  background:rgba(255,255,255,.28);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  color:rgba(15,42,8,.90); font-size:14px; font-weight:400;
   font-family:'Jost',sans-serif; cursor:pointer;
-  transition:background .2s; margin-bottom:14px;
+  outline:none;
+  transition:all .2s; margin-bottom:14px;
 }
-.auth-btn-ghost:hover { background:rgba(255,255,255,.90); }
+.auth-btn-ghost:hover { background:rgba(255,255,255,.48); border-color:rgba(42,104,8,.55); }
+.auth-btn-ghost:focus { outline:2px solid rgba(42,104,8,.50); outline-offset:2px; }
 .auth-tagline { text-align:center; font-size:12px; color:rgba(15,42,8,.45); letter-spacing:.06em; }
 
 /* ── Formulaires dans le cadre ── */
@@ -193,8 +199,8 @@ html,body,#root{height:100%;width:100%}
   .auth-title { font-size:clamp(38px,10vw,54px); }
   .auth-subtitle-wrap { display:none; }
   .auth-sep { display:none; }
-  .auth-btn-primary { font-size:14px; padding:11px 20px; }
-  .auth-btn-ghost { font-size:13px; padding:9px 20px; }
+  .auth-btn-primary { font-size:13px; padding:10px 18px; }
+  .auth-btn-ghost { font-size:12px; padding:9px 18px; }
   .auth-tagline { font-size:13px; }
 }
 `
