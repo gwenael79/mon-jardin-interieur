@@ -34,7 +34,7 @@ import {
 } from './dashboardShared'
 
 import PushNotificationButton        from '../components/PushNotificationButton'
-import { ScreenMonJardin, DailyQuizModal } from './ScreenMonJardin'
+import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers }      from './ScreenClubJardiniers'
@@ -159,16 +159,12 @@ const SLIDES_CONFIG = [
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  SLIDE BOÎTE À GRAINES — placeholder (à développer)
+//  SLIDE BOÎTE À GRAINES — délègue au composant existant BoiteAGraines
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenBoiteAGraine() {
+function ScreenBoiteAGraine({ userId }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', padding:'32px 24px', textAlign:'center', fontFamily:"'Jost',sans-serif" }}>
-      <div style={{ fontSize:52, marginBottom:20 }}>🌱</div>
-      <h2 style={{ fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:28, fontWeight:600, fontStyle:'italic', color:'#2a4a18', margin:'0 0 14px', lineHeight:1.3 }}>La boîte à graines</h2>
-      <p style={{ fontSize:14, color:'#5a6840', lineHeight:1.8, maxWidth:320, margin:0 }}>
-        Chaque soir, déposez ici les graines de vos intentions pour demain — vos désirs, vos engagements, vos petits espoirs.
-      </p>
+    <div style={{ height:'100%', overflowY:'auto', padding:'8px 4px 16px' }}>
+      <BoiteAGraines userId={userId} inline />
     </div>
   )
 }
@@ -221,7 +217,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
     userId:  user?.id,
     slideId,
     payload: insightPayload,
-    enabled: !!user?.id,
+    enabled: !!user?.id && slideId !== 'boite_graine',
   })
 
   if (aiLoading) return (

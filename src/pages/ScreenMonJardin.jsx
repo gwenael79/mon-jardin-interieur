@@ -3120,7 +3120,7 @@ function StreakMessage({ streak }) {
 //  BOÎTE À GRAINES — Estime de soi
 // ═══════════════════════════════════════════════════════
 const GRAINE_TAGS = [
-  { id: 'coeur', emoji: '🌻', label: 'Amour' },
+  { id: 'coeur', emoji: '❤️', label: 'Cœur' },
   { id: 'merci', emoji: '🙏', label: 'Merci' },
 ]
 
@@ -4979,4 +4979,4 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   )
 }
 
-export { ScreenMonJardin, DailyQuizModal }
+export { ScreenMonJardin, DailyQuizModal, BoiteAGraines }
