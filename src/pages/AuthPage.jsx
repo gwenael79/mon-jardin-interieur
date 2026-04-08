@@ -183,7 +183,7 @@ html,body,#root{height:100%;width:100%}
   .auth-right-col { display:none; }
   .auth-layout { flex-direction:column; }
   .auth-left-col {
-    width:100%; padding:20px 24px 32px;
+    width:100%; padding:32px 24px 28px;
     align-items:center; text-align:center;
     justify-content:flex-start; gap:20px;
   }
@@ -320,31 +320,19 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       </div>
       <div style={{ position:'absolute', inset:0, background:'rgba(240,236,220,.35)', zIndex:0 }}/>
 
-      {/* Logo mobile — absolu en haut de l'écran */}
-      {isMobile && (
-        <div style={{ position:'absolute', top:60, left:0, right:0, zIndex:10, display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
-          <div className="auth-logo-circle" style={{ width:80, height:80 }}>
-            <img src="/icons/icon-192.png" alt="" style={{ width:62, height:62, borderRadius:'50%' }}/>
-          </div>
-          <div className="auth-logo-name" style={{ fontSize:20 }}>Mon <em style={{ fontStyle:'normal', color:'#2e7010' }}>Jardin</em> Intérieur</div>
-        </div>
-      )}
-
       <div className="auth-layout">
         <div style={{ display:'flex', alignItems:'center', gap:48, background: isMobile ? 'transparent' : 'rgba(252,250,244,.78)', backdropFilter: isMobile ? 'none' : 'blur(16px)', borderRadius: isMobile ? 0 : 28, border: isMobile ? 'none' : '1.5px solid rgba(180,210,140,.35)', padding: isMobile ? '40px 22px 28px' : '40px 40px', boxShadow: isMobile ? 'none' : '0 8px 40px rgba(60,100,20,.10)' }}>
 
         {/* ── COLONNE GAUCHE — contenu de présentation ── */}
         {(!mobileForm) && (
           <div className="auth-left-col">
-            {/* Logo — visible sur PC dans la colonne, caché sur mobile */}
-            {!isMobile && (
-              <div className="auth-logo-block">
-                <div className="auth-logo-circle">
-                  <img src="/icons/icon-192.png" alt="" style={{ width:68, height:68, borderRadius:'50%' }}/>
-                </div>
-                <div className="auth-logo-name">Mon <em style={{ fontStyle:'normal', color:'#2e7010' }}>Jardin</em> Intérieur</div>
+            {/* Logo — toujours dans le flux, taille différente selon mobile/PC */}
+            <div className="auth-logo-block">
+              <div className="auth-logo-circle" style={{ width: isMobile ? 72 : 90, height: isMobile ? 72 : 90 }}>
+                <img src="/icons/icon-192.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
               </div>
-            )}
+              <div className="auth-logo-name" style={{ fontSize: isMobile ? 18 : 22 }}>Mon <em style={{ fontStyle:'normal', color:'#2e7010' }}>Jardin</em> Intérieur</div>
+            </div>
 
             {/* Titre */}
             <div>
