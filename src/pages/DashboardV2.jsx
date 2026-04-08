@@ -1152,7 +1152,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Sous-titre */}
-                <div style={{ fontSize:15, fontWeight:300, color:'rgba(30,20,8,.55)', lineHeight:1.7, marginBottom:12 }}>
+                <div style={{ fontSize:15, fontWeight:300, color:'#1a1208', lineHeight:1.7, marginBottom:12 }}>
                   {slide.subtitle}
                 </div>
 
