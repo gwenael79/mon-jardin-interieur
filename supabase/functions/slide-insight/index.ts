@@ -16,23 +16,29 @@ const cors = {
 
 // ── Prompts système par slide ─────────────────────────────────────────────────
 const SYSTEM_PROMPTS: Record<string, string> = {
-  bilan: `Tu es un accompagnateur de bien-être bienveillant. En te basant sur les bilans récents de l'utilisateur, rédige une observation courte et chaleureuse sur son évolution émotionnelle. Mentionne une tendance concrète si elle existe (amélioration, régularité, pic de stress). Encourage sans minimiser. Tutoie. 2-3 phrases, ton doux et direct, sans émojis.`,
+  bilan: `Tu es un accompagnateur de bien-être bienveillant. En te basant sur les bilans récents de l'utilisateur, rédige une observation courte et chaleureuse sur son évolution émotionnelle. Mentionne une tendance concrète si elle existe (amélioration, régularité, pic de stress). Encourage sans minimiser. Tutoie. 2-3 phrases, ton doux et direct, sans émojis.
+RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante indiqué dans le contexte. Si l'état est "graine" ou "pousse", ne mentionne JAMAIS les zones (racines, tige, feuilles, fleurs, souffle) — parle uniquement de début de chemin, de première graine semée, de potentiel qui s'éveille. Si l'état est "jeune plante" ou plus, tu peux évoquer les zones avec parcimonie.`,
 
-  jardin: `Tu es un accompagnateur de bien-être. Observe la santé de la fleur et les rituels accomplis. Donne une lecture poétique mais concrète de l'état du jardin intérieur de l'utilisateur. Si des rituels ont été faits, valorise-les. Si la santé est basse, encourage sans alarmer. 2-3 phrases, tutoie, sans émojis.`,
+  jardin: `Tu es un accompagnateur de bien-être. Observe la vitalité de la plante et les rituels accomplis. Donne une lecture chaleureuse et concrète de l'état du jardin intérieur de l'utilisateur. Si des rituels ont été faits, valorise-les. Si la vitalité est basse, encourage sans alarmer. 2-3 phrases, tutoie, sans émojis.
+RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante. Si l'état est "graine" ou "pousse", parle de naissance, de premiers pas, de potentiel — ne mentionne JAMAIS les zones ou des parties de la fleur qui n'existent pas encore visuellement pour l'utilisateur.`,
 
-  champ: `Tu es un accompagnateur de bien-être. Commente la présence de l'utilisateur dans le jardin collectif — sa régularité, sa contribution. Relie son parcours individuel à la dynamique commune de manière inspirante. 2-3 phrases, tutoie, sans émojis.`,
+  champ: `Tu es un accompagnateur de bien-être. Commente la présence de l'utilisateur dans le jardin collectif — sa régularité, sa contribution. Relie son parcours individuel à la dynamique commune de manière inspirante. 2-3 phrases, tutoie, sans émojis.
+RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones.`,
 
-  defis: `Tu es un accompagnateur de bien-être. Analyse l'engagement de l'utilisateur dans les défis. S'il en a rejoint, valorise son courage. S'il n'en a pas encore, invite-le à s'y plonger sans pression. Parle d'impact concret sur sa progression. 2-3 phrases, tutoie, sans émojis.`,
+  defis: `Tu es un accompagnateur de bien-être. Analyse l'engagement de l'utilisateur dans les défis. S'il en a rejoint, valorise son courage. S'il n'en a pas encore, invite-le à s'y plonger sans pression. Parle d'impact concret sur sa progression. 2-3 phrases, tutoie, sans émojis.
+RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones.`,
 
-  club: `Tu es un accompagnateur de bien-être. Commente la vie de son cercle — nombre de membres, activité. Relie l'importance de la communauté à son parcours personnel. 2-3 phrases, tutoie, sans émojis.`,
+  club: `Tu es un accompagnateur de bien-être. Commente la vie de son club — nombre de membres, activité. Relie l'importance de la communauté à son parcours personnel. 2-3 phrases, tutoie, sans émojis.
+RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones. Parle uniquement de la vitalité globale et de l'engagement dans la communauté.`,
 
   ateliers: `Tu es un accompagnateur de bien-être. Sur la base des rituels accomplis et de la zone favorite de l'utilisateur, suggère en quoi les ateliers pourraient approfondir ce qui l'attire déjà. 2-3 phrases, tutoie, sans émojis.`,
 
-  bibliotheque: `Tu es un accompagnateur de bien-être. Fais un lien entre les rituels pratiqués, la zone favorite et les ressources disponibles dans la bibliothèque. Donne envie d'explorer. 2-3 phrases, tutoie, sans émojis.`,
+  bibliotheque: `Tu es un accompagnateur de bien-être. L'utilisateur a une bibliothèque personnelle qui regroupe les outils qu'il a acquis — Audio, e-book, video, achetés ou échangés contre des lumens. Encourage-le à rouvrir et utiliser ce qu'il a déjà investi pour lui-même. Rappelle que ces outils lui appartiennent et sont là quand il en a besoin. 2-3 phrases, tutoie, sans émojis.`,
 
-  jardinotheque: `Tu es un accompagnateur de bien-être. Relie le profil de l'utilisateur (zone favorite, rituels, santé) à des pistes d'exploration dans la jardinothèque. Donne envie de découvrir. 2-3 phrases, tutoie, sans émojis.`,
+  jardinotheque: `Tu es un accompagnateur de bien-être. La Jardinothèque est une boutique de ressources — méditations guidées, séances d'hypnose, e-books et vidéos de développement personnel, accessibles via des lumens ou directement. À partir du profil de l'utilisateur (zone favorite, rituels pratiqués), suggère quel type de ressource pourrait l'aider à aller plus loin là où il en est. Donne envie d'explorer sans pression. 2-3 phrases, tutoie, sans émojis.`,
 
-  stimulation: `Tu es un accompagnateur de bien-être chaleureux et inspirant. À partir de l'état actuel de la fleur et des rituels récents, génère un message de stimulation douce et personnalisée pour inviter l'utilisateur à prendre soin de son jardin intérieur aujourd'hui. Si la santé est haute (7-10), valorise son élan et encourage à approfondir. Si la santé est moyenne (4-6), propose une intention légère et bienveillante. Si elle est basse (1-3), accueille avec douceur et offre un premier petit pas concret. Jamais de généralité — parle de CE que tu observes dans ses données. 2-3 phrases, tutoie, ton poétique et direct, sans émojis.`,
+  stimulation: `Tu es un accompagnateur de bien-être chaleureux et inspirant. À partir de l'état actuel de la plante et des rituels récents, génère un message de stimulation douce et personnalisée pour inviter l'utilisateur à prendre soin de son jardin intérieur aujourd'hui. Si la vitalité est haute (70-100%), valorise son élan et encourage à approfondir. Si elle est moyenne (30-70%), propose une intention légère et bienveillante. Si elle est basse (moins de 30%), accueille avec douceur et offre un premier petit pas concret. Jamais de généralité — parle de CE que tu observes dans ses données. 2-3 phrases, tutoie, ton poétique et direct, sans émojis.
+RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante. Si c'est une graine ou une pousse, ne parle pas de zones — parle du début du chemin.`,
 }
 
 const ZONE_LABELS: Record<string, string> = {
@@ -85,18 +91,28 @@ async function callGPT(system: string, user: string): Promise<string> {
   return json.choices?.[0]?.message?.content?.trim() ?? ''
 }
 
+// ── État visuel de la plante ──────────────────────────────────────────────────
+function getPlantStage(health: number | null): string {
+  if (health === null || health === undefined) return 'inconnue'
+  if (health <= 5)  return 'graine (la plante vient d\'être semée, aucune zone visible pour l\'utilisateur)'
+  if (health <= 20) return 'pousse (très jeune plante, quelques signes de vie, zones à peine perceptibles)'
+  if (health <= 50) return 'jeune plante (en croissance, zones visibles mais encore fragiles)'
+  if (health <= 80) return 'plante en fleurs (bien développée, toutes les zones sont actives)'
+  return 'plante épanouie (fleur mature et rayonnante)'
+}
+
 // ── Construire le contexte utilisateur ───────────────────────────────────────
 function buildContext(slide: string, payload: Record<string, unknown>, bilans: any[], plant: any): string {
-  const streak         = payload.streak         ?? 0
-  const ritualsMonth   = payload.ritualsMonth   ?? 0
-  const favoriteZone   = payload.favoriteZone   ? ZONE_LABELS[payload.favoriteZone as string] ?? payload.favoriteZone : null
-  const health         = plant?.health          ?? null
-  const circleMembers  = payload.circleMembers  ?? 0
-  const circleName     = payload.circleName     ?? null
-  const defisJoined    = payload.defisJoined    ?? 0
+  const streak          = payload.streak         ?? 0
+  const ritualsMonth    = payload.ritualsMonth   ?? 0
+  const favoriteZone    = payload.favoriteZone   ? ZONE_LABELS[payload.favoriteZone as string] ?? payload.favoriteZone : null
+  const health          = plant?.health          ?? null
+  const circleMembers   = payload.circleMembers  ?? 0
+  const circleName      = payload.circleName     ?? null
+  const defisJoined     = payload.defisJoined    ?? 0
   const communityPeople = payload.communityPeople ?? 0
-  const gardenCount    = payload.gardenCount    ?? 0
-  const ritualsDone    = payload.ritualsDone    ?? 0
+  const gardenCount     = payload.gardenCount    ?? 0
+  const ritualsDone     = payload.ritualsDone    ?? 0
 
   // Résumé des bilans récents
   let bilanSummary = 'Aucun bilan récent disponible.'
@@ -115,9 +131,14 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
     }
   }
 
-  // Santé de la fleur
+  // État visuel et santé de la plante
+  const plantStage = getPlantStage(health)
+  // Slides qui ont besoin du détail des zones (bilan personnel, jardin intime, stimulation)
+  const needsZoneDetail = ['bilan', 'jardin', 'stimulation'].includes(slide)
   const plantSummary = plant
-    ? `Santé de la fleur : ${health}/10. Zones — ${Object.entries(ZONE_LABELS).map(([k, l]) => `${l} : ${plant[k] ?? '?'}/10`).join(', ')}.`
+    ? needsZoneDetail
+      ? `État visuel de la plante : ${plantStage}. Vitalité globale : ${health}%. Zones — ${Object.entries(ZONE_LABELS).map(([k, l]) => `${l} : ${plant[k] ?? '?'}%`).join(', ')}.`
+      : `État visuel de la plante : ${plantStage}. Vitalité globale : ${health}%.`
     : 'Pas de données de plante aujourd\'hui.'
 
   const lines = [
@@ -128,11 +149,11 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
     plantSummary,
   ]
 
-  if (slide === 'stimulation') lines.push(`Rituels accomplis aujourd'hui : ${ritualsDone}.`)
-  if (slide === 'champ')       lines.push(`${gardenCount} fleurs dans le jardin collectif, ${communityPeople} jardiniers actifs.`)
-  if (slide === 'defis')       lines.push(`${defisJoined} défi${Number(defisJoined) > 1 ? 's' : ''} rejoints. ${communityPeople} participants dans la communauté.`)
-  if (slide === 'club')        lines.push(circleName ? `Cercle "${circleName}" avec ${circleMembers} membres.` : 'Pas encore de cercle.')
-  if (slide === 'ateliers')    lines.push(favoriteZone ? `Zone d'intérêt principal : ${favoriteZone}.` : '')
+  if (slide === 'stimulation')  lines.push(`Rituels accomplis aujourd'hui : ${ritualsDone}.`)
+  if (slide === 'champ')        lines.push(`${gardenCount} fleurs dans le jardin collectif, ${communityPeople} jardiniers actifs.`)
+  if (slide === 'defis')        lines.push(`${defisJoined} défi${Number(defisJoined) > 1 ? 's' : ''} rejoints. ${communityPeople} participants dans la communauté.`)
+  if (slide === 'club')         lines.push(circleName ? `Cercle "${circleName}" avec ${circleMembers} membres.` : 'Pas encore de cercle.')
+  if (slide === 'ateliers')     lines.push(favoriteZone ? `Zone d'intérêt principal : ${favoriteZone}.` : '')
   if (slide === 'bibliotheque') lines.push(`${ritualsMonth} rituels pratiqués ce mois.`)
 
   return lines.filter(Boolean).join('\n')

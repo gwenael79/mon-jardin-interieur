@@ -3245,6 +3245,90 @@ function TabQCM() {
   )
 }
 
+function MigrationGardenColors({ showToast }) {
+  const [status, setStatus] = useState(null)
+  const [running, setRunning] = useState(false)
+
+  const resolveColor = (c) => {
+    if (!c || !c.startsWith('var(')) return null  // déjà un hex ou null
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(c.slice(4, -1).trim()).trim() || null
+  }
+
+  async function runMigration() {
+    setRunning(true)
+    setStatus('Chargement des garden_settings…')
+    try {
+      const { data, error } = await supabase
+        .from('garden_settings')
+        .select('user_id, petal_color1, petal_color2')
+
+      if (error) throw new Error(error.message)
+
+      const toUpdate = (data || []).filter(row =>
+        (row.petal_color1 && row.petal_color1.startsWith('var(')) ||
+        (row.petal_color2 && row.petal_color2.startsWith('var('))
+      )
+
+      setStatus(`${toUpdate.length} ligne(s) à migrer sur ${data.length} total…`)
+
+      if (toUpdate.length === 0) {
+        setStatus('✅ Aucune migration nécessaire — toutes les couleurs sont déjà en hex.')
+        setRunning(false)
+        return
+      }
+
+      let ok = 0, fail = 0
+      for (const row of toUpdate) {
+        const patch = {}
+        const c1 = resolveColor(row.petal_color1)
+        const c2 = resolveColor(row.petal_color2)
+        if (c1) patch.petal_color1 = c1
+        if (c2) patch.petal_color2 = c2
+
+        if (Object.keys(patch).length === 0) { fail++; continue }
+
+        const { error: upErr } = await supabase
+          .from('garden_settings')
+          .update(patch)
+          .eq('user_id', row.user_id)
+
+        upErr ? fail++ : ok++
+      }
+
+      setStatus(`✅ Migration terminée — ${ok} mis à jour, ${fail} échec(s).`)
+      showToast?.(`Migration couleurs : ${ok}/${toUpdate.length} OK`)
+    } catch (e) {
+      setStatus(`❌ Erreur : ${e.message}`)
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <div style={{ fontSize:13, color:'var(--text2)', lineHeight:1.6 }}>
+        <strong style={{ color:'var(--text)' }}>Migration couleurs garden_settings</strong><br/>
+        Convertit les valeurs <code>var(--...)</code> stockées en base (ex: <code>var(--lumens)</code>, <code>var(--zone-flowers)</code>)
+        en valeurs hex réelles selon le thème actif. Les couleurs Ma Fleur et Jardin Collectif seront alors identiques.
+      </div>
+      <button
+        className="adm-btn"
+        onClick={runMigration}
+        disabled={running}
+        style={{ alignSelf:'flex-start' }}
+      >
+        {running ? '⏳ Migration en cours…' : '🔧 Lancer la migration'}
+      </button>
+      {status && (
+        <div style={{ fontSize:12, color:'var(--text3)', fontFamily:'monospace', padding:'8px 12px', background:'var(--surface-2)', borderRadius:8 }}>
+          {status}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AdminPage() {
   useTheme()
   const { user, signOut } = useAuth()
@@ -3690,6 +3774,9 @@ export function AdminPage() {
           </div>
           <div className={`adm-tab${tab === 'theme' ? ' active' : ''}`} onClick={() => setTab('theme')}>
             🎨 Thème
+          </div>
+          <div className={`adm-tab${tab === 'maintenance' ? ' active' : ''}`} onClick={() => setTab('maintenance')}>
+            🔧 Maintenance
           </div>
         </div>
 
@@ -4200,6 +4287,12 @@ export function AdminPage() {
         {tab === 'theme' && (
           <div className="adm-section">
             <ThemeEditor showToast={showToast} />
+          </div>
+        )}
+
+        {tab === 'maintenance' && (
+          <div className="adm-section">
+            <MigrationGardenColors showToast={showToast} />
           </div>
         )}
 

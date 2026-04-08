@@ -30,7 +30,7 @@ const PHRASES = {
   ],
 }
 
-export function WelcomeScreen({ profile, isNewUser, onDone }) {
+export function WelcomeScreen({ profile, isNewUser, onDone, prefetchDone }) {
   const firstName = (profile?.display_name ?? '').split(' ')[0] || ''
   const h         = new Date().getHours()
   const timeKey   = isNewUser ? 'new' : (h >= 0 && h < 18 ? 'matin' : 'soir')
@@ -42,10 +42,18 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
     return pool[day % pool.length]
   }, [timeKey])
 
-  // Redirection automatique après 3 secondes
+  // Se ferme quand le prefetch IA est terminé (min 2s garanti côté dashboard)
+  // Fallback : 8s max si prefetchDone n'arrive jamais
   useEffect(() => {
-    const timer = setTimeout(() => onDone?.(), 3000)
-    return () => clearTimeout(timer)
+    if (prefetchDone) {
+      const timer = setTimeout(() => onDone?.(), 600) // léger délai pour la transition
+      return () => clearTimeout(timer)
+    }
+  }, [prefetchDone])
+
+  useEffect(() => {
+    const fallback = setTimeout(() => onDone?.(), 8000)
+    return () => clearTimeout(fallback)
   }, [])
 
   return (
@@ -53,12 +61,14 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
       onClick={() => onDone?.()}
       style={{
         position:'fixed', inset:0, zIndex:9998,
-        background:'var(--overlay-dark)',
+        background:'linear-gradient(160deg,#f8f4ec,#e8f0d8)',
         display:'flex', flexDirection:'column',
         alignItems:'center', justifyContent:'center',
         fontFamily:"'Jost',sans-serif", padding:'32px 28px',
         cursor:'pointer',
       }}>
+      <img src="/fond1.png" alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center top', opacity:.55 }}/>
+      <div style={{ position:'absolute', inset:0, background:'rgba(248,244,234,.40)' }}/>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
         @keyframes wcIn    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -69,11 +79,11 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
         .wc-a3 { animation: wcIn .5s cubic-bezier(.22,1,.36,1) .4s both }
       `}</style>
 
-      <div style={{ maxWidth:440, width:'100%', display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center' }}>
+      <div style={{ maxWidth:440, width:'100%', display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', position:'relative', zIndex:1 }}>
 
         {/* Logo */}
         <div className="wc-a1" style={{ marginBottom:32, animation:'wcIn .5s ease both, wcPulse 3.5s ease-in-out .6s infinite' }}>
-          <img src="/icons/icon-192.png" alt="logo" style={{ width:80, height:80, mixBlendMode:'screen' }} />
+          <img src="/icons/icon-192.png" alt="logo" style={{ width:80, height:80, borderRadius:'50%', boxShadow:'0 4px 20px rgba(60,100,20,.18)' }} />
         </div>
 
         {/* Salutation */}
@@ -81,7 +91,7 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
           fontFamily:"'Cormorant Garamond',serif",
           fontSize:'clamp(32px,7vw,48px)',
           fontWeight:300, lineHeight:1.1,
-          color:'rgba(var(--text-on-dark-rgb),0.92)',
+          color:'#0f2a08',
           marginBottom:firstName ? 6 : 16,
         }}>
           {greeting}
@@ -93,7 +103,7 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
         {/* Phrase */}
         <div className="wc-a3" style={{
           fontSize:'var(--fs-h3, 15px)', fontWeight:300,
-          color:'rgba(var(--text-on-dark-rgb),0.45)',
+          color:'rgba(15,42,8,.62)',
           fontStyle:'italic', lineHeight:1.7,
         }}>
           {phrase}

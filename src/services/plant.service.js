@@ -176,36 +176,49 @@ async function recalculateHealth(plantId, updatedCol, updatedVal) {
 }
 
 // Un jour compte dans le streak si :
-//   1. Il est present dans activity (vraie interaction : rituel, coeur, merci, bilan, defi)
-//   OU
-//   2. activity est vide pour cet user -> fallback sur plants
-//      Dans ce cas un jour compte si health > HEALTH_DEFAULT (5)
-//      Si meme ca donne rien -> comportement original (toutes les dates plants)
+//   - Il est présent dans activity (vraie interaction : rituel, bilan, défi, cœur, merci)
+//
+// Règles importantes :
+//   - Aujourd'hui ne compte QUE s'il y a une activité réelle (pas juste un carry-over de plante)
+//   - Hier compte si : activité réelle OU plants.health > HEALTH_DEFAULT (rituels anciens sans activity)
+//   - Le streak tolère un jour de gap si aujourd'hui n'a pas encore d'activité
+//     (ex: 9h du matin → pas encore fait le bilan → on ne casse pas le streak)
 function calculateStreak(plants, activityDates) {
   if (!plants.length) return 0
 
-  const useActivity = activityDates.size > 0
+  const today     = new Date().toISOString().split('T')[0]
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-  const dates = new Set(
-    useActivity
-      ? [...activityDates]
-      : plants.filter(p => p.health > HEALTH_DEFAULT).map(p => p.date)
-  )
+  // Jours réels avec activité (source authoritative)
+  const activitySet = new Set([...activityDates].filter(Boolean))
 
-  const effectiveDates = dates.size > 0
-    ? dates
-    : new Set(plants.map(p => p.date))
+  // Jours avec plante développée (fallback pour les anciens rituels sans activity log)
+  const plantSet = new Set(plants.filter(p => p.health > HEALTH_DEFAULT).map(p => p.date))
 
-  const today = new Date().toISOString().split('T')[0]
-  let current = new Date(today)
-  let streak = 0
+  // Un jour passé compte s'il est dans activity OU dans plants (health > 5)
+  // Aujourd'hui compte UNIQUEMENT si activity contient aujourd'hui
+  const hasActivityToday = activitySet.has(today)
+
+  // Point de départ : hier si pas encore d'activité aujourd'hui, aujourd'hui sinon
+  const startDate = hasActivityToday ? today : yesterday
+
+  let current = new Date(startDate)
+  let streak   = 0
 
   while (true) {
     const dateStr = current.toISOString().split('T')[0]
-    if (!effectiveDates.has(dateStr)) break
+    const isToday = dateStr === today
+    // Aujourd'hui : seulement si activité réelle
+    // Autres jours : activité OU plante développée
+    const counts = isToday
+      ? activitySet.has(dateStr)
+      : activitySet.has(dateStr) || plantSet.has(dateStr)
+
+    if (!counts) break
     streak++
     current.setDate(current.getDate() - 1)
   }
+
   return streak
 }
 

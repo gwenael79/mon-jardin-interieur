@@ -15,6 +15,10 @@ export function usePlant(userId) {
 
   useEffect(() => {
     if (!userId) return
+    // Vide les données de l'utilisateur précédent avant de charger les nouvelles
+    setTodayPlant(null)
+    setStats(null)
+    setTodayRituals([])
     void loadAll()
   }, [userId]) // eslint-disable-line
 

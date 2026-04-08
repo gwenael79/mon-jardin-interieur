@@ -2003,14 +2003,21 @@ function useRitualsState(userId, awardLumens) {
   const handleQuizComplete = (deg) => {
     setDegradation(deg)
     setShowQuiz(false)
-    // Persiste dans Supabase
+
+    // Mapping zone quiz → colonne DB
+    const ZONE_MAP = {
+      roots:   'zone_racines',
+      stem:    'zone_tige',
+      leaves:  'zone_feuilles',
+      flowers: 'zone_fleurs',
+      breath:  'zone_souffle',
+    }
+
     supabase
       .from('daily_quiz')
       .upsert({ user_id: userId, date: todayKey, degradation: deg }, { onConflict: 'user_id,date' })
       .then(async ({ error }) => {
         if (!error && awardLumens) {
-          // Vérifie si les lumens ont déjà été accordés aujourd'hui
-          // en cherchant une transaction existante dans lumen_transactions
           const { data: existing } = await supabase
             .from('lumen_transactions')
             .select('id')
@@ -2022,6 +2029,36 @@ function useRitualsState(userId, awardLumens) {
             awardLumens(3, 'bilan_matin', { date: todayKey })
           }
         }
+
+        // Synchronise plants avec le plancher issu du quiz
+        // → le quiz ne descend jamais sous ce que les rituels ont déjà construit
+        const { data: currentPlant } = await supabase
+          .from('plants')
+          .select('id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
+          .eq('user_id', userId)
+          .eq('date', todayKey)
+          .maybeSingle()
+
+        if (!currentPlant) return
+
+        const patch = {}
+        Object.entries(ZONE_MAP).forEach(([zone, col]) => {
+          const floor   = Math.max(5, 100 - (deg[zone] ?? 50))
+          const current = currentPlant[col] ?? 5
+          if (floor > current) patch[col] = floor
+        })
+
+        if (Object.keys(patch).length === 0) return
+
+        // Recalcule health = moyenne des zones après patch
+        const cols = Object.values(ZONE_MAP)
+        const avg  = Math.round(
+          cols.reduce((sum, col) => sum + (patch[col] ?? currentPlant[col] ?? 5), 0) / cols.length
+        )
+        patch.health = Math.max(currentPlant.health ?? 5, avg)
+
+        await supabase.from('plants').update(patch).eq('id', currentPlant.id)
+        setPlantOverride(prev => ({ ...(prev ?? currentPlant), ...patch }))
       })
   }
 
@@ -2507,35 +2544,37 @@ const choose = (idx) => {
 
 
 // ── BilanInsightCard — texte IA parallèle plante / personne ──
-const SUPABASE_FN_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/Moderate-circle'
+const SLIDE_INSIGHT_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/slide-insight'
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ''
 
-function BilanInsightCard({ degradation, fillHeight = false }) {
+function BilanInsightCard({ degradation, plant, userId, fillHeight = false }) {
   const [insight,  setInsight]  = useState(null)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState(false)
   const containerRef = useRef(null)
   const textRef      = useRef(null)
 
-  const cacheKey = 'bilan-insight-v2-' + new Date().toISOString().slice(0, 10) + '-' + JSON.stringify(degradation)
+  const cacheKey = 'bilan-insight-v3-' + new Date().toISOString().slice(0, 10) + '-' + (plant?.health ?? 0)
 
   useEffect(() => {
-    if (!degradation) return
+    if (!userId) return
     try {
       const cached = sessionStorage.getItem(cacheKey)
       if (cached) { setInsight(cached); return }
     } catch {}
     setLoading(true)
     setError(false)
-    fetch(SUPABASE_FN_URL, {
+    fetch(SLIDE_INSIGHT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate_bilan_insight', degradation }),
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify({ userId, slide: 'bilan' }),
     })
       .then(r => r.json())
       .then(data => {
-        if (data.insight) {
-          setInsight(data.insight)
-          try { sessionStorage.setItem(cacheKey, data.insight) } catch {}
+        const text = data.message || data.insight
+        if (text) {
+          setInsight(text)
+          try { sessionStorage.setItem(cacheKey, text) } catch {}
         } else { setError(true) }
       })
       .catch(() => setError(true))
@@ -4451,6 +4490,20 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     // ── Optimistic update immédiat ──
     setPlantOverride(prev => ({ ...(prev ?? plant), [dbKey]: newZoneVal, health: newHealth }))
 
+    const PENDING_KEY = `mji_pending_plant_${userId}`
+
+    // Flush les éventuels updates en attente du passé
+    const flushPending = async () => {
+      try {
+        const raw = localStorage.getItem(PENDING_KEY)
+        if (!raw) return
+        const pending = JSON.parse(raw)
+        const { error } = await supabase.from('plants').update(pending.patch).eq('id', pending.plantId)
+        if (!error) localStorage.removeItem(PENDING_KEY)
+      } catch {}
+    }
+    flushPending()
+
     try {
       await supabase.from('rituals').upsert({
         user_id:      userId,
@@ -4462,14 +4515,28 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       }, { onConflict: 'user_id,ritual_id,plant_id' })
       logActivity({ userId, action: 'ritual', ritual: ritualName, zone: ritualZoneStr })
       logNetworkActivity(userId, 'ritual_complete')
-      await supabase
-        .from('plants')
-        .update({ [dbKey]: newZoneVal, health: newHealth })
-        .eq('id', plant.id)
+
+      const patch = { [dbKey]: newZoneVal, health: newHealth }
+      const { error } = await supabase.from('plants').update(patch).eq('id', plant.id)
+
+      if (error) throw error
+      localStorage.removeItem(PENDING_KEY)
     } catch (e) {
-      // On garde l'update optimiste — les données sont dans localStorage
-      // L'échec Supabase ne doit pas pénaliser l'utilisateur visuellement
-      console.warn('ritual update failed', e)
+      // Retry une fois après 3s
+      console.warn('ritual update failed, retrying in 3s…', e)
+      setTimeout(async () => {
+        const patch = { [dbKey]: newZoneVal, health: newHealth }
+        const { error } = await supabase.from('plants').update(patch).eq('id', plant.id)
+        if (error) {
+          // Persiste pour réconciliation au prochain chargement
+          try {
+            localStorage.setItem(PENDING_KEY, JSON.stringify({ plantId: plant.id, patch }))
+          } catch {}
+          console.warn('ritual update retry failed, saved to localStorage', error)
+        } else {
+          localStorage.removeItem(PENDING_KEY)
+        }
+      }, 3000)
     }
   }, [_toggleRitual, completedRituals, plant, userId, recordToday])
 
@@ -4519,12 +4586,20 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const today = new Date().toISOString().split('T')[0]
   const todayLabel = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long' }).format(new Date())
 
+  const resolveColor = (c) => {
+    if (!c || !c.startsWith('var(')) return c
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(c.slice(4, -1).trim()).trim() || c
+  }
+
   const saveGardenSettings = async s => {
     setGardenSettings(s)
     await supabase.from('garden_settings').upsert({
       user_id: userId, sunrise_h: s.sunriseH, sunrise_m: s.sunriseM,
       sunset_h: s.sunsetH, sunset_m: s.sunsetM,
-      petal_color1: s.petalColor1, petal_color2: s.petalColor2, petal_shape: s.petalShape,
+      petal_color1: resolveColor(s.petalColor1),
+      petal_color2: resolveColor(s.petalColor2),
+      petal_shape: s.petalShape,
     }, { onConflict: 'user_id' })
   }
 
@@ -4775,7 +4850,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               {!bilanDoneToday ? (
                 <MessageJardin profile={profile} isMobile={isMobile} />
               ) : degradation && (
-                <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
+                <BilanInsightCard degradation={degradation} plant={plant} userId={userId} fillHeight={!isMobile} />
               )}
             </div>
           </div>
@@ -4803,7 +4878,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               overflow: isMobile ? 'hidden' : 'visible',
             }}>
               {bilanDoneToday && degradation
-                  ? <BilanInsightCard degradation={degradation} fillHeight={!isMobile} />
+                  ? <BilanInsightCard degradation={degradation} plant={plant} userId={userId} fillHeight={!isMobile} />
                   : <MessageJardin profile={profile} isMobile={isMobile} />
               }
               {/* Bouton Action rapide — desktop */}

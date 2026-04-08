@@ -294,7 +294,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
         {/* Bouton principal */}
         <button
           onClick={() => onOpenModal(slide.id)}
-          style={{ flex:1, padding:'5px 16px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:500, color:'#fff', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease', color:'#1a1208', fontWeight:700 }}
+          style={{ flex:1, padding:'5px 16px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:600, color:'#1a1208', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease' }}
           onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
           onMouseLeave={e => e.currentTarget.style.transform='none'}
         >
@@ -631,7 +631,8 @@ export default function DashboardPage() {
   const [showBilanModal,      setShowBilanModal]      = useState(false)
   const [openRitualsModal,    setOpenRitualsModal]    = useState(false)
   const [bilanDoneToday,      setBilanDoneToday]      = useState(false)
-  const [showWelcome,         setShowWelcome]         = useState(false)
+  const [showWelcome,         setShowWelcome]         = useState(true)  // true par défaut, caché si conditions non remplies
+  const [prefetchDone,        setPrefetchDone]        = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
   const [welcomeReady,        setWelcomeReady]        = useState(false)
   const [showAccessModal,     setShowAccessModal]     = useState(false)
@@ -678,10 +679,10 @@ export default function DashboardPage() {
     supabase.from('users').select('onboarded, created_at').eq('id', user.id).maybeSingle()
       .then(({ data }) => {
         setWelcomeReady(true)
-        if (!data?.onboarded || isStripeReturn) return
+        if (!data?.onboarded || isStripeReturn) { setShowWelcome(false); return }
         const isJustCreated = data?.created_at && (Date.now() - new Date(data.created_at).getTime()) < 10 * 60 * 1000
         setIsNewUser(!!isJustCreated)
-        if (isJustCreated || isFirstToday) setShowWelcome(true)
+        if (!isJustCreated && !isFirstToday) setShowWelcome(false)
       })
   }, [user?.id])
 
@@ -837,7 +838,11 @@ export default function DashboardPage() {
       communityPeople: screenProps.communityStats?.totalParticipants ?? 0,
       gardenCount:     screenProps.gardenFlowerCount        ?? 0,
     }
-    prefetchAllSlideInsights({ userId: user.id, payload })
+    // Attendre la fin du prefetch IA + minimum 2s avant de fermer le WelcomeScreen
+    Promise.all([
+      prefetchAllSlideInsights({ userId: user.id, payload }),
+      new Promise(r => setTimeout(r, 2000)),
+    ]).then(() => setPrefetchDone(true))
   }, [user?.id])  // une seule fois par session — le cache gère la suite
 
 
@@ -893,7 +898,7 @@ export default function DashboardPage() {
   const commonOverlays = (
     <>
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
-      {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} onDone={() => setShowWelcome(false)} />}
+      {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => setShowWelcome(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
         <DailyQuizModal

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '../store/auth.store'
+import { usePlantStore } from '../store/plant.store'
 import { supabase } from '../core/supabaseClient' // votre chemin existant
 
 // ─── INIT (appelé une seule fois dans App.jsx) ────────────
@@ -16,7 +17,10 @@ export function useAuthInit() {
     // Écoute les changements en temps réel
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (!session) reset()
+      if (!session) {
+        reset()
+        usePlantStore.getState().reset()
+      }
     })
 
     return () => listener.subscription.unsubscribe()

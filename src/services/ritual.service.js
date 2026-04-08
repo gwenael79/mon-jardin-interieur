@@ -61,20 +61,17 @@ export const ritualService = {
 
     // Met à jour la plante
     const plant = await plantService.applyRitualEffect(plantId, catalog.delta, catalog.zone)
-// ─── LOG ACTIVITÉ DANS LE CERCLE ───────────────────────────
+// ─── LOG ACTIVITÉ (toujours, cercle optionnel) ───────────────────────────
 try {
-
-  if (circleId) {
-    await supabase
-      .from('activity')
-      .insert({
-        circle_id: circleId,
-        user_id: userId,
-        action: 'a complété',
-        ritual: catalog.name,
-        zone: catalog.zone ?? 'Racines'
-      })
-  }
+  await supabase
+    .from('activity')
+    .insert({
+      user_id:   userId,
+      action:    'a complété',
+      ritual:    catalog.name,
+      zone:      catalog.zone ?? 'Racines',
+      ...(circleId ? { circle_id: circleId } : {}),
+    })
 } catch (err) {
   console.error('Erreur log activité:', err)
 }

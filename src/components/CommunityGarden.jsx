@@ -34,26 +34,38 @@ async function loadCommunityPlants() {
   const settings = {}
   ;(settingsRes?.data || []).forEach(s => { settings[s.user_id] = s })
 
-  // Dernière plante connue par user
-  const plantsByUser = {}
+  const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
+
+  // Plante non encore développée : ancienne valeur par défaut (50) OU nouvelle valeur initiale (≤5)
+  const isDefault = (p) =>
+    (p.health === 50 && ZONE_KEYS.every(k => (p[k] ?? 50) === 50)) ||
+    (p.health <= 5  && ZONE_KEYS.every(k => (p[k] ?? 5)  <= 5))
+
+  // Toutes les plantes par user (déjà triées date desc) — gardées pour le carry-over
+  const allPlantsByUser = {}
   for (const row of (plantsRes.data || [])) {
-    if (!plantsByUser[row.user_id]) plantsByUser[row.user_id] = row
+    if (!allPlantsByUser[row.user_id]) allPlantsByUser[row.user_id] = []
+    allPlantsByUser[row.user_id].push(row)
   }
 
-  // Tous les users — avec leur plante ou une graine si pas encore de plante
-  const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
-  const isUninitialised = (p) =>
-    p.health === 50 && ZONE_KEYS.every(k => (p[k] ?? 50) === 50)
+  // Sélectionne la plante effective par user :
+  // si la plus récente est à la valeur par défaut (pas encore chargée aujourd'hui),
+  // on prend la dernière plante développée (carry-over côté jardin collectif)
+  const plantsByUser = {}
+  for (const [uid, plants] of Object.entries(allPlantsByUser)) {
+    const latest = plants[0]
+    if (isDefault(latest) && plants.length > 1) {
+      const prev = plants.find(p => !isDefault(p))
+      plantsByUser[uid] = prev || latest
+    } else {
+      plantsByUser[uid] = latest
+    }
+  }
 
   const result = []
   for (const u of (usersRes.data || [])) {
     if (hidden.has(u.id)) continue
-    let plant = plantsByUser[u.id] || { user_id: u.id, health: 0, date: null }
-    // Plante jamais initialisée (valeurs DB par défaut 50) → afficher comme graine à 5%
-    if (isUninitialised(plant)) {
-      const zeros = Object.fromEntries(ZONE_KEYS.map(k => [k, 5]))
-      plant = { ...plant, health: 5, ...zeros }
-    }
+    const plant = plantsByUser[u.id] || { user_id: u.id, health: 0, date: null }
     result.push({ ...plant, gardenSettings: settings[u.id] || null })
   }
 
@@ -73,9 +85,15 @@ function hash(str, seed = 0) {
   return h
 }
 
-// Convertit hex en [r,g,b]
+// Convertit hex (ou variable CSS) en [r,g,b]
 function h2r(hex) {
-  const v = parseInt((hex || '#e8789a').replace('#',''), 16)
+  let h = hex || '#e8789a'
+  if (h.startsWith('var(')) {
+    h = getComputedStyle(document.documentElement)
+      .getPropertyValue(h.slice(4, -1).trim()).trim()
+  }
+  const v = parseInt(h.replace('#',''), 16)
+  if (isNaN(v)) return [200, 136, 168]  // fallback rose si parsing échoue
   return [(v>>16)&255, (v>>8)&255, v&255]
 }
 
@@ -630,7 +648,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
       </>}
 
       {/* ── GRAINE ── */}
-      {r <= 0.08 && (
+      {r < 0.08 && (
         <g>
           <ellipse cx={cx} cy={flwY+5} rx={4} ry={2.5} fill="rgba(118,78,36,0.52)"/>
           <path d={`M${cx},${flwY+3} Q${cx+2},${flwY-4} ${cx+1},${flwY-8}`} stroke="rgba(78,138,48,0.60)" strokeWidth={1.2} strokeLinecap="round" fill="none"/>
@@ -638,7 +656,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
       )}
 
       {/* ── PETIT BOURGEON — 8–25% ── */}
-      {r > 0.08 && r <= 0.25 && (() => {
+      {r >= 0.08 && r < 0.25 && (() => {
         const t = (r - 0.08) / 0.17
         return (
           <g>
@@ -654,7 +672,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
       })()}
 
       {/* ── BOURGEON FERMÉ — 25–45% ── */}
-      {r > 0.25 && r <= 0.45 && (
+      {r >= 0.25 && r < 0.45 && (
         <g>
           {[-22,0,22].map((a,i) => (
             <path key={i}
@@ -666,7 +684,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
         </g>
       )}
       {/* ── PETITE FLEUR — 45–65% ── */}
-      {r > 0.45 && r <= 0.65 && (
+      {r >= 0.45 && r < 0.65 && (
         <g>
           <circle cx={cx+curve} cy={flwY} r={fS*2.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
           {[-28,0,28].map((a,i) => {
@@ -681,7 +699,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
         </g>
       )}
       {/* ── FLEUR ÉPANOUIE — 65%+ ── */}
-      {r > 0.65 && (
+      {r >= 0.65 && (
         <g>
           <circle cx={cx+curve} cy={flwY} r={fS*3.2} fill={`url(#${id}fg)`} filter={`url(#${id}f3)`}/>
           {[-28,0,28].map((a,i) => {
@@ -857,7 +875,7 @@ function GrassLayer({ svgW, groundY }) {
 /* ─────────────────────────────────────────────────────
    COMPOSANT PRINCIPAL
 ───────────────────────────────────────────────────── */
-export default function CommunityGarden({ currentUserId, onClose, embedded }) {
+export default function CommunityGarden({ currentUserId, onClose, embedded, containerH }) {
   const [plants,  setPlants]  = useState([])
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
@@ -1045,7 +1063,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded }) {
 
   const W_PER   = 42
   const MIN_W   = 2400
-  const svgH    = Math.max(380, Math.min(580, winH - (window.innerWidth < 768 ? 130 : 80)))
+  const svgH    = containerH ? Math.max(380, containerH) : Math.max(380, Math.min(580, winH - (window.innerWidth < 768 ? 130 : 80)))
   const groundY = svgH - 20
   const svgW    = Math.max(MIN_W, plants.length * W_PER + 220)
 

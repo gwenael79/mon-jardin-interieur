@@ -939,53 +939,59 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
 function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade, gardenFlowerCount, communityStats }) {
   const isMobile = useIsMobile()
   const flowerCount = gardenFlowerCount ?? 0
-  const participants = communityStats?.totalParticipants ?? 0
+  const gardenContainerRef = useRef(null)
+  const [containerH, setContainerH] = useState(null)
+
+  useEffect(() => {
+    const el = gardenContainerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => setContainerH(entry.contentRect.height))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   return (
     <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', position:'relative' }}>
 
       {/* Jardin — prend tout l'espace */}
-      <div style={{ flex:1, overflow:'hidden', position:'relative' }}>
-        <CommunityGarden currentUserId={userId} embedded isPremium={isPremium} />
+      <div ref={gardenContainerRef} style={{ flex:1, overflow:'hidden', position:'relative', background:'linear-gradient(180deg, #0a1a0e 0%, #060d07 100%)' }}>
 
-        {/* Overlay flou non-premium */}
-        {!isPremium && (
-          <div style={{ position:'absolute', inset:0, pointerEvents:'none', background:'radial-gradient(circle at center, transparent 5%, rgba(6,14,7,.40) 25%, rgba(6,14,7,.75) 45%, rgba(6,14,7,.96) 65%)', zIndex:10 }}/>
-        )}
+        {/* Jardin — flouté si non-premium */}
+        <div style={{ width:'100%', height:'100%', minHeight:'100%', filter: isPremium ? 'none' : 'blur(7px)', transform: isPremium ? 'none' : 'scale(1.04)', transition:'filter .4s ease', pointerEvents: isPremium ? 'auto' : 'none' }}>
+          <CommunityGarden currentUserId={userId} embedded isPremium={isPremium} containerH={containerH} />
+        </div>
 
-        {/* Badge premium */}
+        {/* Carte d'invitation premium */}
         {!isPremium && (
-          <div style={{ position:'absolute', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:20 }}>
-            <div onClick={onUpgrade} style={{ display:'inline-flex', alignItems:'center', gap:8, cursor:'pointer', padding:'8px 18px', borderRadius:20, background:'rgba(207,166,74,.12)', border:'1px solid rgba(207,166,74,.30)' }}>
-              <span style={{ fontSize:13 }}>🔒</span>
-              <span style={{ fontSize:12, color:'var(--green)', fontWeight:500, fontFamily:"'Jost',sans-serif" }}>Voir tout le jardin — Premium</span>
-              <span style={{ fontSize:11, color:'rgba(207,166,74,.6)' }}>→</span>
+          <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>
+            <div onClick={onUpgrade} style={{ cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:12, padding: isMobile ? '24px 28px' : '32px 44px', borderRadius:20, background:'rgba(6,14,7,.55)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.10)', boxShadow:'0 8px 40px rgba(0,0,0,.35)' }}>
+              <span style={{ fontSize: isMobile ? 32 : 40 }}>🌿</span>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 26, fontWeight:600, color:'rgba(240,235,220,.92)', marginBottom:6 }}>
+                  Rejoindre le jardin collectif
+                </div>
+                <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 13, color:'rgba(240,235,220,.50)', maxWidth:220, lineHeight:1.6 }}>
+                  Découvrez les fleurs de la communauté et cultivez ensemble
+                </div>
+              </div>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'8px 20px', borderRadius:100, background:'rgba(var(--green-rgb),.15)', border:'1px solid rgba(var(--green-rgb),.30)' }}>
+                <span style={{ fontSize:12, color:'var(--green)', fontFamily:"'Jost',sans-serif", fontWeight:500, letterSpacing:'.04em' }}>Passer Premium</span>
+                <span style={{ fontSize:11, color:'rgba(var(--green-rgb),.6)' }}>→</span>
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* ── Barre d'info en bas ── */}
-      <div style={{ flexShrink:0, padding:'10px 20px', background:'rgba(200,230,200,.25)', borderTop:'1px solid rgba(96,160,100,.15)', display:'flex', alignItems:'center', justifyContent:'center', gap:24 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:18 }}>🌸</span>
-          <div>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontWeight:600, color:'#1a1208', lineHeight:1 }}>{flowerCount}</div>
-            <div style={{ fontSize:10, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', textTransform:'uppercase', marginTop:2 }}>fleurs en fleurs</div>
-          </div>
-        </div>
-        {participants > 0 && (
-          <>
-            <div style={{ width:1, height:32, background:'rgba(96,160,100,.2)' }}/>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <span style={{ fontSize:18 }}>🌿</span>
-              <div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontWeight:600, color:'#1a1208', lineHeight:1 }}>{participants}</div>
-                <div style={{ fontSize:10, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', textTransform:'uppercase', marginTop:2 }}>jardiniers actifs</div>
-              </div>
-            </div>
-          </>
-        )}
+      <div style={{ flexShrink:0, padding: isMobile ? '16px 24px' : '20px 40px', background:'rgba(180,220,180,.35)', borderTop:'1px solid rgba(80,140,80,.25)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <p style={{ margin:0, textAlign:'center', fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 18, fontWeight:400, color:'rgba(20,30,15,.80)', lineHeight:1.5 }}>
+          En ce moment,{' '}
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 32, fontWeight:700, color:'rgba(20,60,20,.9)' }}>
+            {flowerCount} fleur{flowerCount !== 1 ? 's' : ''}
+          </span>
+          {' '}s'épanouissent dans le jardin collectif
+        </p>
       </div>
 
     </div>
