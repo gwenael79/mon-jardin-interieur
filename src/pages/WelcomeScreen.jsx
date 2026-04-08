@@ -42,7 +42,7 @@ export function WelcomeScreen({ profile, isNewUser, onDone, prefetchDone }) {
     return pool[day % pool.length]
   }, [timeKey])
 
-  // Durée minimale d'affichage : 5 secondes
+  // Durée minimale d'affichage : 5 secondes (le prefetch dashboard attend aussi 5s)
   const MIN_DISPLAY_MS = 5000
   const mountedAt = useMemo(() => Date.now(), [])
 

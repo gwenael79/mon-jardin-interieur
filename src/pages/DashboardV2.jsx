@@ -838,10 +838,10 @@ export default function DashboardPage() {
       communityPeople: screenProps.communityStats?.totalParticipants ?? 0,
       gardenCount:     screenProps.gardenFlowerCount        ?? 0,
     }
-    // Attendre la fin du prefetch IA + minimum 2s avant de fermer le WelcomeScreen
+    // Attendre la fin du prefetch IA + minimum 5s avant de fermer le WelcomeScreen
     Promise.all([
       prefetchAllSlideInsights({ userId: user.id, payload }),
-      new Promise(r => setTimeout(r, 2000)),
+      new Promise(r => setTimeout(r, 5000)),
     ]).then(() => setPrefetchDone(true))
   }, [user?.id])  // une seule fois par session — le cache gère la suite
 
