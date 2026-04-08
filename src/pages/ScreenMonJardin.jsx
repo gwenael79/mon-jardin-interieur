@@ -3119,6 +3119,34 @@ function StreakMessage({ streak }) {
 // ═══════════════════════════════════════════════════════
 //  BOÎTE À GRAINES — Estime de soi
 // ═══════════════════════════════════════════════════════
+function TreasureChestIcon({ size = 48 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Couvercle */}
+      <rect x="6" y="8" width="52" height="22" rx="10" fill="#c8860a" stroke="#8a5a00" strokeWidth="2.5"/>
+      <rect x="6" y="8" width="52" height="12" rx="10" fill="#e8a020"/>
+      {/* Cerclage couvercle */}
+      <rect x="6" y="17" width="52" height="3" fill="#8a5a00" opacity=".5"/>
+      <rect x="20" y="8" width="4" height="22" rx="2" fill="#8a5a00" opacity=".4"/>
+      <rect x="40" y="8" width="4" height="22" rx="2" fill="#8a5a00" opacity=".4"/>
+      {/* Corps */}
+      <rect x="6" y="28" width="52" height="28" rx="5" fill="#c8860a" stroke="#8a5a00" strokeWidth="2.5"/>
+      <rect x="6" y="28" width="52" height="8" fill="#b07008"/>
+      {/* Cerclage corps */}
+      <rect x="20" y="28" width="4" height="28" rx="2" fill="#8a5a00" opacity=".35"/>
+      <rect x="40" y="28" width="4" height="28" rx="2" fill="#8a5a00" opacity=".35"/>
+      {/* Serrure */}
+      <rect x="26" y="24" width="12" height="10" rx="3" fill="#e8c840" stroke="#b09000" strokeWidth="1.5"/>
+      <circle cx="32" cy="27" r="3" fill="#b09000"/>
+      <rect x="30.5" y="28" width="3" height="4" rx="1" fill="#b09000"/>
+      {/* Reflets de pièces d'or */}
+      <ellipse cx="20" cy="50" rx="5" ry="3" fill="#f0d040" opacity=".7"/>
+      <ellipse cx="32" cy="52" rx="6" ry="3" fill="#f0d040" opacity=".6"/>
+      <ellipse cx="44" cy="50" rx="5" ry="3" fill="#f0d040" opacity=".7"/>
+    </svg>
+  )
+}
+
 const GRAINE_TAGS = [
   { id: 'coeur', emoji: '❤️', label: 'Cœur' },
   { id: 'merci', emoji: '🙏', label: 'Merci' },
@@ -3217,7 +3245,7 @@ function BoiteAGraines({ userId, inline }) {
         {/* ── CONCEPT (visible uniquement en mode slide inline) ── */}
         {inline && (
           <div style={{ textAlign:'center', padding: isMobile ? '0 4px' : '0 8px' }}>
-            <div style={{ fontSize: isMobile ? 42 : 48, lineHeight:1, marginBottom:12 }}>🫙</div>
+            <div style={{ lineHeight:1, marginBottom:12, display:'flex', justifyContent:'center' }}><TreasureChestIcon size={isMobile ? 56 : 64} /></div>
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 32, fontWeight:600, fontStyle:'italic', color:'#1a1208', lineHeight:1.25, marginBottom:12 }}>
               La boîte à graines
             </div>
@@ -3246,7 +3274,7 @@ function BoiteAGraines({ userId, inline }) {
             </div>
             {(graines.length > 0 || savedToday) && (
               <div onClick={openModal} style={{ display:'flex', alignItems:'center', gap:5, flexShrink:0, minHeight:44, padding:'0 14px', borderRadius:100, background:'rgba(var(--green-rgb),0.10)', border:'1px solid rgba(var(--green-rgb),0.25)', cursor:'pointer', fontSize:'var(--fs-h5, 11px)', color:'var(--green)' }}>
-                <span>🫙</span><span>Voir mes graines</span>
+                <TreasureChestIcon size={18} /><span>Voir mes graines</span>
               </div>
             )}
           </div>
@@ -3255,8 +3283,8 @@ function BoiteAGraines({ userId, inline }) {
         {/* ── BOUTON VOIR MES GRAINES (mode inline) ── */}
         {inline && (graines.length > 0 || savedToday) && (
           <div style={{ display:'flex', justifyContent:'center' }}>
-            <div onClick={openModal} style={{ display:'flex', alignItems:'center', gap:7, padding:'12px 26px', borderRadius:100, background:'rgba(60,120,60,0.12)', border:'1px solid rgba(60,120,60,0.3)', cursor:'pointer', fontSize: isMobile ? 17 : 18, color:'#1a4a18', fontFamily:"'Jost',sans-serif", fontWeight:500 }}>
-              <span style={{ fontSize:20 }}>🫙</span>
+            <div onClick={openModal} style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 26px', borderRadius:100, background:'rgba(60,120,60,0.12)', border:'1px solid rgba(60,120,60,0.3)', cursor:'pointer', fontSize: isMobile ? 17 : 18, color:'#1a4a18', fontFamily:"'Jost',sans-serif", fontWeight:500 }}>
+              <TreasureChestIcon size={26} />
               <span>Voir mes graines ({graines.length > 0 ? graines.length : '…'})</span>
             </div>
           </div>
@@ -3289,7 +3317,7 @@ function BoiteAGraines({ userId, inline }) {
                 ))}
               </div>
             )}
-            <div style={{ fontSize: isMobile ? 14 : 15, color:'#5a6840', marginTop:2 }}>
+            <div style={{ fontSize: 16, color:'#1a1208', marginTop:2 }}>
               Reviens demain soir pour planter une nouvelle graine 🌿
             </div>
           </div>
@@ -3319,27 +3347,35 @@ function BoiteAGraines({ userId, inline }) {
             />
 
             {/* Badges */}
-            <div style={{ display:'flex', gap: isMobile ? 10 : 12 }}>
-              {GRAINE_TAGS.map(t => (
-                <div
-                  key={t.id}
-                  onClick={() => toggleTag(t.id)}
-                  style={{
-                    flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-                    minHeight: isMobile ? 54 : 50, borderRadius: 12,
-                    fontSize: isMobile ? (inline ? 18 : 13) : (inline ? 18 : 12),
-                    cursor:'pointer',
-                    background: tags.includes(t.id) ? 'rgba(220,80,120,0.12)' : 'rgba(255,255,255,0.7)',
-                    border: `1.5px solid ${tags.includes(t.id) ? 'rgba(220,80,120,0.45)' : 'rgba(0,0,0,0.12)'}`,
-                    color: tags.includes(t.id) ? '#8a2040' : '#3a3a3a',
-                    transition:'all .18s', userSelect:'none', WebkitTapHighlightColor:'transparent',
-                    fontFamily:"'Jost',sans-serif", fontWeight: tags.includes(t.id) ? 600 : 400,
-                  }}
-                >
-                  <span style={{ fontSize: isMobile ? 22 : 20 }}>{t.emoji}</span>
-                  <span>{t.label}</span>
-                </div>
-              ))}
+            <div style={{ display:'flex', gap: isMobile ? 12 : 14 }}>
+              {GRAINE_TAGS.map(t => {
+                const selected = tags.includes(t.id)
+                const isCoeur  = t.id === 'coeur'
+                const selBg    = isCoeur ? 'linear-gradient(135deg,#fce4ec,#f8bbd0)' : 'linear-gradient(135deg,#e8f5e9,#c8e6c9)'
+                const selBorder= isCoeur ? '#e91e63' : '#43a047'
+                const selColor = isCoeur ? '#880e4f' : '#1b5e20'
+                const selShadow= isCoeur ? '0 4px 14px rgba(233,30,99,.25)' : '0 4px 14px rgba(67,160,71,.25)'
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => toggleTag(t.id)}
+                    style={{
+                      flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:5,
+                      minHeight: isMobile ? 72 : 68, borderRadius: 16,
+                      cursor:'pointer', userSelect:'none', WebkitTapHighlightColor:'transparent',
+                      transition:'all .2s cubic-bezier(.34,1.56,.64,1)',
+                      background: selected ? selBg : 'rgba(255,255,255,0.8)',
+                      border: `2px solid ${selected ? selBorder : 'rgba(0,0,0,0.10)'}`,
+                      color: selected ? selColor : '#555',
+                      boxShadow: selected ? selShadow : '0 2px 6px rgba(0,0,0,0.06)',
+                      transform: selected ? 'scale(1.04)' : 'scale(1)',
+                    }}
+                  >
+                    <span style={{ fontSize: isMobile ? 26 : 24, lineHeight:1 }}>{t.emoji}</span>
+                    <span style={{ fontSize: isMobile ? 13 : 12, fontFamily:"'Jost',sans-serif", fontWeight: selected ? 600 : 400, letterSpacing:'.04em' }}>{t.label}</span>
+                  </div>
+                )
+              })}
             </div>
 
             {/* Footer */}
@@ -3404,8 +3440,8 @@ function BoiteAGraines({ userId, inline }) {
             {/* Header modal */}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
               <div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 24, color:'var(--cream)', lineHeight:1.2 }}>
-                  🫙 Mes graines
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 24, color:'var(--cream)', lineHeight:1.2, display:'flex', alignItems:'center', gap:10 }}>
+                  <TreasureChestIcon size={30} /> Mes graines
                 </div>
                 <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginTop:4 }}>
                   {graines.length} réussite{graines.length > 1 ? 's' : ''} semée{graines.length > 1 ? 's' : ''}
