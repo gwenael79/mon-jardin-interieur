@@ -146,7 +146,7 @@ const SLIDES_CONFIG = [
     Component: ScreenJardinotheque,
   },
   {
-    id:        'boite_graine', illusKey: 'boite_graine', image: '/champs.png',
+    id:        'boite_graine', illusKey: 'boite_graine', image: '/Boiteagraines.png',
     badge:     'Boîte à graines',    icon: '🌱',
     title:     'La boîte à graines',
     subtitle:  'Déposez ce soir les graines de vos intentions pour demain.',
