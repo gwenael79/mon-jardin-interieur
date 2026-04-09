@@ -69,7 +69,7 @@ const SLIDES_CONFIG = [
     Component: null,
   },
   {
-    id:        'jardin',    illusKey: 'jardin',   image: '/champs3.png',
+    id:        'jardin',    illusKey: 'jardin',   image: '/fleur.png',
     badge:     'Ma Fleur',           icon: '🌸',
     title:     'Ton jardin intérieur',
     subtitle:  'Ta fleur grandit chaque jour que tu prends soin de toi. Observe-la évoluer.',
@@ -91,7 +91,7 @@ const SLIDES_CONFIG = [
     Component: ScreenJardinCollectif,
   },
   {
-    id:        'defis',     illusKey: 'defis',
+    id:        'defis',     illusKey: 'defis',     image: '/defi.png',
     badge:     'Défis',              icon: '✨',
     title:     'Tes défis du moment',
     subtitle:  'De petits engagements hebdomadaires pour avancer, à ton rythme.',
@@ -102,7 +102,7 @@ const SLIDES_CONFIG = [
     Component: ScreenDefis,
   },
   {
-    id:        'club',      illusKey: 'club',
+    id:        'club',      illusKey: 'club',      image: '/club.png',
     badge:     'Club des Jardiniers', icon: '👥',
     title:     'Ton club de jardiniers',
     subtitle:  'Un espace intime pour partager, s\'encourager et grandir ensemble.',
@@ -113,7 +113,7 @@ const SLIDES_CONFIG = [
     Component: ScreenClubJardiniers,
   },
   {
-    id:        'ateliers',  illusKey: 'ateliers',  image: '/champs2.png',
+    id:        'ateliers',  illusKey: 'ateliers',  image: '/atelier.png',
     badge:     'Ateliers',           icon: '📖',
     title:     'Les ateliers guidés',
     subtitle:  'Des séances thématiques pour explorer, apprendre et pratiquer.',
@@ -287,7 +287,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       </div>
 
       {/* ── Illustration — zone de swipe horizontal ── */}
-      <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
+      <div style={{ flexShrink:0, height:360, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
         <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 40%, rgba(237,229,222,1) 100%)' }}/>
         <div style={{ position:'absolute', bottom:14, right:14, fontFamily:"'Jost',sans-serif", fontSize:10, color:'rgba(255,255,255,.5)' }}>
@@ -373,7 +373,7 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
         position:'relative', zIndex:1,
         margin: isMobile ? 0 : 'auto',
         width:  isMobile ? '100%' : slide.id === 'champ' ? 'min(92vw, calc((100vh - 40px) * 16/9))' : 'min(960px, 97vw)',
-        height: isMobile ? '100%' : slide.id === 'champ' ? 'min(calc(100vh - 40px), calc(min(92vw, (100vh - 40px) * 16/9) * 9/16))' : 'calc(100vh - 40px)',
+        height: isMobile ? '100%' : slide.id === 'champ' ? 'min(calc(100vh - 16px), calc(min(92vw, (100vh - 16px) * 16/9) * 9/16))' : 'calc(100vh - 16px)',
         background:'#faf5f2', borderRadius: isMobile ? 0 : 20,
         display:'flex', flexDirection:'column', overflow:'hidden',
         boxShadow: isMobile ? 'none' : '0 32px 80px rgba(0,0,0,.30)',
@@ -1084,7 +1084,7 @@ export default function DashboardPage() {
           {/* Carte principale centrée */}
           <div className="onb-backdrop">
             <div style={{
-              width:'min(960px, 97vw)', height:'min(88vh, 800px)',
+              width:'min(960px, 97vw)', height:'min(96vh, 960px)',
               borderRadius:24, background:'#faf5f2',
               boxShadow:'0 24px 70px rgba(180,120,110,.22), 0 0 0 1px rgba(200,160,150,.15)',
               display:'flex', flexDirection:'column', overflow:'hidden',
@@ -1125,7 +1125,7 @@ export default function DashboardPage() {
               </div>
 
               {/* ── Illustration pleine largeur ── */}
-              <div style={{ flexShrink:0, height:250, position:'relative', overflow:'hidden' }}>
+              <div style={{ flexShrink:0, height:360, position:'relative', overflow:'hidden' }}>
                 <img key={`illus-${slideIdx}`} src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 40%, rgba(250,245,242,1) 100%)' }}/>
                 {/* Badge slide actuel */}
