@@ -371,7 +371,7 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
       <div style={{
         position:'relative', zIndex:1,
         margin: isMobile ? 0 : 'auto',
-        width:  isMobile ? '100%' : slide.id === 'champ' ? 'min(92vw, calc((100vh - 40px) * 16/9))' : 'min(820px, 96vw)',
+        width:  isMobile ? '100%' : slide.id === 'champ' ? 'min(92vw, calc((100vh - 40px) * 16/9))' : 'min(960px, 97vw)',
         height: isMobile ? '100%' : slide.id === 'champ' ? 'min(calc(100vh - 40px), calc(min(92vw, (100vh - 40px) * 16/9) * 9/16))' : 'calc(100vh - 40px)',
         background:'#faf5f2', borderRadius: isMobile ? 0 : 20,
         display:'flex', flexDirection:'column', overflow:'hidden',
@@ -1078,7 +1078,7 @@ export default function DashboardPage() {
           {/* Carte principale centrée */}
           <div className="onb-backdrop">
             <div style={{
-              width:'min(680px, 96vw)', height:'min(88vh, 800px)',
+              width:'min(960px, 97vw)', height:'min(88vh, 800px)',
               borderRadius:24, background:'#faf5f2',
               boxShadow:'0 24px 70px rgba(180,120,110,.22), 0 0 0 1px rgba(200,160,150,.15)',
               display:'flex', flexDirection:'column', overflow:'hidden',
