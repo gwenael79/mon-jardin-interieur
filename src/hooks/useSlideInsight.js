@@ -18,9 +18,10 @@ import { supabase } from '../core/supabaseClient'
 // ─── Helpers cache ────────────────────────────────────────────────────────────
 
 const today = () => new Date().toISOString().slice(0, 10)
+const CACHE_VERSION = 'v4'  // à incrémenter après chaque déploiement de prompts
 
 function cacheKey(userId, slideId) {
-  return `slide_insight__${userId}__${slideId}__${today()}`
+  return `slide_insight__${CACHE_VERSION}__${userId}__${slideId}__${today()}`
 }
 
 function readCache(userId, slideId) {
