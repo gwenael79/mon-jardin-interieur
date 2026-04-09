@@ -39,7 +39,7 @@ import { WelcomeScreen }             from './WelcomeScreen'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers }      from './ScreenClubJardiniers'
 import { ScreenAteliers }            from './ScreenAteliers'
-import { MaBibliotheque }            from './MaBibliotheque'
+import { MaBibliotheque, useAchats } from './MaBibliotheque'
 import { ScreenJardinotheque }       from './ScreenJardinotheque'
 import { HelpModal }                 from './HelpModal'
 import PremiumGate                   from '../components/PremiumGate'
@@ -201,7 +201,7 @@ function useSwipe(onSwipeLeft, onSwipeRight) {
 //  SLIDE INSIGHTS AI — bloc IA seul (sans cards de données)
 // ─────────────────────────────────────────────────────────────────────────────
 function SlideInsightsAI({ slideId, screenProps, color }) {
-  const { user, stats, circleMembers, activeCircle, communityStats, myDefis, joinedIds, gardenFlowerCount } = screenProps ?? {}
+  const { user, stats, circleMembers, activeCircle, communityStats, myDefis, joinedIds, gardenFlowerCount, achats } = screenProps ?? {}
 
   const insightPayload = useMemo(() => ({
     streak:          stats?.streak            ?? 0,
@@ -211,8 +211,10 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
     circleName:      activeCircle?.name       ?? null,
     defisJoined:     joinedIds?.size          ?? myDefis?.length ?? 0,
     defisDetails:    myDefis?.map(d => `${d.title} (${d.days_validated ?? 0}/${d.duration_days} jours validés)`) ?? [],
+    achatCount:      achats?.length           ?? 0,
+    lumens:          screenProps?.lumens?.available ?? 0,
     fleursActives:   gardenFlowerCount ?? 0,
-  }), [stats, circleMembers, activeCircle, joinedIds, myDefis, communityStats, gardenFlowerCount])
+  }), [stats, circleMembers, activeCircle, joinedIds, myDefis, communityStats, gardenFlowerCount, achats, screenProps])
 
   const { message: aiMessage, loading: aiLoading } = useSlideInsight({
     userId:  user?.id,
@@ -653,6 +655,7 @@ export default function DashboardPage() {
   const { user, signOut }                      = useAuth()
   const { todayPlant, stats: plantStats }      = usePlant(user?.id)
   const { communityStats, defis, myDefis, joinedIds, isLoading: defisLoading } = useDefi(user?.id)
+  const { achats } = useAchats(user?.id)
   const prefetchRunRef = useRef(false)
   const { stats, circleMembers, activeCircle } = useCircle(user?.id)
   const profile                                = useProfile(user?.id)
@@ -854,6 +857,7 @@ export default function DashboardPage() {
     defis,
     myDefis,
     joinedIds,
+    achats,
     unreadMessages: unreadCoeurs,
     pendingInvitations,
     onOpenBilan:    () => setShowBilanModal(true),
@@ -867,7 +871,7 @@ export default function DashboardPage() {
     onCloseRituals: () => setOpenRitualsModal(false),
     bilanDoneToday,
     track,
-  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, track])
+  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, track])
 
   // ── Prefetch IA — tous les slides en parallèle dès que l'user est connu ──
   // Les résultats sont mis en cache sessionStorage (clé = userId + slideId + date).
@@ -885,6 +889,8 @@ export default function DashboardPage() {
       circleName:      screenProps.activeCircle?.name       ?? null,
       defisJoined:     joinedIds?.size ?? myDefis?.length   ?? 0,
       defisDetails:    myDefis?.map(d => `${d.title} (${d.days_validated ?? 0}/${d.duration_days} jours validés)`) ?? [],
+      achatCount:      achats?.length ?? 0,
+      lumens:          screenProps.lumens?.available ?? 0,
       communityPeople: screenProps.communityStats?.totalParticipants ?? 0,
       gardenCount:     screenProps.gardenFlowerCount        ?? 0,
     }

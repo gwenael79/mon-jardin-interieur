@@ -61,51 +61,50 @@ export function MaBibliotheque({ userId }) {
   )
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))', gap:12, padding:10 }}>
       {audioAchats.map(a => {
         const p = a.produits
+        const isPlaying_ = playing === p.id
         return (
           <div key={a.id} style={{
             borderRadius:14, overflow:'hidden',
-            border:'1px solid var(--track)',
+            border:`1px solid ${isPlaying_ ? 'rgba(var(--lumens-rgb),0.45)' : 'var(--track)'}`,
             background:'var(--surface-1)',
+            display:'flex', flexDirection:'column',
+            transition:'border-color .2s',
           }}>
-            {/* Info produit */}
-            <div style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px' }}>
-              {/* Pochette */}
-              <div style={{
-                width:52, height:52, borderRadius:10, flexShrink:0,
-                background:'rgba(var(--lumens-rgb),0.10)',
-                border:'1px solid rgba(var(--lumens-rgb),0.20)',
-                display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
-              }}>
-                {p.image_url
-                  ? <img src={p.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                  : <span style={{ fontSize:'var(--fs-emoji-md, 22px)', opacity:.5 }}>🎧</span>
-                }
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:'var(--fs-h4, 14px)', color:'rgba(var(--text-on-dark-rgb),0.88)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
-                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'rgba(var(--lumens-rgb),0.60)', marginTop:2, textTransform:'uppercase', letterSpacing:'.06em' }}>{p.categorie}</div>
-              </div>
-              {/* Bouton play/stop */}
+            {/* Image carrée */}
+            <div style={{
+              width:'100%', aspectRatio:'1/1',
+              background:'rgba(var(--lumens-rgb),0.08)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              overflow:'hidden', flexShrink:0,
+            }}>
+              {p.image_url
+                ? <img src={p.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                : <span style={{ fontSize:36, opacity:.3 }}>🎧</span>
+              }
+            </div>
+
+            {/* Infos + bouton */}
+            <div style={{ padding:'12px 20px 20px', display:'flex', flexDirection:'column', gap:6, flex:1 }}>
+              <div style={{ fontSize:12, fontWeight:600, color:'#1a1208', lineHeight:1.3, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{p.titre}</div>
+              <div style={{ fontSize:10, color:'rgba(var(--lumens-rgb),0.60)', textTransform:'uppercase', letterSpacing:'.06em' }}>{p.categorie}</div>
               <button
-                onClick={() => setPlaying(playing === p.id ? null : p.id)}
+                onClick={() => setPlaying(isPlaying_ ? null : p.id)}
                 style={{
-                  width:40, height:40, borderRadius:'50%', flexShrink:0,
-                  background: playing === p.id ? 'rgba(var(--lumens-rgb),0.25)' : 'rgba(var(--lumens-rgb),0.10)',
-                  border:`1px solid ${playing === p.id ? 'rgba(var(--lumens-rgb),0.50)' : 'rgba(var(--lumens-rgb),0.25)'}`,
-                  color:'var(--lumens)', fontSize:'var(--fs-emoji-sm, 16px)', cursor:'pointer',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  transition:'all .2s',
+                  marginTop:'auto', width:'100%', padding:'7px 0', borderRadius:20,
+                  background: isPlaying_ ? 'rgba(var(--lumens-rgb),0.22)' : 'rgba(var(--lumens-rgb),0.10)',
+                  border:`1px solid ${isPlaying_ ? 'rgba(var(--lumens-rgb),0.50)' : 'rgba(var(--lumens-rgb),0.22)'}`,
+                  color:'var(--lumens)', fontSize:14, cursor:'pointer', transition:'all .2s',
                 }}
               >
-                {playing === p.id ? '⏹' : '▶'}
+                {isPlaying_ ? '⏹' : '▶'}
               </button>
             </div>
 
             {/* Lecteur sécurisé */}
-            {playing === p.id && (
+            {isPlaying_ && (
               <SecureAudioPlayer
                 produitId={p.id}
                 userId={userId}
