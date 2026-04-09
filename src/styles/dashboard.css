@@ -483,9 +483,7 @@ body { background: var(--bg); }
 .df-join:hover { background: rgba(26,18,8,0.18); }
 .df-learn { padding: 9px 18px; border-radius: 100px; font-size: 11px; border: 1px solid rgba(26,18,8,0.25); color: rgba(26,18,8,0.65); cursor: pointer; background: transparent; transition: all .2s; }
 .defis-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.defis-grid-2col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; align-items: start; }
-@media (max-width: 600px) { .defis-grid-2col { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .defis-grid-2col { gap: 8px; } }
+.defis-grid-2col { display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
 .defi-card { background: rgba(255,252,248,0.92); border: 1.5px solid rgba(180,130,110,0.28); border-radius: 14px; padding: 14px 16px; cursor: default; transition: background .2s, box-shadow .2s; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .defi-card:hover { background: rgba(255,252,248,1); box-shadow: 0 4px 14px rgba(0,0,0,0.10); }
 .dc-top  { display: flex; align-items: center; gap: 8px; }

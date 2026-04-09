@@ -637,6 +637,7 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   const [editDefi, setEditDefi]       = useState(null)
   const [refreshKey, setRefreshKey]   = useState(0)
   const [dismissedIds, setDismissedIds] = useState(new Set())
+  const [showMyDefisModal, setShowMyDefisModal] = useState(false)
   const cats = ['Tous','Souffle','Racines','Feuilles','Tige','Fleurs']
   const { defis: rawDefis, featured: rawFeatured, myDefis, joinedIds, communityStats, isLoading, toggleJoin, proposeDefi, reload: reloadDefis } = useDefi(userId)
   const [periodsMap, setPeriodsMap] = useState({})
@@ -688,6 +689,47 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
   return (
     <div className="content" key={refreshKey}>
       {showPropose && <ProposeModal onClose={() => setShowPropose(false)} onSubmit={proposeDefi} />}
+      {showMyDefisModal && (
+        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowMyDefisModal(false)}>
+          <div className="modal" style={{ maxWidth: 420 }}>
+            <div className="modal-title" style={{ marginBottom: 16 }}>📋 Mes défis actifs</div>
+            {myDefis.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center', padding: '16px 0' }}>
+                Tu n'as pas encore rejoint de défi.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {myDefis.map((d, i) => {
+                  const color = ZONE_COLORS[d.zone] ?? 'var(--green)'
+                  const pct = d.duration_days > 0
+                    ? Math.round(((d.days_validated ?? d.progress ?? 0) / d.duration_days) * 100)
+                    : (d.progress ?? 0)
+                  const daysVal = d.days_validated ?? 0
+                  return (
+                    <div key={d.id ?? i} style={{ background: 'rgba(255,252,248,0.95)', border: '1.5px solid rgba(180,130,110,0.22)', borderRadius: 12, padding: '11px 13px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 7 }}>
+                        <span style={{ fontSize: 20 }}>{d.emoji}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1208', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</div>
+                          <div style={{ fontSize: 11, color: color, fontWeight: 600, marginTop: 2 }}>{d.zone}</div>
+                        </div>
+                        <div style={{ fontSize: 11, color: '#1a1208', fontWeight: 600 }}>{daysVal}/{d.duration_days} j</div>
+                      </div>
+                      <div style={{ height: 5, borderRadius: 3, background: 'rgba(0,0,0,0.07)', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 3, transition: 'width .4s' }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+            <div style={{ textAlign: 'right', marginTop: 18 }}>
+              <button className="modal-btn" onClick={() => setShowMyDefisModal(false)} style={{ background: '#3a6432', color: '#fff', border: 'none', borderRadius: 20, padding: '8px 22px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editDefi && (
         <ProposeModal
           onClose={() => setEditDefi(null)}
@@ -786,14 +828,14 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
     </div>
 
     <div className="df-actions">
-      <div
-  className="df-join"
-  onClick={() => {
-    document.querySelector('.defis-grid')?.scrollIntoView({ behavior: 'smooth' })
-  }}
->
-  🌱 Trouvez votre défi du jour
-</div>
+      {isMobile && (
+        <div
+          className="df-join"
+          onClick={() => setShowMyDefisModal(true)}
+        >
+          📋 Mes défis actifs
+        </div>
+      )}
 
       <div className="df-learn" onClick={isPremium ? () => setShowPropose(true) : onUpgrade} style={{ opacity: isPremium ? 1 : 0.4, cursor: isPremium ? 'pointer' : 'not-allowed' }}>
         {isPremium ? 'Proposer un défi à la communauté' : '🔒 Proposer un défi'}
