@@ -25,7 +25,7 @@ RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante. Si l'état e
   champ: `Tu es un accompagnateur de bien-être. Commente la présence de l'utilisateur dans le jardin collectif — sa régularité, sa contribution. Relie son parcours individuel à la dynamique commune de manière inspirante. 2-3 phrases, tutoie, sans émojis.
 RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones.`,
 
-  defis: `Tu es un accompagnateur de bien-être. Analyse l'engagement de l'utilisateur dans les défis. S'il en a rejoint, valorise son courage. S'il n'en a pas encore, invite-le à s'y plonger sans pression. Parle d'impact concret sur sa progression. 2-3 phrases, tutoie, sans émojis.
+  defis: `Tu es un accompagnateur de bien-être. Analyse l'engagement de l'utilisateur dans les défis. Si tu connais ses défis en cours, mentionne-en un ou deux par nom et valorise sa progression concrète (jours validés). S'il n'en a pas encore rejoint, invite-le à s'y plonger sans pression. Sois précis et personnel. 2-3 phrases, tutoie, sans émojis.
 RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones.`,
 
   club: `Tu es un accompagnateur de bien-être. Commente la vie de son club — nombre de membres, activité. Relie l'importance de la communauté à son parcours personnel. 2-3 phrases, tutoie, sans émojis.
@@ -165,7 +165,11 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
 
   if (slide === 'stimulation')  lines.push(`Rituels accomplis aujourd'hui : ${ritualsDone}.`)
   if (slide === 'champ')        lines.push(`${gardenCount} fleurs dans le jardin collectif, ${communityPeople} jardiniers actifs.`)
-  if (slide === 'defis')        lines.push(`${defisJoined} défi${Number(defisJoined) > 1 ? 's' : ''} rejoints. ${communityPeople} participants dans la communauté.`)
+  if (slide === 'defis') {
+    const defisDetails = (payload.defisDetails as string[]) ?? []
+    const detail = defisDetails.length > 0 ? ` Défis en cours : ${defisDetails.join(', ')}.` : ''
+    lines.push(`${defisJoined} défi${Number(defisJoined) > 1 ? 's' : ''} rejoints. ${communityPeople} participants dans la communauté.${detail}`)
+  }
   if (slide === 'club')         lines.push(circleName ? `Cercle "${circleName}" avec ${circleMembers} membres.` : 'Pas encore de cercle.')
   if (slide === 'ateliers')     lines.push(favoriteZone ? `Zone d'intérêt principal : ${favoriteZone}.` : '')
   if (slide === 'bibliotheque') lines.push(`${ritualsMonth} rituels pratiqués ce mois.`)

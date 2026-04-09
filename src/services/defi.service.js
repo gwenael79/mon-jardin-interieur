@@ -35,7 +35,29 @@ export const defiService = {
       .eq('user_id', userId)
 
     if (error) throw new Error(error.message)
-    return data.map(row => ({ ...row.defi, progress: row.progress, joined_at: row.joined_at, joined: true }))
+
+    // Count validated days from defi_daily_actions
+    const defiIds = data.map(row => row.defi?.id).filter(Boolean)
+    let validatedByDefi = {}
+    if (defiIds.length > 0) {
+      const { data: actions } = await supabase
+        .from('defi_daily_actions')
+        .select('defi_id')
+        .eq('user_id', userId)
+        .eq('completed', true)
+        .in('defi_id', defiIds)
+      actions?.forEach(a => {
+        validatedByDefi[a.defi_id] = (validatedByDefi[a.defi_id] ?? 0) + 1
+      })
+    }
+
+    return data.map(row => ({
+      ...row.defi,
+      progress: row.progress,
+      joined_at: row.joined_at,
+      joined: true,
+      days_validated: validatedByDefi[row.defi?.id] ?? 0,
+    }))
   },
 
   // ── Rejoindre un défi ───────────────────────────────────

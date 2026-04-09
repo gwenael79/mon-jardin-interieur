@@ -210,6 +210,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
     circleMembers:   circleMembers?.length    ?? 0,
     circleName:      activeCircle?.name       ?? null,
     defisJoined:     joinedIds?.size          ?? myDefis?.length ?? 0,
+    defisDetails:    myDefis?.map(d => `${d.title} (${d.days_validated ?? 0}/${d.duration_days} jours validés)`) ?? [],
     fleursActives:   gardenFlowerCount ?? 0,
   }), [stats, circleMembers, activeCircle, joinedIds, myDefis, communityStats, gardenFlowerCount])
 
@@ -651,7 +652,8 @@ export default function DashboardPage() {
   // ── Auth & données ── (identique à DashboardPage)
   const { user, signOut }                      = useAuth()
   const { todayPlant, stats: plantStats }      = usePlant(user?.id)
-  const { communityStats, defis, myDefis, joinedIds } = useDefi(user?.id)
+  const { communityStats, defis, myDefis, joinedIds, isLoading: defisLoading } = useDefi(user?.id)
+  const prefetchRunRef = useRef(false)
   const { stats, circleMembers, activeCircle } = useCircle(user?.id)
   const profile                                = useProfile(user?.id)
   const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
@@ -872,13 +874,17 @@ export default function DashboardPage() {
   // Quand SlideInsightsAI monte, il lit le cache → zéro latence perçue.
   useEffect(() => {
     if (!user?.id || !screenProps) return
+    if (defisLoading) return           // attendre que les défis soient chargés
+    if (prefetchRunRef.current) return // une seule fois par session
+    prefetchRunRef.current = true
     const payload = {
       streak:          screenProps.stats?.streak            ?? 0,
       ritualsMonth:    screenProps.stats?.ritualsThisMonth  ?? 0,
       favoriteZone:    screenProps.stats?.favoriteZone      ?? null,
       circleMembers:   screenProps.circleMembers?.length    ?? 0,
       circleName:      screenProps.activeCircle?.name       ?? null,
-      defisJoined:     screenProps.joinedIds?.size          ?? screenProps.myDefis?.length ?? 0,
+      defisJoined:     joinedIds?.size ?? myDefis?.length   ?? 0,
+      defisDetails:    myDefis?.map(d => `${d.title} (${d.days_validated ?? 0}/${d.duration_days} jours validés)`) ?? [],
       communityPeople: screenProps.communityStats?.totalParticipants ?? 0,
       gardenCount:     screenProps.gardenFlowerCount        ?? 0,
     }
@@ -887,7 +893,7 @@ export default function DashboardPage() {
       prefetchAllSlideInsights({ userId: user.id, payload }),
       new Promise(r => setTimeout(r, 5000)),
     ]).then(() => setPrefetchDone(true))
-  }, [user?.id])  // une seule fois par session — le cache gère la suite
+  }, [user?.id, defisLoading])  // se déclenche quand les défis sont prêts, ref empêche le double run
 
 
   // Saut direct vers un slide (nav latérale desktop)
