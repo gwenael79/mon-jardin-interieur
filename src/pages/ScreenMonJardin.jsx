@@ -2291,86 +2291,33 @@ function getBilanRecommendation(degradation) {
     zones: top.map(([id]) => id),
   }
 }
-function BilanClosingPhrase({ answers, degradation }) {
-  const [phrase,  setPhrase]  = useState(null)
-  const [loading, setLoading] = useState(true)
+const CLOSING_PHRASES = [
+  // score moyen bas (< 30) — stress élevé
+  { max: 30, phrases: [
+    "Ton jardin intérieur a besoin de douceur aujourd'hui. Chaque geste de soin, même le plus petit, est une graine qui germera.",
+    "Les racines tiennent même dans la tempête. Tu es plus solide que tu ne le crois.",
+    "Ce moment de vérité avec toi-même est déjà un acte de courage. Prends soin de toi.",
+  ]},
+  // score moyen (30–60) — équilibre fragile
+  { max: 60, phrases: [
+    "Ton jardin est en mouvement — ni figé, ni perdu. Continue à l'écouter.",
+    "L'équilibre se construit un jour à la fois. Tu es exactement là où tu dois être.",
+    "Chaque bilan est une boussole. Tu viens de te recentrer.",
+  ]},
+  // score haut (> 60) — bien-être
+  { max: 100, phrases: [
+    "Ton jardin rayonne. Laisse cette vitalité t'accompagner tout au long de la journée.",
+    "Quelque chose s'épanouit en toi. Accueille-le pleinement.",
+    "Cette légèreté que tu ressens est réelle. Elle t'appartient.",
+  ]},
+]
 
-  const cacheKey = 'bilan-closing-v1-'
-    + new Date().toISOString().slice(0, 10)
-    + '-' + Object.values(answers).join('')
-
-  useEffect(() => {
-    try {
-      const cached = sessionStorage.getItem(cacheKey)
-      if (cached) { setPhrase(cached); setLoading(false); return }
-    } catch {}
-
-    const answersSummary = PLANT_QUESTIONS.map(q => {
-      const idx = answers[q.id]
-      if (idx === undefined) return null
-      return { zone: q.zone, theme: q.theme, answer: q.answers[idx].label }
-    }).filter(Boolean)
-
-    fetch(SUPABASE_FN_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        action:          'generate_closing_phrase',
-        answers_summary: answersSummary,
-        degradation,
-      }),
-    })
-      .then(r => r.json())
-      .then(data => {
-        const p = data.phrase ?? null
-        setPhrase(p)
-        if (p) try { sessionStorage.setItem(cacheKey, p) } catch {}
-      })
-      .catch(() => setPhrase(null))
-      .finally(() => setLoading(false))
-  }, [])
-
-if (loading) return (
-  <div style={{
-    padding:'18px 22px', borderRadius:14,
-    background:'rgba(var(--gold-warm-rgb),0.06)',
-    border:'1px solid rgba(var(--gold-warm-rgb),0.18)',
-    display:'flex', flexDirection:'column',
-    alignItems:'center', gap:10,
-    minHeight:90, justifyContent:'center',
-  }}>
-    <style>{`
-      @keyframes grow {
-        0%,100% { transform: scaleY(0.6); opacity:.4 }
-        50%      { transform: scaleY(1.0); opacity:1 }
-      }
-    `}</style>
-
-    {/* Petite plante qui grandit */}
-    <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:22 }}>
-      {[0,1,2,3,4].map(i => (
-        <div key={i} style={{
-          width:3, borderRadius:2,
-          height: [10,16,22,16,10][i],
-          background:'rgba(var(--gold-warm-rgb),0.50)',
-          transformOrigin:'bottom',
-          animation:`grow 1.6s ease-in-out infinite`,
-          animationDelay: (i * 0.18) + 's',
-        }}/>
-      ))}
-    </div>
-
-    <span style={{
-      fontSize:'var(--fs-h5, 11px)',
-      color:'rgba(var(--quiz-modal-text-rgb),0.35)',
-      fontStyle:'italic', letterSpacing:'.03em',
-    }}>
-      Votre jardin vous répond…
-    </span>
-  </div>
-)
-
-  if (!phrase) return null
+function BilanClosingPhrase({ degradation }) {
+  const avg = degradation && typeof degradation === 'object'
+    ? Math.round(Object.values(degradation).reduce((a, b) => a + b, 0) / Object.values(degradation).length)
+    : 50
+  const bucket = CLOSING_PHRASES.find(b => avg <= b.max) ?? CLOSING_PHRASES[CLOSING_PHRASES.length - 1]
+  const phrase = bucket.phrases[Math.floor(Math.random() * bucket.phrases.length)]
 
   return (
     <div style={{
@@ -2388,7 +2335,7 @@ if (loading) return (
       <p style={{
         fontFamily:"'Cormorant Garamond','Georgia',serif",
         fontSize:'clamp(15px, 1.4vw, 19px)',
-        color:'rgba(var(--ritual-modal-text-rgb),0.85)',
+        color:'rgba(var(--quiz-modal-text-rgb),0.85)',
         lineHeight:1.7, fontStyle:'italic', fontWeight:300,
         margin:0, paddingLeft:14,
       }}>
@@ -2450,7 +2397,7 @@ const choose = (idx) => {
             <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
 
             {/* Phrase personnalisée */}
-            <BilanClosingPhrase answers={answers} degradation={deg} />
+            <BilanClosingPhrase degradation={deg} />
 
             {/* CTA */}
             <button
