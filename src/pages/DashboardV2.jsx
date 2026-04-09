@@ -287,7 +287,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       </div>
 
       {/* ── Illustration — zone de swipe horizontal ── */}
-      <div style={{ flexShrink:0, height:360, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
+      <div style={{ flexShrink:0, height:200, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
         <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 40%, rgba(237,229,222,1) 100%)' }}/>
         <div style={{ position:'absolute', bottom:14, right:14, fontFamily:"'Jost',sans-serif", fontSize:10, color:'rgba(255,255,255,.5)' }}>
