@@ -305,7 +305,7 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
   )
 }
 let _svgN = 0
-function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false }) {
+function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false, bare = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
   const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
@@ -797,7 +797,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
       <g clipPath={`url(#${id}cl)`}>
 
         {/* CIEL — pleine hauteur comme jardin collectif */}
-        <rect width={W} height={H} fill={`url(#${id}sk)`}/>
+        {!bare && <rect width={W} height={H} fill={`url(#${id}sk)`}/>}
 
         {/* AURA LUMENS — lueur organique diffuse, sans contour */}
         {lumensLevel !== 'faible' && (() => {
@@ -868,7 +868,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
         })()}
 
         {/* SOLEIL */}
-        {isDay && (
+        {!bare && isDay && (
           <g>
             <circle cx={sunX} cy={sunY} r={isG?52:40} fill={`url(#${id}sh)`} filter={`url(#${id}f3)`}/>
             <circle cx={sunX} cy={sunY} r={isG?13:9.5} fill={sunC} filter={`url(#${id}f1)`}/>
@@ -887,7 +887,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
         )}
 
         {/* VENT */}
-        {r > 0.35 && (
+        {!bare && r > 0.35 && (
           <g>
             <path d={`M14,${Math.round(gY*0.28)} Q38,${Math.round(gY*0.26)} 56,${Math.round(gY*0.30)}`} stroke="rgba(175,222,242,0.22)" strokeWidth={1.3} strokeLinecap="round" fill="none" style={{animation:`svgWind ${(2.0+r*0.7).toFixed(2)}s ease-in-out infinite`}}/>
             <path d={`M8,${Math.round(gY*0.40)} Q32,${Math.round(gY*0.38)} 50,${Math.round(gY*0.42)}`}  stroke="rgba(175,222,242,0.16)" strokeWidth={1.0} strokeLinecap="round" fill="none" style={{animation:`svgWind ${(2.5+r*0.5).toFixed(2)}s ease-in-out infinite 0.7s`}}/>
@@ -895,11 +895,13 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
         )}
 
         {/* SOL */}
-        <rect x={0} y={gY} width={W} height={H-gY} fill={`url(#${id}ss)`}/>
-        <path d={`M0,${gY} Q60,${gY-4} 120,${gY+2} Q200,${gY+6} 260,${gY+2} Q328,${gY-3} 400,${gY+1} L400,${gY+24} Q280,${gY+22} 160,${gY+26} L0,${gY+22} Z`} fill={`url(#${id}so)`}/>
+        {!bare && <>
+          <rect x={0} y={gY} width={W} height={H-gY} fill={`url(#${id}ss)`}/>
+          <path d={`M0,${gY} Q60,${gY-4} 120,${gY+2} Q200,${gY+6} 260,${gY+2} Q328,${gY-3} 400,${gY+1} L400,${gY+24} Q280,${gY+22} 160,${gY+26} L0,${gY+22} Z`} fill={`url(#${id}so)`}/>
+        </>}
 
         {/* HERBES HAUTES — arrière-plan, floues et statiques */}
-        <g opacity={0.75}>
+        {!bare && <g opacity={0.75}>
           {tallGrass.map((b, i) => {
             const mx = b.x + b.lean * 0.45
             const my = gY - b.h * 0.55
@@ -919,10 +921,10 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               </g>
             )
           })}
-        </g>
+        </g>}
 
         {/* GAZON DENSE — brins fins statiques */}
-        <g>
+        {!bare && <g>
           {grassBlades.map((b, i) => (
             <line key={'g'+i}
               x1={b.x} y1={gY}
@@ -932,10 +934,10 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               strokeLinecap="round"
             />
           ))}
-        </g>
+        </g>}
 
         {/* PETITES FLEURS — toujours visibles, style jardin collectif */}
-        <g>
+        {!bare && <g>
           {deco.map((b, i) => {
             const ang = [0, 72, 144, 216, 288]
             return (
@@ -956,7 +958,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               </g>
             )
           })}
-        </g>
+        </g>}
 
         {/* ── RACINES : fixes, hors plantSway, organiques ── */}
         {r > 0.10 && (() => {
@@ -2501,7 +2503,7 @@ function BilanInsightCard({ degradation, plant, userId, fillHeight = false }) {
   const containerRef = useRef(null)
   const textRef      = useRef(null)
 
-  const cacheKey = 'bilan-insight-v3-' + new Date().toISOString().slice(0, 10) + '-' + (plant?.health ?? 0)
+  const cacheKey = 'bilan-insight-v4-' + new Date().toISOString().slice(0, 10) + '-' + (plant?.health ?? 0)
 
   useEffect(() => {
     if (!userId) return
@@ -4688,26 +4690,18 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, fontStyle:'italic', color:'#1a1208', lineHeight:1.3 }}>{contextMessage}</span>
       </div>
 
-      {/* Fleur — cercle avec contours fondus */}
-      <div style={{ position:'relative', flexShrink:0, display:'flex', justifyContent:'center', alignItems:'center' }}>
-        {/* Cercle principal */}
-        <div style={{
-          position:'relative',
-          width: isMobile ? 280 : 320,
-          height: isMobile ? 280 : 320,
-          borderRadius:'50%',
-          overflow:'hidden',
-          flexShrink:0,
-          boxShadow:'0 0 0 1px rgba(200,160,150,.12), 0 8px 40px rgba(10,22,40,.14)',
-        }}>
-          <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
-          {/* Fondu radial sur les bords — blend dans le fond */}
-          <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:'radial-gradient(circle, rgba(250,245,242,0) 55%, rgba(250,245,242,.55) 78%, rgba(250,245,242,1) 100%)', pointerEvents:'none' }}/>
+      {/* Fleur — rectangle arrondi */}
+      <div style={{ position:'relative', flexShrink:0, width: isMobile ? '80%' : '60%', alignSelf:'center', height: isMobile ? 300 : 380, borderRadius:24, overflow:'hidden' }}>
+        <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+
+        {/* Vitalité */}
+        <div style={{ position:'absolute', bottom:14, left:14, display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:100, background:'rgba(0,0,0,.28)', border:'1px solid rgba(255,255,255,.20)', fontSize:14, color:'rgba(255,255,255,.92)', fontFamily:"'Jost',sans-serif" }}>
+          Vitalité · <span style={{ fontWeight:700, fontSize:16 }}>{plant?.health ?? 5}%</span>
         </div>
 
         {/* Streak */}
         {streak >= 1 && (
-          <div style={{ position:'absolute', top:12, right: isMobile ? 12 : 16, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'rgba(0,0,0,.22)', border:'1px solid rgba(255,255,255,.18)', fontSize:11, color:'rgba(255,255,255,.88)', fontFamily:"'Jost',sans-serif" }}>
+          <div style={{ position:'absolute', top:12, right:14, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'rgba(0,0,0,.20)', border:'1px solid rgba(255,255,255,.18)', fontSize:11, color:'rgba(255,255,255,.88)', fontFamily:"'Jost',sans-serif" }}>
             👍 {streak} jour{streak > 1 ? 's' : ''}
           </div>
         )}
