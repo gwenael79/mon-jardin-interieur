@@ -3,6 +3,7 @@
 //  3 onglets : Égrégore · Mes Fleurs · Le Jardin
 // ─────────────────────────────────────────────────────────────────────────────
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 
 import { useAnalytics } from '../hooks/useAnalytics'
 import { supabase } from '../core/supabaseClient'
@@ -131,7 +132,7 @@ function Particle({ x, y, color, char, vx: initVx, vy: initVy, dur: initDur, onD
 //  SVG FLEUR COLLECTIVE
 // ─────────────────────────────────────────────────────────────────────────────
 // ── FleurSimple — fleur décorative pour le modal Égrégore ──────────────────
-function FleurSimple({ zonesData, size = 220 }) {
+function FleurSimple({ zonesData, pulseKey = null, size = 220 }) {
   const cx = 120, cy = 120, R = 108
   const globalVit = Math.round(ZONES.reduce((s, z) => s + (zonesData[z.key] ?? 5), 0) / ZONES.length)
   return (
@@ -154,10 +155,15 @@ function FleurSimple({ zonesData, size = 220 }) {
         const c1x = cx + R*.45*Math.cos(rad) + w*Math.cos(lRad), c1y = cy + R*.45*Math.sin(rad) + w*Math.sin(lRad)
         const c2x = cx + R*.45*Math.cos(rad) - w*Math.cos(lRad), c2y = cy + R*.45*Math.sin(rad) - w*Math.sin(lRad)
         const pct = zonesData[z.key] ?? 5
-        return <path key={z.key}
-          d={`M ${cx} ${cy} Q ${c1x} ${c1y} ${tx} ${ty} Q ${c2x} ${c2y} ${cx} ${cy} Z`}
-          fill={`url(#fs-${z.key})`} stroke={z.color} strokeWidth="0.6" strokeOpacity="0.5"
-          opacity={0.5 + (pct/100)*0.5}/>
+        const isPulse = pulseKey === z.key
+        const d = `M ${cx} ${cy} Q ${c1x} ${c1y} ${tx} ${ty} Q ${c2x} ${c2y} ${cx} ${cy} Z`
+        return (
+          <g key={z.key}>
+            {isPulse && <path d={d} fill={z.color} opacity="0.18" style={{ animation: 'petal-pulse .7s ease-out forwards' }} />}
+            <path d={d} fill={`url(#fs-${z.key})`} stroke={z.color} strokeWidth={isPulse ? "1.2" : "0.6"} strokeOpacity="0.5"
+              opacity={0.5 + (pct/100)*0.5}/>
+          </g>
+        )
       })}
       <circle cx={cx} cy={cy} r="36" fill="rgba(255,255,255,0.6)"/>
       <circle cx={cx} cy={cy} r="33" fill="url(#fs-core)"/>
@@ -168,8 +174,6 @@ function FleurSimple({ zonesData, size = 220 }) {
     </svg>
   )
 }
-
-
 function FleurSVG({ zonesData, pulseKey, breathPhase, size = 260, svgRef, compact = false }) {
   const cx = 130, cy = 130
 
@@ -1011,21 +1015,27 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
   }
 
   function spawnParticles() {
-    if (!svgRef.current) return
-    const rect = svgRef.current.getBoundingClientRect()
-    const scaleX = rect.width/240, scaleY = rect.height/240
-    const PETALS = ['🌸','🌺','🌼','🌷','💮'], STARS = ['✨','⭐','🌟','💫','✦']
+    const PETALS = ['🌸','🌺','🌼','🌷','💮','🌻','🌹','💐']
     const ps = []
-    ZONES.forEach(z => {
-      const pct = zonesData[z.key] ?? 50
-      const pos = polarToXY(z.angle, (28+(pct/100)*95)*.6, 130, 130)
-      const bx = rect.left+pos.x*scaleX, by = rect.top+pos.y*scaleY
-      for (let i=0;i<3;i++) ps.push({ id:`${z.key}-p-${i}-${Date.now()}-${Math.random()}`, x:bx+(Math.random()-.5)*20, y:by+(Math.random()-.5)*20, char:PETALS[Math.floor(Math.random()*PETALS.length)], vx:.35+Math.random()*.5, vy:-(.35+Math.random()*.5), dur:3200+Math.random()*1400, color:null })
-      for (let i=0;i<2;i++) { const a=Math.random()*Math.PI*2, s=.9+Math.random()*1.1; ps.push({ id:`${z.key}-s-${i}-${Date.now()}-${Math.random()}`, x:bx+(Math.random()-.5)*14, y:by+(Math.random()-.5)*14, char:STARS[Math.floor(Math.random()*STARS.length)], vx:Math.cos(a)*s, vy:Math.sin(a)*s, dur:900+Math.random()*500, color:null }) }
-    })
+    const rect = svgRef.current ? svgRef.current.getBoundingClientRect() : null
+    const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
+    const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2
+    for (let i = 0; i < 30; i++) {
+      const a = Math.random() * Math.PI * 2
+      const s = 0.5 + Math.random() * 1.8
+      ps.push({
+        id: `burst-${i}-${Date.now()}-${Math.random()}`,
+        x: cx + (Math.random() - 0.5) * 80,
+        y: cy + (Math.random() - 0.5) * 80,
+        char: PETALS[Math.floor(Math.random() * PETALS.length)],
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s - 0.4,
+        dur: 2200 + Math.random() * 1400,
+        color: null,
+      })
+    }
     onParticleBurst?.(ps)
   }
-
   async function handleJoin() {
     if (!isPremium) { onUpgrade?.(); return }
     const today = new Date().toISOString().slice(0,10)
@@ -1048,7 +1058,7 @@ function ModalEgregore({ userId, onClose, onParticleBurst, isPremium = false, on
         {/* Fleur décorative + étoiles superposées */}
         <div style={{ position: 'relative', width: isMobile ? 220 : 260, height: isMobile ? 220 : 260 }}>
           <div ref={svgRef} style={{ width: '100%', height: '100%' }}>
-            <FleurSimple zonesData={zonesData} size={isMobile ? 220 : 260} />
+            <FleurSimple zonesData={zonesData} pulseKey={pulseKey} size={isMobile ? 220 : 260} />
           </div>
           <div style={{ position: 'absolute', inset: -30, pointerEvents: 'none' }}>
             <PoulsReseau />
@@ -1476,10 +1486,13 @@ function ScreenClubJardiniers({ userId, awardLumens, onCoeurSeen, isPremium = fa
         </div>
       </div>
 
-      {particles.map(p => (
-        <Particle key={p.id} x={p.x} y={p.y} color={p.color} char={p.char} vx={p.vx} vy={p.vy} dur={p.dur}
-          onDone={() => setParticles(prev => prev.filter(q => q.id !== p.id))} />
-      ))}
+      {createPortal(
+        particles.map(p => (
+          <Particle key={p.id} x={p.x} y={p.y} color={p.color} char={p.char} vx={p.vx} vy={p.vy} dur={p.dur}
+            onDone={() => setParticles(prev => prev.filter(q => q.id !== p.id))} />
+        )),
+        document.body
+      )}
     </>
   )
 }

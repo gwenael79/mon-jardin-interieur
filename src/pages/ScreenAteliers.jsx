@@ -1098,7 +1098,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
           <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des animateurs</div>
         </div>
         {isAnimator ? (
-          <button onClick={() => setShowCreate(true)} style={btnStyle}>✨ Créer un atelier</button>
+          <button onClick={() => setShowCreate(true)} style={{ ...btnStyle, background:'#3a6432', border:'1px solid #2a4e24', color:'#fff', fontWeight:600 }}>✨ Créer un atelier</button>
         ) : hasApplied ? (
           <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>📩 Candidature en cours d'examen</div>
         ) : (
@@ -1124,7 +1124,10 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
           { id:'past',     label:`Passés (${past.length})` },
           { id:'prefs', label:'⚙ Préférences' },
         ].map(t => (
-          <div key={t.id} onClick={() => setTab(t.id)} style={{ padding: isMobile ? '7px 10px' : '8px 16px', fontSize: isMobile ? 10 : 11, whiteSpace:'nowrap', letterSpacing:'.07em', cursor:'pointer', borderBottom:`2px solid ${tab===t.id ? 'var(--green)' : 'transparent'}`, color: tab===t.id ? 'var(--cream)' : 'var(--text3)', marginBottom:-1, transition:'all .2s', display:'flex', alignItems:'center', gap:6, position:'relative' }}>
+          <div key={t.id} onClick={() => setTab(t.id)}
+             onMouseEnter={e => { e.currentTarget.style.color='#1a1208'; e.currentTarget.style.background='rgba(180,130,110,0.1)'; e.currentTarget.style.borderRadius='6px' }}
+             onMouseLeave={e => { e.currentTarget.style.color = tab===t.id ? '#1a1208' : '#4a3a2a'; e.currentTarget.style.background='transparent' }}
+             style={{ padding: isMobile ? '7px 10px' : '8px 16px', fontSize: isMobile ? 12 : 13, whiteSpace:'nowrap', letterSpacing:'.07em', cursor:'pointer', borderBottom:`2.5px solid ${tab===t.id ? '#3a6432' : 'transparent'}`, color: tab===t.id ? '#1a1208' : '#4a3a2a', fontWeight: tab===t.id ? 600 : 500, marginBottom:-1, transition:'all .2s', display:'flex', alignItems:'center', gap:6, position:'relative' }}>
             {t.label}
             {t.id === 'prefs' && invitations.length > 0 && (
               <div onClick={e => { e.stopPropagation(); setShowInvitePanel(p => !p) }} style={{ fontSize:'var(--fs-h5, 9px)', fontWeight:600, borderRadius:100, background:'linear-gradient(135deg,var(--gold),var(--gold-warm))', color:'var(--bg)', display:'inline-flex', alignItems:'center', padding:'2px 7px', whiteSpace:'nowrap', cursor:'pointer' }}>
@@ -1153,7 +1156,10 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                   <div key={label} onClick={() => {
                     const themes = active ? prefs.themes.filter(t => t !== label) : [...prefs.themes, label]
                     savePrefs({ themes })
-                  }} style={{ padding:'5px 12px', borderRadius:100, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', transition:'all .2s', background: active ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-2)', border:`1px solid ${active ? 'rgba(var(--green-rgb),0.35)' : 'var(--surface-3)'}`, color: active ? 'var(--cream)' : 'var(--text3)' }}>
+                  }}
+                   onMouseEnter={e => { e.currentTarget.style.background='#2a4a22'; e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='#2a4a22' }}
+                   onMouseLeave={e => { e.currentTarget.style.background = active ? '#b8dba0' : 'var(--surface-2)'; e.currentTarget.style.color = active ? '#1a1208' : 'var(--text3)'; e.currentTarget.style.borderColor = active ? '#7ab868' : 'var(--surface-3)' }}
+                   style={{ padding:'5px 12px', borderRadius:100, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', transition:'all .2s', background: active ? '#b8dba0' : 'var(--surface-2)', border:`1px solid ${active ? '#7ab868' : 'var(--surface-3)'}`, color: active ? '#1a1208' : 'var(--text3)', fontWeight: active ? 600 : 400 }}>
                     {emoji} {label}
                   </div>
                 )
@@ -1172,7 +1178,10 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
                     const formats = active ? prefs.formats.filter(f => f !== val) : [...prefs.formats, val]
                     if (formats.length === 0) return
                     savePrefs({ formats })
-                  }} style={{ padding:'7px 16px', borderRadius:9, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', transition:'all .2s', background: active ? 'rgba(var(--green-rgb),0.12)' : 'var(--surface-2)', border:`1px solid ${active ? 'rgba(var(--green-rgb),0.3)' : 'var(--surface-3)'}`, color: active ? 'var(--cream)' : 'var(--text3)' }}>
+                  }}
+                   onMouseEnter={e => { e.currentTarget.style.background='#2a4a22'; e.currentTarget.style.color='#fff'; e.currentTarget.style.borderColor='#2a4a22' }}
+                   onMouseLeave={e => { e.currentTarget.style.background = active ? '#b8dba0' : 'var(--surface-2)'; e.currentTarget.style.color = active ? '#1a1208' : 'var(--text3)'; e.currentTarget.style.borderColor = active ? '#7ab868' : 'var(--surface-3)' }}
+                   style={{ padding:'7px 16px', borderRadius:9, fontSize:'var(--fs-h5, 11px)', cursor:'pointer', transition:'all .2s', background: active ? '#b8dba0' : 'var(--surface-2)', border:`1px solid ${active ? '#7ab868' : 'var(--surface-3)'}`, color: active ? '#1a1208' : 'var(--text3)', fontWeight: active ? 600 : 400 }}>
                     {lbl}
                   </div>
                 )
@@ -1244,7 +1253,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
             {tab === 'upcoming' ? "Aucun atelier à venir pour l'instant" : tab === 'mine' ? isAnimator ? "Vous n'avez pas encore créé d'atelier" : "Vous n'êtes inscrit à aucun atelier" : 'Aucun atelier passé'}
           </div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap:12 }}>
+          <div style={{ display:'grid', gridTemplateColumns: '1fr', gap:12 }}>
             {visibleDisplayed.map(a => (
               <AtelierCard key={a.id} atelier={a} isInscrit={myReg.includes(a.id)} isAnimator={isAnimator} isMine={a.animator_id === userId} onInscrit={handleInscrire} onDesinscrit={handleDesinscrire} onDelete={handleDelete} onEditAtelier={a => setEditAtelier(a)} onRepublish={handleRepublish} userId={userId} onInvite={handleInviteMatching} onPayLumens={handlePayLumens} lumens={lumens} reviews={reviewsByAtelier[a.id] ?? []} myReview={myReviews[a.id]} onReview={atelier => setReviewModal(atelier)} />
             ))}
