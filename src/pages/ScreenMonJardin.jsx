@@ -13,6 +13,7 @@ import { useJournal } from '../hooks/useJournal'
 import { useIsMobile, LumenBadge, LumensCard, useProfile, AIInsightBlock } from './dashboardShared'
 import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
+import RitualSuggestionModal from '../components/RitualSuggestionModal'
 
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -4586,8 +4587,10 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [gardenSettings, setGardenSettings] = useState(DEFAULT_GARDEN_SETTINGS)
   const [showGardenSettings, setShowGardenSettings] = useState(false)
   const [gardenTier, setGardenTier] = useState(1)
-  const [showRitualsModal, setShowRitualsModal] = useState(false)
-  const [showNeedModal, setShowNeedModal]       = useState(false)
+  const [showRitualsModal,        setShowRitualsModal]        = useState(false)
+  const [showNeedModal,           setShowNeedModal]           = useState(false)
+  const [showRitualSuggestion,    setShowRitualSuggestion]    = useState(false)
+  const [selectedNeed,            setSelectedNeed]            = useState(null)
 
   // Ouverture depuis le bouton "Je prends soin de moi" (DashboardV2)
   useEffect(() => {
@@ -4599,9 +4602,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
   function handleNeedSelected(need) {
     setShowNeedModal(false)
-    setShowRitualsModal(true)
-    // need contient l'objet du besoin sélectionné (ou null = "voir tous")
-    // TODO: utiliser need.id pour filtrer les rituels dans AllRitualsModal
+    setSelectedNeed(need)
+    setShowRitualSuggestion(true)
   }
 
   // ── Stimulation IA ─────────────────────────────────────────
@@ -4678,6 +4680,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       <NeedSelectionModal
         onSelectNeed={handleNeedSelected}
         onClose={() => setShowNeedModal(false)}
+      />
+    )}
+    {showRitualSuggestion && selectedNeed && (
+      <RitualSuggestionModal
+        need={selectedNeed}
+        onBack={() => { setShowRitualSuggestion(false); setShowNeedModal(true) }}
+        onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
       />
     )}
     {showRitualsModal && (

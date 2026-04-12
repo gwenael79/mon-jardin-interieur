@@ -47,6 +47,8 @@ import PremiumBanner                 from '../components/PremiumBanner'
 import AccessPage, { PremiumModal }  from './AccessPage'
 import { ONB_STYLES, NatureBg }      from './OnboardingScreen'
 import { useSlideInsight, prefetchAllSlideInsights } from '../hooks/useSlideInsight'
+import NeedSelectionModal   from '../components/NeedSelectionModal'
+import RitualSuggestionModal from '../components/RitualSuggestionModal'
 
 // Verrou anti-double award (React Strict Mode)
 const _dailyLoginAwarded = new Set()
@@ -337,7 +339,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
             className="cta-btn"
             onClick={() => {
               if (slide.isBilan) { onOpenModal(slide.id) }
-              else if (slide.id === 'jardin') { onOpenModal('jardin'); screenProps?.onOpenRituals?.() }
+              else if (slide.id === 'jardin') { setShowNeedModal(true) }
               else { onOpenModal(slide.id) }
             }}
             style={{ padding:'18px 0', borderRadius:100, border:'none', cursor:'pointer', touchAction:'manipulation', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 28px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease', width:'100%', maxWidth:340 }}
@@ -692,6 +694,9 @@ export default function DashboardPage() {
   const [unreadCoeurs,        setUnreadCoeurs]        = useState(0)
   const [pendingDegradation,  setPendingDegradation]  = useState(null)
   const [openModalId,         setOpenModalId]         = useState(null)   // id du slide dont la modal est ouverte
+  const [showNeedModal,       setShowNeedModal]       = useState(false)
+  const [showRitualSuggestion,setShowRitualSuggestion]= useState(false)
+  const [selectedNeed,        setSelectedNeed]        = useState(null)
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
@@ -952,6 +957,27 @@ export default function DashboardPage() {
 
   const commonOverlays = (
     <>
+      {showNeedModal && (
+        <NeedSelectionModal
+          onSelectNeed={need => { setShowNeedModal(false); setSelectedNeed(need); setShowRitualSuggestion(true) }}
+          onClose={() => setShowNeedModal(false)}
+        />
+      )}
+      {showRitualSuggestion && selectedNeed && (
+        <RitualSuggestionModal
+          need={selectedNeed}
+          onBack={() => { setShowRitualSuggestion(false); setShowNeedModal(true) }}
+          onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
+          onCompleteRitual={(needId, liked) => {
+            track('ritual_need_complete', { needId, liked }, 'jardin', 'engagement')
+          }}
+          onSeeFlower={() => {
+            setShowRitualSuggestion(false)
+            setSelectedNeed(null)
+            setOpenModalId('jardin')
+          }}
+        />
+      )}
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
       {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => setShowWelcome(false)} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
@@ -1193,7 +1219,7 @@ export default function DashboardPage() {
                   className="cta-btn"
                   onClick={() => {
                     if (slide.isBilan) { setShowBilanModal(true) }
-                    else if (slide.id === 'jardin') { screenProps?.onOpenRituals?.() }
+                    else if (slide.id === 'jardin') { setShowNeedModal(true) }
                     else { setOpenModalId(slide.id) }
                   }}
                   style={{ padding:'18px 52px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:19, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 30px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease' }}

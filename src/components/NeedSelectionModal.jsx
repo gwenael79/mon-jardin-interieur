@@ -203,113 +203,112 @@ function NeedCard({ need, index, onSelect, isMobile }) {
 
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
+function NeedModalInner({ onSelectNeed, onClose, isMobile }) {
+  return (
+    <>
+      {/* Grain subtil */}
+      <div style={{
+        position:'absolute', inset:0, pointerEvents:'none', zIndex:0, opacity:.018,
+        backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        backgroundRepeat:'repeat', backgroundSize:'128px',
+      }}/>
+      {/* Halos */}
+      <div style={{position:'absolute', inset:0, pointerEvents:'none', zIndex:0}}>
+        <div style={{position:'absolute',top:'-10%',left:'-8%',width:360,height:360,borderRadius:'50%',background:'radial-gradient(circle,rgba(160,130,220,.10) 0%,transparent 70%)'}}/>
+        <div style={{position:'absolute',bottom:'5%',right:'-8%',width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(20,150,140,.08) 0%,transparent 70%)'}}/>
+      </div>
+      {/* Particules */}
+      <div style={{position:'absolute', inset:0, pointerEvents:'none', zIndex:0}}>
+        {PARTICLES.map((p,i) => (
+          <div key={i} style={{
+            position:'absolute', left:p.x, top:p.y,
+            width:p.s, height:p.s, borderRadius:'50%',
+            background:'rgba(255,255,255,0.9)',
+            boxShadow:`0 0 ${p.s*4}px ${p.s*2}px rgba(210,190,255,0.35)`,
+            animation:`nm_float ${p.dur}s ease-in-out ${p.d}s infinite`,
+          }}/>
+        ))}
+      </div>
+      {/* Bouton fermer */}
+      <button onClick={onClose} style={{
+        position:'absolute', top:16, right:16, zIndex:10,
+        width:32, height:32, borderRadius:'50%',
+        background:'rgba(255,255,255,0.50)', border:'1px solid rgba(180,160,200,.30)',
+        backdropFilter:'blur(8px)', cursor:'pointer', fontSize:13, color:'rgba(50,35,70,.45)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+      }}>✕</button>
+      {/* Contenu */}
+      <div style={{
+        position:'relative', zIndex:1, flex:1, overflowY:'auto',
+        width:'100%', margin:'0 auto',
+        padding: isMobile ? '12px 16px 0' : '32px 32px 0',
+        boxSizing:'border-box', display:'flex', flexDirection:'column',
+      }}>
+        {/* Header */}
+        <div style={{textAlign:'center', marginBottom:'20px', animation:'nm_fadeUp .45s ease both', flexShrink:0}}>
+          <h1 style={{
+            fontFamily:"'Cormorant Garamond',serif",
+            fontSize: isMobile ? 28 : 38,
+            fontWeight:400, color:'#2A1F18', lineHeight:1.3,
+            margin:'0 0 8px', letterSpacing:'-.01em',
+          }}>
+            Quel est votre besoin<br/>
+            <em style={{fontStyle:'italic', fontWeight:300, color:'#4a3860'}}>en ce moment ?</em>
+          </h1>
+          <p style={{
+            fontFamily:"'Inter','Jost',sans-serif",
+            fontSize: isMobile ? 13 : 16,
+            fontWeight:300, color:'rgba(50,35,20,.50)',
+            margin:0, letterSpacing:'.02em',
+          }}>Suivez ce qui résonne en vous</p>
+        </div>
+        {/* Grille */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap: isMobile ? 12 : 18, flexShrink:0 }}>
+          {NEEDS.map((need,i) => (
+            <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile}/>
+          ))}
+        </div>
+        {/* Footer */}
+        <div style={{
+          textAlign:'center', padding: isMobile ? '16px 0 20px' : '20px 0 24px',
+          flexShrink:0, animation:'nm_fadeUp .5s ease .35s both',
+        }}>
+          <p style={{ fontFamily:"'Inter','Jost',sans-serif", fontSize:18, fontWeight:400, color:'#1E1E1E', margin:0 }}>
+            Un seul choix suffit pour commencer
+          </p>
+        </div>
+      </div>
+    </>
+  )
+}
+
 export default function NeedSelectionModal({ onSelectNeed, onClose }) {
   const isMobile = useIsMobile()
+  const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
+
+  if (!isMobile) return (
+    <>
+      <style>{CSS}</style>
+      <div style={{ position:'fixed', inset:0, zIndex:260, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(20,12,5,0.55)', backdropFilter:'blur(8px)' }}/>
+        <div style={{
+          position:'relative', zIndex:1,
+          width:'min(780px, 95vw)', maxHeight:'92vh',
+          borderRadius:24, overflow:'hidden', background:bg,
+          display:'flex', flexDirection:'column',
+          boxShadow:'0 32px 80px rgba(0,0,0,0.32)',
+        }}>
+          <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={false}/>
+        </div>
+      </div>
+    </>
+  )
 
   return (
     <>
       <style>{CSS}</style>
-      <div style={{
-        position:'fixed', inset:0, zIndex:260,
-        background:'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)',
-        display:'flex', flexDirection:'column',
-      }}>
-
-        {/* Grain subtil */}
-        <div style={{
-          position:'fixed', inset:0, pointerEvents:'none', zIndex:0, opacity:.018,
-          backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundRepeat:'repeat', backgroundSize:'128px',
-        }}/>
-
-        {/* Halos de fond */}
-        <div style={{position:'fixed', inset:0, pointerEvents:'none', zIndex:0}}>
-          <div style={{position:'absolute',top:'-10%',left:'-8%',width:360,height:360,borderRadius:'50%',background:'radial-gradient(circle,rgba(160,130,220,.10) 0%,transparent 70%)'}}/>
-          <div style={{position:'absolute',bottom:'5%',right:'-8%',width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(20,150,140,.08) 0%,transparent 70%)'}}/>
-        </div>
-
-        {/* Particules */}
-        <div style={{position:'fixed', inset:0, pointerEvents:'none', zIndex:0}}>
-          {PARTICLES.map((p,i) => (
-            <div key={i} style={{
-              position:'absolute', left:p.x, top:p.y,
-              width:p.s, height:p.s, borderRadius:'50%',
-              background:'rgba(255,255,255,0.9)',
-              boxShadow:`0 0 ${p.s*4}px ${p.s*2}px rgba(210,190,255,0.35)`,
-              animation:`nm_float ${p.dur}s ease-in-out ${p.d}s infinite`,
-            }}/>
-          ))}
-        </div>
-
-        {/* Bouton fermer */}
-        <button onClick={onClose} style={{
-          position:'absolute', top:16, right:16, zIndex:10,
-          width:32, height:32, borderRadius:'50%',
-          background:'rgba(255,255,255,0.50)',
-          border:'1px solid rgba(180,160,200,.30)',
-          backdropFilter:'blur(8px)',
-          cursor:'pointer', fontSize:13, color:'rgba(50,35,70,.45)',
-          display:'flex', alignItems:'center', justifyContent:'center',
-        }}>✕</button>
-
-        {/* Contenu */}
-        <div style={{
-          position:'relative', zIndex:1,
-          flex:1, overflowY:'auto',
-          width:'100%', maxWidth: isMobile ? '100%' : 680,
-          margin:'0 auto',
-          padding: isMobile ? '12px 16px 0' : '40px 32px 0',
-          boxSizing:'border-box',
-          display:'flex', flexDirection:'column',
-        }}>
-
-          {/* Header */}
-          <div style={{textAlign:'center', marginBottom:'20px', animation:'nm_fadeUp .45s ease both', flexShrink:0}}>
-            <h1 style={{
-              fontFamily:"'Cormorant Garamond',serif",
-              fontSize: isMobile ? 28 : 38,
-              fontWeight:400, color:'#2A1F18', lineHeight:1.3,
-              margin:'0 0 8px', letterSpacing:'-.01em',
-            }}>
-              Quel est votre besoin<br/>
-              <em style={{fontStyle:'italic', fontWeight:300, color:'#4a3860'}}>en ce moment ?</em>
-            </h1>
-            <p style={{
-              fontFamily:"'Inter','Jost',sans-serif",
-              fontSize: isMobile ? 13 : 16,
-              fontWeight:300, color:'rgba(50,35,20,.50)',
-              margin:0, letterSpacing:'.02em',
-            }}>
-              Suivez ce qui résonne en vous
-            </p>
-          </div>
-
-          {/* Grille */}
-          <div style={{
-            display:'grid', gridTemplateColumns:'repeat(2,1fr)',
-            gap: isMobile ? 12 : 18, flexShrink:0,
-          }}>
-            {NEEDS.map((need,i) => (
-              <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile}/>
-            ))}
-          </div>
-
-          {/* Footer */}
-          <div style={{
-            textAlign:'center',
-            padding: isMobile ? '16px 0 20px' : '20px 0 28px',
-            flexShrink:0, animation:'nm_fadeUp .5s ease .35s both',
-          }}>
-            <p style={{
-              fontFamily:"'Inter','Jost',sans-serif",
-              fontSize:18, fontWeight:400, color:'#1E1E1E',
-              margin:0, letterSpacing:'.01em',
-            }}>
-              Un seul choix suffit pour commencer
-            </p>
-          </div>
-
-        </div>
+      <div style={{ position:'fixed', inset:0, zIndex:260, background:bg, display:'flex', flexDirection:'column' }}>
+        <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={true}/>
       </div>
     </>
   )
