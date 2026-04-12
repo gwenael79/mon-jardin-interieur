@@ -305,25 +305,10 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
           </button>
         )}
 
-        {/* ── Bouton CTA centré ── */}
-        <div style={{ position:'absolute', bottom:20, left:'50%', transform:'translateX(-50%)', zIndex:10 }}>
-          <button
-            onClick={() => {
-              if (slide.isBilan) { onOpenModal(slide.id) }
-              else if (slide.id === 'jardin') { onOpenModal('jardin'); screenProps?.onOpenRituals?.() }
-              else { onOpenModal(slide.id) }
-            }}
-            style={{ padding:'13px 28px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:700, color:'#1a1208', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 8px 22px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .15s ease' }}
-            onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
-            onMouseLeave={e => e.currentTarget.style.transform='none'}
-          >
-            {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
-          </button>
-        </div>
       </div>
 
       {/* ── Preview texte — scroll vertical natif ── */}
-      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 110px', display:'flex', flexDirection:'column', gap:8 }}>
+      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 16px', display:'flex', flexDirection:'column', gap:8 }}>
 
         {/* Tag */}
         <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color, flexShrink:0 }}>
@@ -340,6 +325,21 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
           {slide.subtitle}
         </div>
         <SlideInsightsAI slideId={slide.id} screenProps={screenProps} bilanDoneToday={bilanDoneToday} color={slide.color} />
+
+        {/* ── Bouton CTA centré ── */}
+        <div style={{ textAlign:'center', paddingTop:10, paddingBottom:24 }}>
+          <button
+            className="cta-btn"
+            onClick={() => {
+              if (slide.isBilan) { onOpenModal(slide.id) }
+              else if (slide.id === 'jardin') { onOpenModal('jardin'); screenProps?.onOpenRituals?.() }
+              else { onOpenModal(slide.id) }
+            }}
+            style={{ padding:'18px 0', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 28px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease', width:'100%', maxWidth:340 }}
+          >
+            {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
+          </button>
+        </div>
       </div>
 
     </div>
@@ -1068,6 +1068,11 @@ export default function DashboardPage() {
           @keyframes dkThumbIn   { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
           @keyframes arrowBlink  { 0%,100%{opacity:1;box-shadow:0 4px 16px rgba(0,0,0,0.32),0 0 0 0 rgba(26,74,40,0.5)} 50%{opacity:0.5;box-shadow:0 2px 8px rgba(0,0,0,0.18),0 0 0 6px rgba(26,74,40,0)} }
           .nav-arrow:hover { transform:scale(1.1) !important; opacity:1 !important; }
+          @keyframes ctaShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+          .cta-btn { position:relative; overflow:hidden; }
+          .cta-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.55) 50%,transparent 65%); background-size:200% 100%; animation:ctaShimmer 2.4s ease-in-out infinite; border-radius:inherit; pointer-events:none; }
+          .cta-btn:hover { transform:translateY(-3px) scale(1.03) !important; }
+          .cta-btn:active { transform:scale(0.97) !important; }
         `}</style>
 
         <div style={{ position:'fixed', inset:0, zIndex:10, fontFamily:"'Jost',sans-serif" }}>
@@ -1130,8 +1135,7 @@ export default function DashboardPage() {
               <div style={{ flexShrink:0, height:360, position:'relative', overflow:'hidden' }}>
                 <img key={`illus-${slideIdx}`} src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 40%, rgba(250,245,242,1) 100%)' }}/>
-                {/* Badge slide actuel */}
-                <div style={{ position:'absolute', bottom:12, left:18, fontFamily:"'Jost',sans-serif", fontSize:9.5, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.9)', background:'rgba(0,0,0,.24)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>{slide.badge}</div>
+
                 {/* Progress dots */}
                 <div style={{ position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)', display:'flex', gap:4, alignItems:'center' }}>
                   {visibleSlides.map((s, i) => (
@@ -1180,15 +1184,14 @@ export default function DashboardPage() {
               </div>
 
               {/* ── Bouton CTA centré ── */}
-              <div style={{ flexShrink:0, textAlign:'center', padding:'10px 24px 20px' }}>
+              <div style={{ flexShrink:0, textAlign:'center', padding:'10px 24px 24px' }}>
                 <button
+                  className="cta-btn"
                   onClick={() => {
                     if (slide.isBilan) { setShowBilanModal(true) }
                     else if (slide.id === 'jardin') { screenProps?.onOpenRituals?.() }
                   }}
-                  style={{ padding:'15px 36px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#1a1208', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 8px 24px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .15s ease' }}
-                  onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform='none'}
+                  style={{ padding:'18px 52px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:19, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 30px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease' }}
                 >
                   {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
                 </button>
