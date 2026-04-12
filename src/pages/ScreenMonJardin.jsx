@@ -12,6 +12,7 @@ import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
 import { useIsMobile, LumenBadge, LumensCard, useProfile, AIInsightBlock } from './dashboardShared'
 import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_rituels'
+import NeedSelectionModal from '../components/NeedSelectionModal'
 
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -4586,11 +4587,22 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [showGardenSettings, setShowGardenSettings] = useState(false)
   const [gardenTier, setGardenTier] = useState(1)
   const [showRitualsModal, setShowRitualsModal] = useState(false)
+  const [showNeedModal, setShowNeedModal]       = useState(false)
 
-  // Ouverture depuis le bandeau bas du ScreenModal (DashboardV2)
+  // Ouverture depuis le bouton "Je prends soin de moi" (DashboardV2)
   useEffect(() => {
-    if (openRitualsModal) { setShowRitualsModal(true); onCloseRituals?.() }
+    if (!openRitualsModal) return
+    // Délai court pour laisser le composant se monter complètement avant d'afficher le modal
+    const t = setTimeout(() => { setShowNeedModal(true); onCloseRituals?.() }, 80)
+    return () => clearTimeout(t)
   }, [openRitualsModal])
+
+  function handleNeedSelected(need) {
+    setShowNeedModal(false)
+    setShowRitualsModal(true)
+    // need contient l'objet du besoin sélectionné (ou null = "voir tous")
+    // TODO: utiliser need.id pour filtrer les rituels dans AllRitualsModal
+  }
 
   // ── Stimulation IA ─────────────────────────────────────────
   const stimulationPayload = useMemo(() => ({
@@ -4660,6 +4672,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         isAdmin={userId === 'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7'}
         onSave={saveGardenSettings}
         onClose={() => setShowGardenSettings(false)}
+      />
+    )}
+    {showNeedModal && (
+      <NeedSelectionModal
+        onSelectNeed={handleNeedSelected}
+        onClose={() => setShowNeedModal(false)}
       />
     )}
     {showRitualsModal && (

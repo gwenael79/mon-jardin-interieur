@@ -74,7 +74,7 @@ const SLIDES_CONFIG = [
     title:     'Ton jardin intérieur',
     subtitle:  'Ta fleur grandit chaque jour que tu prends soin de toi. Observe-la évoluer.',
     color:     '#b090c8',
-    btnLabel:  'Soigner ma fleur',
+    btnLabel:  'Je prends soin de moi',
     btnGrad:   'linear-gradient(135deg, #c8a0d8, #9070a8)',
     btnShadow: 'rgba(160,100,180,.36)',
     Component: ScreenMonJardin,
@@ -292,8 +292,33 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
       <div style={{ flexShrink:0, height:200, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
         <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 40%, rgba(237,229,222,1) 100%)' }}/>
-        <div style={{ position:'absolute', bottom:14, right:14, fontFamily:"'Jost',sans-serif", fontSize:10, color:'rgba(255,255,255,.5)' }}>
-          {curIdx + 1} / {slides.length}
+
+        {/* ── Flèches navigation ── */}
+        {curIdx > 0 && (
+          <button onClick={() => onNav(-1)} className="nav-arrow" style={{ position:'absolute', bottom:16, left:16, width:58, height:58, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 14px rgba(0,0,0,0.30)', animation:'arrowBlink 1.8s ease-in-out infinite' }}>
+            <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><path d="M13 4L7 10L13 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8.5 4L2.5 10L8.5 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        )}
+        {!isLast && (
+          <button onClick={() => onNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:16, right:16, width:58, height:58, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 14px rgba(0,0,0,0.30)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
+            <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><path d="M7 4L13 10L7 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 4L17.5 10L11.5 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        )}
+
+        {/* ── Bouton CTA centré ── */}
+        <div style={{ position:'absolute', bottom:20, left:'50%', transform:'translateX(-50%)', zIndex:10 }}>
+          <button
+            onClick={() => {
+              if (slide.isBilan) { onOpenModal(slide.id) }
+              else if (slide.id === 'jardin') { onOpenModal('jardin'); screenProps?.onOpenRituals?.() }
+              else { onOpenModal(slide.id) }
+            }}
+            style={{ padding:'13px 28px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:700, color:'#1a1208', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 8px 22px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .15s ease' }}
+            onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform='none'}
+          >
+            {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
+          </button>
         </div>
       </div>
 
@@ -317,37 +342,6 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
         <SlideInsightsAI slideId={slide.id} screenProps={screenProps} bilanDoneToday={bilanDoneToday} color={slide.color} />
       </div>
 
-      {/* ── Navigation bas ── */}
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'8px 16px 28px', display:'flex', gap:8, alignItems:'center', background:'linear-gradient(transparent, rgba(237,229,222,.98) 38%)', zIndex:20 }}>
-
-        {/* Slide précédent */}
-        {curIdx > 0 && (() => { const prev = slides[curIdx-1]; return (
-          <button
-            onClick={() => onNav(-1)}
-            style={{ flexShrink:0, padding:'4px 12px', borderRadius:100, background:prev.color, border:`1px solid ${prev.color}`, fontSize:10, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s', whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}
-          >‹ {prev.badge}</button>
-        )})()}
-        {curIdx === 0 && <div style={{ flexShrink:0, width:10 }}/>}
-
-        {/* Bouton principal */}
-        <button
-          onClick={() => onOpenModal(slide.id)}
-          style={{ flex:1, padding:'5px 16px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:600, color:'#1a1208', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease' }}
-          onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
-          onMouseLeave={e => e.currentTarget.style.transform='none'}
-        >
-          {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan' : slide.btnLabel}
-        </button>
-
-        {/* Slide suivant */}
-        {!isLast && (() => { const next = slides[curIdx+1]; return (
-          <button
-            onClick={() => onNav(1)}
-            style={{ flexShrink:0, padding:'4px 12px', borderRadius:100, background:next.color, border:`1px solid ${next.color}`, fontSize:10, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s', whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}
-          >{next.badge} ›</button>
-        )})()}
-        {isLast && <div style={{ flexShrink:0, width:10 }}/>}
-      </div>
     </div>
   )
 }
@@ -994,7 +988,7 @@ export default function DashboardPage() {
 
             {/* Avatar + identité */}
             <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20, padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:14, border:'1px solid rgba(200,160,150,.18)' }}>
-              <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</div>
+              <div style={{ width:58, height:58, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</div>
               <div>
                 <div style={{ fontSize:14, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>{name ?? 'Jardinier·ère'}</div>
                 <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
@@ -1072,6 +1066,8 @@ export default function DashboardPage() {
           @keyframes dkIllusIn   { from{opacity:0;transform:scale(1.04)} to{opacity:1;transform:scale(1)} }
           @keyframes dkSlideIn   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
           @keyframes dkThumbIn   { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+          @keyframes arrowBlink  { 0%,100%{opacity:1;box-shadow:0 4px 16px rgba(0,0,0,0.32),0 0 0 0 rgba(26,74,40,0.5)} 50%{opacity:0.5;box-shadow:0 2px 8px rgba(0,0,0,0.18),0 0 0 6px rgba(26,74,40,0)} }
+          .nav-arrow:hover { transform:scale(1.1) !important; opacity:1 !important; }
         `}</style>
 
         <div style={{ position:'fixed', inset:0, zIndex:10, fontFamily:"'Jost',sans-serif" }}>
@@ -1136,16 +1132,25 @@ export default function DashboardPage() {
                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 40%, rgba(250,245,242,1) 100%)' }}/>
                 {/* Badge slide actuel */}
                 <div style={{ position:'absolute', bottom:12, left:18, fontFamily:"'Jost',sans-serif", fontSize:9.5, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,.9)', background:'rgba(0,0,0,.24)', border:'1px solid rgba(255,255,255,.28)', padding:'4px 11px', borderRadius:100 }}>{slide.badge}</div>
-                {/* Progress dots dans l'illus */}
-                <div style={{ position:'absolute', bottom:14, right:18, display:'flex', gap:4, alignItems:'center' }}>
+                {/* Progress dots */}
+                <div style={{ position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)', display:'flex', gap:4, alignItems:'center' }}>
                   {visibleSlides.map((s, i) => (
-                    <div
-                      key={s.id}
-                      onClick={() => handleJump(i)}
-                      style={{ width: i === slideIdx ? 14 : 5, height:5, borderRadius:3, background: i <= slideIdx ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.32)', cursor:'pointer', transition:'all .3s' }}
-                    />
+                    <div key={s.id} onClick={() => handleJump(i)} style={{ width: i === slideIdx ? 14 : 5, height:5, borderRadius:3, background: i <= slideIdx ? 'rgba(255,255,255,.9)' : 'rgba(255,255,255,.32)', cursor:'pointer', transition:'all .3s' }}/>
                   ))}
                 </div>
+
+                {/* ── Flèches navigation ── */}
+                {slideIdx > 0 && (
+                  <button onClick={() => handleNav(-1)} className="nav-arrow" style={{ position:'absolute', bottom:20, left:20, width:62, height:62, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.32)', animation:'arrowBlink 1.8s ease-in-out infinite' }}>
+                    <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><path d="M13 5L8 10L13 15" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 5L4 10L9 15" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                )}
+                {!isLast && (
+                  <button onClick={() => handleNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:20, right:20, width:62, height:62, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.32)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
+                    <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><path d="M7 4L13 10L7 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 4L17.5 10L11.5 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                )}
+
               </div>
 
               {/* ── Contenu texte du slide (preview) ── */}
@@ -1164,7 +1169,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Sous-titre */}
-                <div style={{ fontSize:15, fontWeight:300, color:'#1a1208', lineHeight:1.7, marginBottom:12 }}>
+                <div style={{ fontSize:15, fontWeight:300, color:'#1a1208', lineHeight:1.7, marginBottom:16 }}>
                   {slide.subtitle}
                 </div>
 
@@ -1174,44 +1179,21 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* ── Navigation bas ── */}
-              <div style={{ flexShrink:0, padding:'14px 24px 20px', display:'flex', gap:10, alignItems:'center', background:'linear-gradient(transparent, rgba(250,245,242,.98) 38%)' }}>
-
-                {/* Slide précédent */}
-                {slideIdx > 0 && (() => { const prev = visibleSlides[slideIdx-1]; return (
-                  <button
-                    onClick={() => handleNav(-1)}
-                    style={{ flexShrink:0, padding:'5px 14px', borderRadius:100, background:prev.color, border:`1px solid ${prev.color}`, fontSize:11, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s, transform .15s', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}
-                    onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform='none'}
-                  >‹ {prev.badge}</button>
-                )})()}
-                {slideIdx === 0 && <div style={{ flexShrink:0, width:10 }}/>}
-
-                {/* Bouton principal : ouvre la ScreenModal */}
+              {/* ── Bouton CTA centré ── */}
+              <div style={{ flexShrink:0, textAlign:'center', padding:'10px 24px 20px' }}>
                 <button
                   onClick={() => {
                     if (slide.isBilan) { setShowBilanModal(true) }
-                    else { setOpenModalId(slide.id) }
+                    else if (slide.id === 'jardin') { screenProps?.onOpenRituals?.() }
                   }}
-                  style={{ flex:1, padding:'5px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13.5, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background: slide.btnGrad, boxShadow:`0 6px 16px ${slide.btnShadow}`, transition:'transform .15s ease, box-shadow .15s ease' }}
-                  onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 10px 22px ${slide.btnShadow}` }}
-                  onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 6px 16px ${slide.btnShadow}` }}
+                  style={{ padding:'15px 36px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#1a1208', letterSpacing:'.04em', background:slide.btnGrad, boxShadow:`0 8px 24px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .15s ease' }}
+                  onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+                  onMouseLeave={e => e.currentTarget.style.transform='none'}
                 >
-                  {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan' : slide.btnLabel}
+                  {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
                 </button>
-
-                {/* Slide suivant */}
-                {!isLast && (() => { const next = visibleSlides[slideIdx+1]; return (
-                  <button
-                    onClick={() => handleNav(1)}
-                    style={{ flexShrink:0, padding:'5px 14px', borderRadius:100, background:next.color, border:`1px solid ${next.color}`, fontSize:11, fontFamily:"'Jost',sans-serif", color:'#1a1208', cursor:'pointer', transition:'opacity .2s, transform .15s', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}
-                    onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
-                    onMouseLeave={e => e.currentTarget.style.transform='none'}
-                  >{next.badge} ›</button>
-                )})()}
-                {isLast && <div style={{ flexShrink:0, width:10 }}/>}
               </div>
+
 
             </div>
           </div>
