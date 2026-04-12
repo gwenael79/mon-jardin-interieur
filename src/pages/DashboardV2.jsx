@@ -253,6 +253,11 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
     <div
       style={{ position:'fixed', inset:0, display:'flex', flexDirection:'column', background:'linear-gradient(160deg,#f8f0ec,#ede5de)', zIndex:10 }}
     >
+      <style>{`
+        @keyframes ctaGlow { 0%,100%{filter:brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))} 50%{filter:brightness(1.18) drop-shadow(0 0 12px rgba(255,255,255,0.6))} }
+        .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
+        .cta-btn:active { transform:scale(0.97) !important; }
+      `}</style>
       {/* ── Bandeau titre mobile ── */}
       <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
         {/* Logo */}
@@ -335,7 +340,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
               else if (slide.id === 'jardin') { onOpenModal('jardin'); screenProps?.onOpenRituals?.() }
               else { onOpenModal(slide.id) }
             }}
-            style={{ padding:'18px 0', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 28px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease', width:'100%', maxWidth:340 }}
+            style={{ padding:'18px 0', borderRadius:100, border:'none', cursor:'pointer', touchAction:'manipulation', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 28px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease', width:'100%', maxWidth:340 }}
           >
             {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
           </button>
@@ -1068,10 +1073,9 @@ export default function DashboardPage() {
           @keyframes dkThumbIn   { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
           @keyframes arrowBlink  { 0%,100%{opacity:1;box-shadow:0 4px 16px rgba(0,0,0,0.32),0 0 0 0 rgba(26,74,40,0.5)} 50%{opacity:0.5;box-shadow:0 2px 8px rgba(0,0,0,0.18),0 0 0 6px rgba(26,74,40,0)} }
           .nav-arrow:hover { transform:scale(1.1) !important; opacity:1 !important; }
-          @keyframes ctaShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
-          .cta-btn { position:relative; overflow:hidden; }
-          .cta-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.55) 50%,transparent 65%); background-size:200% 100%; animation:ctaShimmer 2.4s ease-in-out infinite; border-radius:inherit; pointer-events:none; }
-          .cta-btn:hover { transform:translateY(-3px) scale(1.03) !important; }
+          @keyframes ctaGlow { 0%,100%{filter:brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))} 50%{filter:brightness(1.18) drop-shadow(0 0 12px rgba(255,255,255,0.6))} }
+          .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
+          .cta-btn:hover { transform:translateY(-3px) scale(1.03) !important; filter:brightness(1.22) !important; }
           .cta-btn:active { transform:scale(0.97) !important; }
         `}</style>
 
@@ -1190,6 +1194,7 @@ export default function DashboardPage() {
                   onClick={() => {
                     if (slide.isBilan) { setShowBilanModal(true) }
                     else if (slide.id === 'jardin') { screenProps?.onOpenRituals?.() }
+                    else { setOpenModalId(slide.id) }
                   }}
                   style={{ padding:'18px 52px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:19, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 30px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease' }}
                 >
