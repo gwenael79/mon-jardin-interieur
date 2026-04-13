@@ -4504,6 +4504,17 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     return () => window.removeEventListener('bilanComplete', handler)
   }, [handleQuizComplete])
 
+  // Reçoit la mise à jour de santé après un rituel (venant de DashboardV2 ou de soi-même)
+  useEffect(() => {
+    const handler = (e) => {
+      const { health } = e.detail ?? {}
+      if (health == null) return
+      setPlantOverride(prev => ({ ...(prev ?? todayPlant), health }))
+    }
+    window.addEventListener('plantHealthPatched', handler)
+    return () => window.removeEventListener('plantHealthPatched', handler)
+  }, [todayPlant])
+
   const { getStreak, recordToday } = useStreak(userId)
 
   const handleToggleRitual = useCallback(async (ritualId) => {
@@ -4707,6 +4718,19 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         need={selectedNeed}
         onBack={() => { setShowRitualSuggestion(false); setShowNeedModal(true) }}
         onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
+        plantHealth={plant?.health ?? 5}
+        onCompleteRitual={async (needId, isLiked, delta) => {
+          console.log('[onCompleteRitual ScreenMonJardin] called', { needId, isLiked, delta, plantId: plant?.id ?? todayPlant?.id, health: plant?.health ?? todayPlant?.health })
+          if (!isLiked) return
+          const plantId = plant?.id ?? todayPlant?.id
+          const currentHealth = plant?.health ?? todayPlant?.health ?? 5
+          if (!plantId) { console.warn('[onCompleteRitual] plant.id manquant — plant:', plant, 'todayPlant:', todayPlant); return }
+          const newHealth = Math.min(100, currentHealth + delta)
+          setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: newHealth }))
+          const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
+          if (error) console.error('[onCompleteRitual] update failed:', error.message)
+          else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
+        }}
       />
     )}
     {showRitualsModal && (

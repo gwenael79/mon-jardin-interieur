@@ -19,6 +19,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { ADMIN_IDS }    from './AdminPage'
 import { useAuth }      from '../hooks/useAuth'
 import { usePlant }     from '../hooks/usePlant'
+import { usePlantStore } from '../store/plant.store'
 import { useCircle }    from '../hooks/useCircle'
 import { useDefi }      from '../hooks/useDefi'
 import { supabase }     from '../core/supabaseClient'
@@ -758,7 +759,7 @@ export default function DashboardPage() {
 
   // ── Auth & données ── (identique à DashboardPage)
   const { user, signOut }                      = useAuth()
-  const { todayPlant, stats: plantStats }      = usePlant(user?.id)
+  const { todayPlant, stats: plantStats, reload: reloadPlant } = usePlant(user?.id)
   const { communityStats, defis, myDefis, joinedIds, isLoading: defisLoading } = useDefi(user?.id)
   const { achats } = useAchats(user?.id)
   const prefetchRunRef = useRef(false)
@@ -1096,14 +1097,22 @@ export default function DashboardPage() {
           need={selectedNeed}
           onBack={() => { setShowRitualSuggestion(false); setShowNeedModal(true) }}
           onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
-          onCompleteRitual={(needId, liked) => {
-            track('ritual_need_complete', { needId, liked }, 'jardin', 'engagement')
+          onCompleteRitual={async (needId, isLiked, delta) => {
+            console.log('[onCompleteRitual DashV2] called', { needId, isLiked, delta, plantId: todayPlant?.id, health: todayPlant?.health })
+            track('ritual_need_complete', { needId, liked: isLiked }, 'jardin', 'engagement')
+            if (!isLiked || !todayPlant?.id) { console.warn('[onCompleteRitual DashV2] skip — isLiked:', isLiked, 'todayPlant?.id:', todayPlant?.id); return }
+            const newHealth = Math.min(100, (todayPlant?.health ?? 5) + delta)
+            usePlantStore.getState().setTodayPlant({ ...todayPlant, health: newHealth })
+            const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', todayPlant.id)
+            if (error) console.error('[onCompleteRitual DashV2] update failed:', error.message)
+            else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: todayPlant.id } }))
           }}
           onSeeFlower={() => {
             setShowRitualSuggestion(false)
             setSelectedNeed(null)
             setOpenModalId('jardin')
           }}
+          plantHealth={todayPlant?.health ?? 5}
         />
       )}
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}

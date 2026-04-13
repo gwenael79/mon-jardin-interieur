@@ -5,6 +5,9 @@ import { plantService }     from '../services/plant.service'
 import { ritualService }    from '../services/ritual.service'
 import { useCircle } from '../hooks/useCircle'
 
+// Module-level : évite de vider le store quand le MÊME userId monte dans un nouveau composant
+let _lastLoadedUserId = null
+
 export function usePlant(userId) {
   const { activeCircle } = useCircle(userId)
   const {
@@ -15,10 +18,13 @@ export function usePlant(userId) {
 
   useEffect(() => {
     if (!userId) return
-    // Vide les données de l'utilisateur précédent avant de charger les nouvelles
-    setTodayPlant(null)
-    setStats(null)
-    setTodayRituals([])
+    // Vide le store UNIQUEMENT si l'utilisateur change — pas lors d'un simple remontage
+    if (_lastLoadedUserId !== userId) {
+      setTodayPlant(null)
+      setStats(null)
+      setTodayRituals([])
+      _lastLoadedUserId = userId
+    }
     void loadAll()
   }, [userId]) // eslint-disable-line
 
@@ -69,6 +75,13 @@ export function usePlant(userId) {
               })
           }
         }
+      }
+
+      // Ne jamais écraser une valeur optimiste plus haute dans le store
+      // (race condition : le write DB peut ne pas être encore propagé au SELECT)
+      const currentInStore = usePlantStore.getState().todayPlant
+      if (currentInStore?.id === resolvedPlant?.id && currentInStore.health > resolvedPlant.health) {
+        resolvedPlant = { ...resolvedPlant, health: currentInStore.health }
       }
 
       setTodayPlant(resolvedPlant)

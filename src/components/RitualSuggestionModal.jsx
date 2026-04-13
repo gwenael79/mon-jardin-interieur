@@ -42,6 +42,7 @@ const RITUALS = {
     tip: 'Allongez-vous, yeux fermés. Après 4 cycles, laissez votre corps s\'endormir naturellement.',
     icon: '🌙',
     breathing: { inhale:4, hold:7, exhale:8, cycles:4 },
+    delta: 8,
   },
   stress: {
     title:    'Cohérence cardiaque',
@@ -57,6 +58,7 @@ const RITUALS = {
     tip: 'Posez une main sur le cœur pour sentir son rythme se stabiliser.',
     icon: '💨',
     breathing: { inhale:5, hold:0, exhale:5, cycles:18 },
+    delta: 8,
   },
   emotions: {
     title:    "L'accueil de l'émotion",
@@ -71,6 +73,7 @@ const RITUALS = {
     ],
     tip: 'Il n\'y a rien à faire. Juste être là avec ce qui est.',
     icon: '💗',
+    delta: 7,
   },
   grounding: {
     title:    'Ancrage 5-4-3-2-1',
@@ -85,6 +88,7 @@ const RITUALS = {
     ],
     tip: 'Terminez en prenant 3 respirations profondes. Vous êtes ici, maintenant.',
     icon: '⚓',
+    delta: 6,
   },
   thoughts: {
     title:    "La méditation de l'observateur",
@@ -99,6 +103,7 @@ const RITUALS = {
     ],
     tip: 'Les pensées reviendront — c\'est normal. Revenir au souffle, c\'est le rituel.',
     icon: '✨',
+    delta: 7,
   },
   energy: {
     title:    'Activation corps & souffle',
@@ -113,6 +118,7 @@ const RITUALS = {
     ],
     tip: 'Faites-le debout, si possible pieds nus sur le sol.',
     icon: '⚡',
+    delta: 9,
   },
   selfconnect: {
     title:    'Journaling express',
@@ -127,6 +133,7 @@ const RITUALS = {
     ],
     tip: 'Carnet et stylo de préférence — l\'écriture manuelle connecte davantage.',
     icon: '🌿',
+    delta: 7,
   },
   softness: {
     title:    'Auto-massage douceur',
@@ -141,6 +148,7 @@ const RITUALS = {
     ],
     tip: 'Faites-le yeux fermés, en silence. C\'est un moment rien que pour vous.',
     icon: '🌸',
+    delta: 6,
   },
 }
 
@@ -156,6 +164,10 @@ const CSS = `
   @keyframes rs_glow   { 0%,100%{box-shadow:0 0 20px rgba(255,210,100,0.3)} 50%{box-shadow:0 0 50px rgba(255,210,100,0.7),0 0 90px rgba(255,180,80,0.3)} }
   @keyframes rs_bloom  { 0%{transform:scale(1)} 30%{transform:scale(1.18)} 60%{transform:scale(0.96)} 100%{transform:scale(1.08)} }
   @keyframes rs_label_in  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes rs_delta_pop { 0%{transform:scale(0) rotate(-15deg);opacity:0} 65%{transform:scale(1.25) rotate(5deg)} 100%{transform:scale(1) rotate(0deg);opacity:1} }
+  @keyframes rs_bar_fill  { from{width:0%} to{width:var(--bar-w)} }
+  @keyframes rs_plant_in  { from{transform:scale(0.88) translateY(12px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+  @keyframes rs_confetti  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-120px) rotate(360deg);opacity:0} }
   @keyframes bub_inhale   { from{transform:scale(0.60)} to{transform:scale(1.0)} }
   @keyframes bub_hold     { 0%,100%{transform:scale(1.0)} 50%{transform:scale(1.022)} }
   @keyframes bub_exhale   { from{transform:scale(1.0)} to{transform:scale(0.60)} }
@@ -234,158 +246,184 @@ const PHASE_PALETTE = {
 function PhaseBreathing({ ritual, need, isMobile, onDone, onClose }) {
   const { inhale, hold, exhale, cycles } = ritual.breathing
   const PHASES = [
-    ...(inhale > 0 ? [{ key:'inhale', duration:inhale, scale:1.38 }] : []),
-    ...(hold   > 0 ? [{ key:'hold',   duration:hold,   scale:1.38 }] : []),
-    ...(exhale > 0 ? [{ key:'exhale', duration:exhale, scale:0.68 }] : []),
+    ...(inhale > 0 ? [{ key:'inhale', duration:inhale }] : []),
+    ...(hold   > 0 ? [{ key:'hold',   duration:hold   }] : []),
+    ...(exhale > 0 ? [{ key:'exhale', duration:exhale  }] : []),
   ]
 
+  const [countdown, setCountdown] = useState(3)
+  const [started,   setStarted]   = useState(false)
   const [phaseIdx,  setPhaseIdx]  = useState(0)
   const [timeLeft,  setTimeLeft]  = useState(PHASES[0].duration)
   const [cycleNum,  setCycleNum]  = useState(1)
   const [finished,  setFinished]  = useState(false)
-  const [rippleKey, setRippleKey] = useState(0)
-  const tickRef = useRef(null)
+  const [phaseKey,  setPhaseKey]  = useState(0)
+  const stateRef = useRef({ phaseIdx:0, timeLeft:PHASES[0].duration, cycleNum:1, phaseKey:0 })
 
+  // ── Compte à rebours 3-2-1 ──
   useEffect(() => {
-    tickRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev > 1) return prev - 1
-        setPhaseIdx(pi => {
-          const next = pi + 1
-          if (next < PHASES.length) {
-            if (PHASES[next].key === 'inhale') setRippleKey(k => k + 1)
-            setTimeLeft(PHASES[next].duration)
-            return next
-          }
-          setCycleNum(cn => {
-            if (cn >= cycles) { clearInterval(tickRef.current); setFinished(true); return cn }
-            setPhaseIdx(0)
-            setTimeLeft(PHASES[0].duration)
-            setRippleKey(k => k + 1)
-            return cn + 1
-          })
-          return 0
-        })
-        return 0
+    const id = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) { clearInterval(id); setStarted(true); return 0 }
+        return c - 1
       })
     }, 1000)
-    return () => clearInterval(tickRef.current)
+    return () => clearInterval(id)
   }, [])
+
+  // ── Timer respiration (démarre après countdown) ──
+  useEffect(() => {
+    if (!started) return
+    const s = { phaseIdx:0, timeLeft:PHASES[0].duration, cycleNum:1, phaseKey:0 }
+    stateRef.current = s
+    setPhaseIdx(0); setTimeLeft(PHASES[0].duration); setCycleNum(1); setPhaseKey(0)
+
+    const id = setInterval(() => {
+      const cur = stateRef.current
+      if (cur.timeLeft > 1) {
+        const tl = cur.timeLeft - 1
+        stateRef.current.timeLeft = tl
+        setTimeLeft(tl)
+        return
+      }
+      const nextPi = cur.phaseIdx + 1
+      if (nextPi < PHASES.length) {
+        const pk = cur.phaseKey + 1
+        stateRef.current = { ...cur, phaseIdx:nextPi, timeLeft:PHASES[nextPi].duration, phaseKey:pk }
+        setPhaseIdx(nextPi); setTimeLeft(PHASES[nextPi].duration); setPhaseKey(pk)
+        return
+      }
+      if (cur.cycleNum >= cycles) {
+        clearInterval(id); setFinished(true); return
+      }
+      const pk = cur.phaseKey + 1
+      const cn = cur.cycleNum + 1
+      stateRef.current = { phaseIdx:0, timeLeft:PHASES[0].duration, cycleNum:cn, phaseKey:pk }
+      setPhaseIdx(0); setTimeLeft(PHASES[0].duration); setCycleNum(cn); setPhaseKey(pk)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [started])
 
   const currentPhase = PHASES[phaseIdx] ?? PHASES[0]
   const palette      = PHASE_PALETTE[currentPhase.key] ?? PHASE_PALETTE.inhale
-  const bubbleSize   = isMobile ? 156 : 180
-  const R            = bubbleSize / 2 + 22   // rayon arc SVG
-  const circumference = 2 * Math.PI * R
-  const progress     = timeLeft / currentPhase.duration
-  const arcDash      = progress * circumference
+  const bubbleSize   = isMobile ? 168 : 210
 
+  // ── Écran compte à rebours ──
+  if (!started) {
+    return (
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'linear-gradient(180deg,#d8d0f0 0%,#c8bfe8 100%)', position:'relative', overflow:'hidden' }}>
+        <button onClick={onClose} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', background:'rgba(100,80,160,0.10)', border:'1px solid rgba(100,80,160,0.18)', cursor:'pointer', color:'rgba(60,40,100,0.50)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>✕</button>
+        {/* Halo ambiant */}
+        <div style={{ position:'absolute', width:340, height:340, borderRadius:'50%', background:'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)', pointerEvents:'none' }}/>
+        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(40,20,80,0.70)', marginBottom:48, fontWeight:500 }}>
+          {ritual.title}
+        </div>
+        <div key={countdown} style={{ animation:'countdown_pop .55s cubic-bezier(0.34,1.56,0.64,1) both', lineHeight:1 }}>
+          <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 148 : 190, fontWeight:200, color:'rgba(40,20,80,0.82)', letterSpacing:'-.04em' }}>
+            {countdown}
+          </span>
+        </div>
+        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, color:'rgba(40,20,80,0.60)', letterSpacing:'.16em', textTransform:'uppercase', marginTop:36, fontWeight:400 }}>
+          Préparez-vous
+        </div>
+      </div>
+    )
+  }
+
+  // ── Écran terminé ──
+  if (finished) {
+    return (
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'linear-gradient(180deg,#d8d0f0 0%,#c8bfe8 100%)', padding:'24px', textAlign:'center', position:'relative' }}>
+        <button onClick={onClose} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', background:'rgba(100,80,160,0.10)', border:'1px solid rgba(100,80,160,0.18)', cursor:'pointer', color:'rgba(60,40,100,0.50)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        <div style={{ position:'relative', width: bubbleSize * 0.72, height: bubbleSize * 0.72, borderRadius:'50%', background:'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.55) 0%, #a78bfacc 38%, #6d28d9 100%)', boxShadow:'0 0 60px rgba(139,92,246,0.35), 0 0 130px rgba(139,92,246,0.15)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:36, animation:'rs_pop .5s ease both' }}>
+          <div style={{ position:'absolute', width:28, height:28, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.5) 45%, transparent 100%)', filter:'blur(3px)' }}/>
+          <span style={{ position:'relative', zIndex:2, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 54 : 68, fontWeight:300, color:'rgba(255,255,255,0.95)' }}>✓</span>
+        </div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 36 : 44, fontWeight:300, color:'rgba(40,20,80,0.82)', marginBottom:8 }}>Respiration terminée</div>
+        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(10,5,20,0.80)', letterSpacing:'.08em', marginBottom:32 }}>{cycles} cycles effectués</div>
+        <div style={{ display:'flex', gap:6, marginBottom:40 }}>
+          {Array.from({ length:cycles }).map((_, i) => (
+            <div key={i} style={{ width:24, height:4, borderRadius:4, background:'linear-gradient(90deg,#a78bfa,#6d28d9)' }}/>
+          ))}
+        </div>
+        <button onClick={onDone} style={{ padding: isMobile ? '16px 0' : '16px 56px', width: isMobile ? '88%' : 'auto', maxWidth:300, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:16, fontWeight:600, color:'#fff', background:'linear-gradient(135deg,#a78bfa,#6d28d9)', boxShadow:'0 8px 30px rgba(139,92,246,0.35)' }}>
+          Continuer →
+        </button>
+      </div>
+    )
+  }
+
+  // ── Écran respiration ──
   return (
-    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '20px 16px' : '32px 48px', textAlign:'center', position:'relative', background:'linear-gradient(180deg,#0f0a1e 0%,#1a1030 100%)' }}>
+    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '20px 16px' : '32px 48px', textAlign:'center', position:'relative', background:'linear-gradient(180deg,#d8d0f0 0%,#c8bfe8 100%)', overflow:'hidden' }}>
 
-      <button onClick={onClose} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', cursor:'pointer', color:'rgba(255,255,255,0.45)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>✕</button>
+      <button onClick={onClose} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', background:'rgba(100,80,160,0.10)', border:'1px solid rgba(100,80,160,0.18)', cursor:'pointer', color:'rgba(60,40,100,0.50)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>✕</button>
 
-      {/* Titre rituel */}
-      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,255,255,0.30)', marginBottom:28 }}>
+      {/* Titre */}
+      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(40,20,80,0.75)', marginBottom:28, flexShrink:0, fontWeight:500 }}>
         {ritual.title}
       </div>
 
-      {/* Zone bulle + arc */}
-      <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:36, flexShrink:0 }}>
+      {/* Zone bulle */}
+      <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, width: bubbleSize + 90, height: bubbleSize + 90 }}>
 
-        {/* Anneaux ripple — lancés à chaque inspiration */}
-        {currentPhase.key === 'inhale' && [0,1,2].map(i => (
-          <div key={`${rippleKey}-${i}`} style={{
-            position:'absolute', borderRadius:'50%',
+        {/* Halo ambiant — change de couleur avec la phase */}
+        <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:`radial-gradient(circle, ${palette.glow} 0%, transparent 68%)`, transition:'background 1.4s ease', pointerEvents:'none' }}/>
+
+        {/* Anneaux — blancs à l'inspire (expansion), noirs à l'expire (contraction) */}
+        {(currentPhase.key === 'inhale' || currentPhase.key === 'exhale') && [0, 1].map(i => (
+          <div key={`ring-${phaseKey}-${i}`} style={{
+            position:'absolute',
             width: bubbleSize, height: bubbleSize,
-            border: `1.5px solid ${palette.glow}`,
-            animation: `rs_ripple ${currentPhase.duration * 0.85}s ease-out ${i * (currentPhase.duration * 0.28)}s both`,
+            borderRadius:'50%',
+            border: currentPhase.key === 'inhale'
+              ? '2px solid rgba(255,255,255,0.85)'
+              : '2px solid rgba(10,5,30,0.65)',
+            animation:`bub_ring ${currentPhase.duration * 0.95}s ease-out ${i * 1.6}s both`,
             pointerEvents:'none',
           }}/>
         ))}
 
-        {/* Halo hold */}
-        {currentPhase.key === 'hold' && (
-          <div style={{
-            position:'absolute', borderRadius:'50%',
-            width: bubbleSize * 1.38, height: bubbleSize * 1.38,
-            background:`radial-gradient(circle,${palette.glow} 0%,transparent 70%)`,
-            animation:'rs_hold_glow 1.8s ease-in-out infinite',
-            pointerEvents:'none',
-          }}/>
-        )}
-
-        {/* Arc SVG de progression */}
-        <svg width={bubbleSize + 56} height={bubbleSize + 56} style={{ position:'absolute', top:0, left:0, transform:'rotate(-90deg)' }}>
-          <defs>
-            <linearGradient id="arc_grad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor={palette.from} stopOpacity="0.9"/>
-              <stop offset="100%" stopColor={palette.to} stopOpacity="0.9"/>
-            </linearGradient>
-          </defs>
-          {/* Track */}
-          <circle cx={(bubbleSize + 56)/2} cy={(bubbleSize + 56)/2} r={R}
-            fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="3"/>
-          {/* Progress */}
-          <circle cx={(bubbleSize + 56)/2} cy={(bubbleSize + 56)/2} r={R}
-            fill="none" stroke="url(#arc_grad)" strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={`${arcDash} ${circumference}`}
-            style={{ transition:'stroke-dasharray .9s linear' }}/>
-        </svg>
-
-        {/* Bulle principale */}
-        <div style={{
+        {/* Bulle principale — key force le redémarrage de l'animation à chaque phase */}
+        <div key={`bubble-${phaseKey}`} style={{
+          position:'relative',
           width: bubbleSize, height: bubbleSize, borderRadius:'50%',
-          background: `radial-gradient(circle at 38% 32%, ${palette.from}ee, ${palette.to})`,
-          boxShadow: `0 0 60px ${palette.glow}, 0 0 120px ${palette.glow}55, inset 0 1px 0 rgba(255,255,255,0.25)`,
-          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-          transform: `scale(${currentPhase.scale})`,
-          transition: `transform ${currentPhase.duration}s ${currentPhase.key === 'exhale' ? 'cubic-bezier(0.4,0,0.2,1)' : 'cubic-bezier(0,0,0.2,1)'},
-                       background ${0.8}s ease, box-shadow ${0.8}s ease`,
-          flexShrink: 0,
-          position: 'relative', zIndex: 1,
+          background:`radial-gradient(circle at 38% 32%, rgba(255,255,255,0.35) 0%, ${palette.from}ee 40%, ${palette.to} 100%)`,
+          boxShadow:`0 0 55px ${palette.glow}, 0 0 110px ${palette.glow}66, inset 0 2px 10px rgba(255,255,255,0.25)`,
+          animation:`bub_${currentPhase.key} ${currentPhase.duration}s ${currentPhase.key === 'hold' ? 'ease-in-out infinite' : 'cubic-bezier(0.37,0,0.63,1) forwards'}`,
+          display:'flex', alignItems:'center', justifyContent:'center',
+          transition:`box-shadow 1.2s ease`,
+          zIndex:1,
         }}>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 42 : 52, fontWeight:300, color:'rgba(255,255,255,0.92)', lineHeight:1, display:'block' }}>
-            {finished ? '✓' : timeLeft}
-          </span>
-          <span style={{ fontFamily:"'Jost',sans-serif", fontSize:10, letterSpacing:'.12em', color:'rgba(255,255,255,0.50)', textTransform:'uppercase', marginTop:4 }}>
-            {finished ? 'terminé' : 'sec'}
+          {/* Point lumineux central — toujours visible */}
+          <div style={{ position:'absolute', width:30, height:30, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0.08) 75%, transparent 100%)', filter:'blur(2.5px)', zIndex:2, pointerEvents:'none' }}/>
+          {/* Compte à rebours */}
+          <span key={`tl-${timeLeft}`} style={{ position:'relative', zIndex:3, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 52 : 64, fontWeight:300, color:'rgba(255,255,255,1)', lineHeight:1, letterSpacing:'-.02em', animation:'rs_label_in .35s ease both', textShadow:'0 2px 12px rgba(30,10,70,0.50)' }}>
+            {timeLeft}
           </span>
         </div>
       </div>
 
       {/* Label phase */}
-      <div key={currentPhase.key} style={{ animation:'rs_label_in .4s ease both' }}>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 36 : 44, fontWeight:300, color:'rgba(255,255,255,0.90)', letterSpacing:'.03em', lineHeight:1.1 }}>
-          {finished ? 'Respiration terminée' : palette.label}
+      <div key={`label-${phaseKey}`} style={{ animation:'rs_label_in .5s ease both', flexShrink:0 }}>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 42 : 50, fontWeight:400, color:'rgba(25,10,60,0.92)', letterSpacing:'.02em', lineHeight:1.1 }}>
+          {palette.label}
         </div>
-        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,0.35)', letterSpacing:'.08em', marginTop:6 }}>
-          {finished ? `${cycles} cycles effectués` : palette.sub}
+        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(50,30,100,0.70)', letterSpacing:'.14em', textTransform:'uppercase', marginTop:10 }}>
+          {palette.sub}
         </div>
       </div>
 
       {/* Cycles */}
-      <div style={{ display:'flex', gap:6, marginTop:20, marginBottom:28 }}>
-        {Array.from({ length: cycles }).map((_, i) => (
-          <div key={i} style={{ width: i < cycleNum - (finished ? 0 : 1) ? 24 : 8, height:4, borderRadius:4, background: i < cycleNum - (finished ? 0 : 1) ? `linear-gradient(90deg,${palette.from},${palette.to})` : 'rgba(255,255,255,0.15)', transition:'all .4s ease' }}/>
+      <div style={{ display:'flex', gap:6, marginTop:24, marginBottom:22, flexShrink:0 }}>
+        {Array.from({ length:cycles }).map((_, i) => (
+          <div key={i} style={{ width: i < cycleNum - 1 ? 24 : 8, height:5, borderRadius:4, background: i < cycleNum - 1 ? `linear-gradient(90deg,${palette.from},${palette.to})` : 'rgba(60,30,120,0.28)', transition:'all .5s ease' }}/>
         ))}
       </div>
 
-      {/* Bouton */}
-      {finished ? (
-        <button onClick={onDone}
-          style={{ padding: isMobile ? '16px 0' : '16px 52px', width: isMobile ? '90%' : 'auto', maxWidth:300, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:16, fontWeight:600, color:'#fff', background:`linear-gradient(135deg,${palette.from},${palette.to})`, boxShadow:`0 8px 28px ${palette.glow}` }}
-        >
-          Continuer →
-        </button>
-      ) : (
-        <button onClick={onDone}
-          style={{ padding:'10px 28px', borderRadius:100, border:'1px solid rgba(255,255,255,0.15)', background:'rgba(255,255,255,0.06)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,0.40)' }}
-        >
-          Passer
-        </button>
-      )}
+      <button onClick={onDone} style={{ padding:'11px 32px', borderRadius:100, border:'1px solid rgba(50,30,100,0.35)', background:'rgba(50,30,100,0.10)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(30,10,70,0.65)', flexShrink:0, letterSpacing:'.06em' }}>
+        Passer
+      </button>
     </div>
   )
 }
@@ -504,59 +542,45 @@ function PhaseAlternative({ originalNeed, isMobile, onStart, onSkip, onClose }) 
 }
 
 // ─── Phase : résultat + Ma Fleur ─────────────────────────────────────────────
-function PhaseResult({ need, liked, isMobile, onSeeFlower, onClose }) {
+function PhaseResult({ need, isMobile, onSeeFlower, onClose, plantHealth, delta }) {
   const { g1, g2, glow } = need
-  const STAR_COUNT = 12
-  const stars = Array.from({ length: STAR_COUNT }, (_, i) => ({
-    angle: (360 / STAR_COUNT) * i + (Math.random() * 20 - 10),
-    delay: 0.2 + i * 0.06,
-    size:  16 + Math.floor(Math.random() * 14),
-    dist:  80 + Math.floor(Math.random() * 50),
-  }))
+  const healthBefore = Math.min(Math.max(plantHealth ?? 35, 0), 100)
+  const healthAfter  = Math.min(healthBefore + (delta ?? 7), 100)
 
   return (
-    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '32px 24px' : '40px 48px', textAlign:'center', animation:'rs_eval .4s ease both', position:'relative', overflow:'hidden' }}>
+    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '40px 28px' : '52px 48px', textAlign:'center', animation:'rs_eval .4s ease both', position:'relative', overflow:'hidden', background:'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)', gap:32 }}>
 
-      {/* Fleur + étoiles en burst radial */}
-      <div style={{ position:'relative', display:'inline-block', marginBottom:20 }}>
-        {stars.map((s, i) => (
-          <div key={i} style={{
-            position:'absolute', top:'50%', left:'50%', width:0, height:0,
-            transform:`rotate(${s.angle}deg)`, pointerEvents:'none', zIndex:2,
-          }}>
-            <span style={{
-              position:'absolute', fontSize:s.size,
-              animation:`rs_star_out ${0.9 + Math.random() * 0.5}s ease-out ${s.delay}s both`,
-              display:'block',
-              transformOrigin:'0 0',
-            }}>✨</span>
-          </div>
-        ))}
-        <div style={{ fontSize: isMobile ? 90 : 110, animation:'rs_bloom 1.2s cubic-bezier(.34,1.56,.64,1) .2s both', display:'inline-block', filter:`drop-shadow(0 0 24px ${g1}99)`, position:'relative', zIndex:1 }}>
-          🌸
-        </div>
+      {/* Halos décoratifs */}
+      <div style={{ position:'absolute', inset:0, pointerEvents:'none' }}>
+        <div style={{ position:'absolute', top:'-5%', left:'-10%', width:280, height:280, borderRadius:'50%', background:`radial-gradient(circle,${g1}18 0%,transparent 65%)` }}/>
+        <div style={{ position:'absolute', bottom:'-5%', right:'-8%', width:220, height:220, borderRadius:'50%', background:`radial-gradient(circle,${g2}15 0%,transparent 65%)` }}/>
       </div>
 
-      {/* Titre */}
-      <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 52 : 68, fontWeight:700, color:'#2A1F18', margin:'0 0 12px', lineHeight:1.1 }}>
-        Bravo !
-      </h2>
-      <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 26, fontWeight:600, color:'#2A1F18', margin:'0 0 28px', maxWidth:380, lineHeight:1.55 }}>
-        Grâce à vous, en prenant soin de soi,<br/>votre fleur va s'épanouir un peu plus aujourd'hui.
-      </p>
+      {/* Titre + message */}
+      <div style={{ position:'relative', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:20 }}>
+        <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 52 : 66, fontWeight:700, color:'#2A1F18', margin:0, lineHeight:1.05, animation:'rs_pop .5s cubic-bezier(.34,1.56,.64,1) both' }}>
+          Bravo !
+        </h2>
+        <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontStyle:'italic', fontWeight:400, color:'rgba(50,35,20,0.75)', margin:0, lineHeight:1.65, maxWidth:380, animation:'rs_in .5s ease .2s both' }}>
+          En prenant soin de toi, tu as permis à ta fleur de gagner en vitalité,
+          passant ainsi de{' '}
+          <span style={{ fontWeight:600, fontStyle:'normal', color:'rgba(50,35,20,0.55)' }}>{healthBefore}%</span>
+          {' '}à{' '}
+          <span style={{ fontWeight:700, fontStyle:'normal', color:`${g1}`, fontSize: isMobile ? 22 : 26 }}>{healthAfter}%</span>.
+        </p>
+      </div>
 
       {/* Boutons */}
-      <div style={{ display:'flex', flexDirection:'column', gap:12, width:'100%', maxWidth:320 }}>
-        <button
-          onClick={onSeeFlower}
-          style={{ padding:'17px 0', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 10px 28px ${glow}`, transition:'transform .18s ease', animation:'rs_glow 2.4s ease-in-out infinite' }}
+      <div style={{ display:'flex', flexDirection:'column', gap:12, width:'100%', maxWidth:320, position:'relative', zIndex:1, animation:'rs_in .5s ease .4s both' }}>
+        <button onClick={onSeeFlower}
+          style={{ padding:'17px 0', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 8px 28px ${glow}`, transition:'transform .18s ease' }}
           onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
           onMouseLeave={e => e.currentTarget.style.transform='none'}
         >
           🌸 Voir ma fleur
         </button>
         <button onClick={onClose}
-          style={{ padding:'14px 0', borderRadius:100, cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(50,35,20,0.55)', background:'rgba(255,255,255,0.60)', border:'1px solid rgba(180,160,140,0.28)' }}
+          style={{ padding:'13px 0', borderRadius:100, cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(50,35,20,0.55)', background:'rgba(255,255,255,0.60)', border:'1px solid rgba(180,160,140,0.28)' }}
         >
           Fermer
         </button>
@@ -566,7 +590,7 @@ function PhaseResult({ need, liked, isMobile, onSeeFlower, onClose }) {
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlower, onCompleteRitual }) {
+export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlower, onCompleteRitual, plantHealth }) {
   const isMobile = useIsMobile()
   const [phase,       setPhase]       = useState('view')
   const [liked,       setLiked]       = useState(null)
@@ -580,7 +604,7 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
 
   function handleEval(isLiked) {
     setLiked(isLiked)
-    onCompleteRitual?.(activeNeed.id, isLiked)
+    onCompleteRitual?.(activeNeed.id, isLiked, activeRitual.delta ?? 7)
     if (isLiked) { setPhase('result') }
     else         { setPhase('alternative') }
   }
@@ -625,8 +649,9 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
         </div>
       )}
       {phase === 'result' && (
-        <PhaseResult need={activeNeed} liked={liked} isMobile={isMobile}
-          onSeeFlower={onSeeFlower ?? onClose} onClose={onClose}/>
+        <PhaseResult need={activeNeed} isMobile={isMobile}
+          onSeeFlower={onSeeFlower ?? onClose} onClose={onClose}
+          plantHealth={plantHealth} delta={activeRitual.delta}/>
       )}
     </div>
   )
