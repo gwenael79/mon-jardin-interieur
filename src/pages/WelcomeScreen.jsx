@@ -1,5 +1,5 @@
 // src/pages/WelcomeScreen.jsx
-import { useMemo, useEffect } from 'react'
+import { useMemo } from 'react'
 
 function getGreeting(isNewUser) {
   const h = new Date().getHours()
@@ -41,12 +41,6 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
     const day  = parseInt(new Date().toISOString().slice(0,10).replace(/-/g,''))
     return pool[day % pool.length]
   }, [timeKey])
-
-  // Fermeture automatique après 5 secondes
-  useEffect(() => {
-    const timer = setTimeout(() => onDone?.(), 5000)
-    return () => clearTimeout(timer)
-  }, [])
 
   return (
     <div

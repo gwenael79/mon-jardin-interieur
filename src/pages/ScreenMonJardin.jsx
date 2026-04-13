@@ -2348,7 +2348,7 @@ function BilanClosingPhrase({ degradation }) {
     </div>
   )
 }
-function DailyQuizModal({ onComplete, onDismiss, onSkip }) {
+function DailyQuizModal({ onComplete, onDismiss, onSkip, onSoinDeMoi }) {
   const [step,          setStep]          = useState(-1)
   const [answers,       setAnswers]       = useState({})
   const [selected,      setSelected]      = useState(null)
@@ -2380,42 +2380,62 @@ const choose = (idx) => {
 
   // ── Écran de résultat ────────────────────────────────────────────────────────
   if (result) {
-    const { deg, answers, recommendation } = result
-    const ZONE_COLORS = { roots:'var(--zone-roots)', stem:'var(--zone-stem)', leaves:'var(--zone-breath)', flowers:'var(--zone-flowers)', breath:'var(--lumens)' }
-    const ZONE_NAMES  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
+    const { deg } = result
+    const MOOD_RESULT = [
+      { max:30,  emoji:'😔', label:'Difficile',  color:'#e57373', bg:'#fdf0f0', msg:"C'est une journée qui demande de la douceur.\nPrends soin de toi, un petit geste à la fois." },
+      { max:50,  emoji:'😕', label:'Tendu·e',    color:'#ffb74d', bg:'#fdf6ec', msg:"Tu ressens une certaine tension aujourd'hui.\nLes rituels peuvent t'aider à retrouver un peu d'espace." },
+      { max:65,  emoji:'😐', label:'Neutre',     color:'#fdd835', bg:'#fdfaec', msg:"Un état équilibré, ni haut ni bas.\nC'est un bon moment pour poser des petites intentions." },
+      { max:80,  emoji:'🙂', label:'Bien',       color:'#aed581', bg:'#f2f8ea', msg:"Tu te sens plutôt bien aujourd'hui.\nLaisse cette énergie guider ta journée." },
+      { max:101, emoji:'😊', label:'Épanoui·e',  color:'#66bb6a', bg:'#edfaee', msg:"Ton jardin intérieur rayonne.\nAccueille pleinement cette vitalité." },
+    ]
+    const stressAvg = Object.values(deg ?? {}).reduce((s, v) => s + v, 0) / (Object.values(deg ?? {}).length || 1)
+    const wellbeing = 100 - stressAvg  // stress élevé = bien-être bas
+    const mood = MOOD_RESULT.find(m => wellbeing < m.max) ?? MOOD_RESULT[MOOD_RESULT.length - 1]
+
     return (
       <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', overflowY:'auto', padding:'40px 28px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', animation:'fadeUp 0.35s ease both' }}>
-          <div style={{ textAlign:'center', maxWidth:380, width:'100%' }}>
+        <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background: isMobile ? mood.bg : 'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', overflowY:'auto', padding:'48px 28px 36px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', animation:'fadeUp 0.35s ease both' }}>
+          <div style={{ textAlign:'center', maxWidth:340, width:'100%' }}>
 
-            {/* Icône */}
-            <div style={{ fontSize:'var(--fs-emoji-lg, 48px)', marginBottom:20 }}>
-              {recommendation.type === 'good' ? '✨' : '🌿'}
+            {/* Émoji humeur */}
+            <div style={{ fontSize:72, lineHeight:1, marginBottom:16, animation:'pulse 2.5s ease-in-out infinite' }}>
+              {mood.emoji}
             </div>
 
-            {/* Message principal */}
-            <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 26px)', color:'var(--quiz-modal-text)', fontWeight:300, lineHeight:1.3, marginBottom:12 }}>
-              {recommendation.message}
+            {/* Label état */}
+            <div style={{ display:'inline-block', padding:'5px 18px', borderRadius:100, background: mood.color + '22', border:`1px solid ${mood.color}66`, color: mood.color, fontSize:13, fontFamily:"'Jost',sans-serif", fontWeight:600, letterSpacing:'.08em', marginBottom:20 }}>
+              {mood.label}
+            </div>
+
+            {/* Message lié à l'humeur */}
+            <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:24, color:'var(--quiz-modal-text)', fontWeight:300, lineHeight:1.5, marginBottom:0, whiteSpace:'pre-line' }}>
+              {mood.msg}
             </h2>
 
-            <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
+            <div style={{ width:40, height:1, background: mood.color + '44', margin:'20px auto' }} />
 
-            {/* Phrase personnalisée */}
+            {/* Phrase de clôture */}
             <BilanClosingPhrase degradation={deg} />
 
-            {/* CTA */}
+            {/* CTA principal */}
             <button
-              onClick={() => { onComplete(result.deg, {}); onDismiss?.() }}
-              style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:'1px solid rgba(var(--green-rgb),0.35)', background:'rgba(var(--green-rgb),0.1)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', marginBottom:10, marginTop:24, fontFamily:"'Jost',sans-serif" }}
+              onClick={() => {
+                if (onSoinDeMoi) { onSoinDeMoi(result.deg) }
+                else { onComplete(result.deg, {}); onDismiss?.() }
+              }}
+              style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:`1px solid ${mood.color}55`, background: mood.color + '18', color: mood.color, fontSize:13, cursor:'pointer', letterSpacing:'0.08em', marginTop:24, marginBottom:10, fontFamily:"'Jost',sans-serif", fontWeight:500 }}
             >
-              Voir mes rituels du jour →
+              Prendre soin de moi
             </button>
+
+            {/* Refaire le bilan */}
             <button
-              onClick={onSkip}
-              style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
+              onClick={() => { setResult(null); setStep(0); setAnswers({}); setSelected(null) }}
+              style={{ padding:'8px 20px', borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.35)', fontSize:12, cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
             >
-              Fermer
+              ↩ Ce résultat ne me correspond pas — refaire le bilan
             </button>
+
           </div>
         </div>
       </div>

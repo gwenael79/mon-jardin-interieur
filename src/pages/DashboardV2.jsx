@@ -246,7 +246,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  COMPOSANT MOBILE — slides preview plein écran, swipeable
 // ─────────────────────────────────────────────────────────────────────────────
-function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, screenProps, initial, onOpenProfile, onHelp, onSignOut }) {
+function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, bilanDoneToday, bilanHistory, screenProps, initial, onOpenProfile, onHelp, onSignOut }) {
   const slide  = slides[curIdx]
   const isLast = curIdx === slides.length - 1
   const swipe  = useSwipe(() => onNav(1), () => onNav(-1))
@@ -259,6 +259,8 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
         @keyframes ctaGlow { 0%,100%{filter:brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))} 50%{filter:brightness(1.18) drop-shadow(0 0 12px rgba(255,255,255,0.6))} }
         .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
         .cta-btn:active { transform:scale(0.97) !important; }
+        @keyframes arrowBlink { 0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.28),0 0 0 0 rgba(40,160,80,0.6)} 50%{transform:scale(1.10);box-shadow:0 6px 22px rgba(0,0,0,0.22),0 0 0 9px rgba(40,160,80,0)} }
+        .nav-arrow { transition: transform .15s; }
       `}</style>
       {/* ── Bandeau titre mobile ── */}
       <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
@@ -302,17 +304,29 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
 
         {/* ── Flèches navigation ── */}
         {curIdx > 0 && (
-          <button onClick={() => onNav(-1)} className="nav-arrow" style={{ position:'absolute', bottom:16, left:16, width:58, height:58, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 14px rgba(0,0,0,0.30)', animation:'arrowBlink 1.8s ease-in-out infinite' }}>
-            <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><path d="M13 4L7 10L13 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M8.5 4L2.5 10L8.5 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <button onClick={() => onNav(-1)} className="nav-arrow" style={{ position:'absolute', bottom:16, left:16, width:58, height:58, borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', border:'1.5px solid rgba(255,255,255,0.40)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 10px rgba(0,0,0,0.15)', animation:'arrowBlink 1.8s ease-in-out infinite' }}>
+            <svg width="46" height="46" viewBox="0 0 20 20" fill="none"><path d="M12 2L5 10L12 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M17 2L10 10L17 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         )}
         {!isLast && (
-          <button onClick={() => onNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:16, right:16, width:58, height:58, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 14px rgba(0,0,0,0.30)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
-            <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><path d="M7 4L13 10L7 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 4L17.5 10L11.5 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <button onClick={() => onNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:16, right:16, width:58, height:58, borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', border:'1.5px solid rgba(255,255,255,0.40)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 10px rgba(0,0,0,0.15)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
+            <svg width="46" height="46" viewBox="0 0 20 20" fill="none"><path d="M8 2L15 10L8 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 2L10 10L3 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
         )}
 
       </div>
+
+      {/* ── Historique bilan 7 jours — juste sous l'image ── */}
+      {slide.isBilan && (
+        <div style={{ flexShrink:0, background:'linear-gradient(135deg,rgba(255,255,255,0.72),rgba(232,245,232,0.60))', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(26,74,40,0.10)', padding:'12px 16px 10px', boxShadow:'0 2px 10px rgba(26,74,40,0.06)' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:10 }}>
+            <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,transparent,rgba(26,74,40,0.15))' }}/>
+            <span style={{ fontSize:9, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(26,74,40,0.45)', letterSpacing:'.14em', textTransform:'uppercase' }}>Mon humeur · 7 jours</span>
+            <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,rgba(26,74,40,0.15),transparent)' }}/>
+          </div>
+          <BilanHistory7Days history={bilanHistory ?? []} maxDays={7} />
+        </div>
+      )}
 
       {/* ── Preview texte — scroll vertical natif ── */}
       <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 16px', display:'flex', flexDirection:'column', gap:8 }}>
@@ -339,7 +353,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
             className="cta-btn"
             onClick={() => {
               if (slide.isBilan) { onOpenModal(slide.id) }
-              else if (slide.id === 'jardin') { setShowNeedModal(true) }
+              else if (slide.id === 'jardin') { onOpenNeedModal?.() }
               else { onOpenModal(slide.id) }
             }}
             style={{ padding:'18px 0', borderRadius:100, border:'none', cursor:'pointer', touchAction:'manipulation', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 28px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease', width:'100%', maxWidth:340 }}
@@ -354,9 +368,95 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, bilanDoneToday, s
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  BILAN HISTORY — bandeau 7 jours glissants
+// ─────────────────────────────────────────────────────────────────────────────
+const MOOD = [
+  { max:30,  emoji:'😔', label:'Difficile', bg:'#f9d4d4', ring:'#e57373' },
+  { max:50,  emoji:'😕', label:'Tendu',     bg:'#fde8c8', ring:'#ffb74d' },
+  { max:65,  emoji:'😐', label:'Neutre',    bg:'#fdf9c8', ring:'#fdd835' },
+  { max:80,  emoji:'🙂', label:'Bien',      bg:'#dff0c8', ring:'#aed581' },
+  { max:101, emoji:'😊', label:'Épanoui',   bg:'#c8f0d4', ring:'#66bb6a' },
+]
+function moodFromDeg(deg) {
+  const vals = Object.values(deg ?? {})
+  if (!vals.length) return null
+  const stressAvg = vals.reduce((s, v) => s + v, 0) / vals.length
+  const wellbeing = 100 - stressAvg  // stress élevé = bien-être bas
+  return MOOD.find(m => wellbeing < m.max) ?? MOOD[MOOD.length - 1]
+}
+
+function BilanHistory7Days({ history, maxDays = 7 }) {
+  const DAY_LABELS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
+  const today = new Date().toISOString().split('T')[0]
+
+  // Nombre de jours à afficher : depuis le 1er bilan, max maxDays, min 1
+  let daysToShow = 1
+  if (history.length > 0) {
+    const first = history[0].date
+    const msPerDay = 86400000
+    const diff = Math.round((new Date(today) - new Date(first)) / msPerDay)
+    daysToShow = Math.min(maxDays, Math.max(1, diff + 1))
+  }
+
+  const days = []
+  for (let i = daysToShow - 1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    const key = d.toISOString().split('T')[0]
+    const label = DAY_LABELS[d.getDay()]
+    const isToday = i === 0
+    const entry = history.find(r => r.date === key)
+    const mood = entry ? moodFromDeg(entry.degradation) : null
+    days.push({ key, label, isToday, mood })
+  }
+  return (
+    <div style={{ overflowX: daysToShow > 7 ? 'auto' : 'visible', overflowY:'visible', WebkitOverflowScrolling:'touch' }}>
+    <div style={{ display:'flex', alignItems:'center', justifyContent: daysToShow <= 7 ? 'space-between' : 'flex-start', gap: daysToShow > 7 ? 8 : 0, padding:'2px 4px 0', position:'relative', minWidth: daysToShow > 7 ? daysToShow * 50 : 'auto' }}>
+      {/* Trait connecteur */}
+      <div style={{ position:'absolute', top:20, left:24, right:24, height:1, background:'linear-gradient(90deg,rgba(26,74,40,0.08),rgba(26,74,40,0.18),rgba(26,74,40,0.08))', zIndex:0 }}/>
+      {days.map(({ key, label, isToday, mood }) => (
+        <div key={key} title={mood ? mood.label : 'Pas de bilan'} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5, position:'relative', zIndex:1 }}>
+          <div style={{
+            width: isToday ? 52 : 42,
+            height: isToday ? 52 : 42,
+            borderRadius:'50%',
+            background: mood
+              ? `radial-gradient(circle at 38% 35%, white, ${mood.bg})`
+              : isToday ? 'rgba(26,74,40,0.07)' : 'rgba(255,255,255,0.7)',
+            border: isToday
+              ? `2px solid ${mood ? mood.ring : '#1a4a28'}`
+              : `1.5px dashed ${mood ? mood.ring + 'aa' : 'rgba(26,74,40,0.20)'}`,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize: isToday ? 28 : 22,
+            boxShadow: mood
+              ? (isToday ? `0 3px 12px ${mood.ring}55, 0 0 0 3px ${mood.ring}18` : `0 1px 6px ${mood.ring}33`)
+              : (isToday ? '0 2px 8px rgba(26,74,40,0.15)' : 'none'),
+            transition:'transform .15s',
+          }}>
+            {mood
+              ? mood.emoji
+              : <span style={{ width:6, height:6, borderRadius:'50%', background: isToday ? '#1a4a28' : 'rgba(26,74,40,0.25)', display:'block' }}/>
+            }
+          </div>
+          <span style={{
+            fontSize: isToday ? 9.5 : 8.5,
+            fontFamily:"'Jost',sans-serif",
+            fontWeight: isToday ? 700 : 400,
+            color: isToday ? '#1a4a28' : 'rgba(30,20,8,.35)',
+            letterSpacing:'.03em',
+          }}>
+            {isToday ? '· auj ·' : label}
+          </span>
+        </div>
+      ))}
+    </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  SCREEN MODAL — overlay plein écran qui ouvre un slide sur ses hooks
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, onClose }) {
+function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistory, onBilan, onClose }) {
   const idx   = slides.findIndex(s => s.id === slideId)
   const slide = slides[idx]
   if (!slide) return null
@@ -431,12 +531,16 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, onBilan, on
         {/* Contenu du screen — prend tout l'espace restant */}
         <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
           {slide.isBilan ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:20, padding:'32px 24px' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:16, padding:'28px 24px' }}>
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, color:'#1a1208', textAlign:'center', lineHeight:1.2 }}>
                 Comment te sens-tu<br/>aujourd'hui ?
               </div>
               <div style={{ fontSize:13, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", fontWeight:300 }}>
                 {bilanDoneToday ? '✓ Bilan complété aujourd\'hui' : 'Pas encore renseigné ce matin'}
+              </div>
+              <div style={{ width:'100%', background:'rgba(255,255,255,0.55)', backdropFilter:'blur(6px)', borderRadius:16, padding:'12px 8px', border:'1px solid rgba(26,74,40,0.10)' }}>
+                <div style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:500, color:'rgba(26,74,40,0.5)', letterSpacing:'.10em', textTransform:'uppercase', textAlign:'center', marginBottom:8 }}>Mon humeur — 7 jours</div>
+                <BilanHistory7Days history={bilanHistory ?? []} />
               </div>
               <button
                 onClick={onBilan}
@@ -697,6 +801,7 @@ export default function DashboardPage() {
   const [showNeedModal,       setShowNeedModal]       = useState(false)
   const [showRitualSuggestion,setShowRitualSuggestion]= useState(false)
   const [selectedNeed,        setSelectedNeed]        = useState(null)
+  const [bilanHistory,        setBilanHistory]        = useState([])
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
@@ -766,6 +871,21 @@ export default function DashboardPage() {
     }
   }, [refreshGardenCount])
 
+
+  // Rafraîchit l'historique bilan après un nouveau bilan
+  useEffect(() => {
+    if (!user?.id) return
+    const handler = ({ detail: deg }) => {
+      const today = new Date().toISOString().split('T')[0]
+      setBilanHistory(prev => {
+        const filtered = prev.filter(r => r.date !== today)
+        return [...filtered, { date: today, degradation: deg }].sort((a, b) => a.date.localeCompare(b.date))
+      })
+    }
+    window.addEventListener('bilanComplete', handler)
+    return () => window.removeEventListener('bilanComplete', handler)
+  }, [user?.id])
+
   useEffect(() => {
     if (!user?.id) return
     supabase.from('coeurs').select('id', { count: 'exact', head: true })
@@ -785,6 +905,14 @@ export default function DashboardPage() {
     const today = new Date().toISOString().split('T')[0]
     supabase.from('daily_quiz').select('id').eq('user_id', user.id).eq('date', today).maybeSingle()
       .then(({ data }) => setBilanDoneToday(!!data))
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const since = new Date(); since.setDate(since.getDate() - 14)
+    const sinceStr = since.toISOString().split('T')[0]
+    supabase.from('daily_quiz').select('date, degradation').eq('user_id', user.id).gte('date', sinceStr).order('date', { ascending: true })
+      .then(({ data }) => setBilanHistory(data ?? []))
   }, [user?.id])
 
   useEffect(() => {
@@ -984,6 +1112,8 @@ export default function DashboardPage() {
       {showBilanModal && (
         <DailyQuizModal
           onComplete={deg => {
+            const today = new Date().toISOString().split('T')[0]
+            supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
             setBilanDoneToday(true)
             track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
             logActivity({ userId: user?.id, action: 'bilan' })
@@ -993,6 +1123,16 @@ export default function DashboardPage() {
               setOpenModalId(null)
               handleNav(1)
             }, 800)
+          }}
+          onSoinDeMoi={deg => {
+            const today = new Date().toISOString().split('T')[0]
+            supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
+            setBilanDoneToday(true)
+            track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
+            logActivity({ userId: user?.id, action: 'bilan' })
+            window.dispatchEvent(new CustomEvent('bilanComplete', { detail: deg }))
+            setShowBilanModal(false)
+            setShowNeedModal(true)
           }}
           onDismiss={() => setShowBilanModal(false)}
           onSkip={() => { setShowBilanModal(false); track('bilan_skip', {}, 'jardin', 'engagement') }}
@@ -1075,6 +1215,7 @@ export default function DashboardPage() {
           slides={visibleSlides}
           screenProps={screenProps}
           bilanDoneToday={bilanDoneToday}
+          bilanHistory={bilanHistory}
           onBilan={() => setShowBilanModal(true)}
           onClose={() => setOpenModalId(null)}
           onNav={handleModalNav}
@@ -1097,7 +1238,8 @@ export default function DashboardPage() {
           @keyframes dkIllusIn   { from{opacity:0;transform:scale(1.04)} to{opacity:1;transform:scale(1)} }
           @keyframes dkSlideIn   { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
           @keyframes dkThumbIn   { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
-          @keyframes arrowBlink  { 0%,100%{opacity:1;box-shadow:0 4px 16px rgba(0,0,0,0.32),0 0 0 0 rgba(26,74,40,0.5)} 50%{opacity:0.5;box-shadow:0 2px 8px rgba(0,0,0,0.18),0 0 0 6px rgba(26,74,40,0)} }
+          @keyframes arrowBlink  { 0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.28),0 0 0 0 rgba(40,160,80,0.6)} 50%{transform:scale(1.10);box-shadow:0 6px 22px rgba(0,0,0,0.22),0 0 0 9px rgba(40,160,80,0)} }
+          .nav-arrow { transition: transform .15s; }
           .nav-arrow:hover { transform:scale(1.1) !important; opacity:1 !important; }
           @keyframes ctaGlow { 0%,100%{filter:brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))} 50%{filter:brightness(1.18) drop-shadow(0 0 12px rgba(255,255,255,0.6))} }
           .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
@@ -1175,17 +1317,29 @@ export default function DashboardPage() {
 
                 {/* ── Flèches navigation ── */}
                 {slideIdx > 0 && (
-                  <button onClick={() => handleNav(-1)} className="nav-arrow" style={{ position:'absolute', bottom:20, left:20, width:62, height:62, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.32)', animation:'arrowBlink 1.8s ease-in-out infinite' }}>
-                    <svg width="22" height="22" viewBox="0 0 20 20" fill="none"><path d="M13 5L8 10L13 15" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 5L4 10L9 15" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <button onClick={() => handleNav(-1)} className="nav-arrow" style={{ position:'absolute', bottom:20, left:20, width:62, height:62, borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', border:'1.5px solid rgba(255,255,255,0.40)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 12px rgba(0,0,0,0.15)', animation:'arrowBlink 1.8s ease-in-out infinite' }}>
+                    <svg width="50" height="50" viewBox="0 0 20 20" fill="none"><path d="M12 2L5 10L12 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M17 2L10 10L17 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                 )}
                 {!isLast && (
-                  <button onClick={() => handleNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:20, right:20, width:62, height:62, borderRadius:'50%', background:'#1a4a28', border:'2px solid rgba(255,255,255,0.28)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.32)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
-                    <svg width="36" height="36" viewBox="0 0 20 20" fill="none"><path d="M7 4L13 10L7 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11.5 4L17.5 10L11.5 16" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <button onClick={() => handleNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:20, right:20, width:62, height:62, borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', border:'1.5px solid rgba(255,255,255,0.40)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 12px rgba(0,0,0,0.15)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
+                    <svg width="50" height="50" viewBox="0 0 20 20" fill="none"><path d="M8 2L15 10L8 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 2L10 10L3 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                 )}
 
               </div>
+
+              {/* ── Historique bilan 7 jours — juste sous l'image ── */}
+              {slide.isBilan && (
+                <div style={{ flexShrink:0, background:'linear-gradient(135deg,rgba(255,255,255,0.72),rgba(232,245,232,0.60))', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(26,74,40,0.10)', padding:'12px 24px 10px', boxShadow:'0 2px 10px rgba(26,74,40,0.06)' }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:10 }}>
+                    <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,transparent,rgba(26,74,40,0.15))' }}/>
+                    <span style={{ fontSize:9, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(26,74,40,0.45)', letterSpacing:'.14em', textTransform:'uppercase' }}>Mon humeur · 15 jours</span>
+                    <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,rgba(26,74,40,0.15),transparent)' }}/>
+                  </div>
+                  <BilanHistory7Days history={bilanHistory ?? []} maxDays={15} />
+                </div>
+              )}
 
               {/* ── Contenu texte du slide (preview) ── */}
               <div key={`slide-${slideIdx}`} style={{ flex:1, display:'flex', flexDirection:'column', padding:'18px 24px 0', overflow:'hidden', animation:'dkSlideIn .32s cubic-bezier(.22,1,.36,1) both' }}>
@@ -1211,6 +1365,7 @@ export default function DashboardPage() {
                 <div style={{ flex:1, overflow:'auto' }}>
                   <SlideInsightsAI slideId={slide.id} screenProps={screenProps} color={slide.color} />
                 </div>
+
               </div>
 
               {/* ── Bouton CTA centré ── */}
@@ -1251,9 +1406,11 @@ export default function DashboardPage() {
           else setOpenModalId(id)
         }}
         bilanDoneToday={bilanDoneToday}
+        bilanHistory={bilanHistory}
         screenProps={screenProps}
         initial={initial}
         onOpenProfile={() => setShowProfileModal(true)}
+        onOpenNeedModal={() => setShowNeedModal(true)}
         onHelp={() => setShowHelp(true)}
         onSignOut={signOut}
       />

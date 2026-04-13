@@ -622,6 +622,8 @@ export default function DashboardPage() {
             onComplete={(deg) => {
               // Sauvegarde SANS fermer — l'écran résultat s'affiche d'abord
               // La fermeture se fait via onDismiss depuis le bouton "Voir mes rituels"
+              const today = new Date().toISOString().split('T')[0]
+              supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
               setBilanDoneToday(true)
               track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
               logActivity({ userId: user?.id, action: 'bilan' })
