@@ -1,7 +1,6 @@
 // RitualSuggestionModal.jsx — rituel suggéré + breathing + évaluation + Ma Fleur
 import { useState, useEffect, useRef } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
-
 // ─── NEEDS (reprise pour les alternatives) ───────────────────────────────────
 const NEEDS = [
   { id:'sleep',       label:'Mieux dormir',           g1:'#5B3FA0', g2:'#8B6FD0', glow:'rgba(107,75,200,0.32)' },
@@ -542,10 +541,8 @@ function PhaseAlternative({ originalNeed, isMobile, onStart, onSkip, onClose }) 
 }
 
 // ─── Phase : résultat + Ma Fleur ─────────────────────────────────────────────
-function PhaseResult({ need, isMobile, onSeeFlower, onClose, plantHealth, delta }) {
+function PhaseResult({ need, isMobile, onSeeFlower, onClose, healthBefore, healthAfter }) {
   const { g1, g2, glow } = need
-  const healthBefore = Math.min(Math.max(plantHealth ?? 35, 0), 100)
-  const healthAfter  = Math.min(healthBefore + (delta ?? 7), 100)
 
   return (
     <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '40px 28px' : '52px 48px', textAlign:'center', animation:'rs_eval .4s ease both', position:'relative', overflow:'hidden', background:'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)', gap:32 }}>
@@ -566,7 +563,9 @@ function PhaseResult({ need, isMobile, onSeeFlower, onClose, plantHealth, delta 
           passant ainsi de{' '}
           <span style={{ fontWeight:600, fontStyle:'normal', color:'rgba(50,35,20,0.55)' }}>{healthBefore}%</span>
           {' '}à{' '}
-          <span style={{ fontWeight:700, fontStyle:'normal', color:`${g1}`, fontSize: isMobile ? 22 : 26 }}>{healthAfter}%</span>.
+          <span style={{ fontWeight:700, fontStyle:'normal', color:`${g1}`, fontSize: isMobile ? 22 : 26 }}>
+            {healthAfter !== null ? `${healthAfter}%` : '…'}
+          </span>.
         </p>
       </div>
 
@@ -588,14 +587,23 @@ function PhaseResult({ need, isMobile, onSeeFlower, onClose, plantHealth, delta 
     </div>
   )
 }
-
+// ─── Guard anti-double eval (survit aux remounts StrictMode) ─────────────────
+let _evalInProgress = false
+export function resetEvalGuard() { _evalInProgress = false }
 // ─── Composant principal ──────────────────────────────────────────────────────
-export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlower, onCompleteRitual, plantHealth }) {
+export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlower, onCompleteRitual, plantHealth, plantId }) {
   const isMobile = useIsMobile()
-  const [phase,       setPhase]       = useState('view')
-  const [liked,       setLiked]       = useState(null)
-  const [activeNeed,  setActiveNeed]  = useState(need)
-  const [activeRitual,setActiveRitual]= useState(RITUALS[need.id])
+  const [phase,            setPhase]            = useState('view')
+  const [liked,            setLiked]            = useState(null)
+  const [activeNeed,       setActiveNeed]       = useState(need)
+  const [activeRitual,     setActiveRitual]     = useState(RITUALS[need.id])
+  const [healthSnapshot,   setHealthSnapshot]   = useState(null)
+
+// Reset du guard à chaque ouverture du modal
+  useEffect(() => {
+    _evalInProgress = false
+  }, [])
+
 
   if (!activeRitual) return null
 
@@ -603,11 +611,17 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
 
   function handleEval(isLiked) {
-    setLiked(isLiked)
-    onCompleteRitual?.(activeNeed.id, isLiked, activeRitual.delta ?? 7)
-    if (isLiked) { setPhase('result') }
-    else         { setPhase('alternative') }
-  }
+  if (_evalInProgress) return
+  _evalInProgress = true
+  setLiked(isLiked)
+  setHealthSnapshot({
+    before: plantHealth ?? 0,
+    after: Math.min(100, (plantHealth ?? 0) + (activeRitual.delta ?? 7))
+  })
+  onCompleteRitual?.(activeNeed.id, isLiked, activeRitual.delta ?? 7)
+  if (isLiked) { setPhase('result') }
+  else         { setPhase('alternative') }
+}
 
   function handleStartAlternative(altNeed, altRitual) {
     setActiveNeed(altNeed)
@@ -649,10 +663,11 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
         </div>
       )}
       {phase === 'result' && (
-        <PhaseResult need={activeNeed} isMobile={isMobile}
-          onSeeFlower={onSeeFlower ?? onClose} onClose={onClose}
-          plantHealth={plantHealth} delta={activeRitual.delta}/>
-      )}
+  <PhaseResult need={activeNeed} isMobile={isMobile}
+    onSeeFlower={onSeeFlower ?? onClose} onClose={onClose}
+    healthBefore={healthSnapshot?.before ?? plantHealth ?? 0}
+    healthAfter={healthSnapshot?.after ?? plantHealth ?? 0}/>
+)}
     </div>
   )
 

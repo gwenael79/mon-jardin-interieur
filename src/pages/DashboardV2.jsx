@@ -50,7 +50,6 @@ import { ONB_STYLES, NatureBg }      from './OnboardingScreen'
 import { useSlideInsight, prefetchAllSlideInsights } from '../hooks/useSlideInsight'
 import NeedSelectionModal   from '../components/NeedSelectionModal'
 import RitualSuggestionModal from '../components/RitualSuggestionModal'
-
 // Verrou anti-double award (React Strict Mode)
 const _dailyLoginAwarded = new Set()
 
@@ -802,6 +801,7 @@ export default function DashboardPage() {
   const [showNeedModal,       setShowNeedModal]       = useState(false)
   const [showRitualSuggestion,setShowRitualSuggestion]= useState(false)
   const [selectedNeed,        setSelectedNeed]        = useState(null)
+  const ritualCompleteCalledRef = useRef(false)
   const [bilanHistory,        setBilanHistory]        = useState([])
 
   // ── Slides visibles selon la plage horaire ──
@@ -1088,32 +1088,43 @@ export default function DashboardPage() {
     <>
       {showNeedModal && (
         <NeedSelectionModal
-          onSelectNeed={need => { setShowNeedModal(false); setSelectedNeed(need); setShowRitualSuggestion(true) }}
+          onSelectNeed={need => { setShowNeedModal(false); setSelectedNeed(need); ritualCompleteCalledRef.current = false; setShowRitualSuggestion(true) }}
           onClose={() => setShowNeedModal(false)}
         />
       )}
       {showRitualSuggestion && selectedNeed && (
-        <RitualSuggestionModal
-          need={selectedNeed}
-          onBack={() => { setShowRitualSuggestion(false); setShowNeedModal(true) }}
-          onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
-          onCompleteRitual={async (needId, isLiked, delta) => {
-            console.log('[onCompleteRitual DashV2] called', { needId, isLiked, delta, plantId: todayPlant?.id, health: todayPlant?.health })
-            track('ritual_need_complete', { needId, liked: isLiked }, 'jardin', 'engagement')
-            if (!isLiked || !todayPlant?.id) { console.warn('[onCompleteRitual DashV2] skip — isLiked:', isLiked, 'todayPlant?.id:', todayPlant?.id); return }
-            const newHealth = Math.min(100, (todayPlant?.health ?? 5) + delta)
-            usePlantStore.getState().setTodayPlant({ ...todayPlant, health: newHealth })
-            const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', todayPlant.id)
-            if (error) console.error('[onCompleteRitual DashV2] update failed:', error.message)
-            else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: todayPlant.id } }))
-          }}
-          onSeeFlower={() => {
-            setShowRitualSuggestion(false)
-            setSelectedNeed(null)
-            setOpenModalId('jardin')
-          }}
-          plantHealth={todayPlant?.health ?? 5}
-        />
+    <RitualSuggestionModal
+  need={selectedNeed}
+  onBack={() => {
+  setShowRitualSuggestion(false)
+  setShowNeedModal(true)
+}}
+  onClose={() => { 
+    setShowRitualSuggestion(false)
+    setSelectedNeed(null) 
+  }}
+  onCompleteRitual={async (needId, isLiked, delta) => {
+  if (ritualCompleteCalledRef.current) return
+  ritualCompleteCalledRef.current = true
+  console.log('[onCompleteRitual DashV2] called', { needId, isLiked, delta, plantId: todayPlant?.id, health: todayPlant?.health })
+  track('ritual_need_complete', { needId, liked: isLiked }, 'jardin', 'engagement')
+  if (!isLiked || !todayPlant?.id) return
+  const snapshot = { ...todayPlant }
+  const newHealth = Math.min(100, (snapshot.health ?? 5) + delta)
+  const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', snapshot.id)
+  if (error) { console.error('[onCompleteRitual DashV2] update failed:', error.message); return }
+  console.log('[onCompleteRitual DashV2] success → health:', newHealth)
+  usePlantStore.getState().setTodayPlant({ ...snapshot, health: newHealth })
+  window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
+}}
+  onSeeFlower={() => {
+    setShowRitualSuggestion(false)
+    setSelectedNeed(null)
+    setOpenModalId('jardin')
+  }}
+  plantHealth={todayPlant?.health ?? 5}
+  plantId={todayPlant?.id}
+/>    
       )}
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
       {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => setShowWelcome(false)} />}
