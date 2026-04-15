@@ -575,7 +575,7 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
           {slide.id === 'jardin' && (
             <button
               onClick={() => onOpenSlide?.('champ')}
-              style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#d4b050,#a87c28)', boxShadow:'0 4px 16px rgba(180,140,40,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
+              style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:20, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#d4b050,#a87c28)', boxShadow:'0 4px 16px rgba(180,140,40,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 22px rgba(180,140,40,.4)' }}
               onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 16px rgba(180,140,40,.3)' }}
             >🌻 Voir ma fleur dans le jardin collectif</button>

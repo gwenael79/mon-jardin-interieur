@@ -5198,7 +5198,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <span style={{ fontSize:20, flexShrink:0 }}>❤️</span>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 21, fontWeight:600, color:'#1a1208', lineHeight:1.3 }}>{narrative.headline}</span>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 28, fontWeight:600, color:'#1a1208', lineHeight:1.3 }}>{narrative.headline}</span>
         </div>
         {jardinInsightLoading ? (
           <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 0' }}>
@@ -5207,11 +5207,11 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             ))}
           </div>
         ) : jardinInsight ? (
-          <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 17, fontStyle:'italic', color:'rgba(30,20,8,.78)', lineHeight:1.65 }}>{jardinInsight}</p>
+          <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 24, fontStyle:'italic', color:'#1a1208', lineHeight:1.65 }}>{jardinInsight}</p>
         ) : (
           <>
-            <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 13, color:'rgba(30,20,8,.62)', lineHeight:1.65 }}>{narrative.body}</p>
-            <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 17 : 16, fontStyle:'italic', color:'#a04040', lineHeight:1.5 }}>{narrative.accent}</p>
+            <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 15, color:'#1a1208', lineHeight:1.65 }}>{narrative.body}</p>
+            <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 17 : 18, fontStyle:'italic', color:'#a04040', lineHeight:1.5 }}>{narrative.accent}</p>
           </>
         )}
         <div style={{ width:32, height:1.5, background:'rgba(120,184,124,.4)', borderRadius:1 }}/>
@@ -5221,7 +5221,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
           <span style={{ fontSize:16 }}>✨</span>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 21 : 20, fontWeight:600, color:'#1a1208' }}>Ce que cela t'apporte aujourd'hui</span>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 21 : 28, fontWeight:600, color:'#1a1208' }}>Ce que cela t'apporte aujourd'hui</span>
         </div>
 
         {/* 3 cartes bénéfices — IA ou fallback */}
@@ -5247,8 +5247,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 display:'flex', flexDirection:'column', gap:6, alignItems:'center', textAlign:'center',
               }}>
                 {b.icon && <span style={{ fontSize:20 }}>{b.icon}</span>}
-                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 17 : 16, fontWeight:700, color:'rgba(30,20,8,.9)', lineHeight:1.3 }}>{b.title}</span>
-                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 14, color:'rgba(30,20,8,.7)', lineHeight:1.5 }}>{b.desc}</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 17 : 22, fontWeight:700, color:'rgba(30,20,8,.9)', lineHeight:1.3 }}>{b.title}</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 18, color:'rgba(30,20,8,.7)', lineHeight:1.5 }}>{b.desc}</span>
               </div>
             ))}
           </div>
@@ -5281,7 +5281,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       <div style={{ display:'flex', flexDirection:'column', alignItems:'stretch', gap:6 }}>
         <button
           onClick={() => onOpenNeedModal ? onOpenNeedModal() : setShowNeedModal(true)}
-          style={{ padding:'15px 28px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'#fff', background:'linear-gradient(90deg,#9060b8,#b07040,#7cb87c)', backgroundSize:'200% 100%', boxShadow:'0 6px 24px rgba(100,80,160,.3)', transition:'transform .15s, box-shadow .15s, background-position .4s', letterSpacing:'.02em', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
+          style={{ padding:'15px 28px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:20, fontWeight:600, color:'#fff', background:'linear-gradient(90deg,#9060b8,#b07040,#7cb87c)', backgroundSize:'200% 100%', boxShadow:'0 6px 24px rgba(100,80,160,.3)', transition:'transform .15s, box-shadow .15s, background-position .4s', letterSpacing:'.02em', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
           onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 30px rgba(100,80,160,.4)'; e.currentTarget.style.backgroundPosition='100% 0' }}
           onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 24px rgba(100,80,160,.3)'; e.currentTarget.style.backgroundPosition='0% 0' }}
         >
