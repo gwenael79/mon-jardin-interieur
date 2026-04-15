@@ -119,8 +119,11 @@ export const plantService = {
   },
 
   async getStats(userId) {
+    const ninetyDaysAgo = new Date()
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const since90 = ninetyDaysAgo.toISOString().split('T')[0]
 
     const [plants, rituals, activityRows] = await Promise.all([
       query(
@@ -128,7 +131,7 @@ export const plantService = {
           .from('plants')
           .select('date, health')
           .eq('user_id', userId)
-          .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+          .gte('date', since90)
           .order('date', { ascending: false }),
         'getStats/plants'
       ),
@@ -137,7 +140,7 @@ export const plantService = {
           .from('rituals')
           .select('zone, completed_at')
           .eq('user_id', userId)
-          .gte('completed_at', thirtyDaysAgo.toISOString()),
+          .gte('completed_at', ninetyDaysAgo.toISOString()),
         'getStats/rituals'
       ),
       query(
@@ -145,18 +148,20 @@ export const plantService = {
           .from('activity')
           .select('day')
           .eq('user_id', userId)
-          .gte('day', thirtyDaysAgo.toISOString().split('T')[0]),
+          .gte('day', since90),
         'getStats/activity'
       ),
     ])
 
-    // Jours valides depuis activity (vraies interactions)
-    const activityDates = new Set(activityRows.map(a => a.day))
+    // Jours avec vraie activité (trigger DB garantit que day = date UTC de created_at)
+    const activityDates = new Set((activityRows ?? []).map(a => a.day).filter(Boolean))
+    // Jours avec au moins 1 rituel complété (source fiable, pas de carry-over)
+    const ritualDates   = new Set((rituals ?? []).map(r => r.completed_at?.split('T')[0]).filter(Boolean))
 
     return {
       plants,
-      streak:           calculateStreak(plants, activityDates),
-      ritualsThisMonth: rituals.length,
+      streak:           calculateStreak(activityDates, ritualDates),
+      ritualsThisMonth: (rituals ?? []).filter(r => r.completed_at >= thirtyDaysAgo.toISOString()).length,
       favoriteZone:     calculateFavoriteZone(rituals),
     }
   },
@@ -176,47 +181,31 @@ async function recalculateHealth(plantId, updatedCol, updatedVal) {
 }
 
 // Un jour compte dans le streak si :
-//   - Il est présent dans activity (vraie interaction : rituel, bilan, défi, cœur, merci)
+//   - activity contient ce jour (vraie interaction : rituel, bilan, défi, cœur…)
+//   - OU la table rituals contient au moins 1 rituel complété ce jour
 //
-// Règles importantes :
-//   - Aujourd'hui ne compte QUE s'il y a une activité réelle (pas juste un carry-over de plante)
-//   - Hier compte si : activité réelle OU plants.health > HEALTH_DEFAULT (rituels anciens sans activity)
-//   - Le streak tolère un jour de gap si aujourd'hui n'a pas encore d'activité
-//     (ex: 9h du matin → pas encore fait le bilan → on ne casse pas le streak)
-function calculateStreak(plants, activityDates) {
-  if (!plants.length) return 0
-
+// Le plantSet (health > HEALTH_DEFAULT) a été supprimé : il incluait à tort les
+// jours de carry-over où la plante conserve une santé > 5 sans aucune activité
+// réelle, créant de faux streaks.
+//
+// Tolérance matin : si aujourd'hui n'a pas encore d'activité, on part d'hier
+// pour ne pas casser le streak avant que l'utilisateur ait eu le temps d'agir.
+function calculateStreak(activityDates, ritualDates) {
   const today     = new Date().toISOString().split('T')[0]
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-  // Jours réels avec activité (source authoritative)
-  const activitySet = new Set([...activityDates].filter(Boolean))
-
-  // Jours avec plante développée (fallback pour les anciens rituels sans activity log)
-  const plantSet = new Set(plants.filter(p => p.health > HEALTH_DEFAULT).map(p => p.date))
-
-  // Un jour passé compte s'il est dans activity OU dans plants (health > 5)
-  // Aujourd'hui compte UNIQUEMENT si activity contient aujourd'hui
-  const hasActivityToday = activitySet.has(today)
-
-  // Point de départ : hier si pas encore d'activité aujourd'hui, aujourd'hui sinon
+  const hasActivityToday = activityDates.has(today) || ritualDates.has(today)
   const startDate = hasActivityToday ? today : yesterday
 
-  let current = new Date(startDate)
+  let current = new Date(startDate + 'T12:00:00Z') // midi UTC pour éviter les glissements DST
   let streak   = 0
 
   while (true) {
     const dateStr = current.toISOString().split('T')[0]
-    const isToday = dateStr === today
-    // Aujourd'hui : seulement si activité réelle
-    // Autres jours : activité OU plante développée
-    const counts = isToday
-      ? activitySet.has(dateStr)
-      : activitySet.has(dateStr) || plantSet.has(dateStr)
-
+    const counts  = activityDates.has(dateStr) || ritualDates.has(dateStr)
     if (!counts) break
     streak++
-    current.setDate(current.getDate() - 1)
+    current.setUTCDate(current.getUTCDate() - 1)
   }
 
   return streak

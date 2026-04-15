@@ -4792,6 +4792,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     slideId: 'jardin',
     payload: stimulationPayload,
     enabled: !!userId,
+    ready: !!stats,   // attendre que les stats soient chargées
   })
 
   const { message: rawBenefitsMsg, loading: benefitsLoading } = useSlideInsight({
@@ -4799,6 +4800,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     slideId: 'jardin_benefits',
     payload: benefitsPayload,
     enabled: !!userId,
+    ready: !!stats,   // attendre que les stats soient chargées
   })
 
   const { message: jardinQuote, loading: quoteLoading } = useSlideInsight({
@@ -4806,6 +4808,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     slideId: 'jardin_quote',
     payload: benefitsPayload,
     enabled: !!userId,
+    ready: !!stats,   // attendre que les stats soient chargées
   })
 
   const aiBenefits = useMemo(() => {
