@@ -5120,9 +5120,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         {/* Citation */}
         <div style={{ textAlign:'center', display:'flex', flexDirection:'column', gap:6, padding:'12px 16px', borderRadius:14, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)' }}>
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', gap:6 }}>
-            <span style={{ fontFamily:'Georgia,serif', fontSize:26, color:'rgba(30,20,8,.75)', lineHeight:.7, flexShrink:0, marginTop:3 }}>"</span>
+            <span style={{ fontFamily:'Georgia,serif', fontSize:26, color:'rgba(30,20,8,.75)', lineHeight:.7, flexShrink:0, marginTop:3 }}></span>
             <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontStyle:'italic', color:'rgba(10,5,0,.90)', lineHeight:1.55, fontWeight:600 }}>
-              Prendre soin de soi n'est pas un luxe, c'est la base de tout ce qui fleurit dans ta vie."
+              " Prendre soin de soi n'est pas un luxe, c'est la base de tout ce qui fleurit dans ta vie. "
             </span>
           </div>
           <span style={{ fontSize:14, color:'rgba(10,5,0,.65)', letterSpacing:'.08em' }}>— ♡ —</span>
@@ -5314,7 +5314,43 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             flexShrink:0,
             minHeight: isMobile ? 'auto' : 360,
           }}>
+            {/* Colonne gauche : fleur */}
             <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
+            {/* Colonne droite : bilan si pas fait, insight si fait, bouton express desktop */}
+            <div style={{
+              flex:'1 1 0', minWidth:0, display:'flex', flexDirection:'column',
+              padding: isMobile ? '14px 16px 12px' : '18px 20px 16px',
+              background:'var(--bg2)',
+              gap:10,
+              maxHeight: isMobile ? 200 : 'none',
+              overflow: isMobile ? 'hidden' : 'visible',
+            }}>
+              {bilanDoneToday && degradation
+                  ? <BilanInsightCard degradation={degradation} plant={plant} userId={userId} fillHeight={!isMobile} />
+                  : <MessageJardin profile={profile} isMobile={isMobile} />
+              }
+              {/* Bouton Action rapide — desktop */}
+              {!isMobile && (
+                <div
+                  onClick={() => window.dispatchEvent(new CustomEvent('openWakeUp'))}
+                  style={{
+                    display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+                    padding:'13px 20px', borderRadius:13, cursor:'pointer',
+                    background:'linear-gradient(135deg,rgba(var(--green-rgb),0.12),rgba(var(--green-rgb),0.05))',
+                    border:'1px solid rgba(var(--green-rgb),0.28)',
+                    WebkitTapHighlightColor:'transparent',
+                    transition:'all .18s ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity='.82'; e.currentTarget.style.transform='translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity='1';   e.currentTarget.style.transform='none' }}
+                >
+                  <span style={{ fontSize:'var(--fs-emoji-sm, 16px)' }}>⚡</span>
+                  <span style={{ fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'.04em', fontFamily:"'Jost',sans-serif", color:'var(--green)' }}>
+                    Une micro-pause qui compte
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
