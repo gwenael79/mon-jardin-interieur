@@ -183,7 +183,7 @@ function PhaseView({ ritual, need, isMobile, onStart, onBack, onClose }) {
         <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.25)', borderRadius:100, padding:'7px 16px', cursor:'pointer', color:'rgba(50,35,20,0.65)', fontSize:13, fontFamily:"'Jost',sans-serif" }}>‹ Autre besoin</button>
         <button onClick={onClose} style={{ width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.25)', cursor:'pointer', color:'rgba(50,35,20,0.45)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
       </div>
-      <div style={{ flex:1, overflowY:'auto', padding: isMobile ? '24px 20px 32px' : '28px 32px 32px', boxSizing:'border-box' }}>
+      <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding: isMobile ? '24px 20px calc(env(safe-area-inset-bottom, 0px) + 40px)' : '28px 32px 32px', boxSizing:'border-box' }}>
         <div style={{ animation:'rs_in .35s ease both', marginBottom:18 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:100, background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 4px 16px ${glow}` }}>
             <span style={{ fontSize:18 }}>{ritual.icon}</span>
@@ -630,7 +630,7 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
   }
 
   const inner = (
-    <div style={{ position:'relative', zIndex:1, width:'100%', flex:1, minHeight:0, background:bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div style={{ position:'relative', zIndex:1, width:'100%', flex:1, minHeight:0, background:bg, display:'flex', flexDirection:'column', overflow: isMobile ? 'auto' : 'hidden' }}>
       {/* Halos */}
       <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:'-10%', left:'-8%', width:400, height:400, borderRadius:'50%', background:`radial-gradient(circle,${g1}14 0%,transparent 65%)` }}/>
@@ -686,7 +686,7 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
   return (
     <>
       <style>{CSS}</style>
-      <div style={{ position:'fixed', inset:0, zIndex:270 }}>{inner}</div>
+      <div style={{ position:'fixed', inset:0, zIndex:270, display:'flex', flexDirection:'column' }}>{inner}</div>
     </>
   )
 }
