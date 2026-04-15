@@ -59,8 +59,8 @@ export const ritualService = {
       'completeRitual/insert'
     )
 
-    // Met à jour la plante
-    const plant = await plantService.applyRitualEffect(plantId, catalog.delta, catalog.zone)
+    // Met à jour la plante — delta fixe 0.5% sur la zone du rituel
+    const plant = await plantService.applyRitualEffect(plantId, 0.5, catalog.zone)
 // ─── LOG ACTIVITÉ (toujours, cercle optionnel) ───────────────────────────
 try {
   await supabase

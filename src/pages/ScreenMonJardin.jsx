@@ -2045,12 +2045,8 @@ function computeDegradation(answers) {
 //   courbeRalentissement = 1 - (health / 100) * 0.65  → à 5% = ×0.97, à 80% = ×0.48
 //   bonusStreak : +0% / +20% / +40% / +60% selon jours consécutifs (0/1/2/3+)
 
-function computeRitualDelta(currentHealth, streakDays) {
-  const base       = 4
-  const slowdown   = 1 - (currentHealth / 100) * 0.65
-  const streakBonus = Math.min(1.6, 1 + streakDays * 0.20)
-  return Math.max(1, Math.round(base * slowdown * streakBonus))
-}
+// Delta fixe : chaque rituel crédite +0.5% sur sa zone uniquement
+const RITUAL_DELTA = 0.5
 
 
 function useRitualsState(userId, awardLumens) {
@@ -4642,18 +4638,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     const currentZone = plant?.[dbKey] ?? 5
     const currentHealth = plant?.health ?? 5
 
-    // Delta progressif : petit au début (grande progression), ralentit en grandissant
-    const streak  = stats?.streak ?? 0  // source fiable : plant.service.js via DB
-    const delta   = computeRitualDelta(currentHealth, streak)
-
+    // +0.5% sur la zone du rituel uniquement — health = moyenne des 5 zones
+    const delta      = RITUAL_DELTA
     const newZoneVal = Math.min(100, currentZone + delta)
-    // newHealth = max entre (currentHealth + delta) et la moyenne des zones
-    // Garantit que compléter un rituel ne fait JAMAIS baisser la vitalité,
-    // même si les valeurs de zone en DB sont incohérentes avec plant.health
-    const avgHealth = Math.round(
+    const avgHealth  = Math.round(
       zoneKeys.reduce((sum, k) => sum + (k === dbKey ? newZoneVal : (plant?.[k] ?? currentHealth)), 0) / zoneKeys.length
     )
-    const newHealth = Math.min(100, Math.max(currentHealth + delta, avgHealth))
+    const newHealth  = Math.min(100, Math.max(avgHealth, currentHealth))
 
     // ── Optimistic update immédiat ──
     setPlantOverride(prev => ({ ...(prev ?? plant), [dbKey]: newZoneVal, health: newHealth }))
