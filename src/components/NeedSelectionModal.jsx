@@ -239,7 +239,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile }) {
       }}>✕</button>
       {/* Contenu */}
       <div style={{
-        position:'relative', zIndex:1, flex:1, overflowY:'auto',
+        position:'relative', zIndex:1, flex:1, minHeight:0, overflowY:'auto',
         width:'100%', margin:'0 auto',
         padding: isMobile ? '12px 16px 0' : '32px 32px 0',
         boxSizing:'border-box', display:'flex', flexDirection:'column',

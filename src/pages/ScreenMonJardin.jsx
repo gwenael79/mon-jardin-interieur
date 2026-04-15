@@ -4383,7 +4383,7 @@ function AllRitualsModal({ completedRituals, onToggle, onClose }) {
   )
 }
 
-function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals }) {
+function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal }) {
   // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
   const { rituals: _rituals, loading: ritualsLoading } = useRituels()
   useEffect(() => {
@@ -4689,6 +4689,81 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const timeIcon = timeContext === 'matin' ? '🌅' : timeContext === 'aprem' ? '☀️' : '🌙'
   const streak   = stats?.streak ?? 0
 
+  const yesterdayHealth = history?.[0]?.health ?? null
+  const healthDelta = yesterdayHealth != null ? (plant?.health ?? 5) - yesterdayHealth : null
+
+  const NARRATIVES = {
+    matin: {
+      headline: "Ce matin, tu as semé quelque chose.",
+      body: "En commençant ta journée avec ce soin précieux, tu as planté une graine de bien-être. Ton jardin intérieur s'éveille avec toi.",
+      accent: "Ce que tu fais pour toi, tu le fais pour tout ce que tu portes.",
+    },
+    aprem: {
+      headline: "Aujourd'hui, tu as pris soin de toi.",
+      body: "En prenant ce temps précieux pour toi, tu as renforcé tes racines… et quelque chose en toi s'apaise, grandit, s'ouvre.",
+      accent: "Ce que tu offres à ta fleur, tu l'offres aussi à ton cœur.",
+    },
+    soir: {
+      headline: "Aujourd'hui, tu as nourri ta fleur.",
+      body: "En prenant ce temps précieux pour toi, tu as renforcé tes racines… et quelque chose en toi s'apaise, grandit, s'ouvre.",
+      accent: "Ce que tu offres à ta fleur, tu l'offres aussi à ton cœur.",
+    },
+  }
+  const narrative = NARRATIVES[timeContext]
+
+  const BENEFITS = {
+    matin: [
+      { icon:'🌅', title:"Un élan pour démarrer",     desc:"Ton énergie s'éveille, tu entres dans la journée avec douceur.",  bg:'rgba(207,166,74,.10)', border:'rgba(207,166,74,.25)' },
+      { icon:'🌿', title:"Une clarté intérieure",      desc:"Ton esprit se pose, les idées se mettent en ordre.",              bg:'rgba(80,160,80,.09)',  border:'rgba(80,160,80,.22)' },
+      { icon:'🌱', title:"Des racines solides",        desc:"Tu avances depuis un centre stable et ancré.",                    bg:'rgba(80,130,180,.09)', border:'rgba(80,130,180,.22)' },
+    ],
+    aprem: [
+      { icon:'🍃', title:"Plus de calme intérieur",   desc:"Ton esprit se dépose, tu respires plus profondément.",            bg:'rgba(80,160,80,.09)',  border:'rgba(80,160,80,.22)' },
+      { icon:'🌱', title:"Une sensation d'ancrage",   desc:"Tu te sens plus stable, plus aligné-e, plus solide.",             bg:'rgba(80,130,180,.09)', border:'rgba(80,130,180,.22)' },
+      { icon:'☀️', title:"Une énergie plus douce",    desc:"Tu avances avec plus de clarté et de présence.",                  bg:'rgba(207,140,74,.09)', border:'rgba(207,140,74,.22)' },
+    ],
+    soir: [
+      { icon:'🍃', title:"Plus de calme intérieur",   desc:"Ton esprit se dépose, tu respires plus profondément.",            bg:'rgba(80,160,80,.09)',  border:'rgba(80,160,80,.22)' },
+      { icon:'🌱', title:"Une sensation d'ancrage",   desc:"Tu te sens plus stable, plus aligné-e, plus solide.",             bg:'rgba(80,130,180,.09)', border:'rgba(80,130,180,.22)' },
+      { icon:'☀️', title:"Une énergie plus douce",    desc:"Tu avances avec plus de clarté et de présence.",                  bg:'rgba(207,140,74,.09)', border:'rgba(207,140,74,.22)' },
+    ],
+  }
+  const benefits = BENEFITS[timeContext]
+
+  // ── Animation d'entrée : counter + barre ──────────────────
+  const [animHealth, setAnimHealth] = useState(0)
+  const [barPct,     setBarPct]     = useState(0)
+
+  useEffect(() => {
+    if (!plant?.health) return
+    const endVal   = plant.health
+    const startVal = Math.max(0, yesterdayHealth ?? Math.max(0, endVal - (healthDelta ?? 8)))
+
+    setAnimHealth(startVal)
+    setBarPct(startVal)
+
+    const delay = setTimeout(() => {
+      const duration = 1800
+      const fps      = 50
+      const frames   = Math.round(duration / (1000 / fps))
+      const range    = endVal - startVal
+      if (range <= 0) { setAnimHealth(endVal); setBarPct(endVal); return }
+
+      let f = 0
+      const id = setInterval(() => {
+        f++
+        const eased   = 1 - Math.pow(1 - f / frames, 3) // ease-out cubic
+        const current = startVal + range * eased
+        setAnimHealth(Math.round(current))
+        setBarPct(current)
+        if (f >= frames) { clearInterval(id); setAnimHealth(endVal); setBarPct(endVal) }
+      }, 1000 / fps)
+      return () => clearInterval(id)
+    }, 600)
+
+    return () => clearTimeout(delay)
+  }, [plant?.id, plant?.health])
+
   if (isLoading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", fontSize:13 }}>
       Votre jardin se réveille…
@@ -4761,43 +4836,181 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, fontStyle:'italic', color:'#1a1208', lineHeight:1.3 }}>{contextMessage}</span>
       </div>
 
-      {/* Fleur — rectangle arrondi */}
-      <div style={{ position:'relative', flexShrink:0, width: isMobile ? '80%' : '60%', alignSelf:'center', height: isMobile ? 300 : 380, borderRadius:24, overflow:'hidden' }}>
-        <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+      {/* ── Carte fleur ── */}
+      <div style={{
+        flexShrink:0, width: isMobile ? '100%' : '62%', alignSelf:'center',
+        borderRadius:20, overflow:'hidden',
+        background:'rgba(255,255,255,.55)', backdropFilter:'blur(6px)',
+        border:'1px solid rgba(200,180,160,.25)',
+        boxShadow:'0 8px 40px rgba(0,0,0,.14)',
+      }}>
 
-        {/* Vitalité */}
-        <div style={{ position:'absolute', bottom:14, left:14, display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:100, background:'rgba(0,0,0,.28)', border:'1px solid rgba(255,255,255,.20)', fontSize:14, color:'rgba(255,255,255,.92)', fontFamily:"'Jost',sans-serif" }}>
-          Vitalité · <span style={{ fontWeight:700, fontSize:16 }}>{plant?.health ?? 5}%</span>
+        {/* Zone fleur */}
+        <div style={{ position:'relative', height: isMobile ? 300 : 460 }}>
+          <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+
+          {/* Streak badge */}
+          {streak >= 1 && (
+            <div style={{ position:'absolute', top:12, right:12, zIndex:3, display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', borderRadius:12, background:'rgba(20,10,5,.55)', border:'1px solid rgba(255,200,80,.25)', backdropFilter:'blur(4px)' }}>
+              <span style={{ fontSize:14 }}>🔥</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jours</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, color:'rgba(255,255,255,.5)', letterSpacing:'.06em' }}>de continuité</span>
+            </div>
+          )}
+
+          {/* Bouton personnaliser discret */}
+          <button
+            onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
+            style={{ position:'absolute', top:12, left:12, zIndex:3, display:'flex', alignItems:'center', gap:5, padding:'5px 10px', borderRadius:100, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,255,255,.18)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:11, color:'rgba(255,255,255,.65)', backdropFilter:'blur(4px)', transition:'background .15s' }}
+            onMouseEnter={e => e.currentTarget.style.background='rgba(20,10,5,.65)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(20,10,5,.45)'}
+          >
+            🎨
+          </button>
         </div>
 
-        {/* Streak */}
-        {streak >= 1 && (
-          <div style={{ position:'absolute', top:12, right:14, display:'flex', alignItems:'center', gap:5, padding:'4px 10px', borderRadius:100, background:'rgba(0,0,0,.20)', border:'1px solid rgba(255,255,255,.18)', fontSize:11, color:'rgba(255,255,255,.88)', fontFamily:"'Jost',sans-serif" }}>
-            👍 {streak} jour{streak > 1 ? 's' : ''}
-          </div>
-        )}
+        {/* Panneau stats — fond sombre */}
+        {(() => {
+          const animDeg = Math.round(animHealth * 3.6)
+          return (
+            <div style={{ background:'linear-gradient(180deg,#1a1a28 0%,#0f0f1a 100%)', padding:'18px 20px 16px' }}>
+
+              {/* Hier → Aujourd'hui + cercle vitalité */}
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
+                <div style={{ flex:1, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+
+                  {/* Hier */}
+                  {yesterdayHealth != null && (
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
+                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.38)' }}>Hier</span>
+                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 26 : 30, fontWeight:300, color:'rgba(255,255,255,.65)', lineHeight:1 }}>{yesterdayHealth}%</span>
+                    </div>
+                  )}
+
+                  {yesterdayHealth != null && (
+                    <span style={{ fontSize:14, color:'rgba(255,255,255,.3)', alignSelf:'center', marginTop:6 }}>→</span>
+                  )}
+
+                  {/* Aujourd'hui — chiffre animé */}
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
+                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.55)' }}>Aujourd'hui</span>
+                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 30 : 36, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1, transition:'color .2s' }}>{animHealth}%</span>
+                  </div>
+                </div>
+
+                {/* Cercle vitalité animé */}
+                <div style={{
+                  width:72, height:72, borderRadius:'50%', flexShrink:0,
+                  background:`conic-gradient(from -90deg, #5dc87a 0deg, #d4af37 ${Math.round(animDeg * .45)}deg, #c070a0 ${animDeg}deg, rgba(255,255,255,.08) ${animDeg}deg)`,
+                  padding:4,
+                  boxShadow:`0 0 ${8 + Math.round(animHealth / 10)}px rgba(93,200,122,.3)`,
+                  transition:'background .05s',
+                }}>
+                  <div style={{ width:'100%', height:'100%', borderRadius:'50%', background:'#12121e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:1 }}>
+                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:8, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(255,255,255,.45)' }}>Vitalité</span>
+                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', lineHeight:1 }}>{animHealth}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Delta */}
+              {healthDelta != null && healthDelta > 0 && (
+                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:'rgba(160,220,140,.85)', marginTop:8, fontWeight:500 }}>
+                  ✦ +{healthDelta}% grâce à ton attention
+                </div>
+              )}
+
+              {/* Barre de progression animée + point lumineux */}
+              <div style={{ position:'relative', marginTop:12, height:6, borderRadius:3, background:'rgba(255,255,255,.08)' }}>
+                <div style={{ width:`${barPct}%`, height:'100%', borderRadius:3, background:'linear-gradient(to right, #5dc87a, #d4af37)' }}/>
+                {barPct > 1 && (
+                  <div style={{
+                    position:'absolute', top:'50%', left:`${barPct}%`,
+                    transform:'translate(-50%, -50%)',
+                    width:12, height:12, borderRadius:'50%',
+                    background:'#fff',
+                    boxShadow:'0 0 6px 2px rgba(212,175,55,.9), 0 0 14px 5px rgba(212,175,55,.45)',
+                    animation:'mjGlowDot 1.4s ease-in-out infinite',
+                  }}/>
+                )}
+              </div>
+
+              {/* Caption */}
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:10, color:'rgba(255,255,255,.35)', marginTop:10, letterSpacing:'.04em' }}>
+                Ta régularité fait toute la différence 🌿
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
-      {/* Personnaliser */}
-      <button
-        onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
-        style={{ alignSelf:'center', display:'flex', alignItems:'center', gap:7, padding:'7px 14px', borderRadius:100, background:'rgba(255,255,255,.7)', border:'1px solid rgba(200,160,150,.25)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.6)', transition:'background .15s' }}
-        onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,.95)'}
-        onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,.7)'}
-      >
-        <span style={{ fontSize:14 }}>🎨</span>
-        Personnaliser ma fleur
-      </button>
+      {/* ── Carte narrative ── */}
+      <div style={{
+        padding:'20px 22px', borderRadius:16,
+        background:'rgba(255,255,255,.65)', backdropFilter:'blur(8px)',
+        border:'1px solid rgba(200,180,160,.2)',
+        boxShadow:'0 4px 20px rgba(0,0,0,.07)',
+        display:'flex', flexDirection:'column', gap:10,
+      }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:20, flexShrink:0 }}>❤️</span>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 19 : 21, fontWeight:600, color:'#1a1208', lineHeight:1.3 }}>{narrative.headline}</span>
+        </div>
+        <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(30,20,8,.62)', lineHeight:1.65 }}>{narrative.body}</p>
+        <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 15 : 16, fontStyle:'italic', color:'#a04040', lineHeight:1.5 }}>{narrative.accent}</p>
+        <div style={{ width:32, height:1.5, background:'rgba(160,64,64,.3)', borderRadius:1 }}/>
+      </div>
 
-      {/* Stimulation IA */}
-      {!!userId && !!plant && (
-        <AIInsightBlock
-          userId={userId}
-          edgeFn="stimulation"
-          payload={stimulationPayload}
-          color="#b090c8"
-        />
-      )}
+      {/* ── Section bénéfices ── */}
+      <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+          <span style={{ fontSize:16 }}>✨</span>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontWeight:600, color:'#1a1208' }}>Ce que cela t'apporte aujourd'hui</span>
+        </div>
+
+        {/* 3 cartes bénéfices */}
+        <div style={{ display:'flex', gap:10, flexDirection: isMobile ? 'column' : 'row' }}>
+          {benefits.map((b, i) => (
+            <div key={i} style={{
+              flex:1, padding:'14px 14px', borderRadius:14,
+              background:b.bg, border:`1px solid ${b.border}`,
+              display:'flex', flexDirection:'column', gap:6, alignItems:'center', textAlign:'center',
+            }}>
+              <span style={{ fontSize:24 }}>{b.icon}</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:600, color:'rgba(30,20,8,.8)', lineHeight:1.3 }}>{b.title}</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:'rgba(30,20,8,.5)', lineHeight:1.5 }}>{b.desc}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Citation */}
+        <div style={{ textAlign:'center', display:'flex', flexDirection:'column', gap:6, padding:'4px 8px' }}>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', gap:6 }}>
+            <span style={{ fontFamily:'Georgia,serif', fontSize:20, color:'rgba(160,140,100,.45)', lineHeight:.7, flexShrink:0, marginTop:3 }}>"</span>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 13 : 14, fontStyle:'italic', color:'rgba(30,20,8,.45)', lineHeight:1.55 }}>
+              Prendre soin de soi n'est pas un luxe, c'est la base de tout ce qui fleurit dans ta vie.
+            </span>
+          </div>
+          <span style={{ fontSize:11, color:'rgba(30,20,8,.3)', letterSpacing:'.08em' }}>— ♡ —</span>
+        </div>
+      </div>
+
+      {/* ── CTA principal ── */}
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'stretch', gap:6 }}>
+        <button
+          onClick={() => onOpenNeedModal ? onOpenNeedModal() : setShowNeedModal(true)}
+          style={{ padding:'15px 28px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'#fff', background:'linear-gradient(90deg,#9060b8,#b07040,#7cb87c)', backgroundSize:'200% 100%', boxShadow:'0 6px 24px rgba(100,80,160,.3)', transition:'transform .15s, box-shadow .15s, background-position .4s', letterSpacing:'.02em', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
+          onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 30px rgba(100,80,160,.4)'; e.currentTarget.style.backgroundPosition='100% 0' }}
+          onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 24px rgba(100,80,160,.3)'; e.currentTarget.style.backgroundPosition='0% 0' }}
+        >
+          <span style={{ fontSize:16 }}>🌸</span>
+          Je fais grandir ma fleur aujourd'hui
+          <span style={{ fontSize:14, opacity:.8 }}>→</span>
+        </button>
+        <div style={{ textAlign:'center', fontFamily:"'Jost',sans-serif", fontSize:11, color:'rgba(30,20,8,.38)', letterSpacing:'.04em' }}>
+          Un nouveau moment rien que pour toi
+        </div>
+      </div>
 
 
     </div>{/* fin contenu scrollable */}

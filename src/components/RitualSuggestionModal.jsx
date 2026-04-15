@@ -630,7 +630,7 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
   }
 
   const inner = (
-    <div style={{ position:'relative', zIndex:1, width:'100%', height:'100%', background:bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+    <div style={{ position:'relative', zIndex:1, width:'100%', flex:1, minHeight:0, background:bg, display:'flex', flexDirection:'column', overflow:'hidden' }}>
       {/* Halos */}
       <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:'-10%', left:'-8%', width:400, height:400, borderRadius:'50%', background:`radial-gradient(circle,${g1}14 0%,transparent 65%)` }}/>
@@ -676,7 +676,7 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
       <style>{CSS}</style>
       <div style={{ position:'fixed', inset:0, zIndex:270, display:'flex', alignItems:'center', justifyContent:'center' }}>
         <div onClick={phase === 'view' ? onClose : undefined} style={{ position:'absolute', inset:0, background:'rgba(20,12,5,0.55)', backdropFilter:'blur(8px)' }}/>
-        <div style={{ position:'relative', zIndex:1, width:'min(680px, 95vw)', maxHeight:'92vh', borderRadius:24, overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.32)' }}>
+        <div style={{ position:'relative', zIndex:1, width:'min(680px, 95vw)', maxHeight:'92vh', borderRadius:24, overflow:'hidden', boxShadow:'0 32px 80px rgba(0,0,0,0.32)', display:'flex', flexDirection:'column' }}>
           {inner}
         </div>
       </div>

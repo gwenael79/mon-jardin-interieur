@@ -1000,6 +1000,7 @@ export default function DashboardPage() {
     onOpenProfile:  () => setShowProfileModal(true),
     onCoeurSeen:    () => setUnreadCoeurs(0),
     onOpenRituals:  () => setOpenRitualsModal(true),
+    onOpenNeedModal: () => setShowNeedModal(true),
     openRitualsModal,
     onCloseRituals: () => setOpenRitualsModal(false),
     bilanDoneToday,
