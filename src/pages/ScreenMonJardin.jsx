@@ -2052,42 +2052,6 @@ function computeRitualDelta(currentHealth, streakDays) {
   return Math.max(1, Math.round(base * slowdown * streakBonus))
 }
 
-// ── Hook streak ─────────────────────────────────────────────
-function useStreak(userId) {
-  const KEY = userId ? `mafleur-streak-${userId}` : 'mafleur-streak'
-
-  function getStreak() {
-    try {
-      const raw  = localStorage.getItem(KEY)
-      if (!raw) return 0
-      const { lastDate, days } = JSON.parse(raw)
-      const today     = new Date().toISOString().slice(0, 10)
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-      if (lastDate === today)      return days          // déjà enregistré aujourd'hui
-      if (lastDate === yesterday)  return days          // hier → streak continue
-      return 0                                          // trop long → streak cassé
-    } catch { return 0 }
-  }
-
-  function recordToday() {
-    try {
-      const raw       = localStorage.getItem(KEY)
-      const today     = new Date().toISOString().slice(0, 10)
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-      let days = 1
-      if (raw) {
-        const { lastDate, days: prev } = JSON.parse(raw)
-        if (lastDate === today)      return prev         // déjà enregistré
-        if (lastDate === yesterday)  days = prev + 1    // continue le streak
-      }
-      localStorage.setItem(KEY, JSON.stringify({ lastDate: today, days }))
-      return days
-    } catch { return 1 }
-  }
-
-  return { getStreak, recordToday }
-}
-
 
 function useRitualsState(userId, awardLumens) {
   const [degradation,      setDegradation]      = useState(null)
@@ -4650,8 +4614,6 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     return () => window.removeEventListener('plantHealthPatched', handler)
   }, [todayPlant])
 
-  const { getStreak, recordToday } = useStreak(userId)
-
   const handleToggleRitual = useCallback(async (ritualId) => {
     track('ritual_complete', { ritual_id: ritualId }, 'jardin', 'engagement')
     const alreadyDone = !!completedRituals[ritualId]
@@ -4681,7 +4643,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     const currentHealth = plant?.health ?? 5
 
     // Delta progressif : petit au début (grande progression), ralentit en grandissant
-    const streak  = recordToday()
+    const streak  = stats?.streak ?? 0  // source fiable : plant.service.js via DB
     const delta   = computeRitualDelta(currentHealth, streak)
 
     const newZoneVal = Math.min(100, currentZone + delta)
@@ -4744,7 +4706,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         }
       }, 3000)
     }
-  }, [_toggleRitual, completedRituals, plant, userId, recordToday])
+  }, [_toggleRitual, completedRituals, plant, userId, stats])
 
   const PRIVACY_FIELDS = [
     { field:'show_health', icon:'🌸', label:'Visibilité de ma fleur' },
@@ -4819,6 +4781,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       return parsed.slice(0, 3)
     } catch { return null }
   }, [rawBenefitsMsg])
+
+  // Nettoyage unique — supprime l'ancien streak localStorage (remplacé par DB)
+  useEffect(() => {
+    if (!userId) return
+    localStorage.removeItem(`mafleur-streak-${userId}`)
+  }, [userId])
 
   // Charger les settings depuis Supabase
   useEffect(() => {

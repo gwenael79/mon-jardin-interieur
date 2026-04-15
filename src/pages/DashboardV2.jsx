@@ -348,7 +348,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         <SlideInsightsAI slideId={slide.id} screenProps={screenProps} bilanDoneToday={bilanDoneToday} color={slide.color} />
 
         {/* ── Bouton CTA centré ── */}
-        <div style={{ textAlign:'center', paddingTop:10, paddingBottom:24 }}>
+        <div style={{ textAlign:'center', paddingTop:10, paddingBottom:24, display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
           <button
             className="cta-btn"
             onClick={() => {
@@ -360,6 +360,12 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
           >
             {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
           </button>
+          {slide.id === 'jardin' && (
+            <button
+              onClick={() => onOpenModal('jardin')}
+              style={{ padding:'11px 28px', borderRadius:100, border:'1px solid rgba(200,160,150,.3)', background:'rgba(255,255,255,.55)', cursor:'pointer', touchAction:'manipulation', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(30,20,8,.65)', letterSpacing:'.02em', backdropFilter:'blur(4px)' }}
+            >🌸 Voir ma fleur</button>
+          )}
         </div>
       </div>
 
