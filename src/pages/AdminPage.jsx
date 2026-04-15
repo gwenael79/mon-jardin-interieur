@@ -36,6 +36,7 @@ html,body,#root{height:100%;width:100%}
 /* STATS */
 .adm-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:32px}
 .adm-stat{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:14px;padding:20px 24px;display:flex;flex-direction:column;gap:6px}
+.adm-stat-card{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:14px;padding:16px 20px;display:flex;flex-direction:column;gap:4px;min-width:160px}
 .adm-stat-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;color:var(--text);line-height:1}
 .adm-stat-lbl{font-size:10px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
 /* TABS */
@@ -3118,9 +3119,13 @@ function ThemePreview({ vars = {} }) {
 //  TAB QCM — synthèse des réponses au questionnaire de validation produit
 // ─────────────────────────────────────────────────────────────────────────────
 function TabQCM() {
-  const [rows,    setRows]    = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filter,  setFilter]  = useState('tous') // tous | besoin | univers | pertinence | projection
+  const [rows,      setRows]      = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [error,     setError]     = useState(null)
+  const [filter,    setFilter]    = useState('tous')
+  const [analysis,  setAnalysis]  = useState(null)   // texte markdown de l'analyse Claude
+  const [analyzing, setAnalyzing] = useState(false)
+  const [anaError,  setAnaError]  = useState(null)
 
   const TAG_LABELS = {
     contexte:   '🧭 Votre situation',
@@ -3133,36 +3138,90 @@ function TabQCM() {
   }
 
   useEffect(() => {
+    // Les réponses sont dans quiz_responses : 1 ligne = 1 réponse à 1 question
     supabase
-      .from('profiles')
-      .select('id, quiz_completed_at, quiz_answers')
-      .not('quiz_answers', 'is', null)
+      .from('quiz_responses')
+      .select('user_id, quiz_completed_at, tag, question, answer')
       .order('quiz_completed_at', { ascending: false })
-      .then(({ data }) => {
-        setRows(data ?? [])
+      .then(({ data, error: err }) => {
+        if (err) {
+          console.error('[TabQCM] Supabase error:', err)
+          setError(err.message)
+        } else {
+          setRows(data ?? [])
+        }
+        setLoading(false)
+      })
+      .catch(e => {
+        console.error('[TabQCM] fetch error:', e)
+        setError(e.message)
         setLoading(false)
       })
   }, [])
 
   if (loading) return <div className="adm-empty">Chargement…</div>
+  if (error)   return (
+    <div className="adm-empty" style={{ color:'var(--red)' }}>
+      ⚠️ Erreur Supabase : {error}<br/>
+      <span style={{ fontSize:10, opacity:.6 }}>
+        Vérifiez les politiques RLS sur la table <code>quiz_responses</code>.
+      </span>
+    </div>
+  )
   if (rows.length === 0) return <div className="adm-empty">Aucun questionnaire complété pour l'instant.</div>
 
-  // ── Flatten toutes les réponses ──
-  const allAnswers = rows.flatMap(r => (r.quiz_answers ?? []).map(a => ({ ...a, userId: r.id })))
+  // —— Nombre d'utilisateurs distincts ayant complété le quiz ——
+  const uniqueUsers = new Set(rows.map(r => r.user_id)).size
 
-  // ── Agrégation par question ──
+  // —— Agrégation par question (chaque ligne = 1 réponse) ——
   const byQuestion = {}
-  allAnswers.forEach(a => {
-    if (!a.question) return
-    if (!byQuestion[a.question]) byQuestion[a.question] = { tag: a.tag, question: a.question, counts: {} }
-    const ans = a.answer ?? '(sans réponse)'
-    byQuestion[a.question].counts[ans] = (byQuestion[a.question].counts[ans] ?? 0) + 1
+  rows.forEach(r => {
+    if (!r.question) return
+    if (!byQuestion[r.question]) byQuestion[r.question] = { tag: r.tag, question: r.question, counts: {} }
+    const ans = r.answer ?? '(sans réponse)'
+    byQuestion[r.question].counts[ans] = (byQuestion[r.question].counts[ans] ?? 0) + 1
   })
 
   const questions = Object.values(byQuestion)
     .filter(q => filter === 'tous' || q.tag === filter)
 
-  const total = rows.length
+  const total = uniqueUsers
+
+  // ── Génère l'analyse stratégique via Claude ──
+  async function generateAnalysis() {
+    setAnalyzing(true)
+    setAnaError(null)
+    setAnalysis(null)
+
+    // Prépare un résumé agrégé (pas les données brutes ligne par ligne)
+    const summary = Object.values(byQuestion).map(q => {
+      const entries = Object.entries(q.counts).sort((a, b) => b[1] - a[1])
+      const topAnswers = entries.slice(0, 4).map(([ans, count]) => (
+        `  - "${ans}" : ${count} réponse(s) (${Math.round((count/total)*100)}%)`
+      )).join('\n')
+      return `[${q.tag.toUpperCase()}] ${q.question}\n${topAnswers}`
+    }).join('\n\n')
+
+    try {
+      // Appel à l'Edge Function Supabase — la clé OpenAI reste côté serveur
+      const { data, error } = await supabase.functions.invoke('analyze-quiz', {
+        body: {
+          summary,
+          totalUsers:     total,
+          totalResponses: rows.length,
+        },
+      })
+
+      if (error) throw new Error(error.message)
+      if (!data?.analysis) throw new Error("Réponse vide de l'Edge Function")
+
+      setAnalysis(data.analysis)
+    } catch (e) {
+      console.error('[analyse]', e)
+      setAnaError(e.message)
+    }
+    setAnalyzing(false)
+  }
 
   return (
     <div>
@@ -3170,7 +3229,7 @@ function TabQCM() {
       <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:24 }}>
         {[
           { lbl: 'Questionnaires complétés', val: total },
-          { lbl: 'Réponses collectées',      val: allAnswers.length },
+          { lbl: 'Réponses collectées',      val: rows.length },
           { lbl: 'Questions analysées',      val: Object.keys(byQuestion).length },
         ].map(s => (
           <div key={s.lbl} className="adm-stat-card">
@@ -3178,6 +3237,68 @@ function TabQCM() {
             <div className="adm-stat-lbl">{s.lbl}</div>
           </div>
         ))}
+      </div>
+
+      {/* Bouton analyse stratégique */}
+      <div style={{ marginBottom:24 }}>
+        <button
+          onClick={generateAnalysis}
+          disabled={analyzing || rows.length === 0}
+          style={{
+            display:'flex', alignItems:'center', gap:10,
+            padding:'11px 22px', borderRadius:10, border:'none',
+            background: analyzing ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#4a7a8a,#2a5a6a)',
+            color: analyzing ? 'var(--text3)' : 'var(--cream)',
+            fontSize:13, fontWeight:500, letterSpacing:'.04em',
+            fontFamily:"'Jost',sans-serif",
+            cursor: analyzing || rows.length === 0 ? 'default' : 'pointer',
+            boxShadow: analyzing ? 'none' : '0 4px 16px rgba(40,80,100,0.35)',
+            transition:'all .2s',
+          }}
+        >
+          {analyzing ? '⏳ Analyse en cours…' : "🤖 Générer l'analyse stratégique"}
+        </button>
+
+        {anaError && (
+          <div style={{ marginTop:10, fontSize:12, color:'var(--red)', fontFamily:"'Jost',sans-serif" }}>
+            ⚠️ {anaError}
+          </div>
+        )}
+
+        {analysis && (
+          <div style={{
+            marginTop:16, padding:'24px 28px',
+            background:'rgba(74,122,138,0.08)', border:'1px solid rgba(74,122,138,0.25)',
+            borderRadius:14,
+          }}>
+            {/* Header */}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ fontSize:18 }}>🤖</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:500, color:'var(--text)', fontFamily:"'Jost',sans-serif" }}>Analyse stratégique — Claude</div>
+                  <div style={{ fontSize:10, color:'var(--text3)', fontFamily:"'Jost',sans-serif" }}>Basée sur {total} questionnaire(s) · {rows.length} réponses</div>
+                </div>
+              </div>
+              <button onClick={() => setAnalysis(null)} style={{ background:'none', border:'none', color:'var(--text3)', cursor:'pointer', fontSize:16, padding:'4px 8px' }}>✕</button>
+            </div>
+            {/* Contenu markdown rendu simplement */}
+            <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, lineHeight:1.8, color:'var(--text2)' }}>
+              {analysis.split('\n').map((line, i) => {
+                if (line.startsWith('## ')) return (
+                  <div key={i} style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:400, color:'var(--text)', margin:'20px 0 8px', borderBottom:'1px solid rgba(255,255,255,0.08)', paddingBottom:6 }}>
+                    {line.replace('## ', '')}
+                  </div>
+                )
+                if (line.startsWith('- ') || line.startsWith('• ')) return (
+                  <div key={i} style={{ paddingLeft:16, marginBottom:4, color:'var(--text2)' }}>· {line.slice(2)}</div>
+                )
+                if (line.trim() === '') return <div key={i} style={{ height:8 }} />
+                return <div key={i} style={{ marginBottom:4 }}>{line}</div>
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Filtre par bloc */}

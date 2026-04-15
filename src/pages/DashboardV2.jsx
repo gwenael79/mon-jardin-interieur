@@ -1219,6 +1219,15 @@ export default function DashboardPage() {
                   <div style={{ fontSize:10, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif" }}>Nom, notifications, confidentialité</div>
                 </div>
               </div>
+              {ADMIN_IDS.includes(user?.id) && (
+                <div onClick={() => { setShowProfileModal(false); window.location.hash = 'admin' }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(210,80,80,.07)', borderRadius:12, border:'1px solid rgba(210,80,80,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(210,80,80,.13)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(210,80,80,.07)'}>
+                  <span style={{ fontSize:16 }}>🛡️</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:500, color:'rgba(180,60,60,.90)', fontFamily:"'Jost',sans-serif" }}>Interface admin</div>
+                    <div style={{ fontSize:10, color:'rgba(180,60,60,.50)', fontFamily:"'Jost',sans-serif" }}>Accès réservé</div>
+                  </div>
+                </div>
+              )}
               <div onClick={() => { setShowProfileModal(false); setProfileView('main'); signOut() }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
                 <span style={{ fontSize:16 }}>🚪</span>
                 <div><div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Se déconnecter</div></div>
