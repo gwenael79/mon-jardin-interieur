@@ -798,6 +798,7 @@ export default function DashboardPage() {
   const [unreadCoeurs,        setUnreadCoeurs]        = useState(0)
   const [pendingDegradation,  setPendingDegradation]  = useState(null)
   const [openModalId,         setOpenModalId]         = useState(null)   // id du slide dont la modal est ouverte
+  const [postRitualSlide,     setPostRitualSlide]     = useState(false)  // true = slide ouvert après rituel → animations
   const [showNeedModal,       setShowNeedModal]       = useState(false)
   const [showRitualSuggestion,setShowRitualSuggestion]= useState(false)
   const [selectedNeed,        setSelectedNeed]        = useState(null)
@@ -999,13 +1000,14 @@ export default function DashboardPage() {
     onUpgrade:      () => setShowAccessModal(true), // alias attendu par ScreenJardinCollectif, ScreenDefis, ScreenClubJardiniers, ScreenAteliers, ScreenJardinotheque
     onOpenProfile:  () => setShowProfileModal(true),
     onCoeurSeen:    () => setUnreadCoeurs(0),
-    onOpenRituals:  () => setOpenRitualsModal(true),
+    onOpenRituals:   () => setOpenRitualsModal(true),
     onOpenNeedModal: () => setShowNeedModal(true),
+    isPostRitual:    postRitualSlide,
     openRitualsModal,
     onCloseRituals: () => setOpenRitualsModal(false),
     bilanDoneToday,
     track,
-  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, track])
+  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, postRitualSlide, track])
 
   // ── Prefetch IA — tous les slides en parallèle dès que l'user est connu ──
   // Les résultats sont mis en cache sessionStorage (clé = userId + slideId + date).
@@ -1121,6 +1123,7 @@ export default function DashboardPage() {
   onSeeFlower={() => {
     setShowRitualSuggestion(false)
     setSelectedNeed(null)
+    setPostRitualSlide(true)
     setOpenModalId('jardin')
   }}
   plantHealth={todayPlant?.health ?? 5}
@@ -1238,7 +1241,7 @@ export default function DashboardPage() {
           bilanDoneToday={bilanDoneToday}
           bilanHistory={bilanHistory}
           onBilan={() => setShowBilanModal(true)}
-          onClose={() => setOpenModalId(null)}
+          onClose={() => { setOpenModalId(null); setPostRitualSlide(false) }}
           onNav={handleModalNav}
           onOpenSlide={(id) => setOpenModalId(id)}
         />
@@ -1391,7 +1394,7 @@ export default function DashboardPage() {
               </div>
 
               {/* ── Bouton CTA centré ── */}
-              <div style={{ flexShrink:0, textAlign:'center', padding:'10px 24px 24px' }}>
+              <div style={{ flexShrink:0, textAlign:'center', padding:'10px 24px 24px', display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
                 <button
                   className="cta-btn"
                   onClick={() => {
@@ -1403,6 +1406,15 @@ export default function DashboardPage() {
                 >
                   {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
                 </button>
+
+                {slide.id === 'jardin' && (
+                  <button
+                    onClick={() => setOpenModalId('jardin')}
+                    style={{ padding:'10px 28px', borderRadius:100, border:'1px solid rgba(200,160,150,.3)', background:'rgba(255,255,255,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:500, color:'rgba(30,20,8,.65)', letterSpacing:'.02em', transition:'background .15s, transform .15s', backdropFilter:'blur(4px)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,.85)'; e.currentTarget.style.transform='translateY(-1px)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.55)'; e.currentTarget.style.transform='none' }}
+                  >🌸 Voir ma fleur</button>
+                )}
               </div>
 
 

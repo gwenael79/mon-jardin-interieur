@@ -42,6 +42,12 @@ RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante. Si c'est une
 
   boite_graine: `Tu es un accompagnateur de bien-être bienveillant, spécialisé dans l'estime de soi. Ce soir, l'utilisateur va déposer une réussite dans sa boîte à graines — un moment de fierté, un geste de soin, une petite victoire. Génère un message d'invitation chaleureux et personnel qui l'encourage à reconnaître sa valeur ce soir. Si tu as accès à ses réussites passées, valorise leur accumulation comme un trésor qui grandit. Sinon, invite-le à poser la première graine. Tutoie. MAXIMUM 2 phrases courtes, moins de 35 mots au total, ton doux et inspirant, sans émojis.
 RÈGLE ABSOLUE : ne parle jamais de zones (racines, tige, feuilles, fleurs, souffle). Reste centré sur l'estime de soi, la fierté, la valeur personnelle.`,
+
+  jardin_benefits: `Tu es un accompagnateur de bien-être. En te basant sur les rituels accomplis aujourd'hui et la vitalité de la plante, génère exactement 3 bénéfices concrets que l'utilisateur ressent grâce à ses pratiques. Si aucun rituel n'a été fait, génère 3 bénéfices inspirants liés à la vitalité actuelle de la plante.
+RÈGLE ABSOLUE : réponds UNIQUEMENT en JSON valide, sans markdown, sans commentaire. Format exact : [{"title":"...","desc":"..."},{"title":"...","desc":"..."},{"title":"...","desc":"..."}]. Chaque "title" : 3 à 5 mots. Chaque "desc" : 10 à 14 mots. Tutoie. Sans émojis. Ne mentionne jamais les noms techniques des zones (zone_racines etc).`,
+
+  jardin_quote: `Tu es un accompagnateur de bien-être bienveillant et poétique. En te basant sur l'état de la plante et les rituels accomplis aujourd'hui, génère une citation originale, inspirante et personnelle — comme si elle était écrite spécialement pour cette personne en ce moment précis. La citation doit être encourageante, douce, et refléter le chemin parcouru. Elle peut parler de soin de soi, de croissance intérieure, de continuité, ou de douceur envers soi-même. Tutoie. MAXIMUM 20 mots. Sans émojis. Pas de guillemets dans la réponse.
+RÈGLE ABSOLUE : réponds UNIQUEMENT avec le texte de la citation, rien d'autre. Pas de tiret, pas d'auteur, pas de contexte.`,
 }
 
 const ZONE_LABELS: Record<string, string> = {
@@ -87,13 +93,13 @@ async function getTodayPlant(supabase: ReturnType<typeof createClient>, userId: 
 }
 
 // ── Appel OpenAI ──────────────────────────────────────────────────────────────
-async function callGPT(system: string, user: string): Promise<string> {
+async function callGPT(system: string, user: string, maxTokens = 180): Promise<string> {
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_KEY}` },
     body: JSON.stringify({
       model:      'gpt-4o-mini',
-      max_tokens: 180,
+      max_tokens: maxTokens,
       temperature: 0.75,
       messages: [
         { role: 'system', content: system },
@@ -148,7 +154,7 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
   // État visuel et santé de la plante
   const plantStage = getPlantStage(health)
   // Slides qui ont besoin du détail des zones (bilan personnel, jardin intime, stimulation)
-  const needsZoneDetail = ['bilan', 'jardin', 'stimulation'].includes(slide)
+  const needsZoneDetail = ['bilan', 'jardin', 'stimulation', 'jardin_benefits', 'jardin_quote'].includes(slide)
   const plantSummary = plant
     ? needsZoneDetail
       ? `État visuel de la plante : ${plantStage}. Vitalité globale : ${health}%. Zones — ${Object.entries(ZONE_LABELS).map(([k, l]) => `${l} : ${plant[k] ?? '?'}%`).join(', ')}.`
@@ -164,6 +170,14 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
   ]
 
   if (slide === 'stimulation')  lines.push(`Rituels accomplis aujourd'hui : ${ritualsDone}.`)
+  if (slide === 'jardin_benefits' || slide === 'jardin_quote') {
+    const ritualsList = (payload.ritualsList as string[]) ?? []
+    if (ritualsList.length > 0) {
+      lines.push(`Rituels accomplis aujourd'hui : ${ritualsList.join(', ')}.`)
+    } else {
+      lines.push(`Aucun rituel accompli aujourd'hui.`)
+    }
+  }
   if (slide === 'champ')        lines.push(`${gardenCount} fleurs dans le jardin collectif, ${communityPeople} jardiniers actifs.`)
   if (slide === 'defis') {
     const defisDetails = (payload.defisDetails as string[]) ?? []
@@ -218,10 +232,14 @@ serve(async (req: Request) => {
     const systemPrompt = SYSTEM_PROMPTS[slide] ?? SYSTEM_PROMPTS.bilan
     const userContext  = buildContext(slide, enrichedPayload, bilans, plant)
 
-    const message = await callGPT(systemPrompt, userContext)
+    const rawMessage = await callGPT(systemPrompt, userContext, slide === 'jardin_benefits' ? 300 : 180)
+
+    // Pour jardin_benefits, on augmente la tolérance de tokens via le prompt dédié
+    // et on retourne le JSON brut dans message — le frontend le parse
+    const message = rawMessage || null
 
     return new Response(
-      JSON.stringify({ message: message || null }),
+      JSON.stringify({ message }),
       { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   } catch (e: any) {

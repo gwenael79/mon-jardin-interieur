@@ -11,6 +11,7 @@ import { usePlant }   from '../hooks/usePlant'
 import { usePrivacy } from '../hooks/usePrivacy'
 import { useJournal } from '../hooks/useJournal'
 import { useIsMobile, LumenBadge, LumensCard, useProfile, AIInsightBlock } from './dashboardShared'
+import { useSlideInsight } from '../hooks/useSlideInsight'
 import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
 import RitualSuggestionModal from '../components/RitualSuggestionModal'
@@ -307,12 +308,13 @@ function GardenSettingsModal({ settings, onSave, onClose, level = 1, tier = 1, i
   )
 }
 let _svgN = 0
-function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false, bare = false }) {
+function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', lumensTotal = 0, compact = false, bare = false, celebrate = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
   const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
-  const [sparkleOpacity, setSparkleOpacity] = useState(1)
+  const [sparkleOpacity, setSparkleOpacity] = useState(celebrate ? 1 : 0)
   useEffect(() => {
+    if (!celebrate) return
     const fadeStart = setTimeout(() => {
       const start = Date.now()
       const duration = 2000
@@ -324,9 +326,10 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
       requestAnimationFrame(raf)
     }, 18000)
     return () => clearTimeout(fadeStart)
-  }, [])
+  }, [celebrate])
   // ── Harpe magique ──
   useEffect(() => {
+    if (!celebrate) return
     const audio = new Audio('/harpe.mp3')
     audio.volume = 0.7
     audio.play().catch(() => {})
@@ -337,7 +340,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
       }, 100)
     }, 20000)
     return () => { clearTimeout(fade); audio.pause() }
-  }, [])
+  }, [celebrate])
 
 
 
@@ -4515,7 +4518,7 @@ function AllRitualsModal({ completedRituals, onToggle, onClose }) {
   )
 }
 
-function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal }) {
+function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal, isPostRitual = false }) {
   // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
   const { rituals: _rituals, loading: ritualsLoading } = useRituels()
   useEffect(() => {
@@ -4777,6 +4780,43 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     ritualsDone:  todayRituals?.length    ?? 0,
   }), [stats, todayRituals])
 
+  const benefitsPayload = useMemo(() => ({
+    streak:      stats?.streak           ?? 0,
+    ritualsMonth: stats?.ritualsThisMonth ?? 0,
+    ritualsDone: todayRituals?.length    ?? 0,
+    ritualsList: (todayRituals ?? []).map(r => `${r.name}${r.zone ? ` (${r.zone})` : ''}`),
+  }), [stats, todayRituals])
+
+  const { message: jardinInsight, loading: jardinInsightLoading } = useSlideInsight({
+    userId,
+    slideId: 'jardin',
+    payload: stimulationPayload,
+    enabled: !!userId,
+  })
+
+  const { message: rawBenefitsMsg, loading: benefitsLoading } = useSlideInsight({
+    userId,
+    slideId: 'jardin_benefits',
+    payload: benefitsPayload,
+    enabled: !!userId,
+  })
+
+  const { message: jardinQuote, loading: quoteLoading } = useSlideInsight({
+    userId,
+    slideId: 'jardin_quote',
+    payload: benefitsPayload,
+    enabled: !!userId,
+  })
+
+  const aiBenefits = useMemo(() => {
+    if (!rawBenefitsMsg) return null
+    try {
+      const parsed = JSON.parse(rawBenefitsMsg)
+      if (!Array.isArray(parsed) || parsed.length === 0) return null
+      return parsed.slice(0, 3)
+    } catch { return null }
+  }, [rawBenefitsMsg])
+
   // Charger les settings depuis Supabase
   useEffect(() => {
     if (!userId) return
@@ -4843,24 +4883,53 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   }
   const narrative = NARRATIVES[timeContext]
 
-  const BENEFITS = {
+  const ZONE_BENEFITS = {
+    'Racines':  { icon:'🌱', title:"Un ancrage retrouvé",      desc:"Tu te sens plus stable, plus solide, posé-e dans ta journée.",    bg:'rgba(160,100,60,.18)',  border:'rgba(160,100,60,.40)' },
+    'Tige':     { icon:'🌿', title:"Un corps revitalisé",      desc:"Tu as pris soin de ton énergie physique — tu rayonnes.",          bg:'rgba(80,160,80,.18)',   border:'rgba(80,160,80,.40)'  },
+    'Feuilles': { icon:'🍃', title:"Un esprit qui s'ouvre",    desc:"Ta gratitude a éclairé ta perception et adouci ton regard.",      bg:'rgba(60,140,90,.18)',   border:'rgba(60,140,90,.40)'  },
+    'Fleurs':   { icon:'🌸', title:"Une âme nourrie",          desc:"Tu as accueilli la beauté — quelque chose en toi s'épanouit.",   bg:'rgba(200,100,150,.18)', border:'rgba(200,100,150,.40)' },
+    'Souffle':  { icon:'🌬️', title:"Un souffle apaisé",        desc:"Ta respiration se régule, ton système nerveux se détend.",       bg:'rgba(80,130,200,.18)',  border:'rgba(80,130,200,.40)'  },
+  }
+  const FALLBACK_BENEFITS = {
     matin: [
-      { icon:'🌅', title:"Un élan pour démarrer",     desc:"Ton énergie s'éveille, tu entres dans la journée avec douceur.",  bg:'rgba(207,166,74,.22)', border:'rgba(207,166,74,.45)' },
-      { icon:'🌿', title:"Une clarté intérieure",      desc:"Ton esprit se pose, les idées se mettent en ordre.",              bg:'rgba(80,160,80,.20)',  border:'rgba(80,160,80,.40)' },
-      { icon:'🌱', title:"Des racines solides",        desc:"Tu avances depuis un centre stable et ancré.",                    bg:'rgba(80,130,180,.20)', border:'rgba(80,130,180,.40)' },
+      { icon:'🌅', title:"Un élan pour démarrer",    desc:"Ton énergie s'éveille, tu entres dans la journée avec douceur.", bg:'rgba(207,166,74,.18)', border:'rgba(207,166,74,.40)' },
+      { icon:'🌿', title:"Une clarté intérieure",     desc:"Ton esprit se pose, les idées se mettent en ordre.",             bg:'rgba(80,160,80,.18)',  border:'rgba(80,160,80,.40)'  },
+      { icon:'🌱', title:"Des racines solides",       desc:"Tu avances depuis un centre stable et ancré.",                   bg:'rgba(80,130,180,.18)', border:'rgba(80,130,180,.40)' },
     ],
     aprem: [
-      { icon:'🍃', title:"Plus de calme intérieur",   desc:"Ton esprit se dépose, tu respires plus profondément.",            bg:'rgba(80,160,80,.20)',  border:'rgba(80,160,80,.40)' },
-      { icon:'🌱', title:"Une sensation d'ancrage",   desc:"Tu te sens plus stable, plus aligné-e, plus solide.",             bg:'rgba(80,130,180,.20)', border:'rgba(80,130,180,.40)' },
-      { icon:'☀️', title:"Une énergie plus douce",    desc:"Tu avances avec plus de clarté et de présence.",                  bg:'rgba(207,140,74,.20)', border:'rgba(207,140,74,.40)' },
+      { icon:'🍃', title:"Plus de calme intérieur",  desc:"Ton esprit se dépose, tu respires plus profondément.",           bg:'rgba(80,160,80,.18)',  border:'rgba(80,160,80,.40)'  },
+      { icon:'🌱', title:"Une sensation d'ancrage",  desc:"Tu te sens plus stable, plus aligné-e, plus solide.",            bg:'rgba(80,130,180,.18)', border:'rgba(80,130,180,.40)' },
+      { icon:'☀️', title:"Une énergie plus douce",   desc:"Tu avances avec plus de clarté et de présence.",                 bg:'rgba(207,140,74,.18)', border:'rgba(207,140,74,.40)' },
     ],
     soir: [
-      { icon:'🍃', title:"Plus de calme intérieur",   desc:"Ton esprit se dépose, tu respires plus profondément.",            bg:'rgba(80,160,80,.20)',  border:'rgba(80,160,80,.40)' },
-      { icon:'🌱', title:"Une sensation d'ancrage",   desc:"Tu te sens plus stable, plus aligné-e, plus solide.",             bg:'rgba(80,130,180,.20)', border:'rgba(80,130,180,.40)' },
-      { icon:'☀️', title:"Une énergie plus douce",    desc:"Tu avances avec plus de clarté et de présence.",                  bg:'rgba(207,140,74,.20)', border:'rgba(207,140,74,.40)' },
+      { icon:'🍃', title:"Plus de calme intérieur",  desc:"Ton esprit se dépose, tu respires plus profondément.",           bg:'rgba(80,160,80,.18)',  border:'rgba(80,160,80,.40)'  },
+      { icon:'🌱', title:"Une sensation d'ancrage",  desc:"Tu te sens plus stable, plus aligné-e, plus solide.",            bg:'rgba(80,130,180,.18)', border:'rgba(80,130,180,.40)' },
+      { icon:'☀️', title:"Une énergie plus douce",   desc:"Tu avances avec plus de clarté et de présence.",                 bg:'rgba(207,140,74,.18)', border:'rgba(207,140,74,.40)' },
     ],
   }
-  const benefits = BENEFITS[timeContext]
+
+  const benefits = useMemo(() => {
+    const done = todayRituals ?? []
+    if (done.length === 0) return FALLBACK_BENEFITS[timeContext]
+    // Zones uniques des rituels accomplis aujourd'hui
+    const seenZones = []
+    const cards = []
+    for (const r of done) {
+      const zone = r.zone
+      if (zone && ZONE_BENEFITS[zone] && !seenZones.includes(zone)) {
+        seenZones.push(zone)
+        cards.push(ZONE_BENEFITS[zone])
+      }
+      if (cards.length === 3) break
+    }
+    // Compléter jusqu'à 3 avec les fallbacks si besoin
+    const fallback = FALLBACK_BENEFITS[timeContext]
+    let fi = 0
+    while (cards.length < 3 && fi < fallback.length) {
+      cards.push(fallback[fi++])
+    }
+    return cards
+  }, [todayRituals, timeContext])
 
   // ── Animation d'entrée : counter + barre ──────────────────
   const [animHealth, setAnimHealth] = useState(0)
@@ -4868,6 +4937,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
   useEffect(() => {
     if (!plant?.health) return
+    if (!isPostRitual) {
+      // Navigation simple : afficher directement la valeur finale, sans animation
+      setAnimHealth(plant.health)
+      setBarPct(plant.health)
+      return
+    }
     const endVal   = plant.health
     const startVal = Math.max(0, yesterdayHealth ?? Math.max(0, endVal - (healthDelta ?? 8)))
 
@@ -4904,6 +4979,17 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
   return (
     <>
+    <style>{`
+      @keyframes mjGlowDot {
+        0%,100% { box-shadow: 0 0 6px 2px rgba(212,175,55,.9), 0 0 14px 5px rgba(212,175,55,.45); transform: translate(-50%,-50%) scale(1); }
+        50%      { box-shadow: 0 0 10px 4px rgba(212,175,55,1),  0 0 22px 9px rgba(212,175,55,.6);  transform: translate(-50%,-50%) scale(1.35); }
+      }
+      @keyframes mjFlowerIn {
+        0%   { filter: brightness(.65) saturate(.5); }
+        55%  { filter: brightness(1.18) saturate(1.4) drop-shadow(0 0 18px rgba(255,220,120,.55)); }
+        100% { filter: brightness(1) saturate(1); }
+      }
+    `}</style>
     {showGardenSettings && (
       <GardenSettingsModal
         settings={gardenSettings}
@@ -4972,17 +5058,17 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       <div style={{
         flexShrink:0, width: isMobile ? '100%' : '62%', alignSelf:'center',
         borderRadius:20, overflow:'hidden',
-        background:'rgba(255,255,255,.55)', backdropFilter:'blur(6px)',
+        background:'#1a1a28', backdropFilter:'blur(6px)',
         border:'1px solid rgba(200,180,160,.25)',
         boxShadow:'0 8px 40px rgba(0,0,0,.14)',
       }}>
 
         {/* Zone fleur */}
-        <div style={{ position:'relative', height: isMobile ? 300 : 460 }}>
-          <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} />
+        <div style={{ position:'relative', height: isMobile ? 300 : 460, animation: isPostRitual ? 'mjFlowerIn 2.2s ease-out forwards' : 'none' }}>
+          <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} celebrate={isPostRitual} />
 
-          {/* Streak badge */}
-          {streak >= 1 && (
+          {/* Streak badge — desktop only (mobile: rendered below) */}
+          {!isMobile && streak >= 1 && (
             <div style={{ position:'absolute', top:12, right:12, zIndex:3, display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', borderRadius:12, background:'rgba(20,10,5,.55)', border:'1px solid rgba(255,200,80,.25)', backdropFilter:'blur(4px)' }}>
               <span style={{ fontSize:14 }}>🔥</span>
               <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jours</span>
@@ -4990,16 +5076,39 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
             </div>
           )}
 
-          {/* Bouton personnaliser discret */}
-          <button
-            onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
-            style={{ position:'absolute', top:12, left:12, zIndex:3, display:'flex', alignItems:'center', gap:8, padding:'16px 28px', borderRadius:100, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,255,255,.18)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:32, color:'rgba(255,255,255,.90)', backdropFilter:'blur(4px)', transition:'background .15s' }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(20,10,5,.65)'}
-            onMouseLeave={e => e.currentTarget.style.background='rgba(20,10,5,.45)'}
-          >
-            🎨
-          </button>
+          {/* Bouton personnaliser — desktop only (mobile: rendered below) */}
+          {!isMobile && (
+            <button
+              onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
+              style={{ position:'absolute', top:12, left:12, zIndex:3, display:'flex', alignItems:'center', gap:8, padding:'16px 28px', borderRadius:100, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,255,255,.18)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:32, color:'rgba(255,255,255,.90)', backdropFilter:'blur(4px)', transition:'background .15s' }}
+              onMouseEnter={e => e.currentTarget.style.background='rgba(20,10,5,.65)'}
+              onMouseLeave={e => e.currentTarget.style.background='rgba(20,10,5,.45)'}
+            >
+              🎨
+            </button>
+          )}
         </div>
+
+        {/* Mobile only — palette + streak sous la fleur */}
+        {isMobile && (
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px 4px' }}>
+            <button
+              onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
+              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:100, background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:22, color:'rgba(255,255,255,.85)' }}
+            >
+              🎨
+            </button>
+            {streak >= 1 && (
+              <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:12, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,200,80,.2)' }}>
+                <span style={{ fontSize:16 }}>🔥</span>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jours</span>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, color:'rgba(255,255,255,.5)', letterSpacing:'.06em' }}>de continuité</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Panneau stats — fond sombre */}
         {(() => {
@@ -5055,7 +5164,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               {/* Barre de progression animée + point lumineux */}
               <div style={{ position:'relative', marginTop:12, height:7, borderRadius:3, background:'rgba(255,255,255,.18)' }}>
                 <div style={{ width:`${barPct}%`, height:'100%', borderRadius:3, background:'linear-gradient(to right, #5dc87a, #d4af37)' }}/>
-                {barPct > 1 && (
+                {isPostRitual && barPct > 1 && (
                   <div style={{
                     position:'absolute', top:'50%', left:`${barPct}%`,
                     transform:'translate(-50%, -50%)',
@@ -5076,56 +5185,92 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         })()}
       </div>
 
-      {/* ── Carte narrative ── */}
+      {/* ── Carte narrative IA ── */}
       <div style={{
         padding:'20px 22px', borderRadius:16,
         background:'rgba(255,255,255,.65)', backdropFilter:'blur(8px)',
-        border:'1px solid rgba(200,180,160,.2)',
+        border:'1px solid rgba(120,184,124,.25)',
         boxShadow:'0 4px 20px rgba(0,0,0,.07)',
         display:'flex', flexDirection:'column', gap:10,
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <span style={{ fontSize:20, flexShrink:0 }}>❤️</span>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 19 : 21, fontWeight:600, color:'#1a1208', lineHeight:1.3 }}>{narrative.headline}</span>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 21, fontWeight:600, color:'#1a1208', lineHeight:1.3 }}>{narrative.headline}</span>
         </div>
-        <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(30,20,8,.62)', lineHeight:1.65 }}>{narrative.body}</p>
-        <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 15 : 16, fontStyle:'italic', color:'#a04040', lineHeight:1.5 }}>{narrative.accent}</p>
-        <div style={{ width:32, height:1.5, background:'rgba(160,64,64,.3)', borderRadius:1 }}/>
+        {jardinInsightLoading ? (
+          <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 0' }}>
+            {[0, .2, .4].map(d => (
+              <div key={d} style={{ width:5, height:5, borderRadius:'50%', background:'#7cb87c', opacity:.5, animation:`onbPulse 1.2s ease-in-out ${d}s infinite` }}/>
+            ))}
+          </div>
+        ) : jardinInsight ? (
+          <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 17, fontStyle:'italic', color:'rgba(30,20,8,.78)', lineHeight:1.65 }}>{jardinInsight}</p>
+        ) : (
+          <>
+            <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 13, color:'rgba(30,20,8,.62)', lineHeight:1.65 }}>{narrative.body}</p>
+            <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 17 : 16, fontStyle:'italic', color:'#a04040', lineHeight:1.5 }}>{narrative.accent}</p>
+          </>
+        )}
+        <div style={{ width:32, height:1.5, background:'rgba(120,184,124,.4)', borderRadius:1 }}/>
       </div>
 
       {/* ── Section bénéfices ── */}
       <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
           <span style={{ fontSize:16 }}>✨</span>
-          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontWeight:600, color:'#1a1208' }}>Ce que cela t'apporte aujourd'hui</span>
+          <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 21 : 20, fontWeight:600, color:'#1a1208' }}>Ce que cela t'apporte aujourd'hui</span>
         </div>
 
-        {/* 3 cartes bénéfices */}
-        <div style={{ display:'flex', gap:10, flexDirection: isMobile ? 'column' : 'row' }}>
-          {benefits.map((b, i) => (
-            <div key={i} style={{
-              flex:1, padding:'14px 14px', borderRadius:14,
-              background:`rgba(255,255,255,0.82)`,
-              border:`1px solid ${b.border}`,
-              backdropFilter:'blur(10px)',
-              WebkitBackdropFilter:'blur(10px)',
-              display:'flex', flexDirection:'column', gap:6, alignItems:'center', textAlign:'center',
-            }}>
-              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:16, fontWeight:700, color:'rgba(30,20,8,.9)', lineHeight:1.3 }}>{b.title}</span>
-              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(30,20,8,.7)', lineHeight:1.5 }}>{b.desc}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Citation */}
-        <div style={{ textAlign:'center', display:'flex', flexDirection:'column', gap:6, padding:'12px 16px', borderRadius:14, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)' }}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', gap:6 }}>
-            <span style={{ fontFamily:'Georgia,serif', fontSize:26, color:'rgba(30,20,8,.75)', lineHeight:.7, flexShrink:0, marginTop:3 }}>"</span>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontStyle:'italic', color:'rgba(10,5,0,.90)', lineHeight:1.55, fontWeight:600 }}>
-              Prendre soin de soi n'est pas un luxe, c'est la base de tout ce qui fleurit dans ta vie."
-            </span>
+        {/* 3 cartes bénéfices — IA ou fallback */}
+        {benefitsLoading ? (
+          <div style={{ display:'flex', gap:10, flexDirection: isMobile ? 'column' : 'row' }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ flex:1, padding:'14px', borderRadius:14, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(200,180,160,.2)', display:'flex', alignItems:'center', justifyContent:'center', minHeight:72, gap:5 }}>
+                {[0,.15,.3].map(d => (
+                  <div key={d} style={{ width:5, height:5, borderRadius:'50%', background:'#7cb87c', opacity:.5, animation:`onbPulse 1.2s ease-in-out ${d}s infinite` }}/>
+                ))}
+              </div>
+            ))}
           </div>
-          <span style={{ fontSize:14, color:'rgba(10,5,0,.65)', letterSpacing:'.08em' }}>— ♡ —</span>
+        ) : (
+          <div style={{ display:'flex', gap:10, flexDirection: isMobile ? 'column' : 'row' }}>
+            {(aiBenefits ?? benefits).map((b, i) => (
+              <div key={i} style={{
+                flex:1, padding:'14px 14px', borderRadius:14,
+                background:'rgba(255,255,255,0.82)',
+                border:`1px solid ${b.border ?? 'rgba(120,184,124,.3)'}`,
+                backdropFilter:'blur(10px)',
+                WebkitBackdropFilter:'blur(10px)',
+                display:'flex', flexDirection:'column', gap:6, alignItems:'center', textAlign:'center',
+              }}>
+                {b.icon && <span style={{ fontSize:20 }}>{b.icon}</span>}
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 17 : 16, fontWeight:700, color:'rgba(30,20,8,.9)', lineHeight:1.3 }}>{b.title}</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 14, color:'rgba(30,20,8,.7)', lineHeight:1.5 }}>{b.desc}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Citation IA */}
+        <div style={{ textAlign:'center', display:'flex', flexDirection:'column', gap:6, padding:'12px 16px', borderRadius:14, background:'rgba(255,255,255,0.55)', backdropFilter:'blur(8px)', WebkitBackdropFilter:'blur(8px)', minHeight:60, justifyContent:'center' }}>
+          {quoteLoading ? (
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
+              {[0,.15,.3].map(d => (
+                <div key={d} style={{ width:5, height:5, borderRadius:'50%', background:'rgba(30,20,8,.4)', opacity:.5, animation:`onbPulse 1.2s ease-in-out ${d}s infinite` }}/>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'center', gap:6 }}>
+                <span style={{ fontFamily:'Georgia,serif', fontSize:26, color:'rgba(30,20,8,.75)', lineHeight:.7, flexShrink:0, marginTop:3 }}>"</span>
+                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 20, fontStyle:'italic', color:'rgba(10,5,0,.90)', lineHeight:1.55, fontWeight:600 }}>
+                  {jardinQuote ?? "Prendre soin de toi, c'est la plus belle graine que tu puisses semer."}
+                  {'"'}
+                </span>
+              </div>
+              <span style={{ fontSize:14, color:'rgba(10,5,0,.65)', letterSpacing:'.08em' }}>— ♡ —</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -5141,7 +5286,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           Je fais grandir ma fleur aujourd'hui
           <span style={{ fontSize:14, opacity:.8 }}>→</span>
         </button>
-        <div style={{ textAlign:'center', fontFamily:"'Jost',sans-serif", fontSize:11, color:'rgba(30,20,8,.38)', letterSpacing:'.04em' }}>
+        <div style={{ textAlign:'center', fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 17 : 16, fontStyle:'italic', color:'rgba(30,20,8,.60)', letterSpacing:'.02em' }}>
           Un nouveau moment rien que pour toi
         </div>
       </div>
