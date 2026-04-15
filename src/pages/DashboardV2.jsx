@@ -456,7 +456,7 @@ function BilanHistory7Days({ history, maxDays = 7 }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SCREEN MODAL — overlay plein écran qui ouvre un slide sur ses hooks
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistory, onBilan, onClose }) {
+function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistory, onBilan, onClose, onOpenSlide }) {
   const idx   = slides.findIndex(s => s.id === slideId)
   const slide = slides[idx]
   if (!slide) return null
@@ -574,11 +574,11 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
 
           {slide.id === 'jardin' && (
             <button
-              onClick={() => screenProps?.onOpenRituals?.()}
-              style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#c8a0d8,#9070a8)', boxShadow:'0 4px 16px rgba(160,100,180,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
-              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 22px rgba(160,100,180,.4)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 16px rgba(160,100,180,.3)' }}
-            >🌸 Je prends soin de ma fleur</button>
+              onClick={() => onOpenSlide?.('champ')}
+              style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#d4b050,#a87c28)', boxShadow:'0 4px 16px rgba(180,140,40,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 22px rgba(180,140,40,.4)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 16px rgba(180,140,40,.3)' }}
+            >🌻 Voir ma fleur dans le jardin collectif</button>
           )}
         </div>
       </div>
@@ -1240,6 +1240,7 @@ export default function DashboardPage() {
           onBilan={() => setShowBilanModal(true)}
           onClose={() => setOpenModalId(null)}
           onNav={handleModalNav}
+          onOpenSlide={(id) => setOpenModalId(id)}
         />
       )}
     </>
