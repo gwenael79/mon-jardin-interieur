@@ -488,6 +488,7 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
 
   return (
     <g
+      data-uid={plant.user_id}
       style={{
         '--sa': `${swayAmp}deg`,
         animation: `cgSway ${swayDur.toFixed(2)}s ease-in-out infinite ${swayDelay.toFixed(2)}s`,
@@ -881,126 +882,16 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
   const [winH, setWinH] = useState(window.innerHeight)
-  const canvasRef   = useRef(null)
-  const particlesRef = useRef([])
-  const positionsRef = useRef([])
-  const svgElRef     = useRef(null)
-  const rafRef       = useRef(null)
-
-  // Boucle d'animation canvas
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    function resize() {
-      canvas.width  = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    function drawStar(cx, cy, spikes, outer, inner) {
-      let rot = -Math.PI / 2
-      const step = Math.PI / spikes
-      ctx.beginPath()
-      for (let i = 0; i < spikes * 2; i++) {
-        const r = i % 2 === 0 ? outer : inner
-        ctx.lineTo(cx + Math.cos(rot) * r, cy + Math.sin(rot) * r)
-        rot += step
-      }
-      ctx.closePath()
-      ctx.fill()
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      const now = Date.now()
-      particlesRef.current = particlesRef.current.filter(p => now < p.end)
-      particlesRef.current.forEach(p => {
-        if (now < p.start) return
-        const t = (now - p.start) / (p.end - p.start)
-        if (t < 0 || t > 1) return
-
-        // Montée ease-out naturelle
-        const ease = 1 - Math.pow(1 - t, 2.8)
-        const y = p.y - ease * p.rise
-
-        // Dérive sinusoïdale horizontale
-        const x = p.x + Math.sin(t * Math.PI * p.waveFreq + p.wavePhase) * p.waveAmp
-
-        // Alpha en sinus + légère scintillation
-        const baseAlpha = Math.sin(t * Math.PI)
-        const twinkle   = 1 - 0.18 * Math.sin(t * Math.PI * 7 + p.twinklePhase)
-        const alpha      = Math.min(1, baseAlpha * twinkle)
-
-        ctx.save()
-        ctx.globalAlpha = alpha
-        ctx.translate(x, y)
-        ctx.rotate(p.rot + t * p.spin)
-
-        // Halo lumineux externe
-        ctx.shadowBlur  = p.size * 3.5
-        ctx.shadowColor = p.color
-        ctx.fillStyle   = p.color
-        drawStar(0, 0, p.spikes, p.size, p.size * p.innerRatio)
-
-        // Centre blanc brillant
-        ctx.shadowBlur  = p.size * 2
-        ctx.shadowColor = '#FFFFFF'
-        ctx.fillStyle   = '#FFFFFF'
-        drawStar(0, 0, p.spikes, p.size * 0.38, p.size * 0.38 * p.innerRatio)
-
-        ctx.restore()
-      })
-      ctx.globalAlpha  = 1
-      ctx.shadowBlur   = 0
-      rafRef.current = requestAnimationFrame(draw)
-    }
-    rafRef.current = requestAnimationFrame(draw)
-    return () => {
-      cancelAnimationFrame(rafRef.current)
-      window.removeEventListener('resize', resize)
-    }
-  }, [])
+  const svgElRef = useRef(null)
 
   function spawnStars(uid) {
-    const pos = positionsRef.current.find(p => p.user_id === uid)
-    if (!pos || !svgElRef.current) return
-    const svg  = svgElRef.current
-    const ctm  = svg.getScreenCTM()
-    if (!ctm) return
-    const r     = Math.max(0, Math.min(1, (pos.health ?? 50) / 100))
-    const effGY = (svg.viewBox?.baseVal?.height ?? 400) - 20 + (pos.yOff ?? 0)
-    const stemH = Math.min(effGY * 0.45, effGY * (0.08 + 0.38 * r))
-    const svgPt = svg.createSVGPoint()
-    svgPt.x = pos.x
-    svgPt.y = effGY - stemH * 0.5
-    const sc = svgPt.matrixTransform(ctm)
-
-    const COLORS = ['#FFE566','#FFD700','#FFFDE0','#FFB800','#FFFFFF','#FFC800','#FFE8A0','#FFF5CC','#FFD040','#FFFACD']
-    const now = Date.now()
-    const COUNT = 13
-    for (let i = 0; i < COUNT; i++) {
-      const delay    = i * 55 + Math.random() * 35
-      const duration = 2400 + Math.random() * 1400
-      particlesRef.current.push({
-        x:            sc.x + (Math.random() - 0.5) * 28,
-        y:            sc.y - Math.random() * 8,
-        rise:         150 + Math.random() * 130,
-        size:         3.5 + Math.random() * 7.5,
-        innerRatio:   0.32 + Math.random() * 0.16,
-        spikes:       Math.random() < 0.35 ? 4 : 5,
-        color:        COLORS[Math.floor(Math.random() * COLORS.length)],
-        rot:          Math.random() * Math.PI * 2,
-        spin:         (Math.random() - 0.5) * 3.5,
-        waveFreq:     1.4 + Math.random() * 1.8,
-        waveAmp:      7 + Math.random() * 20,
-        wavePhase:    Math.random() * Math.PI * 2,
-        twinklePhase: Math.random() * Math.PI * 2,
-        start:        now + delay,
-        end:          now + delay + duration,
-      })
-    }
+    if (!svgElRef.current) return
+    const el = svgElRef.current.querySelector(`[data-uid="${uid}"]`)
+    if (!el) return
+    el.classList.remove('cg-star-burst')
+    void el.offsetWidth // force reflow pour relancer l'animation
+    el.classList.add('cg-star-burst')
+    setTimeout(() => el.classList.remove('cg-star-burst'), 2500)
   }
 
   // Realtime — étoiles sur la fleur du membre actif
@@ -1014,6 +905,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
       .subscribe()
     return () => supabase.removeChannel(ch)
   }, [])
+
 
   useEffect(() => {
     const fn = () => setWinH(window.innerHeight)
@@ -1114,8 +1006,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
       .sort((a,b) => a.yOff - b.yOff)
   }, [plants, currentUserId, svgW])
 
-  // Met à jour positionsRef quand positions change
-  useEffect(() => { positionsRef.current = positions }, [positions])
 
   return (
     <div style={{
@@ -1140,6 +1030,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
         @keyframes cgPollen  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
         @keyframes cgGrass   { 0%,100%{transform:rotate(0deg)} 38%{transform:rotate(2.2deg)} 72%{transform:rotate(-1.6deg)} }
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }
+        @keyframes cgBurst   { 0%{filter:drop-shadow(0 0 0px #FFD700)} 20%{filter:drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 6px #fff)} 60%{filter:drop-shadow(0 0 10px #FFD700)} 100%{filter:drop-shadow(0 0 0px #FFD700)} }
+        .cg-star-burst { animation: cgBurst 2.5s ease-out forwards !important; }
         @keyframes cgRay     { 0%,100%{opacity:0.50} 50%{opacity:0.20} }
         div[data-cg]::-webkit-scrollbar { height: 5px; }
         div[data-cg]::-webkit-scrollbar-track { background: transparent; }
@@ -1330,7 +1222,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
           </div>
         </>)}
       </div>
-      <canvas ref={canvasRef} style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:9999 }} />
     </div>
   )
 }

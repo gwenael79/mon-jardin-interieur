@@ -4005,6 +4005,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
     const zoneName = suggestedRitual?.zoneId ? ZONE_DB_KEY[suggestedRitual.zoneId].replace('zone_', '') : 'racines'
     try {
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: personId, zone: zoneName, message_ia: 'Un coeur depuis le jardin' })
+      logNetworkActivity(userId, 'coeur')
       spawnActionBurst(e, 'flower')
       const next = new Set([...flowersSent, personId])
       setFlowersSent(next)
@@ -4021,6 +4022,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
         zone: zoneName,
         message_ia: 'Une belle pensee pour toi, de la part de ton jardinier'
       })
+      logNetworkActivity(userId, 'coeur')
       spawnActionBurst(e, 'thought')
       setThoughtSent(true)
       markDone('thought')
