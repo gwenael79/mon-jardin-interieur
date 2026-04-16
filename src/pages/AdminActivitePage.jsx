@@ -1020,7 +1020,7 @@ export function AdminActivitePage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <AdminNav current="#activite" />
-          <div className="adm-btn ghost" onClick={signOut}>Déconnexion</div>
+          <div className="adm-btn ghost" onClick={() => { signOut(); window.location.href = "/"; }}>Déconnexion</div>
         </div>
       </div>
 

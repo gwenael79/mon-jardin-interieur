@@ -3613,7 +3613,7 @@ export function AdminPage() {
             <div className="adm-badge">🚩 {pendingReports.length} signalement{pendingReports.length > 1 ? 's' : ''}</div>
           )}
           <AdminNav current="#admin" />
-          <div className="adm-btn ghost" onClick={signOut}>Déconnexion</div>
+          <div className="adm-btn ghost" onClick={() => { signOut(); window.location.href = "/"; }}>Déconnexion</div>
         </div>
       </div>
 

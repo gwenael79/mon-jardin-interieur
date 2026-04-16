@@ -393,10 +393,8 @@ const FLOWER_NAMES = [
 ]
 
 const PLANS = [
-  { id: 'price_1TAaItFtS3pnlbfx7KMK583V', label: '1 mois',  desc: 'Sans engagement',          price: '5,00 €',  note: '/ mois',   popular: false },
-  { id: 'price_1TAaItFtS3pnlbfxdZjT2e3l', label: '3 mois',  desc: 'Économisez 17 %',          price: '12,00 €', note: '/ 3 mois', popular: false },
-  { id: 'price_1TAaItFtS3pnlbfxbbzkkukr', label: '6 mois',  desc: '3,00 € / mois · -40 %',   price: '18,00 €', note: '/ 6 mois', popular: true  },
-  { id: 'price_1TAaItFtS3pnlbfxMBj4eltY', label: '12 mois', desc: '2,50 € / mois · -50 %',   price: '30,00 €', note: '/ an',     popular: false },
+  { id: 'price_1TMpO0CIpPVJTaopHfQrzF8z', label: 'Mensuel', desc: 'Résiliable à tout moment', price: '13,00 €',  note: '/ mois', popular: false },
+  { id: 'price_1TMpO0CIpPVJTaopzrpNDw8r', label: 'Annuel',  desc: '9,00 € / mois · -30 %',  price: '108,00 €', note: '/ an',   popular: true  },
 ]
 
 function FleurLogoTiny() {
@@ -472,7 +470,6 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
       if (!url) throw new Error('URL de paiement manquante')
 
       // Redirection vers Stripe Checkout
-      sessionStorage.setItem('pendingOnboarding', 'true')
       window.location.href = url
 
     } catch (e) {
@@ -785,9 +782,9 @@ export function FlowerModal({ userId, onDone, onSkip }) {
 export function PremiumModal({ onSuccess, onClose }) {
   const [selectedPlan,    setSelectedPlan]    = useState(() => PLANS.find(p => p.popular) ?? null)
   const [paying,          setPaying]          = useState(false)
-  const [solidaryAmount,  setSolidaryAmount]  = useState(40)
+  const [solidaryAmount,  setSolidaryAmount]  = useState(108)
   const [solidaryError,   setSolidaryError]   = useState(false)
-  const SOLIDARITY_MIN = 36
+  const SOLIDARITY_MIN = 108
 
   async function handlePay() {
     if (!selectedPlan || paying) return
@@ -804,7 +801,6 @@ export function PremiumModal({ onSuccess, onClose }) {
         : { priceId: selectedPlan.id, userId: user.id }
       const { data, error } = await supabase.functions.invoke('stripe-checkout', { body })
       if (error || !data?.url) throw new Error(error?.message ?? 'Erreur Stripe')
-      sessionStorage.setItem('pendingOnboarding', 'true')
       window.location.href = data.url
     } catch (e) {
       console.error('[PremiumModal]', e)

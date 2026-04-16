@@ -3945,28 +3945,75 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
   function doClose() { setClosing(true); setTimeout(onClose, 300) }
 
   function handleStartRitual() { setExerciseActive(true) }
-  function handleCompleteRitual() {
+  function spawnActionBurst(e, theme) {
+    const el   = e?.currentTarget
+    const rect = el ? el.getBoundingClientRect() : { left: window.innerWidth/2, top: window.innerHeight/2, width: 0, height: 0 }
+    const bx   = rect.left + rect.width  / 2
+    const by   = rect.top  + rect.height / 2
+    const ps   = []
+    if (theme === 'ritual') {
+      const CHARS = ['✨','⭐','🌟','💫','✦','🌿','🌱']
+      for (let i = 0; i < 16; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const speed = 0.6 + Math.random() * 1.2
+        ps.push({ id:`rt-${i}-${Date.now()}-${Math.random()}`, x: bx+(Math.random()-.5)*24, y: by+(Math.random()-.5)*16,
+          char: CHARS[Math.floor(Math.random()*CHARS.length)],
+          vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+          dur: 900 + Math.random()*700, color: null })
+      }
+    } else if (theme === 'flower') {
+      const PETALS = ['🌸','🌺','🌼','🌷','💮','🌻','💐']
+      const STARS  = ['✨','💫','⭐']
+      for (let i = 0; i < 12; i++) {
+        const angle = -Math.PI/2 + (Math.random()-.5)*Math.PI*1.5
+        const speed = 0.35 + Math.random()*0.65
+        ps.push({ id:`fl-${i}-${Date.now()}-${Math.random()}`, x: bx+(Math.random()-.5)*28, y: by+(Math.random()-.5)*18,
+          char: PETALS[Math.floor(Math.random()*PETALS.length)],
+          vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+          dur: 2600 + Math.random()*1400, color: null })
+      }
+      for (let i = 0; i < 7; i++) {
+        const angle = Math.random()*Math.PI*2
+        ps.push({ id:`fs-${i}-${Date.now()}-${Math.random()}`, x: bx+(Math.random()-.5)*14, y: by+(Math.random()-.5)*14,
+          char: STARS[Math.floor(Math.random()*STARS.length)],
+          vx: (Math.cos(angle))*(1+Math.random()), vy: (Math.sin(angle))*(1+Math.random()),
+          dur: 700 + Math.random()*400, color: null })
+      }
+    } else if (theme === 'thought') {
+      const CHARS = ['💌','💛','🌟','✨','💫','🌿','⭐']
+      for (let i = 0; i < 14; i++) {
+        const angle = -Math.PI/2 + (Math.random()-.5)*Math.PI*1.6
+        const speed = 0.4 + Math.random()*0.9
+        ps.push({ id:`th-${i}-${Date.now()}-${Math.random()}`, x: bx+(Math.random()-.5)*22, y: by+(Math.random()-.5)*16,
+          char: CHARS[Math.floor(Math.random()*CHARS.length)],
+          vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed,
+          dur: 1800 + Math.random()*1200, color: null })
+      }
+    }
+    setParticles(prev => [...prev, ...ps])
+  }
+
+  function handleCompleteRitual(e) {
     if (!suggestedRitual) return
+    spawnActionBurst(e, 'ritual')
     onToggleRitual?.(suggestedRitual.id)
     setExerciseActive(false)
-    // Désactiver le bouton jusqu'à la prochaine ouverture du modal
-    // (init() rechargera automatiquement la prochaine zone disponible)
     markDone('ritual')
   }
-  async function handleSendFlower(personId) {
+  async function handleSendFlower(personId, e) {
     if (flowersSent.has(personId)) return
     const zoneName = suggestedRitual?.zoneId ? ZONE_DB_KEY[suggestedRitual.zoneId].replace('zone_', '') : 'racines'
     try {
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: personId, zone: zoneName, message_ia: 'Un coeur depuis le jardin' })
+      spawnActionBurst(e, 'flower')
       const next = new Set([...flowersSent, personId])
       setFlowersSent(next)
       if (next.size >= Math.min(3, weakestPeople.length)) markDone('flowers')
     } catch(e) { console.warn('coeur', e) }
   }
-  async function handleSendThought() {
+  async function handleSendThought(e) {
     if (!closestFriend || thoughtSent) return
     try {
-      // Envoie un coeur a l'ami jardinier selectionne
       const zoneName = suggestedRitual?.zoneId ? ZONE_DB_KEY[suggestedRitual.zoneId].replace('zone_', '') : 'racines'
       await supabase.from('coeurs').insert({
         sender_id:  userId,
@@ -3974,6 +4021,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
         zone: zoneName,
         message_ia: 'Une belle pensee pour toi, de la part de ton jardinier'
       })
+      spawnActionBurst(e, 'thought')
       setThoughtSent(true)
       markDone('thought')
     } catch(e) { console.warn('thought coeur', e) }

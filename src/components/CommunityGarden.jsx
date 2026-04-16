@@ -1046,26 +1046,29 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
     }
   }, [])
 
+  const W_PER   = 42
+  const MARGIN  = 120  // marge gauche/droite
+  const MIN_W   = 2400
+  const svgH    = containerH ? Math.max(380, containerH) : Math.max(380, Math.min(580, winH - (window.innerWidth < 768 ? 130 : 80)))
+  const groundY = svgH - 20
+
+  // SVG assez large pour loger toutes les fleurs des deux côtés de l'ancre
+  const _anchorIdx   = Math.max(0, plants.findIndex(p => p.user_id === currentUserId))
+  const _leftCount   = _anchorIdx
+  const _rightCount  = Math.max(0, plants.length - 1 - _anchorIdx)
+  const _halfNeeded  = Math.max(_leftCount, _rightCount) * W_PER + MARGIN + 14
+  const svgW         = Math.max(MIN_W, _halfNeeded * 2)
+
   useEffect(() => {
     if (!plants.length || !currentUserId) return
     setTimeout(() => {
       if (!scrollRef.current) return
-      const myIndex = plants.findIndex(p => p.user_id === currentUserId)
-      if (myIndex === -1) return
-      const W_PER_ = 42
-      const svgW_  = Math.max(2400, plants.length * W_PER_ + 220)
-      const xNoise = (hash(currentUserId, 9) % 28) - 14
-      const myX    = svgW_ / 2 + xNoise
+      const xNoise     = (hash(currentUserId, 9) % 28) - 14
+      const myX        = svgW / 2 + xNoise   // ancre = centre du SVG
       const containerW = scrollRef.current.clientWidth
       scrollRef.current.scrollTo({ left: Math.max(0, myX - containerW / 2), behavior: 'instant' })
     }, 50)
-  }, [plants, currentUserId])
-
-  const W_PER   = 42
-  const MIN_W   = 2400
-  const svgH    = containerH ? Math.max(380, containerH) : Math.max(380, Math.min(580, winH - (window.innerWidth < 768 ? 130 : 80)))
-  const groundY = svgH - 20
-  const svgW    = Math.max(MIN_W, plants.length * W_PER + 220)
+  }, [plants, currentUserId, svgW])
 
   const hour = new Date().getHours() + new Date().getMinutes() / 60
   const mySettings = plants.find(p => p.user_id === currentUserId)?.gardenSettings
@@ -1100,15 +1103,13 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
     : [], [isNight, svgW, groundY])
 
   const positions = useMemo(() => {
-    const myIdx = plants.findIndex(p => p.user_id === currentUserId)
+    const myIdx     = plants.findIndex(p => p.user_id === currentUserId)
     const anchorIdx = myIdx >= 0 ? myIdx : Math.floor(plants.length / 2)
     return plants
       .map((p, i) => {
         const xNoise = (hash(p.user_id, 9) % 28) - 14
         const yNoise = p.user_id === currentUserId ? 10 : (hash(p.user_id, 8) % 14) - 9
-        const offset = i - anchorIdx
-        const baseX  = svgW / 2 + offset * W_PER
-        return { ...p, x: baseX + xNoise, yOff: yNoise }
+        return { ...p, x: svgW / 2 + (i - anchorIdx) * W_PER + xNoise, yOff: yNoise }
       })
       .sort((a,b) => a.yOff - b.yOff)
   }, [plants, currentUserId, svgW])

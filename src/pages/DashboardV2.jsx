@@ -608,6 +608,24 @@ const FLOWER_NAMES_LIST = [
 ]
 
 function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
+  const [portalLoading, setPortalLoading] = useState(false)
+
+  async function openPortal() {
+    setPortalLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const { data, error } = await supabase.functions.invoke('stripe-portal', {
+        body: { returnUrl: window.location.origin },
+      })
+      if (error || !data?.url) throw new Error(error?.message ?? 'Erreur portail')
+      window.location.href = data.url
+    } catch (e) {
+      console.error('[stripe-portal]', e)
+      alert("Impossible d'accéder au portail. Veuillez réessayer.")
+    } finally {
+      setPortalLoading(false)
+    }
+  }
   const [editName,      setEditName]      = useState(name ?? '')
   const [saving,        setSaving]        = useState(false)
   const [saved,         setSaved]         = useState(false)
@@ -740,7 +758,16 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
             <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:5 }}>Abonnement</div>
             <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? '✦ Premium actif' : 'Version gratuite'}</div>
           </div>
-
+          {isPremium && (
+            <button onClick={openPortal} disabled={portalLoading} style={{ padding:'8px 14px', borderRadius:20, border:'1px solid rgba(90,154,40,.35)', background:'rgba(90,154,40,.08)', color:'#5a9a28', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: portalLoading ? 'wait' : 'pointer', opacity: portalLoading ? 0.6 : 1, whiteSpace:'nowrap' }}>
+              {portalLoading ? '…' : 'Gérer'}
+            </button>
+          )}
+          {!isPremium && (
+            <button onClick={onUpgrade} style={{ padding:'8px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', whiteSpace:'nowrap' }}>
+              Passer Premium
+            </button>
+          )}
         </div>
 
       </div>
@@ -1202,6 +1229,17 @@ export default function DashboardPage() {
                 <div style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>Abonnement</div>
                 <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? 'Premium actif' : 'Version gratuite'}</div>
               </div>
+              {isPremium && (
+                <button onClick={async () => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke('stripe-portal', { body: { returnUrl: window.location.origin } })
+                    if (error || !data?.url) throw new Error()
+                    window.location.href = data.url
+                  } catch { alert("Impossible d'accéder au portail. Veuillez réessayer.") }
+                }} style={{ marginTop:10, width:'100%', padding:'10px', borderRadius:20, border:'1px solid rgba(90,154,40,.35)', background:'rgba(90,154,40,.08)', color:'#5a9a28', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
+                  Gérer mon abonnement
+                </button>
+              )}
               {!isPremium && (
                 <div onClick={() => { setShowProfileModal(false); setShowPremiumModal(true) }} style={{ padding:'5px 14px', borderRadius:100, background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
                   Passer Premium

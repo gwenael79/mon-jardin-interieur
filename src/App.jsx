@@ -88,11 +88,26 @@ export default function App() {
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#clients')  { setScreen('admin-clients');  return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#activite') { setScreen('admin-activite'); return }
 
+    // Retour depuis Stripe — succès → vider le cache profil + attendre webhook
+    if (params.get('premium') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname)
+      // Vider le cache profil localStorage pour forcer un refetch
+      try { localStorage.removeItem(`mji_profile_${user.id}`) } catch {}
+      setScreen('loading')
+      // Attendre 3s que le webhook ait le temps de mettre à jour users.plan
+      setTimeout(async () => {
+        await refresh()
+        setToast({ icon: '✨', msg: 'Abonnement activé — bienvenue dans Mon Jardin Premium !' })
+        setTimeout(() => setToast(null), 3500)
+        setScreen('dashboard')
+      }, 3000)
+      return
+    }
+
     // Retour depuis Stripe — annulation → rouvrir le modal premium
     if (params.get('premium') === 'cancel') {
       window.history.replaceState({}, '', window.location.pathname)
       setScreen('dashboard')
-      // On ouvre le PremiumModal via un state qu'on pose après le chargement
       sessionStorage.setItem('reopen_premium', '1')
       return
     }
@@ -106,7 +121,7 @@ export default function App() {
 
       if (isOnboarded && sessionStorage.getItem('pendingOnboarding') === 'true') {
         sessionStorage.removeItem('pendingOnboarding')
-        setScreen('onboarding'); return
+        setScreen('dashboard'); return
       }
 
       if (!isOnboarded) {
@@ -149,7 +164,7 @@ export default function App() {
     )
     showToast('✨', `Abonnement ${plan.label} activé !`)
     await refresh()
-    setScreen('onboarding')
+    setScreen('dashboard')
   }
 
   // ── Test URL params ────────────────────────────────────────────────────────

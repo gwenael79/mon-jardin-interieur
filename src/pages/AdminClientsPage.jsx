@@ -302,13 +302,12 @@ export function AdminClientsPage() {
       const rows = data ?? []
 
       const PLANS = [
-        { key: '1 mois',         icon: '🌱', months: 1,  price: 5,  color: '#7ab5f5' },
-        { key: '3 mois',         icon: '🌿', months: 3,  price: 12, color: '#96d485' },
-        { key: '6 mois',         icon: '🌳', months: 6,  price: 18, color: '#F6C453' },
-        { key: '1 an',           icon: '✨', months: 12, price: 30, color: '#e8a020' },
+        { key: '1 mois',         icon: '🌱', months: 1,  price: 13,  color: '#7ab5f5' },
+        { key: '1 an',           icon: '✨', months: 12, price: 108, color: '#e8a020' },
         { key: '1 an solidaire', icon: '💚', months: 12, price: null, color: '#d4779a' },
       ]
 
+      const knownKeys = PLANS.map(p => p.key)
       const plans = PLANS.map(p => {
         const matching = rows.filter(r => r.product_name === p.key)
         const total    = matching.length
@@ -316,6 +315,17 @@ export function AdminClientsPage() {
         const ca       = matching.reduce((s, r) => s + Number(r.price ?? 0), 0)
         return { ...p, total, actifs, ca }
       })
+
+      // Anciens tarifs (3 mois, 6 mois, Inconnu) regroupés
+      const legacyRows = rows.filter(r => !knownKeys.includes(r.product_name) && r.product_name !== 'Inconnu')
+      if (legacyRows.length > 0) {
+        plans.push({
+          key: 'Anciens tarifs', icon: '📦', months: null, price: null, color: '#888888',
+          total:  legacyRows.length,
+          actifs: legacyRows.filter(r => r.is_active).length,
+          ca:     legacyRows.reduce((s, r) => s + Number(r.price ?? 0), 0),
+        })
+      }
 
       // Histogramme : CA cumulé par mois sur les 12 prochains mois
       const now    = new Date()
@@ -557,7 +567,7 @@ export function AdminClientsPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <AdminNav current="#clients" />
-          <div className="adm-btn ghost" onClick={signOut}>Déconnexion</div>
+          <div className="adm-btn ghost" onClick={() => { signOut(); window.location.href = "/"; }}>Déconnexion</div>
         </div>
       </div>
 
@@ -724,7 +734,7 @@ export function AdminClientsPage() {
                   {/* COL DROITE 2/3 — histogramme mensuel */}
                   <div style={{ background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:'20px 20px 16px', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
                     <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>
-                      CA mensuel — mars 2026 → févr. 2027
+                      CA mensuel — mars 2026 → févr. 2027 · mensuel 13€ · annuel 108€
                     </div>
 
                     {(() => {
