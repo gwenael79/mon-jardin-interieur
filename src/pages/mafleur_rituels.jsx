@@ -1091,7 +1091,7 @@ export function RitualsSection({ degradation, completedRituals, onToggleRitual, 
 //  Gère le state rituals + persistence localStorage
 //  À utiliser dans ScreenMonJardin
 // ═══════════════════════════════════════════════════════════
-export function useRitualsState() {
+export function useRitualsState(userId = null) {
   const [degradation, setDegradation] = useState(null);
   const [completedRituals, setCompletedRituals] = useState({});
   const [showQuiz, setShowQuiz] = useState(false);
@@ -1128,8 +1128,13 @@ export function useRitualsState() {
   };
 
   const handleToggleRitual = (ritualId) => {
-    const updated = { ...completedRituals, [ritualId]: !completedRituals[ritualId] };
+    const wasCompleted = !!completedRituals[ritualId];
+    const updated = { ...completedRituals, [ritualId]: !wasCompleted };
     setCompletedRituals(updated);
+    // Illumine la fleur uniquement quand on coche (pas quand on décoche)
+    if (!wasCompleted && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
+    }
     try {
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, completed: updated }));

@@ -75,7 +75,10 @@ try {
 } catch (err) {
   console.error('Erreur log activité:', err)
 }
-    // Illumine la fleur dans le jardin collectif
+    // Illumine la fleur dans le jardin collectif (local + realtime pour les autres)
+    try {
+      await supabase.from('network_activity').insert({ user_id: userId, action_type: 'ritual_complete' })
+    } catch (err) { console.error('Erreur network_activity rituel:', err) }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
     }

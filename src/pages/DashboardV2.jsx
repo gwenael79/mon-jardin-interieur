@@ -1152,6 +1152,9 @@ export default function DashboardPage() {
   console.log('[onCompleteRitual DashV2] success → health:', newHealth)
   usePlantStore.getState().setTodayPlant({ ...snapshot, health: newHealth })
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
+  // Illumine la fleur dans le jardin collectif
+  try { await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' }) } catch(e) {}
+  window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId: user?.id } }))
 }}
   onSeeFlower={() => {
     setShowRitualSuggestion(false)
