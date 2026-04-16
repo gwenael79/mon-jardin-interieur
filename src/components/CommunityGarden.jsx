@@ -128,7 +128,7 @@ function defaultPetalColors(userId) {
    tige fine, viewBox centré sur la fleur)
 ───────────────────────────────────────────────────── */
 let _n = 0
-function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
+function FieldFlower({ plant, isMine, x, groundY, sceneH, isSparkling = false }) {
   // Heure du jour selon les paramètres propres à ce user
   const _hour   = new Date().getHours() + new Date().getMinutes() / 60
   const _gs     = plant.gardenSettings
@@ -721,6 +721,39 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
           })}
         </g>
       )}
+      {/* ── SPARKLES lors d'une action ── */}
+      {isSparkling && (() => {
+        const col = 'rgba(255,222,60,0.90)'
+        const spk = (px, py, count, sX, sY, delay=0) => Array.from({length:count}, (_,i) => {
+          const ang = (i/count)*Math.PI*2 + i*1.37
+          const dx = Math.cos(ang)*sX*(0.35+(((i*7919)%100)/100)*0.65)
+          const dy = Math.sin(ang)*sY*(0.35+(((i*6271)%100)/100)*0.65)
+          const dur = (1.6+(i%4)*0.55).toFixed(2)
+          const del = (delay+(i*0.38)%2.2).toFixed(2)
+          const sz = 1.8+(i%3)*0.9
+          const px2=px+dx, py2=py+dy
+          return (
+            <g key={i} style={{ transformOrigin:`${px2}px ${py2}px`, animation:`cgSpk ${dur}s ease-in-out infinite ${del}s` }}>
+              <line x1={px2-sz} y1={py2} x2={px2+sz} y2={py2} stroke={col} strokeWidth={0.9} strokeLinecap="round" opacity={0.85}/>
+              <line x1={px2} y1={py2-sz} x2={px2} y2={py2+sz} stroke={col} strokeWidth={0.9} strokeLinecap="round" opacity={0.85}/>
+              <line x1={px2-sz*0.6} y1={py2-sz*0.6} x2={px2+sz*0.6} y2={py2+sz*0.6} stroke={col} strokeWidth={0.6} strokeLinecap="round" opacity={0.6}/>
+              <line x1={px2+sz*0.6} y1={py2-sz*0.6} x2={px2-sz*0.6} y2={py2+sz*0.6} stroke={col} strokeWidth={0.6} strokeLinecap="round" opacity={0.6}/>
+              <circle cx={px2} cy={py2} r={sz*0.55} fill={col} opacity={0.35}
+                style={{ transformOrigin:`${px2}px ${py2}px`, animation:`cgSpkR ${dur}s ease-out infinite ${del}s` }}/>
+            </g>
+          )
+        })
+        return (
+          <g pointerEvents="none" style={{ animation:'cgSparkFade 12s ease-in forwards' }}>
+            {spk(cx+curve, flwY, 18, fS*2.2, fS*1.8, 0)}
+            {spk(cx+curve, flwY, 12, fS*1.1, fS*0.9, 1.0)}
+            {spk(cx+curve, flwY,  6, fS*0.6, fS*0.5, 2.2)}
+            {spk(cx+curve, groundY - stemH*0.45, 9, 10, stemH*0.08, 0.3)}
+            {spk(cx+curve, groundY - stemH*0.60, 6, 8,  stemH*0.07, 1.1)}
+            {spk(cx+curve, groundY - stemH*0.75, 6, 7,  stemH*0.06, 1.8)}
+          </g>
+        )
+      })()}
     </g>
   )
 }
@@ -893,15 +926,27 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
   const scrollRef = useRef(null)
   const [winH, setWinH] = useState(window.innerHeight)
   const svgElRef = useRef(null)
+  const [sparklingUids, setSparklingUids] = useState({})
 
   function spawnStars(uid) {
     if (!uid) return
+    // Glow immédiat sur l'élément SVG
     const el = document.querySelector(`[data-uid="${uid}"]`)
-    if (!el) return
-    el.style.transition = 'filter 0.4s ease'
-    el.style.filter = 'drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 10px #fff8e0)'
-    setTimeout(() => { el.style.filter = 'drop-shadow(0 0 12px #FFD700)' }, 1500)
-    setTimeout(() => { el.style.filter = ''; el.style.transition = '' }, 4000)
+    if (el) {
+      el.style.transition = 'filter 0.4s ease'
+      el.style.filter = 'drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 10px #fff8e0)'
+      setTimeout(() => { el.style.filter = 'drop-shadow(0 0 6px #FFD700)' }, 7000)
+      setTimeout(() => { el.style.filter = ''; el.style.transition = '' }, 12000)
+    }
+    // Déclenche les sparkles React
+    const ts = Date.now()
+    setSparklingUids(prev => ({ ...prev, [uid]: ts }))
+    setTimeout(() => {
+      setSparklingUids(prev => {
+        if (prev[uid] !== ts) return prev
+        const next = { ...prev }; delete next[uid]; return next
+      })
+    }, 12000)
   }
 
   // Realtime — glow sur la fleur du membre actif (actions des autres)
@@ -927,15 +972,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
     window.addEventListener('orientationchange', () => setTimeout(fn, 100))
     return () => { window.removeEventListener('resize', fn) }
   }, [])
-
-  // Rejoue les glows accumulés pendant que le jardin était fermé
-  useEffect(() => {
-    if (!plants.length) return
-    const pending = _pendingGlows.splice(0, _pendingGlows.length)
-    pending.forEach(({ userId: uid, ts }) => {
-      if (Date.now() - ts < 15000) setTimeout(() => spawnStars(uid), 400)
-    })
-  }, [plants])
 
   useEffect(() => {
     loadCommunityPlants()
@@ -1055,6 +1091,10 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }
         @keyframes cgBurst   { 0%{filter:drop-shadow(0 0 0px #FFD700)} 15%{filter:drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 8px #fff)} 55%{filter:drop-shadow(0 0 12px #FFD700)} 100%{filter:drop-shadow(0 0 0px #FFD700)} }
         .cg-star-burst { animation: cgBurst 4s ease-out forwards !important; }
+        @keyframes cgSpk  { 0%{ opacity:0; transform:scale(0.3) rotate(0deg) } 15%{ opacity:1; transform:scale(1.2) rotate(15deg) } 50%{ opacity:0.9; transform:scale(1.0) rotate(30deg) } 80%{ opacity:0.5; transform:scale(0.8) rotate(50deg) } 100%{ opacity:0; transform:scale(0.3) rotate(70deg) } }
+        @keyframes cgSpkR { 0%{ opacity:0; transform:scale(0) } 20%{ opacity:0.65; transform:scale(1.1) } 60%{ opacity:0.25; transform:scale(1.6) } 100%{ opacity:0; transform:scale(2.2) } }
+        @keyframes cgSparkFade { 0%{ opacity:1 } 70%{ opacity:1 } 100%{ opacity:0 } }
+        @keyframes cgRise { 0%{ opacity:1; transform:translateY(0) } 100%{ opacity:0; transform:translateY(-60px) } }
         @keyframes cgRay     { 0%,100%{opacity:0.50} 50%{opacity:0.20} }
         div[data-cg]::-webkit-scrollbar { height: 5px; }
         div[data-cg]::-webkit-scrollbar-track { background: transparent; }
@@ -1208,6 +1248,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
                 isMine={false}
                 x={p.x} groundY={groundY + p.yOff}
                 sceneH={svgH}
+                isSparkling={!!sparklingUids[p.user_id]}
               />
             ))}
 
@@ -1227,6 +1268,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
                 isMine={false}
                 x={p.x} groundY={groundY}
                 sceneH={svgH}
+                isSparkling={!!sparklingUids[p.user_id]}
               />
             ))}
 
@@ -1236,6 +1278,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
                 isMine={true}
                 x={p.x} groundY={groundY + 6}
                 sceneH={svgH}
+                isSparkling={!!sparklingUids[p.user_id]}
               />
             ))}
 
