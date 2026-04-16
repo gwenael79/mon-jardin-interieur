@@ -75,6 +75,11 @@ try {
 } catch (err) {
   console.error('Erreur log activité:', err)
 }
+    // Illumine la fleur dans le jardin collectif
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
+    }
+
     return { ritual, plant }
   },
 
