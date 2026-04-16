@@ -3996,6 +3996,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
   function handleCompleteRitual(e) {
     if (!suggestedRitual) return
     spawnActionBurst(e, 'ritual')
+    window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
     onToggleRitual?.(suggestedRitual.id)
     setExerciseActive(false)
     markDone('ritual')
@@ -4006,6 +4007,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
     try {
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: personId, zone: zoneName, message_ia: 'Un coeur depuis le jardin' })
       logNetworkActivity(userId, 'coeur')
+      window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
       spawnActionBurst(e, 'flower')
       const next = new Set([...flowersSent, personId])
       setFlowersSent(next)
@@ -4023,6 +4025,7 @@ function WakeUpModal({ userId, plant, completedRituals, onToggleRitual, onClose,
         message_ia: 'Une belle pensee pour toi, de la part de ton jardinier'
       })
       logNetworkActivity(userId, 'coeur')
+      window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
       spawnActionBurst(e, 'thought')
       setThoughtSent(true)
       markDone('thought')

@@ -891,19 +891,23 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
     el.classList.remove('cg-star-burst')
     void el.offsetWidth // force reflow pour relancer l'animation
     el.classList.add('cg-star-burst')
-    setTimeout(() => el.classList.remove('cg-star-burst'), 2500)
+    setTimeout(() => el.classList.remove('cg-star-burst'), 4000)
   }
 
-  // Realtime — étoiles sur la fleur du membre actif
+  // Realtime — glow sur la fleur du membre actif (actions des autres)
   useEffect(() => {
     const ch = supabase.channel('garden-stars')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'network_activity' },
-        (p) => {
-          const uid = p.new?.user_id
-          if (uid) spawnStars(uid)
-        })
+        (p) => { const uid = p.new?.user_id; if (uid) spawnStars(uid) })
       .subscribe()
     return () => supabase.removeChannel(ch)
+  }, [])
+
+  // Event local — glow immédiat pour ses propres actions (sans attendre Realtime)
+  useEffect(() => {
+    const handler = (e) => { if (e.detail?.userId) spawnStars(e.detail.userId) }
+    window.addEventListener('garden:activity', handler)
+    return () => window.removeEventListener('garden:activity', handler)
   }, [])
 
 
@@ -1030,8 +1034,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
         @keyframes cgPollen  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
         @keyframes cgGrass   { 0%,100%{transform:rotate(0deg)} 38%{transform:rotate(2.2deg)} 72%{transform:rotate(-1.6deg)} }
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }
-        @keyframes cgBurst   { 0%{filter:drop-shadow(0 0 0px #FFD700)} 20%{filter:drop-shadow(0 0 18px #FFD700) drop-shadow(0 0 6px #fff)} 60%{filter:drop-shadow(0 0 10px #FFD700)} 100%{filter:drop-shadow(0 0 0px #FFD700)} }
-        .cg-star-burst { animation: cgBurst 2.5s ease-out forwards !important; }
+        @keyframes cgBurst   { 0%{filter:drop-shadow(0 0 0px #FFD700)} 15%{filter:drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 8px #fff)} 55%{filter:drop-shadow(0 0 12px #FFD700)} 100%{filter:drop-shadow(0 0 0px #FFD700)} }
+        .cg-star-burst { animation: cgBurst 4s ease-out forwards !important; }
         @keyframes cgRay     { 0%,100%{opacity:0.50} 50%{opacity:0.20} }
         div[data-cg]::-webkit-scrollbar { height: 5px; }
         div[data-cg]::-webkit-scrollbar-track { background: transparent; }
