@@ -896,19 +896,12 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
 
   function spawnStars(uid) {
     if (!uid) return
-    // Cherche dans tout le document (pas seulement svgElRef) car le SVG peut être scrollé
     const el = document.querySelector(`[data-uid="${uid}"]`)
     if (!el) return
-    // Applique le glow directement en style inline — fonctionne même avec animation cgSway active
     el.style.transition = 'filter 0.4s ease'
     el.style.filter = 'drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 10px #fff8e0)'
-    setTimeout(() => {
-      el.style.filter = 'drop-shadow(0 0 12px #FFD700)'
-    }, 1500)
-    setTimeout(() => {
-      el.style.filter = ''
-      el.style.transition = ''
-    }, 4000)
+    setTimeout(() => { el.style.filter = 'drop-shadow(0 0 12px #FFD700)' }, 1500)
+    setTimeout(() => { el.style.filter = ''; el.style.transition = '' }, 4000)
   }
 
   // Realtime — glow sur la fleur du membre actif (actions des autres)
@@ -934,6 +927,15 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
     window.addEventListener('orientationchange', () => setTimeout(fn, 100))
     return () => { window.removeEventListener('resize', fn) }
   }, [])
+
+  // Rejoue les glows accumulés pendant que le jardin était fermé
+  useEffect(() => {
+    if (!plants.length) return
+    const pending = _pendingGlows.splice(0, _pendingGlows.length)
+    pending.forEach(({ userId: uid, ts }) => {
+      if (Date.now() - ts < 15000) setTimeout(() => spawnStars(uid), 400)
+    })
+  }, [plants])
 
   useEffect(() => {
     loadCommunityPlants()
