@@ -579,7 +579,6 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       const message = await generateCoeurMessage({ senderName, receiverName: name, zone: weakest.key })
       await supabase.from('coeurs').insert({ sender_id: userId, receiver_id: fleur.id, zone: weakest.key, message_ia: message })
       logActivity({ userId, action: 'coeur', zone: weakest.key })
-      window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
       logNetworkActivity(userId, 'coeur')
       window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
       window.dispatchEvent(new CustomEvent('analytics_track', { detail: { event: 'coeur_sent', props: { receiver_id: fleur.id, zone: weakest.key }, page: 'club', cat: 'social' } }))
@@ -761,6 +760,7 @@ function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badg
         body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
       }).then(r => console.log('[push] coeur notif status:', r.status)).catch(e => console.error('[push] coeur notif error:', e))
       logActivity({ userId, action: 'coeur', zone: weakest.key })
+      logNetworkActivity(userId, 'coeur')
       window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
       setSentAt(Date.now())
       onCoeurSent?.({ receiverName: name, zone: weakest.key, receiverId: fleur.id })
