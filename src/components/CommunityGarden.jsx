@@ -874,6 +874,16 @@ function GrassLayer({ svgW, groundY }) {
 }
 
 /* ─────────────────────────────────────────────────────
+   FILE D'ATTENTE MODULE-LEVEL — capture les events
+   garden:activity même quand le composant est démonté
+   (ex. action depuis Club Jardiniers ou WakeUp modal)
+───────────────────────────────────────────────────── */
+const _pendingGlows = []
+window.addEventListener('garden:activity', (e) => {
+  if (e.detail?.userId) _pendingGlows.push({ userId: e.detail.userId, ts: Date.now() })
+})
+
+/* ─────────────────────────────────────────────────────
    COMPOSANT PRINCIPAL
 ───────────────────────────────────────────────────── */
 export default function CommunityGarden({ currentUserId, onClose, embedded, containerH }) {

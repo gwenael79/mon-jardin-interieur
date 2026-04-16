@@ -314,6 +314,7 @@ function useActionState(defiId, userId, actionDurationMin) {
         setDaysCount(n => n + 1)
         logNetworkActivity(userId, 'defi_validated')
         logActivity({ userId, action: 'defi' })
+        window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
         // Marquer complété en DB
         const today = todayStr()
         await supabase
@@ -615,7 +616,7 @@ function DefiCard({ d, isJoined, color, userId, toggleJoin, awardLumens, track, 
               <LumenBadge amount={2} />
               <div className="dc-join-btn" onClick={() => {
                 toggleJoin(d.id)
-                if (!joinedIds.has(d.id)) { awardLumens?.(2, 'join_defi', { defi_id: d.id }); track('defi_join', { defi_id: d.id }, 'defis', 'defis'); logNetworkActivity(userId, 'join_defi') }
+                if (!joinedIds.has(d.id)) { awardLumens?.(2, 'join_defi', { defi_id: d.id }); track('defi_join', { defi_id: d.id }, 'defis', 'defis'); logNetworkActivity(userId, 'join_defi'); window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } })) }
               }}>Rejoindre</div>
             </div>}
       </div>
@@ -792,7 +793,7 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
         {!featuredJoined && <LumenBadge amount={2} />}
         <div
           className={featuredJoined ? 'df-join df-join-active' : 'df-join'}
-          onClick={() => { const joining = !joinedIds.has(featured.id); toggleJoin(featured.id); if (joining) { awardLumens?.(2, 'join_defi', { defi_id: featured.id }); track('defi_join', { defi_id: featured.id }, 'defis', 'defis'); logNetworkActivity(userId, 'join_defi') } else { awardLumens?.(-2, 'leave_defi', { defi_id: featured.id }) } }}
+          onClick={() => { const joining = !joinedIds.has(featured.id); toggleJoin(featured.id); if (joining) { awardLumens?.(2, 'join_defi', { defi_id: featured.id }); track('defi_join', { defi_id: featured.id }, 'defis', 'defis'); logNetworkActivity(userId, 'join_defi'); window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } })) } else { awardLumens?.(-2, 'leave_defi', { defi_id: featured.id }) } }}
         >
           {featuredJoined ? '✓ En cours' : 'Je rejoins'}
         </div>
