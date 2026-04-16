@@ -5,6 +5,8 @@ import DashboardPage from './pages/DashboardV2'
 import AccessPage, { FlowerModal, PremiumModal } from './pages/AccessPage'
 import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
+import { AdminClientsPage } from './pages/AdminClientsPage'
+import { AdminActivitePage } from './pages/AdminActivitePage'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
 import { WeekOneFlow }      from './pages/WeekOneFlow'
@@ -66,7 +68,10 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (ADMIN_IDS.includes(user?.id) && hash === '#admin') setScreen('admin')
+    if (!ADMIN_IDS.includes(user?.id)) return
+    if (hash === '#admin')    setScreen('admin')
+    if (hash === '#clients')  setScreen('admin-clients')
+    if (hash === '#activite') setScreen('admin-activite')
   }, [hash, user?.id])
 
   // ── Initialisation principale ──────────────────────────────────────────────
@@ -79,7 +84,9 @@ export default function App() {
     const params = new URLSearchParams(window.location.search)
     if (params.has('test-onboarding')) { setScreen('onboarding'); return }
     if (params.has('test-weekone') || params.has('test-garden') || params.get('test-day')) { setScreen('weekone'); return }
-    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#admin') { setScreen('admin'); return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#admin')    { setScreen('admin');          return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#clients')  { setScreen('admin-clients');  return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#activite') { setScreen('admin-activite'); return }
 
     // Retour depuis Stripe — annulation → rouvrir le modal premium
     if (params.get('premium') === 'cancel') {
@@ -165,7 +172,9 @@ export default function App() {
     )
   }
 
-  if (screen === 'admin') return <AdminPage />
+  if (screen === 'admin')          return <AdminPage />
+  if (screen === 'admin-clients')  return <AdminClientsPage />
+  if (screen === 'admin-activite') return <AdminActivitePage />
 
   if (params.has('test-onboarding')) {
     return (
