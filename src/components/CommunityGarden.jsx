@@ -128,7 +128,7 @@ function defaultPetalColors(userId) {
    tige fine, viewBox centré sur la fleur)
 ───────────────────────────────────────────────────── */
 let _n = 0
-function FieldFlower({ plant, isMine, x, groundY, sceneH, isGlowing = false }) {
+function FieldFlower({ plant, isMine, x, groundY, sceneH }) {
   // Heure du jour selon les paramètres propres à ce user
   const _hour   = new Date().getHours() + new Date().getMinutes() / 60
   const _gs     = plant.gardenSettings
@@ -489,14 +489,12 @@ function FieldFlower({ plant, isMine, x, groundY, sceneH, isGlowing = false }) {
   return (
     <g
       data-uid={plant.user_id}
-      className={isGlowing ? 'cg-glowing' : undefined}
       style={{
         '--sa': `${swayAmp}deg`,
         animation: `cgSway ${swayDur.toFixed(2)}s ease-in-out infinite ${swayDelay.toFixed(2)}s`,
         transformOrigin: `${cx}px ${groundY}px`,
         opacity: _opacity,
         transition: 'opacity 2s ease',
-        // isGlowing géré via la className ci-dessous
       }}
     >
       <defs>
@@ -895,20 +893,21 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
   const scrollRef = useRef(null)
   const [winH, setWinH] = useState(window.innerHeight)
   const svgElRef = useRef(null)
-  // Map userId → timestamp du dernier glow, pour passer isGlowing à FieldFlower via React
-  const [glowingUids, setGlowingUids] = useState({})
 
   function spawnStars(uid) {
     if (!uid) return
-    const ts = Date.now()
-    setGlowingUids(prev => ({ ...prev, [uid]: ts }))
+    // Cherche dans tout le document (pas seulement svgElRef) car le SVG peut être scrollé
+    const el = document.querySelector(`[data-uid="${uid}"]`)
+    if (!el) return
+    // Applique le glow directement en style inline — fonctionne même avec animation cgSway active
+    el.style.transition = 'filter 0.4s ease'
+    el.style.filter = 'drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 10px #fff8e0)'
     setTimeout(() => {
-      setGlowingUids(prev => {
-        if (prev[uid] !== ts) return prev   // un glow plus récent a pris la relève
-        const next = { ...prev }
-        delete next[uid]
-        return next
-      })
+      el.style.filter = 'drop-shadow(0 0 12px #FFD700)'
+    }, 1500)
+    setTimeout(() => {
+      el.style.filter = ''
+      el.style.transition = ''
     }, 4000)
   }
 
@@ -1054,8 +1053,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
         @keyframes cgStar    { 0%,100%{opacity:0.72} 50%{opacity:0.18} }
         @keyframes cgBurst   { 0%{filter:drop-shadow(0 0 0px #FFD700)} 15%{filter:drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 8px #fff)} 55%{filter:drop-shadow(0 0 12px #FFD700)} 100%{filter:drop-shadow(0 0 0px #FFD700)} }
         .cg-star-burst { animation: cgBurst 4s ease-out forwards !important; }
-        @keyframes cgGlow { 0%{filter:drop-shadow(0 0 2px #FFD700)} 20%{filter:drop-shadow(0 0 22px #FFD700) drop-shadow(0 0 10px #fffbe0)} 60%{filter:drop-shadow(0 0 14px #FFD700)} 100%{filter:drop-shadow(0 0 2px #FFD700)} }
-        .cg-glowing { animation: cgGlow 4s ease-out forwards; }
         @keyframes cgRay     { 0%,100%{opacity:0.50} 50%{opacity:0.20} }
         div[data-cg]::-webkit-scrollbar { height: 5px; }
         div[data-cg]::-webkit-scrollbar-track { background: transparent; }
@@ -1209,7 +1206,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
                 isMine={false}
                 x={p.x} groundY={groundY + p.yOff}
                 sceneH={svgH}
-                isGlowing={!!glowingUids[p.user_id]}
               />
             ))}
 
@@ -1229,7 +1225,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
                 isMine={false}
                 x={p.x} groundY={groundY}
                 sceneH={svgH}
-                isGlowing={!!glowingUids[p.user_id]}
               />
             ))}
 
@@ -1239,7 +1234,6 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
                 isMine={true}
                 x={p.x} groundY={groundY + 6}
                 sceneH={svgH}
-                isGlowing={!!glowingUids[p.user_id]}
               />
             ))}
 
