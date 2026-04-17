@@ -74,10 +74,10 @@ export const ONBOARDING_SLIDES = [
     title: 'Pourquoi la\nritualisation fonctionne',
     body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin, il libère de la dopamine avant même que vous commenciez. Progressivement, le cortisol diminue en quelques semaines, la neuroplasticité s\'active, le cerveau se reconfigure positivement et un effet cumulatif s\'installe : chaque jour renforce votre stabilité et votre résilience.',
     bodyDesktop: 'Votre cerveau est une machine à habitudes. Quand vous répétez un geste au même moment, dans le même contexte, il crée un sillon neuronal — une autoroute qui se renforce à chaque passage. Au bout de quelques jours, il anticipe, libère de la dopamine avant même que vous commenciez. C\'est le secret des rituels : ils ne demandent plus d\'effort, ils deviennent automatiques.',
-    extra: [
-      { value: '🧠', label: 'Dopamine', sub: 'libérée par anticipation dès J+3' },
-      { value: '📉', label: 'Cortisol', sub: 'réduit mesurable après 3 semaines' },
-      { value: '🌱', label: 'Neuroplasticité', sub: 'le cerveau se reconfigure positivement' },
+    mechanisms: [
+      { num: '01', icon: '🧠', label: 'Dopamine', color: '#7aaa88', colorBg: 'rgba(122,170,136,0.10)', sub: 'Dès J+3', detail: 'Le cerveau anticipe le rituel et libère la dopamine avant même que vous commenciez. Chaque jour renforce cette récompense automatique.' },
+      { num: '02', icon: '📉', label: 'Cortisol ↓', color: '#9ab8c8', colorBg: 'rgba(154,184,200,0.10)', sub: 'Après 3 semaines', detail: 'L\'hormone du stress diminue de façon mesurable. Le système nerveux apprend à se réguler plus vite face aux tensions.' },
+      { num: '03', icon: '🌱', label: 'Neuroplasticité', color: '#c8a870', colorBg: 'rgba(200,168,112,0.10)', sub: 'Après 2 mois', detail: 'De nouveaux circuits neuronaux se forment. Votre cerveau se reconfigure littéralement — plus stable, plus résilient.' },
     ],
     color: '#7aaa88', visual: 'brain',
   },
@@ -1034,7 +1034,7 @@ function StepCommunaute({ onComplete }) {
 function SlidesEducatives({ onComplete }) {
   const [step,    setStep]    = useState(0)
   const [leaving, setLeaving] = useState(false)
-  const isMobile = window.innerWidth < 768
+  const isMobile = false // test : layout PC sur tous les écrans
 
   const slide  = ONBOARDING_SLIDES[step]
   const isLast = step === ONBOARDING_SLIDES.length - 1
@@ -1115,7 +1115,7 @@ function SlidesEducatives({ onComplete }) {
             fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
             fontWeight: (slide.id === 'stress' || slide.id === 'benefices') ? 300 : 400,
             lineHeight:1.1, color:'var(--text)',
-            marginBottom: isMobile ? 8 : 12,
+            marginBottom: isMobile ? 8 : (slide.id === 'benefices' ? 40 : 12),
             whiteSpace: isMobile ? 'pre-line' : 'nowrap',
             letterSpacing:'-0.01em', flexShrink:0,
           }}>{slide.title}</h2>
@@ -1357,13 +1357,23 @@ function SlidesEducatives({ onComplete }) {
               <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:c, lineHeight:1.6, fontStyle:'italic' }}>{slide.highlightDesktop.text}</span>
             </div>
           )}
-          {!isMobile && slide.extra && !slide.body && (
-            <div style={{ display:'flex', gap:8 }}>
-              {slide.extra.map((e,i) => (
-                <div key={i} style={{ flex:'1 1 0', padding:'10px 14px', borderRadius:12, background:`${c}0e`, border:`1px solid ${c}28`, animation:`onbIn .4s ease ${i*.12+.3}s both`, textAlign:'center' }}>
-                  <div style={{ fontSize:22, marginBottom:4 }}>{e.value}</div>
-                  <div style={{ fontSize:11, fontWeight:600, color:'rgba(30,25,15,0.80)', lineHeight:1.3 }}>{e.label}</div>
-                  <div style={{ fontSize:10, color:'rgba(30,25,15,0.45)', marginTop:2, fontStyle:'italic' }}>{e.sub}</div>
+          {!isMobile && slide.mechanisms && (
+            <div style={{ display:'flex', gap:12 }}>
+              {slide.mechanisms.map((m, i) => (
+                <div key={i} style={{ flex:'1 1 0', borderRadius:16, overflow:'hidden', background:'#fff', border:`1.5px solid ${m.color}40`, boxShadow:`0 6px 24px ${m.color}18`, animation:`onbIn .5s ease ${i*.15+.2}s both` }}>
+                  {/* Header */}
+                  <div style={{ background:`linear-gradient(135deg, ${m.color}28 0%, ${m.color}12 100%)`, borderBottom:`1.5px solid ${m.color}28`, padding:'14px 16px 12px', display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ width:44, height:44, borderRadius:12, background:'#fff', border:`2px solid ${m.color}50`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0, boxShadow:`0 2px 8px ${m.color}20` }}>{m.icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:700, color:'rgba(15,25,10,0.92)', lineHeight:1.2 }}>{m.label}</div>
+                      <div style={{ display:'inline-block', marginTop:4, fontFamily:"'Jost',sans-serif", fontSize:10.5, fontWeight:600, color:m.color, letterSpacing:'.10em', textTransform:'uppercase', background:`${m.color}14`, border:`1px solid ${m.color}30`, borderRadius:100, padding:'2px 8px' }}>{m.sub}</div>
+                    </div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, color:`${m.color}35`, lineHeight:1, flexShrink:0 }}>{m.num}</div>
+                  </div>
+                  {/* Corps */}
+                  <div style={{ padding:'14px 16px' }}>
+                    <p style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:400, color:'rgba(15,25,10,0.78)', lineHeight:1.75, margin:0 }}>{m.detail}</p>
+                  </div>
                 </div>
               ))}
             </div>

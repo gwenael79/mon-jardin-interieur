@@ -5402,11 +5402,17 @@ function WelcomeVeil({ onDone }) {
         }}/>
       ))}
 
-      {/* Phrase */}
+      {/* Image + Phrase */}
       <div style={{
         position:'relative', zIndex:1, textAlign:'center', maxWidth:340,
         animation:'wvTextIn 1.2s cubic-bezier(.22,1,.36,1) .4s both',
+        display:'flex', flexDirection:'column', alignItems:'center', gap:20,
       }}>
+        <img
+          src="/barriere.png"
+          alt=""
+          style={{ width:'clamp(180px, 55vw, 280px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 8px 24px rgba(0,0,0,0.35))' }}
+        />
         <div style={{
           fontFamily:"'Cormorant Garamond',serif",
           fontSize: 'clamp(24px, 6vw, 32px)',
