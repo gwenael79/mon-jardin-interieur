@@ -14,43 +14,99 @@ export const ONBOARDING_SLIDES = [
     id: 'stress', tag: 'Le saviez-vous ?',
     title: 'Le stress d\'usure,\nun ennemi discret',
     body: 'Il ne crie pas. Il s\'installe doucement — une fatigue qui ne part plus, une irritabilité qui grandit, un élan qui s\'efface. Le stress d\'usure s\'accumule en silence, sans que l\'on s\'en rende vraiment compte.',
+    bodyDesktop: 'Il ne crie pas. Il ne se voit pas. Il s\'installe comme de l\'eau qui monte — doucement, régulièrement, sans signal d\'alarme. Une fatigue qui ne part plus après le week-end. Une irritabilité qui surprend. Un élan qui s\'efface sans raison apparente. Le stress d\'usure ne ressemble pas au stress qu\'on imagine. Il est subtil, patient, et souvent confondu avec la "normale".',
     highlight: 'Il touche 7 personnes sur 10 dans leur vie quotidienne.',
+    extra: [
+      { value: '7 / 10', label: 'personnes touchées', sub: 'dans leur quotidien' },
+      { value: '2 à 3 ans', label: 'avant d\'en prendre conscience', sub: 'en moyenne' },
+      { value: '64 %', label: 'pensent que c\'est normal', sub: 'de se sentir ainsi' },
+    ],
     color: '#9ab8c8', visual: 'wave',
+  },
+  {
+    id: 'spectrum', tag: 'Comprendre',
+    title: 'D\'où vient\nle stress d\'usure ?',
+    body: 'Entre le stress qui nous dynamise et celui qui nous brise, il en existe un troisième — plus discret, plus insidieux. C\'est celui qui vous a amené ici.',
+    bodyDesktop: 'Tous les stress ne se ressemblent pas. Il en existe trois grandes familles — et comprendre laquelle vous concerne change tout à la façon d\'y répondre.',
+    bullets: [
+      { icon: '💥', label: 'Le stress traumatique', desc: 'Intense et visible, il déclenche une réaction immédiate — et pousse habituellement à consulter.',
+        descDesktop: 'Un choc, une perte, un événement brutal. Il est douloureux mais identifiable — on sait d\'où il vient, on sait qu\'on a besoin d\'aide. Le corps et l\'esprit réagissent fort, vite.' },
+      { icon: '🌊', label: 'Le stress d\'usure', desc: 'Il s\'accumule en silence. Ni assez fort pour alerter, ni assez faible pour disparaître. Il érode sans prévenir.',
+        descDesktop: 'C\'est la zone grise. Trop discret pour alarmer, trop présent pour être ignoré. Il s\'installe dans la durée, ronge l\'énergie, efface les envies. On s\'adapte... jusqu\'à ce qu\'on ne puisse plus.' },
+      { icon: '⚡', label: 'Le bon stress', desc: 'Court et ciblé, il nous met en mouvement et nous aide à nous dépasser. C\'est le moteur de l\'action.',
+        descDesktop: 'Avant une présentation, avant un défi sportif — il accélère le cœur, aiguise les sens. Court et ciblé, il est utile. C\'est lui qui nous fait avancer. Le problème : quand il ne s\'arrête plus.' },
+    ],
+    color: '#9ab8b0', visual: 'spectrum',
+  },
+  {
+    id: 'impact', tag: 'L\'impact quotidien',
+    title: 'Ce que le stress d\'usure change en vous',
+    heroImage: '/stress3.png',
+    heroPosition: 'center center',
+    body: 'Le stress d\'usure ne reste pas dans votre tête. Il déborde — dans votre espace, vos habitudes, vos relations. Souvent sans que vous le remarquiez.',
+    bodyDesktop: 'Le stress d\'usure ne reste pas dans votre tête. Il déborde partout — dans votre espace, vos habitudes, votre énergie relationnelle. Et parce qu\'il agit lentement, on finit par croire que c\'est devenu normal.',
+    bullets: [
+      { label: 'Votre espace se désorganise', desc: 'L\'état intérieur se reflète dans l\'environnement extérieur. Le désordre s\'installe sans qu\'on trouve l\'énergie d\'agir.', example: '→ "Je vais ranger ça ce soir." Ce soir ne vient jamais.',
+        descDesktop: 'L\'ordre extérieur demande de l\'énergie intérieure. Quand le réservoir est vide, c\'est l\'environnement qui trinque en premier. Le désordre s\'installe — pas par paresse, mais par épuisement.' },
+      { label: 'Vos rituels protecteurs disparaissent', desc: 'Le sport, les sorties, le sommeil régulier — les habitudes ressourçantes sont les premières sacrifiées.', example: '→ "Je n\'ai plus le temps de faire du sport depuis des mois."',
+        descDesktop: 'Paradoxe cruel : ce qui nous ferait du bien disparaît en premier. Le sport, la cuisine maison, les moments de calme — ce sont exactement les activités qu\'on abandonne quand on en aurait le plus besoin.' },
+      { label: 'Votre élan intérieur s\'étiole', desc: 'La motivation baisse, les plaisirs s\'effacent, on fait ce qu\'il faut sans vraiment y être.', example: '→ "Je fais les choses en automatique. Je ne sais plus ce que je veux."',
+        descDesktop: 'Ce n\'est pas de la dépression, ce n\'est pas de la flemme. C\'est une batterie qui se vide. On continue à fonctionner — mais en mode économie d\'énergie. Les projets attendent. Les envies se taisent.' },
+    ],
+    color: '#7a9ab8', visual: 'impact',
   },
   {
     id: 'freins', tag: 'Pourquoi on attend',
     title: 'Trois raisons pour\nlesquelles on ne fait rien',
     bullets: [
-      { icon:'⏱', label: 'Pas le temps', desc: '"Je le ferai quand j\'aurai un moment." Ce moment n\'arrive jamais.' },
-      { icon:'👁', label: 'Pas visible', desc: 'Le bien-être intérieur ne se mesure pas dans un miroir.' },
-      { icon:'📅', label: 'Pas immédiat', desc: 'On abandonne souvent avant de percevoir les bénéfices.' },
+      { icon:'⏱', label: 'Pas le temps', desc: '"Je le ferai quand j\'aurai un moment." Ce moment n\'arrive jamais.',
+        descDesktop: '"Je le ferai quand les enfants seront plus grands. Quand ce projet sera terminé. Quand les vacances arriveront." Le problème : ce moment idéal n\'existe pas. Il faut créer l\'espace, pas l\'attendre.' },
+      { icon:'👁', label: 'Pas visible', desc: 'Le bien-être intérieur ne se mesure pas dans un miroir.',
+        descDesktop: 'On va chez le médecin pour une douleur physique. Mais un épuisement intérieur ? On le minimise. On se dit qu\'on exagère. Pourtant, ce qu\'on ne voit pas peut faire autant de dégâts — sinon plus.' },
+      { icon:'📅', label: 'Pas immédiat', desc: 'On abandonne souvent avant de percevoir les bénéfices.',
+        descDesktop: 'Le cerveau préfère la récompense immédiate. Les bénéfices du mieux-être, eux, s\'installent progressivement — comme une plante qui pousse. On abandonne souvent trop tôt, juste avant que ça commence à vraiment changer.' },
     ],
+    highlightDesktop: { text: 'La bonne nouvelle ? Vous n\'avez pas besoin d\'attendre le bon moment. Deux minutes suffisent pour commencer à changer la donne.', icon: '💡' },
     color: '#c89898', visual: 'barriers',
   },
   {
     id: 'ritualisation', tag: 'La science',
     title: 'Pourquoi la\nritualisation fonctionne',
-    body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin, il libère de la dopamine avant même que vous commenciez. Progressivement, le cortisol diminue en quelques semaines, la neuroplasticité s’active , le cerveau se reconfigure positivement et un effet cumulatif s’installe : chaque jour renforce votre stabilité et votre résilience.',
+    body: 'Répéter un geste simple active les mêmes circuits neuronaux chaque jour. Le cerveau apprend à anticiper ce moment de soin, il libère de la dopamine avant même que vous commenciez. Progressivement, le cortisol diminue en quelques semaines, la neuroplasticité s\'active, le cerveau se reconfigure positivement et un effet cumulatif s\'installe : chaque jour renforce votre stabilité et votre résilience.',
+    bodyDesktop: 'Votre cerveau est une machine à habitudes. Quand vous répétez un geste au même moment, dans le même contexte, il crée un sillon neuronal — une autoroute qui se renforce à chaque passage. Au bout de quelques jours, il anticipe, libère de la dopamine avant même que vous commenciez. C\'est le secret des rituels : ils ne demandent plus d\'effort, ils deviennent automatiques.',
+    extra: [
+      { value: '🧠', label: 'Dopamine', sub: 'libérée par anticipation dès J+3' },
+      { value: '📉', label: 'Cortisol', sub: 'réduit mesurable après 3 semaines' },
+      { value: '🌱', label: 'Neuroplasticité', sub: 'le cerveau se reconfigure positivement' },
+    ],
     color: '#7aaa88', visual: 'brain',
   },
   {
     id: 'benefices', tag: 'Ce qui vous attend',
     title: 'Des bénéfices\nconcrets et progressifs',
     timeline: [
-      { period: 'Dès la 1ʳᵉ semaine', desc: 'Un sentiment de structure et de reprise de contrôle sur votre journée.' },
-      { period: 'Après 3 semaines',   desc: 'Moins de réactivité émotionnelle, meilleure qualité de sommeil.' },
-      { period: 'Après 2 mois',       desc: 'Une résilience renforcée face aux imprévus du quotidien.' },
+      { period: 'Dès la 1ʳᵉ semaine', desc: 'Un sentiment de structure et de reprise de contrôle sur votre journée.',
+        descDesktop: 'Un sentiment de structure apparaît. Vous reprenez le contrôle de votre journée. Ce petit geste quotidien devient un ancrage — quelque chose qui vous appartient.' },
+      { period: 'Après 3 semaines', desc: 'Moins de réactivité émotionnelle, meilleure qualité de sommeil.',
+        descDesktop: 'La réactivité émotionnelle diminue. Les petites choses agacent moins. Le sommeil s\'améliore. Vous commencez à remarquer des espaces de calme là où il n\'y en avait plus.' },
+      { period: 'Après 2 mois', desc: 'Une résilience renforcée face aux imprévus du quotidien.',
+        descDesktop: 'Une nouvelle baseline s\'installe. Vous rebondissez plus vite face aux imprévus. L\'élan revient — non pas comme avant, mais mieux : plus stable, plus ancré, plus vous.' },
     ],
+    highlightDesktop: { text: 'Ces bénéfices sont documentés par la recherche en neurosciences et confirmés par des milliers de pratiquants. Ils ne dépendent pas de votre motivation du moment — juste de votre régularité.', icon: '🔬' },
     color: '#d4a0b0', visual: 'growth',
   },
   {
     id: 'promise', tag: 'Votre jardin',
     title: '2 minutes par jour\nsuffit pour commencer',
     body: 'Pas de performance. Pas d\'exigence. Juste un espace à vous, chaque jour, pour prendre soin de ce qui compte vraiment.',
+    bodyDesktop: 'Pas de performance. Pas de programme à suivre à la lettre. Pas de culpabilité si vous ratez un jour. Juste un espace à vous — deux minutes, chaque jour — pour poser quelque chose de vrai. Ce n\'est pas grand chose. Et c\'est exactement pour ça que ça marche.',
     features: [
-      { icon:'⚡', text: 'Des rituels de 2 à 5 minutes, à votre rythme' },
-      { icon:'📊', text: 'Votre progression visible au quotidien' },
-      { icon:'🌿', text: 'Une plante qui grandit avec vous' },
+      { icon:'⚡', text: 'Des rituels de 2 à 5 minutes, à votre rythme',
+        textDesktop: 'Des rituels de 2 à 5 minutes, conçus pour s\'intégrer dans votre vie telle qu\'elle est — pas telle que vous voudriez qu\'elle soit.' },
+      { icon:'📊', text: 'Votre progression visible au quotidien',
+        textDesktop: 'Votre progression visible jour après jour. Parce que voir que ça avance, même doucement, est ce qui donne envie de continuer.' },
+      { icon:'🌿', text: 'Une plante qui grandit avec vous',
+        textDesktop: 'Une fleur qui grandit avec vous — reflet vivant de votre engagement. Plus vous prenez soin d\'elle, plus elle révèle qui vous êtes.' },
     ],
     color: '#c8a870', visual: 'flower',
   },
@@ -144,7 +200,7 @@ function IntroGwenael({ onStart }) {
             onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)' }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
           >
-            Vous êtes prêt ? Allons-y ensemble…
+            Vous êtes prêt ? Allons-y ensemble...
           </button>
         </div>
       </div>
@@ -202,7 +258,7 @@ export const ONB_STYLES = `
     padding: 24px;
   }
   .onb-modal {
-    width: min(640px, 96vw); height: min(680px, 88vh);
+    width: min(960px, 97vw); height: calc(100vh - 16px);
     border-radius: 24px; background: #faf5f2;
     box-shadow: 0 24px 70px rgba(180,120,110,.20), 0 0 0 1px rgba(200,160,150,.15);
     display: flex; flex-direction: column; overflow: hidden;
@@ -236,6 +292,87 @@ function SlideVisual({ slide }) {
       <div style={{ position:'absolute', bottom:'15%', left:'50%', transform:'translateX(-50%)', textAlign:'center' }}>
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h1,42px)', fontWeight:300, color:c, lineHeight:1 }}>7/10</div>
         <div style={{ fontSize:'var(--fs-h5,11px)', color:c+'99', letterSpacing:'.12em', textTransform:'uppercase', marginTop:4 }}>personnes touchées</div>
+      </div>
+    </div>
+  )
+
+  if (slide.visual === 'spectrum') return (
+    <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
+      {/* Cylindre + labels */}
+      <div style={{ position:'relative', display:'flex', alignItems:'center', gap:0 }}>
+
+        {/* Labels gauche */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', marginRight:14, gap:0 }}>
+          {[
+            { label:'Stress\nTraumatique', color:'#c0392b', top:0,   height:90 },
+            { label:'Stress\nd\'usure',    color:'#e07020', top:90,  height:100 },
+            { label:'Bon\nStress',         color:'#27ae60', top:190, height:110 },
+          ].map(({ label, color }, i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:6, paddingBottom: i<2 ? 8 : 0, animation:`onbIn .5s ease ${i*0.2}s both` }}>
+              <div style={{ textAlign:'right' }}>
+                {label.split('\n').map((l,j) => (
+                  <div key={j} style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h4,13px)', fontWeight:700, color, lineHeight:1.3, whiteSpace:'nowrap' }}>{l}</div>
+                ))}
+              </div>
+              {/* Flèche */}
+              <div style={{ display:'flex', alignItems:'center', gap:0 }}>
+                <div style={{ width:20, height:1.5, background:color }} />
+                <div style={{ width:0, height:0, borderTop:'4px solid transparent', borderBottom:'4px solid transparent', borderLeft:`6px solid ${color}` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Cylindre */}
+        <div style={{ position:'relative', width:72, flexShrink:0 }}>
+          {/* Explosion au sommet */}
+          <div style={{ position:'absolute', top:-32, left:'50%', transform:'translateX(-50%)', width:80, height:44, animation:'onbPulse 2s ease-in-out infinite' }}>
+            {[
+              { w:3, h:22, rot:0,   l:38, t:0,  color:'#c0392b' },
+              { w:3, h:18, rot:30,  l:52, t:4,  color:'#e05020' },
+              { w:3, h:18, rot:-30, l:22, t:4,  color:'#e05020' },
+              { w:2, h:14, rot:55,  l:62, t:12, color:'#e08020' },
+              { w:2, h:14, rot:-55, l:12, t:12, color:'#e08020' },
+              { w:2, h:10, rot:75,  l:70, t:20, color:'#e0a020' },
+              { w:2, h:10, rot:-75, l:4,  t:20, color:'#e0a020' },
+            ].map((s, i) => (
+              <div key={i} style={{
+                position:'absolute', left:s.l, top:s.t,
+                width:s.w, height:s.h,
+                background:s.color,
+                borderRadius:2,
+                transformOrigin:'bottom center',
+                transform:`rotate(${s.rot}deg)`,
+                animation:`onbFloat ${1.5+i*0.15}s ease-in-out ${i*0.1}s infinite`,
+                opacity:.9,
+              }} />
+            ))}
+            {/* Halo explosion */}
+            <div style={{ position:'absolute', left:'50%', top:'60%', transform:'translate(-50%,-50%)', width:28, height:28, borderRadius:'50%', background:'radial-gradient(circle, #ffcc00 0%, #e04000 60%, transparent 100%)', animation:'onbPulse 1.8s ease-in-out infinite' }} />
+          </div>
+
+          {/* Corps du cylindre — 3 zones */}
+          <div style={{ borderRadius:'36px 36px 4px 4px', overflow:'hidden', boxShadow:'4px 8px 24px rgba(0,0,0,.20), inset -8px 0 16px rgba(0,0,0,.15), inset 4px 0 8px rgba(255,255,255,.25)', animation:`onbIn .6s ease both` }}>
+            {/* Zone rouge — traumatique */}
+            <div style={{ height:88, background:'linear-gradient(180deg, #c0392b 0%, #e03a1a 40%, #e05a10 100%)', position:'relative' }}>
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg, rgba(255,255,255,.12) 0%, transparent 40%, rgba(0,0,0,.08) 100%)' }} />
+            </div>
+            {/* Séparateur */}
+            <div style={{ height:2, background:'rgba(255,255,255,.35)' }} />
+            {/* Zone orange — usure */}
+            <div style={{ height:98, background:'linear-gradient(180deg, #e05a10 0%, #e07020 40%, #e8a020 100%)', position:'relative' }}>
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg, rgba(255,255,255,.12) 0%, transparent 40%, rgba(0,0,0,.08) 100%)' }} />
+            </div>
+            {/* Séparateur */}
+            <div style={{ height:2, background:'rgba(255,255,255,.35)' }} />
+            {/* Zone verte — bon stress */}
+            <div style={{ height:108, background:'linear-gradient(180deg, #e8a020 0%, #8bc34a 30%, #27ae60 100%)', position:'relative' }}>
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg, rgba(255,255,255,.12) 0%, transparent 40%, rgba(0,0,0,.08) 100%)' }} />
+            </div>
+          </div>
+          {/* Reflet fond */}
+          <div style={{ height:10, background:'radial-gradient(ellipse, rgba(39,174,96,.35) 0%, transparent 70%)', marginTop:2 }} />
+        </div>
       </div>
     </div>
   )
@@ -333,7 +470,7 @@ function SlideContent({ slide, leaving }) {
         </span>
       </div>
 
-      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(28px,3.5vw,48px)', fontWeight:300, lineHeight:1.15, color:'var(--text)', marginBottom:28, whiteSpace:'pre-line', letterSpacing:'-0.01em' }}>
+      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(28px,3.5vw,48px)', fontWeight:300, lineHeight:1.15, color:'var(--text)', marginBottom:28, whiteSpace: isMobile ? 'pre-line' : 'nowrap', letterSpacing:'-0.01em' }}>
         {slide.title}
       </div>
 
@@ -853,7 +990,7 @@ function StepCommunaute({ onComplete }) {
           <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,4vw,26px)', fontWeight:300, lineHeight:1.35, color:'var(--text)', marginBottom:8 }}>
             En ce moment,<br/>
             <span style={{ color:'var(--green)', fontWeight:400 }}>
-              {count !== null ? count : '…'} {count !== null ? (count === 1 ? 'personne cultive' : 'personnes cultivent') : ''}
+              {count !== null ? count : '...'} {count !== null ? (count === 1 ? 'personne cultive' : 'personnes cultivent') : ''}
             </span>
             {count !== null && <><br/>leur jardin intérieur dans notre communauté.</>}
           </h2>
@@ -969,51 +1106,64 @@ function SlidesEducatives({ onComplete }) {
         transition:'opacity .28s ease, transform .28s ease',
       }}>
 
-        {(slide.id === 'stress' || slide.id === 'freins' || slide.id === 'benefices' || slide.id === 'promise') ? (
-          /* ── Layout 2 colonnes pour stress et freins ── */
+        {(slide.id === 'stress' || slide.id === 'freins' || slide.id === 'benefices' || slide.id === 'promise' || slide.id === 'spectrum') ? (
+          /* ── Layout 2 colonnes ── */
+          <>
+          {/* Titre pleine largeur au-dessus des colonnes */}
+          <h2 style={{
+            fontFamily:"'Cormorant Garamond',serif",
+            fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
+            fontWeight: (slide.id === 'stress' || slide.id === 'benefices') ? 300 : 400,
+            lineHeight:1.1, color:'var(--text)',
+            marginBottom: isMobile ? 8 : 12,
+            whiteSpace: isMobile ? 'pre-line' : 'nowrap',
+            letterSpacing:'-0.01em', flexShrink:0,
+          }}>{slide.title}</h2>
           <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'row', gap:0, overflow:'hidden' }}>
 
             {/* Colonne gauche */}
-            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%', position:'relative', zIndex:2, display:'flex', flexDirection:'column', overflow:'hidden', ...((slide.id === 'freins' || slide.id === 'promise') && { overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, direction:'rtl' }) }}>
-              {(slide.id === 'freins' || slide.id === 'promise') && (
+            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%', position:'relative', zIndex:2, display:'flex', flexDirection:'column', overflow:'hidden', ...((slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') && { overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, direction:'rtl' }) }}>
+              {(slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') && (
                 <div style={{ direction:'ltr', display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
-                  <h2 style={{
-                    fontFamily:"'Cormorant Garamond',serif",
-                    fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
-                    fontWeight:400, lineHeight:1.1,
-                    color:'var(--text)', marginBottom: isMobile ? 8 : 12,
-                    whiteSpace:'pre-line', letterSpacing:'-0.01em',
-                    flexShrink:0,
-                  }}>{slide.title}</h2>
+                  {slide.id === 'impact' && (
+                    <img
+                      src="/stress3.png"
+                      alt=""
+                      style={{ width:'100%', borderRadius:10, objectFit:'cover', maxHeight: isMobile ? 110 : 130, marginBottom:4, boxShadow:'0 4px 14px rgba(0,0,0,0.10)' }}
+                    />
+                  )}
                   {slide.bullets && (
                     <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                      {slide.bullets.map((b,i) => (
-                        <div key={i} style={{
-                          display:'flex', gap:0, alignItems:'stretch',
-                          borderRadius:12, overflow:'hidden',
-                          background:'rgba(255,255,255,0.65)',
-                          border:'1px solid rgba(0,0,0,0.09)',
-                          boxShadow:'0 2px 6px rgba(0,0,0,0.04)',
-                          animation:`onbIn .4s ease ${i*.12+.1}s both`,
-                        }}>
-                          <div style={{ width:4, flexShrink:0, background:c }}/>
-                          <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
-                          <div style={{ padding:'9px 12px', flex:1 }}>
-                            <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
-                            <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.45 }}>{b.desc}</div>
+                      {slide.bullets.map((b,i) => {
+                        const bc = slide.id === 'spectrum'
+                          ? ['#c0392b','#e07020','#27ae60'][i]
+                          : c
+                        return (
+                          <div key={i} style={{ display:'flex', gap:0, alignItems:'stretch', borderRadius:12, overflow:'hidden', background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.09)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.12+.1}s both` }}>
+                            <div style={{ width:4, flexShrink:0, background:bc }}/>
+                            <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', background:`${bc}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>
+                              {slide.id === 'spectrum'
+                                ? <div style={{ width:14, height:14, borderRadius:'50%', background:bc, boxShadow:`0 0 0 3px ${bc}30` }}/>
+                                : <span style={{ fontSize:18 }}>{b.icon}</span>
+                              }
+                            </div>
+                            <div style={{ padding:'9px 12px', flex:1 }}>
+                              <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color: slide.id === 'spectrum' ? bc : 'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
+                              <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.55 }}>{(!isMobile && b.descDesktop) ? b.descDesktop : b.desc}</div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                   {slide.features && (
                     <>
-                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:'0 0 10px' }}>{slide.body}</p>
+                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:'0 0 10px' }}>{(!isMobile && slide.bodyDesktop) ? slide.bodyDesktop : slide.body}</p>
                       <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
                         {slide.features.map((f,i) => (
                           <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
                             <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
-                            <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{f.text}</span>
+                            <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{(!isMobile && f.textDesktop) ? f.textDesktop : f.text}</span>
                           </div>
                         ))}
                       </div>
@@ -1038,18 +1188,17 @@ function SlidesEducatives({ onComplete }) {
             </div>
 
             {/* Colonne droite */}
-            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%', marginLeft:'-10%', position:'relative', zIndex:1, display:'flex', alignItems: (slide.id === 'stress' || slide.id === 'benefices') ? 'flex-start' : slide.id === 'promise' ? 'center' : 'flex-end', justifyContent:'center', ...((slide.id === 'stress' || slide.id === 'benefices') ? { overflowY:'auto', WebkitOverflowScrolling:'touch' } : { overflow:'hidden', flexShrink:0 }) }}>
+            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%', marginLeft:'-10%', position:'relative', zIndex:1, display:'flex', alignItems: (slide.id === 'stress' || slide.id === 'benefices') ? 'flex-start' : (slide.id === 'promise' || slide.id === 'spectrum') ? 'center' : 'flex-end', justifyContent:'center', ...((slide.id === 'stress' || slide.id === 'benefices') ? { overflowY:'auto', WebkitOverflowScrolling:'touch' } : { overflow:'hidden', flexShrink:0 }) }}>
+              {slide.id === 'spectrum' && (
+                <img
+                  src="/stress2.png"
+                  alt=""
+                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'center bottom' }}
+                />
+              )}
               {slide.id === 'stress' && (
                 <>
                   <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
-                    <h2 style={{
-                      fontFamily:"'Cormorant Garamond',serif",
-                      fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
-                      fontWeight:300, lineHeight:1.1,
-                      color:'var(--text)', marginBottom: isMobile ? 8 : 12,
-                      whiteSpace:'pre-line', letterSpacing:'-0.01em',
-                      flexShrink:0,
-                    }}>{slide.title}</h2>
                     <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
                       <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
                       {slide.highlight && (
@@ -1077,14 +1226,6 @@ function SlidesEducatives({ onComplete }) {
               )}
               {slide.id === 'benefices' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
-                  <h2 style={{
-                    fontFamily:"'Cormorant Garamond',serif",
-                    fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
-                    fontWeight:400, lineHeight:1.1,
-                    color:'var(--text)', marginBottom: isMobile ? 8 : 12,
-                    whiteSpace:'pre-line', letterSpacing:'-0.01em',
-                    flexShrink:0,
-                  }}>{slide.title}</h2>
                   <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
                     {slide.timeline.map((t,i) => (
                       <div key={i} style={{ display:'flex', gap:0, alignItems:'stretch', animation:`onbIn .4s ease ${i*.14+.1}s both` }}>
@@ -1093,7 +1234,7 @@ function SlidesEducatives({ onComplete }) {
                         </div>
                         <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
                           <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
-                          <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{t.desc}</div>
+                          <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{(!isMobile && t.descDesktop) ? t.descDesktop : t.desc}</div>
                         </div>
                       </div>
                     ))}
@@ -1102,6 +1243,7 @@ function SlidesEducatives({ onComplete }) {
               )}
             </div>
           </div>
+          </>
         ) : (
         <>
         {/* Titre — grand */}
@@ -1110,7 +1252,7 @@ function SlidesEducatives({ onComplete }) {
           fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
           fontWeight:300, lineHeight:1.1,
           color:'var(--text)', marginBottom: isMobile ? 8 : 12,
-          whiteSpace:'pre-line', letterSpacing:'-0.01em',
+          whiteSpace: isMobile ? 'pre-line' : 'nowrap', letterSpacing:'-0.01em',
           flexShrink:0,
         }}>{slide.title}</h2>
 
@@ -1119,14 +1261,35 @@ function SlidesEducatives({ onComplete }) {
         {/* ── Contenu compacté selon type ── */}
         <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'column', justifyContent:'flex-start', overflowY:'auto', WebkitOverflowScrolling:'touch', gap: isMobile ? 8 : 10, paddingBottom: isMobile ? 12 : 16 }}>
 
+          {slide.id === 'impact' && (
+            <div style={{ display:'flex', justifyContent:'center' }}>
+              <img
+                src="/stress3.png"
+                alt=""
+                style={{ width: isMobile ? '90%' : '52%', borderRadius:10, objectFit:'contain', boxShadow:'0 4px 14px rgba(0,0,0,0.10)', flexShrink:0, display:'block' }}
+              />
+            </div>
+          )}
+
           {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
             <>
-              <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.7, margin:0 }}>
-                {slide.body}
+              <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.8, margin:0 }}>
+                {(!isMobile && slide.bodyDesktop) ? slide.bodyDesktop : slide.body}
               </p>
               {slide.highlight && (
                 <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
                    {slide.highlight}
+                </div>
+              )}
+              {!isMobile && slide.extra && (
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                  {slide.extra.map((e,i) => (
+                    <div key={i} style={{ flex:'1 1 0', minWidth:90, padding:'10px 14px', borderRadius:12, background:`${c}0e`, border:`1px solid ${c}28`, animation:`onbIn .4s ease ${i*.12+.3}s both` }}>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:600, color:c, lineHeight:1 }}>{e.value}</div>
+                      <div style={{ fontSize:11, fontWeight:600, color:'rgba(30,25,15,0.80)', marginTop:4, lineHeight:1.3 }}>{e.label}</div>
+                      <div style={{ fontSize:10, color:'rgba(30,25,15,0.45)', marginTop:2, fontStyle:'italic' }}>{e.sub}</div>
+                    </div>
+                  ))}
                 </div>
               )}
             </>
@@ -1147,7 +1310,10 @@ function SlidesEducatives({ onComplete }) {
                   <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
                   <div style={{ padding:'9px 12px', flex:1 }}>
                     <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
-                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.45 }}>{b.desc}</div>
+                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.55 }}>{(!isMobile && b.descDesktop) ? b.descDesktop : b.desc}</div>
+                    {b.example && (
+                      <div style={{ marginTop:5, fontSize:'var(--fs-h5,11px)', fontStyle:'italic', color:c, fontWeight:400, lineHeight:1.4 }}>{b.example}</div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1178,21 +1344,38 @@ function SlidesEducatives({ onComplete }) {
                   </div>
                   <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
                     <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
-                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{t.desc}</div>
+                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{(!isMobile && t.descDesktop) ? t.descDesktop : t.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
+          {!isMobile && slide.highlightDesktop && (
+            <div style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}28`, animation:'onbIn .4s ease .5s both' }}>
+              <span style={{ fontSize:18, flexShrink:0 }}>{slide.highlightDesktop.icon}</span>
+              <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:c, lineHeight:1.6, fontStyle:'italic' }}>{slide.highlightDesktop.text}</span>
+            </div>
+          )}
+          {!isMobile && slide.extra && !slide.body && (
+            <div style={{ display:'flex', gap:8 }}>
+              {slide.extra.map((e,i) => (
+                <div key={i} style={{ flex:'1 1 0', padding:'10px 14px', borderRadius:12, background:`${c}0e`, border:`1px solid ${c}28`, animation:`onbIn .4s ease ${i*.12+.3}s both`, textAlign:'center' }}>
+                  <div style={{ fontSize:22, marginBottom:4 }}>{e.value}</div>
+                  <div style={{ fontSize:11, fontWeight:600, color:'rgba(30,25,15,0.80)', lineHeight:1.3 }}>{e.label}</div>
+                  <div style={{ fontSize:10, color:'rgba(30,25,15,0.45)', marginTop:2, fontStyle:'italic' }}>{e.sub}</div>
+                </div>
+              ))}
+            </div>
+          )}
           {slide.features && (
             <>
-              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
+              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{(!isMobile && slide.bodyDesktop) ? slide.bodyDesktop : slide.body}</p>
               <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
                 {slide.features.map((f,i) => (
                   <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
                     <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
-                    <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{f.text}</span>
+                    <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{(!isMobile && f.textDesktop) ? f.textDesktop : f.text}</span>
                   </div>
                 ))}
               </div>
@@ -1412,11 +1595,11 @@ function StepEquipe({ onNext, onSkip }) {
 //    q       : texte de la question
 //    tag     : catégorie affichée discrètement (pour analyse interne)
 //    choices : tableau de libellés
-//    — pas de champ `correct` —
+//    — pas de champ `correct` --
 // ─────────────────────────────────────────────────────────────────────────────
 const QCM_QUESTIONS = [
 
-  // ── BLOC 1 : Contexte & besoin (questions 1–6) ──
+  // ── BLOC 1 : Contexte & besoin (questions 1-6) ──
   {
     tag: 'contexte',
     q: 'Pour mieux comprendre ce qui vous a amené ici, quelle phrase décrit le mieux votre quotidien en ce moment ?',
@@ -1449,7 +1632,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'besoin',
-    q: 'Avez-vous déjà essayé de mettre en place une routine de bien-être (méditation, journal, respiration…) ?',
+    q: 'Avez-vous déjà essayé de mettre en place une routine de bien-être (méditation, journal, respiration...) ?',
     choices: [
       'Oui, et ça a duré — j\'ai encore cette pratique',
       'Oui, mais j\'ai arrêté au bout de quelques semaines',
@@ -1478,7 +1661,7 @@ const QCM_QUESTIONS = [
     ],
   },
 
-  // ── BLOC 2 : L'univers (questions 7–12) ──
+  // ── BLOC 2 : L'univers (questions 7-12) ──
   {
     tag: 'univers',
     q: 'L\'idée de prendre soin de soi comme on cultive un jardin — doucement, régulièrement, sans forcer — vous parle-t-elle ?',
@@ -1491,7 +1674,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'univers',
-    q: 'L\'univers visuel que vous venez de découvrir — doux, naturel, sans badges ni classements — vous donne plutôt envie de…',
+    q: 'L\'univers visuel que vous venez de découvrir — doux, naturel, sans badges ni classements — vous donne plutôt envie de...',
     choices: [
       'Revenir souvent — cette douceur est exactement ce qu\'il me faut',
       'Essayer, même si j\'aurais aimé quelque chose de plus dynamique',
@@ -1501,7 +1684,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'univers',
-    q: 'Le fait de voir une plante évoluer en fonction de vos rituels quotidiens vous semblerait…',
+    q: 'Le fait de voir une plante évoluer en fonction de vos rituels quotidiens vous semblerait...',
     choices: [
       'Motivant — voir quelque chose pousser me donnerait envie de continuer',
       'Sympa, sans être déterminant dans mon engagement',
@@ -1511,7 +1694,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'univers',
-    q: 'L\'idée qu\'une application de bien-être puisse être "sans performance ni jugement" vous semble-t-elle…',
+    q: 'L\'idée qu\'une application de bien-être puisse être "sans performance ni jugement" vous semble-t-elle...',
     choices: [
       'Essentielle — c\'est exactement ce dont j\'ai besoin',
       'Rassurante — j\'ai parfois peur de "mal faire"',
@@ -1521,7 +1704,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'univers',
-    q: 'Vous imaginez utiliser cette application plutôt…',
+    q: 'Vous imaginez utiliser cette application plutôt...',
     choices: [
       'Le matin, pour bien démarrer la journée',
       'Le soir, pour décompresser avant de dormir',
@@ -1531,7 +1714,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'univers',
-    q: 'Si vous deviez recommander cette application à quelqu\'un de proche, vous diriez que c\'est…',
+    q: 'Si vous deviez recommander cette application à quelqu\'un de proche, vous diriez que c\'est...',
     choices: [
       'Un espace de pause et de reconnexion à soi',
       'Un outil concret pour gérer le stress du quotidien',
@@ -1540,7 +1723,7 @@ const QCM_QUESTIONS = [
     ],
   },
 
-  // ── BLOC 3 : Pertinence & crédibilité (questions 13–18) ──
+  // ── BLOC 3 : Pertinence & crédibilité (questions 13-18) ──
   {
     tag: 'pertinence',
     q: 'Franchement — avant d\'avoir essayé — à quel point croyez-vous qu\'un rituel de 2 à 5 minutes par jour peut changer quelque chose ?',
@@ -1553,7 +1736,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'pertinence',
-    q: 'Les éléments scientifiques présentés (neuroplasticité, cortisol, dopamine) vous ont-ils semblé…',
+    q: 'Les éléments scientifiques présentés (neuroplasticité, cortisol, dopamine) vous ont-ils semblé...',
     choices: [
       'Crédibles et rassurants — ça donne du sens à la démarche',
       'Intéressants, mais je ne les ai pas vraiment évalués',
@@ -1563,7 +1746,7 @@ const QCM_QUESTIONS = [
   },
   {
     tag: 'pertinence',
-    q: 'Une application qui adapte les rituels à votre état du jour (fatigue, tension, besoin de douceur) vous semblerait…',
+    q: 'Une application qui adapte les rituels à votre état du jour (fatigue, tension, besoin de douceur) vous semblerait...',
     choices: [
       'Très utile — c\'est ce qui manque à la plupart des applis',
       'Intéressante, mais je ne sais pas si je l\'utiliserais vraiment',
@@ -1602,10 +1785,10 @@ const QCM_QUESTIONS = [
     ],
   },
 
-  // ── BLOC 4 : Projection & ressenti libre (questions 19–22) ──
+  // ── BLOC 4 : Projection & ressenti libre (questions 19-22) ──
   {
     tag: 'projection',
-    q: 'Dans 3 mois, si vous utilisiez cette application régulièrement, ce que vous espéreriez le plus, c\'est…',
+    q: 'Dans 3 mois, si vous utilisiez cette application régulièrement, ce que vous espéreriez le plus, c\'est...',
     choices: [
       'Dormir mieux et me sentir moins épuisé(e)',
       'Réagir avec plus de recul face au stress et aux imprévus',
@@ -1650,7 +1833,7 @@ const TAG_LABELS = {
   besoin:      'Votre vécu',
   univers:     'L\'univers de l\'appli',
   pertinence:  'Ce que ça vous apporte',
-  projection:  'Et maintenant…',
+  projection:  'Et maintenant...',
 }
 
 function StepQuestionnaire({ userId, onComplete, onSkip }) {
@@ -1951,7 +2134,7 @@ function StepQuizIntro({ onStart, onSkip, onGoWeekOne }) {
             fontSize:'clamp(16px,2.5vw,20px)', fontWeight:300,
             color:'rgba(30,25,15,0.55)', fontStyle:'italic', margin:0,
           }}>
-            Avant d'entrer dans votre jardin…
+            Avant d'entrer dans votre jardin...
           </p>
         </div>
 
