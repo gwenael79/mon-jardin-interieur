@@ -1104,7 +1104,7 @@ function SlidesEducatives({ onComplete }) {
           return (
             <img src={src} alt="" style={{
               position:'absolute', bottom:0, [isLeft ? 'left' : 'right']:'4%',
-              height:'92%', width:'auto', objectFit:'contain', objectPosition:'bottom center',
+              height: isFloat ? '78%' : '92%', width:'auto', objectFit:'contain', objectPosition:'bottom center',
               pointerEvents:'none', zIndex:2,
               filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.18))',
               animation: isFloat ? 'onbFloat 4s ease-in-out infinite' : undefined,
@@ -1160,7 +1160,19 @@ function SlidesEducatives({ onComplete }) {
             marginBottom: slide.id === 'benefices' ? 40 : (isMobile ? 8 : 12),
             whiteSpace: isMobile ? 'pre-line' : 'nowrap',
             letterSpacing:'-0.01em', flexShrink:0,
-          }}>{slide.title}</h2>
+          }}>
+            {slide.id === 'stress'
+              ? slide.title.split("stress d'usure").map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && (
+                      <strong style={{ fontWeight:800, color:'#2d6a1f' }}>stress d'usure</strong>
+                    )}
+                  </span>
+                ))
+              : slide.title
+            }
+          </h2>
           <div style={{ flex:1, minHeight:0, display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:0, overflow: isMobile ? 'auto' : 'hidden', WebkitOverflowScrolling:'touch' }}>
 
             {/* Colonne gauche — masquée sur mobile pour les slides image-only */}
@@ -1271,7 +1283,7 @@ function SlidesEducatives({ onComplete }) {
                 <img src="/instructeur2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
               )}
               {slide.id === 'promise' && !isMobile && (
-                <img src="/zen.png" alt="" style={{ width:'100%', height:'auto', objectFit:'contain', display:'block', marginLeft:'20%', animation:'onbFloat 4s ease-in-out infinite' }}/>
+                <img src="/zen.png" alt="" style={{ width:'65%', height:'auto', objectFit:'contain', display:'block', marginLeft:'10%', animation:'onbFloat 4s ease-in-out infinite' }}/>
               )}
               {slide.id === 'pourquoi' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', width:'100%', height:'100%' }}>
