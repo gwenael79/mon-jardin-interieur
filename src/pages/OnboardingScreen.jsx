@@ -1034,7 +1034,12 @@ function StepCommunaute({ onComplete }) {
 function SlidesEducatives({ onComplete }) {
   const [step,    setStep]    = useState(0)
   const [leaving, setLeaving] = useState(false)
-  const isMobile = false // test : layout PC sur tous les écrans
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const slide  = ONBOARDING_SLIDES[step]
   const isLast = step === ONBOARDING_SLIDES.length - 1
@@ -1069,6 +1074,24 @@ function SlidesEducatives({ onComplete }) {
         />
         {/* Dégradé bas pour fondu avec le fond */}
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, transparent 50%, #faf5f2 100%)' }}/>
+
+        {/* Personnage en overlay hero — mobile uniquement */}
+        {isMobile && (() => {
+          const charMap = { benefices:'/instructeur3.png', promise:'/zen.png' }
+          const src = charMap[slide.id]
+          if (!src) return null
+          const isLeft = slide.id === 'benefices'
+          const isFloat = slide.id === 'promise'
+          return (
+            <img src={src} alt="" style={{
+              position:'absolute', bottom:0, [isLeft ? 'left' : 'right']:'4%',
+              height:'92%', width:'auto', objectFit:'contain', objectPosition:'bottom center',
+              pointerEvents:'none', zIndex:2,
+              filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.18))',
+              animation: isFloat ? 'onbFloat 4s ease-in-out infinite' : undefined,
+            }}/>
+          )
+        })()}
 
         {/* Barre progression en overlay haut */}
         <div style={{ position:'absolute', top:0, left:0, right:0, display:'flex', gap:3 }}>
@@ -1119,12 +1142,23 @@ function SlidesEducatives({ onComplete }) {
             whiteSpace: isMobile ? 'pre-line' : 'nowrap',
             letterSpacing:'-0.01em', flexShrink:0,
           }}>{slide.title}</h2>
-          <div style={{ flex:1, minHeight:0, display:'flex', flexDirection:'row', gap:0, overflow:'hidden' }}>
+          <div style={{ flex:1, minHeight:0, display:'flex', flexDirection: isMobile ? 'column' : 'row', gap:0, overflow: isMobile ? 'auto' : 'hidden', WebkitOverflowScrolling:'touch' }}>
 
-            {/* Colonne gauche */}
-            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%', position:'relative', zIndex:2, display:'flex', flexDirection:'column', overflow:'hidden', ...((slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') && { overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, direction:'rtl' }) }}>
+            {/* Colonne gauche — masquée sur mobile pour les slides image-only */}
+            {/* Colonne gauche : image pour stress/benefices, texte pour freins/promise/spectrum */}
+            <div style={{
+              flex: isMobile ? '1 1 auto' : (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%',
+              position:'relative', zIndex:2,
+              display: (isMobile && (slide.id === 'stress' || slide.id === 'benefices')) ? 'none' : 'flex',
+              flexDirection:'column',
+              overflowX: 'hidden',
+              overflowY: (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') ? 'auto' : 'hidden',
+              WebkitOverflowScrolling: 'touch',
+              paddingBottom: (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') ? (isMobile ? 12 : 16) : 0,
+              direction: (!isMobile && (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum')) ? 'rtl' : undefined,
+            }}>
               {(slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') && (
-                <div style={{ direction:'ltr', display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
+                <div style={{ direction:'ltr', display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10, position:'relative' }}>
                   {slide.id === 'impact' && (
                     <img
                       src="/stress3.png"
@@ -1133,7 +1167,7 @@ function SlidesEducatives({ onComplete }) {
                     />
                   )}
                   {slide.bullets && (
-                    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                    <div style={{ display:'flex', flexDirection:'column', gap:6, position:'relative', zIndex:1, width: (isMobile && slide.id === 'spectrum') ? '70%' : '100%' }}>
                       {slide.bullets.map((b,i) => {
                         const bc = slide.id === 'spectrum'
                           ? ['#c0392b','#e07020','#27ae60'][i]
@@ -1149,21 +1183,30 @@ function SlidesEducatives({ onComplete }) {
                             </div>
                             <div style={{ padding:'9px 12px', flex:1 }}>
                               <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color: slide.id === 'spectrum' ? bc : 'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
-                              <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.55 }}>{(!isMobile && b.descDesktop) ? b.descDesktop : b.desc}</div>
+                              <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.55 }}>{b.descDesktop || b.desc}</div>
                             </div>
                           </div>
                         )
                       })}
                     </div>
                   )}
+                  {isMobile && slide.id === 'spectrum' && (
+                    <img src="/stress2.png" alt="" style={{
+                      position:'absolute', top:'5%', right:'-4%',
+                      width:'52%', objectFit:'contain', display:'block',
+                      zIndex:0, opacity:0.85,
+                      filter:'drop-shadow(0 4px 12px rgba(0,0,0,0.10))',
+                      pointerEvents:'none',
+                    }}/>
+                  )}
                   {slide.features && (
                     <>
-                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:'0 0 10px' }}>{(!isMobile && slide.bodyDesktop) ? slide.bodyDesktop : slide.body}</p>
+                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:300, color:'var(--text2)', lineHeight:1.7, margin:'0 0 10px' }}>{slide.bodyDesktop || slide.body}</p>
                       <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
                         {slide.features.map((f,i) => (
                           <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
                             <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
-                            <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{(!isMobile && f.textDesktop) ? f.textDesktop : f.text}</span>
+                            <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{f.textDesktop || f.text}</span>
                           </div>
                         ))}
                       </div>
@@ -1171,58 +1214,48 @@ function SlidesEducatives({ onComplete }) {
                   )}
                 </div>
               )}
-              {slide.id === 'stress' && (
-                <img
-                  src="/stress1.png"
-                  alt=""
-                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', marginLeft:'-20%' }}
-                />
+              {slide.id === 'stress' && !isMobile && (
+                <img src="/stress1.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', marginLeft:'-20%' }}/>
               )}
-              {slide.id === 'benefices' && (
-                <img
-                  src="/instructeur3.png"
-                  alt=""
-                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}
-                />
+              {slide.id === 'benefices' && !isMobile && (
+                <img src="/instructeur3.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
               )}
             </div>
 
             {/* Colonne droite */}
-            <div style={{ flex: (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%', marginLeft:'-10%', position:'relative', zIndex:1, display:'flex', alignItems: (slide.id === 'stress' || slide.id === 'benefices') ? 'flex-start' : (slide.id === 'promise' || slide.id === 'spectrum') ? 'center' : 'flex-end', justifyContent:'center', ...((slide.id === 'stress' || slide.id === 'benefices') ? { overflowY:'auto', WebkitOverflowScrolling:'touch' } : { overflow:'hidden', flexShrink:0 }) }}>
-              {slide.id === 'spectrum' && (
-                <img
-                  src="/stress2.png"
-                  alt=""
-                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'center bottom' }}
-                />
+            <div style={{
+              flex: isMobile ? '1 1 auto' : (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%',
+              marginLeft: isMobile ? 0 : '-10%',
+              position:'relative', zIndex:1, display:'flex',
+              alignItems: (slide.id === 'stress' || slide.id === 'benefices') ? 'flex-start' : (slide.id === 'promise' || slide.id === 'spectrum') ? 'center' : 'flex-end',
+              justifyContent:'center',
+              overflowX: 'hidden',
+              overflowY: (slide.id === 'stress' || slide.id === 'benefices') ? (isMobile ? 'visible' : 'auto') : (isMobile ? 'visible' : 'hidden'),
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              {slide.id === 'spectrum' && !isMobile && (
+                <img src="/stress2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'center bottom' }}/>
+              )}
+              {slide.id === 'freins' && !isMobile && (
+                <img src="/instructeur2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
+              )}
+              {slide.id === 'promise' && !isMobile && (
+                <img src="/zen.png" alt="" style={{ width:'100%', height:'auto', objectFit:'contain', display:'block', marginLeft:'20%', animation:'onbFloat 4s ease-in-out infinite' }}/>
               )}
               {slide.id === 'stress' && (
-                <>
-                  <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
-                    <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10 }}>
-                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.7, margin:0 }}>{slide.body}</p>
-                      {slide.highlight && (
-                        <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
-                           {slide.highlight}
-                        </div>
-                      )}
-                    </div>
+                <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', width:'100%', height:'100%' }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10, paddingBottom: isMobile ? 8 : 12 }}>
+                    <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.7, margin:0 }}>{slide.bodyDesktop || slide.body}</p>
+                    {slide.highlight && (
+                      <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
+                         {slide.highlight}
+                      </div>
+                    )}
                   </div>
-                </>
-              )}
-              {slide.id === 'freins' && (
-                <img
-                  src="/instructeur2.png"
-                  alt=""
-                  style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}
-                />
-              )}
-              {slide.id === 'promise' && (
-                <img
-                  src="/zen.png"
-                  alt=""
-                  style={{ width:'100%', height:'auto', objectFit:'contain', display:'block', marginLeft:'20%', animation:'onbFloat 4s ease-in-out infinite' }}
-                />
+                  {isMobile && (
+                    <img src="/stress1.png" alt="" style={{ marginTop:'auto', width:'70%', alignSelf:'center', objectFit:'contain', display:'block', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.15))' }}/>
+                  )}
+                </div>
               )}
               {slide.id === 'benefices' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
@@ -1234,7 +1267,7 @@ function SlidesEducatives({ onComplete }) {
                         </div>
                         <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
                           <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
-                          <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{(!isMobile && t.descDesktop) ? t.descDesktop : t.desc}</div>
+                          <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{t.descDesktop || t.desc}</div>
                         </div>
                       </div>
                     ))}
@@ -1274,7 +1307,7 @@ function SlidesEducatives({ onComplete }) {
           {slide.body && !slide.bullets && !slide.points && !slide.timeline && !slide.features && (
             <>
               <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.8, margin:0 }}>
-                {(!isMobile && slide.bodyDesktop) ? slide.bodyDesktop : slide.body}
+                {slide.bodyDesktop || slide.body}
               </p>
               {slide.highlight && (
                 <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
@@ -1310,7 +1343,7 @@ function SlidesEducatives({ onComplete }) {
                   <div style={{ width:40, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:`${c}12`, borderRight:'1px solid rgba(0,0,0,0.06)' }}>{b.icon}</div>
                   <div style={{ padding:'9px 12px', flex:1 }}>
                     <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:700, color:'rgba(30,25,15,0.90)', marginBottom:2 }}>{b.label}</div>
-                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.55 }}>{(!isMobile && b.descDesktop) ? b.descDesktop : b.desc}</div>
+                    <div style={{ fontSize:'var(--fs-h5,11px)', fontWeight:300, color:'rgba(30,25,15,0.80)', lineHeight:1.55 }}>{b.descDesktop || b.desc}</div>
                     {b.example && (
                       <div style={{ marginTop:5, fontSize:'var(--fs-h5,11px)', fontStyle:'italic', color:c, fontWeight:400, lineHeight:1.4 }}>{b.example}</div>
                     )}
@@ -1344,24 +1377,23 @@ function SlidesEducatives({ onComplete }) {
                   </div>
                   <div style={{ flex:1, paddingLeft:14, paddingBottom: i < slide.timeline.length-1 ? 16 : 0 }}>
                     <div style={{ display:'inline-block', fontSize:'var(--fs-h5,10px)', fontWeight:700, color:c, letterSpacing:'.08em', textTransform:'uppercase', padding:'2px 8px', borderRadius:50, background:`${c}12`, border:`1px solid ${c}30`, marginBottom:4 }}>{t.period}</div>
-                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{(!isMobile && t.descDesktop) ? t.descDesktop : t.desc}</div>
+                    <div style={{ fontSize:'var(--fs-h4,12px)', fontWeight:300, color:'rgba(30,25,15,0.85)', lineHeight:1.6 }}>{t.descDesktop || t.desc}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {!isMobile && slide.highlightDesktop && (
+          {slide.highlightDesktop && (
             <div style={{ display:'flex', gap:10, alignItems:'flex-start', padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}28`, animation:'onbIn .4s ease .5s both' }}>
               <span style={{ fontSize:18, flexShrink:0 }}>{slide.highlightDesktop.icon}</span>
               <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:c, lineHeight:1.6, fontStyle:'italic' }}>{slide.highlightDesktop.text}</span>
             </div>
           )}
-          {!isMobile && slide.mechanisms && (
-            <div style={{ display:'flex', gap:12 }}>
+          {slide.mechanisms && (
+            <div style={{ display:'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 8 : 12 }}>
               {slide.mechanisms.map((m, i) => (
-                <div key={i} style={{ flex:'1 1 0', borderRadius:16, overflow:'hidden', background:'#fff', border:`1.5px solid ${m.color}40`, boxShadow:`0 6px 24px ${m.color}18`, animation:`onbIn .5s ease ${i*.15+.2}s both` }}>
-                  {/* Header */}
+                <div key={i} style={{ flex: isMobile ? 'none' : '1 1 0', borderRadius:16, overflow:'hidden', background:'#fff', border:`1.5px solid ${m.color}40`, boxShadow:`0 6px 24px ${m.color}18`, animation:`onbIn .5s ease ${i*.15+.2}s both` }}>
                   <div style={{ background:`linear-gradient(135deg, ${m.color}28 0%, ${m.color}12 100%)`, borderBottom:`1.5px solid ${m.color}28`, padding:'14px 16px 12px', display:'flex', alignItems:'center', gap:12 }}>
                     <div style={{ width:44, height:44, borderRadius:12, background:'#fff', border:`2px solid ${m.color}50`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0, boxShadow:`0 2px 8px ${m.color}20` }}>{m.icon}</div>
                     <div style={{ flex:1 }}>
@@ -1370,7 +1402,6 @@ function SlidesEducatives({ onComplete }) {
                     </div>
                     <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, color:`${m.color}35`, lineHeight:1, flexShrink:0 }}>{m.num}</div>
                   </div>
-                  {/* Corps */}
                   <div style={{ padding:'14px 16px' }}>
                     <p style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:400, color:'rgba(15,25,10,0.78)', lineHeight:1.75, margin:0 }}>{m.detail}</p>
                   </div>
@@ -1380,12 +1411,12 @@ function SlidesEducatives({ onComplete }) {
           )}
           {slide.features && (
             <>
-              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{(!isMobile && slide.bodyDesktop) ? slide.bodyDesktop : slide.body}</p>
+              <p style={{ fontSize:'var(--fs-h4,13px)', fontWeight:300, color:'rgba(30,25,15,0.65)', lineHeight:1.7, margin:0 }}>{slide.bodyDesktop || slide.body}</p>
               <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
                 {slide.features.map((f,i) => (
                   <div key={i} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 14px', borderRadius:12, background:'rgba(255,255,255,0.65)', border:'1px solid rgba(0,0,0,0.08)', boxShadow:'0 2px 6px rgba(0,0,0,0.04)', animation:`onbIn .4s ease ${i*.1+.1}s both` }}>
                     <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, background:`${c}18`, border:`1.5px solid ${c}35`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>{f.icon}</div>
-                    <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{(!isMobile && f.textDesktop) ? f.textDesktop : f.text}</span>
+                    <span style={{ fontSize:'var(--fs-h4,13px)', fontWeight:400, color:'rgba(30,25,15,0.92)', lineHeight:1.4 }}>{f.textDesktop || f.text}</span>
                   </div>
                 ))}
               </div>
