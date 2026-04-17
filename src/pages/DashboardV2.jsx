@@ -43,8 +43,6 @@ import { ScreenAteliers }            from './ScreenAteliers'
 import { MaBibliotheque, useAchats } from './MaBibliotheque'
 import { ScreenJardinotheque }       from './ScreenJardinotheque'
 import { HelpModal }                 from './HelpModal'
-import PremiumGate                   from '../components/PremiumGate'
-import PremiumBanner                 from '../components/PremiumBanner'
 import AccessPage, { PremiumModal }  from './AccessPage'
 import { ONB_STYLES, NatureBg }      from './OnboardingScreen'
 import { useSlideInsight, prefetchAllSlideInsights } from '../hooks/useSlideInsight'
@@ -987,7 +985,7 @@ export default function DashboardPage() {
 
   // window.openAccessModal (utilisé dans les sous-composants)
   useEffect(() => {
-    window.openAccessModal = () => setShowAccessModal(true)
+    window.openAccessModal = () => setShowPremiumModal(true)
     return () => { delete window.openAccessModal }
   }, [])
 
@@ -1030,7 +1028,7 @@ export default function DashboardPage() {
     onOpenBilan:    () => setShowBilanModal(true),
     onOpenLumens:   () => setShowLumensModal(true),
     onOpenAccess:   () => setShowAccessModal(true),
-    onUpgrade:      () => setShowAccessModal(true), // alias attendu par ScreenJardinCollectif, ScreenDefis, ScreenClubJardiniers, ScreenAteliers, ScreenJardinotheque
+    onUpgrade:      () => setShowPremiumModal(true),
     onOpenProfile:  () => setShowProfileModal(true),
     onCoeurSeen:    () => setUnreadCoeurs(0),
     onOpenRituals:   () => setOpenRitualsModal(true),
@@ -1282,7 +1280,7 @@ export default function DashboardPage() {
                 userId={user?.id}
                 onBack={() => setProfileView('main')}
                 onOpenFleur={() => { setShowProfileModal(false); setProfileView('main'); setOpenModalId('jardin') }}
-                onUpgrade={() => { setShowProfileModal(false); setProfileView('main'); setShowAccessModal(true) }}
+                onUpgrade={() => { setShowProfileModal(false); setProfileView('main'); setShowPremiumModal(true) }}
                 onNameSaved={() => clearProfileCache(user?.id)}
               />
             )}

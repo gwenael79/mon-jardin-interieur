@@ -23,9 +23,7 @@ import { ScreenAteliers }       from './ScreenAteliers'
 import { MaBibliotheque }       from './MaBibliotheque'
 import { ScreenJardinotheque }  from './ScreenJardinotheque'
 import { HelpModal }            from './HelpModal'
-import PremiumGate              from '../components/PremiumGate'
-import PremiumBanner            from '../components/PremiumBanner'
-import AccessPage               from './AccessPage'
+import AccessPage, { PremiumModal } from './AccessPage'
 import { useTheme }             from '../hooks/useTheme'
 
 // Verrou module-level : empêche le double-award daily_login dans la même session
@@ -370,7 +368,7 @@ export default function DashboardPage() {
 
   const profile                       = useProfile(user?.id)
   const isPremium = (profile?.plan === 'premium' || !!profile?.premium_until) && profile?.premium_until && new Date(profile.premium_until) > new Date()
-  const [showAccessModal, setShowAccessModal] = useState(false)
+  const [showPremiumModal, setShowPremiumModal] = useState(false)
   useTheme() // Charge le thème depuis Supabase
   const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
   const { track } = useAnalytics(user?.id)
@@ -578,11 +576,10 @@ export default function DashboardPage() {
     <div className="root">
 
       {/* ── MODAL ACCESS PAGE ── */}
-      {showAccessModal && (
-        <AccessPage
-          onActivateFree={() => setShowAccessModal(false)}
-          onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }}
-          onBack={() => setShowAccessModal(false)}
+      {showPremiumModal && (
+        <PremiumModal
+          onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }}
+          onClose={() => setShowPremiumModal(false)}
         />
       )}
 
@@ -886,7 +883,7 @@ export default function DashboardPage() {
             {/* ── BANNIÈRE PREMIUM — 50px sous le titre ── */}
             {!isPremium && (
               <div style={{ display:'flex', justifyContent:'center', paddingTop: 50, paddingBottom: 0, flexShrink: 0 }}>
-                <div onClick={() => setShowAccessModal(true)} style={{
+                <div onClick={() => setShowPremiumModal(true)} style={{
                   display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer',
                   padding: '10px 24px', borderRadius: 24,
                   background: 'linear-gradient(90deg, color-mix(in srgb, var(--gold) 13%, transparent), rgba(var(--lumens-rgb),0.13))',
@@ -931,7 +928,7 @@ export default function DashboardPage() {
                   <Component
                     userId={user?.id}
                     isPremium={isPremium}
-                    onUpgrade={() => setShowAccessModal(true)}
+                    onUpgrade={() => setShowPremiumModal(true)}
                     openCreate={showCreateCircle}
                     onCreateClose={() => setShowCreateCircle(false)}
                     openInvite={showInviteModal}
