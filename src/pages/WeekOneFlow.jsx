@@ -201,7 +201,7 @@ const LABEL_MAP = {
   // Jour 3 — espace
   travail:       'le travail',
   relations:     'les relations',
-  corps:         'mon corps',
+  corps:         'votre corps',
   pensees:       'mes pensées',
   avenir:        "l'avenir",
   // Jour 4 — besoin
@@ -305,11 +305,13 @@ export const WEEK_ONE_DATA = [
       `Vous vous sentiez ${labelFor(ans?.j1?.feel)}. Et vous avez quand même pris ce moment.`,
     ouverture: 'Demain, vous découvrirez ce qui vous porte, même quand vous vacillez.',
     helpTexts: {
-      accueil:       "Chaque jour commence par un moment d'accueil.\n\nCe n'est pas un test — c'est une invitation à revenir à vous-même.\n\nIl n'y a pas de bonne ou mauvaise façon d'être là.",
-      introspection: "Le baromètre n'est pas un jugement — c'est un relevé.\n\nNommer ce que vous ressentez, même vaguement, est déjà un acte de conscience.",
-      rituel:        "Les racines sont ce qui ne se voit pas.\n\nElles représentent votre sentiment de sécurité fondamentale — votre rapport au corps, à la terre, au présent.\n\nPrendre soin de ses racines, c'est revenir à l'essentiel : respirer, sentir, être là.",
-      trace:         "Ce que vous notez ici ne disparaît pas.\n\nVotre trace devient la mémoire vivante de votre parcours — elle sera là pour vous dans les jours difficiles.",
-      ouverture:     "Chaque fin de journée est aussi un seuil.\n\nVous avez posé la première pierre. Demain, une autre vous attend.",
+      accueil_intro:       "Ce moment n'exige rien de vous.\n\nPas de performance, pas d'état d'âme particulier à avoir. Juste cette respiration, ce corps, cette seconde qui existe.\n\nC'est suffisant pour commencer.",
+      accueil_arret:       "Vous êtes là. C'est déjà quelque chose.\n\nDans nos journées, on oublie souvent de simplement s'arrêter. Ce moment, vous venez de vous l'offrir.",
+      accueil_respiration: "Le souffle est toujours disponible.\n\nQuand tout s'accélère, il reste là, fidèle. Quelques secondes à lui accorder suffisent pour revenir à soi.",
+      introspection:       "Nommer ce que l'on ressent, c'est déjà sortir du brouillard.\n\nPas besoin d'être précis·e. Une direction suffit. Le corps sait avant les mots.",
+      rituel_transition:   "Ce que vous ressentez colore ce dont vous avez besoin.\n\nPas de bonne ou mauvaise réponse. Le rituel s'adapte à vous, pas l'inverse.",
+      rituel:              "Les racines d'une plante ne cherchent pas la lumière. Elles descendent, s'enfoncent, tiennent.\n\nC'est en vous ancrant dans le bas, le souffle, le sol, le corps, que vous trouvez la stabilité pour vous ouvrir vers le haut.\n\nCe rituel nourrit vos racines.",
+      validation:          "Ce que vous écrivez ici ne s'efface pas.\n\nDans un mois, dans un an, ces quelques mots vous diront d'où vous venez. C'est une forme de tendresse envers vous-même.",
     },
   },
 
@@ -383,11 +385,13 @@ export const WEEK_ONE_DATA = [
     },
     ouverture: 'Juste revenir… suffit. À demain.',
     helpTexts: {
-      accueil:       "Vous revenez. C'est déjà beaucoup.\n\nChaque retour, même hésitant, construit quelque chose de réel.\n\nLa régularité n'est pas une contrainte — c'est le soin que vous vous offrez.",
-      introspection: "Remarquer un changement — même minime — c'est affiner votre capacité d'attention.\n\nVous n'avez pas à ressentir quelque chose de spectaculaire. La subtilité compte autant.",
-      rituel:        "La tige est le lien entre le bas et le haut — entre ce qui vous ancre et ce qui vous ouvre.\n\nElle représente votre capacité à vous tenir debout face aux mouvements de la vie, sans rigidité.\n\nUne tige saine est à la fois ferme et souple.",
-      trace:         "Écrire après une pratique permet de laisser une empreinte dans la mémoire.\n\nMême quelques mots posés honnêtement ont plus de valeur que de longs discours.",
-      ouverture:     "Deux jours. Vous revenez. Votre tige commence à tenir.\n\nDemain, quelque chose de plus délicat vous sera proposé.",
+      accueil_intro:       "Revenir, c'est déjà résister à l'oubli.\n\nLe corps se souvient de ce qu'on lui répète. Chaque retour grave un sillon un peu plus profond, même quand l'envie n'y est pas.",
+      accueil_respiration: "Quelques respirations suffisent à changer la qualité de présence.\n\nPas besoin de méditer vingt minutes. Juste ce souffle, maintenant, avant de continuer.",
+      introspection:       "Le changement ne s'annonce pas toujours. Parfois, c'est juste une légère différence de teinte.\n\nCe que vous percevez aujourd'hui vous appartient, aussi petit soit-il.",
+      rituel_transition:   "Votre énergie du moment oriente ce dont vous avez besoin.\n\nLa tige s'adapte, elle ne se brise pas. Ce rituel part de là où vous en êtes.",
+      rituel:              "La tige porte sans plier. Elle tient la fleur vers le ciel tout en restant enracinée dans la terre.\n\nElle n'est ni rigide ni sans forme. Elle oscille, revient, tient bon.\n\nCe rituel renforce votre tige intérieure.",
+      trace:               "Quelques mots honnêtes valent plus que de belles phrases.\n\nEcrire après la pratique, c'est laisser l'expérience se déposer, comme de la terre après la pluie.",
+      ouverture:           "Deux jours. Votre tige commence à se dresser.\n\nDemain, quelque chose de plus délicat vous attend : les premières feuilles.",
     },
   },
 
@@ -436,7 +440,7 @@ export const WEEK_ONE_DATA = [
       choices: [
         { label: 'Le travail',    emoji: '💼', value: 'travail'   },
         { label: 'Les relations', emoji: '🤝', value: 'relations' },
-        { label: 'Mon corps',     emoji: '🧘', value: 'corps'     },
+        { label: 'Votre corps',     emoji: '🧘', value: 'corps'     },
         { label: 'Mes pensées',   emoji: '🌀', value: 'pensees'   },
         { label: "L'avenir",      emoji: '🔭', value: 'avenir'    },
       ],
@@ -509,11 +513,13 @@ export const WEEK_ONE_DATA = [
     },
     ouverture: 'Demain, vous allez vous accorder quelque chose de rare.',
     helpTexts: {
-      accueil:       "Regarder sans juger est l'une des choses les plus difficiles… et les plus transformatrices.\n\nCette semaine vous invite à observer ce qui est là, sans chercher à le changer.",
-      introspection: "Se voir tel qu'on est demande du courage.\n\nCe n'est pas de la complaisance — c'est le début de toute transformation réelle.",
-      rituel:        "Les feuilles sont en perpétuel mouvement — elles reçoivent, filtrent, laissent passer.\n\nElles symbolisent votre capacité à accueillir ce qui arrive sans tout retenir.\n\nLaisser traverser n'est pas de l'indifférence — c'est une forme de sagesse.",
-      trace:         "Vous avez nommé quelque chose aujourd'hui.\n\nC'est plus courageux qu'il n'y paraît — mettre des mots sur ce qu'on voit en soi, c'est déjà commencer à le transformer.",
-      ouverture:     "Trois jours d'observation.\n\nDemain, vous allez vous accorder quelque chose de rare : de l'espace.",
+      accueil_intro:       "Observer sans intervenir, c'est l'une des postures les plus difficiles qui soit.\n\nPas pour changer ce que vous voyez, mais pour le voir vraiment. Ce regard honnête est déjà un acte de courage.",
+      accueil_respiration: "Ce souffle avant de plonger dans la journée.\n\nIl crée un espace entre ce que vous étiez hier et ce que vous choisissez d'observer aujourd'hui.",
+      introspection:       "Ce que vous voyez en vous aujourd'hui n'est pas un verdict.\n\nC'est une photographie du moment. Les photos changent. Et regarder franchement, c'est déjà voir autrement.",
+      rituel_transition:   "Ce que vous avez observé prépare le terrain pour ce qui suit.\n\nLes feuilles accueillent ce qui arrive. Ce rituel part de votre réalité du moment.",
+      rituel:              "Les feuilles d'une plante respirent. Elles absorbent, transforment, relâchent, en permanence.\n\nElles ne retiennent rien. Ce que le vent apporte, elles le laissent repartir.\n\nCe rituel travaille votre capacité à laisser circuler ce qui traverse.",
+      trace:               "Vous avez nommé quelque chose aujourd'hui, peut-être pour la première fois.\n\nLes mots que vous posez ici ne jugent pas. Ils témoignent. C'est différent.",
+      ouverture:           "Trois jours. Vous observez. Vous nommez.\n\nDemain, une nouvelle invitation : vous accorder ce qui manquait.",
     },
   },
 
@@ -644,11 +650,13 @@ export const WEEK_ONE_DATA = [
     },
     ouverture: 'Demain, quelque chose de nouveau entre dans votre jardin.',
     helpTexts: {
-      accueil:       "Ralentir n'est pas reculer.\n\nDans notre culture, nous valorisons l'action. Mais c'est souvent dans le ralentissement que les choses trouvent leur juste place.",
-      introspection: "Ce que vous choisissez d'explorer aujourd'hui vous appartient entièrement.\n\nIl n'y a pas de bonne réponse — seulement votre vérité du moment.",
-      rituel:        "Les fleurs s'ouvrent quand les conditions sont réunies — elles ne peuvent pas être forcées.\n\nPrendre soin de vos fleurs, c'est créer les conditions de votre propre épanouissement.",
-      trace:         "Vous venez de vous accorder de l'espace.\n\nMême peu… compte. Chaque geste de soin envers vous-même laisse une trace que votre corps et votre esprit retiennent.",
-      ouverture:     "Quatre jours. Votre jardin intérieur prend forme.\n\nDemain, quelque chose de nouveau entre dans votre espace.",
+      accueil_intro:       "Ralentir demande plus d'audace qu'accélérer.\n\nDans un monde qui valorise la vitesse, s'arrêter est un acte presque subversif. Et pourtant, c'est souvent là que tout se remet en ordre.",
+      accueil_respiration: "Avant d'explorer, juste s'installer.\n\nCe souffle crée le sol sur lequel vous allez poser ce qui vient ensuite.",
+      introspection:       "Il n'y a pas de bonne réponse à ce que vous explorez ici.\n\nSeulement la vôtre, toujours en mouvement, toujours juste pour ce moment.",
+      rituel_transition:   "Ce dont vous avez besoin guide le rituel d'aujourd'hui.\n\nLes fleurs ne s'ouvrent que dans les conditions qui leur conviennent. Ce rituel crée les vôtres.",
+      rituel:              "Une fleur ne s'ouvre pas sur commande.\n\nElle attend que la lumière soit là, que la chaleur soit suffisante. Elle ne se force pas.\n\nCe rituel vous invite à créer ces conditions pour vous, sans effort, juste en ouvrant l'espace.",
+      trace:               "L'espace que vous venez de vous accorder a laissé une empreinte.\n\nVotre système nerveux l'a enregistré, même si vous n'en avez pas conscience. Même peu compte.",
+      ouverture:           "Quatre jours. Vos fleurs commencent à s'ouvrir.\n\nDemain, quelque chose de nouveau entre dans votre jardin : la dimension du lien.",
     },
   },
 
@@ -777,11 +785,13 @@ export const WEEK_ONE_DATA = [
     },
     ouverture: "Demain, vous allez voir quelque chose que vous n'avez pas encore vu.",
     helpTexts: {
-      accueil:       "Le lien commence souvent par un geste invisible — une attention portée, un espace ouvert.\n\nCe que vous faites ici crée des ondes dans votre façon d'être avec les autres.",
-      introspection: "Explorer votre rapport aux autres, c'est aussi mieux vous comprendre vous-même.\n\nLe lien n'est pas une perte de soi — c'est une extension de soi.",
-      rituel:        "Le souffle est ce qui relie tout.\n\nIl circule entre vous et le monde, entre vos différentes parties, entre le présent et ce qui vient.\n\nTravailler avec le souffle, c'est apprendre à ne plus lutter contre le cours des choses.",
-      trace:         "Vous avez pris soin… au-delà de vous-même.\n\nCe geste, même silencieux, a activé quelque chose dans votre jardin.",
-      ouverture:     "Cinq zones. Toutes actives désormais.\n\nDemain, un regard différent vous attend — quelque chose que vous n'avez pas encore vu.",
+      accueil_intro:       "Le lien ne se fabrique pas. Il s'ouvre.\n\nUne présence plus attentive, un regard moins pressé. Ce que vous cultivez ici change imperceptiblement la façon dont vous habitez vos relations.",
+      accueil_respiration: "Ce souffle avant de rencontrer l'autre.\n\nOn oublie souvent que la qualité de notre présence commence dans notre propre corps.",
+      introspection:       "Vous dire quelque chose sur votre rapport aux autres, c'est aussi vous en apprendre sur vous-même.\n\nLe lien est un miroir. Ce qu'il vous renvoie aujourd'hui est précieux.",
+      rituel_transition:   "Ce que vous avez ressenti dans vos relations guide ce rituel.\n\nLe souffle relie tout. Il part de vous et va vers le monde.",
+      rituel:              "Le souffle tisse un fil invisible entre vous et le reste du vivant.\n\nIl entre, il sort. Il relie votre monde intérieur à ce qui vous entoure.\n\nTravailler avec le souffle, c'est apprendre à habiter cet entre-deux.",
+      trace:               "Ce geste vers l'autre, ou vers vous-même, a résonné dans votre jardin.\n\nLe lien laisse toujours une trace, même quand on ne sait pas encore la nommer.",
+      ouverture:           "Cinq zones éveillées. Votre jardin prend sa forme.\n\nDemain, pour la première fois, vous allez le voir en entier.",
     },
   },
 
@@ -836,11 +846,13 @@ export const WEEK_ONE_DATA = [
       "Aujourd'hui, vous avez rencontré votre fleur. Elle vous attend chaque jour maintenant.",
     ouverture: 'Demain, un dernier regard avant de prendre votre envol.',
     helpTexts: {
-      accueil:       "Votre fleur est unique — elle porte votre histoire, vos couleurs, vos nuances.\n\nElle est le reflet de ce que vous avez traversé et de ce que vous portez en vous.",
-      introspection: "Certaines choses ne se nomment pas facilement.\n\nPrenez le temps qu'il faut. Ce que vous ressentez est valide, même si les mots manquent.",
-      rituel:        "Rencontrer votre fleur, c'est rencontrer une partie de vous-même.\n\nLaissez cette image vous toucher — il n'y a rien à faire, juste à recevoir.",
-      trace:         "Vous avez rencontré votre fleur aujourd'hui.\n\nElle vous attend chaque jour maintenant — une présence constante dans votre jardin intérieur.",
-      ouverture:     "Six jours. Votre fleur a pris racine.\n\nDemain, un dernier regard — avant de prendre votre envol.",
+      accueil_intro:       "Votre fleur ne ressemble à aucune autre.\n\nElle porte les couleurs de ce que vous avez traversé, les saisons difficiles autant que les belles lumières. Elle est fidèle à votre vérité.",
+      accueil_respiration: "Avant de la rencontrer, juste s'installer.\n\nCe souffle prépare l'espace intérieur pour accueillir ce qui arrive.",
+      introspection:       "Certaines choses résistent aux mots.\n\nC'est normal. Laissez venir ce qui vient : une image, une sensation, un silence. Ce sont aussi des réponses.",
+      rituel_transition:   "Vous avez cultivé cinq zones. Aujourd'hui elles convergent.\n\nVotre fleur est le reflet de tout ce travail.",
+      rituel:              "Rencontrer votre fleur, c'est rencontrer ce que vous avez cultivé.\n\nElle n'est pas un idéal. Elle est vous, maintenant, dans toute votre complexité. Laissez-la vous toucher sans chercher à l'interpréter.",
+      trace:               "Aujourd'hui, quelque chose a changé de forme.\n\nVotre fleur a un visage. Elle vous attend maintenant, chaque jour, dans votre jardin.",
+      ouverture:           "Six jours. Votre fleur a pris racine, votre tige se tient.\n\nDemain, un dernier jour avant d'entrer dans quelque chose de plus grand.",
     },
   },
 
@@ -886,11 +898,13 @@ export const WEEK_ONE_DATA = [
     isFinal: true,
     finalCTA: 'Entrer dans mon jardin',
     helpTexts: {
-      accueil:       "Vous avez traversé sept jours. Chaque jour avait sa couleur, sa texture.\n\nCe que vous avez cultivé ici continue de grandir, à votre rythme.",
-      introspection: "Ce que vous avez remarqué cette semaine vous appartient.\n\nAujourd'hui, regardez ce que vous emportez avec vous.",
-      rituel:        "Le jardin collectif est une invitation à sortir de l'isolement intérieur.\n\nVotre présence, votre engagement, votre pratique — tout cela rayonne au-delà de vous.\n\nBienvenue dans le jardin partagé.",
-      trace:         "Sept jours. Vous n'êtes pas seul·e dans ce jardin.\n\nLe reste du chemin se fait ensemble.",
-      ouverture:     "Votre fleur a pris racine. Votre jardin existe.\n\nMaintenant, il rencontre les autres.",
+      accueil_intro:       "Sept jours. Chaque jour avait sa lumière, sa résistance, sa couleur.\n\nCe que vous avez traversé n'est pas derrière vous. C'est en vous, désormais. Quelque chose a changé de forme.",
+      accueil_respiration: "Un dernier souffle avant d'entrer dans le jardin partagé.\n\nCe que vous portez aujourd'hui, vous allez le retrouver dans les autres aussi.",
+      introspection:       "Ce que vous emportez de cette semaine ne tient pas toujours dans un mot.\n\nPeut-être une sensation. Une image. Un peu plus de douceur envers vous-même. C'est suffisant.",
+      rituel_transition:   "Ce que vous avez remarqué cette semaine prend sens ici.\n\nLe jardin collectif n'efface pas le vôtre. Il le prolonge.",
+      rituel:              "Un jardin partagé n'efface pas le vôtre. Il l'enrichit.\n\nVotre pratique, votre présence, votre engagement cette semaine ont une résonance au-delà de vous.\n\nEntrer dans le jardin collectif, c'est continuer de grandir autrement.",
+      trace:               "Sept jours. Et vous n'êtes pas seul·e dans ce qui s'est passé.\n\nD'autres jardins poussent en même temps que le vôtre. Ce chemin se fait ensemble, maintenant.",
+      ouverture:           "Votre fleur existe. Votre jardin est vivant.\n\nCe n'est pas une fin. C'est le début de quelque chose qui dure.",
     },
   },
 ]
@@ -1656,15 +1670,19 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
 
 // ── ACCUEIL SLIDE 1 ────────────────────────────────────────────────────────
 
-function DayAccueilSlide1({ answerKey, onAnswer }) {
+function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   const [subSlide, setSubSlide] = useState(0)
   const [phase,    setPhase]    = useState(0)
+
+  useEffect(() => {
+    const screens = ['accueil_intro', 'accueil_arret', 'accueil_respiration', 'introspection']
+    onScreenChange?.(screens[subSlide] ?? 'accueil_intro')
+  }, [subSlide])
 
   useEffect(() => {
     setPhase(0)
     let timers
     if (subSlide === 0) {
-      // SLIDE 0 — INTRO
       timers = [
         setTimeout(() => setPhase(1), 200),
         setTimeout(() => setPhase(2), 400),
@@ -1672,19 +1690,16 @@ function DayAccueilSlide1({ answerKey, onAnswer }) {
         setTimeout(() => setPhase(4), 800),
       ]
     } else if (subSlide === 1) {
-      // SLIDE 1 — ARRÊT
       timers = [
         setTimeout(() => setPhase(1), 200),
         setTimeout(() => setPhase(2), 500),
       ]
     } else if (subSlide === 2) {
-      // SLIDE 2 — CONNEXION
       timers = [
         setTimeout(() => setPhase(1), 200),
         setTimeout(() => setPhase(2), 600),
       ]
     } else {
-      // SLIDE 3 — QUESTION
       timers = [
         setTimeout(() => setPhase(1), 150),
       ]
@@ -1847,10 +1862,15 @@ function DayAccueilSlide1({ answerKey, onAnswer }) {
 
 // ── Mise en condition (jours 2-7) ──────────────────────────────────────────
 
-function ConditioningAccueil({ data, answers, onConditioningComplete }) {
+function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenChange }) {
   const [subSlide, setSubSlide] = useState(0)
   const [ctaReady, setCtaReady] = useState(false)
   const [breathCta, setBreathCta] = useState(false)
+
+  useEffect(() => {
+    const screens = ['accueil_intro', 'accueil_respiration', 'introspection']
+    onScreenChange?.(screens[subSlide] ?? 'accueil_intro')
+  }, [subSlide])
 
   useEffect(() => {
     setCtaReady(false)
@@ -1963,7 +1983,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete }) {
 
 // ── ACCUEIL ────────────────────────────────────────────────────────────────
 
-function DayAccueil({ data, introspectionData, answers, onAnswerFromAccueil, onConditioningComplete, onNext }) {
+function DayAccueil({ data, introspectionData, answers, onAnswerFromAccueil, onConditioningComplete, onNext, onScreenChange }) {
   const isSlide1       = data.layout === 'slide1'
   const isConditioning = data.conditioning === true
 
@@ -1984,6 +2004,7 @@ function DayAccueil({ data, introspectionData, answers, onAnswerFromAccueil, onC
       <DayAccueilSlide1
         answerKey={introspectionData?.answerKey}
         onAnswer={onAnswerFromAccueil}
+        onScreenChange={onScreenChange}
       />
     )
   }
@@ -1994,6 +2015,7 @@ function DayAccueil({ data, introspectionData, answers, onAnswerFromAccueil, onC
         data={data}
         answers={answers}
         onConditioningComplete={onConditioningComplete}
+        onScreenChange={onScreenChange}
       />
     )
   }
@@ -2784,7 +2806,8 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
 
 // ── INTROSPECTION ──────────────────────────────────────────────────────────
 
-function DayIntrospection({ data, onAnswer, onBack }) {
+function DayIntrospection({ data, onAnswer, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('introspection') }, [])
   const [selected, setSelected] = useState(null)
 
   if (data.component === 'energy-battery') {
@@ -4138,11 +4161,15 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
 
 // ── RITUEL ─────────────────────────────────────────────────────────────────
 
-function DayRituel({ data, answers, dayColor, onNext, onBack }) {
+function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) {
   const [showTransition, setShowTransition] = useState(!!data.getIntro)
   const [freeChoice,     setFreeChoice]     = useState(null)
   const [choiceStarted,  setChoiceStarted]  = useState(false)
   const [timerDone,      setTimerDone]      = useState(false)
+
+  useEffect(() => {
+    onScreenChange?.(showTransition ? 'rituel_transition' : 'rituel')
+  }, [showTransition])
 
   if (showTransition) {
     return (
@@ -4284,7 +4311,8 @@ function DayRituel({ data, answers, dayColor, onNext, onBack }) {
 
 // ── TRACE ──────────────────────────────────────────────────────────────────
 
-function DayTrace({ text, onNext, onBack, onFleur }) {
+function DayTrace({ text, onNext, onBack, onFleur, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('trace') }, [])
   return (
     <div className="wof-in" style={{ padding: '8px 0 16px', textAlign: 'center' }}>
       <BackButton onClick={onBack} />
@@ -4342,7 +4370,8 @@ function DayTrace({ text, onNext, onBack, onFleur }) {
 
 // ── OUVERTURE ──────────────────────────────────────────────────────────────
 
-function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack }) {
+function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('ouverture') }, [])
   return (
     <div className="wof-in" style={{ padding: '8px 0 16px', textAlign: 'center' }}>
       {!isFinal && <BackButton onClick={onBack} />}
@@ -4395,7 +4424,8 @@ function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack }) {
 
 // ── VALIDATION GUIDÉE JOUR 1 ───────────────────────────────────────────────
 
-function RacinesValidation({ answers, onNext, onBack }) {
+function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('validation') }, [])
   const [phase, setPhase] = useState(0)
   const phaseRefs = useRef({})
   const hasBarometer = !!answers?.j1?.feel
@@ -4500,6 +4530,15 @@ function HelpBandeau({ helpText }) {
   const [open, setOpen] = useState(false)
   const bandeauRef = useRef(null)
   const [panelRect, setPanelRect] = useState(null)
+  const [pulse, setPulse] = useState(false)
+
+  // Ferme le panneau et pulse le bandeau quand l'étape change
+  useEffect(() => {
+    setOpen(false)
+    setPulse(true)
+    const t = setTimeout(() => setPulse(false), 800)
+    return () => clearTimeout(t)
+  }, [helpText])
 
   function handleOpen() {
     // Récupère les dimensions du wof-modal (ancêtre position:relative)
@@ -4599,7 +4638,7 @@ function HelpBandeau({ helpText }) {
 
                 {/* Texte à gauche — avec padding droit pour laisser place au personnage */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 180 }}>
-                  {(helpText || "Un espace pour approfondir ce que vous venez de vivre.\n\nPrenez le temps de ressentir ce qui s'est passé en vous pendant cette étape.\n\nIl n'y a rien à forcer — juste à laisser la pratique continuer de résonner.")
+                  {(helpText || "Un espace pour approfondir ce que vous venez de vivre.\n\nPrenez le temps de ressentir ce qui s'est passé en vous pendant cette étape.\n\nIl n'y a rien à forcer, laissez juste la pratique continuer de résonner.")
                     .split('\n\n')
                     .map((para, i) => (
                       <p key={i} style={{
@@ -4660,6 +4699,9 @@ function HelpBandeau({ helpText }) {
           height: 150,
           overflow: 'hidden',
           flexShrink: 0,
+          transition: 'filter 0.3s ease, transform 0.3s ease',
+          filter: pulse ? 'brightness(1.15)' : 'brightness(1)',
+          transform: pulse ? 'scale(1.01)' : 'scale(1)',
         }}
       >
         <img
@@ -4694,22 +4736,31 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
   const [step, setStep] = useState(0)
   const [animKey, setAnimKey] = useState(0)
   const [showFleurModal, setShowFleurModal] = useState(false)
+  const [screen, setScreen] = useState('accueil_intro')
 
   const dayConfig = WEEK_ONE_DATA[dayIndex]
 
+  function notifyScreen(screenId) {
+    setScreen(screenId)
+    onStepChange?.(screenId, screenId, dayConfig)
+  }
+
   useEffect(() => {
-    onStepChange?.(0, STEP_THEMES[0], dayConfig)
+    notifyScreen('accueil_intro')
   }, [])
 
   function advance() {
     const next = step + 1
     setStep(next)
     setAnimKey((k) => k + 1)
-    onStepChange?.(next, STEP_THEMES[next] ?? '', dayConfig)
+    // Le screen sera mis à jour par le composant enfant via onScreenChange
   }
 
   function goBack() {
-    const prev = Math.max(0, step - 1)
+    // Au jour 1, l'introspection est intégrée dans l'accueil (slide1).
+    // On saute le step 1 pour éviter le doublon.
+    const skip = dayConfig.accueil?.layout === 'slide1' && step === 2
+    const prev = skip ? 0 : Math.max(0, step - 1)
     setStep(prev)
     setAnimKey((k) => k + 1)
   }
@@ -4728,6 +4779,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
     onDayComplete({ type: 'answer', dayKey: `j${dayConfig.day}`, answerKey, value })
     setStep(2)
     setAnimKey((k) => k + 1)
+    notifyScreen('rituel_transition')
   }
 
   function handleDayDone() {
@@ -4752,6 +4804,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onAnswerFromAccueil={handleAnswerFromAccueil}
           onConditioningComplete={handleConditioningComplete}
           onNext={advance}
+          onScreenChange={notifyScreen}
         />
       )}
       {step === 1 && (
@@ -4759,6 +4812,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           data={dayConfig.introspection}
           onAnswer={handleAnswer}
           onBack={goBack}
+          onScreenChange={notifyScreen}
         />
       )}
       {step === 2 && (
@@ -4768,6 +4822,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           dayColor={dayConfig.color}
           onNext={advance}
           onBack={goBack}
+          onScreenChange={notifyScreen}
         />
       )}
       {step === 3 && dayConfig.guidedValidation && (
@@ -4775,6 +4830,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           answers={answers}
           onNext={handleDayDone}
           onBack={goBack}
+          onScreenChange={notifyScreen}
         />
       )}
       {step === 3 && !dayConfig.guidedValidation && (
@@ -4782,7 +4838,8 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           text={traceText}
           onNext={advance}
           onBack={goBack}
-          onFleur={dayConfig.day === 6 ? () => setShowFleurModal(true) : undefined}
+          onFleur={undefined}
+          onScreenChange={notifyScreen}
         />
       )}
       {step === 4 && (
@@ -4792,6 +4849,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           ctaLabel={dayConfig.finalCTA}
           onNext={handleDayDone}
           onBack={goBack}
+          onScreenChange={notifyScreen}
         />
       )}
     </div>
@@ -5567,7 +5625,7 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
   const [activeZoneId, setActiveZoneId] = useState(null)
   const [completedRituals, setCompletedRituals] = useState({})
   const { rituals: plantRituals } = useRituels()
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentScreen, setCurrentScreen] = useState('accueil_intro')
 
   // Lutin compagnon
   const [lutinVisible,   setLutinVisible]  = useState(false)
@@ -5600,9 +5658,9 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
     }).catch(() => {}).finally(() => setLutinLoading(false))
   }
 
-  // Déclenché à chaque changement de step (via DayShell)
-  function handleStepChange(step, stepTheme, dayCfg) {
-    setCurrentStep(step)
+  // Déclenché à chaque changement de screen (via DayShell)
+  function handleStepChange(screen, stepTheme, dayCfg) {
+    setCurrentScreen(screen)
     clearTimeout(lutinShowTimer.current)
     clearTimeout(lutinHideTimer.current)
     setBubbleOpen(false)
@@ -6070,9 +6128,8 @@ console.log('❌ Pas de données ou erreur:', error)
 
           {/* ── HelpBandeau — dernier enfant flex du modal, collé en bas ── */}
           {view !== 'garden' && (() => {
-            const STEP_KEYS = ['accueil', 'introspection', 'rituel', 'trace', 'ouverture']
-            const helpText = currentConfig.helpTexts?.[STEP_KEYS[currentStep]]
-            return <HelpBandeau helpText={helpText} />
+            const helpText = currentConfig.helpTexts?.[currentScreen]
+            return <HelpBandeau key={`${currentConfig.day}-${currentScreen}`} helpText={helpText} />
           })()}
 
         </div>

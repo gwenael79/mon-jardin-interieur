@@ -15,68 +15,81 @@ import { useTheme } from '../hooks/useTheme'
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap');
 
-@keyframes eow-in  { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
-@keyframes eow-glow{ 0%,100%{box-shadow:0 0 0 0 transparent} 50%{box-shadow:0 0 32px 8px rgba(200,160,48,0.18)} }
+@keyframes eow-in    { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+@keyframes eow-modal { from{opacity:0;transform:scale(.96) translateY(16px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes eow-glow  { 0%,100%{box-shadow:0 0 0 0 transparent} 50%{box-shadow:0 0 32px 8px rgba(200,160,48,0.18)} }
 
+/* ── Overlay ── */
 .eow-root {
   position: fixed; inset: 0; z-index: 200;
-  background: linear-gradient(160deg, #f8f0ec, #ede5de);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-start;
-  overflow-y: auto; overflow-x: hidden;
-  padding: 48px 20px 60px;
+  background: rgba(20,12,6,.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
   font-family: 'Jost', sans-serif;
+  animation: eow-in .3s ease both;
+}
+
+/* ── Modal box ── */
+.eow-modal {
+  background: linear-gradient(160deg, #f8f0ec, #ede5de);
+  border-radius: 24px;
+  width: 100%; max-width: 580px;
+  max-height: 92vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 28px 48px;
+  animation: eow-modal .4s cubic-bezier(.22,1,.36,1) both;
+  box-shadow: 0 32px 80px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.12);
 }
 
 /* ── Header ── */
 .eow-header {
   text-align: center;
-  margin-bottom: 36px;
+  margin-bottom: 32px;
   animation: eow-in .7s cubic-bezier(.22,1,.36,1) both;
 }
 .eow-eyebrow {
-  font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+  font-size: 13px; letter-spacing: .22em; text-transform: uppercase;
   color: rgba(30,20,8,.55); margin-bottom: 12px;
 }
 .eow-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(26px, 5vw, 38px); font-weight: 300;
+  font-size: clamp(36px, 6vw, 52px); font-weight: 300;
   color: rgba(30,20,8,.92); line-height: 1.2; margin-bottom: 10px;
 }
 .eow-title em { font-style: italic; color: #7a4030; }
 .eow-sub {
-  font-size: 14px; font-weight: 300;
-  color: rgba(30,20,8,.65); line-height: 1.7; max-width: 380px; margin: 0 auto;
+  font-size: 18px; font-weight: 300;
+  color: rgba(30,20,8,.65); line-height: 1.7; max-width: 400px; margin: 0 auto;
 }
 
 /* ── Cards ── */
 .eow-cards {
   display: flex; flex-direction: column;
-  gap: 14px; width: 100%; max-width: 480px;
+  gap: 14px; width: 100%;
 }
 
 .eow-card {
-  border-radius: 20px; padding: 24px 24px 22px;
+  border-radius: 20px; padding: 26px 26px 24px;
   position: relative; overflow: hidden;
   transition: transform .2s ease, box-shadow .2s ease;
 }
 .eow-card:hover { transform: translateY(-2px); }
 
-/* Card 1 — mois offert */
 .eow-card-trial {
   background: linear-gradient(135deg, #fef9e8, #fdf0c0);
   border: 1.5px solid rgba(200,160,48,.40);
   box-shadow: 0 6px 28px rgba(200,160,48,.12);
   animation: eow-in .6s cubic-bezier(.22,1,.36,1) .05s both, eow-glow 3s ease-in-out 1.2s infinite;
 }
-/* Card 2 — gratuit */
 .eow-card-free {
-  background: rgba(255,255,255,.70);
+  background: rgba(255,255,255,.80);
   border: 1px solid rgba(0,0,0,.09);
   box-shadow: 0 4px 18px rgba(0,0,0,.06);
   animation: eow-in .6s cubic-bezier(.22,1,.36,1) .15s both;
 }
-/* Card 3 — premium */
 .eow-card-prem {
   background: linear-gradient(135deg, #1a2f12, #243818);
   border: 1.5px solid rgba(122,170,80,.30);
@@ -86,8 +99,8 @@ const css = `
 
 .eow-card-badge {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 9px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
-  padding: 4px 12px; border-radius: 100px; margin-bottom: 14px;
+  font-size: 12px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600;
+  padding: 6px 14px; border-radius: 100px; margin-bottom: 14px;
 }
 .eow-badge-trial { background: rgba(200,144,10,.15); color: #c8900a; border: 1px solid rgba(200,144,10,.30); }
 .eow-badge-free  { background: rgba(0,0,0,.07); color: rgba(26,18,8,.65); border: 1px solid rgba(0,0,0,.18); }
@@ -95,44 +108,44 @@ const css = `
 
 .eow-card-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(22px, 5vw, 28px); font-weight: 400; line-height: 1.2;
-  margin-bottom: 10px;
+  font-size: clamp(28px, 4vw, 36px); font-weight: 400; line-height: 1.2;
+  margin-bottom: 12px;
 }
 .eow-card-trial .eow-card-title  { color: #1a1208; }
 .eow-card-free  .eow-card-title  { color: #1a1208; }
 .eow-card-prem  .eow-card-title  { color: #ffffff; }
 
 .eow-card-body {
-  font-size: 14px; font-weight: 300; line-height: 1.75; margin-bottom: 20px;
+  font-size: 18px; font-weight: 300; line-height: 1.75; margin-bottom: 20px;
 }
 .eow-card-trial .eow-card-body  { color: rgba(26,18,8,.80); }
 .eow-card-free  .eow-card-body  { color: rgba(26,18,8,.72); }
 .eow-card-prem  .eow-card-body  { color: rgba(255,255,255,.80); }
 
 .eow-features {
-  list-style: none; margin: 0 0 20px; padding: 0;
-  display: flex; flex-direction: column; gap: 7px;
+  list-style: none; margin: 0 0 22px; padding: 0;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .eow-features li {
-  display: flex; align-items: center; gap: 9px;
-  font-size: 13.5px; font-weight: 300;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 18px; font-weight: 300;
 }
 .eow-card-trial .eow-features li  { color: rgba(26,18,8,.88); }
 .eow-card-free  .eow-features li  { color: rgba(26,18,8,.80); }
 .eow-card-prem  .eow-features li  { color: rgba(255,255,255,.90); }
 
 .eow-check {
-  width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%;
+  width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 9px;
+  font-size: 11px;
 }
 .eow-check-gold  { background: rgba(200,144,10,.18); color: #c8900a; border: 1px solid rgba(200,144,10,.35); }
 .eow-check-green { background: rgba(80,150,40,.14); color: #5a9a28; border: 1px solid rgba(80,150,40,.30); }
 .eow-check-light { background: rgba(122,200,64,.12); color: #8ad048; border: 1px solid rgba(122,200,64,.28); }
 
 .eow-btn {
-  width: 100%; padding: 14px 20px; border-radius: 50px; border: none;
-  font-family: 'Jost', sans-serif; font-size: 13.5px; font-weight: 500;
+  width: 100%; padding: 18px 20px; border-radius: 50px; border: none;
+  font-family: 'Jost', sans-serif; font-size: 18px; font-weight: 500;
   letter-spacing: .05em; cursor: pointer;
   transition: transform .18s ease, opacity .18s ease;
   display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -157,19 +170,15 @@ const css = `
 }
 
 .eow-timer {
-  font-size: 11px; color: rgba(60,40,10,.55);
+  font-size: 14px; color: rgba(60,40,10,.55);
   text-align: center; margin-top: 10px;
   font-style: italic;
 }
 
 .eow-note {
-  font-size: 11px; color: rgba(30,20,8,.45);
+  font-size: 14px; color: rgba(30,20,8,.45);
   text-align: center; margin-top: 28px;
   font-style: italic; animation: eow-in .6s .4s both;
-}
-
-@media (min-width: 640px) {
-  .eow-root { padding: 64px 32px 80px; }
 }
 `
 
@@ -225,6 +234,7 @@ export function EndOfWeekScreen({ userId, onContinue }) {
     <>
       <style>{css}</style>
       <div className="eow-root">
+        <div className="eow-modal">
 
         {/* ── Header ── */}
         <div className="eow-header">
@@ -304,6 +314,7 @@ export function EndOfWeekScreen({ userId, onContinue }) {
               <li><CheckLight/>Jardinothèque complète (audio, vidéo, e-books)</li>
               <li><CheckLight/>Ateliers guidés &amp; accompagnements</li>
               <li><CheckLight/>Accès prioritaire aux nouveautés</li>
+              <li><CheckLight/>Accès à l'appli Pep's <em style={{fontSize:11,opacity:.65,fontStyle:'italic'}}>(bientôt disponible)</em></li>
             </ul>
             <button className="eow-btn eow-btn-prem" onClick={handlePremium}>
               Choisir Premium →
@@ -316,6 +327,7 @@ export function EndOfWeekScreen({ userId, onContinue }) {
           Vous pouvez changer d'avis à tout moment depuis vos paramètres.
         </p>
 
+        </div>{/* /.eow-modal */}
       </div>
     </>
   )
