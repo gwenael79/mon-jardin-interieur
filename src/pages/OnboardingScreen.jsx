@@ -1138,7 +1138,7 @@ function SlidesEducatives({ onComplete }) {
             fontSize: isMobile ? 'clamp(22px,6vw,32px)' : 'clamp(26px,3vw,40px)',
             fontWeight: (slide.id === 'stress' || slide.id === 'benefices') ? 300 : 400,
             lineHeight:1.1, color:'var(--text)',
-            marginBottom: isMobile ? 8 : (slide.id === 'benefices' ? 40 : 12),
+            marginBottom: slide.id === 'benefices' ? 40 : (isMobile ? 8 : 12),
             whiteSpace: isMobile ? 'pre-line' : 'nowrap',
             letterSpacing:'-0.01em', flexShrink:0,
           }}>{slide.title}</h2>
