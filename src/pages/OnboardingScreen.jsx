@@ -11,7 +11,15 @@ import { useTheme } from '../hooks/useTheme'
 // ─────────────────────────────────────────────────────────────────────────────
 export const ONBOARDING_SLIDES = [
   {
-    id: 'stress', tag: 'Le saviez-vous ?',
+    id: 'pourquoi', tag: 'Avant de commencer',
+    title: 'Si vous êtes là,\nc\'est pour une raison',
+    body: 'Pas de crise visible, pas de raison claire. Juste cette sensation que quelque chose s\'use doucement. C\'est exactement ce dont nous allons parler.',
+    bodyDesktop: 'Si vous avez ouvert cette application, ce n\'est probablement pas par hasard. Quelque chose dans votre quotidien ne tourne plus tout à fait comme avant. Pas de crise visible, pas de raison claire à pointer du doigt. Juste cette sensation diffuse que l\'énergie s\'amenuise, que l\'élan se perd progressivement. Nous allons mettre des mots sur ce que vous traversez, et surtout vous montrer qu\'il existe un chemin pour en sortir.',
+    highlight: 'Vous n\'êtes pas seul(e). Et ce que vous ressentez a un nom.',
+    color: '#9ab8c8', visual: 'wave',
+  },
+  {
+    id: 'stress', tag: 'Le saviez-vous ?', boldWords: ["stress d'usure"],
     title: 'Le stress d\'usure,\nun ennemi discret',
     body: 'Il ne crie pas. Il s\'installe doucement : une fatigue qui ne part plus, une irritabilité qui grandit, un élan qui s\'efface. Le stress d\'usure s\'accumule en silence, sans que l\'on s\'en rende vraiment compte.',
     bodyDesktop: 'Il ne crie pas. Il ne se voit pas. Il s\'installe comme de l\'eau qui monte, doucement, régulièrement, sans signal d\'alarme. Une fatigue qui ne part plus après le week-end. Une irritabilité qui surprend. Un élan qui s\'efface sans raison apparente. Le stress d\'usure ne ressemble pas au stress qu\'on imagine. Il est subtil, patient, et souvent confondu avec la "normale".',
@@ -1045,6 +1053,17 @@ function SlidesEducatives({ onComplete }) {
   const isLast = step === ONBOARDING_SLIDES.length - 1
   const c      = slide.color
 
+  function renderText(text) {
+    if (!slide.boldWords?.length) return text
+    const regex = new RegExp(`(${slide.boldWords.join('|')})`, 'gi')
+    const parts = text.split(regex)
+    return parts.map((p, i) =>
+      slide.boldWords.some(w => w.toLowerCase() === p.toLowerCase())
+        ? <strong key={i} style={{ fontWeight:700, color:'#2d6a1f' }}>{p}</strong>
+        : p
+    )
+  }
+
   function next() {
     if (leaving) return
     if (isLast) { onComplete(); return }
@@ -1129,7 +1148,7 @@ function SlidesEducatives({ onComplete }) {
         transition:'opacity .28s ease, transform .28s ease',
       }}>
 
-        {(slide.id === 'stress' || slide.id === 'freins' || slide.id === 'benefices' || slide.id === 'promise' || slide.id === 'spectrum') ? (
+        {(slide.id === 'pourquoi' || slide.id === 'stress' || slide.id === 'freins' || slide.id === 'benefices' || slide.id === 'promise' || slide.id === 'spectrum') ? (
           /* ── Layout 2 colonnes ── */
           <>
           {/* Titre pleine largeur au-dessus des colonnes */}
@@ -1147,18 +1166,30 @@ function SlidesEducatives({ onComplete }) {
             {/* Colonne gauche — masquée sur mobile pour les slides image-only */}
             {/* Colonne gauche : image pour stress/benefices, texte pour freins/promise/spectrum */}
             <div style={{
-              flex: isMobile ? '1 1 auto' : (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%',
+              flex: isMobile ? '1 1 auto' : (slide.id === 'pourquoi' || slide.id === 'benefices') ? '0 0 40%' : '0 0 70%',
               position:'relative', zIndex:2,
-              display: (isMobile && (slide.id === 'stress' || slide.id === 'benefices')) ? 'none' : 'flex',
+              display: (isMobile && (slide.id === 'pourquoi' || slide.id === 'benefices')) ? 'none' : 'flex',
               flexDirection:'column',
               overflowX: 'hidden',
-              overflowY: (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') ? 'auto' : 'hidden',
+              overflowY: (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum' || slide.id === 'stress') ? 'auto' : 'hidden',
               WebkitOverflowScrolling: 'touch',
               paddingBottom: (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') ? (isMobile ? 12 : 16) : 0,
               direction: (!isMobile && (slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum')) ? 'rtl' : undefined,
             }}>
-              {(slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum') && (
+              {(slide.id === 'freins' || slide.id === 'promise' || slide.id === 'spectrum' || slide.id === 'stress') && (
                 <div style={{ direction:'ltr', display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10, position:'relative' }}>
+                  {slide.id === 'stress' && (
+                    <>
+                      <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.7, margin:0 }}>
+                        Il ne crie pas. Il ne se voit pas. Il s'installe comme de l'eau qui monte, doucement, régulièrement, sans signal d'alarme. Une fatigue qui ne part plus après le week-end. Une irritabilité qui surprend. Un élan qui s'efface sans raison apparente. Le{' '}<strong style={{ fontWeight:800, color:'#3a9a28', fontSize:'1.05em', letterSpacing:'.01em' }}>stress d'usure</strong>{' '}ne ressemble pas au stress qu'on imagine. Il est subtil, patient, et souvent confondu avec la "normale".
+                      </p>
+                      {slide.highlight && (
+                        <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
+                          {slide.highlight}
+                        </div>
+                      )}
+                    </>
+                  )}
                   {slide.id === 'impact' && (
                     <img
                       src="/stress3.png"
@@ -1214,7 +1245,7 @@ function SlidesEducatives({ onComplete }) {
                   )}
                 </div>
               )}
-              {slide.id === 'stress' && !isMobile && (
+              {slide.id === 'pourquoi' && !isMobile && (
                 <img src="/stress1.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', marginLeft:'-20%' }}/>
               )}
               {slide.id === 'benefices' && !isMobile && (
@@ -1224,13 +1255,13 @@ function SlidesEducatives({ onComplete }) {
 
             {/* Colonne droite */}
             <div style={{
-              flex: isMobile ? '1 1 auto' : (slide.id === 'stress' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%',
+              flex: isMobile ? '1 1 auto' : (slide.id === 'pourquoi' || slide.id === 'benefices') ? '0 0 70%' : '0 0 40%',
               marginLeft: isMobile ? 0 : '-10%',
               position:'relative', zIndex:1, display:'flex',
               alignItems: (slide.id === 'stress' || slide.id === 'benefices') ? 'flex-start' : (slide.id === 'promise' || slide.id === 'spectrum') ? 'center' : 'flex-end',
               justifyContent:'center',
               overflowX: 'hidden',
-              overflowY: (slide.id === 'stress' || slide.id === 'benefices') ? (isMobile ? 'visible' : 'auto') : (isMobile ? 'visible' : 'hidden'),
+              overflowY: (slide.id === 'pourquoi' || slide.id === 'benefices') ? (isMobile ? 'visible' : 'auto') : (isMobile ? 'visible' : 'hidden'),
               WebkitOverflowScrolling: 'touch',
             }}>
               {slide.id === 'spectrum' && !isMobile && (
@@ -1242,20 +1273,33 @@ function SlidesEducatives({ onComplete }) {
               {slide.id === 'promise' && !isMobile && (
                 <img src="/zen.png" alt="" style={{ width:'100%', height:'auto', objectFit:'contain', display:'block', marginLeft:'20%', animation:'onbFloat 4s ease-in-out infinite' }}/>
               )}
-              {slide.id === 'stress' && (
+              {slide.id === 'pourquoi' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', width:'100%', height:'100%' }}>
-                  <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10, paddingBottom: isMobile ? 8 : 12 }}>
+                  <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 10, paddingBottom: isMobile ? 0 : 12 }}>
                     <p style={{ fontSize: isMobile ? 'var(--fs-h4,14px)' : 'var(--fs-h3,15px)', fontWeight:400, color:'var(--text2)', lineHeight:1.7, margin:0 }}>{slide.bodyDesktop || slide.body}</p>
                     {slide.highlight && (
                       <div style={{ padding:'12px 16px', borderRadius:12, background:`${c}10`, border:`1px solid ${c}25`, fontSize:'var(--fs-h4,13px)', fontWeight:500, color:c, lineHeight:1.5 }}>
                          {slide.highlight}
                       </div>
                     )}
+                    {isMobile && (
+                      <div style={{ display:'flex', justifyContent:'center', marginTop:8 }}>
+                        <img
+                          src="/stress1.png"
+                          alt=""
+                          style={{
+                            height:220, width:'auto', objectFit:'contain', objectPosition:'bottom center',
+                            filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.18))',
+                            display:'block',
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
-                  {isMobile && (
-                    <img src="/stress1.png" alt="" style={{ marginTop:'auto', width:'70%', alignSelf:'center', objectFit:'contain', display:'block', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.15))' }}/>
-                  )}
                 </div>
+              )}
+              {slide.id === 'stress' && !isMobile && (
+                <img src="/instructeur2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(20px)' }}/>
               )}
               {slide.id === 'benefices' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
