@@ -898,7 +898,7 @@ export function PremiumModal({ onSuccess, onClose }) {
 
           {/* Bénéfices clés */}
           <div style={{ display:'flex', flexDirection:'column', gap:6, margin:'16px 0 4px', padding:'14px 16px', background:'rgba(90,154,40,.06)', borderRadius:12, border:'1px solid rgba(90,154,40,.15)' }}>
-            {['Club des jardiniers & jardin collectif','Défis communautaires — toutes les zones','Jardinothèque complète (méditations, hypnoses, e-books)','Ateliers guidés & accompagnements'].map(f => (
+            {['Club des jardiniers & jardin collectif','Défis communautaires — toutes les zones','Jardinothèque complète (méditations, hypnoses, e-books)','Ateliers guidés & accompagnements',"Application Pep's — bientôt disponible"].map(f => (
               <div key={f} style={{ display:'flex', alignItems:'center', gap:8, fontSize:13.5, color:'rgba(30,20,8,.82)', fontFamily:"'Jost',sans-serif" }}>
                 <span style={{ color:'#5a9a28', fontSize:14, flexShrink:0 }}>✓</span>{f}
               </div>
@@ -958,6 +958,86 @@ export function PremiumModal({ onSuccess, onClose }) {
               </div>
               <div className="pm-radio" style={{ borderColor: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.8)' : undefined, background: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.85)' : undefined }}>
                 <div className="pm-radio-dot"/>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Teaser Pep's ─────────────────────────────────────────── */}
+          <div style={{
+            margin: '4px 0 20px',
+            borderRadius: 16,
+            border: '1.5px solid rgba(58,154,40,.22)',
+            background: 'linear-gradient(135deg, rgba(58,154,40,.06) 0%, rgba(40,120,20,.10) 100%)',
+            overflow: 'hidden',
+          }}>
+            {/* Header Pep's */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 16px 10px',
+              borderBottom: '1px solid rgba(58,154,40,.12)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <img
+                  src="/peps1.png"
+                  alt="Pep's"
+                  style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, boxShadow: '0 3px 12px rgba(58,154,40,.40)' }}
+                />
+                <div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 700, color: '#1a1208', letterSpacing: '.04em' }}>
+                    Pep's
+                  </div>
+                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, color: 'rgba(30,20,8,.50)', letterSpacing: '.06em' }}>
+                    App mobile iOS & Android
+                  </div>
+                </div>
+              </div>
+              <div style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase',
+                color: '#3a9a28', background: 'rgba(58,154,40,.10)',
+                border: '1px solid rgba(58,154,40,.25)',
+                borderRadius: 100, padding: '3px 10px',
+                fontStyle: 'italic',
+              }}>
+                Bientôt
+              </div>
+            </div>
+
+            {/* Features */}
+            <div style={{ padding: '12px 16px 14px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {[
+                { icon: '🔔', text: 'Rappels bien-être personnalisés' },
+                { icon: '🌸', text: 'Accès rapide à votre Fleur' },
+                { icon: '☀️', text: 'Inspirations positives au quotidien' },
+                { icon: '🌿', text: 'Cultivez un espace média ressourçant' },
+                { icon: '📚', text: 'Jardinothèque complète' },
+              ].map(f => (
+                <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13, color: 'rgba(30,20,8,.72)', fontFamily: "'Jost',sans-serif" }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{f.icon}</span>
+                  <span>{f.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Prix + mention */}
+            <div style={{
+              margin: '0 12px 12px',
+              borderRadius: 12,
+              background: 'rgba(255,255,255,.55)',
+              border: '1px solid rgba(58,154,40,.15)',
+              padding: '12px 16px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 18, fontWeight: 500, color: '#1a1208' }}>8,00 €</span>
+                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, color: 'rgba(30,20,8,.45)', marginLeft: 2 }}>/ mois</span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 500, color: '#3a9a28', letterSpacing: '.04em' }}>
+                  Inclus dans le Premium
+                </div>
+                <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontStyle: 'italic', color: 'rgba(30,20,8,.38)', marginTop: 2 }}>
+                  dès sa sortie
+                </div>
               </div>
             </div>
           </div>

@@ -3789,7 +3789,19 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
             opacity: phase >= 3 ? 1 : 0,
             transform: phase >= 3 ? 'translateY(0)' : 'translateY(8px)',
             transition: `opacity 600ms ease ${i * 120}ms, transform 600ms ease ${i * 120}ms`,
+            position: 'relative',
+            overflow: 'hidden',
           }}>
+            {i < 4 && (
+              <div style={{
+                position: 'absolute', top: 0, right: 0,
+                fontSize: 8, fontWeight: 700, letterSpacing: '.10em', textTransform: 'uppercase',
+                color: '#fff', background: 'linear-gradient(135deg, #3a9a28, #2a7a18)',
+                padding: '3px 10px', borderRadius: '0 14px 0 8px',
+              }}>
+                Accès limité · Premium
+              </div>
+            )}
             <div style={{
               width: 40, height: 40, borderRadius: '50%',
               background: `${f.color}22`,
@@ -3810,6 +3822,32 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
         ))}
       </div>
 
+      {/* ── Card Pep's ── */}
+      <div style={{
+        maxWidth: 340, margin: '0 auto 32px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '13px 18px',
+        background: 'rgba(255,255,255,0.72)',
+        borderRadius: 14,
+        border: '1.5px solid rgba(58,154,40,.35)',
+        opacity: phase >= 3 ? 1 : 0,
+        transform: phase >= 3 ? 'translateY(0)' : 'translateY(8px)',
+        transition: 'opacity 600ms ease 740ms, transform 600ms ease 740ms',
+      }}>
+        <div style={{ flexShrink: 0 }}>
+          <img src="/peps1.png" alt="Pep's" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 2px 8px rgba(58,154,40,.30)' }} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: '#2a1828' }}>Pep's</div>
+            <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.10em', textTransform: 'uppercase', color: '#fff', background: 'linear-gradient(135deg, #3a9a28, #2a7a18)', borderRadius: 100, padding: '2px 7px' }}>Accès suivant abonnement</div>
+          </div>
+          <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(14px, 3.5vw, 17px)', fontStyle: 'italic', color: '#1a1010', lineHeight: 1.3 }}>
+            L'app mobile pour cultiver votre bien-être partout — rappels, inspirations positives et accès à votre Fleur, où que vous soyez.
+          </div>
+        </div>
+      </div>
+
       <div style={{
         display: 'flex', justifyContent: 'center',
         opacity: phase >= 3 ? 1 : 0,
@@ -3825,8 +3863,119 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
 
 // ── Rituel guidé — Communauté (Jour 7) ────────────────────────────────────
 
+function PepsPage({ onNext }) {
+  const [phase, setPhase] = useState(0)
+
+  useEffect(() => {
+    const T = [0, 200, 500, 900, 1400]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #f6fdf4 0%, #eaf5e6 40%, #f0fbe8 100%)', padding: '0 0 80px', overflowX: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 24px 0', ...fadeIn(phase >= 1) }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(58,154,40,.10)', border: '1px solid rgba(58,154,40,.25)', borderRadius: 100, padding: '4px 14px', marginBottom: 18 }}>
+          <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '.12em', textTransform: 'uppercase', color: '#3a9a28', fontStyle: 'italic' }}>Bientôt disponible</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 10 }}>
+          <img src="/icon_iOs.jpg" alt="Pep's app" style={{ width: 52, height: 52, borderRadius: 14, objectFit: 'cover', transform: 'rotate(-8deg)', boxShadow: '0 6px 18px rgba(58,154,40,.30)' }} />
+          <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(34px, 8vw, 48px)', fontWeight: 700, fontStyle: 'italic', color: '#0a1808', margin: 0, lineHeight: 1.1 }}>Pep's</h2>
+        </div>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(13px, 3.5vw, 15px)', color: 'rgba(20,50,10,.55)', letterSpacing: '.06em', margin: 0 }}>L'application mobile de votre mieux-être</p>
+      </div>
+
+      {/* Phone mockup + mascot */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', gap: 0, margin: '32px 0 0', ...fadeIn(phase >= 2), position: 'relative' }}>
+        {/* Phone */}
+        <div style={{ position: 'relative', width: 200, height: 390, borderRadius: 36, background: 'linear-gradient(160deg, #3a9a28 0%, #2a7a18 55%, #1e6010 100%)', boxShadow: '0 24px 60px rgba(58,154,40,.38), 0 6px 20px rgba(0,0,0,.18)', border: '6px solid rgba(255,255,255,.18)', flexShrink: 0 }}>
+          {/* Notch */}
+          <div style={{ position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', width: 64, height: 10, background: 'rgba(0,0,0,.30)', borderRadius: 8 }} />
+          {/* Screen content */}
+          <div style={{ position: 'absolute', inset: '28px 10px 10px', borderRadius: 24, background: 'rgba(255,255,255,.08)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '18px 12px 12px', gap: 10, overflow: 'hidden' }}>
+            <img src="/peps1.png" alt="Pep's mascot" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 4px 16px rgba(0,0,0,.25)', flexShrink: 0 }} />
+            <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '.06em' }}>Bonjour ! 🌿</div>
+            <div style={{ width: '100%', background: 'rgba(255,255,255,.15)', borderRadius: 12, padding: '10px 12px' }}>
+              <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'rgba(255,255,255,.70)', marginBottom: 4 }}>Inspiration du jour</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 13, fontStyle: 'italic', color: '#fff', lineHeight: 1.4 }}>"Chaque petit pas compte dans votre jardin intérieur."</div>
+            </div>
+            {[
+              { label: '🔔 Rappels bien-être', v: 78 },
+              { label: '🌸 Ma Fleur', v: 92 },
+            ].map(item => (
+              <div key={item.label} style={{ width: '100%', background: 'rgba(255,255,255,.12)', borderRadius: 10, padding: '8px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 10, color: 'rgba(255,255,255,.80)' }}>{item.label}</span>
+                  <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 10, color: 'rgba(255,255,255,.60)' }}>{item.v}%</span>
+                </div>
+                <div style={{ height: 4, background: 'rgba(255,255,255,.18)', borderRadius: 4 }}>
+                  <div style={{ height: '100%', width: `${item.v}%`, background: 'rgba(255,255,255,.75)', borderRadius: 4 }} />
+                </div>
+              </div>
+            ))}
+            {/* Bottom nav dots */}
+            <div style={{ marginTop: 'auto', display: 'flex', gap: 6 }}>
+              {[1,2,3,4].map(i => <div key={i} style={{ width: i === 1 ? 20 : 6, height: 6, borderRadius: 4, background: i === 1 ? 'rgba(255,255,255,.90)' : 'rgba(255,255,255,.30)' }} />)}
+            </div>
+          </div>
+        </div>
+        {/* peps2.png overlapping to the right */}
+        <img src="/peps2.png" alt="Pep's" style={{ position: 'absolute', right: 'calc(50% - 200px)', bottom: 0, width: 140, height: 'auto', filter: 'drop-shadow(0 8px 24px rgba(58,154,40,.35))' }} />
+      </div>
+
+      {/* Citation mascot */}
+      <div style={{ padding: '36px 24px 0', maxWidth: 380, margin: '0 auto', ...fadeIn(phase >= 3) }}>
+        <blockquote style={{ margin: 0, padding: '24px 22px', background: 'rgba(255,255,255,.75)', borderRadius: 18, border: '1.5px solid rgba(58,154,40,.20)', boxShadow: '0 4px 20px rgba(58,154,40,.08)' }}>
+          <div style={{ fontSize: 48, lineHeight: 1, color: '#3a9a28', fontFamily: 'Georgia, serif', marginBottom: 4, opacity: .6 }}>"</div>
+          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(20px, 5.5vw, 26px)', fontWeight: 700, fontStyle: 'italic', color: '#0a1808', lineHeight: 1.55, margin: '0 0 18px' }}>
+            Je suis là pour t'aider à prendre soin de ton jardin… sans te compliquer la vie.
+          </p>
+          <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(15px, 4vw, 18px)', fontWeight: 500, color: '#1a3a10', lineHeight: 1.65, margin: '0 0 18px' }}>
+            Pas besoin de réfléchir longtemps.<br />
+            On fait simple. On fait court. On commence maintenant.
+          </p>
+          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(20px, 5.5vw, 26px)', fontWeight: 700, fontStyle: 'italic', color: '#3a9a28', lineHeight: 1.4, margin: 0 }}>
+            Tu viens ?
+          </p>
+        </blockquote>
+      </div>
+
+      {/* Features */}
+      <div style={{ padding: '36px 24px 0', maxWidth: 380, margin: '0 auto', ...fadeIn(phase >= 3) }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          {[
+            { icon: '🔔', title: 'Rappels personnalisés', sub: 'Recevez un rappel au moment idéal pour vous', desc: 'On vous relance au bon moment, juste ce qu\'il faut, quand il faut' },
+            { icon: '🌸', title: 'Ma fleur, partout', sub: 'Votre équilibre à portée de main', desc: 'Accédez à votre jardin, où que vous soyez' },
+            { icon: '☀️', title: 'Infos positives', sub: 'Nourrissez votre esprit autrement', desc: 'Un flux simple, inspirant et ressourçant' },
+            { icon: '🌿', title: 'Espace média sain', sub: 'Respirez loin du bruit', desc: 'Des contenus choisis pour vous apaiser' },
+            { icon: '📚', title: 'Jardinothèque', sub: 'Explorez, pratiquez, évoluez', desc: 'Des outils concrets pour avancer à votre rythme' },
+            { icon: '💎', title: 'Inclus Premium', sub: 'Accédez à l\'expérience complète', desc: 'Toutes les ressources dès l\'ouverture de l\'app' },
+          ].map(f => (
+            <div key={f.title} style={{ background: 'rgba(255,255,255,.72)', borderRadius: 14, border: '1px solid rgba(58,154,40,.18)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ fontSize: 22 }}>{f.icon}</div>
+              <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, color: '#1a3a10', lineHeight: 1.3 }}>{f.title}</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 13, fontStyle: 'italic', fontWeight: 600, color: '#2a5a18', lineHeight: 1.35 }}>{f.sub}</div>
+              <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 10.5, color: 'rgba(20,50,10,.52)', lineHeight: 1.45 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{ padding: '36px 24px 0', textAlign: 'center', ...fadeIn(phase >= 4) }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(17px, 4.5vw, 20px)', fontStyle: 'italic', color: 'rgba(10,30,8,.65)', margin: '0 0 24px', lineHeight: 1.6 }}>
+          Pep's sera disponible <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>prochainement</strong>.<br />Votre abonnement Premium vous donnera accès dès sa sortie.
+        </p>
+        <PrimaryButton onClick={onNext}>Commencer mon jardin</PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
 function CommunauteGuidedRituel({ onNext, onBack }) {
   const [phase, setPhase] = useState(0)
+  const [showPeps, setShowPeps] = useState(false)
   const phaseRefs = useRef({})
 
   useEffect(() => {
@@ -3870,6 +4019,21 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
     )
   }
 
+  function FeatureCard({ accent, accentBg, intro, label, desc }) {
+    return (
+      <div style={{ marginBottom: 8 }}>
+        <p style={{ ...S, margin: '0 0 14px' }}>{intro}</p>
+        <div style={{ borderRadius: 16, border: `1.5px solid ${accent}44`, background: accentBg, overflow: 'hidden', marginBottom: 20 }}>
+          <div style={{ padding: '10px 18px', borderBottom: `1px solid ${accent}22`, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 4, height: 20, borderRadius: 4, background: accent, flexShrink: 0 }} />
+            <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 600, letterSpacing: '.10em', textTransform: 'uppercase', color: accent }}>{label}</span>
+          </div>
+          <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(16px, 4.2vw, 19px)', color: '#0f0808', lineHeight: 1.7, margin: 0, padding: '14px 18px' }}>{desc}</p>
+        </div>
+      </div>
+    )
+  }
+
   function block(n, content) {
     return (
       <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
@@ -3877,6 +4041,8 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
       </div>
     )
   }
+
+  if (showPeps) return <PepsPage onNext={onNext} />
 
   return (
     <div style={{ padding: '16px 24px 80px' }}>
@@ -3908,75 +4074,60 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
 
       {block(1, <p style={S}>Votre fleur <B>existe</B>.<br />Et elle n'est pas seule.</p>)}
 
-      {block(2, <>
-        <p style={S}>Autour de vous, d'autres jardiniers <B>cultivent</B> leur espace intérieur.</p>
-        <FeatureBadge
-          label="Le Jardin Collectif"
-          color="#7a9ab8"
-          bg="rgba(122,154,184,0.10)"
-          border="rgba(122,154,184,0.28)"
-        />
-        <p style={S}>Un espace partagé où chaque fleur <B>contribue</B> au jardin commun<br />par sa seule <B>présence</B>.</p>
-      </>)}
+      {block(2, <FeatureCard
+        accent="#7a9ab8"
+        accentBg="rgba(122,154,184,0.08)"
+        intro={<>Autour de vous, d'autres jardiniers <B>cultivent</B> leur espace intérieur.</>}
+        label="Le Jardin Collectif"
+        desc={<>Un espace partagé où chaque fleur <B>contribue</B> au jardin commun par sa seule <B>présence</B>.</>}
+      />)}
 
-      {block(3, <>
-        <p style={S}>Vous n'avancez pas <B>seul·e</B>.</p>
-        <FeatureBadge
-          label="Le Club des Jardiniers"
-          color="#9a78b0"
-          bg="rgba(154,120,176,0.10)"
-          border="rgba(154,120,176,0.28)"
-        />
-        <p style={S}>Une communauté qui avance <B>ensemble</B>,<br />se soutient et partage des <B>ondes positives</B>.</p>
-      </>)}
+      {block(3, <FeatureCard
+        accent="#9a78b0"
+        accentBg="rgba(154,120,176,0.08)"
+        intro={<>Vous n'avancez pas <B>seul·e</B>.</>}
+        label="Le Club des Jardiniers"
+        desc={<>Une communauté qui avance <B>ensemble</B>, se soutient et partage des <B>ondes positives</B>.</>}
+      />)}
 
-      {block(4, <>
-        <p style={S}>Pour ceux qui aiment <B>agir</B>…</p>
-        <FeatureBadge
-          label="Les Défis"
-          color="#b07860"
-          bg="rgba(176,120,96,0.10)"
-          border="rgba(176,120,96,0.28)"
-        />
-        <p style={S}>Des challenges pour partager ensemble des <B>mises en action</B><br />et <B>s'encourager</B> mutuellement.</p>
-      </>)}
+      {block(4, <FeatureCard
+        accent="#b07860"
+        accentBg="rgba(176,120,96,0.08)"
+        intro={<>Pour ceux qui aiment <B>agir</B>…</>}
+        label="Les Défis"
+        desc={<>Des challenges pour partager des <B>mises en action</B> et <B>s'encourager</B> mutuellement.</>}
+      />)}
 
-      {block(5, <>
-        <p style={S}>Pour aller plus <B>loin</B>…</p>
-        <FeatureBadge
-          label="Les Ateliers"
-          color="#607860"
-          bg="rgba(96,120,96,0.10)"
-          border="rgba(96,120,96,0.28)"
-        />
-        <p style={S}>Des sessions guidées pour approfondir votre <B>mieux-être</B>,<br />accompagné par des <B>professionnels</B>.</p>
-      </>)}
+      {block(5, <FeatureCard
+        accent="#607860"
+        accentBg="rgba(96,120,96,0.08)"
+        intro={<>Pour aller plus <B>loin</B>…</>}
+        label="Les Ateliers"
+        desc={<>Des sessions guidées pour approfondir votre <B>mieux-être</B>, accompagné par des <B>professionnels</B>.</>}
+      />)}
 
-      {block(6, <>
-        <p style={S}>Et enfin, une <B>énergie</B> qui se voit.</p>
-        <FeatureBadge
-          label="Les Lumens"
-          color="#a8a030"
-          bg="rgba(168,160,48,0.10)"
-          border="rgba(168,160,48,0.28)"
-        />
-        <p style={S}>L'énergie de votre <B>engagement</B>,<br />visible et <B>partageable</B>.</p>
-      </>)}
+      {block(6, <FeatureCard
+        accent="#a8a030"
+        accentBg="rgba(168,160,48,0.08)"
+        intro={<>Et enfin, une <B>énergie</B> qui se voit.</>}
+        label="Les Lumens"
+        desc={<>L'énergie de votre <B>engagement</B>, visible et <B>partageable</B>.</>}
+      />)}
 
-      {block(7, <>
-        <p style={S}>Et pour ne jamais <B>avancer seul·e</B>…</p>
-        <FeatureBadge
-          label="La Jardinothèque"
-          color="#8878a8"
-          bg="rgba(136,120,168,0.10)"
-          border="rgba(136,120,168,0.28)"
-        />
-        <p style={S}>Un ensemble d'outils pour vous <B>accompagner</B><br />dans votre <B>bien-être</B> au quotidien.</p>
-      </>)}
+      {block(7, <FeatureCard
+        accent="#8878a8"
+        accentBg="rgba(136,120,168,0.08)"
+        intro={<>Et pour ne jamais <B>avancer seul·e</B>…</>}
+        label="La Jardinothèque"
+        desc={<>Un ensemble d'outils pour vous <B>accompagner</B> dans votre <B>bien-être</B> au quotidien.</>}
+      />)}
 
-      {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>
-        <B>Votre jardin vous attend.</B> Et les autres jardiniers aussi.
-      </p>)}
+      {block(8, <>
+        <div style={{ height: 1, background: 'linear-gradient(to right, transparent, rgba(122,154,184,.30), transparent)', margin: '8px 0 36px' }} />
+        <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px', textAlign: 'center' }}>
+          <B>Votre jardin vous attend.</B><br />Et les autres jardiniers aussi.
+        </p>
+      </>)}
 
       <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
         <PrimaryButton onClick={onNext}>Je rejoins le jardin</PrimaryButton>
