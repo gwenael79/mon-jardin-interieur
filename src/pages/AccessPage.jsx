@@ -397,6 +397,10 @@ const PLANS = [
   { id: 'price_1TMpO0CIpPVJTaopzrpNDw8r', label: 'Annuel',  desc: '9,00 € / mois · -30 %',  price: '108,00 €', note: '/ an',   popular: true  },
 ]
 
+// Plan test 1€ — visible uniquement en développement
+const TEST_PLAN = { id: 'price_1TMsoYCIpPVJTaopmNrjlGUA', label: 'TEST 1€', desc: 'Test développeur uniquement', price: '1,00 €', note: '/ test', popular: false, isTest: true }
+const IS_DEV = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+
 function FleurLogoTiny() {
   return <img src="/icons/icon-192.png" alt="logo" style={{ width:24, height:24, borderRadius:'50%' }} />
 }
@@ -788,6 +792,20 @@ export function PremiumModal({ onSuccess, onClose }) {
   const [promoCode,       setPromoCode]       = useState('')
   const SOLIDARITY_MIN = 108
 
+  async function handlePayTest() {
+    if (paying) return
+    setPaying(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Non connecté')
+      const promo = promoCode.trim() || undefined
+      const body = { priceId: TEST_PLAN.id, userId: user.id, promoCode: promo }
+      const { data, error } = await supabase.functions.invoke('stripe-checkout', { body })
+      if (error || !data?.url) throw new Error(error?.message ?? 'Erreur Stripe')
+      window.location.href = data.url
+    } catch (e) { console.error('[PremiumModal test]', e); setPaying(false) }
+  }
+
   async function handlePay() {
     if (!selectedPlan || paying) return
     if (selectedPlan.id === 'solidarity') {
@@ -1129,6 +1147,23 @@ export function PremiumModal({ onSuccess, onClose }) {
             >
               {paying ? 'Redirection…' : promoCode.trim() ? `Valider "${promoCode.trim()}" →` : 'Continuer sans code →'}
             </button>
+
+            {/* Bouton test 1€ — dev uniquement */}
+            {IS_DEV && (
+              <button
+                onClick={handlePayTest}
+                disabled={paying}
+                style={{
+                  width:'100%', marginTop:8, padding:'10px',
+                  borderRadius:50, border:'1.5px dashed rgba(200,100,100,.40)',
+                  background:'rgba(200,100,100,.06)', color:'rgba(180,60,60,.70)',
+                  fontSize:12, fontWeight:500, fontFamily:"'Jost',sans-serif",
+                  cursor:'pointer', letterSpacing:'.03em',
+                }}
+              >
+                🧪 TEST 1€ {promoCode.trim() ? `avec "${promoCode.trim()}"` : '(sans code promo)'}
+              </button>
+            )}
 
             <button
               onClick={() => setShowPromo(false)}
