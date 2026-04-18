@@ -1169,9 +1169,10 @@ export default function DashboardPage() {
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
         <DailyQuizModal
-          onComplete={deg => {
+          onComplete={async deg => {
             const today = new Date().toISOString().split('T')[0]
-            supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
+            const { error } = await supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
+            if (error) { console.error('[bilan] upsert failed:', error.message); return }
             setBilanDoneToday(true)
             track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
             logActivity({ userId: user?.id, action: 'bilan' })
@@ -1182,9 +1183,10 @@ export default function DashboardPage() {
               handleNav(1)
             }, 800)
           }}
-          onSoinDeMoi={deg => {
+          onSoinDeMoi={async deg => {
             const today = new Date().toISOString().split('T')[0]
-            supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
+            const { error } = await supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
+            if (error) { console.error('[bilan] upsert failed:', error.message); return }
             setBilanDoneToday(true)
             track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
             logActivity({ userId: user?.id, action: 'bilan' })
