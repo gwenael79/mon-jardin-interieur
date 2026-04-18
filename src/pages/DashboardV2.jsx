@@ -58,9 +58,10 @@ const _dailyLoginAwarded = new Set()
 const SLIDES_CONFIG = [
   {
     id:        'bilan',     illusKey: 'bilan',
-    badge:     'Chaque matin',      icon: '🌹',
+    badge:     'Chaque matin',      icon: '🌅',
     title:     'Comment te sens-tu aujourd\'hui ?',
     subtitle:  'Ton bilan quotidien en 2 minutes — humeur, énergie, intention.',
+    guideDesc: 'Ton bilan en 2 minutes',
     color:     '#c87878',
     btnLabel:  'Commencer le bilan',
     btnGrad:   'linear-gradient(135deg, #c87878, #a05858)',
@@ -73,6 +74,7 @@ const SLIDES_CONFIG = [
     badge:     'Ma Fleur',           icon: '🌸',
     title:     'Ton jardin intérieur',
     subtitle:  'Ta fleur grandit chaque jour que tu prends soin de toi. Observe-la évoluer.',
+    guideDesc: 'Observe et prends soin de toi',
     color:     '#b090c8',
     btnLabel:  'Je prends soin de moi',
     btnGrad:   'linear-gradient(135deg, #c8a0d8, #9070a8)',
@@ -81,9 +83,10 @@ const SLIDES_CONFIG = [
   },
   {
     id:        'champ',     illusKey: 'champ',   image: '/collectif.png',
-    badge:     'Jardin Collectif',   icon: '🌻',
+    badge:     'Jardin Collectif',   icon: '🌼',
     title:     'Le jardin collectif',
     subtitle:  'Les fleurs de ta communauté. Une présence partagée, sans noms, sans profils.',
+    guideDesc: 'Inspire-toi et partage',
     color:     '#c8a040',
     btnLabel:  'Rejoindre le jardin',
     btnGrad:   'linear-gradient(135deg, #d4b050, #a87c28)',
@@ -95,6 +98,7 @@ const SLIDES_CONFIG = [
     badge:     'Défis',              icon: '✨',
     title:     'Tes défis du moment',
     subtitle:  'De petits engagements hebdomadaires pour avancer, à ton rythme.',
+    guideDesc: 'Avance avec des défis simples',
     color:     '#9080c0',
     btnLabel:  'Voir mes défis',
     btnGrad:   'linear-gradient(135deg, #a890d0, #7860a8)',
@@ -106,6 +110,7 @@ const SLIDES_CONFIG = [
     badge:     'Club des Jardiniers', icon: '👥',
     title:     'Ton club de jardiniers',
     subtitle:  'Un espace intime pour partager, s\'encourager et grandir ensemble.',
+    guideDesc: 'Échange avec bienveillance',
     color:     '#6898c0',
     btnLabel:  'Rejoindre mon club',
     btnGrad:   'linear-gradient(135deg, #80aad0, #5070a0)',
@@ -114,9 +119,10 @@ const SLIDES_CONFIG = [
   },
   {
     id:        'ateliers',  illusKey: 'ateliers',  image: '/atelier.png',
-    badge:     'Ateliers',           icon: '📖',
+    badge:     'Ateliers',           icon: '📘',
     title:     'Les ateliers guidés',
     subtitle:  'Des séances thématiques pour explorer, apprendre et pratiquer.',
+    guideDesc: 'Pratique et progresse',
     color:     '#60a870',
     btnLabel:  'Explorer les ateliers',
     btnGrad:   'linear-gradient(135deg, #78c088, #488858)',
@@ -128,6 +134,7 @@ const SLIDES_CONFIG = [
     badge:     'Ma Bibliothèque',    icon: '📚',
     title:     'Tes outils personnels',
     subtitle:  'Retrouve ici tout ce que tu as acquis — rituels achetés, contenus échangés contre des lumens. Ton espace, à portée de main.',
+    guideDesc: 'Retrouve tes essentiels',
     color:     '#a07850',
     btnLabel:  'Ouvrir ma bibliothèque',
     btnGrad:   'linear-gradient(135deg, #c09060, #886040)',
@@ -139,6 +146,7 @@ const SLIDES_CONFIG = [
     badge:     'Jardinothèque',      icon: '🌿',
     title:     'La Jardinothèque',
     subtitle:  'Ta boutique de ressources : méditations, hypnoses, e-books et vidéos de développement personnel. Acquiers-les avec tes lumens ou directement.',
+    guideDesc: 'Ressources pour t\'apaiser',
     color:     '#5890a0',
     btnLabel:  'Explorer',
     btnGrad:   'linear-gradient(135deg, #70a8b8, #406878)',
@@ -150,6 +158,7 @@ const SLIDES_CONFIG = [
     badge:     'Boîte à graines',    icon: '🌱',
     title:     'La boîte à graines',
     subtitle:  'Déposez ce soir les graines de vos intentions pour demain.',
+    guideDesc: 'Cultive ton estime de toi',
     color:     '#4a8060',
     btnLabel:  'Ouvrir ma boîte',
     btnGrad:   'linear-gradient(135deg, #5a9870, #3a6850)',
@@ -848,8 +857,8 @@ function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, bilanDoneTo
               >
                 <div style={{ width:32, height:32, borderRadius:'50%', background: i === curIdx ? s.color : `${s.color}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{s.icon}</div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:14, fontWeight: i === curIdx ? 700 : 500, color: i === curIdx ? s.color : '#0d0905', fontFamily:"'Jost',sans-serif" }}>{s.badge}</div>
-                  <div style={{ fontSize:11.5, color:'rgba(13,9,5,.5)', fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</div>
+                  <div style={{ fontSize:16, fontWeight: i === curIdx ? 700 : 600, color: i === curIdx ? s.color : '#0d0905', fontFamily:"'Jost',sans-serif" }}>{s.badge}</div>
+                  <div style={{ fontSize:13, color:'rgba(13,9,5,.75)', fontWeight:400, fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.guideDesc ?? s.title}</div>
                 </div>
                 {i === curIdx && <div style={{ width:7, height:7, borderRadius:'50%', background:s.color, flexShrink:0 }}/>}
               </div>

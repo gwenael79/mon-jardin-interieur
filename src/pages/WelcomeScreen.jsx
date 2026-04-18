@@ -115,10 +115,14 @@ export function WelcomeScreen({ profile, isNewUser, onDone }) {
         </div>
 
         {/* Bouton Entrer */}
-        <div className="wc-a4">
+        <div className="wc-a4" style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
           <button className="wc-enter-btn" onClick={() => onDone?.()}>
             Entrer dans mon jardin
           </button>
+          <p style={{ margin:0, fontSize:15, fontWeight:500, color:'rgba(15,42,8,.85)', letterSpacing:'.03em', fontStyle:'normal', display:'flex', alignItems:'center', gap:6 }}>
+            Afin de vous repérer&nbsp;: pensez au bouton
+            <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:24, height:24, borderRadius:'50%', background:'linear-gradient(135deg,#4cd964,#28a745)', color:'#fff', fontSize:13, fontWeight:700, fontStyle:'normal', flexShrink:0 }}>?</span>
+          </p>
         </div>
 
       </div>
