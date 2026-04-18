@@ -257,6 +257,8 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         @keyframes ctaGlow { 0%,100%{filter:brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))} 50%{filter:brightness(1.18) drop-shadow(0 0 12px rgba(255,255,255,0.6))} }
         .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
         .cta-btn:active { transform:scale(0.97) !important; }
+        @keyframes guidePulse { 0%,100%{box-shadow:0 0 0 0 rgba(80,200,80,.6),0 4px 16px rgba(60,160,60,.4)} 50%{box-shadow:0 0 0 8px rgba(80,200,80,0),0 4px 20px rgba(60,160,60,.6)} }
+        .guide-btn { animation: guidePulse 2s ease-in-out infinite; }
         @keyframes arrowBlink { 0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.28),0 0 0 0 rgba(40,160,80,0.6)} 50%{transform:scale(1.10);box-shadow:0 6px 22px rgba(0,0,0,0.22),0 0 0 9px rgba(40,160,80,0)} }
         .nav-arrow { transition: transform .15s; }
       `}</style>
@@ -327,7 +329,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
       )}
 
       {/* ── Preview texte — scroll vertical natif ── */}
-      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 16px', display:'flex', flexDirection:'column', gap:8 }}>
+      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 80px', display:'flex', flexDirection:'column', gap:8, position:'relative', zIndex:1 }}>
 
         {/* Tag */}
         <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color, flexShrink:0 }}>
@@ -371,7 +373,8 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
       <button
         onClick={onGuide}
         title="Guide & Repérage"
-        style={{ position:'absolute', bottom:20, right:16, width:48, height:48, borderRadius:'50%', border:'2px solid rgba(200,160,150,.4)', background:'rgba(255,255,255,.92)', boxShadow:'0 4px 16px rgba(0,0,0,.18)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'rgba(30,20,8,.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:20, touchAction:'manipulation' }}
+        className="guide-btn"
+        style={{ position:'absolute', bottom:20, right:16, width:48, height:48, borderRadius:'50%', border:'none', background:'linear-gradient(135deg,#4cd964,#28a745)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, touchAction:'manipulation' }}
       >?</button>
 
       {/* Guide panel mobile */}
@@ -786,13 +789,17 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
 // ─────────────────────────────────────────────────────────────────────────────
 //  GUIDE PANEL — index des slides + checklist débutant
 // ─────────────────────────────────────────────────────────────────────────────
-function GuidePanel({ slides, curIdx, onNavigate, onClose, bilanDoneToday, stats, joinedIds, achats }) {
-  const steps = [
-    { icon: '🌸', label: 'Faire ton premier bilan',       done: bilanDoneToday || (stats?.streak ?? 0) > 0 },
-    { icon: '🪴', label: 'Faire un rituel de soin',        done: (stats?.ritualsThisMonth ?? 0) > 0 },
-    { icon: '✨', label: 'Rejoindre un défi',              done: (joinedIds?.size ?? 0) > 0 },
-    { icon: '📚', label: 'Explorer la Jardinothèque',      done: (achats?.length ?? 0) > 0 },
-  ]
+function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, bilanDoneToday, stats, joinedIds, achats }) {
+  const isEvening = new Date().getHours() >= 18
+  const steps = isEvening
+    ? [
+        { label: 'Déposer une intention ce soir', done: false, slideId: 'boite_graine' },
+        { label: 'Faire un rituel rapidement',    done: false, slideId: 'jardin' },
+      ]
+    : [
+        { label: 'Faire ton bilan du matin',      done: bilanDoneToday, slideId: 'bilan' },
+        { label: 'Faire un rituel rapidement',    done: false, slideId: 'jardin' },
+      ]
   const doneCount = steps.filter(s => s.done).length
 
   return (
@@ -803,47 +810,48 @@ function GuidePanel({ slides, curIdx, onNavigate, onClose, bilanDoneToday, stats
         {/* Header */}
         <div style={{ padding:'20px 20px 14px', borderBottom:'1px solid rgba(200,160,150,.2)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
           <div>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:400, color:'#1a1208', lineHeight:1 }}>Guide & Repérage</div>
-            <div style={{ fontSize:11, color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", marginTop:5 }}>{doneCount}/{steps.length} étapes accomplies</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:500, color:'#0d0905', lineHeight:1 }}>Guide & Repérage</div>
           </div>
-          <button onClick={onClose} style={{ width:28, height:28, borderRadius:'50%', border:'1px solid rgba(200,160,150,.3)', background:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'rgba(30,20,8,.5)', flexShrink:0 }}>✕</button>
+          <button onClick={onClose} style={{ width:30, height:30, borderRadius:'50%', border:'1px solid rgba(200,160,150,.3)', background:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, color:'#0d0905', fontWeight:600, flexShrink:0 }}>✕</button>
         </div>
 
-        {/* Carte des espaces */}
-        <div style={{ padding:'16px 16px 8px', flexShrink:0 }}>
-          <div style={{ fontSize:9.5, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", marginBottom:10 }}>Les 9 espaces</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
-            {slides.map((s, i) => (
-              <div
-                key={s.id}
-                onClick={() => { onNavigate(i); onClose() }}
-                style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 10px', borderRadius:10, background: i === curIdx ? `${s.color}18` : 'rgba(255,255,255,.5)', border: i === curIdx ? `1.5px solid ${s.color}55` : '1px solid rgba(200,160,150,.15)', cursor:'pointer', transition:'all .15s' }}
-                onMouseEnter={e => { if (i !== curIdx) e.currentTarget.style.background='rgba(255,255,255,.85)' }}
-                onMouseLeave={e => { if (i !== curIdx) e.currentTarget.style.background='rgba(255,255,255,.5)' }}
-              >
-                <div style={{ width:30, height:30, borderRadius:'50%', background: i === curIdx ? s.color : `${s.color}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0 }}>{s.icon}</div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12.5, fontWeight: i === curIdx ? 600 : 400, color: i === curIdx ? s.color : '#1a1208', fontFamily:"'Jost',sans-serif" }}>{s.badge}</div>
-                  <div style={{ fontSize:10.5, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</div>
-                </div>
-                {i === curIdx && <div style={{ width:6, height:6, borderRadius:'50%', background:s.color, flexShrink:0 }}/>}
+        {/* Checklist — en haut */}
+        <div style={{ padding:'16px 16px 14px', flexShrink:0, borderBottom:'1px solid rgba(200,160,150,.15)' }}>
+          <div style={{ fontSize:13, letterSpacing:'.04em', textTransform:'uppercase', color:'#0d0905', fontFamily:"'Jost',sans-serif", fontWeight:700, marginBottom:10 }}>Par où commencer · 2mn maximum</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+            {steps.map((step, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px', borderRadius:10, background: step.done ? 'rgba(90,154,40,.09)' : '#fff', border: step.done ? '1px solid rgba(90,154,40,.25)' : '1px solid rgba(200,160,150,.25)' }}>
+                <div style={{ width:28, height:28, borderRadius:'50%', flexShrink:0, background:'linear-gradient(135deg,#f5c842,#c8960a)', boxShadow:'0 2px 8px rgba(200,150,10,.35)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#fff', fontFamily:"'Jost',sans-serif" }}>{i + 1}</div>
+                <span style={{ flex:1, fontSize:16, color: step.done ? '#3a7a18' : '#0d0905', fontFamily:"'Jost',sans-serif", fontWeight: step.done ? 700 : 600 }}>
+                  {step.label}
+                </span>
+                <button
+                  onClick={() => { if (step.slideId === 'jardin' && onRitual) { onRitual(); onClose() } else { onNavigate(slides.findIndex(s => s.id === step.slideId)); onClose() } }}
+                  style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, border:'none', background:'linear-gradient(135deg,#4cd964,#28a745)', color:'#fff', fontSize:12, fontWeight:700, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.03em' }}
+                >Action →</button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Checklist débutant */}
-        <div style={{ padding:'8px 16px 28px', flexShrink:0 }}>
-          <div style={{ fontSize:9.5, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", marginBottom:10 }}>Par où commencer</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-            {steps.map((step, i) => (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:10, background:'rgba(255,255,255,.5)', border:'1px solid rgba(200,160,150,.15)' }}>
-                <div style={{ width:20, height:20, borderRadius:'50%', flexShrink:0, background: step.done ? 'rgba(90,154,40,.15)' : 'transparent', border: step.done ? '1.5px solid rgba(90,154,40,.5)' : '1.5px solid rgba(200,160,150,.4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#5a9a28', fontWeight:700 }}>
-                  {step.done ? '✓' : ''}
+        {/* Carte des espaces */}
+        <div style={{ padding:'16px 16px 28px', flexShrink:0 }}>
+          <div style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontWeight:600, marginBottom:10 }}>Les 9 espaces</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+            {slides.map((s, i) => (
+              <div
+                key={s.id}
+                onClick={() => { onNavigate(i); onClose() }}
+                style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:10, background: i === curIdx ? `${s.color}18` : '#fff', border: i === curIdx ? `1.5px solid ${s.color}66` : '1px solid rgba(200,160,150,.25)', cursor:'pointer', transition:'all .15s' }}
+                onMouseEnter={e => { if (i !== curIdx) e.currentTarget.style.background='rgba(255,255,255,.85)' }}
+                onMouseLeave={e => { if (i !== curIdx) e.currentTarget.style.background='#fff' }}
+              >
+                <div style={{ width:32, height:32, borderRadius:'50%', background: i === curIdx ? s.color : `${s.color}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{s.icon}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:14, fontWeight: i === curIdx ? 700 : 500, color: i === curIdx ? s.color : '#0d0905', fontFamily:"'Jost',sans-serif" }}>{s.badge}</div>
+                  <div style={{ fontSize:11.5, color:'rgba(13,9,5,.5)', fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</div>
                 </div>
-                <span style={{ fontSize:12, color: step.done ? 'rgba(30,20,8,.4)' : '#1a1208', fontFamily:"'Jost',sans-serif", textDecoration: step.done ? 'line-through' : 'none' }}>
-                  {step.icon} {step.label}
-                </span>
+                {i === curIdx && <div style={{ width:7, height:7, borderRadius:'50%', background:s.color, flexShrink:0 }}/>}
               </div>
             ))}
           </div>
@@ -1408,6 +1416,8 @@ export default function DashboardPage() {
           .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
           .cta-btn:hover { transform:translateY(-3px) scale(1.03) !important; filter:brightness(1.22) !important; }
           .cta-btn:active { transform:scale(0.97) !important; }
+          @keyframes guidePulse { 0%,100%{box-shadow:0 0 0 0 rgba(80,200,80,.6),0 4px 16px rgba(60,160,60,.4)} 50%{box-shadow:0 0 0 8px rgba(80,200,80,0),0 4px 20px rgba(60,160,60,.6)} }
+          .guide-btn { animation: guidePulse 2s ease-in-out infinite; }
         `}</style>
 
         <div style={{ position:'fixed', inset:0, zIndex:10, fontFamily:"'Jost',sans-serif" }}>
@@ -1559,9 +1569,10 @@ export default function DashboardPage() {
               <button
                 onClick={() => setShowGuide(true)}
                 title="Guide & Repérage"
-                style={{ position:'absolute', bottom:20, right:20, width:48, height:48, borderRadius:'50%', border:'2px solid rgba(200,160,150,.4)', background:'rgba(255,255,255,.92)', boxShadow:'0 4px 16px rgba(0,0,0,.18)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'rgba(30,20,8,.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, transition:'transform .15s, box-shadow .15s' }}
-                onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.12)';e.currentTarget.style.boxShadow='0 6px 22px rgba(0,0,0,.25)'}}
-                onMouseLeave={e=>{e.currentTarget.style.transform='scale(1)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.18)'}}
+                className="guide-btn"
+                style={{ position:'absolute', bottom:20, right:20, width:52, height:52, borderRadius:'50%', border:'none', background:'linear-gradient(135deg,#4cd964,#28a745)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:700, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}
+                onMouseEnter={e=>e.currentTarget.style.filter='brightness(1.15)'}
+                onMouseLeave={e=>e.currentTarget.style.filter='none'}
               >?</button>
 
               {/* Guide panel desktop — à l'intérieur de la carte */}
@@ -1571,6 +1582,7 @@ export default function DashboardPage() {
                   curIdx={slideIdx}
                   onNavigate={handleJump}
                   onClose={() => setShowGuide(false)}
+                  onRitual={() => setShowNeedModal(true)}
                   bilanDoneToday={bilanDoneToday}
                   stats={plantStats}
                   joinedIds={joinedIds}
@@ -1609,7 +1621,7 @@ export default function DashboardPage() {
         onSignOut={signOut}
         onGuide={() => setShowGuide(true)}
         showGuide={showGuide}
-        guideProps={{ slides: visibleSlides, curIdx: slideIdx, onNavigate: handleJump, onClose: () => setShowGuide(false), bilanDoneToday, stats: plantStats, joinedIds, achats }}
+        guideProps={{ slides: visibleSlides, curIdx: slideIdx, onNavigate: handleJump, onClose: () => setShowGuide(false), onRitual: () => setShowNeedModal(true), bilanDoneToday, stats: plantStats, joinedIds, achats }}
       />
     </>
   )
