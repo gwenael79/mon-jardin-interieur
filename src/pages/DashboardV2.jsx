@@ -257,7 +257,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         @keyframes ctaGlow { 0%,100%{filter:brightness(1) drop-shadow(0 0 0px rgba(255,255,255,0))} 50%{filter:brightness(1.18) drop-shadow(0 0 12px rgba(255,255,255,0.6))} }
         .cta-btn { animation: ctaGlow 2.4s ease-in-out infinite; }
         .cta-btn:active { transform:scale(0.97) !important; }
-        @keyframes guidePulse { 0%,100%{box-shadow:0 0 0 0 rgba(80,200,80,.6),0 4px 16px rgba(60,160,60,.4)} 50%{box-shadow:0 0 0 8px rgba(80,200,80,0),0 4px 20px rgba(60,160,60,.6)} }
+        @keyframes guidePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.12)} }
         .guide-btn { animation: guidePulse 2s ease-in-out infinite; }
         @keyframes arrowBlink { 0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.28),0 0 0 0 rgba(40,160,80,0.6)} 50%{transform:scale(1.10);box-shadow:0 6px 22px rgba(0,0,0,0.22),0 0 0 9px rgba(40,160,80,0)} }
         .nav-arrow { transition: transform .15s; }
