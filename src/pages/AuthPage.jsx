@@ -56,7 +56,7 @@ html,body,#root{height:100%;width:100%}
   display:flex; align-items:center; justify-content:center;
 }
 .auth-frame {
-  width:420px; height:600px;
+  width:420px; height:640px;
   border-radius:28px;
   overflow:hidden;
   position:relative;
@@ -171,6 +171,57 @@ html,body,#root{height:100%;width:100%}
 .auth-switch span { color:#4a8a20; cursor:pointer; font-weight:500; text-decoration:underline; }
 .auth-footer { margin-top:14px; font-size:11px; color:rgba(30,20,8,.30); text-align:center; line-height:1.7; }
 
+/* ── Lien pro sous le formulaire ── */
+.auth-pro-link {
+  margin-top:14px; font-size:12px; color:rgba(30,20,8,.38); text-align:center; letter-spacing:.01em;
+}
+.auth-pro-link span {
+  color:#6a5020; cursor:pointer; font-weight:500; text-decoration:underline; text-underline-offset:2px;
+  transition:color .15s;
+}
+.auth-pro-link span:hover { color:#4a8a20; }
+
+/* ── Modal PRO ── */
+.pro-modal-overlay {
+  position:fixed; inset:0; z-index:999;
+  background:rgba(10,20,5,.48); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:authFadeIn .25s ease both;
+}
+.pro-modal {
+  background:rgba(252,248,242,.98); border-radius:24px;
+  width:min(520px,100%); max-height:90vh; overflow-y:auto;
+  padding:36px 36px 28px; position:relative;
+  box-shadow:0 16px 60px rgba(30,60,10,.22);
+  border:1.5px solid rgba(180,210,140,.35);
+  animation:authFormIn .35s cubic-bezier(.22,1,.36,1) both;
+}
+.pro-modal-close {
+  position:absolute; top:14px; right:16px;
+  background:none; border:none; font-size:20px; cursor:pointer;
+  color:rgba(30,20,8,.35); line-height:1; padding:4px;
+  transition:color .15s;
+}
+.pro-modal-close:hover { color:rgba(30,20,8,.65); }
+.pro-modal-title { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; color:#1a1208; margin-bottom:4px; }
+.pro-modal-sub   { font-size:13px; color:rgba(30,20,8,.48); margin-bottom:22px; line-height:1.6; }
+.pro-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.pro-row .auth-field { margin-bottom:0; }
+.pro-req { color:#c04040; margin-left:2px; font-size:12px; }
+.pro-section-label {
+  font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:rgba(30,20,8,.30); margin:18px 0 10px; font-weight:500;
+  border-top:1px solid rgba(200,160,150,.18); padding-top:14px;
+}
+.pro-success { text-align:center; padding:28px 10px; }
+.pro-success-icon { font-size:52px; margin-bottom:14px; }
+.pro-success-title { font-family:'Cormorant Garamond',serif; font-size:22px; color:#2e6808; margin-bottom:8px; }
+.pro-success-text { font-size:13.5px; color:rgba(30,20,8,.55); line-height:1.75; }
+@media(max-width:520px) {
+  .pro-modal { padding:28px 20px 22px; }
+  .pro-row { grid-template-columns:1fr; }
+}
+
 /* Fleur picker */
 .auth-flower-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; max-height:200px; overflow-y:auto; margin-bottom:18px; }
 .auth-flower-pill { padding:8px 4px; border-radius:20px; font-size:12px; text-align:center; border:1.5px solid rgba(200,160,150,.20); cursor:pointer; color:rgba(30,20,8,.55); transition:all .15s; background:rgba(255,255,255,.55); }
@@ -226,6 +277,20 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [newUserId,    setNewUserId]    = useState(null)
   const [isMobile,     setIsMobile]     = useState(() => window.innerWidth < 768)
 
+  // ── Modal PRO ──
+  const [showProModal,  setShowProModal]  = useState(false)
+  const [proSuccess,    setProSuccess]    = useState(false)
+  const [proLoading,    setProLoading]    = useState(false)
+  const [proError,      setProError]      = useState(null)
+  const [proEmailPending, setProEmailPending] = useState(false)
+  const [proForm, setProForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mji_pro_draft')
+      if (saved) return { ...{ nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' }, ...JSON.parse(saved) }
+    } catch(e) {}
+    return { nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' }
+  })
+
   const hasLoggedInBefore = !!localStorage.getItem('mji_has_logged_in')
 
   useEffect(() => {
@@ -242,6 +307,88 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   }, [])
 
   const goTo = (panel) => { setRightPanel(panel); setError(null); setResetSent(false) }
+
+  const updatePro = (field) => (e) => {
+    const val = e.target.value
+    setProForm(f => {
+      const next = { ...f, [field]: val }
+      // Persiste dans localStorage (sans mot de passe)
+      try {
+        const { proPassword: _, ...toSave } = next
+        localStorage.setItem('mji_pro_draft', JSON.stringify(toSave))
+      } catch(e) {}
+      return next
+    })
+  }
+
+  async function handleProSubmit(e) {
+    e.preventDefault()
+    const { nom, prenom, telephone, siret, proEmail, proPassword } = proForm
+    if (!nom.trim())       { setProError('Le nom est obligatoire.'); return }
+    if (!prenom.trim())    { setProError('Le prénom est obligatoire.'); return }
+    if (!telephone.trim()) { setProError('Le téléphone est obligatoire.'); return }
+    if (!siret.trim())     { setProError('Le SIRET est obligatoire.'); return }
+    if (!/^\d{14}$/.test(siret.replace(/\s/g,''))) { setProError('Le SIRET doit comporter 14 chiffres.'); return }
+    if (!proEmail.trim())  { setProError("L'email est obligatoire."); return }
+    if (proPassword.length < 8) { setProError('Mot de passe : 8 caractères minimum.'); return }
+    setProError(null); setProLoading(true)
+    try {
+      // 1. Créer le compte Supabase Auth
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: proEmail.trim(),
+        password: proPassword,
+        options: { data: { display_name: prenom.trim() + ' ' + nom.trim(), role: 'pro' } }
+      })
+      if (signUpError) throw new Error(signUpError.message)
+      const userId = data?.user?.id
+      if (!userId) throw new Error('Erreur lors de la création du compte.')
+
+      // 2. Insérer dans users avec role pro (accès immédiat)
+      await supabase.from('users').upsert({
+        id: userId,
+        email: proEmail.trim(),
+        display_name: prenom.trim() + ' ' + nom.trim(),
+        role: 'pro',
+      }, { onConflict: 'id' })
+
+      // 3. Insérer dans users_pro lié au compte
+      const { error: dbError } = await supabase.from('users_pro').insert({
+        user_id: userId,
+        email: proEmail.trim(),
+        nom: nom.trim(),
+        prenom: prenom.trim(),
+        entreprise: proForm.entreprise.trim() || null,
+        activite: proForm.activite.trim() || null,
+        adresse: proForm.adresse.trim() || null,
+        cp: proForm.cp.trim() || null,
+        ville: proForm.ville.trim() || null,
+        telephone: telephone.trim(),
+        siret: siret.replace(/\s/g,''),
+        created_at: new Date().toISOString(),
+      })
+      if (dbError) throw new Error(dbError.message)
+
+      // 4. Connexion : immédiate si email non vérifié requis désactivé,
+      //    sinon l'utilisateur devra cliquer sur le lien reçu par email.
+      if (data?.session) {
+        // Accès immédiat — même parcours que user normal (choix de la fleur)
+        localStorage.setItem('mji_has_logged_in', '1')
+      }
+      // Succès : vider le draft localStorage
+      try { localStorage.removeItem('mji_pro_draft') } catch(e) {}
+      setProSuccess(true)
+      setProEmailPending(!data?.session)
+    } catch (err) { setProError(err.message) }
+    finally { setProLoading(false) }
+  }
+
+  function closeProModal() {
+    setShowProModal(false)
+    setProSuccess(false)
+    setProError(null)
+    setProForm({ nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' })
+    setProEmailPending(false)
+  }
 
   async function handleSignIn(e) {
     e.preventDefault()
@@ -426,6 +573,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                   {error && <div className="auth-error">{error}</div>}
                   <button className="auth-submit" type="submit" disabled={isLoading}>{isLoading ? '…' : 'Créer mon jardin'}</button>
                 </form>
+                <button type="button" onClick={() => setShowProModal(true)} style={{width:'100%',padding:'12px 24px',borderRadius:'50px',border:'1.5px solid rgba(110,60,15,.70)',background:'linear-gradient(135deg,#7a4010,#5a2e08)',color:'#fff',fontSize:'14px',fontWeight:'600',fontFamily:"'Jost',sans-serif",cursor:'pointer',letterSpacing:'.02em',marginTop:'10px',marginBottom:'2px',boxShadow:'0 4px 14px rgba(100,50,10,.25)',transition:'filter .2s'}}>
+                  Professionnel(le) du mieux-être ?
+                </button>
                 <div className="auth-switch">Déjà un compte ? <span onClick={() => goTo('login')}>Me connecter</span></div>
               </div>
             )}
@@ -518,6 +668,129 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         </div>
         </div>
       </div>
+
+      {/* ── MODAL PROFESSIONNEL(LE) ── */}
+      {showProModal && (
+        <div className="pro-modal-overlay" onClick={e => e.target===e.currentTarget && closeProModal()}>
+          <div className="pro-modal">
+            <button className="pro-modal-close" onClick={closeProModal} aria-label="Fermer">✕</button>
+
+            {proSuccess ? (
+              <div className="pro-success">
+                {proEmailPending ? (
+                  <>
+                    <div className="pro-success-icon">✉️</div>
+                    <div className="pro-success-title">Vérifiez votre email !</div>
+                    <div className="pro-success-text">
+                      Un lien de confirmation a été envoyé à<br/>
+                      <strong style={{color:'#1a1208'}}>{proForm.proEmail}</strong>.<br/><br/>
+                      Cliquez sur le lien pour activer votre compte pro<br/>
+                      et accéder à votre espace avec le badge <strong style={{color:'#2e6808'}}>✦ Pro</strong>.
+                    </div>
+                    <button className="auth-submit" style={{marginTop:24,maxWidth:280,marginLeft:'auto',marginRight:'auto',display:'block'}} onClick={() => { closeProModal(); goTo('login') }}>
+                      Me connecter après confirmation →
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="pro-success-icon">🌿</div>
+                    <div className="pro-success-title">Bienvenue, professionnel(le) !</div>
+                    <div className="pro-success-text">
+                      Votre espace pro est prêt.<br/>
+                      Vous êtes connecté(e) avec le badge <strong style={{color:'#2e6808'}}>✦ Pro</strong>.
+                    </div>
+                    <button className="auth-submit" style={{marginTop:24,maxWidth:280,marginLeft:'auto',marginRight:'auto',display:'block'}} onClick={closeProModal}>
+                      Accéder à mon espace →
+                    </button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="pro-modal-title">Espace Professionnel 🌱</div>
+                <div className="pro-modal-sub">Inscrivez votre activité de mieux-être pour rejoindre la communauté pro.</div>
+
+                <form onSubmit={handleProSubmit}>
+                  <div className="pro-row">
+                    <div className="auth-field">
+                      <label className="auth-label">Nom <span className="pro-req">*</span></label>
+                      <input className="auth-input" type="text" placeholder="Dupont" value={proForm.nom} onChange={updatePro('nom')} required autoFocus maxLength={80}/>
+                    </div>
+                    <div className="auth-field">
+                      <label className="auth-label">Prénom <span className="pro-req">*</span></label>
+                      <input className="auth-input" type="text" placeholder="Marie" value={proForm.prenom} onChange={updatePro('prenom')} required maxLength={80}/>
+                    </div>
+                  </div>
+
+                  <div className="pro-section-label">Entreprise &amp; localisation</div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">Nom de l'entreprise</label>
+                    <input className="auth-input" type="text" placeholder="Cabinet Marie Dupont" value={proForm.entreprise} onChange={updatePro('entreprise')} maxLength={120}/>
+                  </div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">Nature de l'activité</label>
+                    <input className="auth-input" type="text" placeholder="Ex : hypnothérapeute, coach bien-être, naturopathe…" value={proForm.activite} onChange={updatePro('activite')} maxLength={160}/>
+                  </div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">Adresse</label>
+                    <input className="auth-input" type="text" placeholder="12 rue des Lilas" value={proForm.adresse} onChange={updatePro('adresse')} maxLength={200}/>
+                  </div>
+
+                  <div className="pro-row">
+                    <div className="auth-field">
+                      <label className="auth-label">Code postal</label>
+                      <input className="auth-input" type="text" placeholder="33000" value={proForm.cp} onChange={updatePro('cp')} maxLength={10}/>
+                    </div>
+                    <div className="auth-field">
+                      <label className="auth-label">Ville</label>
+                      <input className="auth-input" type="text" placeholder="Bordeaux" value={proForm.ville} onChange={updatePro('ville')} maxLength={80}/>
+                    </div>
+                  </div>
+
+                  <div style={{fontSize:'12px',fontWeight:'700',color:'#b83030',marginTop:'8px',marginBottom:'4px',textAlign:'center',letterSpacing:'.01em'}}>
+                    🇫🇷 Service proposé uniquement en France et DOM-TOM
+                  </div>
+                  <div className="pro-section-label">Contact &amp; identification</div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">Téléphone <span className="pro-req">*</span></label>
+                    <input className="auth-input" type="tel" placeholder="06 12 34 56 78" value={proForm.telephone} onChange={updatePro('telephone')} required maxLength={20}/>
+                  </div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">SIRET <span className="pro-req">*</span></label>
+                    <input className="auth-input" type="text" placeholder="362 521 879 00034" value={proForm.siret} onChange={updatePro('siret')} required maxLength={18}/>
+                    <div className="auth-hint">14 chiffres — visible uniquement par l'équipe MJI</div>
+                  </div>
+
+                  <div className="pro-section-label">Accès à l&apos;application</div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">Email <span className="pro-req">*</span></label>
+                    <input className="auth-input" type="email" placeholder="pro@email.com" value={proForm.proEmail} onChange={updatePro('proEmail')} required maxLength={120}/>
+                    <div className="auth-hint">Votre identifiant de connexion</div>
+                  </div>
+
+                  <div className="auth-field">
+                    <label className="auth-label">Mot de passe <span className="pro-req">*</span></label>
+                    <input className="auth-input" type="password" placeholder="8 caractères min." value={proForm.proPassword} onChange={updatePro('proPassword')} required minLength={8}/>
+                    <div className="auth-hint">8 caractères minimum · 1 majuscule · 1 minuscule</div>
+                  </div>
+
+                  {proError && <div className="auth-error">{proError}</div>}
+
+                  <button className="auth-submit" type="submit" disabled={proLoading} style={{marginTop:10}}>
+                    {proLoading ? '…' : 'Envoyer mon inscription comme professionnel(le)'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

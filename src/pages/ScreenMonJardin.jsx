@@ -2538,7 +2538,7 @@ const choose = (idx) => {
 
               {/* Refaire le bilan */}
               <button
-                onClick={() => { setResult(null); setStep(0); setAnswers({}); setSelected(null) }}
+                onClick={() => { setResult(null); setStep(0); setAnswers({}); setSelected(null); setTransitioning(false); setVisible(true) }}
                 style={{ padding:'8px 20px', borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.45)', fontSize:14, cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
               >
                 ↩ Ce résultat ne me correspond pas — refaire

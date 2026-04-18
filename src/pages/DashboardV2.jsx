@@ -48,6 +48,7 @@ import { ONB_STYLES, NatureBg }      from './OnboardingScreen'
 import { useSlideInsight, prefetchAllSlideInsights } from '../hooks/useSlideInsight'
 import NeedSelectionModal   from '../components/NeedSelectionModal'
 import RitualSuggestionModal from '../components/RitualSuggestionModal'
+import { ProProfile }        from './ProProfile'
 // Verrou anti-double award (React Strict Mode)
 const _dailyLoginAwarded = new Set()
 
@@ -913,6 +914,8 @@ export default function DashboardPage() {
   const [showLumensModal,     setShowLumensModal]     = useState(false)
   const [showLumenInfo,       setShowLumenInfo]       = useState(false)
   const [showProfileModal,    setShowProfileModal]    = useState(false)
+  const [isPro,               setIsPro]               = useState(false)
+  const [showProProfileModal, setShowProProfileModal] = useState(false)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
   const [profileView,         setProfileView]         = useState('main') // 'main' | 'settings'
   const [showSettingsDrawer,  setShowSettingsDrawer]  = useState(false)
@@ -1213,6 +1216,14 @@ export default function DashboardPage() {
 
   // ── Overlays communs (desktop + mobile) ──
   // ── Identité utilisateur (utilisée dans commonOverlays et le header) ──
+  // Charger le rôle pro
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('users').select('role').eq('id', user.id).single()
+      .then(({ data }) => { if (data?.role === 'pro') setIsPro(true) })
+      .catch(() => {})
+  }, [user?.id])
+
   const name    = profile?.display_name ?? user?.display_name ?? null
   const email   = user?.email ?? ''
   const initial = (name ?? email).charAt(0).toUpperCase()
@@ -1352,6 +1363,15 @@ export default function DashboardPage() {
 
             {/* Actions */}
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:4 }}>
+              {isPro && (
+                <div onClick={() => { setShowProfileModal(false); setShowProProfileModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))', borderRadius:12, border:'1px solid rgba(122,64,16,.25)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(122,64,16,.14)'} onMouseLeave={e=>e.currentTarget.style.background='linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))'}>
+                  <span style={{ fontSize:16 }}>✦</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:600, color:'#7a4010', fontFamily:"'Jost',sans-serif" }}>Compte Pro</div>
+                    <div style={{ fontSize:10, color:'rgba(122,64,16,.55)', fontFamily:"'Jost',sans-serif" }}>Ateliers, outils, identifiant partenaire</div>
+                  </div>
+                </div>
+              )}
               <div onClick={() => setProfileView('settings')} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
                 <span style={{ fontSize:16 }}>⚙️</span>
                 <div>
@@ -1385,6 +1405,13 @@ export default function DashboardPage() {
                 onNameSaved={() => clearProfileCache(user?.id)}
               />
             )}
+          </div>
+        </div>
+      )}
+      {showProProfileModal && (
+        <div style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(0,0,0,.45)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+          <div style={{ width:'100%', maxWidth:880, maxHeight:'92vh', overflowY:'auto', borderRadius:24, background:'linear-gradient(160deg,#f5f0e8,#dde8d0)', boxShadow:'0 16px 60px rgba(30,60,10,.22)', border:'1.5px solid rgba(180,210,140,.35)' }}>
+            <ProProfile onBack={() => setShowProProfileModal(false)} />
           </div>
         </div>
       )}

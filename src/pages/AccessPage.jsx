@@ -784,6 +784,8 @@ export function PremiumModal({ onSuccess, onClose }) {
   const [paying,          setPaying]          = useState(false)
   const [solidaryAmount,  setSolidaryAmount]  = useState(108)
   const [solidaryError,   setSolidaryError]   = useState(false)
+  const [showPromo,       setShowPromo]       = useState(false)
+  const [promoCode,       setPromoCode]       = useState('')
   const SOLIDARITY_MIN = 108
 
   async function handlePay() {
@@ -796,9 +798,10 @@ export function PremiumModal({ onSuccess, onClose }) {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Non connecté')
+      const promo = promoCode.trim() || undefined
       const body = selectedPlan.id === 'solidarity'
-        ? { solidarity: true, amount: Math.round(solidaryAmount * 100), userId: user.id }
-        : { priceId: selectedPlan.id, userId: user.id }
+        ? { solidarity: true, amount: Math.round(solidaryAmount * 100), userId: user.id, promoCode: promo }
+        : { priceId: selectedPlan.id, userId: user.id, promoCode: promo }
       const { data, error } = await supabase.functions.invoke('stripe-checkout', { body })
       if (error || !data?.url) throw new Error(error?.message ?? 'Erreur Stripe')
       window.location.href = data.url
@@ -1043,7 +1046,7 @@ export function PremiumModal({ onSuccess, onClose }) {
           </div>
 
           {/* CTA */}
-          <button className="pm-cta" onClick={handlePay} disabled={!selectedPlan || paying}
+          <button className="pm-cta" onClick={() => setShowPromo(true)} disabled={!selectedPlan || paying}
             style={{ background: selectedPlan?.id === 'solidarity' ? 'linear-gradient(135deg,#c8a030,#a07820)' : 'linear-gradient(135deg,#5a9a28,#3a7a18)', boxShadow: selectedPlan?.id === 'solidarity' ? '0 6px 20px rgba(180,140,20,.30)' : '0 6px 20px rgba(60,120,20,.30)' }}
           >
             {paying
@@ -1055,8 +1058,91 @@ export function PremiumModal({ onSuccess, onClose }) {
                   : 'Choisissez une formule'}
           </button>
           <p className="pm-note"><span>🔒</span><span>Paiement sécurisé via Stripe · sans engagement</span></p>
+
         </div>
       </div>
+
+      {/* ── PROMO OVERLAY — position:fixed, hors du modal ── */}
+      {showPromo && (
+        <div style={{
+          position:'fixed', inset:0, zIndex:600,
+          background:'rgba(0,0,0,0.55)', backdropFilter:'blur(6px)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          padding:'20px', animation:'pm-fadeIn .2s ease both',
+        }}>
+          <div style={{
+            background:'#f5f1eb', borderRadius:20, padding:'36px 28px 28px',
+            width:'100%', maxWidth:400,
+            boxShadow:'0 12px 48px rgba(0,0,0,.22)',
+            display:'flex', flexDirection:'column', alignItems:'center',
+            animation:'pm-slideUp .28s cubic-bezier(.22,1,.36,1) both',
+          }}>
+            <div style={{
+              width:56, height:56, borderRadius:16, marginBottom:20,
+              background:'linear-gradient(135deg,#3a7a18,#5a9a28)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'0 8px 24px rgba(60,120,20,.25)',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="8" width="20" height="13" rx="2" stroke="white" strokeWidth="1.6"/>
+                <path d="M2 12h20" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M12 8V21" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M12 8C12 8 9 5 7 6C5 7 6 9 8 8.5C10 8 12 8 12 8Z" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 8C12 8 15 5 17 6C19 7 18 9 16 8.5C14 8 12 8 12 8Z" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:300, color:'#1a1208', marginBottom:8, textAlign:'center', lineHeight:1.2 }}>
+              Vous avez un code promo ?
+            </div>
+            <div style={{ fontSize:13, color:'rgba(30,20,8,.45)', marginBottom:24, textAlign:'center', lineHeight:1.65, maxWidth:270 }}>
+              Entrez votre code ci-dessous pour obtenir votre réduction, ou continuez sans.
+            </div>
+
+            <input
+              type="text"
+              placeholder="mj-xxxxxx"
+              value={promoCode}
+              onChange={e => setPromoCode(e.target.value.toLowerCase())}
+              autoFocus
+              style={{
+                width:'100%', padding:'14px 18px', borderRadius:12, marginBottom:12,
+                border:'1.5px solid #ddd', background:'#fff',
+                fontSize:17, fontFamily:"'Jost',sans-serif", color:'#1a1208',
+                letterSpacing:'.12em', textAlign:'center', outline:'none',
+                transition:'border-color .2s, box-shadow .2s',
+                boxShadow:'0 2px 8px rgba(0,0,0,.04)',
+              }}
+              onFocus={e => { e.target.style.borderColor='rgba(90,154,40,.6)'; e.target.style.boxShadow='0 0 0 3px rgba(90,154,40,.10)' }}
+              onBlur={e => { e.target.style.borderColor='#ddd'; e.target.style.boxShadow='0 2px 8px rgba(0,0,0,.04)' }}
+            />
+
+            <button
+              className="pm-cta"
+              onClick={handlePay}
+              disabled={paying}
+              style={{
+                width:'100%', marginBottom:14,
+                background: promoCode.trim() ? 'linear-gradient(135deg,#5a9a28,#3a7a18)' : 'linear-gradient(135deg,#888,#666)',
+                boxShadow: promoCode.trim() ? '0 6px 20px rgba(60,120,20,.28)' : '0 4px 14px rgba(0,0,0,.12)',
+              }}
+            >
+              {paying ? 'Redirection…' : promoCode.trim() ? `Valider "${promoCode.trim()}" →` : 'Continuer sans code →'}
+            </button>
+
+            <button
+              onClick={() => setShowPromo(false)}
+              style={{
+                background:'none', border:'none', cursor:'pointer',
+                fontSize:12.5, color:'rgba(30,20,8,.35)',
+                fontFamily:"'Jost',sans-serif", padding:'4px 8px',
+              }}
+            >
+              ← Retour
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

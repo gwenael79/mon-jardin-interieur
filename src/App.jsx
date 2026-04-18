@@ -11,6 +11,7 @@ import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
 import { WeekOneFlow }      from './pages/WeekOneFlow'
 import { EndOfWeekScreen }  from './pages/EndOfWeekScreen'
+import { ProProfile }       from './pages/ProProfile'
 import InstallPrompt from './components/InstallPrompt'
 
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
@@ -26,6 +27,8 @@ export default function App() {
   const { activateFree, refresh } = useSubscription()
 
   const [screen,        setScreen]        = useState('loading')
+  const [isPro,         setIsPro]         = useState(false)
+  const [showProProfile,setShowProProfile] = useState(false)
   const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
@@ -115,7 +118,10 @@ export default function App() {
     setScreen('loading')
     ;(async () => {
       const { data: userData } = await supabase
-        .from('users').select('onboarded, onboarding_completed').eq('id', user.id).maybeSingle()
+        .from('users').select('onboarded, onboarding_completed, role').eq('id', user.id).maybeSingle()
+
+      // Détecter le rôle pro dès le départ
+      if (userData?.role === 'pro') setIsPro(true)
 
       const isOnboarded = userData?.onboarded === true
 
@@ -228,20 +234,34 @@ export default function App() {
   }
 
   if (screen === 'onboarding') {
-    return <OnboardingScreen userId={user.id} onComplete={async () => {
-      // Marquer l'onboarding comme terminé en base
-      await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
-      setScreen('weekone')
-    }} />
+    return (
+      <>
+        <OnboardingScreen userId={user.id} onComplete={async () => {
+          await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
+          setScreen('weekone')
+        }} />
+      </>
+    )
   }
 
   if (screen === 'weekone') {
     return (
-      <WeekOneFlow
-        userId={user.id}
-        onComplete={() => setScreen('weekone_rest')}
-        onAllDone={() => setScreen('endofweek')}
-      />
+      <>
+        <WeekOneFlow
+          userId={user.id}
+          onComplete={() => setScreen('weekone_rest')}
+          onAllDone={() => setScreen('endofweek')}
+          onOpenProProfile={() => setShowProProfile(true)}
+          isPro={isPro}
+        />
+        {showProProfile && (
+          <div style={{ position:'fixed', inset:0, zIndex:10000, background:'rgba(10,20,5,.60)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
+            <div style={{ width:'100%', maxWidth:860, maxHeight:'92vh', overflowY:'auto', borderRadius:24, background:'linear-gradient(160deg,#f5f0e8,#dde8d0)', boxShadow:'0 16px 60px rgba(30,60,10,.22)', border:'1.5px solid rgba(180,210,140,.35)' }}>
+              <ProProfile onBack={() => setShowProProfile(false)} />
+            </div>
+          </div>
+        )}
+      </>
     )
   }
 

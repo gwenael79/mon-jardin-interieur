@@ -2241,6 +2241,8 @@ function MaFleurLiveModal({ onClose }) {
       const rituals  = ritualsRes.status  === 'fulfilled' ? (ritualsRes.value.data  ?? [])  : []
       const profile0 = profileRes.status  === 'fulfilled' ? (profileRes.value.data  ?? null) : null
 
+
+
       let plant = plant0
 
       // Cumul semaine — applique les bonus des jours complétés si la table plants
@@ -5023,7 +5025,7 @@ function FleurDiscoveryModal({ onClose }) {
   )
 }
 
-function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth }) {
+function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth, isPro, onOpenProProfile }) {
   const [showFleurModal, setShowFleurModal] = useState(false)
 
   const completedZones = ZONE_DAYS
@@ -5321,7 +5323,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
       </div>
 
       {/* Bouton fermeture */}
-      <div style={{ textAlign: 'center', marginTop: 40 }}>
+      <div style={{ textAlign: 'center', marginTop: 24 }}>
         <button
           onClick={onClose}
           style={{
@@ -5578,7 +5580,7 @@ function WelcomeWeekOne({ onStart }) {
   )
 }
 
-export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceDay }) {
+export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceDay, isPro: isProProp, onOpenProProfile }) {
   const { signOut } = useAuth()
   const [loading,     setLoading]     = useState(true)
 
@@ -5621,7 +5623,7 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
   )
   const [view, setView] = useState(
     forceDay > 1 || forceGarden ? 'garden' : 'day'
-  ) // 'day' | 'garden'
+  )
   const [activeZoneId, setActiveZoneId] = useState(null)
   const [completedRituals, setCompletedRituals] = useState({})
   const { rituals: plantRituals } = useRituels()
@@ -6004,6 +6006,26 @@ console.log('❌ Pas de données ou erreur:', error)
       {/* Conteneur modal */}
       <div className="wof-backdrop" style={{ zIndex: 10 }}>
         <div className={`wof-modal${view === 'garden' ? ' wof-modal--garden' : ''}`} style={view === 'garden' ? { background: 'linear-gradient(160deg, #0d2818 0%, #0a1f12 50%, #071510 100%)' } : {}}>
+
+          {/* ── Bouton Compte Pro — vue garden uniquement ── */}
+          {isProProp && view === 'garden' && (
+            <div
+              onClick={() => onOpenProProfile?.()}
+              style={{
+                position: 'absolute', top: 12, right: 12, zIndex: 50,
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 14px', borderRadius: 100,
+                background: 'linear-gradient(135deg,rgba(122,64,16,.90),rgba(90,46,8,.85))',
+                border: '1px solid rgba(255,255,255,.20)',
+                backdropFilter: 'blur(8px)',
+                cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                fontSize: 11, fontWeight: 600, color: '#fff',
+                letterSpacing: '.05em', boxShadow: '0 2px 12px rgba(0,0,0,.25)',
+              }}
+            >
+              ✦ Compte Pro
+            </div>
+          )}
           {view === 'garden' && (
             <>
               <div className="garden-overlay" />
@@ -6111,6 +6133,8 @@ console.log('❌ Pas de données ou erreur:', error)
                 petalColor1={petalColor1}
                 petalColor2={petalColor2}
                 plantHealth={plantHealth}
+                isPro={isProProp}
+                onOpenProProfile={onOpenProProfile}
               />
             ) : (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
@@ -6161,6 +6185,8 @@ console.log('❌ Pas de données ou erreur:', error)
           />
         </div>
       )}
+
+
 
     </>
   )
