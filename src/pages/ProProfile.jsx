@@ -15,6 +15,7 @@ const css = `
 @keyframes ppFadeUp  {from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ppFadeIn  {from{opacity:0}to{opacity:1}}
 @keyframes ppPulse   {0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes ppSpin    {from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 .pp-wrap {
   min-height:100vh; font-family:'Jost',sans-serif;
@@ -143,9 +144,9 @@ const css = `
 }
 .pp-modal-close:hover { background:#eee; color:#111; }
 .pp-modal-title { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; color:#111; margin-bottom:4px; }
-.pp-modal-sub { font-size:13px; color:#888; margin-bottom:24px; }
+.pp-modal-sub { font-size:13px; color:#444; margin-bottom:24px; }
 .pp-field { margin-bottom:14px; }
-.pp-label { font-size:10px; letter-spacing:.10em; text-transform:uppercase; color:#999; margin-bottom:5px; display:block; font-weight:600; }
+.pp-label { font-size:10px; letter-spacing:.10em; text-transform:uppercase; color:#555; margin-bottom:5px; display:block; font-weight:600; }
 .pp-input {
   width:100%; padding:11px 14px; background:#fafafa; border:1px solid #e0ddd6;
   border-radius:10px; font-size:14px; font-family:'Jost',sans-serif; color:#111; outline:none; transition:border-color .18s;
@@ -183,12 +184,24 @@ export function ProProfile({ onBack }) {
   const [showEdit,   setShowEdit]   = useState(false)
   const [editForm,   setEditForm]   = useState({})
   const [saving,     setSaving]     = useState(false)
+  const [refreshing,  setRefreshing]  = useState(false)
+  const [openMonths,   setOpenMonths]   = useState({})
   const [saveError,  setSaveError]  = useState(null)
   const [referrals,  setReferrals]  = useState([])
   const [commissions,setCommissions]= useState([])
+  const [ateliers,      setAteliers]      = useState([])
+  const [produits,      setProduits]      = useState([])
+  const [inscriptions,  setInscriptions]  = useState([])
+  const [ventesProduits,setVentesProduits]= useState([])
   const promoInitialized = useRef(false)
 
   useEffect(() => { loadData() }, [])
+
+  async function refreshData() {
+    setRefreshing(true)
+    await loadData()
+    setRefreshing(false)
+  }
 
   async function loadData() {
     setLoading(true)
@@ -259,20 +272,58 @@ export function ProProfile({ onBack }) {
         } catch (e) { console.warn('[ProProfile] init-pro-promo:', e) }
       }
 
-      // Charger referrals et commissions
+      // Charger referrals, commissions, ateliers, produits
       if (pro) {
-        const [{ data: refs }, { data: comms }] = await Promise.all([
+        const [{ data: refs }, { data: comms }, { data: atelData }] = await Promise.all([
           supabase.from('pro_referrals')
-            .select('*, users(display_name, flower_name)')
+            .select('*, users!client_user_id(display_name, email)')
             .eq('pro_id', pro.id)
             .order('created_at', { ascending: false }),
           supabase.from('pro_commissions')
             .select('*')
             .eq('pro_id', pro.id)
             .order('created_at', { ascending: false }),
+          supabase.from('ateliers')
+            .select('*, atelier_registrations(count)')
+            .eq('animator_id', user.id)
+            .order('starts_at', { ascending: false }),
         ])
         setReferrals(refs ?? [])
         setCommissions(comms ?? [])
+        setAteliers(atelData ?? [])
+
+        // Inscriptions ateliers (basé sur les IDs chargés)
+        if (atelData?.length) {
+          const atelIds = atelData.map(a => a.id)
+          const { data: inscData } = await supabase
+            .from('atelier_registrations')
+            .select('*, ateliers(title, starts_at), users(display_name)')
+            .in('atelier_id', atelIds)
+            .order('registered_at', { ascending: false })
+          setInscriptions(inscData ?? [])
+        } else {
+          setInscriptions([])
+        }
+
+        // Produits + ventes via partenaires
+        const { data: partenaire } = await supabase
+          .from('partenaires').select('id').eq('user_id', user.id).maybeSingle()
+        if (partenaire) {
+          const [{ data: prodData }, { data: ventesData }] = await Promise.all([
+            supabase.from('produits').select('*')
+              .eq('partenaire_id', partenaire.id)
+              .order('created_at', { ascending: false }),
+            supabase.from('ventes_partenaires')
+              .select('*, produits(titre)')
+              .eq('partenaire_id', partenaire.id)
+              .order('created_at', { ascending: false }),
+          ])
+          setProduits(prodData ?? [])
+          setVentesProduits(ventesData ?? [])
+        } else {
+          setProduits([])
+          setVentesProduits([])
+        }
       }
     } catch (e) { console.error('[ProProfile]', e) }
     finally { setLoading(false) }
@@ -327,7 +378,8 @@ export function ProProfile({ onBack }) {
   const TABS = [
     { id:'ateliers',    icon:'🌿', label:'Mes ateliers'  },
     { id:'outils',      icon:'🪴', label:'Mes outils'    },
-    { id:'commissions', icon:'💰', label:'Commissions'   },
+    { id:'ventes',      icon:'🧾', label:'Gestion des ventes'      },
+    { id:'commissions', icon:'💰', label:'Commissions abonnements' },
   ]
 
   if (loading) return (
@@ -415,92 +467,370 @@ export function ProProfile({ onBack }) {
       <div className="pp-tab-panel">
         <div className="pp-tab-body">
           {activeTab === 'ateliers' && (
-            <div className="pp-empty">
-              <div className="pp-empty-icon">🌱</div>
-              <div className="pp-empty-title">Aucun atelier pour le moment</div>
-              <div className="pp-empty-text">Proposez vos ateliers bien-être à la communauté.<br/>Ils seront liés à votre identifiant <strong>{proData?.pro_id ?? '…'}</strong>.</div>
-              <button className="pp-empty-btn" disabled style={{opacity:.4,cursor:'not-allowed'}}>+ Créer un atelier <span style={{fontSize:10,opacity:.7}}>(bientôt)</span></button>
-            </div>
+            ateliers.length === 0 ? (
+              <div className="pp-empty">
+                <div className="pp-empty-icon">🌱</div>
+                <div className="pp-empty-title">Aucun atelier pour le moment</div>
+                <div className="pp-empty-text">Vos ateliers bien-être apparaîtront ici dès qu'ils seront créés sur l'application.</div>
+              </div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                {ateliers.map(a => {
+                  const date = a.starts_at ? new Date(a.starts_at) : null
+                  const count = a.atelier_registrations?.[0]?.count ?? 0
+                  return (
+                    <div key={a.id} style={{border:'1px solid #ece9e2',borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'#fafaf8'}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:14,fontWeight:600,color:'#111',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{a.title}</div>
+                        <div style={{fontSize:12,color:'#aaa',display:'flex',gap:12,flexWrap:'wrap'}}>
+                          {date && <span>{date.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})} · {date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>}
+                          {a.format && <span style={{textTransform:'capitalize'}}>{a.format}</span>}
+                          {a.price > 0 && <span>{Number(a.price).toFixed(2)} €</span>}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+                        <span style={{fontSize:11,color:'#888'}}>{count} inscrit{count>1?'s':''}</span>
+                        <span style={{fontSize:11,fontWeight:600,padding:'3px 10px',borderRadius:20,
+                          background: a.is_published ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.06)',
+                          color: a.is_published ? '#5a9a28' : '#aaa'}}>
+                          {a.is_published ? '✓ Publié' : 'Brouillon'}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )
           )}
           {activeTab === 'outils' && (
-            <div className="pp-empty">
-              <div className="pp-empty-icon">🛍️</div>
-              <div className="pp-empty-title">Aucun outil en vente</div>
-              <div className="pp-empty-text">Mettez en avant vos ressources dans la jardinothèque.<br/>Tracés via votre identifiant <strong>{proData?.pro_id ?? '…'}</strong>.</div>
-              <button className="pp-empty-btn" disabled style={{opacity:.4,cursor:'not-allowed'}}>+ Ajouter un outil <span style={{fontSize:10,opacity:.7}}>(bientôt)</span></button>
-            </div>
+            produits.length === 0 ? (
+              <div className="pp-empty">
+                <div className="pp-empty-icon">🛍️</div>
+                <div className="pp-empty-title">Aucun produit dans la jardinothèque</div>
+                <div className="pp-empty-text">Vos ressources numériques apparaîtront ici une fois ajoutées via votre compte partenaire.</div>
+              </div>
+            ) : (
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                {produits.map(p => (
+                  <div key={p.id} style={{border:'1px solid #ece9e2',borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'#fafaf8'}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:14,fontWeight:600,color:'#111',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.titre}</div>
+                      <div style={{fontSize:12,color:'#aaa',display:'flex',gap:12}}>
+                        {p.type && <span style={{textTransform:'capitalize'}}>{p.type}</span>}
+                        {p.categorie && <span>{p.categorie}</span>}
+                        {p.prix > 0 && <span>{Number(p.prix).toFixed(2)} €</span>}
+                      </div>
+                    </div>
+                    <span style={{fontSize:11,fontWeight:600,padding:'3px 10px',borderRadius:20,flexShrink:0,
+                      background: p.statut === 'publié' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.06)',
+                      color: p.statut === 'publié' ? '#5a9a28' : '#aaa'}}>
+                      {p.statut ?? 'En attente'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
           )}
+          {activeTab === 'ventes' && (() => {
+            const TVA = 20
+            const COMM_RATE = 0.15
+
+            const allVentes = [
+              ...inscriptions.map(ins => {
+                const atelier = ateliers.find(a => a.id === ins.atelier_id)
+                const ttc  = Number(atelier?.price ?? 0)
+                const ht   = ttc / (1 + TVA / 100)
+                const comm = ht * COMM_RATE
+                const net  = ht * (1 - COMM_RATE)
+                const date = ins.registered_at ? new Date(ins.registered_at) : null
+                return { id: ins.id, type: 'atelier', label: ins.ateliers?.title ?? 'Atelier', date, ttc, tva: TVA, ht, comm, net }
+              }),
+              ...ventesProduits.map(v => {
+                const ttc  = Number(v.montant_brut ?? 0)
+                const ht   = ttc / (1 + TVA / 100)
+                const comm = ht * COMM_RATE
+                const net  = ht * (1 - COMM_RATE)
+                const date = v.created_at ? new Date(v.created_at) : null
+                return { id: v.id, type: 'produit', label: v.produits?.titre ?? 'Produit', date, ttc, tva: TVA, ht, comm, net }
+              }),
+            ].filter(v => v.date).sort((a, b) => b.date - a.date)
+
+            const soldeNet = allVentes.reduce((s, v) => s + v.net, 0)
+
+            if (allVentes.length === 0) return (
+              <div className="pp-empty">
+                <div className="pp-empty-icon">🧾</div>
+                <div className="pp-empty-title">Aucune vente</div>
+                <div className="pp-empty-text">Vos ventes d'ateliers et produits numériques apparaîtront ici, regroupées par mois.</div>
+              </div>
+            )
+
+            const byMonth = {}
+            allVentes.forEach(v => {
+              const key   = `${v.date.getFullYear()}-${String(v.date.getMonth()+1).padStart(2,'0')}`
+              const label = v.date.toLocaleDateString('fr-FR', { month:'long', year:'numeric' })
+              if (!byMonth[key]) byMonth[key] = { label, items:[], ttc:0, ht:0, comm:0, net:0 }
+              byMonth[key].items.push(v)
+              byMonth[key].ttc  += v.ttc
+              byMonth[key].ht   += v.ht
+              byMonth[key].comm += v.comm
+              byMonth[key].net  += v.net
+            })
+
+            const COLS = '2fr 1fr 1fr 1fr 1fr 1fr'
+            const COL_HEADS = ['Désignation','TTC','TVA','HT','Comm. 15 %','Net pro']
+
+            return (
+              <div>
+              {/* Solde + bouton Solder */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:24}}>
+                <div style={{background:'#f9f7f4',border:'1px solid #e0ddd6',borderRadius:14,padding:'18px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                  <div style={{flex:1,textAlign:'center'}}>
+                    <div style={{fontSize:9.5,letterSpacing:'.12em',textTransform:'uppercase',color:'#aaa',marginBottom:8,fontWeight:600}}>Solde disponible</div>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:48,fontWeight:600,color:'#111',lineHeight:1}}>
+                      {soldeNet.toFixed(2)} <span style={{fontSize:24}}>€</span>
+                    </div>
+                  </div>
+                  <button
+                    disabled={soldeNet <= 0}
+                    onClick={() => alert('Demande de virement envoyée à Wize. Notre équipe traitera le paiement sous 3–5 jours ouvrés.')}
+                    style={{
+                      alignSelf:'stretch',margin:'10px 10px 10px 0',padding:'0 24px',
+                      borderRadius:10,border:'none',
+                      background: soldeNet > 0 ? 'linear-gradient(160deg,#1c1c1c,#333)' : 'rgba(0,0,0,.08)',
+                      color: soldeNet > 0 ? '#fff' : '#bbb',
+                      fontSize:14,fontWeight:700,fontFamily:"'Jost',sans-serif",
+                      cursor: soldeNet > 0 ? 'pointer' : 'not-allowed',
+                      letterSpacing:'.05em',whiteSpace:'nowrap',
+                    }}
+                  >Solder</button>
+                </div>
+                <div style={{background:'#f9f7f4',border:'1px solid #e0ddd6',borderRadius:14,padding:'18px 20px',display:'flex',flexDirection:'column',justifyContent:'center',gap:10}}>
+                  <div>
+                    <div style={{fontSize:9.5,letterSpacing:'.12em',textTransform:'uppercase',color:'#888',marginBottom:4,fontWeight:600}}>Paiement via</div>
+                    <div style={{fontSize:17,fontWeight:700,color:'#111',letterSpacing:'.04em'}}>Wize</div>
+                    <div style={{fontSize:12,color:'#555',marginTop:3,fontWeight:500}}>Virement SEPA · 3–5 jours ouvrés</div>
+                  </div>
+                  <div style={{fontSize:12,color:'#333',lineHeight:1.7}}>
+                    Commission Mon Jardin : <strong style={{color:'#111'}}>15 %</strong> sur le montant HT.<br/>
+                    TVA applicable : <strong style={{color:'#111'}}>20 %</strong>.
+                  </div>
+                </div>
+              </div>
+
+              {/* Accordéon par mois */}
+              <div style={{border:'1px solid #ece9e2',borderRadius:14,overflow:'hidden'}}>
+                {Object.entries(byMonth).sort((a,b) => b[0].localeCompare(a[0])).map(([key, month], mi, arr) => (
+                  <div key={key} style={{borderBottom: mi < arr.length-1 ? '1px solid #ece9e2' : 'none'}}>
+                    {/* Accordéon header */}
+                    <div
+                      onClick={() => setOpenMonths(prev => ({...prev, [key]: !prev[key]}))}
+                      style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',cursor:'pointer',
+                        background: openMonths[key] ? '#f4f1ec' : '#fafaf8',userSelect:'none',transition:'background .15s'}}
+                    >
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <span style={{fontSize:13.5,fontWeight:600,color:'#222',textTransform:'capitalize'}}>{month.label}</span>
+                        <span style={{fontSize:11,color:'#bbb'}}>({month.items.length} vente{month.items.length>1?'s':''})</span>
+                      </div>
+                      <div style={{display:'flex',alignItems:'center',gap:20}}>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:9,letterSpacing:'.10em',textTransform:'uppercase',color:'#bbb',marginBottom:2}}>Comm. MJ</div>
+                          <div style={{fontSize:12,fontWeight:600,color:'#e07040'}}>−{month.comm.toFixed(2)} €</div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <div style={{fontSize:9,letterSpacing:'.10em',textTransform:'uppercase',color:'#bbb',marginBottom:2}}>Net pro</div>
+                          <div style={{fontSize:14,fontWeight:700,color:'#5a9a28'}}>{month.net.toFixed(2)} €</div>
+                        </div>
+                        <span style={{fontSize:11,color:'#bbb',display:'inline-block',
+                          transform: openMonths[key] ? 'rotate(180deg)' : 'none',transition:'transform .2s'}}>▾</span>
+                      </div>
+                    </div>
+
+                    {openMonths[key] && (
+                      <div>
+                        {/* En-têtes colonnes */}
+                        <div style={{display:'grid',gridTemplateColumns:COLS,padding:'8px 20px',
+                          background:'#f9f7f4',borderTop:'1px solid #ece9e2',borderBottom:'1px solid #ece9e2',gap:10}}>
+                          {COL_HEADS.map(h => (
+                            <span key={h} style={{fontSize:9.5,letterSpacing:'.09em',textTransform:'uppercase',color:'#bbb',fontWeight:600}}>{h}</span>
+                          ))}
+                        </div>
+
+                        {/* Lignes */}
+                        {month.items.map(v => (
+                          <div key={v.id} style={{display:'grid',gridTemplateColumns:COLS,padding:'11px 20px',
+                            borderBottom:'1px solid #f5f2ee',gap:10,alignItems:'center',background:'#fff'}}>
+                            <div style={{minWidth:0}}>
+                              <div style={{fontSize:10.5,color:'#bbb',marginBottom:2}}>
+                                {v.type === 'atelier' ? '🌿 Atelier' : '🛍️ Produit numérique'}
+                              </div>
+                              <div style={{fontSize:13,fontWeight:500,color:'#111',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{v.label}</div>
+                              <div style={{fontSize:11,color:'#ccc',marginTop:1}}>
+                                {v.date.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}
+                              </div>
+                            </div>
+                            <span style={{fontSize:13,color:'#333'}}>{v.ttc.toFixed(2)} €</span>
+                            <span style={{fontSize:12,color:'#888'}}>{v.tva} %</span>
+                            <span style={{fontSize:13,color:'#555'}}>{v.ht.toFixed(2)} €</span>
+                            <span style={{fontSize:12,fontWeight:600,color:'#e07040'}}>−{v.comm.toFixed(2)} €</span>
+                            <span style={{fontSize:13,fontWeight:700,color:'#5a9a28'}}>{v.net.toFixed(2)} €</span>
+                          </div>
+                        ))}
+
+                        {/* Total du mois */}
+                        <div style={{display:'grid',gridTemplateColumns:COLS,padding:'10px 20px',
+                          background:'#f9f7f4',borderTop:'1px solid #ece9e2',gap:10,alignItems:'center'}}>
+                          <span style={{fontSize:10,fontWeight:700,color:'#999',letterSpacing:'.08em',textTransform:'uppercase'}}>
+                            Total {month.label}
+                          </span>
+                          <span style={{fontSize:13,fontWeight:600,color:'#333'}}>{month.ttc.toFixed(2)} €</span>
+                          <span/>
+                          <span style={{fontSize:13,fontWeight:600,color:'#333'}}>{month.ht.toFixed(2)} €</span>
+                          <span style={{fontSize:12,fontWeight:700,color:'#e07040'}}>−{month.comm.toFixed(2)} €</span>
+                          <span style={{fontSize:13,fontWeight:700,color:'#5a9a28'}}>{month.net.toFixed(2)} €</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              </div>
+            )
+          })()}
           {activeTab === 'commissions' && (
             <div>
+              {/* Bouton actualiser */}
+              <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:10 }}>
+                <button onClick={refreshData} disabled={refreshing} style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 14px', borderRadius:8, border:'1px solid #e0ddd6', background:'#fafaf8', color:'#666', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
+                  <span style={{ display:'inline-block', animation: refreshing ? 'ppSpin 1s linear infinite' : 'none' }}>↻</span>
+                  {refreshing ? 'Actualisation…' : 'Actualiser'}
+                </button>
+              </div>
+
               {/* Solde + code promo */}
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:24 }}>
-                <div style={{ background:'#f9f7f4', border:'1px solid #e0ddd6', borderRadius:14, padding:'18px 20px' }}>
-                  <div style={{ fontSize:9.5, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', marginBottom:6, fontWeight:600 }}>Solde disponible</div>
-                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, color:'#111', lineHeight:1 }}>
-                    {((proData?.commission_balance_cents ?? 0) / 100).toFixed(2)} <span style={{ fontSize:16 }}>€</span>
+                <div style={{ background:'#f9f7f4', border:'1px solid #e0ddd6', borderRadius:14, padding:'18px 20px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div style={{ flex:1, textAlign:'center' }}>
+                    <div style={{ fontSize:9.5, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', marginBottom:8, fontWeight:600 }}>Solde disponible</div>
+                    <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:48, fontWeight:600, color:'#111', lineHeight:1 }}>
+                      {((proData?.commission_balance_cents ?? 0) / 100).toFixed(2)} <span style={{ fontSize:24 }}>€</span>
+                    </div>
                   </div>
-                  <div style={{ fontSize:11, color:'#aaa', marginTop:5 }}>
-                    Total cumulé : {((proData?.total_earned_cents ?? 0) / 100).toFixed(2)} €
-                  </div>
+                  <button
+                    disabled={(proData?.commission_balance_cents ?? 0) === 0}
+                    onClick={() => alert('La demande de solde sera traitée par notre équipe. Fonctionnalité bientôt disponible.')}
+                    style={{
+                      alignSelf:'stretch', margin:'10px 10px 10px 0', padding:'0 24px',
+                      borderRadius:10, border:'none',
+                      background: (proData?.commission_balance_cents ?? 0) > 0 ? 'linear-gradient(160deg,#1c1c1c,#333)' : 'rgba(0,0,0,.08)',
+                      color: (proData?.commission_balance_cents ?? 0) > 0 ? '#fff' : '#bbb',
+                      fontSize:14, fontWeight:700, fontFamily:"'Jost',sans-serif",
+                      cursor: (proData?.commission_balance_cents ?? 0) > 0 ? 'pointer' : 'not-allowed',
+                      letterSpacing:'.05em', whiteSpace:'nowrap',
+                    }}
+                  >Solder</button>
                 </div>
-                <div style={{ background:'#f9f7f4', border:'1px solid #e0ddd6', borderRadius:14, padding:'18px 20px' }}>
-                  <div style={{ fontSize:9.5, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', marginBottom:6, fontWeight:600 }}>Code promo client</div>
-                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:600, letterSpacing:'.10em', color:'#111' }}>
-                    {proData?.pro_id ?? '…'}
+                <div style={{ background:'#f9f7f4', border:'1px solid #e0ddd6', borderRadius:14, padding:'18px 20px', display:'flex', flexDirection:'column', justifyContent:'center', gap:10 }}>
+                  <div>
+                    <div style={{ fontSize:9.5, letterSpacing:'.12em', textTransform:'uppercase', color:'#888', marginBottom:4, fontWeight:600 }}>Paiement via</div>
+                    <div style={{ fontSize:17, fontWeight:700, color:'#111', letterSpacing:'.04em' }}>Wize</div>
+                    <div style={{ fontSize:12, color:'#555', marginTop:3, fontWeight:500 }}>Virement SEPA · 3–5 jours ouvrés</div>
                   </div>
-                  <div style={{ fontSize:11, color:'#aaa', marginTop:5 }}>−10 % · commission 10 % / mois</div>
+                  <div style={{ fontSize:12, color:'#333', lineHeight:1.7 }}>
+                    Commission Mon Jardin : <strong style={{ color:'#111' }}>10 %</strong> sur chaque renouvellement.<br/>
+                    Code promo client : <strong style={{ color:'#111' }}>{proData?.pro_id ?? '…'}</strong> (−10 %).
+                  </div>
                 </div>
               </div>
 
-              {/* Clients affiliés */}
-              <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', fontWeight:600, marginBottom:12 }}>
-                  Clients affiliés ({referrals.length})
-                </div>
-                {referrals.length === 0 ? (
-                  <div style={{ fontSize:13, color:'#bbb', fontStyle:'italic', padding:'12px 0' }}>
-                    Aucun client pour le moment — partagez votre code <strong style={{ color:'#888' }}>{proData?.pro_id}</strong>
-                  </div>
-                ) : referrals.map(ref => (
-                  <div key={ref.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #f0ede8' }}>
-                    <div>
-                      <div style={{ fontSize:13.5, color:'#111', fontWeight:500 }}>
-                        {ref.users?.display_name ?? 'Anonyme'}
-                        {ref.users?.flower_name && <span style={{ color:'#aaa', fontWeight:400 }}> · {ref.users.flower_name}</span>}
-                      </div>
-                      <div style={{ fontSize:11, color:'#bbb', marginTop:2 }}>
-                        Depuis le {new Date(ref.created_at).toLocaleDateString('fr-FR')}
-                      </div>
-                    </div>
-                    <div style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:20,
-                      background: ref.status === 'active' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.05)',
-                      color: ref.status === 'active' ? '#5a9a28' : '#aaa',
-                    }}>
-                      {ref.status === 'active' ? '✓ Actif' : '✕ Résilié'}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {/* 2 colonnes : clients affiliés + historique CA */}
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
 
-              {/* Historique commissions */}
-              <div>
-                <div style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', fontWeight:600, marginBottom:12 }}>
-                  Historique ({commissions.length})
+                {/* Colonne gauche — Clients affiliés */}
+                <div style={{ border:'1px solid #ece9e2', borderRadius:14, overflow:'hidden' }}>
+                  <div style={{ padding:'12px 16px', background:'#fafaf8', borderBottom:'1px solid #ece9e2' }}>
+                    <span style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', fontWeight:600 }}>Clients affiliés ({referrals.length})</span>
+                  </div>
+                  <div style={{ padding:'0 16px' }}>
+                    {referrals.length === 0 ? (
+                      <div style={{ fontSize:13, color:'#bbb', fontStyle:'italic', padding:'16px 0' }}>
+                        Aucun client — partagez votre code <strong style={{ color:'#888' }}>{proData?.pro_id}</strong>
+                      </div>
+                    ) : referrals.map(ref => (
+                      <div key={ref.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #f5f2ee' }}>
+                        <div>
+                          <div style={{ fontSize:13, color:'#111', fontWeight:500 }}>
+                            {(ref.users ?? ref['users!client_user_id'])?.display_name ?? 'Anonyme'}
+                          </div>
+                          {(ref.users ?? ref['users!client_user_id'])?.email && (
+                            <div style={{ fontSize:11, color:'#555', marginTop:1 }}>
+                              {(ref.users ?? ref['users!client_user_id']).email}
+                            </div>
+                          )}
+                          <div style={{ fontSize:11, color:'#999', marginTop:2 }}>
+                            Depuis le {new Date(ref.created_at).toLocaleDateString('fr-FR')}
+                          </div>
+                        </div>
+                        <div style={{ fontSize:11, fontWeight:600, padding:'3px 10px', borderRadius:20, flexShrink:0,
+                          background: ref.status === 'active' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.05)',
+                          color: ref.status === 'active' ? '#5a9a28' : '#aaa',
+                        }}>
+                          {ref.status === 'active' ? '✓ Actif' : '✕ Résilié'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                {commissions.length === 0 ? (
-                  <div style={{ fontSize:13, color:'#bbb', fontStyle:'italic', padding:'12px 0' }}>
-                    Les commissions apparaîtront ici à chaque renouvellement.
+
+                {/* Colonne droite — Historique CA accordéon par mois */}
+                <div style={{ border:'1px solid #ece9e2', borderRadius:14, overflow:'hidden' }}>
+                  <div style={{ padding:'12px 16px', background:'#fafaf8', borderBottom:'1px solid #ece9e2' }}>
+                    <span style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', fontWeight:600 }}>Historique CA ({commissions.length})</span>
                   </div>
-                ) : commissions.map(c => (
-                  <div key={c.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'9px 0', borderBottom:'1px solid #f0ede8' }}>
-                    <div style={{ fontSize:12.5, color:'#555' }}>
-                      {new Date(c.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' })}
-                    </div>
-                    <div style={{ fontSize:14, fontWeight:600, color:'#5a9a28' }}>
-                      +{(c.amount_cents / 100).toFixed(2)} €
-                    </div>
+                  <div>
+                    {commissions.length === 0 ? (
+                      <div style={{ fontSize:13, color:'#bbb', fontStyle:'italic', padding:'16px' }}>
+                        Les commissions apparaîtront ici à chaque renouvellement.
+                      </div>
+                    ) : (() => {
+                      const byMonth = commissions.reduce((acc, c) => {
+                        const d = new Date(c.created_at)
+                        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+                        const label = d.toLocaleDateString('fr-FR', { month:'long', year:'numeric' })
+                        if (!acc[key]) acc[key] = { label, total:0, items:[] }
+                        acc[key].total += c.amount_cents
+                        acc[key].items.push(c)
+                        return acc
+                      }, {})
+                      return Object.entries(byMonth).sort((a,b) => b[0].localeCompare(a[0])).map(([key, month]) => (
+                        <div key={key} style={{ borderBottom:'1px solid #f5f2ee' }}>
+                          <div onClick={() => setOpenMonths(prev => ({ ...prev, [key]: !prev[key] }))}
+                            style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'11px 16px', cursor:'pointer', background: openMonths[key] ? '#f5f2ee' : '#fff', userSelect:'none' }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <span style={{ fontSize:12.5, fontWeight:600, color:'#333', textTransform:'capitalize' }}>{month.label}</span>
+                              <span style={{ fontSize:10.5, color:'#bbb' }}>({month.items.length})</span>
+                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                              <span style={{ fontSize:13, fontWeight:700, color:'#5a9a28' }}>+{(month.total/100).toFixed(2)} €</span>
+                              <span style={{ fontSize:11, color:'#bbb', display:'inline-block', transform: openMonths[key] ? 'rotate(180deg)' : 'none' }}>▾</span>
+                            </div>
+                          </div>
+                          {openMonths[key] && (
+                            <div style={{ background:'#fafaf8', padding:'0 16px 6px' }}>
+                              {month.items.map(c => (
+                                <div key={c.id} style={{ display:'flex', justifyContent:'space-between', padding:'7px 0', borderBottom:'1px solid #f0ede8' }}>
+                                  <span style={{ fontSize:12, color:'#888' }}>{new Date(c.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}</span>
+                                  <span style={{ fontSize:12, fontWeight:600, color:'#5a9a28' }}>+{(c.amount_cents/100).toFixed(2)} €</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    })()}
                   </div>
-                ))}
+                </div>
+
               </div>
             </div>
           )}
@@ -520,7 +850,7 @@ export function ProProfile({ onBack }) {
                 <div className="pp-field"><label className="pp-label">Prénom</label><input className="pp-input" value={editForm.prenom} onChange={upd('prenom')} required maxLength={80}/></div>
               </div>
               <div className="pp-field"><label className="pp-label">Entreprise</label><input className="pp-input" value={editForm.entreprise} onChange={upd('entreprise')} maxLength={120}/></div>
-              <div className="pp-field"><label className="pp-label">Nature de l'activité <span style={{color:'#aaa',fontWeight:400}}>(ex: hypnothérapeute, coach, naturopathe…)</span></label><input className="pp-input" value={editForm.activite} onChange={upd('activite')} placeholder="Décrivez votre activité de mieux-être" maxLength={160}/></div>
+              <div className="pp-field"><label className="pp-label">Nature de l'activité <span style={{color:'#666',fontWeight:400}}>(ex: hypnothérapeute, coach, naturopathe…)</span></label><input className="pp-input" value={editForm.activite} onChange={upd('activite')} placeholder="Décrivez votre activité de mieux-être" maxLength={160}/></div>
               <div className="pp-field"><label className="pp-label">Adresse</label><input className="pp-input" value={editForm.adresse} onChange={upd('adresse')} maxLength={200}/></div>
               <div className="pp-row">
                 <div className="pp-field"><label className="pp-label">Code postal</label><input className="pp-input" value={editForm.cp} onChange={upd('cp')} maxLength={10}/></div>
