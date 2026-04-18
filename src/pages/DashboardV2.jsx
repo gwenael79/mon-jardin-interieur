@@ -244,7 +244,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  COMPOSANT MOBILE — slides preview plein écran, swipeable
 // ─────────────────────────────────────────────────────────────────────────────
-function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, bilanDoneToday, bilanHistory, screenProps, initial, onOpenProfile, onHelp, onSignOut }) {
+function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, bilanDoneToday, bilanHistory, screenProps, initial, onOpenProfile, onHelp, onSignOut, onGuide, showGuide, guideProps }) {
   const slide  = slides[curIdx]
   const isLast = curIdx === slides.length - 1
   const swipe  = useSwipe(() => onNav(1), () => onNav(-1))
@@ -366,6 +366,16 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
           )}
         </div>
       </div>
+
+      {/* Bouton ? bas-droite mobile */}
+      <button
+        onClick={onGuide}
+        title="Guide & Repérage"
+        style={{ position:'absolute', bottom:20, right:16, width:48, height:48, borderRadius:'50%', border:'2px solid rgba(200,160,150,.4)', background:'rgba(255,255,255,.92)', boxShadow:'0 4px 16px rgba(0,0,0,.18)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'rgba(30,20,8,.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:20, touchAction:'manipulation' }}
+      >?</button>
+
+      {/* Guide panel mobile */}
+      {showGuide && guideProps && <GuidePanel {...guideProps} />}
 
     </div>
   )
@@ -773,6 +783,77 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  GUIDE PANEL — index des slides + checklist débutant
+// ─────────────────────────────────────────────────────────────────────────────
+function GuidePanel({ slides, curIdx, onNavigate, onClose, bilanDoneToday, stats, joinedIds, achats }) {
+  const steps = [
+    { icon: '🌸', label: 'Faire ton premier bilan',       done: bilanDoneToday || (stats?.streak ?? 0) > 0 },
+    { icon: '🪴', label: 'Faire un rituel de soin',        done: (stats?.ritualsThisMonth ?? 0) > 0 },
+    { icon: '✨', label: 'Rejoindre un défi',              done: (joinedIds?.size ?? 0) > 0 },
+    { icon: '📚', label: 'Explorer la Jardinothèque',      done: (achats?.length ?? 0) > 0 },
+  ]
+  const doneCount = steps.filter(s => s.done).length
+
+  return (
+    <>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.32)', backdropFilter:'blur(4px)', zIndex:98 }} onClick={onClose} />
+      <div style={{ position:'absolute', top:0, right:0, bottom:0, width:'min(360px,94vw)', background:'linear-gradient(170deg,#f4ece6,#ede5de)', borderLeft:'1px solid rgba(200,160,150,.25)', boxShadow:'-24px 0 60px rgba(0,0,0,.18)', display:'flex', flexDirection:'column', overflowY:'auto', zIndex:99 }}>
+
+        {/* Header */}
+        <div style={{ padding:'20px 20px 14px', borderBottom:'1px solid rgba(200,160,150,.2)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:400, color:'#1a1208', lineHeight:1 }}>Guide & Repérage</div>
+            <div style={{ fontSize:11, color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", marginTop:5 }}>{doneCount}/{steps.length} étapes accomplies</div>
+          </div>
+          <button onClick={onClose} style={{ width:28, height:28, borderRadius:'50%', border:'1px solid rgba(200,160,150,.3)', background:'rgba(255,255,255,.6)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, color:'rgba(30,20,8,.5)', flexShrink:0 }}>✕</button>
+        </div>
+
+        {/* Carte des espaces */}
+        <div style={{ padding:'16px 16px 8px', flexShrink:0 }}>
+          <div style={{ fontSize:9.5, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", marginBottom:10 }}>Les 9 espaces</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+            {slides.map((s, i) => (
+              <div
+                key={s.id}
+                onClick={() => { onNavigate(i); onClose() }}
+                style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 10px', borderRadius:10, background: i === curIdx ? `${s.color}18` : 'rgba(255,255,255,.5)', border: i === curIdx ? `1.5px solid ${s.color}55` : '1px solid rgba(200,160,150,.15)', cursor:'pointer', transition:'all .15s' }}
+                onMouseEnter={e => { if (i !== curIdx) e.currentTarget.style.background='rgba(255,255,255,.85)' }}
+                onMouseLeave={e => { if (i !== curIdx) e.currentTarget.style.background='rgba(255,255,255,.5)' }}
+              >
+                <div style={{ width:30, height:30, borderRadius:'50%', background: i === curIdx ? s.color : `${s.color}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, flexShrink:0 }}>{s.icon}</div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12.5, fontWeight: i === curIdx ? 600 : 400, color: i === curIdx ? s.color : '#1a1208', fontFamily:"'Jost',sans-serif" }}>{s.badge}</div>
+                  <div style={{ fontSize:10.5, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{s.title}</div>
+                </div>
+                {i === curIdx && <div style={{ width:6, height:6, borderRadius:'50%', background:s.color, flexShrink:0 }}/>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Checklist débutant */}
+        <div style={{ padding:'8px 16px 28px', flexShrink:0 }}>
+          <div style={{ fontSize:9.5, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", marginBottom:10 }}>Par où commencer</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            {steps.map((step, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:10, background:'rgba(255,255,255,.5)', border:'1px solid rgba(200,160,150,.15)' }}>
+                <div style={{ width:20, height:20, borderRadius:'50%', flexShrink:0, background: step.done ? 'rgba(90,154,40,.15)' : 'transparent', border: step.done ? '1.5px solid rgba(90,154,40,.5)' : '1.5px solid rgba(200,160,150,.4)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#5a9a28', fontWeight:700 }}>
+                  {step.done ? '✓' : ''}
+                </div>
+                <span style={{ fontSize:12, color: step.done ? 'rgba(30,20,8,.4)' : '#1a1208', fontFamily:"'Jost',sans-serif", textDecoration: step.done ? 'line-through' : 'none' }}>
+                  {step.icon} {step.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </>
+  )
+}
+
 export default function DashboardPage() {
   const isMobile = useIsMobile()
   useTheme()
@@ -835,6 +916,7 @@ export default function DashboardPage() {
   const [selectedNeed,        setSelectedNeed]        = useState(null)
   const ritualCompleteCalledRef = useRef(false)
   const [bilanHistory,        setBilanHistory]        = useState([])
+  const [showGuide,           setShowGuide]           = useState(false)
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
@@ -1473,6 +1555,28 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* Bouton ? bas-droite desktop */}
+              <button
+                onClick={() => setShowGuide(true)}
+                title="Guide & Repérage"
+                style={{ position:'absolute', bottom:20, right:20, width:48, height:48, borderRadius:'50%', border:'2px solid rgba(200,160,150,.4)', background:'rgba(255,255,255,.92)', boxShadow:'0 4px 16px rgba(0,0,0,.18)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'rgba(30,20,8,.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, transition:'transform .15s, box-shadow .15s' }}
+                onMouseEnter={e=>{e.currentTarget.style.transform='scale(1.12)';e.currentTarget.style.boxShadow='0 6px 22px rgba(0,0,0,.25)'}}
+                onMouseLeave={e=>{e.currentTarget.style.transform='scale(1)';e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.18)'}}
+              >?</button>
+
+              {/* Guide panel desktop — à l'intérieur de la carte */}
+              {showGuide && (
+                <GuidePanel
+                  slides={visibleSlides}
+                  curIdx={slideIdx}
+                  onNavigate={handleJump}
+                  onClose={() => setShowGuide(false)}
+                  bilanDoneToday={bilanDoneToday}
+                  stats={plantStats}
+                  joinedIds={joinedIds}
+                  achats={achats}
+                />
+              )}
 
             </div>
           </div>
@@ -1503,6 +1607,9 @@ export default function DashboardPage() {
         onOpenNeedModal={() => setShowNeedModal(true)}
         onHelp={() => setShowHelp(true)}
         onSignOut={signOut}
+        onGuide={() => setShowGuide(true)}
+        showGuide={showGuide}
+        guideProps={{ slides: visibleSlides, curIdx: slideIdx, onNavigate: handleJump, onClose: () => setShowGuide(false), bilanDoneToday, stats: plantStats, joinedIds, achats }}
       />
     </>
   )
