@@ -41,7 +41,7 @@ const RITUALS = {
     tip: 'Allongez-vous, yeux fermés. Après 4 cycles, laissez votre corps s\'endormir naturellement.',
     icon: '🌙',
     breathing: { inhale:4, hold:7, exhale:8, cycles:4 },
-    delta: 8,
+    delta: 2,
   },
   stress: {
     title:    'Cohérence cardiaque',
@@ -57,7 +57,7 @@ const RITUALS = {
     tip: 'Posez une main sur le cœur pour sentir son rythme se stabiliser.',
     icon: '💨',
     breathing: { inhale:5, hold:0, exhale:5, cycles:18 },
-    delta: 8,
+    delta: 2,
   },
   emotions: {
     title:    "L'accueil de l'émotion",
@@ -72,7 +72,7 @@ const RITUALS = {
     ],
     tip: 'Il n\'y a rien à faire. Juste être là avec ce qui est.',
     icon: '💗',
-    delta: 7,
+    delta: 2,
   },
   grounding: {
     title:    'Ancrage 5-4-3-2-1',
@@ -87,7 +87,7 @@ const RITUALS = {
     ],
     tip: 'Terminez en prenant 3 respirations profondes. Vous êtes ici, maintenant.',
     icon: '⚓',
-    delta: 6,
+    delta: 2,
   },
   thoughts: {
     title:    "La méditation de l'observateur",
@@ -102,7 +102,7 @@ const RITUALS = {
     ],
     tip: 'Les pensées reviendront — c\'est normal. Revenir au souffle, c\'est le rituel.',
     icon: '✨',
-    delta: 7,
+    delta: 2,
   },
   energy: {
     title:    'Activation corps & souffle',
@@ -117,7 +117,7 @@ const RITUALS = {
     ],
     tip: 'Faites-le debout, si possible pieds nus sur le sol.',
     icon: '⚡',
-    delta: 9,
+    delta: 2,
   },
   selfconnect: {
     title:    'Journaling express',
@@ -132,7 +132,7 @@ const RITUALS = {
     ],
     tip: 'Carnet et stylo de préférence — l\'écriture manuelle connecte davantage.',
     icon: '🌿',
-    delta: 7,
+    delta: 2,
   },
   softness: {
     title:    'Auto-massage douceur',
@@ -147,7 +147,7 @@ const RITUALS = {
     ],
     tip: 'Faites-le yeux fermés, en silence. C\'est un moment rien que pour vous.',
     icon: '🌸',
-    delta: 6,
+    delta: 2,
   },
 }
 
@@ -616,9 +616,9 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
   setLiked(isLiked)
   setHealthSnapshot({
     before: plantHealth ?? 0,
-    after: Math.min(100, (plantHealth ?? 0) + (activeRitual.delta ?? 7))
+    after: Math.min(100, (plantHealth ?? 0) + (activeRitual.delta ?? 2))
   })
-  onCompleteRitual?.(activeNeed.id, isLiked, activeRitual.delta ?? 7)
+  onCompleteRitual?.(activeNeed.id, isLiked, activeRitual.delta ?? 2)
   if (isLiked) { setPhase('result') }
   else         { setPhase('alternative') }
 }

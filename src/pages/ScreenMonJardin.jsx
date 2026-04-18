@@ -2444,8 +2444,10 @@ function BilanClosingPhrase({ degradation }) {
   )
 }
 function DailyQuizModal({ onComplete, onDismiss, onSkip, onSoinDeMoi }) {
-  const [step,          setStep]          = useState(-1)
-  const [answers,       setAnswers]       = useState({})
+  const _bilanKey = 'mji_bilan_' + new Date().toISOString().slice(0, 10)
+  const _saved = useMemo(() => { try { const r = sessionStorage.getItem(_bilanKey); return r ? JSON.parse(r) : null } catch { return null } }, [])
+  const [step,          setStep]          = useState(_saved?.step ?? -1)
+  const [answers,       setAnswers]       = useState(_saved?.answers ?? {})
   const [selected,      setSelected]      = useState(null)
   const [transitioning, setTransitioning] = useState(false)
   const [visible,       setVisible]       = useState(true)
@@ -2463,8 +2465,11 @@ const choose = (idx) => {
     const newAnswers = { ...answers, [q.id]: idx }
     setTimeout(() => {
       if (step < PLANT_QUESTIONS.length - 1) {
-        setStep(s => s + 1); setAnswers(newAnswers); setSelected(null); setTransitioning(false); setVisible(true)
+        const nextStep = step + 1
+        try { sessionStorage.setItem(_bilanKey, JSON.stringify({ step: nextStep, answers: newAnswers })) } catch {}
+        setStep(nextStep); setAnswers(newAnswers); setSelected(null); setTransitioning(false); setVisible(true)
       } else {
+        try { sessionStorage.removeItem(_bilanKey) } catch {}
         const deg = computeDegradation(newAnswers)
         setResult({ deg, answers: newAnswers, recommendation: getBilanRecommendation(deg) })
       }
@@ -4763,6 +4768,23 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const [showNeedModal,           setShowNeedModal]           = useState(false)
   const [showRitualSuggestion,    setShowRitualSuggestion]    = useState(false)
   const [selectedNeed,            setSelectedNeed]            = useState(null)
+  const scrollContainerRef = useRef(null)
+  const [celebrateKey, setCelebrateKey] = useState(0)
+  const ritualJustCompleted = useRef(false)
+
+  const prevShowRitualSuggestion = useRef(false)
+  useEffect(() => {
+    if (prevShowRitualSuggestion.current && !showRitualSuggestion) {
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0
+        if (ritualJustCompleted.current) {
+          ritualJustCompleted.current = false
+          setCelebrateKey(k => k + 1)
+        }
+      })
+    }
+    prevShowRitualSuggestion.current = showRitualSuggestion
+  }, [showRitualSuggestion])
 
   // Ouverture depuis le bouton "Je prends soin de moi" (DashboardV2)
   useEffect(() => {
@@ -5028,13 +5050,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
         plantHealth={plant?.health ?? 5}
         onCompleteRitual={async (needId, isLiked, delta) => {
-          console.log('[onCompleteRitual ScreenMonJardin] called', { needId, isLiked, delta, plantId: plant?.id ?? todayPlant?.id, health: plant?.health ?? todayPlant?.health })
           if (!isLiked) return
           const plantId = plant?.id ?? todayPlant?.id
           const currentHealth = plant?.health ?? todayPlant?.health ?? 5
           if (!plantId) { console.warn('[onCompleteRitual] plant.id manquant — plant:', plant, 'todayPlant:', todayPlant); return }
           const newHealth = Math.min(100, currentHealth + delta)
           setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: newHealth }))
+          ritualJustCompleted.current = true
           const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
           if (error) console.error('[onCompleteRitual] update failed:', error.message)
           else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
@@ -5061,7 +5083,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       )}
 
     {/* ── Contenu scrollable au-dessus ── */}
-    <div style={{ position:'relative', zIndex:1, flex:1, overflowY:'auto', display:'flex', flexDirection:'column', padding: isMobile ? '24px 20px 32px' : '32px 80px 40px 80px', gap:20, boxSizing:'border-box' }}>
+    <div ref={scrollContainerRef} style={{ position:'relative', zIndex:1, flex:1, overflowY:'auto', display:'flex', flexDirection:'column', padding: isMobile ? '24px 20px 32px' : '32px 80px 40px 80px', gap:20, boxSizing:'border-box' }}>
 
       {/* Phrase contextuelle */}
       <div style={{ display:'flex', alignItems:'center', gap:12, justifyContent:'center', textAlign:'center' }}>
@@ -5080,7 +5102,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
         {/* Zone fleur */}
         <div style={{ position:'relative', height: isMobile ? 300 : 460, animation: isPostRitual ? 'mjFlowerIn 2.2s ease-out forwards' : 'none' }}>
-          <PlantSVG health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} celebrate={isPostRitual} />
+          <PlantSVG key={celebrateKey} health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} celebrate={celebrateKey > 0 || isPostRitual} />
 
           {/* Streak badge — desktop only (mobile: rendered below) */}
           {!isMobile && streak >= 1 && (
@@ -5292,7 +5314,10 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       {/* ── CTA principal ── */}
       <div style={{ display:'flex', flexDirection:'column', alignItems:'stretch', gap:6 }}>
         <button
-          onClick={() => onOpenNeedModal ? onOpenNeedModal() : setShowNeedModal(true)}
+          onClick={() => {
+            scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+            setTimeout(() => onOpenNeedModal ? onOpenNeedModal() : setShowNeedModal(true), 350)
+          }}
           style={{ padding:'15px 28px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:20, fontWeight:600, color:'#fff', background:'linear-gradient(90deg,#9060b8,#b07040,#7cb87c)', backgroundSize:'200% 100%', boxShadow:'0 6px 24px rgba(100,80,160,.3)', transition:'transform .15s, box-shadow .15s, background-position .4s', letterSpacing:'.02em', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}
           onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 30px rgba(100,80,160,.4)'; e.currentTarget.style.backgroundPosition='100% 0' }}
           onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 24px rgba(100,80,160,.3)'; e.currentTarget.style.backgroundPosition='0% 0' }}
