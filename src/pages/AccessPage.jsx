@@ -398,7 +398,7 @@ const PLANS = [
 ]
 
 // Plan test 1€ — visible uniquement en développement
-const TEST_PLAN = { id: 'price_1TMsoYCIpPVJTaopmNrjlGUA', label: 'TEST 1€', desc: 'Test développeur uniquement', price: '1,00 €', note: '/ test', popular: false, isTest: true }
+const TEST_PLAN = { id: 'price_1TNcwlCIpPVJTaopCFVl7xou', label: 'TEST 1€/mois', desc: 'Abonnement test — dev uniquement', price: '1,00 €', note: '/ mois', popular: false, isTest: true }
 const IS_DEV = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 
 function FleurLogoTiny() {
@@ -928,7 +928,7 @@ export function PremiumModal({ onSuccess, onClose }) {
 
           {/* Plans */}
           <div className="pm-plans">
-            {PLANS.map(p => (
+            {(IS_DEV ? [...PLANS, TEST_PLAN] : PLANS).map(p => (
               <div key={p.id} className={'pm-plan' + (selectedPlan?.id === p.id ? ' pm-sel' : '')} onClick={() => setSelectedPlan(p)}>
                 {p.popular && <div className="pm-popular">Populaire</div>}
                 <div>
@@ -1148,22 +1148,6 @@ export function PremiumModal({ onSuccess, onClose }) {
               {paying ? 'Redirection…' : promoCode.trim() ? `Valider "${promoCode.trim()}" →` : 'Continuer sans code →'}
             </button>
 
-            {/* Bouton test 1€ — dev uniquement */}
-            {IS_DEV && (
-              <button
-                onClick={handlePayTest}
-                disabled={paying}
-                style={{
-                  width:'100%', marginTop:8, padding:'10px',
-                  borderRadius:50, border:'1.5px dashed rgba(200,100,100,.40)',
-                  background:'rgba(200,100,100,.06)', color:'rgba(180,60,60,.70)',
-                  fontSize:12, fontWeight:500, fontFamily:"'Jost',sans-serif",
-                  cursor:'pointer', letterSpacing:'.03em',
-                }}
-              >
-                🧪 TEST 1€ {promoCode.trim() ? `avec "${promoCode.trim()}"` : '(sans code promo)'}
-              </button>
-            )}
 
             <button
               onClick={() => setShowPromo(false)}
