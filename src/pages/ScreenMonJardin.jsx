@@ -2411,36 +2411,42 @@ const CLOSING_PHRASES = [
   ]},
 ]
 
-function BilanClosingPhrase({ degradation }) {
+function BilanClosingPhrase({ degradation, color }) {
   const avg = degradation && typeof degradation === 'object'
     ? Math.round(Object.values(degradation).reduce((a, b) => a + b, 0) / Object.values(degradation).length)
     : 50
   const bucket = CLOSING_PHRASES.find(b => avg <= b.max) ?? CLOSING_PHRASES[CLOSING_PHRASES.length - 1]
-  const phrase = bucket.phrases[Math.floor(Math.random() * bucket.phrases.length)]
+  const phrase = useMemo(() => bucket.phrases[Math.floor(Math.random() * bucket.phrases.length)], [bucket])
+
+  const [displayed, setDisplayed] = useState('')
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    setDisplayed('')
+    setDone(false)
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setDisplayed(phrase.slice(0, i))
+      if (i >= phrase.length) { clearInterval(id); setDone(true) }
+    }, 55)
+    return () => clearInterval(id)
+  }, [phrase])
 
   return (
-    <div style={{
-      padding:'18px 22px', borderRadius:14,
-      background:'rgba(var(--gold-warm-rgb),0.06)',
-      border:'1px solid rgba(var(--gold-warm-rgb),0.18)',
-      animation:'fadeUp 0.5s ease both',
-      position:'relative', overflow:'hidden',
+    <p style={{
+      fontFamily:"'Cormorant Garamond','Georgia',serif",
+      fontSize:20,
+      color:'#1a1a1a',
+      lineHeight:1.7,
+      fontStyle:'italic',
+      fontWeight:400,
+      margin:0,
+      minHeight: '3em',
     }}>
-      <div style={{
-        position:'absolute', left:0, top:'20%', bottom:'20%',
-        width:2, borderRadius:2,
-        background:'linear-gradient(180deg, transparent, rgba(var(--gold-warm-rgb),0.5), transparent)',
-      }}/>
-      <p style={{
-        fontFamily:"'Cormorant Garamond','Georgia',serif",
-        fontSize:'clamp(15px, 1.4vw, 19px)',
-        color:'rgba(var(--quiz-modal-text-rgb),0.85)',
-        lineHeight:1.7, fontStyle:'italic', fontWeight:300,
-        margin:0, paddingLeft:14,
-      }}>
-        {phrase}
-      </p>
-    </div>
+      {displayed}
+      {!done && <span style={{ display:'inline-block', width:2, height:'1em', background: color ?? '#888', marginLeft:2, verticalAlign:'middle', animation:'guidePulse 0.8s ease-in-out infinite' }} />}
+    </p>
   )
 }
 function DailyQuizModal({ onComplete, onDismiss, onSkip, onSoinDeMoi }) {
@@ -2494,49 +2500,51 @@ const choose = (idx) => {
 
     return (
       <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-        <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background: isMobile ? mood.bg : 'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', overflowY:'auto', padding:'48px 28px 36px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', animation:'fadeUp 0.35s ease both' }}>
-          <div style={{ textAlign:'center', maxWidth:340, width:'100%' }}>
+        <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', overflow:'hidden', overflowY:'auto', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', animation:'fadeUp 0.35s ease both' }}>
 
-            {/* Émoji humeur */}
-            <div style={{ fontSize:72, lineHeight:1, marginBottom:16, animation:'pulse 2.5s ease-in-out infinite' }}>
-              {mood.emoji}
+            {/* Bandeau coloré haut */}
+            <div style={{ background: mood.color, padding:'36px 28px 28px', display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+              <div style={{ fontSize:72, lineHeight:1, animation:'pulse 2.5s ease-in-out infinite', filter:'drop-shadow(0 4px 12px rgba(0,0,0,.15))' }}>
+                {mood.emoji}
+              </div>
+              <div style={{ background:'rgba(255,255,255,.25)', borderRadius:100, padding:'6px 22px', color:'#fff', fontSize:15, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase' }}>
+                {mood.label}
+              </div>
             </div>
 
-            {/* Label état */}
-            <div style={{ display:'inline-block', padding:'5px 18px', borderRadius:100, background: mood.color + '22', border:`1px solid ${mood.color}66`, color: mood.color, fontSize:13, fontFamily:"'Jost',sans-serif", fontWeight:600, letterSpacing:'.08em', marginBottom:20 }}>
-              {mood.label}
+            {/* Corps */}
+            <div style={{ padding:'28px 28px 32px', display:'flex', flexDirection:'column', alignItems:'center', textAlign:'center', gap:20 }}>
+
+              {/* Message */}
+              <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:26, color:'var(--quiz-modal-text)', fontWeight:400, lineHeight:1.5, margin:0, whiteSpace:'pre-line' }}>
+                {mood.msg}
+              </h2>
+
+              {/* Phrase de clôture */}
+              <div style={{ width:'100%', borderLeft:`3px solid ${mood.color}`, paddingLeft:16, textAlign:'left' }}>
+                <BilanClosingPhrase degradation={deg} color={mood.color} />
+              </div>
+
+              {/* CTA principal */}
+              <button
+                onClick={() => {
+                  if (onSoinDeMoi) { onSoinDeMoi(result.deg) }
+                  else { onComplete(result.deg, {}); onDismiss?.() }
+                }}
+                style={{ width:'100%', padding:'16px 40px', borderRadius:50, border:'none', background: mood.color, color:'#fff', fontSize:18, cursor:'pointer', letterSpacing:'0.05em', fontFamily:"'Jost',sans-serif", fontWeight:600, boxShadow:`0 6px 20px ${mood.color}55` }}
+              >
+                Prendre soin de toi
+              </button>
+
+              {/* Refaire le bilan */}
+              <button
+                onClick={() => { setResult(null); setStep(0); setAnswers({}); setSelected(null) }}
+                style={{ padding:'8px 20px', borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.45)', fontSize:14, cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
+              >
+                ↩ Ce résultat ne me correspond pas — refaire
+              </button>
+
             </div>
-
-            {/* Message lié à l'humeur */}
-            <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:24, color:'var(--quiz-modal-text)', fontWeight:300, lineHeight:1.5, marginBottom:0, whiteSpace:'pre-line' }}>
-              {mood.msg}
-            </h2>
-
-            <div style={{ width:40, height:1, background: mood.color + '44', margin:'20px auto' }} />
-
-            {/* Phrase de clôture */}
-            <BilanClosingPhrase degradation={deg} />
-
-            {/* CTA principal */}
-            <button
-              onClick={() => {
-                if (onSoinDeMoi) { onSoinDeMoi(result.deg) }
-                else { onComplete(result.deg, {}); onDismiss?.() }
-              }}
-              style={{ width:'100%', padding:'14px 40px', borderRadius:50, border:`1px solid ${mood.color}55`, background: mood.color + '18', color: mood.color, fontSize:13, cursor:'pointer', letterSpacing:'0.08em', marginTop:24, marginBottom:10, fontFamily:"'Jost',sans-serif", fontWeight:500 }}
-            >
-              Prendre soin de moi
-            </button>
-
-            {/* Refaire le bilan */}
-            <button
-              onClick={() => { setResult(null); setStep(0); setAnswers({}); setSelected(null) }}
-              style={{ padding:'8px 20px', borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.35)', fontSize:12, cursor:'pointer', width:'100%', fontFamily:"'Jost',sans-serif" }}
-            >
-              ↩ Ce résultat ne me correspond pas — refaire le bilan
-            </button>
-
-          </div>
         </div>
       </div>
     )
@@ -2567,7 +2575,7 @@ const choose = (idx) => {
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : '88vh', maxHeight:'88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)' }}>
+      <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '82vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', overflow:'hidden', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)' }}>
         <div style={{ display:'flex', gap:3, padding:'12px 20px 0', flexShrink:0 }}>
           {PLANT_QUESTIONS.map((_, i) => {
             const done    = i < step
@@ -2575,33 +2583,33 @@ const choose = (idx) => {
             const zColor  = PLANT_ZONES[PLANT_QUESTIONS[i].zone].color
             return (
               <div key={i} style={{
-                flex:1, height:3, borderRadius:2,
-                background: done ? zColor : current ? zColor + '55' : 'var(--surface-3)',
+                flex:1, height:4, borderRadius:2,
+                background: done ? zColor : current ? zColor + '88' : 'var(--surface-3)',
                 transition:'background 0.4s ease',
               }}/>
             )
           })}
         </div>
-        <div style={{ padding:'16px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontSize:'var(--fs-h5, 10px)', textTransform:'uppercase', letterSpacing:'0.12em', color:zone.color, opacity:0.8, fontWeight:500 }}>{zone.name} · {q.theme}</span>
+        <div style={{ padding:'14px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:13, textTransform:'uppercase', letterSpacing:'0.1em', color:zone.color, fontWeight:700 }}>{zone.name} · {q.theme}</span>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--quiz-modal-text-rgb),0.3)' }}>{step+1} <span style={{ opacity:0.4 }}>/ 10</span></span>
-            <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:26, height:26, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.6)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
+            <span style={{ fontSize:15, color:'rgba(var(--quiz-modal-text-rgb),0.7)', fontWeight:600 }}>{step+1} <span style={{ opacity:0.6 }}>/ 10</span></span>
+            <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.7)', fontSize:14, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
           </div>
         </div>
-        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
-          <div style={{ fontSize:'var(--fs-emoji-lg, 36px)', marginBottom:12 }}>{q.icon}</div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h2, 24px)', color:'var(--quiz-modal-text)', fontWeight:400, lineHeight:1.25, marginBottom:6 }}>{q.text}</h3>
-          <p style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--quiz-modal-text-rgb),0.4)', lineHeight:1.6, marginBottom:20, fontStyle:'italic' }}>{q.sub}</p>
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'16px 24px 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
+          <div style={{ fontSize:40, marginBottom:12 }}>{q.icon}</div>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:30, color:'var(--quiz-modal-text)', fontWeight:500, lineHeight:1.2, marginBottom:6 }}>{q.text}</h3>
+          <p style={{ fontSize:15, color:'rgba(var(--quiz-modal-text-rgb),0.7)', lineHeight:1.6, marginBottom:18, fontStyle:'italic' }}>{q.sub}</p>
+          <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
             {q.answers.map((ans, i) => {
               const sel = selected === i
               return (
-                <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color+'55' : 'var(--track)'}`, background: sel ? 'rgba(var(--green-rgb),0.08)' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}30` : 'none', transition:'all 0.18s ease' }}>
-                  <span style={{ fontSize:'var(--fs-emoji-md, 18px)' }}>{ans.emoji}</span>
-                  <span style={{ flex:1, fontSize:'var(--fs-h4, 13px)', color: sel ? 'var(--quiz-modal-text)' : 'rgba(var(--quiz-modal-text-rgb),0.6)', fontWeight: sel ? 500 : 300 }}>{ans.label}</span>
-                  <div style={{ width:18, height:18, borderRadius:'50%', border:`1.5px solid ${sel ? zone.color : 'var(--separator)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
-                    {sel && <div style={{ width:6, height:6, borderRadius:'50%', background:zone.accent }} />}
+                <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:14, padding:'13px 16px', borderRadius:14, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color : 'rgba(var(--quiz-modal-text-rgb),0.2)'}`, background: sel ? zone.color+'18' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}40` : 'none', transition:'all 0.18s ease' }}>
+                  <span style={{ fontSize:22 }}>{ans.emoji}</span>
+                  <span style={{ flex:1, fontSize:18, color:'var(--quiz-modal-text)', fontWeight: sel ? 600 : 400 }}>{ans.label}</span>
+                  <div style={{ width:22, height:22, borderRadius:'50%', border:`2px solid ${sel ? zone.color : 'rgba(var(--quiz-modal-text-rgb),0.3)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
+                    {sel && <div style={{ width:8, height:8, borderRadius:'50%', background:zone.accent }} />}
                   </div>
                 </button>
               )

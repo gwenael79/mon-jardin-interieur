@@ -798,7 +798,7 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
 // ─────────────────────────────────────────────────────────────────────────────
 //  GUIDE PANEL — index des slides + checklist débutant
 // ─────────────────────────────────────────────────────────────────────────────
-function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, bilanDoneToday, stats, joinedIds, achats }) {
+function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, onBilan, bilanDoneToday, stats, joinedIds, achats }) {
   const isEvening = new Date().getHours() >= 18
   const steps = isEvening
     ? [
@@ -835,7 +835,7 @@ function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, bilanDoneTo
                   {step.label}
                 </span>
                 <button
-                  onClick={() => { if (step.slideId === 'jardin' && onRitual) { onRitual(); onClose() } else { onNavigate(slides.findIndex(s => s.id === step.slideId)); onClose() } }}
+                  onClick={() => { if (step.slideId === 'jardin' && onRitual) { onRitual(); onClose() } else if (step.slideId === 'bilan' && onBilan) { onBilan(); onClose() } else { onNavigate(slides.findIndex(s => s.id === step.slideId)); onClose() } }}
                   style={{ flexShrink:0, padding:'6px 14px', borderRadius:100, border:'none', background:'linear-gradient(135deg,#4cd964,#28a745)', color:'#fff', fontSize:12, fontWeight:700, fontFamily:"'Jost',sans-serif", cursor:'pointer', letterSpacing:'.03em' }}
                 >Action →</button>
               </div>
@@ -1592,6 +1592,7 @@ export default function DashboardPage() {
                   onNavigate={handleJump}
                   onClose={() => setShowGuide(false)}
                   onRitual={() => setShowNeedModal(true)}
+                  onBilan={() => setShowBilanModal(true)}
                   bilanDoneToday={bilanDoneToday}
                   stats={plantStats}
                   joinedIds={joinedIds}
@@ -1630,7 +1631,7 @@ export default function DashboardPage() {
         onSignOut={signOut}
         onGuide={() => setShowGuide(true)}
         showGuide={showGuide}
-        guideProps={{ slides: visibleSlides, curIdx: slideIdx, onNavigate: handleJump, onClose: () => setShowGuide(false), onRitual: () => setShowNeedModal(true), bilanDoneToday, stats: plantStats, joinedIds, achats }}
+        guideProps={{ slides: visibleSlides, curIdx: slideIdx, onNavigate: handleJump, onClose: () => setShowGuide(false), onRitual: () => setShowNeedModal(true), onBilan: () => setShowBilanModal(true), bilanDoneToday, stats: plantStats, joinedIds, achats }}
       />
     </>
   )
