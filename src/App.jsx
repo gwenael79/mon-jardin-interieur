@@ -21,15 +21,29 @@ import PlantIcon                 from './components/PlantIcon'
 
 const ADMIN_IDS = ['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7']
 
+const FLOWER_NAMES = [
+  'Aubépine','Cèdre','Pivoine','Iris','Verveine','Jasmin','Glycine',
+  'Lilas','Noisetier','Pervenche','Sauge','Lavande','Magnolia','Acacia',
+  'Clématite','Bruyère','Capucine','Gentiane','Muguet','Orchidée','Tilleul',
+  'Violette','Camélia','Renoncule','Mimosa','Angélique','Bouleau','Eglantine',
+  'Chèvrefeuille','Coquelicot',
+]
+
 export default function App() {
   useAuthInit()
   const { user, isLoading: authLoading } = useAuth()
   const { activateFree, refresh } = useSubscription()
 
-  const [screen,        setScreen]        = useState('loading')
-  const [isPro,         setIsPro]         = useState(false)
-  const [showProProfile,setShowProProfile] = useState(false)
-  const [showProWelcome,setShowProWelcome] = useState(false)
+  const [screen,          setScreen]          = useState('loading')
+  const [isPro,           setIsPro]           = useState(false)
+  const [showProProfile,  setShowProProfile]  = useState(false)
+  const [showProWelcome,  setShowProWelcome]  = useState(false)
+  const [showProFlower,   setShowProFlower]   = useState(false)
+  const [proSelFlower,    setProSelFlower]    = useState(null)
+  const [proSavingFlower, setProSavingFlower] = useState(false)
+  const [proDisplayName,  setProDisplayName]  = useState('')
+  const [showProCancelConfirm, setShowProCancelConfirm] = useState(false)
+  const [proCancelLoading,     setProCancelLoading]     = useState(false)
   const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
@@ -144,7 +158,8 @@ export default function App() {
           await refresh()
         } catch (e) { console.warn('[auto-activate]', e) }
         if (userData?.role === 'pro' && localStorage.getItem('mji_show_pro_welcome') === '1') {
-          setShowProWelcome(true)
+          setProDisplayName(user.user_metadata?.display_name?.split(' ')[0] || '')
+          setScreen('pro_welcome'); return
         }
         setScreen('flower'); return
       }
@@ -234,62 +249,272 @@ export default function App() {
 
   if (screen === 'flower') {
     return (
+      <FlowerModal
+        userId={user.id}
+        onDone={() => setScreen('onboarding')}
+        onSkip={() => setScreen('onboarding')}
+      />
+    )
+  }
+
+  if (screen === 'pro_welcome') {
+    const handleCancelPro = async () => {
+      setProCancelLoading(true)
+      try {
+        const { data: { user: u } } = await supabase.auth.getUser()
+        if (u) {
+          await supabase.from('users_pro').delete().eq('user_id', u.id)
+          await supabase.from('users').delete().eq('id', u.id)
+          localStorage.setItem('mji_go_register', '1')
+          await supabase.auth.signOut()
+        }
+      } catch(e) { console.warn('[CancelPro]', e) }
+      finally { setProCancelLoading(false); setShowProCancelConfirm(false) }
+    }
+
+    return (
       <>
-        <FlowerModal
-          userId={user.id}
-          onDone={() => setScreen('onboarding')}
-          onSkip={() => setScreen('onboarding')}
-        />
-        {showProWelcome && (
-          <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(5,15,5,.80)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
-            <div style={{ background:'linear-gradient(160deg,#0d1f08,#142808)', border:'1px solid rgba(90,154,40,.25)', borderRadius:28, width:'min(580px,100%)', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 24px 80px rgba(0,0,0,.55)' }}>
-              <div style={{ padding:'36px 36px 0', textAlign:'center' }}>
-                <div style={{ fontSize:52, marginBottom:12 }}>🌿</div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:600, color:'#fff', lineHeight:1.2, marginBottom:8 }}>Votre jardin professionnel<br/>vient de s'ouvrir</div>
-                <div style={{ fontSize:14, color:'rgba(255,255,255,.55)', lineHeight:1.7, marginBottom:28 }}>En rejoignant Mon Jardin Intérieur en tant que professionnel(le),<br/>vous entrez dans un écosystème conçu pour vous soutenir,<br/>vous et vos clients.</div>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500;600&display=swap');
+          @keyframes authFadeIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+          @keyframes authFormIn  { from{opacity:0;transform:scale(.97)}       to{opacity:1;transform:scale(1)}     }
+          .pw-overlay  { position:fixed;inset:0;z-index:1100;background:rgba(5,15,5,.78);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:20px;animation:authFadeIn .3s ease both; }
+          .pw-modal    { background:#faf8f4;border:1px solid rgba(180,210,140,.35);border-radius:28px;width:min(560px,100%);max-height:92vh;overflow-y:auto;padding:0;position:relative;box-shadow:0 24px 80px rgba(30,60,10,.18);animation:authFormIn .4s cubic-bezier(.22,1,.36,1) both;scrollbar-width:thin;scrollbar-color:rgba(90,154,40,.20) transparent; }
+          .pw-header   { padding:44px 40px 28px;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(90,154,40,.06) 0%,transparent 70%); }
+          .pw-icon     { font-size:44px;margin-bottom:14px;display:inline-block;filter:drop-shadow(0 4px 12px rgba(90,154,40,.20)); }
+          .pw-title    { font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:#1a1208;line-height:1.25;margin-bottom:10px;letter-spacing:.01em; }
+          .pw-sub      { font-size:18px;color:rgba(30,20,8,.55);line-height:1.7;margin-bottom:0;max-width:420px;margin-left:auto;margin-right:auto; }
+          .pw-sep      { height:1px;background:linear-gradient(to right,transparent,rgba(90,154,40,.25),transparent);margin:24px 40px; }
+          .pw-section  { padding:0 40px 20px; }
+          .pw-sec-title{ font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:rgba(60,120,20,.85);font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px; }
+          .pw-sec-title::after{ content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(90,154,40,.18),transparent); }
+          .pw-item     { display:flex;align-items:flex-start;gap:16px;margin-bottom:12px;padding:16px 18px;border-radius:14px;background:#fff;border:1px solid rgba(200,190,175,.45);transition:border-color .2s,box-shadow .2s; }
+          .pw-item:hover{ border-color:rgba(90,154,40,.35);box-shadow:0 2px 12px rgba(90,154,40,.08); }
+          .pw-item:last-child{ margin-bottom:0; }
+          .pw-item-icon{ width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px; }
+          .pw-item-icon.green{ background:rgba(90,154,40,.12);box-shadow:0 0 0 1px rgba(90,154,40,.18); }
+          .pw-item-icon.gold { background:rgba(200,160,48,.10);box-shadow:0 0 0 1px rgba(200,160,48,.18); }
+          .pw-item-body{ flex:1;min-width:0; }
+          .pw-item-title{ font-size:18px;font-weight:600;color:#1a1208;margin-bottom:4px;letter-spacing:.01em; }
+          .pw-item-desc { font-size:18px;color:rgba(30,20,8,.58);line-height:1.65; }
+          .pw-cta      { padding:24px 40px 36px;text-align:center; }
+          .pw-btn      { width:100%;padding:16px;border-radius:50px;border:none;background:linear-gradient(135deg,#4a8a20,#2e6808);color:#fff;font-size:18px;font-weight:600;font-family:'Jost',sans-serif;cursor:pointer;box-shadow:0 6px 24px rgba(42,104,8,.28);transition:filter .2s,transform .15s;letter-spacing:.03em; }
+          .pw-btn:hover{ filter:brightness(1.08);transform:translateY(-1px); }
+          .pw-btn:active{ transform:translateY(0); }
+          .pw-tagline  { margin-top:14px;font-size:18px;color:#1a1208;letter-spacing:.04em;font-family:'Cormorant Garamond',serif;font-style:italic; }
+          @media(max-width:520px){ .pw-header{padding:32px 24px 20px} .pw-section{padding:0 24px 18px} .pw-sep{margin:18px 24px} .pw-cta{padding:18px 24px 28px} .pw-item{padding:12px 14px;gap:12px} }
+          .pf-grid{ display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-height:200px;overflow-y:auto;margin-bottom:18px; }
+          .pf-pill{ padding:8px 4px;border-radius:20px;font-size:12px;text-align:center;border:1.5px solid rgba(200,160,150,.20);cursor:pointer;color:rgba(30,20,8,.55);transition:all .15s;background:rgba(255,255,255,.55); }
+          .pf-pill:hover{ border-color:rgba(90,154,40,.40);color:rgba(30,20,8,.85); }
+          .pf-pill.sel { border-color:rgba(90,154,40,.55);background:rgba(90,154,40,.10);color:#2e6808;font-weight:500; }
+          .pc-overlay  { position:fixed;inset:0;z-index:1200;background:rgba(10,20,5,.60);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;animation:authFadeIn .2s ease both; }
+          .pc-modal    { background:#faf8f4;border-radius:22px;width:min(440px,100%);padding:36px 32px 28px;position:relative;box-shadow:0 20px 60px rgba(30,60,10,.20);border:1px solid rgba(180,210,140,.30);animation:authFormIn .3s cubic-bezier(.22,1,.36,1) both;text-align:center; }
+          .pc-confirm-btn{ width:100%;padding:14px;border-radius:50px;border:1px solid rgba(180,60,60,.20);background:rgba(180,60,60,.10);color:#b03030;font-size:18px;font-weight:600;font-family:'Jost',sans-serif;cursor:pointer;transition:background .18s; }
+          .pc-confirm-btn:hover{ background:rgba(180,60,60,.18); }
+          .pc-confirm-btn:disabled{ opacity:.4;cursor:not-allowed; }
+          .pc-back-btn { width:100%;padding:14px;border-radius:50px;border:1.5px solid rgba(42,104,8,.40);background:linear-gradient(135deg,#4a8a20,#2e6808);color:#fff;font-size:18px;font-weight:600;font-family:'Jost',sans-serif;cursor:pointer;transition:filter .18s; }
+          .pc-back-btn:hover{ filter:brightness(1.08); }
+        `}</style>
+
+        {/* ── Étape 1 : modal d'information pro ── */}
+        {!showProFlower && !showProCancelConfirm && (
+          <div className="pw-overlay">
+            <div className="pw-modal">
+
+              <div className="pw-header">
+                <div className="pw-icon">🌿</div>
+                <div className="pw-title">Votre jardin professionnel<br/>vient de s'ouvrir</div>
+                <div className="pw-sub">
+                  En rejoignant Mon Jardin Intérieur en tant que professionnel(le),<br/>
+                  vous entrez dans un écosystème conçu pour vous soutenir,<br/>vous et vos clients.
+                </div>
               </div>
-              <div style={{ height:1, background:'linear-gradient(to right,transparent,rgba(90,154,40,.35),transparent)', margin:'0 36px 28px' }}/>
-              <div style={{ padding:'0 36px 24px' }}>
-                <div style={{ fontSize:10, letterSpacing:'.16em', textTransform:'uppercase', color:'rgba(90,154,40,.80)', fontWeight:700, marginBottom:14 }}>✦ Ce que vous gagnez</div>
-                {[
-                  { icon:'🪪', title:'Un identifiant partenaire unique', desc:'Votre code tracera chaque client que vous recommandez, à vie — même après la fin de votre suivi.' },
-                  { icon:'💰', title:'10 % de commission récurrente', desc:"À chaque renouvellement de vos clients, 10 % est crédité automatiquement sur votre solde." },
-                  { icon:'📊', title:'Un tableau de bord transparent', desc:'Suivez vos clients affiliés, votre CA et votre solde disponible en temps réel.' },
-                ].map(item => (
-                  <div key={item.title} style={{ display:'flex', alignItems:'flex-start', gap:14, marginBottom:14 }}>
-                    <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:'rgba(200,160,48,.15)' }}>{item.icon}</div>
-                    <div>
-                      <div style={{ fontSize:14, fontWeight:600, color:'#fff', marginBottom:2 }}>{item.title}</div>
-                      <div style={{ fontSize:12.5, color:'rgba(255,255,255,.50)', lineHeight:1.6 }}>{item.desc}</div>
-                    </div>
+
+              <div className="pw-sep"/>
+
+              <div className="pw-section">
+                <div className="pw-sec-title">🌱 Ce que vos clients reçoivent</div>
+                <div className="pw-item">
+                  <div className="pw-item-icon green">🎁</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">−10 % sur leur abonnement</div>
+                    <div className="pw-item-desc">En utilisant votre code, ils bénéficient d'une réduction immédiate et permanente. Une vraie valeur ajoutée à votre accompagnement.</div>
                   </div>
-                ))}
-              </div>
-              <div style={{ height:1, background:'linear-gradient(to right,transparent,rgba(90,154,40,.35),transparent)', margin:'0 36px 28px' }}/>
-              <div style={{ padding:'0 36px 24px' }}>
-                <div style={{ fontSize:10, letterSpacing:'.16em', textTransform:'uppercase', color:'rgba(90,154,40,.80)', fontWeight:700, marginBottom:14 }}>🌱 Ce que vos clients reçoivent</div>
-                {[
-                  { icon:'🎁', title:'−10 % sur leur abonnement', desc:"En utilisant votre code, ils bénéficient d'une réduction permanente — une vraie valeur ajoutée à votre accompagnement." },
-                  { icon:'🌸', title:'Un outil de soin quotidien', desc:"Entre deux séances, Mon Jardin Intérieur les accompagne — bilan, rituels, club. Votre travail continue en dehors du cabinet." },
-                  { icon:'🤝', title:'Un lien durable avec vous', desc:"Chaque client que vous orientez reste attaché à votre identifiant, pour toujours." },
-                ].map(item => (
-                  <div key={item.title} style={{ display:'flex', alignItems:'flex-start', gap:14, marginBottom:14 }}>
-                    <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:'rgba(90,154,40,.15)' }}>{item.icon}</div>
-                    <div>
-                      <div style={{ fontSize:14, fontWeight:600, color:'#fff', marginBottom:2 }}>{item.title}</div>
-                      <div style={{ fontSize:12.5, color:'rgba(255,255,255,.50)', lineHeight:1.6 }}>{item.desc}</div>
-                    </div>
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon green">🌸</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Un outil de soin quotidien</div>
+                    <div className="pw-item-desc">Entre deux séances, Mon Jardin Intérieur les accompagne : bilan émotionnel, rituels, club de soutien. Votre travail continue en dehors du cabinet.</div>
                   </div>
-                ))}
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon green">🤝</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Un lien durable avec vous</div>
+                    <div className="pw-item-desc">Votre code crée un lien traçable et pérenne. Chaque client que vous orientez reste attaché à votre identifiant, pour toujours.</div>
+                  </div>
+                </div>
               </div>
-              <div style={{ padding:'16px 36px 32px', textAlign:'center' }}>
-                <button
-                  onClick={() => { localStorage.removeItem('mji_show_pro_welcome'); setShowProWelcome(false) }}
-                  style={{ width:'100%', padding:16, borderRadius:50, border:'none', background:'linear-gradient(135deg,#4a8a20,#2e6808)', color:'#fff', fontSize:16, fontWeight:700, fontFamily:"'Jost',sans-serif", cursor:'pointer', boxShadow:'0 8px 28px rgba(42,104,8,.40)', letterSpacing:'.03em' }}
-                >
+
+              <div className="pw-sep"/>
+
+              <div className="pw-section">
+                <div className="pw-sec-title">🤝 Un partenariat gagnant / gagnant</div>
+                <div className="pw-item">
+                  <div className="pw-item-icon green">🪴</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Vous recommandez, ils progressent</div>
+                    <div className="pw-item-desc">Chaque client que vous orientez bénéficie d'un outil complémentaire à votre suivi, et vous êtes récompensé(e) à chaque renouvellement.</div>
+                  </div>
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon gold">🔗</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Un lien tracé à vie</div>
+                    <div className="pw-item-desc">Même si vous ne suivez plus un client directement, le lien avec votre code reste actif. Votre commission aussi.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pw-sep"/>
+
+              <div className="pw-section">
+                <div className="pw-sec-title">✦ Ce que vous gagnez</div>
+                <div className="pw-item">
+                  <div className="pw-item-icon gold">🪪</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Un identifiant partenaire unique</div>
+                    <div className="pw-item-desc">Votre code personnel tracera chaque client que vous recommandez, à vie. Même si vous ne les suivez plus directement.</div>
+                  </div>
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon gold">💰</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">10 % de commission récurrente</div>
+                    <div className="pw-item-desc">À chaque renouvellement d'abonnement de vos clients (mensuel ou annuel), une commission de 10 % est automatiquement créditée sur votre solde. (Contrat portage d'affaires.)</div>
+                  </div>
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon gold">📊</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Un tableau de bord transparent</div>
+                    <div className="pw-item-desc">Suivez en temps réel vos clients affiliés, votre historique de CA et votre solde disponible depuis votre espace pro.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pw-sep"/>
+
+              <div className="pw-section">
+                <div className="pw-sec-title">🛍️ Votre vitrine dans l'application</div>
+                <div className="pw-item">
+                  <div className="pw-item-icon green">🌿</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Ateliers &amp; formations en ligne</div>
+                    <div className="pw-item-desc">Proposez vos ateliers bien-être directement aux abonnés de Mon Jardin Intérieur. Séances live, replays, formations à votre rythme.</div>
+                  </div>
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon gold">🎧</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Audios &amp; e-books dans la Jardinothèque</div>
+                    <div className="pw-item-desc">Déposez vos créations numériques — méditations guidées, protocoles, guides pratiques — et commercialisez-les auprès de toute la communauté.</div>
+                  </div>
+                </div>
+                <div className="pw-item">
+                  <div className="pw-item-icon green">✨</div>
+                  <div className="pw-item-body">
+                    <div className="pw-item-title">Une audience déjà là</div>
+                    <div className="pw-item-desc">Pas besoin de construire une liste. Vos ressources sont visibles par des abonnés en recherche active de soutien et d'outils de mieux-être.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pw-cta">
+                <div style={{fontSize:16,color:'#1a1208',lineHeight:1.65,marginBottom:16,fontStyle:'italic',fontFamily:"'Cormorant Garamond',serif"}}>
+                  Un mail vous sera adressé avec plus de précisions dès votre avancement dans l'aventure.
+                </div>
+                <button className="pw-btn" onClick={() => { localStorage.removeItem('mji_show_pro_welcome'); setShowProFlower(true) }}>
                   Commencer mon aventure pro →
                 </button>
-                <div style={{ marginTop:12, fontSize:11, color:'rgba(255,255,255,.28)', letterSpacing:'.06em' }}>Chaque geste de soin est une graine. — 🌿</div>
+                <div className="pw-tagline">Chaque geste de soin est une graine.</div>
+                <button
+                  onClick={() => setShowProCancelConfirm(true)}
+                  style={{marginTop:18,background:'none',border:'none',color:'rgba(30,20,8,.32)',fontSize:18,fontFamily:"'Jost',sans-serif",cursor:'pointer',textDecoration:'underline',textUnderlineOffset:3,letterSpacing:'.01em',transition:'color .15s'}}
+                  onMouseOver={e=>e.target.style.color='rgba(180,60,60,.70)'}
+                  onMouseOut={e=>e.target.style.color='rgba(30,20,8,.32)'}
+                >
+                  Je ne souhaite pas créer de compte pro
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
+        {/* ── Étape 2 : choix de la fleur pro ── */}
+        {showProFlower && (
+          <div style={{position:'fixed',inset:0,zIndex:1200,background:'rgba(10,20,5,.55)',backdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'authFadeIn .25s ease both'}}>
+            <div style={{background:'rgba(252,248,242,.97)',borderRadius:24,width:'min(420px,100%)',maxHeight:'90vh',overflowY:'auto',padding:'36px 32px',position:'relative',boxShadow:'0 20px 60px rgba(30,60,10,.22)',border:'1.5px solid rgba(180,210,140,.35)',animation:'authFormIn .35s cubic-bezier(.22,1,.36,1) both'}}>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:400,color:'#1a1208',marginBottom:8}}>Votre identité florale 🌸</div>
+              <div style={{fontSize:18,color:'#1a1208',marginBottom:10,lineHeight:1.65}}>
+                Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.<br/>
+                <span style={{fontSize:16,color:'rgba(30,20,8,.40)',fontStyle:'italic'}}>Ex : Marie · Lavande</span>
+              </div>
+              {proDisplayName && (
+                <div style={{fontSize:18,color:'#1a1208',marginBottom:20,lineHeight:1.5}}>
+                  <em style={{fontStyle:'italic'}}>{proDisplayName}</em> · {proSelFlower ?? '…'}
+                </div>
+              )}
+              <div style={{textAlign:'center',padding:'10px 0 14px',fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:'#1a1208',minHeight:44}}>
+                {proSelFlower
+                  ? <><span>🌸</span> {proDisplayName} · <span>{proSelFlower}</span></>
+                  : 'Choisissez votre fleur ci-dessous'}
+              </div>
+              <div className="pf-grid">
+                {FLOWER_NAMES.map(n => (
+                  <div key={n} className={'pf-pill'+(proSelFlower===n?' sel':'')} style={{fontSize:16}} onClick={()=>setProSelFlower(n)}>{n}</div>
+                ))}
+              </div>
+              <button
+                disabled={!proSelFlower || proSavingFlower}
+                onClick={async () => {
+                  if (!proSelFlower || proSavingFlower) return
+                  setProSavingFlower(true)
+                  try { await supabase.from('users').update({ flower_name: proSelFlower }).eq('id', user.id) }
+                  catch(e) { console.warn('[pro flower]', e) }
+                  setProSavingFlower(false)
+                  setScreen('onboarding')
+                }}
+                style={{width:'100%',padding:'14px 20px',borderRadius:50,border:'none',background:'linear-gradient(135deg,#4a8a20,#2e6808)',color:'#fff',fontSize:18,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer',boxShadow:'0 5px 18px rgba(42,104,8,.28)',lineHeight:1.4,whiteSpace:'normal'}}
+              >
+                {proSavingFlower ? '…' : proSelFlower
+                  ? <><span style={{display:'block',fontSize:18,fontWeight:600}}>Entrer dans mon jardin</span><span style={{fontSize:13,fontWeight:400,opacity:.80,letterSpacing:'.05em'}}>{proDisplayName ? `${proDisplayName} · ` : ''}{proSelFlower} →</span></>
+                  : 'Choisissez une fleur'}
+              </button>
+              <div style={{marginTop:14,fontSize:18,color:'#1a1208',textAlign:'center',lineHeight:1.7}}>Modifiable dans vos paramètres.</div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal confirmation annulation pro ── */}
+        {showProCancelConfirm && (
+          <div className="pc-overlay">
+            <div className="pc-modal">
+              <div style={{fontSize:40,marginBottom:14}}>🌿</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:600,color:'#1a1208',lineHeight:1.3,marginBottom:10}}>Êtes-vous sûr de vouloir annuler votre compte pro ?</div>
+              <div style={{fontSize:18,color:'#1a1208',lineHeight:1.70,marginBottom:26}}>
+                Vous passeriez à côté d'une offre gagnant / gagnant : commissions récurrentes, vitrine dans l'app, et des clients accompagnés entre vos séances.<br/><br/>
+                Cette action supprimera définitivement votre inscription professionnelle.
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                <button className="pc-back-btn" onClick={() => setShowProCancelConfirm(false)}>
+                  ← Revenir à mon espace pro
+                </button>
+                <button className="pc-confirm-btn" onClick={handleCancelPro} disabled={proCancelLoading}>
+                  {proCancelLoading ? 'Annulation en cours…' : 'Oui, annuler mon compte pro'}
+                </button>
               </div>
             </div>
           </div>
