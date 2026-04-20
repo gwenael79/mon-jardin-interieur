@@ -218,74 +218,112 @@ html,body,#root{height:100%;width:100%}
 /* ── Modal explicatif avantages PRO ── */
 .pro-welcome-overlay {
   position:fixed; inset:0; z-index:1100;
-  background:rgba(5,15,5,.72); backdrop-filter:blur(10px);
+  background:rgba(5,15,5,.78); backdrop-filter:blur(12px);
   display:flex; align-items:center; justify-content:center; padding:20px;
   animation:authFadeIn .3s ease both;
 }
 .pro-welcome-modal {
-  background:linear-gradient(160deg,#0d1f08,#142808);
-  border:1px solid rgba(90,154,40,.25);
-  border-radius:28px; width:min(580px,100%); max-height:90vh; overflow-y:auto;
+  background:#faf8f4;
+  border:1px solid rgba(180,210,140,.35);
+  border-radius:28px; width:min(560px,100%); max-height:92vh; overflow-y:auto;
   padding:0; position:relative;
-  box-shadow:0 24px 80px rgba(0,0,0,.55);
+  box-shadow:0 24px 80px rgba(30,60,10,.18);
   animation:authFormIn .4s cubic-bezier(.22,1,.36,1) both;
+  scrollbar-width:thin; scrollbar-color:rgba(90,154,40,.20) transparent;
 }
 .pro-welcome-header {
-  padding:36px 36px 0;
+  padding:44px 40px 28px;
   text-align:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(90,154,40,.06) 0%,transparent 70%);
 }
-.pro-welcome-icon { font-size:52px; margin-bottom:12px; }
+.pro-welcome-icon {
+  font-size:44px; margin-bottom:14px;
+  display:inline-block;
+  filter:drop-shadow(0 4px 12px rgba(90,154,40,.20));
+}
 .pro-welcome-title {
   font-family:'Cormorant Garamond',serif;
-  font-size:32px; font-weight:600; color:#fff;
-  line-height:1.2; margin-bottom:8px;
+  font-size:30px; font-weight:600; color:#1a1208;
+  line-height:1.25; margin-bottom:10px;
+  letter-spacing:.01em;
 }
 .pro-welcome-sub {
-  font-size:14px; color:rgba(255,255,255,.55);
-  line-height:1.7; margin-bottom:28px;
+  font-size:18px; color:rgba(30,20,8,.55);
+  line-height:1.7; margin-bottom:0; max-width:420px; margin-left:auto; margin-right:auto;
 }
 .pro-welcome-sep {
-  height:1px; background:linear-gradient(to right,transparent,rgba(90,154,40,.35),transparent);
-  margin:0 36px 28px;
+  height:1px;
+  background:linear-gradient(to right,transparent,rgba(90,154,40,.25),transparent);
+  margin:24px 40px;
 }
-.pro-welcome-section { padding:0 36px 24px; }
+.pro-welcome-section {
+  padding:0 40px 20px;
+}
 .pro-welcome-section-title {
-  font-size:10px; letter-spacing:.16em; text-transform:uppercase;
-  color:rgba(90,154,40,.80); font-weight:700; margin-bottom:14px;
+  font-size:15px; letter-spacing:.12em; text-transform:uppercase;
+  color:rgba(60,120,20,.85); font-weight:700; margin-bottom:16px;
+  display:flex; align-items:center; gap:8px;
+}
+.pro-welcome-section-title::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(to right,rgba(90,154,40,.18),transparent);
 }
 .pro-welcome-item {
-  display:flex; align-items:flex-start; gap:14px;
-  margin-bottom:14px;
+  display:flex; align-items:flex-start; gap:16px;
+  margin-bottom:12px;
+  padding:16px 18px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid rgba(200,190,175,.45);
+  transition:border-color .2s, box-shadow .2s;
 }
+.pro-welcome-item:hover { border-color:rgba(90,154,40,.35); box-shadow:0 2px 12px rgba(90,154,40,.08); }
+.pro-welcome-item:last-child { margin-bottom:0; }
 .pro-welcome-item-icon {
-  width:36px; height:36px; border-radius:10px; flex-shrink:0;
+  width:42px; height:42px; border-radius:12px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  font-size:18px;
+  font-size:22px;
 }
-.pro-welcome-item-icon.green { background:rgba(90,154,40,.15); }
-.pro-welcome-item-icon.gold  { background:rgba(200,160,48,.15); }
-.pro-welcome-item-body {}
+.pro-welcome-item-icon.green {
+  background:rgba(90,154,40,.12);
+  box-shadow:0 0 0 1px rgba(90,154,40,.18);
+}
+.pro-welcome-item-icon.gold {
+  background:rgba(200,160,48,.10);
+  box-shadow:0 0 0 1px rgba(200,160,48,.18);
+}
+.pro-welcome-item-body { flex:1; min-width:0; }
 .pro-welcome-item-title {
-  font-size:14px; font-weight:600; color:#fff; margin-bottom:2px;
+  font-size:18px; font-weight:600; color:#1a1208;
+  margin-bottom:4px; letter-spacing:.01em;
 }
 .pro-welcome-item-desc {
-  font-size:12.5px; color:rgba(255,255,255,.50); line-height:1.6;
+  font-size:18px; color:rgba(30,20,8,.58); line-height:1.65;
 }
 .pro-welcome-cta {
-  padding:24px 36px 32px; text-align:center;
+  padding:24px 40px 36px; text-align:center;
 }
 .pro-welcome-btn {
   width:100%; padding:16px; border-radius:50px; border:none;
   background:linear-gradient(135deg,#4a8a20,#2e6808);
-  color:#fff; font-size:16px; font-weight:700;
+  color:#fff; font-size:18px; font-weight:600;
   font-family:'Jost',sans-serif; cursor:pointer;
-  box-shadow:0 8px 28px rgba(42,104,8,.40);
-  transition:filter .2s; letter-spacing:.03em;
+  box-shadow:0 6px 24px rgba(42,104,8,.28);
+  transition:filter .2s, transform .15s; letter-spacing:.03em;
 }
-.pro-welcome-btn:hover { filter:brightness(1.10); }
+.pro-welcome-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.pro-welcome-btn:active { transform:translateY(0); }
 .pro-welcome-tagline {
-  margin-top:12px; font-size:11px;
-  color:rgba(255,255,255,.28); letter-spacing:.06em;
+  margin-top:14px; font-size:18px;
+  color:#1a1208; letter-spacing:.04em;
+  font-family:'Cormorant Garamond',serif; font-style:italic;
+}
+@media(max-width:520px) {
+  .pro-welcome-header { padding:32px 24px 20px; }
+  .pro-welcome-section { padding:0 24px 18px; }
+  .pro-welcome-sep { margin:18px 24px; }
+  .pro-welcome-cta { padding:18px 24px 28px; }
+  .pro-welcome-item { padding:12px 14px; gap:12px; }
 }
 .pro-success-icon { font-size:52px; margin-bottom:14px; }
 .pro-success-title { font-family:'Cormorant Garamond',serif; font-size:22px; color:#2e6808; margin-bottom:8px; }
@@ -294,6 +332,51 @@ html,body,#root{height:100%;width:100%}
   .pro-modal { padding:28px 20px 22px; }
   .pro-row { grid-template-columns:1fr; }
 }
+
+/* ── Modal confirmation annulation pro ── */
+.pro-cancel-overlay {
+  position:fixed; inset:0; z-index:1200;
+  background:rgba(10,20,5,.60); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:authFadeIn .2s ease both;
+}
+.pro-cancel-modal {
+  background:#faf8f4; border-radius:22px;
+  width:min(440px,100%);
+  padding:36px 32px 28px; position:relative;
+  box-shadow:0 20px 60px rgba(30,60,10,.20);
+  border:1px solid rgba(180,210,140,.30);
+  animation:authFormIn .3s cubic-bezier(.22,1,.36,1) both;
+  text-align:center;
+}
+.pro-cancel-icon { font-size:40px; margin-bottom:14px; }
+.pro-cancel-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:24px; font-weight:600; color:#1a1208;
+  line-height:1.3; margin-bottom:10px;
+}
+.pro-cancel-text {
+  font-size:18px; color:#1a1208; line-height:1.70;
+  margin-bottom:26px;
+}
+.pro-cancel-actions { display:flex; flex-direction:column; gap:10px; }
+.pro-cancel-confirm-btn {
+  width:100%; padding:14px; border-radius:50px; border:none;
+  background:rgba(180,60,60,.10); color:#b03030;
+  font-size:18px; font-weight:600; font-family:'Jost',sans-serif;
+  cursor:pointer; transition:background .18s;
+  border:1px solid rgba(180,60,60,.20);
+}
+.pro-cancel-confirm-btn:hover { background:rgba(180,60,60,.18); }
+.pro-cancel-confirm-btn:disabled { opacity:.4; cursor:not-allowed; }
+.pro-cancel-back-btn {
+  width:100%; padding:14px; border-radius:50px;
+  border:1.5px solid rgba(42,104,8,.40);
+  background:linear-gradient(135deg,#4a8a20,#2e6808);
+  color:#fff; font-size:18px; font-weight:600;
+  font-family:'Jost',sans-serif; cursor:pointer; transition:filter .18s;
+}
+.pro-cancel-back-btn:hover { filter:brightness(1.08); }
 
 /* Fleur picker */
 .auth-flower-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; max-height:200px; overflow-y:auto; margin-bottom:18px; }
@@ -351,12 +434,15 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [isMobile,     setIsMobile]     = useState(() => window.innerWidth < 768)
 
   // ── Modal PRO ──
-  const [showProModal,  setShowProModal]  = useState(false)
-  const [proSuccess,    setProSuccess]    = useState(false)
-  const [proLoading,    setProLoading]    = useState(false)
-  const [proError,      setProError]      = useState(null)
-  const [proEmailPending, setProEmailPending] = useState(false)
-  const [showProWelcome,  setShowProWelcome]  = useState(false)
+  const [showProModal,      setShowProModal]      = useState(false)
+  const [proSuccess,        setProSuccess]        = useState(false)
+  const [proLoading,        setProLoading]        = useState(false)
+  const [proError,          setProError]          = useState(null)
+  const [proEmailPending,   setProEmailPending]   = useState(false)
+  const [showProWelcome,    setShowProWelcome]     = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [cancelLoading,     setCancelLoading]     = useState(false)
+  const [showProFlower,     setShowProFlower]     = useState(false)
   const [proForm, setProForm] = useState(() => {
     try {
       const saved = localStorage.getItem('mji_pro_draft')
@@ -371,6 +457,13 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     const check = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    if (localStorage.getItem('mji_go_register') === '1') {
+      localStorage.removeItem('mji_go_register')
+      setRightPanel('register')
+    }
   }, [])
 
   useEffect(() => {
@@ -444,17 +537,20 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
 
       // 4. Connexion : immédiate si email non vérifié requis désactivé,
       //    sinon l'utilisateur devra cliquer sur le lien reçu par email.
-      if (data?.session) {
-        // Accès immédiat — même parcours que user normal (choix de la fleur)
-        localStorage.setItem('mji_has_logged_in', '1')
-        localStorage.setItem('mji_show_pro_welcome', '1')
-        // Flag pour afficher le modal explicatif pro après redirection
-        localStorage.setItem('mji_show_pro_welcome', '1')
-      }
       // Succès : vider le draft localStorage
       try { localStorage.removeItem('mji_pro_draft') } catch(e) {}
-      setProSuccess(true)
-      setProEmailPending(!data?.session)
+      if (data?.session) {
+        localStorage.setItem('mji_has_logged_in', '1')
+        setNewUserId(userId)
+        setDisplayName(prenom.trim())
+        // Accès immédiat : fermer le modal d'inscription et ouvrir directement la présentation pro
+        setShowProModal(false)
+        setProForm({ nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' })
+        setShowProWelcome(true)
+      } else {
+        setProSuccess(true)
+        setProEmailPending(true)
+      }
     } catch (err) { setProError(err.message) }
     finally { setProLoading(false) }
   }
@@ -465,6 +561,39 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     setProError(null)
     setProForm({ nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' })
     setProEmailPending(false)
+  }
+
+  async function handleStartProAdventure() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { user } }    = await supabase.auth.getUser()
+      if (session && user) {
+        await supabase.functions.invoke('register-to-systemeio', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: { record: { email: user.email, display_name: displayName || user.user_metadata?.display_name || '', role: 'pro' } },
+        })
+      }
+    } catch(e) { console.warn('[register-to-systemeio]', e) }
+    setShowProWelcome(false)
+    setShowProFlower(true)
+  }
+
+  async function handleCancelPro() {
+    setCancelLoading(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('users_pro').delete().eq('user_id', user.id)
+        await supabase.from('users').delete().eq('id', user.id)
+        localStorage.setItem('mji_go_register', '1')
+        await supabase.auth.signOut()
+      }
+    } catch(e) { console.warn('[CancelPro]', e) }
+    finally {
+      setCancelLoading(false)
+      setShowCancelConfirm(false)
+      setShowProWelcome(false)
+    }
   }
 
   async function handleSignIn(e) {
@@ -587,6 +716,11 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 Retrouver mon jardin
               </button>
               <div className="auth-tagline">Chaque geste de soin est une graine. — 🌿</div>
+              {import.meta.env.DEV && (
+                <button onClick={() => setShowProWelcome(true)} style={{marginTop:12,width:'100%',padding:'7px',borderRadius:8,border:'1px dashed rgba(90,154,40,.40)',background:'transparent',color:'rgba(90,154,40,.70)',fontSize:11,fontFamily:"'Jost',sans-serif",cursor:'pointer',letterSpacing:'.06em'}}>
+                  ◎ Aperçu présentation pro
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -886,7 +1020,61 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
 
             <div className="pro-welcome-sep"/>
 
-            {/* Pour vous */}
+            {/* Ce que vos clients reçoivent */}
+            <div className="pro-welcome-section">
+              <div className="pro-welcome-section-title">🌱 Ce que vos clients reçoivent</div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🎁</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">−10 % sur leur abonnement</div>
+                  <div className="pro-welcome-item-desc">En utilisant votre code, ils bénéficient d'une réduction immédiate et permanente. Une vraie valeur ajoutée à votre accompagnement.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🌸</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un outil de soin quotidien</div>
+                  <div className="pro-welcome-item-desc">Entre deux séances, Mon Jardin Intérieur les accompagne : bilan émotionnel, rituels, club de soutien. Votre travail continue en dehors du cabinet.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🤝</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un lien durable avec vous</div>
+                  <div className="pro-welcome-item-desc">Votre code crée un lien traçable et pérenne. Chaque client que vous orientez reste attaché à votre identifiant, pour toujours.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pro-welcome-sep"/>
+
+            {/* Partenariat gagnant/gagnant */}
+            <div className="pro-welcome-section">
+              <div className="pro-welcome-section-title">🤝 Un partenariat gagnant / gagnant</div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🪴</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Vous recommandez, ils progressent</div>
+                  <div className="pro-welcome-item-desc">Chaque client que vous orientez bénéficie d'un outil complémentaire à votre suivi, et vous êtes récompensé(e) à chaque renouvellement.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon gold">🔗</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un lien tracé à vie</div>
+                  <div className="pro-welcome-item-desc">Même si vous ne suivez plus un client directement, le lien avec votre code reste actif. Votre commission aussi.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pro-welcome-sep"/>
+
+            {/* Ce que vous gagnez */}
             <div className="pro-welcome-section">
               <div className="pro-welcome-section-title">✦ Ce que vous gagnez</div>
 
@@ -894,7 +1082,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 <div className="pro-welcome-item-icon gold">🪪</div>
                 <div className="pro-welcome-item-body">
                   <div className="pro-welcome-item-title">Un identifiant partenaire unique</div>
-                  <div className="pro-welcome-item-desc">Votre code personnel tracera chaque client que vous recommandez, à vie — même si vous ne les suivez plus directement.</div>
+                  <div className="pro-welcome-item-desc">Votre code personnel tracera chaque client que vous recommandez, à vie. Même si vous ne les suivez plus directement.</div>
                 </div>
               </div>
 
@@ -902,7 +1090,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 <div className="pro-welcome-item-icon gold">💰</div>
                 <div className="pro-welcome-item-body">
                   <div className="pro-welcome-item-title">10 % de commission récurrente</div>
-                  <div className="pro-welcome-item-desc">À chaque renouvellement d'abonnement de vos clients, une commission de 10 % est automatiquement créditée sur votre solde.</div>
+                  <div className="pro-welcome-item-desc">À chaque renouvellement d'abonnement de vos clients (mensuel ou annuel), une commission de 10 % est automatiquement créditée sur votre solde. (Contrat portage d'affaires.)</div>
                 </div>
               </div>
 
@@ -917,42 +1105,113 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
 
             <div className="pro-welcome-sep"/>
 
-            {/* Pour vos clients */}
+            {/* Votre vitrine dans l'application */}
             <div className="pro-welcome-section">
-              <div className="pro-welcome-section-title">🌱 Ce que vos clients reçoivent</div>
+              <div className="pro-welcome-section-title">🛍️ Votre vitrine dans l'application</div>
 
               <div className="pro-welcome-item">
-                <div className="pro-welcome-item-icon green">🎁</div>
+                <div className="pro-welcome-item-icon green">🌿</div>
                 <div className="pro-welcome-item-body">
-                  <div className="pro-welcome-item-title">−10 % sur leur abonnement</div>
-                  <div className="pro-welcome-item-desc">En utilisant votre code, ils bénéficient d'une réduction immédiate et permanente — une vraie valeur ajoutée à votre accompagnement.</div>
+                  <div className="pro-welcome-item-title">Ateliers & formations en ligne</div>
+                  <div className="pro-welcome-item-desc">Proposez vos ateliers bien-être directement aux abonnés de Mon Jardin Intérieur. Séances live, replays, formations à votre rythme.</div>
                 </div>
               </div>
 
               <div className="pro-welcome-item">
-                <div className="pro-welcome-item-icon green">🌸</div>
+                <div className="pro-welcome-item-icon gold">🎧</div>
                 <div className="pro-welcome-item-body">
-                  <div className="pro-welcome-item-title">Un outil de soin quotidien</div>
-                  <div className="pro-welcome-item-desc">Entre deux séances, Mon Jardin Intérieur les accompagne — bilan émotionnel, rituels, club de soutien. Votre travail continue en dehors du cabinet.</div>
+                  <div className="pro-welcome-item-title">Audios & e-books dans la Jardinothèque</div>
+                  <div className="pro-welcome-item-desc">Déposez vos créations numériques — méditations guidées, protocoles, guides pratiques — et commercialisez-les auprès de toute la communauté.</div>
                 </div>
               </div>
 
               <div className="pro-welcome-item">
-                <div className="pro-welcome-item-icon green">🤝</div>
+                <div className="pro-welcome-item-icon green">✨</div>
                 <div className="pro-welcome-item-body">
-                  <div className="pro-welcome-item-title">Un lien durable avec vous</div>
-                  <div className="pro-welcome-item-desc">Votre code crée un lien traçable et pérenne. Chaque client que vous orientez reste attaché à votre identifiant, pour toujours.</div>
+                  <div className="pro-welcome-item-title">Une audience déjà là</div>
+                  <div className="pro-welcome-item-desc">Pas besoin de construire une liste. Vos ressources sont visibles par des abonnés en recherche active de soutien et d'outils de mieux-être.</div>
                 </div>
               </div>
             </div>
 
             <div className="pro-welcome-cta">
-              <button className="pro-welcome-btn" onClick={() => setShowProWelcome(false)}>
+              <button className="pro-welcome-btn" onClick={handleStartProAdventure}>
                 Commencer mon aventure pro →
               </button>
-              <div className="pro-welcome-tagline">Chaque geste de soin est une graine. — 🌿</div>
+              <div className="pro-welcome-tagline">Chaque geste de soin est une graine.</div>
+              <button
+                onClick={() => setShowCancelConfirm(true)}
+                style={{marginTop:18,background:'none',border:'none',color:'rgba(30,20,8,.32)',fontSize:18,fontFamily:"'Jost',sans-serif",cursor:'pointer',textDecoration:'underline',textUnderlineOffset:3,letterSpacing:'.01em',transition:'color .15s'}}
+                onMouseOver={e=>e.target.style.color='rgba(180,60,60,.70)'}
+                onMouseOut={e=>e.target.style.color='rgba(30,20,8,.32)'}
+              >
+                Je ne souhaite pas créer de compte pro
+              </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal confirmation annulation pro ── */}
+      {showCancelConfirm && (
+        <div className="pro-cancel-overlay">
+          <div className="pro-cancel-modal">
+            <div className="pro-cancel-icon">🌿</div>
+            <div className="pro-cancel-title">Êtes-vous sûr de vouloir annuler votre compte pro ?</div>
+            <div className="pro-cancel-text">
+              Vous passeriez à côté d'une offre gagnant / gagnant : commissions récurrentes, vitrine dans l'app, et des clients accompagnés entre vos séances.<br/><br/>
+              Cette action supprimera définitivement votre inscription professionnelle.
+            </div>
+            <div className="pro-cancel-actions">
+              <button
+                className="pro-cancel-back-btn"
+                onClick={() => setShowCancelConfirm(false)}
+              >
+                ← Revenir à mon espace pro
+              </button>
+              <button
+                className="pro-cancel-confirm-btn"
+                onClick={handleCancelPro}
+                disabled={cancelLoading}
+              >
+                {cancelLoading ? 'Annulation en cours…' : 'Oui, annuler mon compte pro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal choix de la fleur (parcours pro) ── */}
+      {showProFlower && (
+        <div style={{position:'fixed',inset:0,zIndex:1200,background:'rgba(10,20,5,.55)',backdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'authFadeIn .25s ease both'}}>
+          <div style={{background:'rgba(252,248,242,.97)',borderRadius:24,width:'min(420px,100%)',maxHeight:'90vh',overflowY:'auto',padding:'36px 32px',position:'relative',boxShadow:'0 20px 60px rgba(30,60,10,.22)',border:'1.5px solid rgba(180,210,140,.35)',animation:'authFormIn .35s cubic-bezier(.22,1,.36,1) both'}}>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:400,color:'#1a1208',marginBottom:8}}>Votre identité florale 🌸</div>
+            <div style={{fontSize:18,color:'#1a1208',marginBottom:10,lineHeight:1.65}}>
+              Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.<br/>
+              <span style={{fontSize:16,color:'rgba(30,20,8,.40)',fontStyle:'italic'}}>Ex : Marie · Lavande</span>
+            </div>
+            {displayName && (
+              <div style={{fontSize:18,color:'#1a1208',marginBottom:20,lineHeight:1.5}}>
+                <em style={{fontStyle:'italic'}}>{displayName}</em> · {selFlower ?? '…'}
+              </div>
+            )}
+            <div style={{textAlign:'center',padding:'10px 0 14px',fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:'#1a1208',minHeight:44}}>
+              {selFlower
+                ? <><span>🌸</span> {displayName} · <span>{selFlower}</span></>
+                : 'Choisissez votre fleur ci-dessous'}
+            </div>
+            <div className="auth-flower-grid" style={{marginBottom:20}}>
+              {FLOWER_NAMES.map(n => (
+                <div key={n} className={'auth-flower-pill' + (selFlower===n?' sel':'')} style={{fontSize:16}} onClick={() => setSelFlower(n)}>{n}</div>
+              ))}
+            </div>
+            <button className="auth-submit" style={{fontSize:18,lineHeight:1.4,whiteSpace:'normal',padding:'14px 20px'}} onClick={async () => { await handleConfirmFlower(); setShowProFlower(false); window.location.reload() }} disabled={!selFlower || savingFlower}>
+              {savingFlower ? '…' : selFlower
+                ? <><span style={{display:'block',fontSize:18,fontWeight:600}}>Entrer dans mon jardin</span><span style={{fontSize:13,fontWeight:400,opacity:.80,letterSpacing:'.05em'}}>{displayName ? `${displayName} · ` : ''}{selFlower} →</span></>
+                : 'Choisissez une fleur'}
+            </button>
+            <div style={{marginTop:14,fontSize:18,color:'#1a1208',textAlign:'center',lineHeight:1.7}}>Modifiable dans vos paramètres.</div>
           </div>
         </div>
       )}

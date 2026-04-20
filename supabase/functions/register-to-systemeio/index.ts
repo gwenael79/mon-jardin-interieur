@@ -1,10 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const SYSTEMEIO_API_KEY = Deno.env.get('SYSTEMEIO_API_KEY') ?? ''
-const SYSTEMEIO_TAG_ID  = Deno.env.get('SYSTEMEIO_TAG_ID')  ?? ''  // optionnel
+const SYSTEMEIO_API_KEY    = Deno.env.get('SYSTEMEIO_API_KEY')     ?? ''
+const SYSTEMEIO_TAG_ID     = Deno.env.get('SYSTEMEIO_TAG_ID')      ?? ''  // tag par défaut
+const SYSTEMEIO_PRO_TAG_ID = Deno.env.get('SYSTEMEIO_PRO_TAG_ID')  ?? ''  // tag "pro"
 
 Deno.serve(async (req) => {
-  // Supabase appelle cette fonction via un Database Webhook (INSERT sur users)
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 })
   }
@@ -21,14 +21,17 @@ Deno.serve(async (req) => {
     return new Response('No email in record', { status: 400 })
   }
 
+  const isPro = record.role === 'pro'
+
   const contact: Record<string, unknown> = {
     email:     record.email,
     firstName: record.display_name ?? '',
   }
 
-  // Ajouter un tag si configuré
-  if (SYSTEMEIO_TAG_ID) {
-    contact.tagIds = [Number(SYSTEMEIO_TAG_ID)]
+  // Tag pro prioritaire, sinon tag par défaut
+  const tagId = isPro ? SYSTEMEIO_PRO_TAG_ID : SYSTEMEIO_TAG_ID
+  if (tagId) {
+    contact.tagIds = [Number(tagId)]
   }
 
   const res = await fetch('https://api.systeme.io/api/contacts', {
