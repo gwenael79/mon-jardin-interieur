@@ -214,6 +214,79 @@ html,body,#root{height:100%;width:100%}
   border-top:1px solid rgba(200,160,150,.18); padding-top:14px;
 }
 .pro-success { text-align:center; padding:28px 10px; }
+
+/* ── Modal explicatif avantages PRO ── */
+.pro-welcome-overlay {
+  position:fixed; inset:0; z-index:1100;
+  background:rgba(5,15,5,.72); backdrop-filter:blur(10px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:authFadeIn .3s ease both;
+}
+.pro-welcome-modal {
+  background:linear-gradient(160deg,#0d1f08,#142808);
+  border:1px solid rgba(90,154,40,.25);
+  border-radius:28px; width:min(580px,100%); max-height:90vh; overflow-y:auto;
+  padding:0; position:relative;
+  box-shadow:0 24px 80px rgba(0,0,0,.55);
+  animation:authFormIn .4s cubic-bezier(.22,1,.36,1) both;
+}
+.pro-welcome-header {
+  padding:36px 36px 0;
+  text-align:center;
+}
+.pro-welcome-icon { font-size:52px; margin-bottom:12px; }
+.pro-welcome-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:32px; font-weight:600; color:#fff;
+  line-height:1.2; margin-bottom:8px;
+}
+.pro-welcome-sub {
+  font-size:14px; color:rgba(255,255,255,.55);
+  line-height:1.7; margin-bottom:28px;
+}
+.pro-welcome-sep {
+  height:1px; background:linear-gradient(to right,transparent,rgba(90,154,40,.35),transparent);
+  margin:0 36px 28px;
+}
+.pro-welcome-section { padding:0 36px 24px; }
+.pro-welcome-section-title {
+  font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+  color:rgba(90,154,40,.80); font-weight:700; margin-bottom:14px;
+}
+.pro-welcome-item {
+  display:flex; align-items:flex-start; gap:14px;
+  margin-bottom:14px;
+}
+.pro-welcome-item-icon {
+  width:36px; height:36px; border-radius:10px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+}
+.pro-welcome-item-icon.green { background:rgba(90,154,40,.15); }
+.pro-welcome-item-icon.gold  { background:rgba(200,160,48,.15); }
+.pro-welcome-item-body {}
+.pro-welcome-item-title {
+  font-size:14px; font-weight:600; color:#fff; margin-bottom:2px;
+}
+.pro-welcome-item-desc {
+  font-size:12.5px; color:rgba(255,255,255,.50); line-height:1.6;
+}
+.pro-welcome-cta {
+  padding:24px 36px 32px; text-align:center;
+}
+.pro-welcome-btn {
+  width:100%; padding:16px; border-radius:50px; border:none;
+  background:linear-gradient(135deg,#4a8a20,#2e6808);
+  color:#fff; font-size:16px; font-weight:700;
+  font-family:'Jost',sans-serif; cursor:pointer;
+  box-shadow:0 8px 28px rgba(42,104,8,.40);
+  transition:filter .2s; letter-spacing:.03em;
+}
+.pro-welcome-btn:hover { filter:brightness(1.10); }
+.pro-welcome-tagline {
+  margin-top:12px; font-size:11px;
+  color:rgba(255,255,255,.28); letter-spacing:.06em;
+}
 .pro-success-icon { font-size:52px; margin-bottom:14px; }
 .pro-success-title { font-family:'Cormorant Garamond',serif; font-size:22px; color:#2e6808; margin-bottom:8px; }
 .pro-success-text { font-size:13.5px; color:rgba(30,20,8,.55); line-height:1.75; }
@@ -283,6 +356,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [proLoading,    setProLoading]    = useState(false)
   const [proError,      setProError]      = useState(null)
   const [proEmailPending, setProEmailPending] = useState(false)
+  const [showProWelcome,  setShowProWelcome]  = useState(false)
   const [proForm, setProForm] = useState(() => {
     try {
       const saved = localStorage.getItem('mji_pro_draft')
@@ -373,6 +447,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       if (data?.session) {
         // Accès immédiat — même parcours que user normal (choix de la fleur)
         localStorage.setItem('mji_has_logged_in', '1')
+        localStorage.setItem('mji_show_pro_welcome', '1')
+        // Flag pour afficher le modal explicatif pro après redirection
+        localStorage.setItem('mji_show_pro_welcome', '1')
       }
       // Succès : vider le draft localStorage
       try { localStorage.removeItem('mji_pro_draft') } catch(e) {}
@@ -466,6 +543,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const mobileForm = isMobile && rightPanel !== 'image'
 
   return (
+    <>
     <div className="auth-wrap">
       <style>{css}</style>
       <div className="auth-bg">
@@ -482,7 +560,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
             {/* Logo — toujours dans le flux, taille différente selon mobile/PC */}
             <div className="auth-logo-block">
               <div className="auth-logo-circle" style={{ width: isMobile ? 72 : 90, height: isMobile ? 72 : 90 }}>
-                <img src="/icons/icon-192.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
+                <img src="/icons/logo.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
               </div>
               <div className="auth-logo-name" style={{ fontSize: isMobile ? 18 : 22 }}>Mon <em style={{ fontStyle:'normal', color:'#2e7010' }}>Jardin</em> Intérieur</div>
             </div>
@@ -699,8 +777,8 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                       Votre espace pro est prêt.<br/>
                       Vous êtes connecté(e) avec le badge <strong style={{color:'#2e6808'}}>✦ Pro</strong>.
                     </div>
-                    <button className="auth-submit" style={{marginTop:24,maxWidth:280,marginLeft:'auto',marginRight:'auto',display:'block'}} onClick={closeProModal}>
-                      Accéder à mon espace →
+                    <button className="auth-submit" style={{marginTop:24,maxWidth:280,marginLeft:'auto',marginRight:'auto',display:'block'}} onClick={() => { closeProModal(); setShowProWelcome(true) }}>
+                      Découvrir mon espace pro →
                     </button>
                   </>
                 )}
@@ -792,5 +870,92 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         </div>
       )}
     </div>
+      {/* ── MODAL EXPLICATIF AVANTAGES PRO ── */}
+      {showProWelcome && (
+        <div className="pro-welcome-overlay" onClick={e => e.target===e.currentTarget && setShowProWelcome(false)}>
+          <div className="pro-welcome-modal">
+
+            <div className="pro-welcome-header">
+              <div className="pro-welcome-icon">🌿</div>
+              <div className="pro-welcome-title">Votre jardin professionnel<br/>vient de s'ouvrir</div>
+              <div className="pro-welcome-sub">
+                En rejoignant Mon Jardin Intérieur en tant que professionnel(le),<br/>
+                vous entrez dans un écosystème conçu pour vous soutenir,<br/>vous et vos clients.
+              </div>
+            </div>
+
+            <div className="pro-welcome-sep"/>
+
+            {/* Pour vous */}
+            <div className="pro-welcome-section">
+              <div className="pro-welcome-section-title">✦ Ce que vous gagnez</div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon gold">🪪</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un identifiant partenaire unique</div>
+                  <div className="pro-welcome-item-desc">Votre code personnel tracera chaque client que vous recommandez, à vie — même si vous ne les suivez plus directement.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon gold">💰</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">10 % de commission récurrente</div>
+                  <div className="pro-welcome-item-desc">À chaque renouvellement d'abonnement de vos clients, une commission de 10 % est automatiquement créditée sur votre solde.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon gold">📊</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un tableau de bord transparent</div>
+                  <div className="pro-welcome-item-desc">Suivez en temps réel vos clients affiliés, votre historique de CA et votre solde disponible depuis votre espace pro.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pro-welcome-sep"/>
+
+            {/* Pour vos clients */}
+            <div className="pro-welcome-section">
+              <div className="pro-welcome-section-title">🌱 Ce que vos clients reçoivent</div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🎁</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">−10 % sur leur abonnement</div>
+                  <div className="pro-welcome-item-desc">En utilisant votre code, ils bénéficient d'une réduction immédiate et permanente — une vraie valeur ajoutée à votre accompagnement.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🌸</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un outil de soin quotidien</div>
+                  <div className="pro-welcome-item-desc">Entre deux séances, Mon Jardin Intérieur les accompagne — bilan émotionnel, rituels, club de soutien. Votre travail continue en dehors du cabinet.</div>
+                </div>
+              </div>
+
+              <div className="pro-welcome-item">
+                <div className="pro-welcome-item-icon green">🤝</div>
+                <div className="pro-welcome-item-body">
+                  <div className="pro-welcome-item-title">Un lien durable avec vous</div>
+                  <div className="pro-welcome-item-desc">Votre code crée un lien traçable et pérenne. Chaque client que vous orientez reste attaché à votre identifiant, pour toujours.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pro-welcome-cta">
+              <button className="pro-welcome-btn" onClick={() => setShowProWelcome(false)}>
+                Commencer mon aventure pro →
+              </button>
+              <div className="pro-welcome-tagline">Chaque geste de soin est une graine. — 🌿</div>
+            </div>
+
+          </div>
+        </div>
+      )}
+    </>
   )
 }

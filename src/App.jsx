@@ -29,6 +29,7 @@ export default function App() {
   const [screen,        setScreen]        = useState('loading')
   const [isPro,         setIsPro]         = useState(false)
   const [showProProfile,setShowProProfile] = useState(false)
+  const [showProWelcome,setShowProWelcome] = useState(false)
   const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
@@ -121,7 +122,12 @@ export default function App() {
         .from('users').select('onboarded, onboarding_completed, role').eq('id', user.id).maybeSingle()
 
       // Détecter le rôle pro dès le départ
-      if (userData?.role === 'pro') setIsPro(true)
+      if (userData?.role === 'pro') {
+        setIsPro(true)
+        if (localStorage.getItem('mji_show_pro_welcome') === '1') {
+          setShowProWelcome(true)
+        }
+      }
 
       const isOnboarded = userData?.onboarded === true
 
@@ -225,11 +231,67 @@ export default function App() {
 
   if (screen === 'flower') {
     return (
-      <FlowerModal
-        userId={user.id}
-        onDone={() => setScreen('onboarding')}
-        onSkip={() => setScreen('onboarding')}
-      />
+      <>
+        <FlowerModal
+          userId={user.id}
+          onDone={() => setScreen('onboarding')}
+          onSkip={() => setScreen('onboarding')}
+        />
+        {showProWelcome && (
+          <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(5,15,5,.80)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }}>
+            <div style={{ background:'linear-gradient(160deg,#0d1f08,#142808)', border:'1px solid rgba(90,154,40,.25)', borderRadius:28, width:'min(580px,100%)', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 24px 80px rgba(0,0,0,.55)' }}>
+              <div style={{ padding:'36px 36px 0', textAlign:'center' }}>
+                <div style={{ fontSize:52, marginBottom:12 }}>🌿</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:600, color:'#fff', lineHeight:1.2, marginBottom:8 }}>Votre jardin professionnel<br/>vient de s'ouvrir</div>
+                <div style={{ fontSize:14, color:'rgba(255,255,255,.55)', lineHeight:1.7, marginBottom:28 }}>En rejoignant Mon Jardin Intérieur en tant que professionnel(le),<br/>vous entrez dans un écosystème conçu pour vous soutenir,<br/>vous et vos clients.</div>
+              </div>
+              <div style={{ height:1, background:'linear-gradient(to right,transparent,rgba(90,154,40,.35),transparent)', margin:'0 36px 28px' }}/>
+              <div style={{ padding:'0 36px 24px' }}>
+                <div style={{ fontSize:10, letterSpacing:'.16em', textTransform:'uppercase', color:'rgba(90,154,40,.80)', fontWeight:700, marginBottom:14 }}>✦ Ce que vous gagnez</div>
+                {[
+                  { icon:'🪪', title:'Un identifiant partenaire unique', desc:'Votre code tracera chaque client que vous recommandez, à vie — même après la fin de votre suivi.' },
+                  { icon:'💰', title:'10 % de commission récurrente', desc:"À chaque renouvellement de vos clients, 10 % est crédité automatiquement sur votre solde." },
+                  { icon:'📊', title:'Un tableau de bord transparent', desc:'Suivez vos clients affiliés, votre CA et votre solde disponible en temps réel.' },
+                ].map(item => (
+                  <div key={item.title} style={{ display:'flex', alignItems:'flex-start', gap:14, marginBottom:14 }}>
+                    <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:'rgba(200,160,48,.15)' }}>{item.icon}</div>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:600, color:'#fff', marginBottom:2 }}>{item.title}</div>
+                      <div style={{ fontSize:12.5, color:'rgba(255,255,255,.50)', lineHeight:1.6 }}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ height:1, background:'linear-gradient(to right,transparent,rgba(90,154,40,.35),transparent)', margin:'0 36px 28px' }}/>
+              <div style={{ padding:'0 36px 24px' }}>
+                <div style={{ fontSize:10, letterSpacing:'.16em', textTransform:'uppercase', color:'rgba(90,154,40,.80)', fontWeight:700, marginBottom:14 }}>🌱 Ce que vos clients reçoivent</div>
+                {[
+                  { icon:'🎁', title:'−10 % sur leur abonnement', desc:"En utilisant votre code, ils bénéficient d'une réduction permanente — une vraie valeur ajoutée à votre accompagnement." },
+                  { icon:'🌸', title:'Un outil de soin quotidien', desc:"Entre deux séances, Mon Jardin Intérieur les accompagne — bilan, rituels, club. Votre travail continue en dehors du cabinet." },
+                  { icon:'🤝', title:'Un lien durable avec vous', desc:"Chaque client que vous orientez reste attaché à votre identifiant, pour toujours." },
+                ].map(item => (
+                  <div key={item.title} style={{ display:'flex', alignItems:'flex-start', gap:14, marginBottom:14 }}>
+                    <div style={{ width:36, height:36, borderRadius:10, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, background:'rgba(90,154,40,.15)' }}>{item.icon}</div>
+                    <div>
+                      <div style={{ fontSize:14, fontWeight:600, color:'#fff', marginBottom:2 }}>{item.title}</div>
+                      <div style={{ fontSize:12.5, color:'rgba(255,255,255,.50)', lineHeight:1.6 }}>{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding:'16px 36px 32px', textAlign:'center' }}>
+                <button
+                  onClick={() => { localStorage.removeItem('mji_show_pro_welcome'); setShowProWelcome(false) }}
+                  style={{ width:'100%', padding:16, borderRadius:50, border:'none', background:'linear-gradient(135deg,#4a8a20,#2e6808)', color:'#fff', fontSize:16, fontWeight:700, fontFamily:"'Jost',sans-serif", cursor:'pointer', boxShadow:'0 8px 28px rgba(42,104,8,.40)', letterSpacing:'.03em' }}
+                >
+                  Commencer mon aventure pro →
+                </button>
+                <div style={{ marginTop:12, fontSize:11, color:'rgba(255,255,255,.28)', letterSpacing:'.06em' }}>Chaque geste de soin est une graine. — 🌿</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     )
   }
 

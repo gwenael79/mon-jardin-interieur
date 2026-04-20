@@ -95,7 +95,7 @@ export default function InstallPrompt() {
         /* ── DESKTOP : carte flottante bas-droite ── */
         .ip-card-desktop {
           position: fixed; bottom: 24px; right: 24px;
-          width: min(320px, calc(100vw - 32px));
+          width: min(380px, calc(100vw - 32px));
           background: var(--card, var(--bg));
           border: 1px solid rgba(var(--green-rgb), 0.22);
           border-radius: 20px;
@@ -115,16 +115,12 @@ export default function InstallPrompt() {
 
         /* ── Desktop header ── */
         .ip-desktop-header {
-          display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+          display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
           position: relative; z-index: 1;
-        }
-        .ip-desktop-logo {
-          width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
-          border: 1px solid rgba(var(--green-rgb), 0.25);
         }
         .ip-desktop-title {
           font-family: var(--font-serif, 'Cormorant Garamond', serif);
-          font-size: 16px; font-weight: 300; line-height: 1.2;
+          font-size: 22px; font-weight: 400; line-height: 1.2;
           color: var(--text);
         }
         .ip-desktop-title em { font-style: italic; color: var(--green); }
@@ -137,46 +133,49 @@ export default function InstallPrompt() {
         .ip-desktop-close:hover { color: rgba(var(--text-rgb), 0.65); }
 
         .ip-desktop-desc {
-          font-size: 12px; font-weight: 300;
-          color: var(--text3); line-height: 1.6;
-          margin-bottom: 12px; font-style: italic;
+          font-size: 14px; font-weight: 400;
+          color: var(--text2); line-height: 1.6;
+          margin-bottom: 14px; font-style: italic;
           position: relative; z-index: 1;
         }
 
         .ip-desktop-features {
-          display: flex; flex-direction: column; gap: 6px;
-          margin-bottom: 14px; position: relative; z-index: 1;
+          display: flex; flex-direction: column; gap: 8px;
+          margin-bottom: 16px; position: relative; z-index: 1;
         }
         .ip-desktop-feature {
-          display: flex; align-items: center; gap: 8px;
-          font-size: 12px; color: var(--text2);
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 12px;
+          background: rgba(var(--text-rgb), 0.04);
+          border: 1px solid rgba(var(--text-rgb), 0.08);
+          border-radius: 10px;
+          font-size: 14px; color: var(--text2);
         }
-        .ip-desktop-feature span:first-child { font-size: 14px; }
+        .ip-desktop-feature span:first-child { font-size: 18px; }
 
-        /* ── Logo centré mobile ── */
-        .ip-logo-wrap {
+        /* ── Lutin centré mobile ── */
+        .ip-lutin-wrap {
           display: flex; justify-content: center;
-          margin-bottom: 14px; position: relative; z-index: 1;
+          margin-bottom: 2px; position: relative; z-index: 1;
         }
-        .ip-logo {
-          width: 60px; height: 60px; border-radius: 16px;
-          border: 1px solid rgba(var(--green-rgb), 0.25);
-          box-shadow: 0 0 0 5px rgba(var(--green-rgb), 0.06), 0 10px 32px rgba(0,0,0,0.15);
+        .ip-lutin {
+          width: 160px; height: auto;
+          filter: drop-shadow(0 4px 16px rgba(120,80,40,0.22));
           animation: ipFloat 3.5s ease-in-out infinite;
         }
 
         .ip-title {
           font-family: var(--font-serif, 'Cormorant Garamond', serif);
-          font-size: clamp(22px, 6vw, 26px); font-weight: 300; line-height: 1.2;
+          font-size: clamp(26px, 7vw, 32px); font-weight: 400; line-height: 1.2;
           color: var(--text);
-          text-align: center; margin-bottom: 6px;
+          text-align: center; margin-bottom: 8px;
           position: relative; z-index: 1;
         }
         .ip-title em { font-style: italic; color: var(--green); }
 
         .ip-subtitle {
-          font-size: 13px; font-weight: 300;
-          color: var(--text3);
+          font-size: 15px; font-weight: 400;
+          color: var(--text2);
           text-align: center; line-height: 1.6;
           margin-bottom: 18px; font-style: italic;
           position: relative; z-index: 1;
@@ -187,27 +186,27 @@ export default function InstallPrompt() {
           margin-bottom: 18px; position: relative; z-index: 1;
         }
         .ip-feature {
-          display: flex; align-items: center; gap: 10px;
-          padding: 10px 12px;
-          background: rgba(var(--text-rgb), 0.04);
-          border: 1px solid rgba(var(--text-rgb), 0.08);
-          border-radius: 10px;
+          display: flex; align-items: center; gap: 12px;
+          padding: 12px 14px;
+          background: rgba(var(--text-rgb), 0.05);
+          border: 1px solid rgba(var(--text-rgb), 0.10);
+          border-radius: 12px;
         }
         .ip-feature-icon {
-          font-size: 17px; flex-shrink: 0;
-          width: 32px; height: 32px; border-radius: 8px;
-          background: rgba(var(--green-rgb), 0.10);
-          border: 1px solid rgba(var(--green-rgb), 0.18);
+          font-size: 20px; flex-shrink: 0;
+          width: 38px; height: 38px; border-radius: 10px;
+          background: rgba(var(--green-rgb), 0.12);
+          border: 1px solid rgba(var(--green-rgb), 0.22);
           display: flex; align-items: center; justify-content: center;
         }
-        .ip-feature-text { font-size: 12px; font-weight: 400; color: var(--text2); line-height: 1.4; }
-        .ip-feature-text strong { display: block; font-weight: 500; color: var(--text); margin-bottom: 1px; }
+        .ip-feature-text { font-size: 14px; font-weight: 400; color: var(--text2); line-height: 1.4; }
+        .ip-feature-text strong { display: block; font-weight: 600; color: var(--text); font-size: 15px; margin-bottom: 2px; }
 
         .ip-btn-install {
-          width: 100%; padding: 14px;
-          border: none; border-radius: 12px; cursor: pointer;
+          width: 100%; padding: 16px;
+          border: none; border-radius: 14px; cursor: pointer;
           font-family: var(--font-body, 'Jost', sans-serif);
-          font-size: 13px; font-weight: 500; letter-spacing: .05em;
+          font-size: 15px; font-weight: 600; letter-spacing: .06em;
           color: var(--bg);
           background: linear-gradient(270deg, var(--green), color-mix(in srgb, var(--green) 75%, white), var(--green));
           background-size: 200% auto;
@@ -254,12 +253,20 @@ export default function InstallPrompt() {
         .ip-ios-text { font-size: 12px; color: var(--text2); line-height: 1.5; }
         .ip-ios-text strong { color: var(--text); }
 
+        /* ── Lutin desktop dans le header ── */
+        .ip-desktop-lutin {
+          width: 140px; height: auto;
+          position: absolute; left: -40px; bottom: -40px;
+          filter: drop-shadow(0 2px 10px rgba(120,80,40,0.25));
+          animation: ipFloat 3.5s ease-in-out infinite;
+        }
+
         @media (max-width: 380px) {
           .ip-card-mobile { padding-left: 16px; padding-right: 16px; }
-          .ip-title { font-size: 20px; }
-          .ip-subtitle { font-size: 12px; margin-bottom: 14px; }
+          .ip-title { font-size: 24px; }
+          .ip-subtitle { font-size: 14px; margin-bottom: 14px; }
           .ip-features { gap: 6px; margin-bottom: 14px; }
-          .ip-logo { width: 52px; height: 52px; }
+          .ip-lutin { width: 130px; }
         }
       `}</style>
 
@@ -268,17 +275,17 @@ export default function InstallPrompt() {
         <div className="ip-backdrop-mobile" onClick={dismiss}>
           <div className={`ip-card-mobile ${animOut ? 'out' : ''}`} onClick={e => e.stopPropagation()}>
             <div className="ip-handle" />
-            <div className="ip-logo-wrap">
-              <img src="/icons/icon-192.png" alt="Mon Jardin Intérieur" className="ip-logo" />
+            <div className="ip-lutin-wrap">
+              <img src="/lutin-gauche.png" alt="Félin, le lutin des forêts" className="ip-lutin" />
             </div>
             <div className="ip-title">Plante ton <em>jardin</em><br />sur ton téléphone</div>
             <div className="ip-subtitle">Retrouve ton espace intérieur en un geste, chaque jour.</div>
 
             <div className="ip-features">
               {[
-                { icon:'🌱', title:'Accès instantané',     desc:'Sans navigateur, en un geste' },
-                { icon:'🔔', title:'Rappels doux',          desc:'Rituels quotidiens à ton rythme' },
-                { icon:'🌿', title:'Fonctionne hors ligne', desc:'Ton espace, même sans connexion' },
+                { icon:'🌱', title:'Accès instantané',  desc:'Sans navigateur, en un geste' },
+                { icon:'🔔', title:'Rappels doux',       desc:'Rituels quotidiens à ton rythme' },
+                { icon:'✨', title:'Toujours avec toi',  desc:'Ton espace intérieur, partout' },
               ].map(({ icon, title, desc }) => (
                 <div className="ip-feature" key={title}>
                   <div className="ip-feature-icon">{icon}</div>
@@ -303,8 +310,9 @@ export default function InstallPrompt() {
         /* ══ DESKTOP : carte flottante bas-droite ══ */
         <div className={`ip-card-desktop ${animOut ? 'out' : ''}`}>
           <div className="ip-desktop-header">
-            <img src="/icons/icon-192.png" alt="" className="ip-desktop-logo" />
-            <div>
+            <img src="/lutin-gauche.png" alt="Félin" className="ip-desktop-lutin" />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <img src="/icons/logo.png" alt="" style={{ width: 72, height: 72, borderRadius: 16, border: '1px solid rgba(var(--green-rgb),0.25)', marginBottom: 8, display: 'block' }} />
               <div className="ip-desktop-title">Mon <em>Jardin</em> Intérieur</div>
             </div>
             <button className="ip-desktop-close" onClick={dismiss}>✕</button>
@@ -318,7 +326,7 @@ export default function InstallPrompt() {
             {[
               { icon:'🌱', label:'Accès rapide depuis le bureau' },
               { icon:'🔔', label:'Notifications de rituels' },
-              { icon:'🌿', label:'Fonctionne hors ligne' },
+              { icon:'✨', label:'Toujours avec toi, partout' },
             ].map(({ icon, label }) => (
               <div className="ip-desktop-feature" key={label}>
                 <span>{icon}</span><span>{label}</span>

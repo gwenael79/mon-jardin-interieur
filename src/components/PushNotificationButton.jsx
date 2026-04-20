@@ -74,6 +74,19 @@ export default function PushNotificationButton({ userId, compact = false }) {
     setShowModal(false)
   }
 
+  const handlePreview = async () => {
+    if (Notification.permission !== 'granted') {
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') return
+    }
+    const sw = await navigator.serviceWorker.ready
+    sw.showNotification('Mon Jardin Intérieur', {
+      body: 'Ton jardin t\'attend… prends un moment pour toi aujourd\'hui.',
+      icon: '/icons/logo.png',
+      badge: '/icons/icon-192.png',
+    })
+  }
+
   // iOS Safari ne supporte pas les push en dehors de la PWA installée
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
@@ -121,25 +134,38 @@ export default function PushNotificationButton({ userId, compact = false }) {
             background: 'var(--bg)',
             border: '1px solid var(--border2)',
             borderRadius: 20, padding: '28px 24px',
-            width: '100%', maxWidth: 360,
+            width: '100%', maxWidth: 380,
             fontFamily: 'Jost, sans-serif',
+            position: 'relative', overflow: 'hidden',
           }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 22, fontWeight: 300, color: 'var(--text)' }}>
+            <style>{`@keyframes lutinFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }`}</style>
+
+            {/* Header : logo gauche | titre centre | lutin droite */}
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20, position: 'relative', gap: 12 }}>
+              <img src="/icons/logo.png" alt="" style={{ width: 64, height: 64, borderRadius: 14, border: '1px solid rgba(var(--green-rgb),0.25)', flexShrink: 0 }} />
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 26, fontWeight: 400, color: 'var(--text)' }}>
                   Notifications
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.08em', marginTop: 2 }}>
-                  RAPPELS DOUX POUR VOTRE JARDIN
+                <div style={{ fontSize: 12, color: 'var(--text2)', letterSpacing: '.08em', marginTop: 4 }}>
+                  Rappels doux pour votre jardin
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer' }}>✕</button>
+              <img
+                src="/lutin-gauche.png"
+                alt=""
+                style={{
+                  width: 80, height: 'auto', flexShrink: 0,
+                  filter: 'drop-shadow(0 2px 10px rgba(120,80,40,0.25))',
+                  animation: 'lutinFloat 3.5s ease-in-out infinite',
+                }}
+              />
+              <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: 0, right: 0, background: 'none', border: 'none', color: 'var(--text3)', fontSize: 18, cursor: 'pointer' }}>✕</button>
             </div>
 
             {/* Horaires */}
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 10 }}>
+              <div style={{ fontSize: 11, letterSpacing: '.1em', color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 10 }}>
                 Horaire de rappel
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -158,8 +184,8 @@ export default function PushNotificationButton({ userId, compact = false }) {
                       }}
                     >
                       <div style={{ fontSize: 22, marginBottom: 4 }}>{h.emoji}</div>
-                      <div style={{ fontSize: 11, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.5)', fontWeight: active ? 500 : 300 }}>{h.label}</div>
-                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2 }}>{h.heure}</div>
+                      <div style={{ fontSize: 13, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.5)', fontWeight: active ? 500 : 300 }}>{h.label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>{h.heure}</div>
                     </div>
                   )
                 })}
@@ -171,7 +197,7 @@ export default function PushNotificationButton({ userId, compact = false }) {
 
             {/* Son */}
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 10 }}>
+              <div style={{ fontSize: 11, letterSpacing: '.1em', color: 'var(--text2)', textTransform: 'uppercase', marginBottom: 10 }}>
                 Son de notification
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -190,7 +216,7 @@ export default function PushNotificationButton({ userId, compact = false }) {
                       }}
                     >
                       <div style={{ fontSize: 22, marginBottom: 4 }}>{s.emoji}</div>
-                      <div style={{ fontSize: 10, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.5)', fontWeight: active ? 500 : 300, lineHeight: 1.3 }}>{s.label}</div>
+                      <div style={{ fontSize: 12, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.5)', fontWeight: active ? 500 : 300, lineHeight: 1.3 }}>{s.label}</div>
                     </div>
                   )
                 })}
@@ -205,12 +231,24 @@ export default function PushNotificationButton({ userId, compact = false }) {
                 width: '100%', padding: '13px', borderRadius: 100,
                 background: saved ? 'rgba(var(--green-rgb),0.3)' : 'rgba(var(--green-rgb),0.2)',
                 border: '1px solid rgba(var(--green-rgb),0.4)',
-                color: 'var(--green)', fontSize: 11, letterSpacing: '.08em',
+                color: 'var(--green)', fontSize: 14, letterSpacing: '.08em',
                 fontFamily: 'Jost,sans-serif', cursor: saving ? 'wait' : 'pointer',
                 transition: 'all .2s', marginBottom: 8,
               }}
             >
               {saved ? '✓ Enregistré' : saving ? '…' : isSubscribed ? 'Enregistrer les préférences' : 'Activer les notifications'}
+            </button>
+
+            <button
+              onClick={handlePreview}
+              style={{
+                width: '100%', padding: '10px', borderRadius: 100,
+                background: 'transparent', border: '1px solid var(--border2)',
+                color: 'var(--text2)', fontSize: 12, letterSpacing: '.06em',
+                fontFamily: 'Jost,sans-serif', cursor: 'pointer', marginBottom: 8,
+              }}
+            >
+              Prévisualiser la notification
             </button>
 
             {isSubscribed && (
