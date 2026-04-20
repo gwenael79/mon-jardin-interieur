@@ -25,7 +25,8 @@ Deno.serve(async (req) => {
 
   const contact: Record<string, unknown> = {
     email:     record.email,
-    firstName: record.display_name ?? '',
+    firstName: isPro ? (record.prenom ?? record.display_name ?? '') : (record.display_name ?? ''),
+    ...(isPro && record.nom ? { surname: record.nom } : {}),
   }
 
   // Tag pro prioritaire, sinon tag par défaut

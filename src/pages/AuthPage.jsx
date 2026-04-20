@@ -132,7 +132,7 @@ html,body,#root{height:100%;width:100%}
 }
 .auth-btn-ghost:hover { background:rgba(255,255,255,.48); border-color:rgba(42,104,8,.55); }
 .auth-btn-ghost:focus { outline:2px solid rgba(42,104,8,.50); outline-offset:2px; }
-.auth-tagline { text-align:center; font-size:12px; color:rgba(15,42,8,.45); letter-spacing:.06em; }
+.auth-tagline { text-align:center; font-size:18px; color:rgba(15,42,8,.70); letter-spacing:.03em; font-family:'Cormorant Garamond',serif; font-style:italic; }
 
 /* ── Formulaires dans le cadre ── */
 .auth-back-btn {
@@ -570,7 +570,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       if (session && user) {
         await supabase.functions.invoke('register-to-systemeio', {
           headers: { Authorization: `Bearer ${session.access_token}` },
-          body: { record: { email: user.email, display_name: displayName || user.user_metadata?.display_name || '', role: 'pro' } },
+          body: { record: { email: user.email, display_name: displayName || user.user_metadata?.display_name || '', prenom: proForm.prenom || displayName || '', nom: proForm.nom || '', role: 'pro' } },
         })
       }
     } catch(e) { console.warn('[register-to-systemeio]', e) }
@@ -715,9 +715,23 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               <button className="auth-btn-ghost" onClick={() => goTo('login')}>
                 Retrouver mon jardin
               </button>
-              <div className="auth-tagline">Chaque geste de soin est une graine. — 🌿</div>
+              <div className="auth-tagline">Chaque geste de soin est une graine.</div>
+
+              {/* Entrée pro — séparée visuellement */}
+              <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid rgba(42,104,8,.15)',textAlign:'center'}}>
+                <div style={{fontSize:18,color:'rgba(15,42,8,.65)',marginBottom:10}}>Vous exercez une activité de bien-être ?</div>
+                <button
+                  onClick={() => setShowProModal(true)}
+                  style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:18,fontWeight:600,color:'rgba(90,60,10,.80)',textDecoration:'underline',textUnderlineOffset:3,transition:'color .15s'}}
+                  onMouseOver={e=>e.target.style.color='rgba(90,60,10,1)'}
+                  onMouseOut={e=>e.target.style.color='rgba(90,60,10,.80)'}
+                >
+                  Créer un espace professionnel →
+                </button>
+              </div>
+
               {import.meta.env.DEV && (
-                <button onClick={() => setShowProWelcome(true)} style={{marginTop:12,width:'100%',padding:'7px',borderRadius:8,border:'1px dashed rgba(90,154,40,.40)',background:'transparent',color:'rgba(90,154,40,.70)',fontSize:11,fontFamily:"'Jost',sans-serif",cursor:'pointer',letterSpacing:'.06em'}}>
+                <button onClick={() => setShowProWelcome(true)} style={{marginTop:12,width:'100%',padding:'10px',borderRadius:8,border:'1px dashed rgba(90,154,40,.40)',background:'transparent',color:'rgba(90,154,40,.80)',fontSize:18,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
                   ◎ Aperçu présentation pro
                 </button>
               )}
@@ -785,9 +799,6 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                   {error && <div className="auth-error">{error}</div>}
                   <button className="auth-submit" type="submit" disabled={isLoading}>{isLoading ? '…' : 'Créer mon jardin'}</button>
                 </form>
-                <button type="button" onClick={() => setShowProModal(true)} style={{width:'100%',padding:'12px 24px',borderRadius:'50px',border:'1.5px solid rgba(110,60,15,.70)',background:'linear-gradient(135deg,#7a4010,#5a2e08)',color:'#fff',fontSize:'14px',fontWeight:'600',fontFamily:"'Jost',sans-serif",cursor:'pointer',letterSpacing:'.02em',marginTop:'10px',marginBottom:'2px',boxShadow:'0 4px 14px rgba(100,50,10,.25)',transition:'filter .2s'}}>
-                  Professionnel(le) du mieux-être ?
-                </button>
                 <div className="auth-switch">Déjà un compte ? <span onClick={() => goTo('login')}>Me connecter</span></div>
               </div>
             )}
@@ -1135,6 +1146,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
             </div>
 
             <div className="pro-welcome-cta">
+              <div style={{fontSize:16,color:'#1a1208',lineHeight:1.65,marginBottom:16,fontStyle:'italic',fontFamily:"'Cormorant Garamond',serif"}}>
+                Un mail vous sera adressé avec plus de précisions dès votre avancement dans l'aventure.
+              </div>
               <button className="pro-welcome-btn" onClick={handleStartProAdventure}>
                 Commencer mon aventure pro →
               </button>
