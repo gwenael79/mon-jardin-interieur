@@ -50,6 +50,8 @@ Deno.serve(async (req: Request) => {
     const planMonths     = parseInt(meta?.plan_months  ?? '0', 10)
     const lumenAmount    = parseInt(meta?.lumen_amount ?? '0', 10)
     const produitId      = meta?.produit_id
+    const atelierIdMeta  = meta?.atelier_id
+    const animatorUserId = meta?.animator_user_id
     const type           = meta?.type
     const sessionId      = obj?.id as string
     const proUsersProId  = meta?.pro_users_pro_id
@@ -57,6 +59,44 @@ Deno.serve(async (req: Request) => {
     if (!uid) {
       console.error('[webhook] supabase_uid manquant')
       return new Response(JSON.stringify({ received: true, warning: 'uid manquant' }), { status: 200 })
+    }
+
+    // ── Cas Atelier payant ───────────────────────────────────────────────────
+    if (type === 'atelier_achat' && atelierIdMeta) {
+      // Idempotence
+      const { data: existingReg } = await supabase.from('atelier_registrations')
+        .select('id').eq('stripe_session_id', sessionId).maybeSingle()
+      if (existingReg) { console.log(`[webhook] Atelier inscription ${sessionId} déjà traitée`); return ok() }
+
+      const amount = (obj?.amount_total as number ?? 0) / 100
+
+      // 1. Créer un achat
+      const { data: achatData } = await supabase.from('achats').insert({
+        user_id: uid, atelier_id: atelierIdMeta, stripe_payment_id: sessionId, montant: amount, statut: 'complete',
+      }).select('id').single()
+
+      // 2. Inscrire le participant
+      await supabase.from('atelier_registrations').insert({
+        atelier_id: atelierIdMeta, user_id: uid, stripe_session_id: sessionId,
+      })
+
+      // 3. Créer ventes_partenaires si l'animateur a un compte partenaire actif
+      if (animatorUserId) {
+        const { data: partenaire } = await supabase.from('partenaires')
+          .select('id, statut').eq('user_id', animatorUserId).maybeSingle()
+        if (partenaire?.statut === 'actif') {
+          const taux = 15.00; const commission = Math.round(amount * taux) / 100
+          const mois = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+          await supabase.from('ventes_partenaires').insert({
+            achat_id: achatData?.id ?? null, atelier_id: atelierIdMeta, partenaire_id: partenaire.id,
+            montant_brut: amount, taux_commission: taux, commission, montant_net: amount - commission,
+            mois_facturation: mois, statut: 'en_attente',
+          })
+        }
+      }
+
+      console.log(`[webhook] ✅ Atelier payant — atelier ${atelierIdMeta} pour ${uid}`)
+      return ok()
     }
 
     // ── Cas Jardinothèque ────────────────────────────────────────────────────

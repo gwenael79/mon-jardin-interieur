@@ -143,6 +143,9 @@ export default function App() {
           await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
           await refresh()
         } catch (e) { console.warn('[auto-activate]', e) }
+        if (userData?.role === 'pro' && localStorage.getItem('mji_show_pro_welcome') === '1') {
+          setShowProWelcome(true)
+        }
         setScreen('flower'); return
       }
 

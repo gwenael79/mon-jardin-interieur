@@ -292,13 +292,14 @@ export function ProProfile({ onBack }) {
         setCommissions(comms ?? [])
         setAteliers(atelData ?? [])
 
-        // Inscriptions ateliers (basé sur les IDs chargés)
+        // Inscriptions ateliers payantes (Stripe uniquement)
         if (atelData?.length) {
           const atelIds = atelData.map(a => a.id)
           const { data: inscData } = await supabase
             .from('atelier_registrations')
-            .select('*, ateliers(title, starts_at), users(display_name)')
+            .select('*, ateliers(title, starts_at, price), users(display_name)')
             .in('atelier_id', atelIds)
+            .not('stripe_session_id', 'is', null)
             .order('registered_at', { ascending: false })
           setInscriptions(inscData ?? [])
         } else {
@@ -537,8 +538,7 @@ export function ProProfile({ onBack }) {
 
             const allVentes = [
               ...inscriptions.map(ins => {
-                const atelier = ateliers.find(a => a.id === ins.atelier_id)
-                const ttc  = Number(atelier?.price ?? 0)
+                const ttc  = Number(ins.ateliers?.price ?? 0)
                 const ht   = ttc / (1 + TVA / 100)
                 const comm = ht * COMM_RATE
                 const net  = ht * (1 - COMM_RATE)

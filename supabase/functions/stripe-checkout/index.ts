@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
     if (authErr || !user) return error(401, 'Non autorisé — session invalide')
 
     const body = await req.json()
-    const { priceId, successUrl, cancelUrl, produitId, solidarity, amount, promoCode } = body
+    const { priceId, successUrl, cancelUrl, produitId, atelierId, solidarity, amount, promoCode } = body
 
     // ── Résolution du code promo (Stripe + détection pro) ────────────────────
     let discounts: unknown[] | undefined
@@ -45,6 +45,53 @@ Deno.serve(async (req: Request) => {
       discounts    = [{ promotion_code: resolved.id }]
       proUsersProId = resolved.proUsersProId
       console.log(`[stripe-checkout] Promo: ${promoCode} → ${resolved.id}${proUsersProId ? ` (pro ${proUsersProId})` : ''}`)
+    }
+
+    // ── Cas Atelier payant ───────────────────────────────────────────────────
+    if (atelierId) {
+      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE)
+
+      const { data: atelier, error: atelierErr } = await adminClient
+        .from('ateliers').select('id, title, price, animator_id')
+        .eq('id', atelierId).maybeSingle()
+
+      if (!atelier) return error(404, 'Atelier introuvable — ' + JSON.stringify(atelierErr))
+      if (!atelier.price || atelier.price <= 0) return error(400, 'Cet atelier est gratuit')
+
+      const { data: userData } = await adminClient
+        .from('users').select('stripe_customer_id, display_name').eq('id', user.id).single()
+
+      let customerId = userData?.stripe_customer_id
+      if (!customerId) {
+        const cust = await stripePost('customers', { email: user.email ?? '', name: userData?.display_name ?? '', metadata: { supabase_uid: user.id } })
+        customerId = cust.id
+        await adminClient.from('users').update({ stripe_customer_id: customerId }).eq('id', user.id)
+      }
+
+      const baseUrl = req.headers.get('origin') ?? 'https://monjardininterieur.com'
+      const sessionBody: Record<string, unknown> = {
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{ quantity: 1, price_data: {
+          currency: 'eur',
+          unit_amount: Math.round(atelier.price * 100),
+          product_data: { name: atelier.title },
+        }}],
+        mode: 'payment',
+        success_url: successUrl ?? `${baseUrl}/?atelier_success=1`,
+        cancel_url:  cancelUrl  ?? `${baseUrl}/`,
+        metadata: {
+          supabase_uid: user.id, type: 'atelier_achat',
+          atelier_id: atelierId, animator_user_id: atelier.animator_id ?? '',
+        },
+        payment_intent_data: { metadata: {
+          supabase_uid: user.id, type: 'atelier_achat',
+          atelier_id: atelierId, animator_user_id: atelier.animator_id ?? '',
+        }},
+      }
+      const session = await stripePost('checkout/sessions', sessionBody)
+      console.log(`[stripe-checkout] Atelier session créée — ${atelierId} pour ${user.id}`)
+      return json({ url: session.url, sessionId: session.id })
     }
 
     // ── Cas Jardinothèque ────────────────────────────────────────────────────

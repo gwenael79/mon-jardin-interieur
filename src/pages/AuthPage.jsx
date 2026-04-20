@@ -541,6 +541,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       try { localStorage.removeItem('mji_pro_draft') } catch(e) {}
       if (data?.session) {
         localStorage.setItem('mji_has_logged_in', '1')
+        localStorage.setItem('mji_show_pro_welcome', '1')
         setNewUserId(userId)
         setDisplayName(prenom.trim())
         // Accès immédiat : fermer le modal d'inscription et ouvrir directement la présentation pro
@@ -559,7 +560,10 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     setShowProModal(false)
     setProSuccess(false)
     setProError(null)
-    setProForm({ nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' })
+    try {
+      const saved = localStorage.getItem('mji_pro_draft')
+      if (saved) setProForm(f => ({ ...f, ...JSON.parse(saved), proPassword: '' }))
+    } catch(e) {}
     setProEmailPending(false)
   }
 

@@ -441,7 +441,7 @@ function ReviewsPanel({ atelier, reviews, totalCount }) {
   )
 }
 
-function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, isMine, onDelete, onEditAtelier, onRepublish, userId, onInvite, onPayLumens, lumens, reviews, myReview, onReview }) {
+function AtelierCard({ atelier, onInscrit, onPayEuros, onDesinscrit, isInscrit, isAnimator, isMine, onDelete, onEditAtelier, onRepublish, userId, onInvite, onPayLumens, lumens, reviews, myReview, onReview }) {
   const now = new Date()
   const starts = new Date(atelier.starts_at)
   const isPast = starts < now
@@ -545,9 +545,9 @@ function AtelierCard({ atelier, onInscrit, onDesinscrit, isInscrit, isAnimator, 
                     Accédez contre {atelier.lumen_price} Lumens
                   </button>
                 )}
-                {/* Bouton euros */}
+                {/* Bouton euros → Stripe */}
                 {atelier.price > 0 && (
-                  <button onClick={() => onInscrit(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:'var(--fs-h5, 12px)' }}>
+                  <button onClick={() => onPayEuros?.(atelier.id)} style={{ ...btnStyle, padding:'7px 18px', fontSize:'var(--fs-h5, 12px)' }}>
                     ✓ S&apos;inscrire · {atelier.price} €
                   </button>
                 )}
@@ -645,7 +645,14 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
   function showToastLocal(msg) { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
-  useEffect(() => { loadAll() }, [userId])
+  useEffect(() => {
+    loadAll()
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('atelier_success') === '1') {
+      showToastLocal('✅ Paiement confirmé — inscription validée !')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [userId])
 
   async function loadAll() {
     setLoading(true)
@@ -948,6 +955,24 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
     loadAteliers()
     showToastLocal(`✦ Payé ${lumenPrice} Lumens · Inscription confirmée !`)
     awardLumens?.(3, 'inscription_atelier', { atelier_id: atelierIdVal })
+  }
+
+  async function handlePayEuros(atelierIdVal) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { showToastLocal('Vous devez être connecté'); return }
+      showToastLocal('Redirection vers le paiement…')
+      const { data, error: fnErr } = await supabase.functions.invoke('stripe-checkout', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: {
+          atelierId: atelierIdVal,
+          successUrl: `${window.location.origin}/?atelier_success=1`,
+          cancelUrl: window.location.href,
+        },
+      })
+      if (fnErr || !data?.url) { showToastLocal('Erreur lors du paiement — réessayez'); return }
+      window.location.href = data.url
+    } catch(e) { showToastLocal('Erreur — réessayez') }
   }
 
   async function handleDelete(atelierIdVal, titleVal) {
@@ -1255,7 +1280,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         ) : (
           <div style={{ display:'grid', gridTemplateColumns: '1fr', gap:12 }}>
             {visibleDisplayed.map(a => (
-              <AtelierCard key={a.id} atelier={a} isInscrit={myReg.includes(a.id)} isAnimator={isAnimator} isMine={a.animator_id === userId} onInscrit={handleInscrire} onDesinscrit={handleDesinscrire} onDelete={handleDelete} onEditAtelier={a => setEditAtelier(a)} onRepublish={handleRepublish} userId={userId} onInvite={handleInviteMatching} onPayLumens={handlePayLumens} lumens={lumens} reviews={reviewsByAtelier[a.id] ?? []} myReview={myReviews[a.id]} onReview={atelier => setReviewModal(atelier)} />
+              <AtelierCard key={a.id} atelier={a} isInscrit={myReg.includes(a.id)} isAnimator={isAnimator} isMine={a.animator_id === userId} onInscrit={handleInscrire} onPayEuros={handlePayEuros} onDesinscrit={handleDesinscrire} onDelete={handleDelete} onEditAtelier={a => setEditAtelier(a)} onRepublish={handleRepublish} userId={userId} onInvite={handleInviteMatching} onPayLumens={handlePayLumens} lumens={lumens} reviews={reviewsByAtelier[a.id] ?? []} myReview={myReviews[a.id]} onReview={atelier => setReviewModal(atelier)} />
             ))}
           </div>
         )}
