@@ -80,18 +80,27 @@ Deno.serve(async (req: Request) => {
         atelier_id: atelierIdMeta, user_id: uid, stripe_session_id: sessionId,
       })
 
-      // 3. Créer ventes_partenaires si l'animateur a un compte partenaire actif
+      // 3. Créer vente_partenaires via users_pro si l'animateur est un pro actif
       if (animatorUserId) {
-        const { data: partenaire } = await supabase.from('partenaires')
-          .select('id, statut').eq('user_id', animatorUserId).maybeSingle()
-        if (partenaire?.statut === 'actif') {
-          const taux = 15.00; const commission = Math.round(amount * taux) / 100
+        const { data: usersPro } = await supabase.from('users_pro')
+          .select('id, user_id').eq('user_id', animatorUserId).maybeSingle()
+        if (usersPro) {
+          const taux = 15.00
+          const commission = Math.round(amount * taux) / 100
           const mois = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
           await supabase.from('ventes_partenaires').insert({
-            achat_id: achatData?.id ?? null, atelier_id: atelierIdMeta, partenaire_id: partenaire.id,
-            montant_brut: amount, taux_commission: taux, commission, montant_net: amount - commission,
-            mois_facturation: mois, statut: 'en_attente',
+            achat_id: achatData?.id ?? null,
+            atelier_id: atelierIdMeta,
+            users_pro_id: usersPro.id,
+            user_id: uid,
+            montant_brut: amount,
+            taux_commission: taux,
+            commission,
+            montant_net: amount - commission,
+            mois_facturation: mois,
+            statut: 'en_attente',
           })
+          console.log(`[webhook] ✅ Vente pro créée — users_pro ${usersPro.id}`)
         }
       }
 

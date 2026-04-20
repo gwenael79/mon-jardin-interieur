@@ -486,7 +486,7 @@ function AtelierCard({ atelier, onInscrit, onPayEuros, onDesinscrit, isInscrit, 
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, flexShrink:0 }}>
           {atelier.price > 0 ? (
             /* Badge euros classique */
-            <div style={{ fontSize:'var(--fs-h2, 20px)', fontFamily:'Cormorant Garamond,serif', fontWeight:600, padding:'4px 14px', borderRadius:100, background:'linear-gradient(135deg,rgba(160,120,10,0.55),rgba(120,90,5,0.45))', border:'1px solid rgba(200,160,30,0.6)', color:'#f5d060', whiteSpace:'nowrap' }}>
+            <div style={{ fontSize:'var(--fs-h3, 17px)', fontFamily:'Jost,sans-serif', fontWeight:700, padding:'4px 14px', borderRadius:100, background:'linear-gradient(135deg,#1c3a18,#2a5422)', border:'1px solid rgba(60,120,40,0.5)', color:'#fff', whiteSpace:'nowrap' }}>
               {atelier.price} €
             </div>
           ) : (
@@ -808,7 +808,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       .select('user_id, themes, formats, code_postal, ville')
       .contains('themes', theme ? [theme] : [])
     const others = (allPrefs ?? []).filter(p => p.user_id !== userId)
-    const matched = others.filter(p => p.formats?.includes(format))
+    let matched = others.filter(p => p.formats?.includes(format))
 
     if (format === 'presentiel' && prefs.code_postal) {
       const dept = prefs.code_postal.slice(0, 2)
@@ -818,7 +818,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
     if (!matched.length) { showToastLocal('Aucun utilisateur correspondant aux critères'); return }
     const invites = matched.map(p => ({ atelier_id: atelierIdVal, user_id: p.user_id }))
-    const { error: upsertErr } = await supabase.from('atelier_invitations').upsert(invites, { onConflict: 'atelier_id,user_id' })
+    const { error: upsertErr } = await supabase.rpc('insert_atelier_invitations', { invites })
     if (upsertErr) { showToastLocal(`Erreur : ${upsertErr.message}`); return }
     setInviteCounts(prev => ({ ...prev, [atelierIdVal]: (prev[atelierIdVal] ?? 0) + matched.length }))
     showToastLocal(`✉️ ${matched.length} invitation${matched.length > 1 ? 's' : ''} envoyée${matched.length > 1 ? 's' : ''} !`)
@@ -856,8 +856,8 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   }
 
   async function checkAnimator() {
-    const { data } = await supabase.from('users').select('is_animator').eq('id', userId).single()
-    setIsAnimator(data?.is_animator === true)
+    const { data } = await supabase.from('users').select('is_animator, role').eq('id', userId).single()
+    setIsAnimator(data?.is_animator === true && data?.role === 'pro')
   }
 
   async function checkApplication() {
@@ -921,7 +921,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         )
         if (targets.length > 0) {
           const invites = targets.map(p => ({ atelier_id: data.id, user_id: p.user_id }))
-          await supabase.from('atelier_invitations').upsert(invites, { onConflict: 'atelier_id,user_id' })
+          await supabase.rpc('insert_atelier_invitations', { invites })
           showToastLocal(`✨ Atelier créé · ✉️ ${targets.length} invitation${targets.length > 1 ? 's' : ''} envoyée${targets.length > 1 ? 's' : ''} !`)
         } else {
           showToastLocal('✨ Atelier créé — aucun membre trouvé dans votre recherche.')
@@ -1126,23 +1126,35 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       {/* CONTENU PRINCIPAL — gauche */}
       <div className='at-main' style={{ flex:1, overflowY:'auto', padding: isMobile ? '14px 14px 80px' : '24px 28px' }}>
       {/* HEADER */}
-      {isMobile && <button onClick={() => setShowFilter(f => !f)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', background: showFilter ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:20, color: showFilter ? 'var(--cream)' : 'var(--text3)', cursor:'pointer', marginBottom:10, display:'block' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button>}
+      {isMobile && (
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+          <button onClick={() => setShowFilter(f => !f)} style={{ fontSize:'var(--fs-h5, 10px)', padding:'6px 12px', background: showFilter ? 'rgba(var(--green-rgb),0.15)' : 'var(--surface-2)', border:'1px solid var(--surface-3)', borderRadius:20, color: showFilter ? 'var(--cream)' : 'var(--text3)', cursor:'pointer' }}>{'⚙ ' + (showFilter ? 'Masquer filtres' : 'Filtrer')}</button>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={() => setTab('prefs')} style={{ position:'relative', fontSize:16, background: tab==='prefs' ? 'rgba(var(--gold-rgb),0.2)' : 'var(--surface-2)', border:`1px solid ${tab==='prefs' ? 'rgba(var(--gold-rgb),0.4)' : 'var(--surface-3)'}`, borderRadius:9, width:34, height:34, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>⚙️</button>
+            {invitations.length > 0 && (
+              <>
+                <style>{`@keyframes invitePulse { 0%,100%{box-shadow:0 0 0 0 rgba(230,100,20,0.6)} 50%{box-shadow:0 0 0 7px rgba(230,100,20,0)} }`}</style>
+                <button onClick={() => setShowInvitePanel(p => !p)} style={{ position:'relative', fontSize:'var(--fs-h5, 10px)', fontWeight:700, fontFamily:'Jost,sans-serif', background:'linear-gradient(135deg,#c85a0a,#e07020)', border:'1px solid rgba(230,120,40,0.6)', borderRadius:9, padding:'0 12px', height:34, display:'flex', alignItems:'center', gap:5, cursor:'pointer', color:'#fff', animation:'invitePulse 1.8s ease-in-out infinite' }}>
+                  {invitations.length} invitation{invitations.length > 1 ? 's' : ''}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
         <div>
           <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h1, 26px)', fontWeight:300, color:'var(--gold)' }}>Ateliers</div>
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des animateurs</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des professionnel(le)s du mieux-être</div>
         </div>
-        {isAnimator ? (
-          <button onClick={() => setShowCreate(true)} style={{ ...btnStyle, background:'#3a6432', border:'1px solid #2a4e24', color:'#fff', fontWeight:600 }}>✨ Créer un atelier</button>
-        ) : hasApplied ? (
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>📩 Candidature en cours d'examen</div>
-        ) : (
-          <button
-            onClick={!isPremium ? onUpgrade : () => setShowApply(true)}
-            style={{ ...btnStyle, background:'var(--surface-2)', border:'1px solid var(--surface-3)', color: isPremium ? 'var(--text3)' : 'var(--text3)', fontSize:'var(--fs-h5, 11px)', cursor: isPremium ? 'pointer' : 'not-allowed', opacity: isPremium ? 1 : 0.5 }}>
-            {isPremium ? 'Devenir animateur' : '🔒 Devenir animateur'}
-          </button>
-        )}
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          {isMobile && null}
+          {isAnimator ? (
+            <button onClick={() => setShowCreate(true)} style={{ ...btnStyle, background:'linear-gradient(135deg,#2a5422,#3a6432)', border:'1px solid #2a4e24', color:'#d4f0c0', fontWeight:700, padding: isMobile ? '10px 16px' : undefined, fontSize: isMobile ? 'var(--fs-h4, 13px)' : undefined, borderRadius: isMobile ? 12 : undefined }}>✨ {isMobile ? 'Nouvel atelier' : 'Créer un atelier'}</button>
+          ) : hasApplied ? (
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>{isMobile ? '📩' : '📩 Candidature en cours d\'examen'}</div>
+          ) : null}
+        </div>
       </div>
 
       <div style={{ display:'flex', gap:0, borderBottom:'1px solid var(--surface-3)', marginBottom:20, overflowX: isMobile ? 'auto' : 'visible', flexWrap:'nowrap', WebkitOverflowScrolling:'touch' }}>
@@ -1157,7 +1169,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
           </span>
         : `Mes inscriptions (${myInscriptions.length})` },
           { id:'past',     label:`Passés (${past.length})` },
-          { id:'prefs', label:'⚙ Préférences' },
+          ...(!isMobile ? [{ id:'prefs', label:'⚙ Préférences' }] : []),
         ].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)}
              onMouseEnter={e => { e.currentTarget.style.color='#1a1208'; e.currentTarget.style.background='rgba(180,130,110,0.1)'; e.currentTarget.style.borderRadius='6px' }}
