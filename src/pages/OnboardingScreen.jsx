@@ -212,6 +212,23 @@ function IntroGwenael({ onStart }) {
           </button>
         </div>
       </div>
+
+      {/* Déconnexion discrète sous la vidéo */}
+      <div style={{ ...fade(phase >= 3), marginTop: 16, textAlign: 'center' }}>
+        <button
+          onClick={async () => { await supabase.auth.signOut() }}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 11, color: 'rgba(120,90,80,0.35)',
+            fontFamily: 'Jost, sans-serif', letterSpacing: '.06em',
+            padding: '4px 8px', transition: 'color .2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = 'rgba(120,90,80,0.65)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'rgba(120,90,80,0.35)'}
+        >
+          ← déconnexion
+        </button>
+      </div>
     </div>
   )
 }
@@ -2406,6 +2423,10 @@ export function OnboardingScreen({ userId, onComplete }) {
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
   const [quizAlready,  setQuizAlready]  = useState(false)  // true si le quiz a déjà été complété
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+  }
 
   // ── Vérifie si le quiz a déjà été fait lors du passage en phase 5→6 ──
   useEffect(() => {
