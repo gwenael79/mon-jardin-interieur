@@ -167,12 +167,12 @@ export function LumenBadge({ amount }) {
         display: 'inline-flex', alignItems: 'center', gap: 6,
         padding: '4px 10px 4px 6px', borderRadius: 100,
         background: isGain
-          ? 'rgba(212,146,10,0.12)'
+          ? 'linear-gradient(135deg,rgba(210,160,15,0.45),rgba(170,120,5,0.35))'
           : 'var(--red2)',
-        border: `1px solid ${isGain ? 'rgba(212,146,10,0.35)' : 'var(--redT)'}`,
-        fontSize:'var(--fs-h5, 10px)', fontWeight: 600, letterSpacing: '.04em',
+        border: `1px solid ${isGain ? 'rgba(230,180,40,0.65)' : 'var(--redT)'}`,
+        fontSize:'var(--fs-h5, 10px)', fontWeight: 700, letterSpacing: '.04em',
         fontFamily: "'Jost', sans-serif", whiteSpace: 'nowrap',
-        color: isGain ? '#D4920A' : 'var(--red)',
+        color: isGain ? '#ffe066' : 'var(--red)',
         pointerEvents: 'none',
         animation: isGain ? 'lumenBadgePulse 3s ease-in-out infinite' : 'none',
       }}>

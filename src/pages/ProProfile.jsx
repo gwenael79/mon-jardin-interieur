@@ -315,7 +315,7 @@ export function ProProfile({ onBack }) {
               .eq('partenaire_id', partenaire.id)
               .order('created_at', { ascending: false }),
             supabase.from('ventes_partenaires')
-              .select('*, produits(titre)')
+              .select('*, produits(titre), ateliers(title, starts_at)')
               .eq('partenaire_id', partenaire.id)
               .order('created_at', { ascending: false }),
           ])
@@ -536,24 +536,16 @@ export function ProProfile({ onBack }) {
             const TVA = 20
             const COMM_RATE = 0.15
 
-            const allVentes = [
-              ...inscriptions.map(ins => {
-                const ttc  = Number(ins.ateliers?.price ?? 0)
-                const ht   = ttc / (1 + TVA / 100)
-                const comm = ht * COMM_RATE
-                const net  = ht * (1 - COMM_RATE)
-                const date = ins.registered_at ? new Date(ins.registered_at) : null
-                return { id: ins.id, type: 'atelier', label: ins.ateliers?.title ?? 'Atelier', date, ttc, tva: TVA, ht, comm, net }
-              }),
-              ...ventesProduits.map(v => {
+            const allVentes = ventesProduits.map(v => {
+                const isAtelier = !!v.atelier_id
                 const ttc  = Number(v.montant_brut ?? 0)
                 const ht   = ttc / (1 + TVA / 100)
-                const comm = ht * COMM_RATE
-                const net  = ht * (1 - COMM_RATE)
+                const comm = Number(v.commission ?? ht * COMM_RATE)
+                const net  = Number(v.montant_net  ?? ht * (1 - COMM_RATE))
                 const date = v.created_at ? new Date(v.created_at) : null
-                return { id: v.id, type: 'produit', label: v.produits?.titre ?? 'Produit', date, ttc, tva: TVA, ht, comm, net }
-              }),
-            ].filter(v => v.date).sort((a, b) => b.date - a.date)
+                const label = isAtelier ? (v.ateliers?.title ?? 'Atelier') : (v.produits?.titre ?? 'Produit')
+                return { id: v.id, type: isAtelier ? 'atelier' : 'produit', label, date, ttc, tva: TVA, ht, comm, net }
+              }).filter(v => v.date).sort((a, b) => b.date - a.date)
 
             const soldeNet = allVentes.reduce((s, v) => s + v.net, 0)
 
