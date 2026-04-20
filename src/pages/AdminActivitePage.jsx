@@ -109,7 +109,7 @@ function RituelsEditor({ showToast }) {
   const [editTitle, setEditTitle] = useState('')
 
   const zColors = { roots: '#C8894A', stem: '#5AAF78', leaves: '#4A9E5C', flowers: '#D4779A', breath: '#6ABBE4' }
-  const inp = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--bg)', color: 'var(--text2)', fontSize: 13, fontFamily: "'Jost',sans-serif", outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none' }
+  const inp = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border2)', background: '#fff', color: '#1a1208', fontSize: 13, fontFamily: "'Jost',sans-serif", outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none' }
   const label = { fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8, display: 'block' }
 
   useEffect(() => {
@@ -318,7 +318,7 @@ function VentesPartenairesAdmin({ showToast }) {
   }
 
   const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
-  const inp = { padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border2)', background: 'var(--bg)', color: 'var(--text2)', fontSize: 12, fontFamily: "'Jost',sans-serif", outline: 'none' }
+  const inp = { padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border2)', background: '#fff', color: '#1a1208', fontSize: 12, fontFamily: "'Jost',sans-serif", outline: 'none' }
 
   return (
     <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
@@ -652,8 +652,8 @@ function BoutiqueEditor({ showToast }) {
   const [usersLoaded,     setUsersLoaded]     = useState(false)
   const [attribuant,      setAttribuant]      = useState(false)
 
-  const inp = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--bg)', color: 'var(--text2)', fontSize: 13, fontFamily: "'Jost',sans-serif", outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none' }
-  const lbl = { fontSize: 10, color: 'rgba(242,237,224,0.38)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6, display: 'block' }
+  const inp = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border2)', background: '#181717', color: '#1a1208', fontSize: 13, fontFamily: "'Jost',sans-serif", outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none' }
+  const lbl = { fontSize: 10, color: '#555', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6, display: 'block' }
   const zColors = { digital: '#b4a0f0', physique: '#82c8a0', occasion: '#e8c060', all: '#96d485' }
 
   const load = () => {
@@ -797,7 +797,7 @@ function BoutiqueEditor({ showToast }) {
               <button onClick={() => setAttribuerProduit(null)} style={{ background: 'none', border: 'none', color: 'rgba(242,237,224,0.35)', fontSize: 18, cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ fontSize: 12, color: 'rgba(180,160,240,0.70)', marginBottom: 16, padding: '8px 12px', background: 'rgba(180,160,240,0.06)', border: '1px solid rgba(180,160,240,0.20)', borderRadius: 8 }}>🎧 {attribuerProduit.titre}</div>
-            <div style={{ fontSize: 10, color: 'rgba(242,237,224,0.38)', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Choisir un utilisateur</div>
+            <div style={{ fontSize: 10, color: '#555', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10 }}>Choisir un utilisateur</div>
             {!usersLoaded ? (
               <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Chargement…</div>
             ) : (

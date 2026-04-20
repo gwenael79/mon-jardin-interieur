@@ -973,7 +973,6 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       if (!session) { showToastLocal('Vous devez être connecté'); return }
       showToastLocal('Redirection vers le paiement…')
       const { data, error: fnErr } = await supabase.functions.invoke('stripe-checkout', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
         body: {
           atelierId: atelierIdVal,
           successUrl: `${window.location.origin}/?atelier_success=1`,
@@ -1145,12 +1144,12 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
         <div>
           <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h1, 26px)', fontWeight:300, color:'var(--gold)' }}>Ateliers</div>
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des professionnel(le)s du mieux-être</div>
+          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', letterSpacing:'.05em', marginTop:2 }}>Moments partagés, guidés par des animateurs</div>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           {isMobile && null}
           {isAnimator ? (
-            <button onClick={() => setShowCreate(true)} style={{ ...btnStyle, background:'linear-gradient(135deg,#2a5422,#3a6432)', border:'1px solid #2a4e24', color:'#d4f0c0', fontWeight:700, padding: isMobile ? '10px 16px' : undefined, fontSize: isMobile ? 'var(--fs-h4, 13px)' : undefined, borderRadius: isMobile ? 12 : undefined }}>✨ {isMobile ? 'Nouvel atelier' : 'Créer un atelier'}</button>
+            <button onClick={() => setShowCreate(true)} style={{ ...btnStyle, background:'#3a6432', border:'1px solid #2a4e24', color:'#fff', fontWeight:600 }}>✨ {isMobile ? '' : 'Créer un atelier'}</button>
           ) : hasApplied ? (
             <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>{isMobile ? '📩' : '📩 Candidature en cours d\'examen'}</div>
           ) : null}

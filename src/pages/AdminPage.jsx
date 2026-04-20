@@ -139,7 +139,7 @@ function RituelsEditor({ showToast }) {
   const [toolObj, setToolObj] = useState({ inhale:5, hold:0, exhale:5, holdEmpty:0, cycles:5 })
 
   const zColors = { roots:'#C8894A', stem:'#5AAF78', leaves:'#4A9E5C', flowers:'#D4779A', breath:'#6ABBE4' }
-  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text2)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
+  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'#fff', color:'#1a1208', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
 
   // Quand la zone change → charge les rituels disponibles
   useEffect(() => {
@@ -436,7 +436,7 @@ function VentesPartenairesAdmin({ showToast }) {
   }
 
   const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
-  const inp = { padding:'6px 10px', borderRadius:6, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text2)', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
+  const inp = { padding:'6px 10px', borderRadius:6, border:'1px solid var(--border2)', background:'#fff', color:'#1a1208', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
 
   return (
     <div style={{ marginTop:32, paddingTop:24, borderTop:'1px solid rgba(255,255,255,0.07)' }}>
@@ -927,8 +927,8 @@ function BoutiqueEditor({ showToast }) {
   const [showForm,   setShowForm]   = useState(false)
   const [saving,     setSaving]     = useState(false)
 
-  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'var(--bg)', color:'var(--text2)', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
-  const lbl = { fontSize:10, color:'rgba(242,237,224,0.38)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6, display:'block' }
+  const inp = { padding:'8px 10px', borderRadius:8, border:'1px solid var(--border2)', background:'#fff', color:'#1a1208', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', colorScheme:'light' }
+  const lbl = { fontSize:10, color:'#555', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:6, display:'block' }
   const zColors = { digital:'#b4a0f0', physique:'#82c8a0', occasion:'#e8c060', all:'#96d485' }
 
   const load = () => {
@@ -987,7 +987,7 @@ function BoutiqueEditor({ showToast }) {
   const handleSave = async () => {
     if (!form.titre.trim()) { showToast('✗ Titre obligatoire'); return }
     setSaving(true)
-    const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, ordre: parseInt(form.ordre)||0, updated_at: new Date().toISOString() }
+    const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, prix_lumens: form.accepte_lumens && form.prix_lumens !== '' ? parseFloat(form.prix_lumens) : null, ordre: parseInt(form.ordre)||0, updated_at: new Date().toISOString() }
     delete payload._audioFile
 
     let savedId = editId

@@ -1085,8 +1085,8 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
 
   const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'' }
   const CAT_OPTS = { digital:['Audio','Formation','E-book'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
-  const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg2)', color:'var(--text)', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none' }
-  const lbl = { fontSize:'var(--fs-h5, 11px)', color:'var(--text2)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
+  const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid #ccc', background:'#fff', color:'#1a1208', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', colorScheme:'light' }
+  const lbl = { fontSize:'var(--fs-h5, 11px)', color:'#555', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
 
   const [audioUploading, setAudioUploading] = useState(false)
 
