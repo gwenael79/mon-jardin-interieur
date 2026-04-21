@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../core/supabaseClient'
+import { VueEspace } from './ScreenJardinotheque'
 
 function generateProId() {
   const chars = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -190,7 +191,7 @@ export function ProProfile({ onBack }) {
   const [referrals,  setReferrals]  = useState([])
   const [commissions,setCommissions]= useState([])
   const [ateliers,      setAteliers]      = useState([])
-  const [produits,      setProduits]      = useState([])
+  const [partenaireData, setPartenaireData] = useState(null)
   const [inscriptions,  setInscriptions]  = useState([])
   const [ventesProduits,setVentesProduits]= useState([])
   const promoInitialized = useRef(false)
@@ -306,28 +307,39 @@ export function ProProfile({ onBack }) {
           setInscriptions([])
         }
 
-        // Produits + ventes via partenaires
+        // Partenaire + ventes
         const { data: partenaire } = await supabase
-          .from('partenaires').select('id').eq('user_id', user.id).maybeSingle()
+          .from('partenaires').select('*').eq('user_id', user.id).maybeSingle()
+        setPartenaireData(partenaire ?? null)
         if (partenaire) {
-          const [{ data: prodData }, { data: ventesData }] = await Promise.all([
-            supabase.from('produits').select('*')
-              .eq('partenaire_id', partenaire.id)
-              .order('created_at', { ascending: false }),
-            supabase.from('ventes_partenaires')
-              .select('*, produits(titre), ateliers(title, starts_at)')
-              .eq('partenaire_id', partenaire.id)
-              .order('created_at', { ascending: false }),
-          ])
-          setProduits(prodData ?? [])
+          const { data: ventesData } = await supabase
+            .from('ventes_partenaires')
+            .select('*, produits(titre), ateliers(title, starts_at)')
+            .eq('partenaire_id', partenaire.id)
+            .order('created_at', { ascending: false })
           setVentesProduits(ventesData ?? [])
         } else {
-          setProduits([])
           setVentesProduits([])
         }
       }
     } catch (e) { console.error('[ProProfile]', e) }
     finally { setLoading(false) }
+  }
+
+  async function handleCreatePartenaire() {
+    const { data: { user } } = await supabase.auth.getUser()
+    const nomBoutique = proData?.entreprise || `${proData?.prenom ?? ''} ${proData?.nom ?? ''}`.trim() || userData?.display_name || 'Ma boutique'
+    const { data, error } = await supabase.from('partenaires').insert({
+      user_id: user.id,
+      nom_boutique: nomBoutique,
+      code_vendeur: proData?.pro_id ?? `pro-${user.id.slice(0, 8)}`,
+      email: user.email,
+      type_vendeur: 'professionnel',
+      statut: 'actif',
+      publication_mode: 'direct',
+      email_verified: true,
+    }).select().single()
+    if (!error && data) setPartenaireData(data)
   }
 
   function copyId() {
@@ -504,31 +516,21 @@ export function ProProfile({ onBack }) {
             )
           )}
           {activeTab === 'outils' && (
-            produits.length === 0 ? (
-              <div className="pp-empty">
-                <div className="pp-empty-icon">🛍️</div>
-                <div className="pp-empty-title">Aucun produit dans la jardinothèque</div>
-                <div className="pp-empty-text">Vos ressources numériques apparaîtront ici une fois ajoutées via votre compte partenaire.</div>
-              </div>
+            partenaireData ? (
+              <VueEspace
+                partenaire={partenaireData}
+                onProductAdded={refreshData}
+              />
             ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                {produits.map(p => (
-                  <div key={p.id} style={{border:'1px solid #ece9e2',borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'#fafaf8'}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:14,fontWeight:600,color:'#111',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.titre}</div>
-                      <div style={{fontSize:12,color:'#aaa',display:'flex',gap:12}}>
-                        {p.type && <span style={{textTransform:'capitalize'}}>{p.type}</span>}
-                        {p.categorie && <span>{p.categorie}</span>}
-                        {p.prix > 0 && <span>{Number(p.prix).toFixed(2)} €</span>}
-                      </div>
-                    </div>
-                    <span style={{fontSize:11,fontWeight:600,padding:'3px 10px',borderRadius:20,flexShrink:0,
-                      background: p.statut === 'publié' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.06)',
-                      color: p.statut === 'publié' ? '#5a9a28' : '#aaa'}}>
-                      {p.statut ?? 'En attente'}
-                    </span>
-                  </div>
-                ))}
+              <div className="pp-empty">
+                <div className="pp-empty-icon">🌿</div>
+                <div className="pp-empty-title">Activez votre espace boutique</div>
+                <div className="pp-empty-text">
+                  Proposez vos ressources numériques (méditations, formations, guides…) directement dans la Jardinothèque.
+                </div>
+                <button className="pp-empty-btn" onClick={handleCreatePartenaire}>
+                  Activer mon espace boutique
+                </button>
               </div>
             )
           )}

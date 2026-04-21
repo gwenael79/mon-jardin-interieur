@@ -132,8 +132,6 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
   const [produits,      setProduits]      = useState([])
   const [loading,       setLoading]       = useState(true)
   const [selected,      setSelected]      = useState(null)
-  const [showPartenaire, setShowPartenaire] = useState(false)
-  const [partenaire,     setPartenaire]     = useState(null)
   const [vendeurFilter,  setVendeurFilter]  = useState('Tous')
   const [achatIds,      setAchatIds]      = useState(new Set()) // produits déjà achetés
 
@@ -201,10 +199,6 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
             Ressources, créations de partenaires et échanges de la communauté — tout ce qui nourrit votre jardin intérieur.
           </p>
         </div>
-        <button onClick={() => setShowPartenaire(true)}
-          style={{ flexShrink:0, padding:'9px 18px', borderRadius:20, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:'var(--fs-h5, 12px)', fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500, letterSpacing:'.04em', transition:'all .2s', marginTop:6 }}>
-          🌿 Partenaires
-        </button>
       </div>
 
       {/* ── Onglets ── */}
@@ -271,22 +265,6 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
         <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} hasBought={achatIds.has(selected.id)} userId={userId} isPremium={isPremium} onUpgrade={onUpgrade} onAchatLumens={() => { setAchatIds(s => new Set([...s, selected.id])); setSelected(null) }} />
       )}
 
-      {/* ── Modal Partenaires ── */}
-      {showPartenaire && (
-        <PartenaireModal
-          partenaire={partenaire}
-          onLogin={f => setPartenaire(f)}
-          onLogout={() => setPartenaire(null)}
-          onClose={() => setShowPartenaire(false)}
-          onProductAdded={() => {
-            setShowPartenaire(false)
-            // Recharge les produits
-            setLoading(true)
-            supabase.from('produits').select('*').eq('statut','actif').order('ordre')
-              .then(({ data }) => { setProduits(data || DEMO_PRODUITS); setLoading(false) })
-          }}
-        />
-      )}
     </div>
   )
 }
@@ -527,42 +505,42 @@ function VentesDashboard({ partenaireId }) {
   const totalBrut = ventes.reduce((s, v) => s + Number(v.montant_brut), 0)
   const totalNet  = ventes.reduce((s, v) => s + Number(v.montant_net), 0)
   const fmt = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`
-  const inp = { padding:'5px 8px', borderRadius:6, border:'1px solid var(--surface-3)', background:'var(--surface-2)', color:'var(--text2)', fontSize:'var(--fs-h5, 12px)', fontFamily:"'Jost',sans-serif", outline:'none' }
+  const inp = { padding:'5px 8px', borderRadius:6, border:'1px solid #d5d0c8', background:'#ede9e2', color:'#333', fontSize:12, fontFamily:"'Jost',sans-serif", outline:'none' }
 
   return (
-    <div style={{ marginTop:20, paddingTop:16, borderTop:'1px solid var(--track)' }}>
+    <div style={{ marginTop:20, paddingTop:16, borderTop:'1px solid #ddd' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase' }}>Mes ventes</div>
+        <div style={{ fontSize:10, color:'#888', letterSpacing:'.10em', textTransform:'uppercase' }}>Mes ventes</div>
         <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp }}/>
       </div>
       {loading ? (
-        <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
+        <div style={{ fontSize:12, color:'#888', fontStyle:'italic' }}>Chargement…</div>
       ) : ventes.length === 0 ? (
-        <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', fontStyle:'italic' }}>Aucune vente ce mois.</div>
+        <div style={{ fontSize:12, color:'#888', fontStyle:'italic' }}>Aucune vente ce mois.</div>
       ) : (
         <>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:8, marginBottom:12 }}>
             {[
-              { lbl:'Ventes brutes', val: fmt(totalBrut), color:'var(--text2)' },
-              { lbl:'Commission 15%', val: fmt(totalBrut - totalNet), color:'var(--gold)' },
-              { lbl:'Net à reverser', val: fmt(totalNet), color:'var(--green)' },
+              { lbl:'Ventes brutes', val: fmt(totalBrut), color:'#333' },
+              { lbl:'Commission 15%', val: fmt(totalBrut - totalNet), color:'#b07a20' },
+              { lbl:'Net à reverser', val: fmt(totalNet), color:'#5a9a28' },
             ].map(({ lbl, val, color }) => (
-              <div key={lbl} style={{ padding:'10px 12px', borderRadius:8, background:'var(--surface-1)', border:'1px solid var(--surface-2)' }}>
-                <div style={{ fontSize:'var(--fs-h5, 9px)', color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>{lbl}</div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h3, 16px)', fontWeight:300, color }}>{val}</div>
+              <div key={lbl} style={{ padding:'10px 12px', borderRadius:8, background:'#f5f2ec', border:'1px solid #ddd' }}>
+                <div style={{ fontSize:9, color:'#888', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:4 }}>{lbl}</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:300, color }}>{val}</div>
               </div>
             ))}
           </div>
           <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
             {ventes.map(v => (
-              <div key={v.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:7, background:'var(--surface-1)' }}>
-                <div style={{ flex:1, fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.produits?.titre || 'Produit'}</div>
-                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)' }}>{fmt(v.montant_brut)}</div>
-                <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--green)', fontWeight:500 }}>{fmt(v.montant_net)} net</div>
-                <span style={{ fontSize:'var(--fs-h5, 9px)', padding:'2px 8px', borderRadius:20,
-                  background: v.statut==="reverse" ? "rgba(var(--green-rgb),0.10)" : "rgba(var(--gold-rgb),0.10)",
-                  border: v.statut==="reverse" ? "1px solid rgba(var(--green-rgb),0.25)" : "1px solid rgba(var(--gold-rgb),0.25)",
-                  color: v.statut==="reverse" ? "var(--green)" : "var(--gold)" }}>
+              <div key={v.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 10px', borderRadius:7, background:'#f5f2ec' }}>
+                <div style={{ flex:1, fontSize:11, color:'#555', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{v.produits?.titre || 'Produit'}</div>
+                <div style={{ fontSize:11, color:'#555' }}>{fmt(v.montant_brut)}</div>
+                <div style={{ fontSize:11, color:'#5a9a28', fontWeight:500 }}>{fmt(v.montant_net)} net</div>
+                <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20,
+                  background: v.statut==="reverse" ? "rgba(90,154,40,0.10)" : "rgba(176,122,32,0.10)",
+                  border: v.statut==="reverse" ? "1px solid rgba(90,154,40,0.30)" : "1px solid rgba(176,122,32,0.30)",
+                  color: v.statut==="reverse" ? "#5a9a28" : "#b07a20" }}>
                   {v.statut === "reverse" ? "✓ reversé" : "⏳ en attente"}
                 </span>
               </div>
@@ -1075,7 +1053,7 @@ function VueConnexion({ onSuccess, onBack }) {
 }
 
 // ── Vue espace vendeur ───────────────────────────────────────
-function VueEspace({ partenaire, onLogout, onProductAdded }) {
+export function VueEspace({ partenaire, onLogout, onProductAdded }) {
   const [produits,  setProduits]  = useState([])
   const [loading,   setLoading]   = useState(true)
   const [showForm,  setShowForm]  = useState(false)
@@ -1085,8 +1063,8 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
 
   const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'' }
   const CAT_OPTS = { digital:['Audio','Formation','E-book'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
-  const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid #ccc', background:'#fff', color:'#1a1208', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', colorScheme:'light' }
-  const lbl = { fontSize:'var(--fs-h5, 11px)', color:'#555', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:500 }
+  const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid #ccc', background:'#fff', color:'#111', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', colorScheme:'light' }
+  const lbl = { fontSize:11, color:'#555', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:600 }
 
   const [audioUploading, setAudioUploading] = useState(false)
 
@@ -1134,7 +1112,19 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
     if (!form.titre.trim()) { alert('Titre obligatoire'); return }
     setSaving(true)
     const statut = partenaire.publication_mode === 'direct' ? 'actif' : 'en_attente'
-    const payload = { ...form, prix: form.prix !== '' ? parseFloat(form.prix) : null, updated_at: new Date().toISOString() }
+    const payload = {
+      type:          form.type,
+      categorie:     form.categorie || null,
+      titre:         form.titre.trim(),
+      description:   form.description.trim() || null,
+      prix:          form.prix !== '' ? parseFloat(form.prix) : null,
+      image_url:     form.image_url.trim() || null,
+      lien_externe:  form.lien_externe.trim() || null,
+      storage_path:  form.storage_path || null,
+      accepte_lumens: form.accepte_lumens,
+      prix_lumens:   form.prix_lumens !== '' ? parseInt(form.prix_lumens, 10) : null,
+      updated_at:    new Date().toISOString(),
+    }
 
     let savedId = editId
     if (editId) {
@@ -1185,41 +1175,43 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h2, 22px)', fontWeight:300, color:'var(--text)' }}>{partenaire.nom_boutique}</div>
-          <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:3 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'#111' }}>{partenaire.nom_boutique}</div>
+          <div style={{ fontSize:10, color:'#777', marginTop:3 }}>
             {partenaire.publication_mode === 'direct'
               ? '✓ Publication directe activée'
               : '⏳ Vos produits sont soumis à validation avant publication'}
           </div>
         </div>
-        <button onClick={onLogout} style={{ background:'none', border:'1px solid var(--surface-3)', borderRadius:8, color:'var(--text3)', fontSize:'var(--fs-h5, 11px)', cursor:'pointer', padding:'6px 12px', fontFamily:"'Jost',sans-serif" }}>
-          Déconnexion
-        </button>
+        {onLogout && (
+          <button onClick={onLogout} style={{ background:'none', border:'1px solid #ddd', borderRadius:8, color:'#666', fontSize:11, cursor:'pointer', padding:'6px 12px', fontFamily:"'Jost',sans-serif" }}>
+            Déconnexion
+          </button>
+        )}
       </div>
 
       {/* Bouton ajouter */}
       {!showForm && (
         <button onClick={openNew}
-          style={{ padding:'12px', borderRadius:12, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:500 }}>
+          style={{ padding:'12px', borderRadius:12, border:'1px solid rgba(90,154,40,0.35)', background:'rgba(90,154,40,0.08)', color:'#3d7a12', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:600 }}>
           + Proposer un nouveau produit
         </button>
       )}
 
       {/* Formulaire ajout/édition */}
       {showForm && (
-        <div style={{ background:'var(--surface-1)', border:'1px solid var(--surface-3)', borderRadius:14, padding:'18px 20px', display:'flex', flexDirection:'column', gap:14 }}>
+        <div style={{ background:'#f7f5f1', border:'1px solid #ddd', borderRadius:14, padding:'18px 20px', display:'flex', flexDirection:'column', gap:14 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'var(--fs-h3, 17px)', color:'var(--text2)' }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:400, color:'#111' }}>
               {editId ? 'Modifier le produit' : 'Nouveau produit'}
             </div>
             <button onClick={() => { setShowForm(false); setEditId(null); setForm(EMPTY_FORM) }}
-              style={{ background:'none', border:'none', color:'var(--text3)', fontSize:'var(--fs-h3, 16px)', cursor:'pointer' }}>✕</button>
+              style={{ background:'none', border:'none', color:'#888', fontSize:16, cursor:'pointer' }}>✕</button>
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div>
               <span style={lbl}>Choix du support</span>
-              <div style={{ padding:'9px 12px', borderRadius:8, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif" }}>
+              <div style={{ padding:'9px 12px', borderRadius:8, border:'1px solid rgba(90,154,40,0.35)', background:'rgba(90,154,40,0.08)', color:'#3d7a12', fontSize:13, fontFamily:"'Jost',sans-serif" }}>
                 🎧 Digital
               </div>
             </div>
@@ -1239,7 +1231,7 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
           <div>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
               <span style={lbl}>Description</span>
-              <span style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)' }}>{form.description.length} / 350</span>
+              <span style={{ fontSize:10, color:'#888' }}>{form.description.length} / 350</span>
             </div>
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description:e.target.value.slice(0,350) }))} rows={3} style={{ ...inp, resize:'none', lineHeight:1.7 }}/>
           </div>
@@ -1258,23 +1250,23 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
           <div>
             <span style={lbl}>Lien de téléchargement / boutique</span>
             <input value={form.lien_externe} onChange={e => setForm(f => ({ ...f, lien_externe:e.target.value }))} placeholder="Ex: gumroad.com/l/votre-produit, drive.google.com/…" style={{ ...inp }}/>
-            <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
+            <div style={{ fontSize:10, color:'#888', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
           </div>
 
           {/* Paiement en Lumens */}
-          <div style={{ padding:'12px 14px', background:'rgba(var(--gold-rgb),0.06)', border:'1px solid rgba(var(--gold-rgb),0.18)', borderRadius:10 }}>
+          <div style={{ padding:'12px 14px', background:'rgba(176,122,32,0.06)', border:'1px solid rgba(176,122,32,0.22)', borderRadius:10 }}>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: form.accepte_lumens ? 10 : 0 }}>
               <div>
-                <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)', fontWeight:500 }}>✦ Accepter les Lumens</div>
-                <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>L'acheteur pourra payer en Lumens ou en euros</div>
+                <div style={{ fontSize:12, color:'#333', fontWeight:600 }}>✦ Accepter les Lumens</div>
+                <div style={{ fontSize:10, color:'#777', marginTop:2 }}>L'acheteur pourra payer en Lumens ou en euros</div>
               </div>
               <div onClick={() => setForm(f => ({ ...f, accepte_lumens:!f.accepte_lumens }))}
                 style={{ width:40, height:22, borderRadius:100, cursor:'pointer', flexShrink:0,
-                  background: form.accepte_lumens ? 'rgba(var(--gold-rgb),0.35)' : 'var(--surface-3)',
-                  border:`1px solid ${form.accepte_lumens ? 'rgba(var(--gold-rgb),0.5)' : 'var(--surface-3)'}`,
+                  background: form.accepte_lumens ? 'rgba(176,122,32,0.35)' : '#ddd',
+                  border:`1px solid ${form.accepte_lumens ? 'rgba(176,122,32,0.55)' : '#ccc'}`,
                   position:'relative', transition:'all .25s' }}>
                 <div style={{ position:'absolute', top:3, left: form.accepte_lumens ? 20 : 3, width:14, height:14, borderRadius:'50%',
-                  background: form.accepte_lumens ? 'var(--gold)' : 'var(--border)', transition:'left .25s' }}/>
+                  background: form.accepte_lumens ? '#b07a20' : '#aaa', transition:'left .25s' }}/>
               </div>
             </div>
             {form.accepte_lumens && (
@@ -1286,36 +1278,40 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
             )}
           </div>
 
-          {/* Upload audio — uniquement pour les produits digitaux */}
+          {/* Upload audio */}
           {form.type === 'digital' && (
             <div>
-              <span style={lbl}>Fichier audio <span style={{ color:'var(--text3)', textTransform:'none', letterSpacing:0, fontWeight:300 }}>(lecture sécurisée dans l'app)</span></span>
-              <label style={{ display:'block', padding:'12px 14px', borderRadius:8, border:`1px dashed ${form.storage_path ? 'rgba(var(--green-rgb),0.40)' : 'var(--separator)'}`, background: form.storage_path ? 'rgba(var(--green-rgb),0.06)' : 'var(--surface-1)', color: form.storage_path ? 'var(--green)' : 'var(--text3)', fontSize:'var(--fs-h5, 12px)', cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
+              <span style={lbl}>Fichier audio <span style={{ color:'#888', textTransform:'none', letterSpacing:0, fontWeight:400 }}>(lecture sécurisée dans l'app)</span></span>
+              <label style={{ display:'block', padding:'12px 14px', borderRadius:8,
+                border:`1px dashed ${form.storage_path ? 'rgba(90,154,40,0.50)' : '#ccc'}`,
+                background: form.storage_path ? 'rgba(90,154,40,0.06)' : '#fafafa',
+                color: form.storage_path ? '#3d7a12' : '#888',
+                fontSize:12, cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
                 <input type="file" accept="audio/*" style={{ display:'none' }} onChange={e => handleAudioUpload(e.target.files[0])} disabled={audioUploading}/>
                 {audioUploading ? '⏳ Upload en cours…' : form.storage_path ? '✓ Fichier audio chargé' : '📁 Choisir un fichier audio (MP3, WAV, AAC…)'}
               </label>
               {form.storage_path && (
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
-                  <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                  <div style={{ fontSize:10, color:'#666', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
                     {form.storage_path.split('/').pop()}
                   </div>
                   <button onClick={() => setForm(f => ({ ...f, storage_path:'' }))}
-                    style={{ background:'none', border:'none', color:'rgba(var(--red-rgb),0.60)', fontSize:'var(--fs-h5, 11px)', cursor:'pointer', flexShrink:0, marginLeft:8 }}>
+                    style={{ background:'none', border:'none', color:'rgba(180,60,60,0.70)', fontSize:11, cursor:'pointer', flexShrink:0, marginLeft:8 }}>
                     ✕ Supprimer
                   </button>
                 </div>
               )}
-              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
+              <div style={{ fontSize:10, color:'#888', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
             </div>
           )}
 
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleSubmit} disabled={saving}
-              style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid var(--greenT)', background:'var(--green3)', color:'var(--green)', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:500, opacity: saving ? 0.6 : 1 }}>
+              style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid rgba(90,154,40,0.35)', background:'rgba(90,154,40,0.10)', color:'#3d7a12', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:600, opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : partenaire.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
             </button>
             <button onClick={() => setShowForm(false)}
-              style={{ padding:'11px 18px', borderRadius:10, border:'1px solid var(--surface-3)', background:'transparent', color:'var(--text3)', fontSize:'var(--fs-h4, 13px)', fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
+              style={{ padding:'11px 18px', borderRadius:10, border:'1px solid #ddd', background:'#fff', color:'#555', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
               Annuler
             </button>
           </div>
@@ -1324,36 +1320,36 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
 
       {/* Liste produits */}
       <div>
-        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase', marginBottom:10 }}>
+        <div style={{ fontSize:10, color:'#888', letterSpacing:'.10em', textTransform:'uppercase', marginBottom:10 }}>
           Mes produits ({produits.length})
         </div>
         {loading ? (
-          <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', fontStyle:'italic' }}>Chargement…</div>
+          <div style={{ fontSize:12, color:'#888', fontStyle:'italic' }}>Chargement…</div>
         ) : produits.length === 0 ? (
-          <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text3)', fontStyle:'italic', padding:'16px 0' }}>Aucun produit pour l'instant.</div>
+          <div style={{ fontSize:12, color:'#888', fontStyle:'italic', padding:'16px 0' }}>Aucun produit pour l'instant.</div>
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
             {produits.map(p => (
-              <div key={p.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderRadius:10, background:'var(--surface-1)', border:'1px solid var(--surface-2)' }}>
+              <div key={p.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', borderRadius:10, background:'#f5f2ec', border:'1px solid #e0ddd6' }}>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--text2)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
-                  <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', marginTop:2 }}>
+                  <div style={{ fontSize:13, color:'#111', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
+                  <div style={{ fontSize:10, color:'#777', marginTop:2 }}>
                     {p.categorie} · {p.prix != null ? `${Number(p.prix).toFixed(2)} €` : 'prix libre'}
                   </div>
                 </div>
-                <span style={{ fontSize:'var(--fs-h5, 9px)', padding:'2px 8px', borderRadius:20, flexShrink:0,
-                  background: p.statut==='actif' ? 'rgba(var(--green-rgb),0.10)' : p.statut==='en_attente' ? 'rgba(var(--gold-rgb),0.10)' : 'var(--surface-2)',
-                  border: p.statut==='actif' ? '1px solid rgba(var(--green-rgb),0.25)' : p.statut==='en_attente' ? '1px solid rgba(var(--gold-rgb),0.25)' : '1px solid var(--surface-3)',
-                  color: p.statut==='actif' ? 'var(--green)' : p.statut==='en_attente' ? 'var(--gold)' : 'var(--text3)' }}>
+                <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, flexShrink:0,
+                  background: p.statut==='actif' ? 'rgba(90,154,40,0.10)' : p.statut==='en_attente' ? 'rgba(176,122,32,0.10)' : '#eee',
+                  border: p.statut==='actif' ? '1px solid rgba(90,154,40,0.30)' : p.statut==='en_attente' ? '1px solid rgba(176,122,32,0.30)' : '1px solid #ddd',
+                  color: p.statut==='actif' ? '#3d7a12' : p.statut==='en_attente' ? '#b07a20' : '#888' }}>
                   {p.statut === 'en_attente' ? '⏳ en attente' : p.statut}
                 </span>
                 <div style={{ display:'flex', gap:6, flexShrink:0 }}>
                   <button onClick={() => openEdit(p)}
-                    style={{ padding:'4px 10px', borderRadius:7, fontSize:'var(--fs-h5, 10px)', cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(var(--zone-breath-rgb),0.08)', border:'1px solid rgba(var(--zone-breath-rgb),0.20)', color:'var(--zone-breath)' }}>
+                    style={{ padding:'4px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(74,123,165,0.08)', border:'1px solid rgba(74,123,165,0.25)', color:'#4a7ba5' }}>
                     ✏ Modifier
                   </button>
                   <button onClick={() => handleDelete(p.id)}
-                    style={{ padding:'4px 10px', borderRadius:7, fontSize:'var(--fs-h5, 10px)', cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(var(--red-rgb),0.08)', border:'1px solid rgba(var(--red-rgb),0.20)', color:'rgba(var(--red-rgb),0.65)' }}>
+                    style={{ padding:'4px 10px', borderRadius:7, fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", background:'rgba(180,60,60,0.07)', border:'1px solid rgba(180,60,60,0.22)', color:'rgba(180,60,60,0.80)' }}>
                     ✕
                   </button>
                 </div>
@@ -1363,10 +1359,6 @@ function VueEspace({ partenaire, onLogout, onProductAdded }) {
         )}
       </div>
 
-      {/* Dashboard ventes — pros uniquement */}
-      {partenaire.type_vendeur === 'professionnel' && (
-        <VentesDashboard partenaireId={partenaire.id} />
-      )}
     </div>
   )
 }
