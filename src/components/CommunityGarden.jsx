@@ -1089,7 +1089,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
       width: embedded ? '100%' : undefined,
       height: embedded ? svgH : undefined,
       minHeight: embedded ? svgH : undefined,
-      background:`linear-gradient(180deg, rgba(0,0,0,0.92) 0%, rgba(8,4,2,0.97) 100%)`,
+      background:'rgba(10,5,2,1)',  // couleur du sol — couvre la safe area iOS
       overflow:'hidden',
       display:'flex', flexDirection:'column',
       backdropFilter: embedded ? 'none' : 'blur(10px)',
