@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../core/supabaseClient'
 import { VueEspace } from './ScreenJardinotheque'
+import { AtelierFormModal } from './ScreenAteliers'
 
 function generateProId() {
   const chars = 'abcdefghjkmnpqrstuvwxyz23456789'
@@ -176,6 +177,37 @@ const css = `
 }
 `
 
+function ApplyCandidatureForm({ onClose, onSubmit }) {
+  const [motivation, setMotivation] = useState('')
+  const [experience, setExperience] = useState('')
+  const [loading,    setLoading]    = useState(false)
+  async function handleSend() {
+    if (!motivation.trim()) return
+    setLoading(true)
+    await onSubmit(motivation.trim(), experience.trim())
+    setLoading(false)
+  }
+  const ta = { width:'100%', padding:'11px 14px', background:'#fafafa', border:'1px solid #e0ddd6', borderRadius:10, fontSize:14, fontFamily:"'Jost',sans-serif", color:'#111', outline:'none', resize:'none', boxSizing:'border-box' }
+  return (
+    <div>
+      <div className="pp-field">
+        <label className="pp-label">Votre motivation *</label>
+        <textarea style={{...ta, height:90}} value={motivation} onChange={e=>setMotivation(e.target.value)} placeholder="Pourquoi souhaitez-vous animer des ateliers bien-être ?" />
+      </div>
+      <div className="pp-field">
+        <label className="pp-label">Expérience (optionnel)</label>
+        <textarea style={{...ta, height:70}} value={experience} onChange={e=>setExperience(e.target.value)} placeholder="Formation, pratique, certifications…" />
+      </div>
+      <div style={{display:'flex',gap:10,marginTop:8}}>
+        <button type="button" onClick={onClose} style={{flex:1,padding:'11px',borderRadius:10,border:'1px solid #ddd',background:'#fafafa',color:'#555',fontSize:13,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>Annuler</button>
+        <button type="button" onClick={handleSend} disabled={loading||!motivation.trim()} style={{flex:2,padding:'11px',borderRadius:10,border:'none',background:'#111',color:'#fff',fontSize:13,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer',opacity:!motivation.trim()?0.4:1}}>
+          {loading ? '…' : '📩 Envoyer ma candidature'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function ProProfile({ onBack }) {
   const [proData,    setProData]    = useState(null)
   const [userData,   setUserData]   = useState(null)
@@ -190,8 +222,14 @@ export function ProProfile({ onBack }) {
   const [saveError,  setSaveError]  = useState(null)
   const [referrals,  setReferrals]  = useState([])
   const [commissions,setCommissions]= useState([])
-  const [ateliers,      setAteliers]      = useState([])
-  const [partenaireData, setPartenaireData] = useState(null)
+  const [ateliers,         setAteliers]         = useState([])
+  const [showAtelierModal, setShowAtelierModal] = useState(false)
+  const [editAtelierModal, setEditAtelierModal] = useState(null)
+  const [partenaireData,   setPartenaireData]   = useState(null)
+  const [isAnimator,       setIsAnimator]       = useState(false)
+  const [hasApplied,       setHasApplied]       = useState(false)
+  const [applyStatus,      setApplyStatus]      = useState(null)
+  const [showApplyModal,   setShowApplyModal]   = useState(false)
   const [inscriptions,  setInscriptions]  = useState([])
   const [ventesProduits,setVentesProduits]= useState([])
   const promoInitialized = useRef(false)
@@ -212,9 +250,14 @@ export function ProProfile({ onBack }) {
       console.log('[ProProfile] user.id:', user.id, '| user.email:', user.email)
 
       const { data: u } = await supabase
-        .from('users').select('id, display_name, flower_name, role')
+        .from('users').select('id, display_name, flower_name, role, is_animator')
         .eq('id', user.id).single()
       setUserData(u)
+      const animator = u?.is_animator === true
+      setIsAnimator(animator)
+      const { data: appData } = await supabase.from('animator_applications').select('id, status').eq('user_id', user.id).maybeSingle()
+      setHasApplied(!!appData)
+      setApplyStatus(appData?.status ?? null)
 
       // 1. Chercher par user_id (si la colonne existe)
       let pro = null
@@ -275,7 +318,7 @@ export function ProProfile({ onBack }) {
 
       // Charger referrals, commissions, ateliers, produits
       if (pro) {
-        const [{ data: refs }, { data: comms }, { data: atelData }] = await Promise.all([
+        const baseQueries = [
           supabase.from('pro_referrals')
             .select('*, users!client_user_id(display_name, email)')
             .eq('pro_id', pro.id)
@@ -284,17 +327,25 @@ export function ProProfile({ onBack }) {
             .select('*')
             .eq('pro_id', pro.id)
             .order('created_at', { ascending: false }),
-          supabase.from('ateliers')
-            .select('*, atelier_registrations(count)')
-            .eq('animator_id', user.id)
-            .order('starts_at', { ascending: false }),
-        ])
+        ]
+        const [{ data: refs }, { data: comms }] = await Promise.all(baseQueries)
         setReferrals(refs ?? [])
         setCommissions(comms ?? [])
-        setAteliers(atelData ?? [])
+
+        // Ateliers : seulement si is_animator = true (RLS l'exige)
+        let atelData = []
+        if (animator) {
+          const { data } = await supabase
+            .from('ateliers')
+            .select('*, atelier_registrations(count)')
+            .eq('animator_id', user.id)
+            .order('starts_at', { ascending: false })
+          atelData = data ?? []
+        }
+        setAteliers(atelData)
 
         // Inscriptions ateliers payantes (Stripe uniquement)
-        if (atelData?.length) {
+        if (atelData.length) {
           const atelIds = atelData.map(a => a.id)
           const { data: inscData } = await supabase
             .from('atelier_registrations')
@@ -326,6 +377,36 @@ export function ProProfile({ onBack }) {
     finally { setLoading(false) }
   }
 
+  async function handleCreateAtelier(fields) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('ateliers').insert({ ...fields, animator_id: user.id, is_published: true })
+    setShowAtelierModal(false)
+    setEditAtelierModal(null)
+    await loadData()
+  }
+
+  async function handleEditAtelier(id, fields) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('ateliers').update(fields).eq('id', id).eq('animator_id', user.id)
+    setShowAtelierModal(false)
+    setEditAtelierModal(null)
+    await loadData()
+  }
+
+  async function handleDeleteAtelier(id, title) {
+    if (!window.confirm(`Supprimer l'atelier "${title}" ?`)) return
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('atelier_registrations').delete().eq('atelier_id', id)
+    await supabase.from('ateliers').delete().eq('id', id).eq('animator_id', user.id)
+    await loadData()
+  }
+
+  function handleRepublishAtelier(atelier) {
+    const sourceId = atelier.parent_id ?? atelier.id
+    setEditAtelierModal({ ...atelier, _isRepublish: true, _sourceId: sourceId, id: null, starts_at: '' })
+    setShowAtelierModal(true)
+  }
+
   async function handleCreatePartenaire() {
     const { data: { user } } = await supabase.auth.getUser()
     const nomBoutique = proData?.entreprise || `${proData?.prenom ?? ''} ${proData?.nom ?? ''}`.trim() || userData?.display_name || 'Ma boutique'
@@ -340,6 +421,13 @@ export function ProProfile({ onBack }) {
       email_verified: true,
     }).select().single()
     if (!error && data) setPartenaireData(data)
+  }
+
+  async function handleApply(motivation, experience) {
+    const { data: { user } } = await supabase.auth.getUser()
+    await supabase.from('animator_applications').insert({ user_id: user.id, motivation, experience })
+    setHasApplied(true)
+    setShowApplyModal(false)
   }
 
   function copyId() {
@@ -480,40 +568,95 @@ export function ProProfile({ onBack }) {
       <div className="pp-tab-panel">
         <div className="pp-tab-body">
           {activeTab === 'ateliers' && (
-            ateliers.length === 0 ? (
+            !isAnimator ? (
               <div className="pp-empty">
-                <div className="pp-empty-icon">🌱</div>
-                <div className="pp-empty-title">Aucun atelier pour le moment</div>
-                <div className="pp-empty-text">Vos ateliers bien-être apparaîtront ici dès qu'ils seront créés sur l'application.</div>
+                <div className="pp-empty-icon">🌿</div>
+                <div className="pp-empty-title">Devenez animateur</div>
+                <div className="pp-empty-text">
+                  La création d'ateliers est réservée aux praticiens validés par l'équipe Mon Jardin.
+                  {applyStatus === 'approved'
+                    ? <><br/><br/><strong style={{color:'#5a9a28'}}>✅ Candidature approuvée !</strong> Rechargez pour accéder à vos ateliers.</>
+                    : applyStatus === 'rejected'
+                    ? <><br/><br/><strong style={{color:'#c04040'}}>Candidature non retenue.</strong> Contactez l'équipe Mon Jardin pour plus d'informations.</>
+                    : hasApplied
+                    ? <><br/><br/><strong style={{color:'#888'}}>📩 Candidature en cours d'examen.</strong> Nous reviendrons vers vous prochainement.</>
+                    : <><br/><br/>Envoyez votre candidature pour faire valider votre profil.</>
+                  }
+                </div>
+                <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:20,flexWrap:'wrap'}}>
+                  {!hasApplied && (
+                    <button className="pp-empty-btn" onClick={() => setShowApplyModal(true)}>
+                      Soumettre ma candidature
+                    </button>
+                  )}
+                  {hasApplied && (
+                    <button onClick={refreshData} disabled={refreshing}
+                      style={{display:'inline-flex',alignItems:'center',gap:6,padding:'10px 22px',borderRadius:8,border:'1px solid #ddd',background:'#fafafa',color:'#555',fontSize:13,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
+                      <span style={{display:'inline-block',animation:refreshing?'ppSpin 1s linear infinite':'none'}}>↻</span>
+                      {refreshing ? 'Vérification…' : 'Vérifier le statut'}
+                    </button>
+                  )}
+                </div>
               </div>
-            ) : (
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                {ateliers.map(a => {
-                  const date = a.starts_at ? new Date(a.starts_at) : null
-                  const count = a.atelier_registrations?.[0]?.count ?? 0
-                  return (
-                    <div key={a.id} style={{border:'1px solid #ece9e2',borderRadius:12,padding:'14px 18px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:'#fafaf8'}}>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:14,fontWeight:600,color:'#111',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{a.title}</div>
-                        <div style={{fontSize:12,color:'#aaa',display:'flex',gap:12,flexWrap:'wrap'}}>
-                          {date && <span>{date.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})} · {date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>}
-                          {a.format && <span style={{textTransform:'capitalize'}}>{a.format}</span>}
-                          {a.price > 0 && <span>{Number(a.price).toFixed(2)} €</span>}
+            ) :
+            <div style={{display:'flex',flexDirection:'column',gap:14}}>
+              <button
+                onClick={() => { setEditAtelierModal(null); setShowAtelierModal(true) }}
+                style={{padding:'12px',borderRadius:12,border:'1px solid rgba(90,154,40,0.35)',background:'rgba(90,154,40,0.08)',color:'#3d7a12',fontSize:13,fontFamily:"'Jost',sans-serif",cursor:'pointer',fontWeight:600}}>
+                + Créer un atelier
+              </button>
+              {ateliers.length === 0 ? (
+                <div className="pp-empty">
+                  <div className="pp-empty-icon">🌱</div>
+                  <div className="pp-empty-title">Aucun atelier pour le moment</div>
+                  <div className="pp-empty-text">Créez votre premier atelier bien-être pour votre communauté.</div>
+                </div>
+              ) : (
+                <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                  {ateliers.map(a => {
+                    const date = a.starts_at ? new Date(a.starts_at) : null
+                    const count = a.atelier_registrations?.[0]?.count ?? 0
+                    const isPast = date && date < new Date()
+                    return (
+                      <div key={a.id} style={{border:'1px solid #e0ddd6',borderRadius:12,padding:'12px 16px',background:'#fafaf8'}}>
+                        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,marginBottom:8}}>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:14,fontWeight:600,color:'#111',marginBottom:3,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{a.title}</div>
+                            <div style={{fontSize:11,color:'#888',display:'flex',gap:10,flexWrap:'wrap'}}>
+                              {date && <span>{date.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})} · {date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>}
+                              {a.format && <span style={{textTransform:'capitalize'}}>{a.format === 'online' ? '🌐 En ligne' : '📍 Présentiel'}</span>}
+                              {a.price > 0 && <span>{Number(a.price).toFixed(2)} €</span>}
+                              <span>{count} inscrit{count>1?'s':''}</span>
+                            </div>
+                          </div>
+                          <span style={{fontSize:11,fontWeight:600,padding:'3px 10px',borderRadius:20,flexShrink:0,
+                            background: a.is_published ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.06)',
+                            color: a.is_published ? '#5a9a28' : '#888'}}>
+                            {a.is_published ? '✓ Publié' : 'Brouillon'}
+                          </span>
+                        </div>
+                        <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                          <button onClick={() => { setEditAtelierModal(a); setShowAtelierModal(true) }}
+                            style={{padding:'4px 12px',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:"'Jost',sans-serif",background:'rgba(74,123,165,0.08)',border:'1px solid rgba(74,123,165,0.25)',color:'#4a7ba5'}}>
+                            ✏ Modifier
+                          </button>
+                          {isPast && (
+                            <button onClick={() => handleRepublishAtelier(a)}
+                              style={{padding:'4px 12px',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:"'Jost',sans-serif",background:'rgba(90,154,40,0.08)',border:'1px solid rgba(90,154,40,0.25)',color:'#3d7a12'}}>
+                              🔄 Republier
+                            </button>
+                          )}
+                          <button onClick={() => handleDeleteAtelier(a.id, a.title)}
+                            style={{padding:'4px 12px',borderRadius:7,fontSize:11,cursor:'pointer',fontFamily:"'Jost',sans-serif",background:'rgba(180,60,60,0.07)',border:'1px solid rgba(180,60,60,0.22)',color:'rgba(180,60,60,0.80)'}}>
+                            ✕ Supprimer
+                          </button>
                         </div>
                       </div>
-                      <div style={{display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-                        <span style={{fontSize:11,color:'#888'}}>{count} inscrit{count>1?'s':''}</span>
-                        <span style={{fontSize:11,fontWeight:600,padding:'3px 10px',borderRadius:20,
-                          background: a.is_published ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.06)',
-                          color: a.is_published ? '#5a9a28' : '#aaa'}}>
-                          {a.is_published ? '✓ Publié' : 'Brouillon'}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )}
           {activeTab === 'outils' && (
             partenaireData ? (
@@ -857,6 +1000,28 @@ export function ProProfile({ onBack }) {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal candidature animateur */}
+      {showApplyModal && (
+        <div className="pp-modal-overlay" onClick={e => e.target===e.currentTarget && setShowApplyModal(false)}>
+          <div className="pp-modal">
+            <button className="pp-modal-close" onClick={() => setShowApplyModal(false)}>✕</button>
+            <div className="pp-modal-title">Devenir animateur</div>
+            <div className="pp-modal-sub">Votre candidature sera examinée par l'équipe Mon Jardin.</div>
+            <ApplyCandidatureForm onClose={() => setShowApplyModal(false)} onSubmit={handleApply} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal création / édition atelier */}
+      {showAtelierModal && (
+        <AtelierFormModal
+          initialData={editAtelierModal?._isRepublish ? { ...editAtelierModal, id: null } : editAtelierModal}
+          onClose={() => { setShowAtelierModal(false); setEditAtelierModal(null) }}
+          onCreate={handleCreateAtelier}
+          onEdit={handleEditAtelier}
+        />
       )}
     </div>
   )

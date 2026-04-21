@@ -13,7 +13,7 @@ import { useIsMobile, LumenBadge, LumenOrb, getThemeEmoji, THEMES_LIST, callMode
 //  SCREEN ATELIERS
 // ═══════════════════════════════════════════════════════
 
-function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
+export function AtelierFormModal({ onClose, onCreate, onEdit, initialData }) {
   const isRepublish = !!initialData?._isRepublish
   const isEdit = !!initialData && !isRepublish
   const sourceId = initialData?._sourceId ?? null
@@ -626,8 +626,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   const [ateliers,    setAteliers]    = useState([])
   const [myReg,       setMyReg]       = useState([]) // ids des ateliers où je suis inscrit
   const [isAnimator,  setIsAnimator]  = useState(false)
-  const [showCreate,   setShowCreate]  = useState(false)
-  const [editAtelier,  setEditAtelier] = useState(null)   // atelier à éditer (ou template republication)
+  const [editAtelier,  setEditAtelier] = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [tab,         setTab]         = useState('upcoming') // upcoming | mine | past
   const [showApply,   setShowApply]   = useState(false)
@@ -933,7 +932,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       showToastLocal('✨ Atelier créé !')
     }
 
-    setShowCreate(false)
+    setEditAtelier(null)
     loadAteliers()
   }
 
@@ -947,7 +946,6 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
     // _sourceId = id de l'atelier original pour lier les avis
     const sourceId = atelier.parent_id ?? atelier.id
     setEditAtelier({ ...atelier, _isRepublish: true, _sourceId: sourceId, id: null, starts_at: '' })
-    setShowCreate(true)
   }
 
   async function handlePayLumens(atelierIdVal, lumenPrice) {
@@ -1148,11 +1146,9 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           {isMobile && null}
-          {isAnimator ? (
-            <button onClick={() => setShowCreate(true)} style={{ ...btnStyle, background:'#3a6432', border:'1px solid #2a4e24', color:'#fff', fontWeight:600 }}>✨ {isMobile ? '' : 'Créer un atelier'}</button>
-          ) : hasApplied ? (
+          {!isAnimator && hasApplied && (
             <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', fontStyle:'italic' }}>{isMobile ? '📩' : '📩 Candidature en cours d\'examen'}</div>
-          ) : null}
+          )}
         </div>
       </div>
 
@@ -1323,12 +1319,12 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       )}
 
       {/* MODAL CRÉER */}
-      {(showCreate || editAtelier) && (
+      {editAtelier && (
         <AtelierFormModal
-          onClose={() => { setShowCreate(false); setEditAtelier(null) }}
+          onClose={() => setEditAtelier(null)}
           onCreate={(fields, deptInvites) => handleCreate(fields, deptInvites)}
           onEdit={handleEdit}
-          initialData={editAtelier?._isRepublish ? { ...editAtelier, id: null } : editAtelier}
+          initialData={editAtelier._isRepublish ? { ...editAtelier, id: null } : editAtelier}
         />
       )}
 
