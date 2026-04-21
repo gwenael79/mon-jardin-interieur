@@ -1010,10 +1010,11 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
   const W_PER   = 42
   const MARGIN  = 120  // marge gauche/droite
   const MIN_W   = 2400
+  const safeBottom = typeof CSS !== 'undefined' ? 0 : 0  // valeur CSS gérée via env()
   const svgH = containerH
     ? Math.max(380, containerH)
     : isLandscapeMobile
-      ? Math.max(260, winH - 60)   // paysage mobile : utilise presque toute la hauteur
+      ? Math.max(260, winH - 60)
       : Math.max(380, Math.min(580, winH - (winW < 768 ? 130 : 80)))
   const groundY = svgH - 20
 
@@ -1094,9 +1095,11 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
       backdropFilter: embedded ? 'none' : 'blur(10px)',
       animation: embedded ? 'none' : 'cgFadeIn 0.38s ease',
       padding:'0',
+      paddingBottom: embedded ? 0 : 'env(safe-area-inset-bottom)',
     }}>
       <style>{`
         @keyframes cgFadeIn  { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+        .cg-root { padding-bottom: env(safe-area-inset-bottom) !important; }
         /* Paysage mobile — plein écran propre */
         @media (max-width:1023px) and (orientation:landscape) {
           .cg-root { position:fixed !important; inset:0 !important; width:100dvw !important; height:100dvh !important; }
