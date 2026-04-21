@@ -371,7 +371,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGo
           }}>
             {/* Header */}
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'18px 20px 14px', flexShrink:0, borderBottom:'1px solid var(--surface-3)' }}>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'var(--text)' }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'var(--text)' }}>
                 🌿 Les <em style={{ fontStyle:'italic', color:'var(--green)' }}>thérapeutes</em>
               </div>
               <button onClick={() => setShowTheraModal(false)} style={{ background:'none', border:'none', fontSize:20, color:'var(--text3)', cursor:'pointer', lineHeight:1, padding:4 }}>✕</button>
@@ -379,24 +379,24 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGo
             {/* Liste — scroll interne */}
             <div style={{ overflowY:'auto', padding:'12px 16px 24px', display:'flex', flexDirection:'column', gap:8, scrollbarWidth:'thin', scrollbarColor:'rgba(0,0,0,0.15) transparent' }}>
               {therapeutes.length === 0 ? (
-                <div style={{ fontSize:13, color:'var(--text3)', fontStyle:'italic', textAlign:'center', padding:'24px 0' }}>Aucun thérapeute pour le moment.</div>
+                <div style={{ fontSize:16, color:'var(--text3)', fontStyle:'italic', textAlign:'center', padding:'24px 0' }}>Aucun thérapeute pour le moment.</div>
               ) : therapeutes.map(t => {
                 const nom = `${t.prenom ?? ''} ${t.nom ?? ''}`.trim() || t.entreprise || '—'
                 const initiale = nom.charAt(0).toUpperCase()
                 return (
-                  <div key={t.id} onClick={() => { setShowTheraModal(false); setSelectedThera(t) }} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, border:'1px solid var(--surface-3)', background:'var(--surface-1)', cursor:'pointer', transition:'background .15s' }}
+                  <div key={t.id} onClick={() => { setShowTheraModal(false); setSelectedThera(t) }} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:12, border:'1px solid var(--surface-3)', background:'var(--surface-1)', cursor:'pointer', transition:'background .15s' }}
                     onMouseEnter={e => e.currentTarget.style.background='var(--surface-2)'}
                     onMouseLeave={e => e.currentTarget.style.background='var(--surface-1)'}
                   >
-                    <div style={{ width:40, height:40, borderRadius:'50%', background:'rgba(var(--green-rgb),0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:600, color:'var(--green)', flexShrink:0 }}>
+                    <div style={{ width:44, height:44, borderRadius:'50%', background:'rgba(var(--green-rgb),0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:600, color:'var(--green)', flexShrink:0 }}>
                       {initiale}
                     </div>
                     <div style={{ minWidth:0, flex:1 }}>
-                      <div style={{ fontSize:14, fontWeight:500, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nom}</div>
-                      {t.activite && <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{t.activite}</div>}
-                      {t.ville && <div style={{ fontSize:11, color:'var(--text3)', marginTop:1 }}>📍 {t.ville}</div>}
+                      <div style={{ fontSize:17, fontWeight:500, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nom}</div>
+                      {t.activite && <div style={{ fontSize:16, color:'var(--text3)', marginTop:3 }}>{t.activite}</div>}
+                      {t.ville && <div style={{ fontSize:15, color:'var(--text3)', marginTop:2 }}>📍 {t.ville}</div>}
                     </div>
-                    <div style={{ color:'var(--text3)', fontSize:18, flexShrink:0 }}>›</div>
+                    <div style={{ color:'var(--text3)', fontSize:20, flexShrink:0 }}>›</div>
                   </div>
                 )
               })}
