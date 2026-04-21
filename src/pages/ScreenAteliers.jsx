@@ -972,6 +972,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       showToastLocal('Redirection vers le paiement…')
       sessionStorage.setItem('stripe_return_tab', 'ateliers')
       const { data, error: fnErr } = await supabase.functions.invoke('stripe-checkout', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
         body: {
           atelierId: atelierIdVal,
           successUrl: `${window.location.origin}/?atelier_success=1`,
