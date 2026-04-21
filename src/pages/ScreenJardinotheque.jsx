@@ -126,7 +126,7 @@ const DEMO_PRODUITS = [
 ]
 
 // ── Composant principal ──────────────────────────────────────────────────────
-export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
+export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGoToBibliotheque }) {
   const [tab,           setTab]           = useState('digital')
   const [cat,           setCat]           = useState('Tous')
   const [produits,      setProduits]      = useState([])
@@ -134,11 +134,29 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
   const [selected,      setSelected]      = useState(null)
   const [vendeurFilter,  setVendeurFilter]  = useState('Tous')
   const [achatIds,      setAchatIds]      = useState(new Set()) // produits déjà achetés
+  const [therapeutes,   setTherapeutes]   = useState([])
+  const [selectedThera, setSelectedThera] = useState(null) // fiche ouverte
 
   useEffect(() => {
     if (!userId) return
     supabase.from('achats').select('produit_id').eq('user_id', userId).eq('statut', 'complete')
       .then(({ data }) => setAchatIds(new Set((data || []).map(a => a.produit_id))))
+  }, [userId])
+
+  useEffect(() => {
+    const loadTherapeutes = async () => {
+      const { data, error } = await supabase
+        .from('users_pro')
+        .select('id, nom, prenom, entreprise, activite, adresse, cp, ville, telephone, siret, pro_id, site_web, facebook, instagram, linkedin')
+        .order('nom', { ascending: true })
+      console.log('[therapeutes] data:', data, '| error:', error)
+      if (data && data.length > 0) setTherapeutes(data)
+    }
+    // Attendre que la session soit prête avant de requêter
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[therapeutes] session:', !!session)
+      loadTherapeutes()
+    })
   }, [userId])
 
   const loadProduits = () => {
@@ -187,7 +205,41 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
 
   return (
     <div className="jt-root" style={{ padding:'0 0 40px', overflowY:'auto', height:'100%' }}>
+      <style>{`
+        @media(min-width:900px){
+          .jt-two-col { display:flex; gap:0; align-items:flex-start; }
+          .jt-main-col { flex:1; min-width:0; }
+          .jt-thera-col { width:280px; flex-shrink:0; padding:24px 20px 0 0; }
+        }
+        @media(max-width:899px){ .jt-thera-col { display:none; } }
+        .jt-thera-card {
+          border-radius:12px; padding:12px 14px; cursor:pointer;
+          border:1px solid var(--surface-3); background:var(--surface-1);
+          transition:all .18s; margin-bottom:8px; display:flex; align-items:center; gap:10px;
+        }
+        .jt-thera-card:hover { background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.14); transform:translateY(-1px); }
+        .jt-thera-avatar {
+          width:36px; height:36px; border-radius:50%; flex-shrink:0;
+          background:rgba(var(--green-rgb),0.15); display:flex; align-items:center;
+          justify-content:center; font-size:14px; font-weight:600; color:var(--green);
+          overflow:hidden;
+        }
+        .jt-thera-avatar img { width:100%; height:100%; object-fit:cover; }
+        .jt-fiche-overlay {
+          position:fixed; inset:0; z-index:450; display:flex; align-items:center;
+          justify-content:center; background:rgba(0,0,0,0.70); backdrop-filter:blur(12px); padding:20px;
+        }
+        .jt-fiche-modal {
+          width:100%; max-width:480px; border-radius:18px; background:var(--bg);
+          border:1px solid var(--surface-3); padding:28px 24px 36px;
+          max-height:90vh; overflow-y:auto;
+          animation:slideUp .35s cubic-bezier(.34,1.4,.64,1);
+        }
+      `}</style>
       <style>{css}</style>
+
+      <div className="jt-two-col">
+      <div className="jt-main-col">
 
       {/* ── En-tête ── */}
       <div style={{ padding:'24px 24px 0', marginBottom:24, display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16 }}>
@@ -260,9 +312,160 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade }) {
         )}
       </div>
 
+      </div>{/* fin jt-main-col */}
+
+      {/* ── Colonne droite thérapeutes (desktop only) ── */}
+      <div className="jt-thera-col">
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color:'var(--text)', marginBottom:4, lineHeight:1.3 }}>
+          En savoir + sur<br/>les <em style={{ fontStyle:'italic', color:'var(--green)' }}>thérapeutes</em>
+        </div>
+        <p style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.06em', marginBottom:14, lineHeight:1.6 }}>
+          Rencontrez les praticiens partenaires
+        </p>
+        <div>
+          {therapeutes.length === 0 ? (
+            <div style={{ fontSize:11, color:'var(--text3)', fontStyle:'italic' }}>Aucun thérapeute pour le moment.</div>
+          ) : therapeutes.map(t => {
+            const nom = `${t.prenom ?? ''} ${t.nom ?? ''}`.trim() || t.entreprise || '—'
+            const initiale = nom.charAt(0).toUpperCase()
+            return (
+              <div key={t.id} className="jt-thera-card" onClick={() => setSelectedThera(t)}>
+                <div className="jt-thera-avatar">
+                  {initiale}
+                </div>
+                <div style={{ minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:500, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{nom}</div>
+                  {t.activite && <div style={{ fontSize:10, color:'var(--text3)', marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{t.activite}</div>}
+                  {t.ville && <div style={{ fontSize:9, color:'var(--text3)', marginTop:1 }}>📍 {t.ville}</div>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      </div>{/* fin jt-two-col */}
+
+      {/* ── Fiche thérapeute ── */}
+      {selectedThera && (
+        <div className="jt-fiche-overlay" onClick={() => setSelectedThera(null)}>
+          <div className="jt-fiche-modal" onClick={e => e.stopPropagation()}>
+            {/* Handle + fermer */}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <div style={{ width:36, height:3, background:'var(--separator)', borderRadius:100 }}/>
+              <button onClick={() => setSelectedThera(null)} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:18, cursor:'pointer', lineHeight:1 }}>✕</button>
+            </div>
+
+            {/* Avatar + nom */}
+            <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+              <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(var(--green-rgb),0.12)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:600, color:'var(--green)', flexShrink:0 }}>
+                {`${selectedThera.prenom ?? selectedThera.entreprise ?? '?'}`.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:300, color:'var(--text)', lineHeight:1.2 }}>
+                  {`${selectedThera.prenom ?? ''} ${selectedThera.nom ?? ''}`.trim() || selectedThera.entreprise || '—'}
+                </div>
+
+              </div>
+            </div>
+
+            {/* Activité */}
+            {selectedThera.activite && (
+              <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(var(--green-rgb),0.07)', border:'1px solid rgba(var(--green-rgb),0.20)', marginBottom:16 }}>
+                <div style={{ fontSize:9, letterSpacing:'.12em', textTransform:'uppercase', color:'var(--green)', marginBottom:4, fontWeight:600 }}>Activité</div>
+                <div style={{ fontSize:13, color:'var(--text)', lineHeight:1.6 }}>{selectedThera.activite}</div>
+              </div>
+            )}
+
+
+
+            {/* Infos pratiques */}
+            <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:16 }}>
+              {selectedThera.entreprise && (
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:14, flexShrink:0 }}>🏪</span>
+                  <div>
+                    <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase', fontWeight:600 }}>Cabinet / Entreprise</div>
+                    <div style={{ fontSize:13, color:'var(--text)' }}>{selectedThera.entreprise}</div>
+                  </div>
+                </div>
+              )}
+              {(selectedThera.adresse || selectedThera.ville) && (
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:14, flexShrink:0 }}>📍</span>
+                  <div>
+                    <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase', fontWeight:600 }}>Adresse</div>
+                    <div style={{ fontSize:13, color:'var(--text)' }}>
+                      {[selectedThera.adresse, selectedThera.cp, selectedThera.ville].filter(Boolean).join(', ')}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {selectedThera.telephone && (
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:14, flexShrink:0 }}>📞</span>
+                  <div>
+                    <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase', fontWeight:600 }}>Téléphone</div>
+                    <a href={`tel:${selectedThera.telephone}`} style={{ fontSize:13, color:'var(--green)', textDecoration:'none', fontWeight:500 }}>{selectedThera.telephone}</a>
+                  </div>
+                </div>
+              )}
+              {selectedThera.site_web && (
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:14, flexShrink:0 }}>🌐</span>
+                  <div>
+                    <div style={{ fontSize:9, color:'var(--text3)', letterSpacing:'.10em', textTransform:'uppercase', fontWeight:600 }}>Site internet</div>
+                    <a href={selectedThera.site_web} target="_blank" rel="noreferrer" style={{ fontSize:13, color:'var(--green)', textDecoration:'underline', textUnderlineOffset:3, wordBreak:'break-all' }}>{selectedThera.site_web}</a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Réseaux sociaux */}
+            {(selectedThera.facebook || selectedThera.instagram || selectedThera.linkedin) && (
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
+                {selectedThera.facebook && (
+                  <a href={selectedThera.facebook} target="_blank" rel="noreferrer"
+                    style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 16px', borderRadius:20, background:'rgba(24,119,242,0.08)', border:'1px solid rgba(24,119,242,0.25)', color:'#1877f2', fontSize:12, fontWeight:500, textDecoration:'none' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#1877f2"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.791-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.887v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+                    Facebook
+                  </a>
+                )}
+                {selectedThera.instagram && (
+                  <a href={selectedThera.instagram} target="_blank" rel="noreferrer"
+                    style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 16px', borderRadius:20, background:'rgba(225,48,108,0.08)', border:'1px solid rgba(225,48,108,0.25)', color:'#e1306c', fontSize:12, fontWeight:500, textDecoration:'none' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="url(#ig-grad)">
+                      <defs>
+                        <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#f09433"/>
+                          <stop offset="25%" stopColor="#e6683c"/>
+                          <stop offset="50%" stopColor="#dc2743"/>
+                          <stop offset="75%" stopColor="#cc2366"/>
+                          <stop offset="100%" stopColor="#bc1888"/>
+                        </linearGradient>
+                      </defs>
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    Instagram
+                  </a>
+                )}
+                {selectedThera.linkedin && (
+                  <a href={selectedThera.linkedin} target="_blank" rel="noreferrer"
+                    style={{ display:'flex', alignItems:'center', gap:7, padding:'7px 16px', borderRadius:20, background:'rgba(0,119,181,0.08)', border:'1px solid rgba(0,119,181,0.25)', color:'#0077b5', fontSize:12, fontWeight:500, textDecoration:'none' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#0077b5"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    LinkedIn
+                  </a>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
       {/* ── Modal détail ── */}
       {selected && (
-        <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} hasBought={achatIds.has(selected.id)} userId={userId} isPremium={isPremium} onUpgrade={onUpgrade} onAchatLumens={() => { setAchatIds(s => new Set([...s, selected.id])); setSelected(null) }} />
+        <ProductModal produit={selected} tc={TYPE_CONFIG[selected.type]} onClose={() => setSelected(null)} hasBought={achatIds.has(selected.id)} userId={userId} isPremium={isPremium} onUpgrade={onUpgrade} onAchatLumens={() => { setAchatIds(s => new Set([...s, selected.id])); setSelected(null) }} onGoToBibliotheque={onGoToBibliotheque} />
       )}
 
     </div>
@@ -311,7 +514,7 @@ function ProductCard({ produit: p, tc, onOpen, hasBought }) {
 }
 
 // ── Modal détail produit ──────────────────────────────────────────────────────
-function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumens, isPremium = false, onUpgrade }) {
+function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumens, isPremium = false, onUpgrade, onGoToBibliotheque }) {
   const emoji = CAT_EMOJI[p.categorie] ?? tc.icon
   const isDigital  = p.type === 'digital'
   const isOccasion = p.type === 'occasion'
@@ -424,24 +627,31 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
         {/* Description */}
         <div className="jt-modal-desc">{p.description}</div>
 
-        {/* Vendeur */}
-        {p.vendeur_nom && (
-          <div style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', background:'var(--surface-1)', border:'1px solid var(--track)', borderRadius:12, marginBottom:20 }}>
-            <div style={{ width:32, height:32, borderRadius:'50%', background:`${tc.bg}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'var(--fs-h4, 14px)', fontWeight:500, color:tc.color, flexShrink:0 }}>
-              {p.vendeur_nom.charAt(0).toUpperCase()}
+
+
+        {/* Prix + mention légale — masqués si déjà acheté */}
+        {!(isDigital && hasBought) && (
+          <div style={{ marginBottom:4, textAlign:'center' }}>
+            <div className="jt-modal-price" style={{ color: tc.color, fontSize:36, fontWeight:600, marginBottom:4 }}>
+              {p.prix != null ? `${Number(p.prix).toFixed(2).replace('.', ',')} €` : 'Prix sur demande'}
             </div>
-            <div>
-              <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--text2)', fontWeight:500 }}>{p.vendeur_nom}</div>
-              {p.type === 'physique' && <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)' }}>Partenaire officiel</div>}
-              {p.type === 'occasion' && <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)' }}>Membre de la communauté</div>}
-            </div>
+            {isDigital && (
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', lineHeight:1.6 }}>
+                Paiement sécurisé via Stripe · Accès immédiat après achat
+              </div>
+            )}
+            {p.type === 'physique' && (
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', lineHeight:1.6 }}>
+                Lien vers le site partenaire · Mon Jardin Intérieur ne perçoit pas de commission
+              </div>
+            )}
+            {isOccasion && (
+              <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', lineHeight:1.6 }}>
+                Vente entre particuliers · Mon Jardin Intérieur n'intervient pas dans la transaction
+              </div>
+            )}
           </div>
         )}
-
-        {/* Prix */}
-        <div className="jt-modal-price" style={{ color: tc.color }}>
-          {p.prix != null ? `${Number(p.prix).toFixed(2).replace('.', ',')} €` : 'Prix sur demande'}
-        </div>
 
         {/* CTA */}
         {isOccasion ? (
@@ -452,7 +662,15 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
         ) : isDigital && hasBought ? (
           <div style={{ padding:'14px', borderRadius:12, background:'rgba(var(--green-rgb),0.08)', border:'1px solid rgba(var(--green-rgb),0.30)', textAlign:'center' }}>
             <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--green)', fontWeight:500, marginBottom:6 }}>✓ Vous possédez ce produit</div>
-            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)' }}>Retrouvez-le dans Mon profil → 🎧 Ma bibliothèque</div>
+            <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)' }}>
+              Retrouvez-le dans{' '}
+              <span
+                onClick={() => { onClose(); onGoToBibliotheque?.() }}
+                style={{ color:'var(--green)', fontWeight:500, cursor:'pointer', textDecoration:'underline', textUnderlineOffset:3 }}
+              >
+                🎧 Ma bibliothèque
+              </span>
+            </div>
           </div>
         ) : (
           <>
@@ -461,7 +679,7 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
                 style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
                 {paying ? '⏳ Redirection…' : !isPremium ? '🔒 Premium requis — Découvrir' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
               </button>
-              {p.accepte_lumens && p.prix_lumens && (
+              {!!(p.accepte_lumens && p.prix_lumens) && (
                 <button className="jt-modal-btn" onClick={handlePayLumens} disabled={payingLumens}
                   style={{ background:'rgba(var(--gold-rgb),0.10)', border:'1px solid rgba(var(--gold-rgb),0.40)', color:'var(--gold)', opacity: payingLumens ? 0.7 : 1 }}>
                   {payingLumens ? '⏳ Traitement…' : `✦ Payer ${p.prix_lumens} Lumens`}
@@ -469,15 +687,15 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
               )}
             </div>
             {payErr && <div style={{ fontSize:'var(--fs-h5, 12px)', color:'var(--red)', marginTop:8, textAlign:'center' }}>{payErr}</div>}
+            <div style={{ textAlign:'center', marginTop:10 }}>
+              <a href="#" style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', textDecoration:'underline', textUnderlineOffset:3, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
+                Conditions générales de vente
+              </a>
+            </div>
           </>
         )}
 
-        {/* Mention légale discrète */}
-        <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', textAlign:'center', marginTop:14, lineHeight:1.6 }}>
-          {isDigital && 'Paiement sécurisé via Stripe · Accès immédiat après achat'}
-          {p.type === 'physique' && 'Lien vers le site partenaire · Mon Jardin Intérieur ne perçoit pas de commission'}
-          {isOccasion && 'Vente entre particuliers · Mon Jardin Intérieur n\'intervient pas dans la transaction'}
-        </div>
+
       </div>
     </div>
   )
@@ -1092,6 +1310,22 @@ export function VueEspace({ partenaire, onLogout, onProductAdded }) {
     } catch (e) { alert('Erreur réseau : ' + e.message) }
     setAudioUploading(false)
   }
+
+  useEffect(() => {
+    const loadTherapeutes = async () => {
+      const { data, error } = await supabase
+        .from('users_pro')
+        .select('id, nom, prenom, entreprise, activite, adresse, cp, ville, telephone, siret, pro_id, site_web, facebook, instagram, linkedin')
+        .order('nom', { ascending: true })
+      console.log('[therapeutes] data:', data, '| error:', error)
+      if (data && data.length > 0) setTherapeutes(data)
+    }
+    // Attendre que la session soit prête avant de requêter
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[therapeutes] session:', !!session)
+      loadTherapeutes()
+    })
+  }, [userId])
 
   const loadProduits = () => {
     setLoading(true)

@@ -1145,6 +1145,7 @@ export default function DashboardPage() {
     onCoeurSeen:    () => setUnreadCoeurs(0),
     onOpenRituals:   () => setOpenRitualsModal(true),
     onOpenNeedModal: () => setShowNeedModal(true),
+    onGoToBibliotheque: () => setOpenModalId('bibliotheque'),
     isPostRitual:    postRitualSlide,
     openRitualsModal,
     onCloseRituals: () => setOpenRitualsModal(false),

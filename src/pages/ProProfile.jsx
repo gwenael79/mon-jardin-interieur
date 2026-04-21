@@ -444,6 +444,10 @@ export function ProProfile({ onBack }) {
       adresse: proData?.adresse ?? '',
       cp: proData?.cp ?? '', ville: proData?.ville ?? '',
       telephone: proData?.telephone ?? '', siret: proData?.siret ?? '',
+      site_web: proData?.site_web ?? '',
+      facebook: proData?.facebook ?? '',
+      instagram: proData?.instagram ?? '',
+      linkedin: proData?.linkedin ?? '',
     })
     setSaveError(null); setShowEdit(true)
   }
@@ -460,6 +464,10 @@ export function ProProfile({ onBack }) {
         cp: editForm.cp.trim() || null, ville: editForm.ville.trim() || null,
         telephone: editForm.telephone.trim(),
         siret: editForm.siret.replace(/\s/g, ''),
+        site_web:  editForm.site_web.trim()  || null,
+        facebook:  editForm.facebook.trim()  || null,
+        instagram: editForm.instagram.trim() || null,
+        linkedin:  editForm.linkedin.trim()  || null,
       }
       console.log('[ProProfile] save payload:', payload, '| user_id:', user.id, '| proData.id:', proData?.id)
       const { data: saved, error } = await supabase.from('users_pro').update(payload)
@@ -539,6 +547,10 @@ export function ProProfile({ onBack }) {
               { label:'Adresse',    value: proData?.adresse },
               { label:'CP / Ville', value: proData?.cp || proData?.ville ? `${proData?.cp ?? ''} ${proData?.ville ?? ''}`.trim() : null },
               { label:'SIRET',      value: proData?.siret },
+              { label:'Site internet', value: proData?.site_web },
+              { label:'Facebook',      value: proData?.facebook },
+              { label:'Instagram',     value: proData?.instagram },
+              { label:'LinkedIn',      value: proData?.linkedin },
             ].map(({ label, value }) => (
               <div key={label} className="pp-info-item">
                 <div className="pp-info-label">{label}</div>
@@ -995,6 +1007,13 @@ export function ProProfile({ onBack }) {
               </div>
               <div className="pp-field"><label className="pp-label">Téléphone</label><input className="pp-input" value={editForm.telephone} onChange={upd('telephone')} required maxLength={20}/></div>
               <div className="pp-field"><label className="pp-label">SIRET</label><input className="pp-input" value={editForm.siret} onChange={upd('siret')} required maxLength={18}/></div>
+
+              <div style={{ margin:'16px 0 10px', fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'#aaa', fontWeight:600 }}>Présence en ligne <span style={{ textTransform:'none', letterSpacing:0, fontWeight:400, color:'#bbb' }}>(optionnel)</span></div>
+              <div className="pp-field"><label className="pp-label">🌐 Site internet</label><input className="pp-input" value={editForm.site_web} onChange={upd('site_web')} placeholder="https://monsite.fr" maxLength={200}/></div>
+              <div className="pp-field"><label className="pp-label">📘 Facebook</label><input className="pp-input" value={editForm.facebook} onChange={upd('facebook')} placeholder="https://facebook.com/mapages" maxLength={200}/></div>
+              <div className="pp-field"><label className="pp-label">📸 Instagram</label><input className="pp-input" value={editForm.instagram} onChange={upd('instagram')} placeholder="https://instagram.com/moncompte" maxLength={200}/></div>
+              <div className="pp-field"><label className="pp-label">💼 LinkedIn</label><input className="pp-input" value={editForm.linkedin} onChange={upd('linkedin')} placeholder="https://linkedin.com/in/monprofil" maxLength={200}/></div>
+
               {saveError && <div className="pp-error">{saveError}</div>}
               <button className="pp-save-btn" type="submit" disabled={saving}>{saving ? '…' : '✓ Enregistrer'}</button>
             </form>
