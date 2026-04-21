@@ -1095,11 +1095,10 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
       backdropFilter: embedded ? 'none' : 'blur(10px)',
       animation: embedded ? 'none' : 'cgFadeIn 0.38s ease',
       padding:'0',
-      paddingBottom: embedded ? 0 : 'env(safe-area-inset-bottom)',
+
     }}>
       <style>{`
         @keyframes cgFadeIn  { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
-        .cg-root { padding-bottom: env(safe-area-inset-bottom) !important; }
         /* Paysage mobile — plein écran propre */
         @media (max-width:1023px) and (orientation:landscape) {
           .cg-root { position:fixed !important; inset:0 !important; width:100dvw !important; height:100dvh !important; }
@@ -1152,10 +1151,10 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
         ref={scrollRef}
         data-cg="1"
         style={{
-          position:'absolute', inset:0,
+          position:'absolute', top:0, left:0, right:0, bottom:0,
           overflowX:'auto',
           overflowY:'hidden',
-          height: svgH,
+          height: '100%',
           scrollbarWidth:'thin',
           scrollbarColor:'rgba(120,120,120,0.3) transparent',
         }}
@@ -1276,7 +1275,8 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
             ))}
 
             {/* SOL */}
-            <rect x={0} y={groundY} width={svgW} height={svgH - groundY} fill="url(#cgSoil)"/>
+            {/* Sol étendu — couvre safe area iOS et tout débordement */}
+            <rect x={0} y={groundY} width={svgW} height={svgH - groundY + 200} fill="url(#cgSoil)"/>
             <path
               d={`M0,${groundY-2} Q${svgW*0.25},${groundY-5} ${svgW*0.5},${groundY-2} Q${svgW*0.75},${groundY-4} ${svgW},${groundY-2} L${svgW},${groundY+3} L0,${groundY+3} Z`}
               fill="rgba(32,72,16,0.55)"
