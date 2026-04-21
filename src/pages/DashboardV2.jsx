@@ -592,7 +592,7 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
         </div>
 
         {/* Bandeau bas */}
-        <div style={{ flexShrink:0, padding:'12px 18px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderTop:'1px solid rgba(96,160,100,.2)' }}>
+        <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderTop:'1px solid rgba(96,160,100,.2)' }}>
           <button
             onClick={onClose}
             style={{ padding:'9px 20px', borderRadius:100, background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s', flexShrink:0 }}
