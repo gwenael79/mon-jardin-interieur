@@ -209,7 +209,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGo
         @media(min-width:900px){
           .jt-two-col { display:flex; gap:0; align-items:flex-start; }
           .jt-main-col { flex:1; min-width:0; }
-          .jt-thera-col { width:280px; flex-shrink:0; padding:24px 20px 0 0; }
+          .jt-thera-col { width:280px; flex-shrink:0; padding:24px 20px 0 0; position:sticky; top:0; max-height:100vh; overflow-y:auto; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.15) transparent; }
         }
         @media(max-width:899px){ .jt-thera-col { display:none; } }
         .jt-thera-card {
