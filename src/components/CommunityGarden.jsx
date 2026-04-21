@@ -924,7 +924,10 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
   const [loading, setLoading] = useState(true)
   const [err,     setErr]     = useState(null)
   const scrollRef = useRef(null)
-  const [winH, setWinH] = useState(window.innerHeight)
+  const [winSize, setWinSize] = useState({ w: window.innerWidth, h: window.innerHeight })
+  const winH = winSize.h
+  const winW = winSize.w
+  const isLandscapeMobile = winW > winH && winW < 1024  // mobile en paysage
   const svgElRef = useRef(null)
   const [sparklingUids, setSparklingUids] = useState({})
 
@@ -967,10 +970,17 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
 
 
   useEffect(() => {
-    const fn = () => setWinH(window.innerHeight)
+    const fn = () => setWinSize({ w: window.innerWidth, h: window.innerHeight })
     window.addEventListener('resize', fn)
-    window.addEventListener('orientationchange', () => setTimeout(fn, 100))
-    return () => { window.removeEventListener('resize', fn) }
+    // Délai plus long pour laisser le browser finir la rotation (iOS peut être lent)
+    window.addEventListener('orientationchange', () => {
+      setTimeout(fn, 100)
+      setTimeout(fn, 400)
+    })
+    return () => {
+      window.removeEventListener('resize', fn)
+      window.removeEventListener('orientationchange', fn)
+    }
   }, [])
 
   useEffect(() => {
@@ -1000,7 +1010,11 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
   const W_PER   = 42
   const MARGIN  = 120  // marge gauche/droite
   const MIN_W   = 2400
-  const svgH    = containerH ? Math.max(380, containerH) : Math.max(380, Math.min(580, winH - (window.innerWidth < 768 ? 130 : 80)))
+  const svgH = containerH
+    ? Math.max(380, containerH)
+    : isLandscapeMobile
+      ? Math.max(260, winH - 60)   // paysage mobile : utilise presque toute la hauteur
+      : Math.max(380, Math.min(580, winH - (winW < 768 ? 130 : 80)))
   const groundY = svgH - 20
 
   // SVG assez large pour loger toutes les fleurs des deux côtés de l'ancre
@@ -1067,7 +1081,7 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
 
 
   return (
-    <div style={{
+    <div className="cg-root" style={{
       position: embedded ? 'relative' : 'fixed',
       inset: embedded ? 'auto' : 0,
       zIndex: embedded ? 'auto' : 300,
@@ -1083,6 +1097,12 @@ export default function CommunityGarden({ currentUserId, onClose, embedded, cont
     }}>
       <style>{`
         @keyframes cgFadeIn  { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+        /* Paysage mobile — plein écran propre */
+        @media (max-width:1023px) and (orientation:landscape) {
+          .cg-root { position:fixed !important; inset:0 !important; width:100dvw !important; height:100dvh !important; }
+          .cg-header { padding:8px 16px 0 !important; }
+          .cg-close-btn { width:28px !important; height:28px !important; font-size:14px !important; }
+        }
         @keyframes cgSway    { 0%,100%{transform:rotate(0deg)} 40%{transform:rotate(var(--sa,2deg))} 75%{transform:rotate(calc(var(--sa,2deg)*-0.68))} }
         @keyframes cgBreath  { 0%,100%{opacity:1} 50%{opacity:0.80} }
         @keyframes cgPulse   { 0%,100%{opacity:1} 50%{opacity:0.25} }
