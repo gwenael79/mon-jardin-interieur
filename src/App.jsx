@@ -130,6 +130,17 @@ export default function App() {
       return
     }
 
+    // Retour depuis Stripe — atelier ou produit (succès ou annulation) → dashboard + tab restauré par DashboardV2
+    if (params.has('atelier_success') || params.has('atelier_cancel') ||
+        params.get('achat') === 'success' || params.get('achat') === 'cancel') {
+      window.history.replaceState({}, '', window.location.pathname)
+      if (params.has('atelier_success')) setToast({ icon: '🌿', msg: 'Inscription confirmée ! À tout de suite.' })
+      if (params.get('achat') === 'success') setToast({ icon: '✅', msg: 'Achat confirmé ! Retrouvez votre contenu dans votre espace.' })
+      setTimeout(() => setToast(null), 4000)
+      setScreen('dashboard')
+      return
+    }
+
     setScreen('loading')
     ;(async () => {
       const { data: userData } = await supabase

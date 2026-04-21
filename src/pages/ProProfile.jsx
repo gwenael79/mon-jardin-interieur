@@ -362,16 +362,16 @@ export function ProProfile({ onBack }) {
         const { data: partenaire } = await supabase
           .from('partenaires').select('*').eq('user_id', user.id).maybeSingle()
         setPartenaireData(partenaire ?? null)
-        if (partenaire) {
-          const { data: ventesData } = await supabase
-            .from('ventes_partenaires')
-            .select('*, produits(titre), ateliers(title, starts_at)')
-            .eq('partenaire_id', partenaire.id)
-            .order('created_at', { ascending: false })
-          setVentesProduits(ventesData ?? [])
-        } else {
-          setVentesProduits([])
-        }
+
+        // Ventes : ateliers insérés avec users_pro_id, produits avec partenaire_id
+        const orParts = [`users_pro_id.eq.${pro.id}`]
+        if (partenaire) orParts.push(`partenaire_id.eq.${partenaire.id}`)
+        const { data: ventesData } = await supabase
+          .from('ventes_partenaires')
+          .select('*, produits(titre), ateliers(title, starts_at)')
+          .or(orParts.join(','))
+          .order('created_at', { ascending: false })
+        setVentesProduits(ventesData ?? [])
       }
     } catch (e) { console.error('[ProProfile]', e) }
     finally { setLoading(false) }

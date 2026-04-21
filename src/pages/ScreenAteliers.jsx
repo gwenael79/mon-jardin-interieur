@@ -970,14 +970,15 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { showToastLocal('Vous devez être connecté'); return }
       showToastLocal('Redirection vers le paiement…')
+      sessionStorage.setItem('stripe_return_tab', 'ateliers')
       const { data, error: fnErr } = await supabase.functions.invoke('stripe-checkout', {
         body: {
           atelierId: atelierIdVal,
           successUrl: `${window.location.origin}/?atelier_success=1`,
-          cancelUrl: window.location.href,
+          cancelUrl:  `${window.location.origin}/?atelier_cancel=1`,
         },
       })
-      if (fnErr || !data?.url) { showToastLocal('Erreur lors du paiement — réessayez'); return }
+      if (fnErr || !data?.url) { sessionStorage.removeItem('stripe_return_tab'); showToastLocal('Erreur lors du paiement — réessayez'); return }
       window.location.href = data.url
     } catch(e) { showToastLocal('Erreur — réessayez') }
   }

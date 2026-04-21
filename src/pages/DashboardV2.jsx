@@ -996,6 +996,15 @@ export default function DashboardPage() {
 
   useEffect(() => { refreshGardenCount() }, [])
 
+  // Restaurer le tab après retour depuis Stripe
+  useEffect(() => {
+    const tab = sessionStorage.getItem('stripe_return_tab')
+    if (!tab || !visibleSlides.length) return
+    sessionStorage.removeItem('stripe_return_tab')
+    const idx = visibleSlides.findIndex(s => s.id === tab)
+    if (idx >= 0) { setSlideIdx(idx); setActive(tab) }
+  }, [visibleSlides])
+
   // Rafraîchit le compteur après un bilan ou un rituel complété
   useEffect(() => {
     const handler = () => refreshGardenCount()

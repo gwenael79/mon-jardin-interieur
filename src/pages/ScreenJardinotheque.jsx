@@ -338,14 +338,20 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
       const session = await supabase.auth.getSession()
       const token = session.data.session?.access_token
       if (!token) { setPayErr('Connectez-vous pour acheter.'); setPaying(false); return }
+      const origin = window.location.origin
+      sessionStorage.setItem('stripe_return_tab', 'jardinotheque')
       const res = await fetch(CHECKOUT_URL, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ produitId: p.id }),
+        body: JSON.stringify({
+          produitId:  p.id,
+          successUrl: `${origin}/?achat=success`,
+          cancelUrl:  `${origin}/?achat=cancel`,
+        }),
       })
       console.log('[checkout] produitId envoyé:', p.id, '— status:', res.status)
       const data = await res.json()
-      if (!res.ok) { setPayErr(data.error || 'Erreur paiement'); setPaying(false); return }
+      if (!res.ok) { sessionStorage.removeItem('stripe_return_tab'); setPayErr(data.error || 'Erreur paiement'); setPaying(false); return }
       window.location.href = data.url
     } catch {
       setPayErr('Erreur réseau'); setPaying(false)
@@ -1308,7 +1314,7 @@ export function VueEspace({ partenaire, onLogout, onProductAdded }) {
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleSubmit} disabled={saving}
               style={{ flex:1, padding:'11px', borderRadius:10, border:'1px solid rgba(90,154,40,0.35)', background:'rgba(90,154,40,0.10)', color:'#3d7a12', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: saving ? 'wait' : 'pointer', fontWeight:600, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : partenaire.publication_mode === 'direct' ? '✓ Publier' : '✓ Soumettre pour validation'}
+              {saving ? 'Envoi…' : editId ? '✓ Mettre à jour' : '✓ Publier et soumettre pour validation'}
             </button>
             <button onClick={() => setShowForm(false)}
               style={{ padding:'11px 18px', borderRadius:10, border:'1px solid #ddd', background:'#fff', color:'#555', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer' }}>
