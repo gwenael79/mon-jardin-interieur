@@ -39,7 +39,7 @@ export function useAchats(userId) {
 // ═══════════════════════════════════════════════════════════
 //  MaBibliotheque — composant principal
 // ═══════════════════════════════════════════════════════════
-export function MaBibliotheque({ userId }) {
+export function MaBibliotheque({ userId, onGoToJardinotheque }) {
   const { achats, loading } = useAchats(userId)
   const [playing, setPlaying] = useState(null) // produit_id en cours
 
@@ -52,10 +52,24 @@ export function MaBibliotheque({ userId }) {
   )
 
   if (audioAchats.length === 0) return (
-    <div style={{ textAlign:'center', padding:'32px 0' }}>
-      <div style={{ fontSize:'var(--fs-emoji-lg, 32px)', opacity:.2, marginBottom:12 }}>🎧</div>
-      <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.30)', fontStyle:'italic' }}>
-        Votre bibliothèque est vide.<br/>Vos achats apparaîtront ici.
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px 24px', textAlign:'center', gap:16 }}>
+      <div style={{ fontSize:48, opacity:.25 }}>🎧</div>
+      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:400, color:'#1a1208', lineHeight:1.3 }}>
+        Votre bibliothèque est vide
+      </div>
+      <div style={{ fontSize:18, color:'#1a1208', lineHeight:1.75, maxWidth:340 }}>
+        Retrouvez ici tous vos achats de la <strong style={{ fontWeight:700 }}>Jardinothèque</strong> — méditations, séances d'hypnose, e-books et vidéos de développement personnel.
+      </div>
+      <div style={{ fontSize:18, color:'#1a1208', lineHeight:1.7, maxWidth:320, fontStyle:'italic' }}>
+        Chaque contenu acheté avec vos lumens ou par paiement direct apparaîtra ici, prêt à être écouté ou consulté.
+      </div>
+      <div
+        onClick={onGoToJardinotheque}
+        style={{ marginTop:8, padding:'10px 22px', borderRadius:20, background:'rgba(var(--lumens-rgb),0.10)', border:'1px solid rgba(var(--lumens-rgb),0.25)', fontSize:18, color:'#1a1208', letterSpacing:'.04em', cursor: onGoToJardinotheque ? 'pointer' : 'default', transition:'background .15s' }}
+        onMouseEnter={e => { if(onGoToJardinotheque) e.currentTarget.style.background='rgba(var(--lumens-rgb),0.20)' }}
+        onMouseLeave={e => { e.currentTarget.style.background='rgba(var(--lumens-rgb),0.10)' }}
+      >
+        🌿 Explorez la <strong style={{ fontWeight:700, textDecoration: onGoToJardinotheque ? 'underline' : 'none', textUnderlineOffset:3 }}>Jardinothèque</strong> pour commencer
       </div>
     </div>
   )

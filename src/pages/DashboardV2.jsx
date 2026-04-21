@@ -1160,6 +1160,7 @@ export default function DashboardPage() {
     onOpenRituals:   () => setOpenRitualsModal(true),
     onOpenNeedModal: () => setShowNeedModal(true),
     onGoToBibliotheque: () => setOpenModalId('bibliotheque'),
+    onGoToJardinotheque: () => setOpenModalId('jardinotheque'),
     isPostRitual:    postRitualSlide,
     openRitualsModal,
     onCloseRituals: () => setOpenRitualsModal(false),
