@@ -591,24 +591,38 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
           )}
         </div>
 
-        {/* Bandeau bas */}
-        <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderTop:'1px solid rgba(96,160,100,.2)' }}>
-          <button
-            onClick={onClose}
-            style={{ padding:'9px 20px', borderRadius:100, background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s', flexShrink:0 }}
-            onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,1)'; e.currentTarget.style.transform='translateY(-1px)' }}
-            onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.8)'; e.currentTarget.style.transform='none' }}
-          >‹ Retour</button>
-
-          {slide.id === 'jardin' && (
+        {/* Bandeau bas — masqué pour le jardin collectif (plein écran) */}
+        {slide.id !== 'champ' && (
+          <div style={{ flexShrink:0, padding:'12px 18px', paddingBottom:'calc(12px + env(safe-area-inset-bottom))', display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderTop:'1px solid rgba(96,160,100,.2)' }}>
             <button
-              onClick={() => onOpenSlide?.('champ')}
-              style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:20, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#d4b050,#a87c28)', boxShadow:'0 4px 16px rgba(180,140,40,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
-              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 22px rgba(180,140,40,.4)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 16px rgba(180,140,40,.3)' }}
-            >🌻 Voir ma fleur dans le jardin collectif</button>
-          )}
-        </div>
+              onClick={onClose}
+              style={{ padding:'9px 20px', borderRadius:100, background:'rgba(255,255,255,.8)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s', flexShrink:0 }}
+              onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,1)'; e.currentTarget.style.transform='translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.8)'; e.currentTarget.style.transform='none' }}
+            >‹ Retour</button>
+
+            {slide.id === 'jardin' && (
+              <button
+                onClick={() => onOpenSlide?.('champ')}
+                style={{ flex:1, padding:'10px 20px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:20, fontWeight:600, color:'#1a1208', background:'linear-gradient(135deg,#d4b050,#a87c28)', boxShadow:'0 4px 16px rgba(180,140,40,.3)', transition:'transform .15s, box-shadow .15s', letterSpacing:'.02em' }}
+                onMouseEnter={e => { e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 22px rgba(180,140,40,.4)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 16px rgba(180,140,40,.3)' }}
+              >🌻 Voir ma fleur dans le jardin collectif</button>
+            )}
+          </div>
+        )}
+
+        {/* Bouton Retour en overlay pour le jardin collectif */}
+        {slide.id === 'champ' && (
+          <div style={{ position:'absolute', bottom:'calc(24px + env(safe-area-inset-bottom))', left:24, zIndex:400 }}>
+            <button
+              onClick={onClose}
+              style={{ padding:'9px 20px', borderRadius:100, background:'rgba(255,255,255,.85)', backdropFilter:'blur(8px)', border:'1px solid rgba(200,160,150,.3)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,.55)', transition:'background .15s, transform .15s', boxShadow:'0 4px 16px rgba(0,0,0,.15)' }}
+              onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,1)'; e.currentTarget.style.transform='translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,.85)'; e.currentTarget.style.transform='none' }}
+            >‹ Retour</button>
+          </div>
+        )}
       </div>
     </div>
   )
