@@ -676,7 +676,7 @@ export function FlowerModal({ userId, onDone, onSkip }) {
       onDone?.(selectedFlower)
     } catch(e) {
       console.warn('[FlowerModal] save error', e)
-      onDone?.(selectedFlower) // on continue quand même
+      onDone?.(selectedFlower)
     } finally {
       setSaving(false)
     }
@@ -685,80 +685,93 @@ export function FlowerModal({ userId, onDone, onSkip }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Epilogue:wght@300;400;500&display=swap');
-        @keyframes ap-fadeIn  { from{opacity:0} to{opacity:1} }
-        @keyframes ap-slideUp { from{opacity:0;transform:scale(.93) translateY(18px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500;600&display=swap');
+        @keyframes fm-fadeIn  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fm-formIn  { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:scale(1)} }
         .fm-overlay {
-          position:fixed; inset:0; z-index:500;
-          background:rgba(0,0,0,0.75); backdrop-filter:blur(8px);
+          position:fixed; inset:0; z-index:1200;
+          background:rgba(10,20,5,.55); backdrop-filter:blur(10px);
           display:flex; align-items:center; justify-content:center; padding:20px;
-          animation:ap-fadeIn .3s ease;
-          font-family:'Epilogue',sans-serif;
+          animation:fm-fadeIn .25s ease both;
+          font-family:'Jost',sans-serif;
         }
         .fm-modal {
-          background:#f8f4f0; border:1px solid rgba(200,160,150,.25);
-          border-radius:20px; width:100%; max-width:420px;
-          padding:40px 36px 36px; position:relative;
-          max-height:92vh; overflow-y:auto;
-          animation:ap-slideUp .38s cubic-bezier(.34,1.56,.64,1) both;
-          --text:#1a1208; --text2:rgba(26,18,8,.78); --text3:rgba(26,18,8,.45);
-          --green:#5a9a28; --greenT:rgba(90,154,40,.4); --green3:rgba(90,154,40,.08);
-          --border2:rgba(0,0,0,.12); --surface-1:rgba(0,0,0,.03);
+          background:rgba(252,248,242,.97);
+          border-radius:24px; width:min(420px,100%);
+          max-height:90vh; overflow-y:auto;
+          padding:36px 32px; position:relative;
+          box-shadow:0 20px 60px rgba(30,60,10,.22);
+          border:1.5px solid rgba(180,210,140,.35);
+          animation:fm-formIn .35s cubic-bezier(.22,1,.36,1) both;
         }
         .fm-close {
-          position:absolute; top:16px; right:18px;
-          width:32px; height:32px; border-radius:50%;
-          border:1px solid rgba(0,0,0,.12); background:none;
-          color:rgba(26,18,8,.45); cursor:pointer; font-size:14px;
+          position:absolute; top:14px; right:16px;
+          width:32px; height:32px; border-radius:50%; border:none; padding:0;
+          background:rgba(0,0,0,.07); color:rgba(30,20,8,.50);
+          font-size:15px; cursor:pointer;
           display:flex; align-items:center; justify-content:center;
+          transition:background .2s;
         }
-        .fm-eyebrow { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:#5a9a28; margin-bottom:10px; }
-        .fm-h2 { font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:300; color:#1a1208; margin-bottom:6px; }
-        .fm-sub { font-size:13px; color:rgba(26,18,8,.45); line-height:1.6; margin-bottom:28px; }
+        .fm-close:hover { background:rgba(0,0,0,.14); }
+        .fm-title { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:400; color:#1a1208; margin-bottom:8px; }
+        .fm-desc  { font-size:15px; color:#1a1208; margin-bottom:6px; line-height:1.65; }
+        .fm-example { font-size:13px; color:rgba(30,20,8,.40); font-style:italic; margin-bottom:18px; }
         .fm-preview {
-          text-align:center; padding:10px; margin-bottom:16px;
-          font-family:'Cormorant Garamond',serif; font-size:18px;
-          color:rgba(26,18,8,.45); letter-spacing:.04em; min-height:40px;
+          text-align:center; padding:8px 0 14px;
+          font-family:'Cormorant Garamond',serif; font-size:20px; color:#1a1208;
         }
-        .fm-preview span { color:#1a1208; }
         .fm-grid {
-          display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
-          max-height:260px; overflow-y:auto; margin-bottom:22px;
-          scrollbar-width:thin;
+          display:grid; grid-template-columns:repeat(3,1fr); gap:7px;
+          max-height:220px; overflow-y:auto; margin-bottom:20px;
+          scrollbar-width:thin; scrollbar-color:rgba(90,154,40,.20) transparent;
         }
         .fm-pill {
-          padding:8px 6px; border-radius:20px; font-size:12px; text-align:center;
-          border:1px solid rgba(0,0,0,.12); cursor:pointer; color:rgba(26,18,8,.45);
-          transition:all .18s; background:rgba(0,0,0,.03);
+          padding:8px 4px; border-radius:20px; font-size:13px; text-align:center;
+          border:1.5px solid rgba(200,160,150,.20); cursor:pointer;
+          color:rgba(30,20,8,.55); transition:all .15s;
+          background:rgba(255,255,255,.55);
         }
-        .fm-pill:hover { border-color:rgba(90,154,40,.4); color:rgba(26,18,8,.78); background:rgba(90,154,40,.08); }
-        .fm-pill.fm-sel { border-color:rgba(90,154,40,.4); background:rgba(90,154,40,.08); color:#5a9a28; }
+        .fm-pill:hover { border-color:rgba(90,154,40,.40); color:rgba(30,20,8,.85); }
+        .fm-pill.fm-sel { border-color:rgba(90,154,40,.55); background:rgba(90,154,40,.10); color:#2e6808; font-weight:500; }
         .fm-cta {
-          width:100%; padding:14px; border-radius:30px;
-          font-family:'Epilogue',sans-serif; font-size:14px; font-weight:500;
-          border:none; background:#5a9a28; color:#f8f4f0;
-          cursor:pointer; margin-bottom:12px;
+          width:100%; padding:14px 20px; border-radius:50px; border:none;
+          background:linear-gradient(135deg,#4a8a20,#2e6808);
+          color:#fff; font-size:16px; font-weight:600; letter-spacing:.03em;
+          font-family:'Jost',sans-serif; cursor:pointer;
+          box-shadow:0 5px 18px rgba(42,104,8,.28);
+          transition:filter .2s; line-height:1.4; white-space:normal;
         }
-        .fm-cta:disabled { opacity:.35; cursor:not-allowed; }
-        .fm-skip { font-size:11px; color:rgba(26,18,8,.35); text-align:center; cursor:pointer; text-decoration:underline; }
-        @media(max-width:768px) {
-          .fm-modal { border-radius:24px 24px 0 0; position:fixed; bottom:0; left:0; right:0; max-width:100%; padding:28px 24px 40px; }
-          .fm-overlay { align-items:flex-end; padding:0; }
-          .fm-grid { max-height:220px; }
-          .fm-pill { font-size:11px; padding:9px 4px; }
+        .fm-cta:hover { filter:brightness(1.08); }
+        .fm-cta:disabled { opacity:.4; cursor:not-allowed; filter:none; }
+        .fm-footer { margin-top:14px; font-size:13px; color:rgba(30,20,8,.38); text-align:center; line-height:1.7; }
+        .fm-skip   { margin-top:10px; font-size:12px; color:rgba(30,20,8,.32); text-align:center; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+        .fm-skip:hover { color:rgba(30,20,8,.55); }
+        @media(max-width:480px) {
+          .fm-modal { padding:28px 20px 28px; }
+          .fm-grid  { max-height:180px; }
         }
       `}</style>
       <div className="fm-overlay">
         <div className="fm-modal">
           {onSkip && <button className="fm-close" onClick={onSkip}>✕</button>}
-          <p className="fm-eyebrow">Votre identité</p>
-          <h2 className="fm-h2">Choisissez<br/>votre fleur</h2>
-          <p className="fm-sub">Ce nom vous identifiera dans la communauté. Vous serez reconnu·e comme <em style={{fontStyle:'normal',color:'rgba(26,18,8,.65)'}}>Prénom · {selectedFlower ?? '...'}</em></p>
-          <div className="fm-preview">
-            {selectedFlower
-              ? <><span>🌸</span> Votre fleur · <span>{selectedFlower}</span></>
-              : 'Sélectionnez un nom ci-dessous'}
+
+          {/* Titre */}
+          <div className="fm-title">Votre identité florale 🌸</div>
+
+          {/* Description */}
+          <div className="fm-desc">
+            Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.
           </div>
+          <div className="fm-example">Ex : Marie · Lavande</div>
+
+          {/* Aperçu — uniquement quand une fleur est choisie */}
+          {selectedFlower && (
+            <div className="fm-preview">
+              🌸 {selectedFlower}
+            </div>
+          )}
+
+          {/* Grille */}
           <div className="fm-grid">
             {FLOWER_NAMES.map(name => (
               <div
@@ -768,9 +781,17 @@ export function FlowerModal({ userId, onDone, onSkip }) {
               >{name}</div>
             ))}
           </div>
+
+          {/* Bouton principal */}
           <button className="fm-cta" onClick={handleConfirm} disabled={!selectedFlower || saving}>
-            {saving ? 'Enregistrement…' : selectedFlower ? `Continuer en tant que · ${selectedFlower} →` : 'Choisissez un nom'}
+            {saving
+              ? 'Enregistrement…'
+              : selectedFlower
+                ? `Entrer dans mon jardin · ${selectedFlower} →`
+                : 'Choisissez une fleur'}
           </button>
+
+          <div className="fm-footer">Modifiable dans vos paramètres.</div>
           {onSkip && <div className="fm-skip" onClick={onSkip}>Passer cette étape</div>}
         </div>
       </div>
