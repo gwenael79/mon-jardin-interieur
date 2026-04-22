@@ -869,26 +869,8 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               </div>
             )}
 
-            {/* ── CHOIX DE LA FLEUR ── */}
-            {rightPanel === 'flower' && (
-              <div className="auth-frame-form">
-                <div className="auth-form-title">Votre identité florale 🌸</div>
-                <div className="auth-form-sub">{displayName} · <em style={{fontStyle:'italic',color:'rgba(30,20,8,.55)'}}>{selFlower ?? '…'}</em></div>
-                <div className="auth-flower-preview">
-                  {selFlower ? <><span>🌸</span> {displayName} · <span>{selFlower}</span></> : 'Choisissez votre fleur ci-dessous'}
-                </div>
-                <div className="auth-flower-grid">
-                  {FLOWER_NAMES.map(n => (
-                    <div key={n} className={'auth-flower-pill' + (selFlower===n?' sel':'')} onClick={() => setSelFlower(n)}>{n}</div>
-                  ))}
-                </div>
-                {error && <div className="auth-error">{error}</div>}
-                <button className="auth-submit" onClick={handleConfirmFlower} disabled={!selFlower||savingFlower}>
-                  {savingFlower ? '…' : selFlower ? `Entrer dans mon jardin · ${selFlower} →` : 'Choisissez une fleur'}
-                </button>
-                <div className="auth-footer">Modifiable dans vos paramètres.</div>
-              </div>
-            )}
+            {/* ── CHOIX DE LA FLEUR (particulier) — rendu via portal en dehors du cadre ── */}
+            {rightPanel === 'flower' && null}
 
             {/* ── RESET MOT DE PASSE ── */}
             {rightPanel === 'reset' && (
@@ -1246,6 +1228,64 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               >
                 {cancelLoading ? 'Annulation en cours…' : 'Oui, annuler mon compte pro'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal choix de la fleur (parcours particulier) ── */}
+      {rightPanel === 'flower' && (
+        <div style={{position:'fixed',inset:0,zIndex:1200,background:'rgba(10,20,5,.55)',backdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'authFadeIn .25s ease both'}}>
+          <div style={{background:'rgba(252,248,242,.97)',borderRadius:24,width:'min(420px,100%)',maxHeight:'90vh',overflowY:'auto',padding:'36px 32px',position:'relative',boxShadow:'0 20px 60px rgba(30,60,10,.22)',border:'1.5px solid rgba(180,210,140,.35)',animation:'authFormIn .35s cubic-bezier(.22,1,.36,1) both'}}>
+
+            {/* Titre */}
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:400,color:'#1a1208',marginBottom:8}}>
+              Votre identité florale 🌸
+            </div>
+
+            {/* Description */}
+            <div style={{fontSize:15,color:'#1a1208',marginBottom:6,lineHeight:1.65}}>
+              Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.
+            </div>
+            <div style={{fontSize:13,color:'rgba(30,20,8,.40)',fontStyle:'italic',marginBottom:18}}>
+              Ex : Marie · Lavande
+            </div>
+
+            {/* Aperçu sélection — affiché uniquement quand une fleur est choisie */}
+            {selFlower && (
+              <div style={{textAlign:'center',padding:'8px 0 14px',fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:'#1a1208'}}>
+                🌸 {displayName} · {selFlower}
+              </div>
+            )}
+
+            {/* Grille de fleurs */}
+            <div className="auth-flower-grid" style={{marginBottom:20}}>
+              {FLOWER_NAMES.map(n => (
+                <div
+                  key={n}
+                  className={'auth-flower-pill' + (selFlower===n?' sel':'')}
+                  style={{fontSize:14}}
+                  onClick={() => setSelFlower(n)}
+                >{n}</div>
+              ))}
+            </div>
+
+            {/* Bouton */}
+            <button
+              className="auth-submit"
+              style={{fontSize:16,lineHeight:1.4,whiteSpace:'normal',padding:'14px 20px'}}
+              onClick={handleConfirmFlower}
+              disabled={!selFlower || savingFlower}
+            >
+              {savingFlower
+                ? '…'
+                : selFlower
+                  ? `Entrer dans mon jardin · ${selFlower} →`
+                  : 'Choisissez une fleur'}
+            </button>
+
+            <div style={{marginTop:14,fontSize:13,color:'rgba(30,20,8,.38)',textAlign:'center',lineHeight:1.7}}>
+              Modifiable dans vos paramètres.
             </div>
           </div>
         </div>
