@@ -575,24 +575,34 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   // "Je ne souhaite pas créer de compte pro" ne passe jamais par cette fonction.
   async function handleStartProAdventure() {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const { data: { user } }    = await supabase.auth.getUser()
+      const { data: { session }, error: sessionErr } = await supabase.auth.getSession()
+      const { data: { user },    error: userErr }    = await supabase.auth.getUser()
+
+      console.log('[Systeme.io pro] session:', !!session, '| sessionErr:', sessionErr)
+      console.log('[Systeme.io pro] user:', user?.email, '| userErr:', userErr)
+      console.log('[Systeme.io pro] proForm.prenom:', proForm.prenom, '| proForm.nom:', proForm.nom)
+
       if (session && user) {
-        await supabase.functions.invoke('register-to-systemeio', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: {
-            record: {
-              email:  user.email,
-              prenom: proForm.prenom?.trim() || displayName?.trim() || '',
-              nom:    proForm.nom?.trim()    || '',
-              role:   'pro',
-            },
+        const payload = {
+          record: {
+            email:  user.email,
+            prenom: proForm.prenom?.trim() || displayName?.trim() || '',
+            nom:    proForm.nom?.trim()    || '',
+            role:   'pro',
           },
+        }
+        console.log('[Systeme.io pro] payload envoyé:', JSON.stringify(payload))
+
+        const { data: fnData, error: fnError } = await supabase.functions.invoke('register-to-systemeio', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: payload,
         })
+        console.log('[Systeme.io pro] réponse fn:', JSON.stringify(fnData), '| erreur:', fnError)
+      } else {
+        console.warn('[Systeme.io pro] pas de session ou user — envoi annulé')
       }
     } catch(e) {
-      // Non-bloquant : le parcours continue même si Systeme.io est KO
-      console.warn('[Systeme.io pro]', e)
+      console.error('[Systeme.io pro] exception:', e)
     }
     setShowProWelcome(false)
     setShowProFlower(true)
@@ -651,19 +661,23 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
 
         // Envoi Systeme.io : email + prénom + tag particulier (SYSTEMEIO_TAG_ID)
         try {
-          await supabase.functions.invoke('register-to-systemeio', {
-            headers: { Authorization: `Bearer ${data.session.access_token}` },
-            body: {
-              record: {
-                email:  data.user.email,
-                prenom: displayName.trim(),
-                role:   'particulier',
-              },
+          const payload = {
+            record: {
+              email:  data.user.email,
+              prenom: displayName.trim(),
+              role:   'particulier',
             },
+          }
+          console.log('[Systeme.io particulier] session access_token présent:', !!data.session.access_token)
+          console.log('[Systeme.io particulier] payload:', JSON.stringify(payload))
+
+          const { data: fnData, error: fnError } = await supabase.functions.invoke('register-to-systemeio', {
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+            body: payload,
           })
+          console.log('[Systeme.io particulier] réponse fn:', JSON.stringify(fnData), '| erreur:', fnError)
         } catch(sioErr) {
-          // Non-bloquant : l'inscription continue même si Systeme.io est KO
-          console.warn('[Systeme.io particulier]', sioErr)
+          console.error('[Systeme.io particulier] exception:', sioErr)
         }
 
         goTo('flower')
