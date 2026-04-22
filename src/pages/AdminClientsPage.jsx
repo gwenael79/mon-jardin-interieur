@@ -83,6 +83,87 @@ function AdminNav({ current }) {
   )
 }
 
+// ── Accordéon détail utilisateurs ─────────────────────────────────────────
+function FunnelUserDetail({ users }) {
+  const [open, setOpen] = useState(false)
+  const sorted = [...users].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+
+  return (
+    <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14, marginTop: 4 }}>
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', padding: '4px 0' }}
+      >
+        <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: 'Jost,sans-serif' }}>
+          Détail par utilisateur · {sorted.length}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text3)', transition: 'transform .2s', transform: open ? 'rotate(180deg)' : 'none' }}>▾</div>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 14, overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Jost,sans-serif' }}>
+            <thead>
+              <tr>
+                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan'].map(h => (
+                  <th key={h} style={{ textAlign: h === 'Utilisateur' ? 'left' : 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((u, i) => {
+                const completedDays = (u.completedDays ?? []).map(Number)
+                return (
+                  <tr key={u.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+                    {/* Nom */}
+                    <td style={{ padding: '7px 8px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 11 }}>
+                      {u.display_name || u.email || u.id.slice(0, 8)}
+                    </td>
+                    {/* Date inscription */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center', color: 'var(--text3)', whiteSpace: 'nowrap', fontSize: 10 }}>
+                      {new Date(u.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </td>
+                    {/* Onboarding */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                      {u.onboarding_completed
+                        ? <span style={{ color: '#a78bf5', fontSize: 14 }}>✓</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
+                    </td>
+                    {/* J1 → J7 cumulatif : ✓ si ce jour OU un jour supérieur a été complété */}
+                    {[1,2,3,4,5,6,7].map(j => {
+                      const done = completedDays.some(d => d >= j)
+                      return (
+                        <td key={j} style={{ padding: '7px 8px', textAlign: 'center' }}>
+                          {done
+                            ? <span style={{ color: '#78c85e', fontSize: 14 }}>✓</span>
+                            : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
+                        </td>
+                      )
+                    })}
+                    {/* Plan */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                      <span style={{
+                        fontSize: 9, padding: '2px 7px', borderRadius: 100,
+                        background: u.plan === 'premium' ? 'rgba(246,196,83,0.12)' : 'rgba(255,255,255,0.06)',
+                        border: `1px solid ${u.plan === 'premium' ? 'rgba(246,196,83,0.3)' : 'rgba(255,255,255,0.1)'}`,
+                        color: u.plan === 'premium' ? '#F6C453' : 'var(--text3)',
+                      }}>
+                        {u.plan ?? 'free'}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Questionnaires QCM ────────────────────────────────────────────────────
 function TabQCM() {
   const [rows,      setRows]      = useState([])
@@ -246,6 +327,7 @@ export function AdminClientsPage() {
   const [attendance,    setAttendance]    = useState(null)
   const [palmares,      setPalmares]      = useState([])
   const [funnel,        setFunnel]        = useState(null)
+  const [funnelUsers,   setFunnelUsers]   = useState([])
   const [subStats,      setSubStats]      = useState(null)
   const [fullStats,     setFullStats]     = useState(null)
   const [statsPeriod,   setStatsPeriod]   = useState('week')
@@ -283,9 +365,10 @@ export function AdminClientsPage() {
   useEffect(() => { if (tab === 'statistiques') loadFullStats() }, [tab])
 
   async function loadStats() {
-    const [{ count: totalUsers }] = await Promise.all([
-      supabase.from('users').select('*', { count: 'exact', head: true }).not('id', 'in', `(${ADMIN_IDS.join(',')})`),
-    ])
+    const { count: totalUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .not('id', 'in', `(${ADMIN_IDS.join(',')})`)
     setStats({ totalUsers })
   }
 
@@ -294,91 +377,47 @@ export function AdminClientsPage() {
       const { data, error } = await supabase
         .from('subscriptions')
         .select('user_id, product_id, product_name, product_icon, months, price, is_active, purchased_at, expires_at')
-
-      console.log('[subscriptions] data:', data, 'error:', error)
-
       if (error) { console.error('[subscriptions]', error); return }
-
       const rows = data ?? []
-
       const PLANS = [
         { key: '1 mois',         icon: '🌱', months: 1,  price: 13,  color: '#7ab5f5' },
         { key: '1 an',           icon: '✨', months: 12, price: 108, color: '#e8a020' },
         { key: '1 an solidaire', icon: '💚', months: 12, price: null, color: '#d4779a' },
       ]
-
       const knownKeys = PLANS.map(p => p.key)
       const plans = PLANS.map(p => {
         const matching = rows.filter(r => r.product_name === p.key)
-        const total    = matching.length
-        const actifs   = matching.filter(r => r.is_active).length
-        const ca       = matching.reduce((s, r) => s + Number(r.price ?? 0), 0)
-        return { ...p, total, actifs, ca }
+        return { ...p, total: matching.length, actifs: matching.filter(r => r.is_active).length, ca: matching.reduce((s, r) => s + Number(r.price ?? 0), 0) }
       })
-
-      // Anciens tarifs (3 mois, 6 mois, Inconnu) regroupés
       const legacyRows = rows.filter(r => !knownKeys.includes(r.product_name) && r.product_name !== 'Inconnu')
       if (legacyRows.length > 0) {
-        plans.push({
-          key: 'Anciens tarifs', icon: '📦', months: null, price: null, color: '#888888',
-          total:  legacyRows.length,
-          actifs: legacyRows.filter(r => r.is_active).length,
-          ca:     legacyRows.reduce((s, r) => s + Number(r.price ?? 0), 0),
-        })
+        plans.push({ key: 'Anciens tarifs', icon: '📦', months: null, price: null, color: '#888888', total: legacyRows.length, actifs: legacyRows.filter(r => r.is_active).length, ca: legacyRows.reduce((s, r) => s + Number(r.price ?? 0), 0) })
       }
-
-      // Histogramme : CA cumulé par mois sur les 12 prochains mois
-      const now    = new Date()
       const months = Array.from({ length: 12 }, (_, i) => {
-        const d = new Date(2026, 2 + i, 1) // mars 2026 = mois index 2
+        const d = new Date(2026, 2 + i, 1)
         return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }) }
       })
-
       const histogram = months.map(m => {
         const monthStart = new Date(m.key + '-01')
         const monthEnd   = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0)
-
-        // CA réalisé ce mois = achats dont purchased_at est dans ce mois
         const caByPlan = {}
-        PLANS.forEach(p => {
-          const matching = rows.filter(r =>
-            r.product_name === p.key &&
-            r.purchased_at && r.purchased_at.startsWith(m.key)
-          )
-          caByPlan[p.key] = matching.reduce((s, r) => s + Number(r.price ?? 0), 0)
-        })
+        PLANS.forEach(p => { caByPlan[p.key] = rows.filter(r => r.product_name === p.key && r.purchased_at && r.purchased_at.startsWith(m.key)).reduce((s, r) => s + Number(r.price ?? 0), 0) })
         const caTotal = Object.values(caByPlan).reduce((s, v) => s + v, 0)
-
-        // Abonnements actifs ce mois = purchased_at <= fin du mois ET expires_at >= début du mois
         const actifsByPlan = {}
-        PLANS.forEach(p => {
-          actifsByPlan[p.key] = rows.filter(r =>
-            r.product_name === p.key &&
-            r.purchased_at && new Date(r.purchased_at) <= monthEnd &&
-            r.expires_at   && new Date(r.expires_at)   >= monthStart
-          ).length
-        })
+        PLANS.forEach(p => { actifsByPlan[p.key] = rows.filter(r => r.product_name === p.key && r.purchased_at && new Date(r.purchased_at) <= monthEnd && r.expires_at && new Date(r.expires_at) >= monthStart).length })
         const actifsTotal = Object.values(actifsByPlan).reduce((s, v) => s + v, 0)
-
         return { ...m, caByPlan, caTotal, actifsByPlan, actifsTotal }
       })
-
       const caTotal  = rows.filter(r => r.product_name !== 'Inconnu').reduce((s, r) => s + Number(r.price ?? 0), 0)
-      const nbTotal  = rows.length
-      const nbActifs = rows.filter(r => r.is_active).length
-
-      setSubStats({ plans, caTotal, nbTotal, nbActifs, histogram, PLANS })
-    } catch (e) {
-      console.error('[subscriptions] exception:', e)
-    }
+      setSubStats({ plans, caTotal, nbTotal: rows.length, nbActifs: rows.filter(r => r.is_active).length, histogram, PLANS })
+    } catch (e) { console.error('[subscriptions] exception:', e) }
   }
 
   async function loadAttendance() {
     try {
       const { data: att } = await supabase.rpc('get_admin_attendance_stats')
       if (att !== null && att !== undefined) {
-        const parsed = typeof att === 'string' ? JSON.parse(att) : att
-        setAttendance(parsed)
+        setAttendance(typeof att === 'string' ? JSON.parse(att) : att)
       } else {
         const today = new Date().toISOString().slice(0, 10)
         const week  = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)
@@ -404,139 +443,105 @@ export function AdminClientsPage() {
         const parsed = typeof pal === 'string' ? JSON.parse(pal) : pal
         setPalmares(Array.isArray(parsed) ? parsed : [])
       } else {
-        const ADMIN2 = ADMIN_IDS[1]
-        const { data: users } = await supabase.from('users').select('id, display_name, email').not('id', 'in', `(${ADMIN_IDS.join(',')})`)
-        const { data: quizRows } = await supabase.from('daily_quiz').select('user_id, date').neq('user_id', ADMIN2)
-        const { data: lumensRows } = await supabase.from('lumens').select('user_id, streak_days').neq('user_id', ADMIN2)
+        const { data: users }      = await supabase.from('users').select('id, display_name, email').not('id', 'in', `(${ADMIN_IDS.join(',')})`)
+        const { data: quizRows }   = await supabase.from('daily_quiz').select('user_id, date').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`)
+        const { data: lumensRows } = await supabase.from('lumens').select('user_id, streak_days').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`)
         const countMap = {}, lastMap = {}, streakMap = {}
         ;(quizRows ?? []).forEach(q => {
           countMap[q.user_id] = (countMap[q.user_id] ?? 0) + 1
           if (!lastMap[q.user_id] || q.date > lastMap[q.user_id]) lastMap[q.user_id] = q.date
         })
         ;(lumensRows ?? []).forEach(l => { streakMap[l.user_id] = l.streak_days ?? 0 })
-        const fallback = (users ?? []).map(u => ({
-          id: u.id, display_name: u.display_name, email: u.email,
-          connexions: countMap[u.id] ?? 0,
-          last_active: lastMap[u.id] ?? null,
-          streak_days: streakMap[u.id] ?? 0,
-        })).sort((a, b) => b.connexions - a.connexions).slice(0, 20)
-        setPalmares(fallback)
+        setPalmares((users ?? []).map(u => ({ id: u.id, display_name: u.display_name, email: u.email, connexions: countMap[u.id] ?? 0, last_active: lastMap[u.id] ?? null, streak_days: streakMap[u.id] ?? 0 })).sort((a, b) => b.connexions - a.connexions).slice(0, 20))
       }
     } catch (e) { console.error('[clients] palmares error:', e) }
   }
 
   async function loadFunnel() {
     try {
-      // 1. Tous les users non-admin avec leur plan et statut onboarding
-      const { data: allUsers, error: e1 } = await supabase
-        .from('users').select('id, onboarding_completed, plan')
-        .not('id', 'in', `(${ADMIN_IDS.join(',')})`)
+      const [
+        { data: allUsers, error: e1 },
+        { data: profiles, error: e2 },
+      ] = await Promise.all([
+        supabase.from('users').select('id, email, display_name, created_at, onboarding_completed, plan').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
+        supabase.from('profiles').select('id, week_one_data'),
+      ])
       if (e1) console.error('[funnel] users:', e1)
-
-      // 2. Tous les profils (nécessite la policy RLS admin)
-      const { data: profiles, error: e2 } = await supabase
-        .from('profiles').select('id, week_one_data')
       if (e2) console.error('[funnel] profiles:', e2)
 
-      // Index profiles par id
       const profileMap = {}
       ;(profiles ?? []).forEach(p => { profileMap[p.id] = p })
 
-      // Compter la position ACTUELLE de chaque utilisateur
-      const counts = { inscrit: 0, onboarding: 0, jour: [0,0,0,0,0,0], dashboard: 0, premium: 0 }
+      const counts   = { inscrit: 0, onboarding: 0, jour: [0,0,0,0,0,0,0], dashboard: 0 }
+      const userList = []
 
       ;(allUsers ?? []).forEach(u => {
-        // Premium → étape finale
-        if (u.plan === 'premium') { counts.premium++; return }
-
         const completedDays = (profileMap[u.id]?.week_one_data?.completedDays ?? []).map(Number)
+        const maxDay        = completedDays.length > 0 ? Math.max(...completedDays) : 0
 
-        // Pas encore fait l'onboarding
-        if (!u.onboarding_completed) { counts.inscrit++; return }
+        userList.push({ id: u.id, email: u.email, display_name: u.display_name, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, completedDays })
 
-        // Onboarding fait mais semaine 1 pas commencée
-        if (completedDays.length === 0) { counts.onboarding++; return }
-
-        const maxDay = Math.max(...completedDays)
-
-        // A fini la semaine 1 complète → Dashboard
-        if (maxDay >= 7) { counts.dashboard++; return }
-
-        // En cours de semaine 1 : position = dernier jour validé (J1→J6)
-        counts.jour[maxDay - 1]++
+        if (!u.onboarding_completed)    { counts.inscrit++;              return }
+        if (completedDays.length === 0) { counts.onboarding++;           return }
+        if (maxDay >= 7)                { counts.dashboard++;            return }
+        if (maxDay >= 1 && maxDay <= 6)   counts.jour[maxDay - 1]++
       })
 
+      setFunnelUsers(userList)
       setFunnel([
-        { label: 'Inscrits',   icon: '🌱', count: counts.inscrit,      color: 'rgba(150,212,133,0.35)' },
-        { label: 'Onboarding', icon: '✅', count: counts.onboarding,    color: '#7ab5f5' },
-        { label: 'Jour 1',     icon: '1',  count: counts.jour[0],       color: '#90d07a' },
-        { label: 'Jour 2',     icon: '2',  count: counts.jour[1],       color: '#84cc6c' },
-        { label: 'Jour 3',     icon: '3',  count: counts.jour[2],       color: '#78c85e' },
-        { label: 'Jour 4',     icon: '4',  count: counts.jour[3],       color: '#6cc450' },
-        { label: 'Jour 5',     icon: '5',  count: counts.jour[4],       color: '#60c044' },
-        { label: 'Jour 6',     icon: '6',  count: counts.jour[5],       color: '#54bc3a' },
-        { label: 'Dashboard',  icon: '🏡', count: counts.dashboard,     color: '#96d485' },
-        { label: 'Premium',    icon: '✨', count: counts.premium,       color: '#F6C453' },
+        { label: 'Inscrits',   count: counts.inscrit    },
+        { label: 'Onboarding', count: counts.onboarding },
+        { label: 'Jour 1',     count: counts.jour[0]    },
+        { label: 'Jour 2',     count: counts.jour[1]    },
+        { label: 'Jour 3',     count: counts.jour[2]    },
+        { label: 'Jour 4',     count: counts.jour[3]    },
+        { label: 'Jour 5',     count: counts.jour[4]    },
+        { label: 'Jour 6',     count: counts.jour[5]    },
+        { label: 'Jour 7',     count: counts.jour[6]    },
+        { label: 'Dashboard',  count: counts.dashboard  },
       ])
     } catch (e) {
       console.error('[funnel] exception:', e)
-      setFunnel([
-        { label: 'Inscrits',   icon: '🌱', count: 0, color: 'rgba(150,212,133,0.35)' },
-        { label: 'Onboarding', icon: '✅', count: 0, color: '#7ab5f5' },
-        { label: 'Jour 1',     icon: '1',  count: 0, color: '#90d07a' },
-        { label: 'Jour 2',     icon: '2',  count: 0, color: '#84cc6c' },
-        { label: 'Jour 3',     icon: '3',  count: 0, color: '#78c85e' },
-        { label: 'Jour 4',     icon: '4',  count: 0, color: '#6cc450' },
-        { label: 'Jour 5',     icon: '5',  count: 0, color: '#60c044' },
-        { label: 'Jour 6',     icon: '6',  count: 0, color: '#54bc3a' },
-        { label: 'Dashboard',  icon: '🏡', count: 0, color: '#96d485' },
-        { label: 'Premium',    icon: '✨', count: 0, color: '#F6C453' },
-      ])
+      setFunnel(Array(10).fill(null).map(() => ({ label: '', count: 0 })))
+      setFunnelUsers([])
     }
   }
 
   async function loadFullStats() {
     const ago  = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10)
     const periods = { day: ago(0), week: ago(6), month: ago(29), year: ago(364) }
-
-    const { data: usersData } = await supabase.from('users').select('id, created_at').not('id', 'in', `(${ADMIN_IDS.join(',')})`)
+    const [
+      { data: usersData },
+      { data: sessData },
+      { data: actData },
+      { data: atelierData },
+      { data: regData },
+      { data: defiData },
+    ] = await Promise.all([
+      supabase.from('users').select('id, created_at').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
+      supabase.from('analytics_events').select('user_id, created_at').eq('event_type', 'session_start').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
+      supabase.from('activity').select('user_id, action, created_at').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
+      supabase.from('ateliers').select('id, created_at').not('animator_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
+      supabase.from('atelier_registrations').select('created_at').gte('created_at', ago(364)),
+      supabase.from('analytics_events').select('created_at').eq('event_type', 'defi_join').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
+    ])
     const usersByDate = {}
-    ;(usersData ?? []).forEach(u => { const d = u.created_at?.slice(0, 10); if (d) usersByDate[d] = (usersByDate[d] ?? 0) + 1 })
-
-    const { data: sessData } = await supabase.from('analytics_events').select('user_id, created_at').eq('event_type', 'session_start').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364))
+    ;(usersData ?? []).forEach(u => { const d = u.created_at?.slice(0,10); if (d) usersByDate[d] = (usersByDate[d] ?? 0) + 1 })
     const sessUsersByDate = {}
-    ;(sessData ?? []).forEach(s => {
-      const d = s.created_at?.slice(0, 10); if (!d) return
-      if (!sessUsersByDate[d]) sessUsersByDate[d] = new Set()
-      sessUsersByDate[d].add(s.user_id)
-    })
-
-    const { data: actData } = await supabase.from('activity').select('user_id, action, created_at').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364))
+    ;(sessData ?? []).forEach(s => { const d = s.created_at?.slice(0,10); if (!d) return; if (!sessUsersByDate[d]) sessUsersByDate[d] = new Set(); sessUsersByDate[d].add(s.user_id) })
     const actByDateAction = {}
-    ;(actData ?? []).forEach(a => {
-      const d = a.created_at?.slice(0, 10); if (!d) return
-      const key = `${d}__${a.action}`
-      actByDateAction[key] = (actByDateAction[key] ?? 0) + 1
-    })
-
-    const { data: atelierData } = await supabase.from('ateliers').select('id, created_at').not('animator_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364))
+    ;(actData ?? []).forEach(a => { const d = a.created_at?.slice(0,10); if (!d) return; const key = `${d}__${a.action}`; actByDateAction[key] = (actByDateAction[key] ?? 0) + 1 })
     const ateliersByDate = {}
-    ;(atelierData ?? []).forEach(a => { const d = a.created_at?.slice(0, 10); if (d) ateliersByDate[d] = (ateliersByDate[d] ?? 0) + 1 })
-
-    const { data: regData } = await supabase.from('atelier_registrations').select('created_at').gte('created_at', ago(364))
+    ;(atelierData ?? []).forEach(a => { const d = a.created_at?.slice(0,10); if (d) ateliersByDate[d] = (ateliersByDate[d] ?? 0) + 1 })
     const regsByDate = {}
-    ;(regData ?? []).forEach(r => { const d = r.created_at?.slice(0, 10); if (d) regsByDate[d] = (regsByDate[d] ?? 0) + 1 })
-
-    const { data: defiData } = await supabase.from('analytics_events').select('created_at').eq('event_type', 'defi_join').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364))
+    ;(regData ?? []).forEach(r => { const d = r.created_at?.slice(0,10); if (d) regsByDate[d] = (regsByDate[d] ?? 0) + 1 })
     const defisByDate = {}
-    ;(defiData ?? []).forEach(d => { const day = d.created_at?.slice(0, 10); if (day) defisByDate[day] = (defisByDate[day] ?? 0) + 1 })
-
-    const sumFrom = (map, from) => Object.entries(map).filter(([d]) => d >= from).reduce((s, [, v]) => s + v, 0)
+    ;(defiData ?? []).forEach(d => { const day = d.created_at?.slice(0,10); if (day) defisByDate[day] = (defisByDate[day] ?? 0) + 1 })
+    const sumFrom  = (map, from) => Object.entries(map).filter(([d]) => d >= from).reduce((s, [, v]) => s + v, 0)
     const uniqFrom = (map, from) => new Set(Object.entries(map).filter(([d]) => d >= from).flatMap(([, s]) => [...s])).size
-    const build = (map) => ({ day: sumFrom(map, periods.day), week: sumFrom(map, periods.week), month: sumFrom(map, periods.month), year: sumFrom(map, periods.year) })
-    const chart30 = (map) => { const days = []; for (let i = 29; i >= 0; i--) { const d = ago(i); days.push({ date: d, count: map[d] ?? 0 }) }; return days }
-    const actMap = (action) => { const m = {}; Object.entries(actByDateAction).forEach(([key, v]) => { const [d, a] = key.split('__'); if (a === action) m[d] = (m[d] ?? 0) + v }); return m }
-
+    const build    = (map) => ({ day: sumFrom(map, periods.day), week: sumFrom(map, periods.week), month: sumFrom(map, periods.month), year: sumFrom(map, periods.year) })
+    const chart30  = (map) => { const days = []; for (let i = 29; i >= 0; i--) { const d = ago(i); days.push({ date: d, count: map[d] ?? 0 }) }; return days }
+    const actMap   = (action) => { const m = {}; Object.entries(actByDateAction).forEach(([key, v]) => { const [d, a] = key.split('__'); if (a === action) m[d] = (m[d] ?? 0) + v }); return m }
     setFullStats({
       inscriptions:      { ...build(usersByDate), chart: chart30(usersByDate) },
       connexions:        { day: uniqFrom(sessUsersByDate, periods.day), week: uniqFrom(sessUsersByDate, periods.week), month: uniqFrom(sessUsersByDate, periods.month), year: uniqFrom(sessUsersByDate, periods.year), chart: chart30(Object.fromEntries(Object.entries(sessUsersByDate).map(([d, s]) => [d, s.size]))) },
@@ -559,7 +564,6 @@ export function AdminClientsPage() {
     <div className="adm-root">
       <style>{css}</style>
 
-      {/* TOPBAR */}
       <div className="adm-topbar">
         <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <img src="/icons/icon-192.png" alt="logo" style={{ width: 28, height: 28, borderRadius: '50%' }} />
@@ -573,7 +577,7 @@ export function AdminClientsPage() {
 
       <div className="adm-body">
 
-        {/* COMPTEUR INSCRIPTIONS LED */}
+        {/* COMPTEUR LED */}
         <div className="adm-counter">
           <div className="adm-counter-screen">
             <div className="adm-counter-num">
@@ -599,97 +603,78 @@ export function AdminClientsPage() {
         {tab === 'frequentation' && (
           <div className="adm-section">
 
-            {/* ── FUNNEL HISTOGRAMME ── */}
-            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, padding: '20px 24px', marginBottom: 24 }}>
-              <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 20 }}>
-                Funnel d'engagement — parcours utilisateurs
-              </div>
-
-              {!funnel ? (
-                <div className="adm-empty">Chargement…</div>
-              ) : (() => {
-                const max = Math.max(funnel[0]?.count ?? 1, 1)
-                const total = funnel.reduce((s, f) => s + f.count, 0) || 1
-                const inWeekOne = funnel.slice(2, 8).reduce((s, f) => s + f.count, 0)
-                return (
-                  <>
-                    {/* Barres */}
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 5, height: 180 }}>
-                      {funnel.map((step, i) => {
-                        const barPct = Math.max(2, Math.round((step.count / max) * 100))
-                        const pctOfTotal = Math.round((step.count / total) * 100)
-                        return (
-                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                            {/* % du total */}
-                            {step.count > 0 && (
-                              <div style={{ fontSize: 8, color: 'var(--text3)', marginBottom: 3, fontFamily: 'Jost,sans-serif' }}>
-                                {pctOfTotal}%
-                              </div>
-                            )}
-                            {/* Nombre */}
-                            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontWeight: 300, color: 'var(--text)', lineHeight: 1, marginBottom: 5 }}>
-                              {step.count}
-                            </div>
-                            {/* Barre */}
-                            <div style={{ width: '78%', height: `${barPct}%`, minHeight: 4, background: step.color, borderRadius: '4px 4px 0 0', transition: 'height .5s ease' }} />
-                          </div>
-                        )
-                      })}
+            {/* ── FUNNEL ── */}
+            {!funnel ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : (() => {
+              const get = (i) => funnel[i]?.count ?? 0
+              const totalInscrits = funnel.reduce((s, f) => s + f.count, 0)
+              const steps = [
+                { label: 'Onboarding', short: 'Onb.',  count: get(1), color: '#a78bf5' },
+                { label: 'Jour 1',     short: 'J1',    count: get(2), color: '#90d07a' },
+                { label: 'Jour 2',     short: 'J2',    count: get(3), color: '#84cc6c' },
+                { label: 'Jour 3',     short: 'J3',    count: get(4), color: '#78c85e' },
+                { label: 'Jour 4',     short: 'J4',    count: get(5), color: '#6cc450' },
+                { label: 'Jour 5',     short: 'J5',    count: get(6), color: '#60c044' },
+                { label: 'Jour 6',     short: 'J6',    count: get(7), color: '#54bc3a' },
+                { label: 'Jour 7',     short: 'J7',    count: get(8), color: '#48b830' },
+                { label: 'Complet',  short: 'Fini',  count: get(9), color: '#7ab5f5' },
+              ]
+              const max = Math.max(...steps.map(s => s.count), 1)
+              return (
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, padding: '20px 24px', marginBottom: 24 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 20 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                      Funnel d'engagement — parcours utilisateurs
                     </div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'Jost,sans-serif' }}>
+                      <span style={{ color: '#fff', fontWeight: 500 }}>{totalInscrits}</span> utilisateurs au total
+                      {get(0) > 0 && <span style={{ marginLeft: 8, color: 'rgba(255,200,100,0.7)' }}>· {get(0)} n'ont pas démarré</span>}
+                    </div>
+                  </div>
 
-                    {/* Axe X — étiquettes */}
-                    <div style={{ display: 'flex', gap: 5, marginTop: 0, borderTop: '1px solid var(--border2)', paddingTop: 10 }}>
-                      {funnel.map((step, i) => (
-                        <div key={i} style={{ flex: 1, textAlign: 'center' }}>
-                          <div style={{ fontSize: i >= 2 && i <= 7 ? 11 : 14, lineHeight: 1, color: i >= 2 && i <= 7 ? 'rgba(150,212,133,0.6)' : 'inherit', fontFamily: i >= 2 && i <= 7 ? "'Cormorant Garamond',serif" : 'inherit' }}>
-                            {step.icon}
+                  {/* Histogramme */}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 180 }}>
+                    {steps.map((step) => {
+                      const barPct = Math.max(2, Math.round((step.count / max) * 100))
+                      return (
+                        <div key={step.label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 15, fontWeight: 300, color: step.count > 0 ? '#fff' : 'rgba(255,255,255,0.2)', lineHeight: 1, marginBottom: 5 }}>
+                            {step.count}
                           </div>
-                          <div style={{ fontSize: 8, color: 'var(--text3)', marginTop: 4, letterSpacing: '.03em', lineHeight: 1.3 }}>
-                            {step.label}
-                          </div>
+                          <div style={{ width: '78%', height: `${barPct}%`, minHeight: 4, background: step.color, borderRadius: '4px 4px 0 0', opacity: step.count > 0 ? 1 : 0.15, transition: 'height .5s ease' }} />
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })}
+                  </div>
 
-                    {/* Résumé */}
-                    <div style={{ display: 'flex', gap: 20, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border2)', flexWrap: 'wrap' }}>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'Jost,sans-serif' }}>
-                        <span style={{ color: '#7ab5f5', fontWeight: 500 }}>{funnel[1]?.count ?? 0}</span>{' '}en onboarding
+                  {/* Axe X */}
+                  <div style={{ display: 'flex', gap: 6, borderTop: '1px solid var(--border2)', paddingTop: 10, marginBottom: 4 }}>
+                    {steps.map((step) => (
+                      <div key={step.label} style={{ flex: 1, textAlign: 'center' }}>
+                        <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.02em', fontFamily: 'Jost,sans-serif' }}>{step.short}</div>
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'Jost,sans-serif' }}>
-                        <span style={{ color: '#84cc6c', fontWeight: 500 }}>{inWeekOne}</span>{' '}en cours de semaine 1
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'Jost,sans-serif' }}>
-                        <span style={{ color: '#96d485', fontWeight: 500 }}>{funnel[8]?.count ?? 0}</span>{' '}sur le dashboard
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'Jost,sans-serif' }}>
-                        <span style={{ color: '#F6C453', fontWeight: 500 }}>{funnel[9]?.count ?? 0}</span>{' '}premium
-                      </div>
-                    </div>
-                  </>
-                )
-              })()}
-            </div>
+                    ))}
+                  </div>
+
+                  {/* Accordéon détail utilisateurs */}
+                  <FunnelUserDetail users={funnelUsers} />
+
+                  <div style={{ marginTop: 10, fontSize: 9, color: 'rgba(255,255,255,0.18)', fontFamily: 'Jost,sans-serif', textAlign: 'right' }}>
+                    Chaque utilisateur compté une seule fois à son étape actuelle · plan ignoré · comptes admin exclus
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* ── ABONNEMENTS PREMIUM ── */}
             <div style={{ background:'#3d4248', border:'1px solid rgba(255,255,255,0.10)', borderRadius:16, padding:28, marginBottom:24 }}>
-              <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)', letterSpacing:'.15em', textTransform:'uppercase', marginBottom:24 }}>
-                💳 Abonnements Premium
-              </div>
-              {!subStats ? (
-                <div className="adm-empty">Chargement…</div>
-              ) : (
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)', letterSpacing:'.15em', textTransform:'uppercase', marginBottom:24 }}>💳 Abonnements Premium</div>
+              {!subStats ? <div className="adm-empty">Chargement…</div> : (
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 2fr', gap:20 }}>
-
-                  {/* COL GAUCHE 1/3 — stats + formules */}
                   <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-
-                    {/* Résumé global */}
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:4 }}>
-                      {[
-                        { lbl:'Total',  val: subStats.nbTotal,  color:'#ffffff' },
-                        { lbl:'Actifs', val: subStats.nbActifs, color:'#96d485' },
-                      ].map((s, i) => (
+                      {[{ lbl:'Total', val: subStats.nbTotal, color:'#ffffff' }, { lbl:'Actifs', val: subStats.nbActifs, color:'#96d485' }].map((s, i) => (
                         <div key={i} style={{ background:'rgba(0,0,0,0.20)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'12px 14px', textAlign:'center' }}>
                           <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:36, fontWeight:300, color:s.color, lineHeight:1 }}>{s.val}</div>
                           <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.08em', textTransform:'uppercase', marginTop:6 }}>{s.lbl}</div>
@@ -697,32 +682,18 @@ export function AdminClientsPage() {
                       ))}
                     </div>
                     <div style={{ background:'rgba(0,0,0,0.20)', border:'1px solid rgba(246,196,83,0.15)', borderRadius:10, padding:'12px 14px', textAlign:'center', marginBottom:8 }}>
-                      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:36, fontWeight:300, color:'#F6C453', lineHeight:1 }}>
-                        {subStats.caTotal.toLocaleString('fr-FR', { style:'currency', currency:'EUR' })}
-                      </div>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:36, fontWeight:300, color:'#F6C453', lineHeight:1 }}>{subStats.caTotal.toLocaleString('fr-FR', { style:'currency', currency:'EUR' })}</div>
                       <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.08em', textTransform:'uppercase', marginTop:6 }}>CA total</div>
                     </div>
-
-                    {/* Formules */}
                     {subStats.plans.map((p, i) => (
-                      <div key={i} style={{
-                        background:'rgba(0,0,0,0.15)',
-                        border:`1px solid ${p.total > 0 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'}`,
-                        borderRadius:10, padding:'12px 14px',
-                        display:'flex', alignItems:'center', gap:10,
-                        opacity: p.total === 0 ? 0.45 : 1,
-                      }}>
+                      <div key={i} style={{ background:'rgba(0,0,0,0.15)', border:`1px solid ${p.total > 0 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'}`, borderRadius:10, padding:'12px 14px', display:'flex', alignItems:'center', gap:10, opacity: p.total === 0 ? 0.45 : 1 }}>
                         <span style={{ fontSize:18, flexShrink:0 }}>{p.icon}</span>
                         <div style={{ flex:1, minWidth:0 }}>
                           <div style={{ fontSize:13, fontWeight:500, color:'#ffffff' }}>{p.key}</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>
-                            {p.actifs} actif{p.actifs !== 1 ? 's' : ''} · {p.total} total
-                          </div>
+                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>{p.actifs} actif{p.actifs !== 1 ? 's' : ''} · {p.total} total</div>
                         </div>
                         <div style={{ textAlign:'right', flexShrink:0 }}>
-                          <div style={{ fontSize:15, fontWeight:600, color: p.total > 0 ? '#F6C453' : 'rgba(255,255,255,0.20)' }}>
-                            {p.ca.toLocaleString('fr-FR', { style:'currency', currency:'EUR' })}
-                          </div>
+                          <div style={{ fontSize:15, fontWeight:600, color: p.total > 0 ? '#F6C453' : 'rgba(255,255,255,0.20)' }}>{p.ca.toLocaleString('fr-FR', { style:'currency', currency:'EUR' })}</div>
                           <div style={{ height:3, background:'rgba(255,255,255,0.07)', borderRadius:100, marginTop:5, width:60, overflow:'hidden' }}>
                             <div style={{ height:'100%', width: subStats.nbTotal > 0 ? `${Math.round((p.total / subStats.nbTotal) * 100)}%` : '0%', background: p.color, borderRadius:100 }} />
                           </div>
@@ -730,93 +701,45 @@ export function AdminClientsPage() {
                       </div>
                     ))}
                   </div>
-
-                  {/* COL DROITE 2/3 — histogramme mensuel */}
                   <div style={{ background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:'20px 20px 16px', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>
-                      CA mensuel — mars 2026 → févr. 2027 · mensuel 13€ · annuel 108€
-                    </div>
-
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>CA mensuel — mars 2026 → févr. 2027 · mensuel 13€ · annuel 108€</div>
                     {(() => {
-                      const histo    = subStats.histogram ?? []
-                      const PLANS    = subStats.PLANS ?? []
-                      const HEIGHT   = 320
-                      const maxCA    = Math.max(...histo.map(m => m.caTotal), 1)
-                      const maxActif = Math.max(...histo.map(m => m.actifsTotal), 1)
-
+                      const histo = subStats.histogram ?? [], PLANS = subStats.PLANS ?? [], HEIGHT = 320
+                      const maxCA = Math.max(...histo.map(m => m.caTotal), 1), maxActif = Math.max(...histo.map(m => m.actifsTotal), 1)
                       return (
                         <div style={{ display:'flex', flexDirection:'column', gap:10, flex:1 }}>
-                          {/* Légende séries */}
                           <div style={{ display:'flex', gap:16 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                              <div style={{ width:10, height:10, borderRadius:2, background:'rgba(255,255,255,0.6)' }} />
-                              <span style={{ fontSize:10, color:'rgba(255,255,255,0.50)' }}>CA réalisé (€) — opacité pleine</span>
-                            </div>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                              <div style={{ width:10, height:10, borderRadius:2, background:'rgba(255,255,255,0.25)' }} />
-                              <span style={{ fontSize:10, color:'rgba(255,255,255,0.50)' }}>Abonnements actifs — opacité réduite</span>
-                            </div>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}><div style={{ width:10, height:10, borderRadius:2, background:'rgba(255,255,255,0.6)' }} /><span style={{ fontSize:10, color:'rgba(255,255,255,0.50)' }}>CA réalisé (€)</span></div>
+                            <div style={{ display:'flex', alignItems:'center', gap:6 }}><div style={{ width:10, height:10, borderRadius:2, background:'rgba(255,255,255,0.25)' }} /><span style={{ fontSize:10, color:'rgba(255,255,255,0.50)' }}>Abonnements actifs</span></div>
                           </div>
-
-                          {/* Barres doubles */}
                           <div style={{ display:'flex', alignItems:'flex-end', gap:4, flex:1, minHeight:HEIGHT }}>
                             {histo.map((m, i) => {
-                              const caH     = maxCA    > 0 ? Math.max(Math.round((m.caTotal    / maxCA)    * HEIGHT), m.caTotal    > 0 ? 4 : 0) : 0
-                              const actifH  = maxActif > 0 ? Math.max(Math.round((m.actifsTotal / maxActif) * HEIGHT), m.actifsTotal > 0 ? 4 : 0) : 0
+                              const caH = maxCA > 0 ? Math.max(Math.round((m.caTotal / maxCA) * HEIGHT), m.caTotal > 0 ? 4 : 0) : 0
+                              const actifH = maxActif > 0 ? Math.max(Math.round((m.actifsTotal / maxActif) * HEIGHT), m.actifsTotal > 0 ? 4 : 0) : 0
                               return (
                                 <div key={i} style={{ flex:1, display:'flex', alignItems:'flex-end', justifyContent:'center', gap:2, height:'100%' }}>
-                                  {/* Barre CA empilée par plan */}
                                   <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', height:'100%' }}>
                                     {m.caTotal > 0 && <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', marginBottom:2 }}>{m.caTotal}€</div>}
                                     <div style={{ width:'100%', height:caH, display:'flex', flexDirection:'column', borderRadius:'3px 3px 0 0', overflow:'hidden' }}>
-                                      {PLANS.map((p, pi) => {
-                                        const ca = m.caByPlan?.[p.key] ?? 0
-                                        if (ca === 0) return null
-                                        const segH = m.caTotal > 0 ? Math.max(Math.round((ca / m.caTotal) * caH), 2) : 0
-                                        return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0 }} title={`${p.key} · ${ca}€`} />
-                                      })}
+                                      {PLANS.map((p, pi) => { const ca = m.caByPlan?.[p.key] ?? 0; if (!ca) return null; const segH = m.caTotal > 0 ? Math.max(Math.round((ca / m.caTotal) * caH), 2) : 0; return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0 }} title={`${p.key} · ${ca}€`} /> })}
                                     </div>
                                   </div>
-                                  {/* Barre actifs empilée par formule */}
                                   <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', height:'100%' }}>
                                     {m.actifsTotal > 0 && <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', marginBottom:2 }}>{m.actifsTotal}</div>}
                                     <div style={{ width:'100%', height:actifH, display:'flex', flexDirection:'column', borderRadius:'3px 3px 0 0', overflow:'hidden' }}>
-                                      {PLANS.map((p, pi) => {
-                                        const nb = m.actifsByPlan?.[p.key] ?? 0
-                                        if (nb === 0) return null
-                                        const segH = m.actifsTotal > 0 ? Math.max(Math.round((nb / m.actifsTotal) * actifH), 2) : 0
-                                        return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0, opacity:0.6 }} title={`${p.key} · ${nb} actifs`} />
-                                      })}
+                                      {PLANS.map((p, pi) => { const nb = m.actifsByPlan?.[p.key] ?? 0; if (!nb) return null; const segH = m.actifsTotal > 0 ? Math.max(Math.round((nb / m.actifsTotal) * actifH), 2) : 0; return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0, opacity:0.6 }} title={`${p.key} · ${nb} actifs`} /> })}
                                     </div>
                                   </div>
                                 </div>
                               )
                             })}
                           </div>
-
-                          {/* Labels mois */}
-                          <div style={{ display:'flex', gap:4 }}>
-                            {histo.map((m, i) => (
-                              <div key={i} style={{ flex:1, textAlign:'center', fontSize:9, color:'rgba(255,255,255,0.30)' }}>
-                                {m.label}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Légende formules */}
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:'4px 12px' }}>
-                            {PLANS.map((p, i) => (
-                              <div key={i} style={{ display:'flex', alignItems:'center', gap:4 }}>
-                                <div style={{ width:7, height:7, borderRadius:2, background:p.color, flexShrink:0 }} />
-                                <span style={{ fontSize:9, color:'rgba(255,255,255,0.35)' }}>{p.icon} {p.key}</span>
-                              </div>
-                            ))}
-                          </div>
+                          <div style={{ display:'flex', gap:4 }}>{histo.map((m, i) => <div key={i} style={{ flex:1, textAlign:'center', fontSize:9, color:'rgba(255,255,255,0.30)' }}>{m.label}</div>)}</div>
+                          <div style={{ display:'flex', flexWrap:'wrap', gap:'4px 12px' }}>{PLANS.map((p, i) => <div key={i} style={{ display:'flex', alignItems:'center', gap:4 }}><div style={{ width:7, height:7, borderRadius:2, background:p.color, flexShrink:0 }} /><span style={{ fontSize:9, color:'rgba(255,255,255,0.35)' }}>{p.icon} {p.key}</span></div>)}</div>
                         </div>
                       )
                     })()}
                   </div>
-
                 </div>
               )}
             </div>
@@ -827,18 +750,11 @@ export function AdminClientsPage() {
                 <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 16 }}>Activité quotidienne — 14 derniers jours</div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
                   {(() => {
-                    const days = attendance.daily_active
-                    const max  = Math.max(...days.map(d => d.count), 1)
+                    const days = attendance.daily_active, max = Math.max(...days.map(d => d.count), 1)
                     const allDays = []
-                    for (let i = 13; i >= 0; i--) {
-                      const d = new Date(); d.setDate(d.getDate() - i)
-                      const key   = d.toISOString().slice(0, 10)
-                      const found = days.find(x => x.date === key)
-                      allDays.push({ date: key, count: found?.count ?? 0 })
-                    }
+                    for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const key = d.toISOString().slice(0,10); allDays.push({ date: key, count: days.find(x => x.date === key)?.count ?? 0 }) }
                     return allDays.map((d, i) => {
-                      const pct     = Math.max(4, Math.round((d.count / max) * 100))
-                      const isToday = d.date === new Date().toISOString().slice(0, 10)
+                      const pct = Math.max(4, Math.round((d.count / max) * 100)), isToday = d.date === new Date().toISOString().slice(0,10)
                       return (
                         <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
                           <div title={`${d.count} actifs`} style={{ width: '100%', height: `${pct}%`, background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)', borderRadius: 4, minHeight: 4, boxShadow: isToday ? '0 0 8px rgba(150,212,133,0.4)' : 'none', transition: 'height .3s' }} />
@@ -857,23 +773,14 @@ export function AdminClientsPage() {
 
             {/* ── PALMARÈS ── */}
             <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>🏆 Palmarès — jours actifs</div>
-            {loading ? (
-              <div className="adm-empty">Chargement…</div>
-            ) : palmares.length === 0 ? (
-              <div className="adm-empty">Aucune donnée disponible</div>
-            ) : (
+            {loading ? <div className="adm-empty">Chargement…</div> : palmares.length === 0 ? <div className="adm-empty">Aucune donnée disponible</div> : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {palmares.map((p, i) => (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border2)', borderRadius: 10 }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'var(--text3)', width: 24, textAlign: 'center', flexShrink: 0 }}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                    </div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'var(--text3)', width: 24, textAlign: 'center', flexShrink: 0 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.display_name ?? p.email ?? p.id?.slice(0, 8)}</div>
-                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2 }}>
-                        Dernière activité : {p.last_active ? new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}
-                        {p.streak_days > 0 && ` · 🔥 ${p.streak_days}j de streak`}
-                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.display_name ?? p.email ?? p.id?.slice(0,8)}</div>
+                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2 }}>Dernière activité : {p.last_active ? new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}{p.streak_days > 0 && ` · 🔥 ${p.streak_days}j de streak`}</div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: 'var(--green)', lineHeight: 1 }}>{p.connexions}</div>
@@ -910,9 +817,7 @@ export function AdminClientsPage() {
                 ))}
                 <span style={{ fontSize: 10, color: 'var(--text3)', alignSelf: 'center', marginLeft: 4, fontStyle: 'italic' }}>{pLabel[P]}</span>
               </div>
-              {!fullStats ? (
-                <div className="adm-empty">Chargement…</div>
-              ) : (
+              {!fullStats ? <div className="adm-empty">Chargement…</div> : (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginBottom: 32 }}>
                     {METRICS.map(m => (
@@ -920,35 +825,21 @@ export function AdminClientsPage() {
                         <div style={{ fontSize: 18, marginBottom: 6 }}>{m.icon}</div>
                         <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, fontWeight: 300, color: m.color, lineHeight: 1 }}>{fullStats[m.key]?.[P] ?? 0}</div>
                         <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', marginTop: 6 }}>{m.label}</div>
-                        {fullStats[m.key]?.chart && (() => {
-                          const data = fullStats[m.key].chart.slice(-14)
-                          const max  = Math.max(...data.map(d => d.count), 1)
-                          return (
-                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 24, marginTop: 10 }}>
-                              {data.map((d, i) => <div key={i} title={`${d.date}: ${d.count}`} style={{ flex: 1, height: `${Math.max(2, Math.round(d.count / max * 100))}%`, background: m.color, opacity: 0.4, borderRadius: 2, minHeight: 2 }} />)}
-                            </div>
-                          )
-                        })()}
+                        {fullStats[m.key]?.chart && (() => { const data = fullStats[m.key].chart.slice(-14), max = Math.max(...data.map(d => d.count), 1); return <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 24, marginTop: 10 }}>{data.map((d, i) => <div key={i} title={`${d.date}: ${d.count}`} style={{ flex: 1, height: `${Math.max(2, Math.round(d.count / max * 100))}%`, background: m.color, opacity: 0.4, borderRadius: 2, minHeight: 2 }} />)}</div> })()}
                       </div>
                     ))}
                   </div>
-
                   <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, padding: 20, marginBottom: 24 }}>
                     <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 16 }}>Activité quotidienne — 30 derniers jours</div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                      {METRICS.map(m => <div key={m.key} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 100, background: `${m.color}22`, border: `1px solid ${m.color}44`, color: m.color }}>{m.icon} {m.label}</div>)}
-                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>{METRICS.map(m => <div key={m.key} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 100, background: `${m.color}22`, border: `1px solid ${m.color}44`, color: m.color }}>{m.icon} {m.label}</div>)}</div>
                     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 100 }}>
                       {fullStats.connexions.chart.map((d, i) => {
-                        const vals     = METRICS.map(m => fullStats[m.key].chart[i]?.count ?? 0)
-                        const total    = vals.reduce((a, b) => a + b, 0)
+                        const vals = METRICS.map(m => fullStats[m.key].chart[i]?.count ?? 0), total = vals.reduce((a, b) => a + b, 0)
                         const maxTotal = Math.max(...fullStats.connexions.chart.map((_, j) => METRICS.map(m => fullStats[m.key].chart[j]?.count ?? 0).reduce((a, b) => a + b, 0)), 1)
-                        const pct      = Math.max(3, Math.round(total / maxTotal * 100))
-                        const isToday  = d.date === new Date().toISOString().slice(0, 10)
+                        const pct = Math.max(3, Math.round(total / maxTotal * 100)), isToday = d.date === new Date().toISOString().slice(0,10)
                         return (
                           <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                            <div title={`${d.date}\n${METRICS.map((m, j) => `${m.label}: ${vals[j]}`).join('\n')}`}
-                              style={{ width: '100%', height: `${pct}%`, background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)', borderRadius: 3, minHeight: 3, boxShadow: isToday ? '0 0 6px rgba(150,212,133,0.4)' : 'none', transition: 'height .3s' }} />
+                            <div title={`${d.date}\n${METRICS.map((m, j) => `${m.label}: ${vals[j]}`).join('\n')}`} style={{ width: '100%', height: `${pct}%`, background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)', borderRadius: 3, minHeight: 3, boxShadow: isToday ? '0 0 6px rgba(150,212,133,0.4)' : 'none', transition: 'height .3s' }} />
                             {total > 0 && <div style={{ fontSize: 7, color: 'var(--text3)' }}>{total}</div>}
                           </div>
                         )
@@ -959,24 +850,17 @@ export function AdminClientsPage() {
                       <div style={{ fontSize: 8, color: 'var(--green)' }}>aujourd'hui</div>
                     </div>
                   </div>
-
                   <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>Récapitulatif</div>
                   <div style={{ overflowX: 'auto' }}>
                     <table className="adm-table">
                       <thead>
-                        <tr>
-                          {['MÉTRIQUE', 'JOUR', '7J', '30J', '365J'].map(h => (
-                            <th key={h} style={{ padding: '10px 14px', textAlign: h === 'MÉTRIQUE' ? 'left' : 'center', fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', fontWeight: 400 }}>{h}</th>
-                          ))}
-                        </tr>
+                        <tr>{['MÉTRIQUE', 'JOUR', '7J', '30J', '365J'].map(h => <th key={h} style={{ padding: '10px 14px', textAlign: h === 'MÉTRIQUE' ? 'left' : 'center', fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', fontWeight: 400 }}>{h}</th>)}</tr>
                       </thead>
                       <tbody>
                         {METRICS.map((m, i) => (
                           <tr key={m.key} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
                             <td style={{ padding: '10px 14px', fontSize: 11, color: 'var(--text)' }}>{m.icon} {m.label}</td>
-                            {['day', 'week', 'month', 'year'].map(p => (
-                              <td key={p} style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, fontFamily: "'Cormorant Garamond',serif", color: m.color }}>{fullStats[m.key]?.[p] ?? 0}</td>
-                            ))}
+                            {['day', 'week', 'month', 'year'].map(p => <td key={p} style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, fontFamily: "'Cormorant Garamond',serif", color: m.color }}>{fullStats[m.key]?.[p] ?? 0}</td>)}
                           </tr>
                         ))}
                       </tbody>
@@ -990,9 +874,7 @@ export function AdminClientsPage() {
 
         {/* ── QCM ── */}
         {tab === 'qcm' && (
-          <div className="adm-section">
-            <TabQCM />
-          </div>
+          <div className="adm-section"><TabQCM /></div>
         )}
 
       </div>
