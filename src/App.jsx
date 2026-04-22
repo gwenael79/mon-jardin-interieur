@@ -43,6 +43,7 @@ export default function App() {
   const [proSavingFlower, setProSavingFlower] = useState(false)
   const [proDisplayName,  setProDisplayName]  = useState('')
   const [showProCancelConfirm, setShowProCancelConfirm] = useState(false)
+  const [showProLaunch,       setShowProLaunch]       = useState(false)
   const [proCancelLoading,     setProCancelLoading]     = useState(false)
   const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
   const [toast,  setToast]  = useState(null)
@@ -473,11 +474,7 @@ export default function App() {
                 Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.<br/>
                 <span style={{fontSize:16,color:'rgba(30,20,8,.40)',fontStyle:'italic'}}>Ex : Marie · Lavande</span>
               </div>
-              {proDisplayName && (
-                <div style={{fontSize:18,color:'#1a1208',marginBottom:20,lineHeight:1.5}}>
-                  <em style={{fontStyle:'italic'}}>{proDisplayName}</em> · {proSelFlower ?? '…'}
-                </div>
-              )}
+
               <div style={{textAlign:'center',padding:'10px 0 14px',fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:'#1a1208',minHeight:44}}>
                 {proSelFlower
                   ? <><span>🌸</span> {proDisplayName} · <span>{proSelFlower}</span></>
@@ -496,12 +493,12 @@ export default function App() {
                   try { await supabase.from('users').update({ flower_name: proSelFlower }).eq('id', user.id) }
                   catch(e) { console.warn('[pro flower]', e) }
                   setProSavingFlower(false)
-                  setScreen('onboarding')
+                  setShowProFlower(false); setShowProLaunch(true)
                 }}
                 style={{width:'100%',padding:'14px 20px',borderRadius:50,border:'none',background:'linear-gradient(135deg,#4a8a20,#2e6808)',color:'#fff',fontSize:18,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer',boxShadow:'0 5px 18px rgba(42,104,8,.28)',lineHeight:1.4,whiteSpace:'normal'}}
               >
                 {proSavingFlower ? '…' : proSelFlower
-                  ? <><span style={{display:'block',fontSize:18,fontWeight:600}}>Entrer dans mon jardin</span><span style={{fontSize:13,fontWeight:400,opacity:.80,letterSpacing:'.05em'}}>{proDisplayName ? `${proDisplayName} · ` : ''}{proSelFlower} →</span></>
+                  ? <><span style={{display:'block',fontSize:18,fontWeight:600}}>Entrer dans mon jardin</span></>
                   : 'Choisissez une fleur'}
               </button>
               <div style={{marginTop:14,fontSize:18,color:'#1a1208',textAlign:'center',lineHeight:1.7}}>Modifiable dans vos paramètres.</div>
@@ -509,7 +506,46 @@ export default function App() {
           </div>
         )}
 
-        {/* ── Modal confirmation annulation pro ── */}
+        {/* ── Modal bienvenue dans l'aventure ── */}
+        {showProLaunch && (
+          <div style={{position:'fixed',inset:0,zIndex:1300,background:'rgba(10,20,5,.65)',backdropFilter:'blur(14px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div style={{background:'rgba(252,248,242,.98)',borderRadius:24,width:'min(480px,100%)',maxHeight:'90vh',overflowY:'auto',padding:'40px 32px 36px',boxShadow:'0 24px 70px rgba(30,60,10,.28)',border:'1.5px solid rgba(180,210,140,.40)'}}>
+              <div style={{textAlign:'center',fontSize:52,marginBottom:16}}>🌱</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:30,fontWeight:400,color:'#1a1208',textAlign:'center',lineHeight:1.2,marginBottom:20}}>
+                Bienvenue dans l'aventure !
+              </div>
+              <div style={{width:48,height:2,background:'linear-gradient(90deg,transparent,#8ab840,transparent)',margin:'0 auto 24px'}}/>
+              <div style={{display:'flex',flexDirection:'column',gap:16,marginBottom:28}}>
+                <p style={{fontSize:17,color:'#1a1208',lineHeight:1.8,margin:0}}>
+                  Votre inscription est complète — vous êtes prêt(e) à entrer dans l'expérience <strong>Mon Jardin Intérieur</strong>.
+                </p>
+                <p style={{fontSize:17,color:'#1a1208',lineHeight:1.8,margin:0}}>
+                  Avant tout, nous vous invitons à <strong>vivre le même parcours initiatique que vos futurs clients</strong>. C'est en le traversant vous-même que vous pourrez en parler avec authenticité et guider vos accompagnés avec justesse.
+                </p>
+                <div style={{padding:'16px 18px',borderRadius:14,background:'rgba(90,138,48,.07)',border:'1px solid rgba(90,138,48,.22)'}}>
+                  <div style={{fontSize:15,fontWeight:600,color:'#5a8a30',marginBottom:8,letterSpacing:'.04em',textTransform:'uppercase'}}>✦ Votre espace Pro vous attend</div>
+                  <p style={{fontSize:17,color:'#1a1208',lineHeight:1.75,margin:0}}>
+                    À l'issue de votre première étape, un bouton <strong>« Mon compte Pro »</strong> apparaîtra dans votre profil. Vous y trouverez votre tableau de bord, la possibilité de créer des <strong>ateliers</strong>, des <strong>séances en ligne</strong>, et de mettre en vente vos <strong>audios, e-books</strong> et autres contenus.
+                  </p>
+                </div>
+                <p style={{fontSize:17,color:'#1a1208',lineHeight:1.8,margin:0,fontStyle:'italic',textAlign:'center'}}>
+                  À très bientôt, et belle continuation dans cette magnifique aventure 🌿
+                </p>
+              </div>
+              <button
+                onClick={() => { setShowProLaunch(false); setScreen('onboarding') }}
+                style={{width:'100%',padding:'16px 24px',borderRadius:100,border:'none',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:18,fontWeight:600,color:'#fff',background:'linear-gradient(135deg,#78c040,#4a8820)',boxShadow:'0 8px 24px rgba(90,138,48,.35)',letterSpacing:'.03em'}}
+              >
+                Commencer l'aventure
+              </button>
+              <div style={{marginTop:14,fontSize:14,color:'rgba(30,20,8,.38)',textAlign:'center'}}>
+                Votre compte Pro est actif · Profil modifiable dans vos paramètres
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal confirmation annulation pro ── */}}
         {showProCancelConfirm && (
           <div className="pc-overlay">
             <div className="pc-modal">

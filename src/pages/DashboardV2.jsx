@@ -952,6 +952,7 @@ export default function DashboardPage() {
   const ritualCompleteCalledRef = useRef(false)
   const [bilanHistory,        setBilanHistory]        = useState([])
   const [showGuide,           setShowGuide]           = useState(false)
+  const [showProLaunch,        setShowProLaunch]        = useState(() => localStorage.getItem('mji_show_pro_launch') === '1')
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
@@ -1441,6 +1442,46 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {showProLaunch && !showWelcome && (
+        <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(10,20,5,.65)', backdropFilter:'blur(14px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20, animation:'authFadeIn .3s ease both' }}>
+          <style>{`@keyframes authFadeIn{from{opacity:0}to{opacity:1}}`}</style>
+          <div style={{ background:'rgba(252,248,242,.98)', borderRadius:24, width:'min(480px,100%)', maxHeight:'90vh', overflowY:'auto', padding:'40px 32px 36px', position:'relative', boxShadow:'0 24px 70px rgba(30,60,10,.28)', border:'1.5px solid rgba(180,210,140,.40)' }}>
+            <div style={{ textAlign:'center', fontSize:52, marginBottom:16 }}>🌱</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:400, color:'#1a1208', textAlign:'center', lineHeight:1.2, marginBottom:20 }}>
+              Bienvenue dans l'aventure !<br/>
+              <em style={{ fontStyle:'italic', color:'#5a8a30' }}>cher(e) thérapeute</em> 🎉
+            </div>
+            <div style={{ width:48, height:2, background:'linear-gradient(90deg,transparent,#8ab840,transparent)', margin:'0 auto 24px' }}/>
+            <div style={{ display:'flex', flexDirection:'column', gap:16, marginBottom:28 }}>
+              <p style={{ fontSize:17, color:'#1a1208', lineHeight:1.8, margin:0 }}>
+                Votre inscription est complète — vous êtes prêt(e) à entrer dans l'expérience <strong>Mon Jardin Intérieur</strong>.
+              </p>
+              <p style={{ fontSize:17, color:'#1a1208', lineHeight:1.8, margin:0 }}>
+                Avant tout, nous vous invitons à <strong>vivre le même parcours initiatique que vos futurs clients</strong>. C'est en le traversant vous-même que vous pourrez en parler avec authenticité et guider vos accompagnés avec justesse.
+              </p>
+              <div style={{ padding:'16px 18px', borderRadius:14, background:'rgba(90,138,48,.07)', border:'1px solid rgba(90,138,48,.22)' }}>
+                <div style={{ fontSize:15, fontWeight:600, color:'#5a8a30', marginBottom:8, letterSpacing:'.04em', textTransform:'uppercase' }}>✦ Votre espace Pro vous attend</div>
+                <p style={{ fontSize:17, color:'#1a1208', lineHeight:1.75, margin:0 }}>
+                  À l'issue de votre première étape, un bouton <strong>« Mon compte Pro »</strong> apparaîtra dans votre profil. Vous y trouverez votre tableau de bord, la possibilité de créer des <strong>ateliers</strong>, des <strong>séances en ligne</strong>, et de mettre en vente vos <strong>audios, e-books</strong> et autres contenus.
+                </p>
+              </div>
+              <p style={{ fontSize:17, color:'#1a1208', lineHeight:1.8, margin:0, fontStyle:'italic', textAlign:'center' }}>
+                À très bientôt, et belle continuation dans cette magnifique aventure 🌿
+              </p>
+            </div>
+            <button
+              onClick={() => { localStorage.removeItem('mji_show_pro_launch'); setShowProLaunch(false) }}
+              style={{ width:'100%', padding:'16px 24px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:600, color:'#fff', background:'linear-gradient(135deg,#78c040,#4a8820)', boxShadow:'0 8px 24px rgba(90,138,48,.35)', letterSpacing:'.03em' }}
+            >
+              Commencer l'aventure
+            </button>
+            <div style={{ marginTop:14, fontSize:14, color:'rgba(30,20,8,.38)', textAlign:'center' }}>
+              Votre compte Pro est actif · Profil modifiable dans vos paramètres
+            </div>
+          </div>
+        </div>
+      )}
+
       {openModalId && (
         <ScreenModal
           slideId={openModalId}

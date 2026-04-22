@@ -443,6 +443,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [cancelLoading,     setCancelLoading]     = useState(false)
   const [showProFlower,     setShowProFlower]     = useState(false)
+  const [showProLaunch,     setShowProLaunch]     = useState(false)
   const [proForm, setProForm] = useState(() => {
     try {
       const saved = localStorage.getItem('mji_pro_draft')
@@ -542,6 +543,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       if (data?.session) {
         localStorage.setItem('mji_has_logged_in', '1')
         localStorage.setItem('mji_show_pro_welcome', '1')
+        localStorage.setItem('mji_show_pro_launch', '1')
         setNewUserId(userId)
         setDisplayName(prenom.trim())
         // Accès immédiat : fermer le modal d'inscription et ouvrir directement la présentation pro
@@ -567,6 +569,10 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     setProEmailPending(false)
   }
 
+  // ── Envoi Systeme.io PRO ──
+  // Placé ICI intentionnellement : le clic sur "Commencer mon aventure pro"
+  // est la dernière étape irréversible. Tout pro ayant cliqué
+  // "Je ne souhaite pas créer de compte pro" ne passe jamais par cette fonction.
   async function handleStartProAdventure() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
@@ -574,10 +580,20 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       if (session && user) {
         await supabase.functions.invoke('register-to-systemeio', {
           headers: { Authorization: `Bearer ${session.access_token}` },
-          body: { record: { email: user.email, display_name: displayName || user.user_metadata?.display_name || '', prenom: proForm.prenom || displayName || '', nom: proForm.nom || '', role: 'pro' } },
+          body: {
+            record: {
+              email:  user.email,
+              prenom: proForm.prenom?.trim() || displayName?.trim() || '',
+              nom:    proForm.nom?.trim()    || '',
+              role:   'pro',
+            },
+          },
         })
       }
-    } catch(e) { console.warn('[register-to-systemeio]', e) }
+    } catch(e) {
+      // Non-bloquant : le parcours continue même si Systeme.io est KO
+      console.warn('[Systeme.io pro]', e)
+    }
     setShowProWelcome(false)
     setShowProFlower(true)
   }
@@ -610,6 +626,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     finally { setIsLoading(false) }
   }
 
+  // ── Envoi Systeme.io PARTICULIER ──
+  // Envoyé après le upsert users réussi avec session active.
+  // À ce stade le compte est confirmé, le parcours particulier est irréversible.
   async function handleSignUp(e) {
     e.preventDefault()
     if (!displayName.trim()) { setError('Veuillez choisir un prénom ou pseudo.'); return }
@@ -629,6 +648,24 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
           display_name: displayName.trim(), birthdate,
         }, { onConflict: 'id' })
         setNewUserId(data.user.id)
+
+        // Envoi Systeme.io : email + prénom + tag particulier (SYSTEMEIO_TAG_ID)
+        try {
+          await supabase.functions.invoke('register-to-systemeio', {
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+            body: {
+              record: {
+                email:  data.user.email,
+                prenom: displayName.trim(),
+                role:   'particulier',
+              },
+            },
+          })
+        } catch(sioErr) {
+          // Non-bloquant : l'inscription continue même si Systeme.io est KO
+          console.warn('[Systeme.io particulier]', sioErr)
+        }
+
         goTo('flower')
       } else { setSuccess(true) }
     } catch (err) { setError(err.message) }
@@ -1018,7 +1055,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
           </div>
         </div>
       )}
-    </div>
+
       {/* ── MODAL EXPLICATIF AVANTAGES PRO ── */}
       {showProWelcome && (
         <div className="pro-welcome-overlay" onClick={e => e.target===e.currentTarget && setShowProWelcome(false)}>
@@ -1209,11 +1246,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.<br/>
               <span style={{fontSize:16,color:'rgba(30,20,8,.40)',fontStyle:'italic'}}>Ex : Marie · Lavande</span>
             </div>
-            {displayName && (
-              <div style={{fontSize:18,color:'#1a1208',marginBottom:20,lineHeight:1.5}}>
-                <em style={{fontStyle:'italic'}}>{displayName}</em> · {selFlower ?? '…'}
-              </div>
-            )}
+
             <div style={{textAlign:'center',padding:'10px 0 14px',fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:'#1a1208',minHeight:44}}>
               {selFlower
                 ? <><span>🌸</span> {displayName} · <span>{selFlower}</span></>
@@ -1224,15 +1257,67 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 <div key={n} className={'auth-flower-pill' + (selFlower===n?' sel':'')} style={{fontSize:16}} onClick={() => setSelFlower(n)}>{n}</div>
               ))}
             </div>
-            <button className="auth-submit" style={{fontSize:18,lineHeight:1.4,whiteSpace:'normal',padding:'14px 20px'}} onClick={async () => { await handleConfirmFlower(); setShowProFlower(false); window.location.reload() }} disabled={!selFlower || savingFlower}>
+            <button className="auth-submit" style={{fontSize:18,lineHeight:1.4,whiteSpace:'normal',padding:'14px 20px'}} onClick={() => { setShowProFlower(false); setShowProLaunch(true) }} disabled={!selFlower || savingFlower}>
               {savingFlower ? '…' : selFlower
-                ? <><span style={{display:'block',fontSize:18,fontWeight:600}}>Entrer dans mon jardin</span><span style={{fontSize:13,fontWeight:400,opacity:.80,letterSpacing:'.05em'}}>{displayName ? `${displayName} · ` : ''}{selFlower} →</span></>
+                ? <><span style={{display:'block',fontSize:18,fontWeight:600}}>Entrer dans mon jardin</span></>
                 : 'Choisissez une fleur'}
             </button>
             <div style={{marginTop:14,fontSize:18,color:'#1a1208',textAlign:'center',lineHeight:1.7}}>Modifiable dans vos paramètres.</div>
           </div>
         </div>
       )}
+      {showProLaunch && (
+        <div style={{position:'fixed',inset:0,zIndex:1300,background:'rgba(10,20,5,.65)',backdropFilter:'blur(14px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,animation:'authFadeIn .3s ease both'}}>
+          <div style={{background:'rgba(252,248,242,.98)',borderRadius:24,width:'min(480px,100%)',maxHeight:'90vh',overflowY:'auto',padding:'40px 32px 36px',position:'relative',boxShadow:'0 24px 70px rgba(30,60,10,.28)',border:'1.5px solid rgba(180,210,140,.40)',animation:'authFormIn .38s cubic-bezier(.22,1,.36,1) both'}}>
+
+            {/* Icône */}
+            <div style={{textAlign:'center',fontSize:52,marginBottom:16}}>🌱</div>
+
+            {/* Titre */}
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:32,fontWeight:400,color:'#1a1208',textAlign:'center',lineHeight:1.2,marginBottom:20}}>
+              Bienvenue dans l'aventure,<br/>
+              <em style={{fontStyle:'italic',color:'#5a8a30'}}>{displayName || 'cher(e) thérapeute'}</em> 🎉
+            </div>
+
+            {/* Séparateur */}
+            <div style={{width:48,height:2,background:'linear-gradient(90deg,transparent,#8ab840,transparent)',margin:'0 auto 24px'}}/>
+
+            {/* Texte */}
+            <div style={{display:'flex',flexDirection:'column',gap:16,marginBottom:28}}>
+              <p style={{fontSize:17,color:'#1a1208',lineHeight:1.8,margin:0}}>
+                Votre inscription est complète — vous êtes prêt(e) à entrer dans l'expérience <strong>Mon Jardin Intérieur</strong>.
+              </p>
+              <p style={{fontSize:17,color:'#1a1208',lineHeight:1.8,margin:0}}>
+                Avant tout, nous vous invitons à <strong>vivre le même parcours initiatique que vos futurs clients</strong>. C'est en le traversant vous-même que vous pourrez en parler avec authenticité et guider vos accompagnés avec justesse.
+              </p>
+              <div style={{padding:'16px 18px',borderRadius:14,background:'rgba(90,138,48,.07)',border:'1px solid rgba(90,138,48,.22)'}}>
+                <div style={{fontSize:15,fontWeight:600,color:'#5a8a30',marginBottom:8,letterSpacing:'.04em',textTransform:'uppercase'}}>✦ Votre espace Pro vous attend</div>
+                <p style={{fontSize:17,color:'#1a1208',lineHeight:1.75,margin:0}}>
+                  À l'issue de votre première étape, un bouton <strong>« Mon compte Pro »</strong> apparaîtra dans votre profil. Vous y trouverez votre tableau de bord, la possibilité de créer des <strong>ateliers</strong>, des <strong>séances en ligne</strong>, et de mettre en vente vos <strong>audios, e-books</strong> et autres contenus — rapidement et simplement.
+                </p>
+              </div>
+              <p style={{fontSize:17,color:'#1a1208',lineHeight:1.8,margin:0,fontStyle:'italic',textAlign:'center'}}>
+                À très bientôt, et belle continuation dans cette magnifique aventure 🌿
+              </p>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={async () => { await handleConfirmFlower(); setShowProLaunch(false); window.location.reload() }}
+              style={{width:'100%',padding:'16px 24px',borderRadius:100,border:'none',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:18,fontWeight:600,color:'#fff',background:'linear-gradient(135deg,#78c040,#4a8820)',boxShadow:'0 8px 24px rgba(90,138,48,.35)',transition:'transform .15s,filter .15s',letterSpacing:'.03em'}}
+              onMouseEnter={e=>{e.currentTarget.style.filter='brightness(1.08)';e.currentTarget.style.transform='translateY(-1px)'}}
+              onMouseLeave={e=>{e.currentTarget.style.filter='none';e.currentTarget.style.transform='none'}}
+            >
+              Commencer l'aventure
+            </button>
+
+            <div style={{marginTop:14,fontSize:14,color:'rgba(30,20,8,.38)',textAlign:'center',lineHeight:1.6}}>
+              Votre compte Pro est actif · Profil modifiable dans vos paramètres
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   )
 }
