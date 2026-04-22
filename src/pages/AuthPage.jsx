@@ -1372,6 +1372,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         </div>
       )}
 
+    </div>
     </>
   )
 }

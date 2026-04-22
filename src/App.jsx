@@ -545,7 +545,7 @@ export default function App() {
           </div>
         )}
 
-        {/* ── Modal confirmation annulation pro ── */}}
+        {/* ── Modal confirmation annulation pro ── */}
         {showProCancelConfirm && (
           <div className="pc-overlay">
             <div className="pc-modal">
