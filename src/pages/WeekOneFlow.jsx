@@ -1505,71 +1505,69 @@ function BreathingOrb() {
   )
 }
 
+/// ═══════════════════════════════════════════════════════════════════════════
+// PATCH 1 : remplacer EmotionalBarometer (lignes 1508–1669)
+// ═══════════════════════════════════════════════════════════════════════════
+ 
 // ── Baromètre émotionnel ───────────────────────────────────────────────────
-
+ 
+const BAROMETER_STOPS = [
+  { min: 0.00, max: 0.20, value: 'fatigue', label: 'Fatigué·e', emoji: '😔', color: '#d95c5c', fixedIdx: 0 },
+  { min: 0.20, max: 0.40, value: 'stresse', label: 'Stressé·e', emoji: '😰', color: '#e07550', fixedIdx: 0 },
+  { min: 0.40, max: 0.60, value: 'neutre',  label: 'Neutre',    emoji: '😐', color: '#e8c86a', fixedIdx: 1 },
+  { min: 0.60, max: 0.80, value: 'calme',   label: 'Calme',     emoji: '😌', color: '#9acc7a', fixedIdx: 2 },
+  { min: 0.80, max: 1.01, value: 'bien',    label: 'Bien',      emoji: '🙂', color: '#6aaa7a', fixedIdx: 2 },
+]
+ 
+const FIXED_LABELS = [
+  { emoji: '😔', label: 'Fatigué·e' },
+  { emoji: '😐', label: 'Neutre'    },
+  { emoji: '😌', label: 'Bien'      },
+]
+ 
 function EmotionalBarometer({ answerKey, onAnswer }) {
   const [pos,        setPos]        = useState(0.5)
   const [touched,    setTouched]    = useState(false)
   const [ctaVisible, setCtaVisible] = useState(false)
-  const trackRef   = useRef(null)
-  const dragging   = useRef(false)
-  const ctaTimer   = useRef(null)
-
-  function getCursorColor(p) {
-    // #d95c5c (rouge doux) → #e8c86a (jaune chaud) → #6aaa7a (vert sauge)
-    let r, g, b
-    if (p <= 0.5) {
-      const t = p * 2
-      r = Math.round(217 + (232 - 217) * t)
-      g = Math.round(92  + (200 - 92)  * t)
-      b = Math.round(92  + (106 - 92)  * t)
-    } else {
-      const t = (p - 0.5) * 2
-      r = Math.round(232 + (106 - 232) * t)
-      g = Math.round(200 + (170 - 200) * t)
-      b = Math.round(106 + (122 - 106) * t)
-    }
-    return `rgb(${r},${g},${b})`
+  const trackRef  = useRef(null)
+  const dragging  = useRef(false)
+  const ctaTimer  = useRef(null)
+ 
+  useEffect(() => () => clearTimeout(ctaTimer.current), [])
+ 
+  function getStop(p) {
+    return BAROMETER_STOPS.find(s => p >= s.min && p < s.max) ?? BAROMETER_STOPS[4]
   }
-
+ 
   function posFromPointer(e) {
     const rect = trackRef.current.getBoundingClientRect()
     return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
   }
-
+ 
   function handlePointerDown(e) {
     dragging.current = true
     e.currentTarget.setPointerCapture(e.pointerId)
-    setPos(posFromPointer(e))
+    const p = posFromPointer(e)
+    setPos(p)
     if (!touched) {
       setTouched(true)
-      ctaTimer.current = setTimeout(() => setCtaVisible(true), 1400)
+      ctaTimer.current = setTimeout(() => setCtaVisible(true), 800)
     }
   }
-
+ 
   function handlePointerMove(e) {
     if (!dragging.current) return
     setPos(posFromPointer(e))
   }
-
+ 
   function handlePointerUp() { dragging.current = false }
-
-  useEffect(() => () => clearTimeout(ctaTimer.current), [])
-
-  function posToValue(p) {
-    if (p < 0.2) return 'fatigue'
-    if (p < 0.4) return 'stresse'
-    if (p < 0.6) return 'neutre'
-    if (p < 0.8) return 'calme'
-    return 'bien'
-  }
-
-  const color = getCursorColor(pos)
-
+ 
+  const stop = getStop(pos)
+ 
   return (
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-
-      {/* Phrase d'introduction */}
+ 
+      {/* Phrase intro */}
       <p style={{
         fontFamily: 'Cormorant Garamond, Georgia, serif',
         fontSize: 'clamp(15px, 3.8vw, 18px)',
@@ -1577,12 +1575,12 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
         color: '#1a1010',
         lineHeight: 1.7,
         textAlign: 'center',
-        margin: '0 0 22px',
+        margin: '0 0 16px',
       }}>
         Il n'y a pas de bonne réponse.<br />
         Juste ce qui est là aujourd'hui.
       </p>
-
+ 
       {/* Question */}
       <p style={{
         fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -1591,14 +1589,15 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
         color: '#0f0808',
         lineHeight: 1.45,
         textAlign: 'center',
-        margin: '0 0 44px',
+        margin: '0 0 36px',
       }}>
         Comment vous vous sentez,<br />là, maintenant&nbsp;?
       </p>
-
+ 
       {/* Slider */}
-      <div style={{ width: '100%', padding: '0 2px', boxSizing: 'border-box' }}>
-
+      <div style={{ width: '100%', padding: '0 4px', boxSizing: 'border-box' }}>
+ 
+        {/* Track */}
         <div
           ref={trackRef}
           onPointerDown={handlePointerDown}
@@ -1624,46 +1623,95 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
             width: 32,
             height: 32,
           }}>
+            {/* Bulle label dynamique */}
+            <div style={{
+              position: 'absolute',
+              bottom: 38,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#ffffff',
+              border: `1px solid ${stop.color}55`,
+              borderRadius: 8,
+              padding: '4px 12px',
+              fontSize: 13,
+              fontWeight: 500,
+              fontFamily: 'Jost, sans-serif',
+              color: '#1a1010',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.10)',
+              transition: 'border-color 0.3s ease',
+            }}>
+              {stop.emoji} {stop.label}
+              {/* Petite flèche vers le bas */}
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 0, height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderTop: `5px solid ${stop.color}55`,
+              }} />
+            </div>
+ 
             {/* Halo pulsant */}
             <div style={{
               position: 'absolute',
-              width: 60,
-              height: 60,
+              width: 60, height: 60,
               borderRadius: '50%',
-              top: -14,
-              left: -14,
-              backgroundColor: color,
+              top: -14, left: -14,
+              backgroundColor: stop.color,
               animation: 'pulseCursor 4.5s ease-in-out infinite',
-              transition: 'background-color 0.5s ease',
+              transition: 'background-color 0.4s ease',
             }} />
+ 
             {/* Orbe principal */}
             <div style={{
-              width: 32,
-              height: 32,
+              width: 32, height: 32,
               borderRadius: '50%',
-              backgroundColor: color,
-              boxShadow: `inset 0 0 14px rgba(255,255,255,0.75), 0 2px 18px 6px ${color}80`,
-              transition: 'background-color 0.5s ease',
+              backgroundColor: stop.color,
+              boxShadow: `inset 0 0 14px rgba(255,255,255,0.75), 0 2px 18px 6px ${stop.color}80`,
+              transition: 'background-color 0.4s ease',
             }} />
           </div>
         </div>
-
-        {/* Pôles */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
-          <span style={{ fontSize: 26, lineHeight: 1 }}>😔</span>
-          <span style={{ fontSize: 26, lineHeight: 1 }}>😌</span>
+ 
+        {/* Labels fixes — 3 positions */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 20 }}>
+          {FIXED_LABELS.map((f, i) => {
+            const isActive = stop.fixedIdx === i
+            return (
+              <div key={f.label} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                transition: 'opacity 0.3s ease',
+                opacity: isActive ? 1 : 0.38,
+              }}>
+                <span style={{ fontSize: 22, lineHeight: 1 }}>{f.emoji}</span>
+                <span style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: 11, fontWeight: isActive ? 600 : 400,
+                  color: isActive ? '#1a1010' : '#8a7070',
+                  letterSpacing: '0.02em',
+                  transition: 'color 0.3s ease, font-weight 0.3s ease',
+                }}>
+                  {f.label}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </div>
-
+ 
       {/* CTA */}
       {ctaVisible && (
-        <div className="wof-soft" style={{ marginTop: 40 }}>
-          <PrimaryButton onClick={() => onAnswer(answerKey, posToValue(pos))}>
+        <div className="wof-soft" style={{ marginTop: 36 }}>
+          <PrimaryButton onClick={() => onAnswer(answerKey, stop.value)}>
             Continuer
           </PrimaryButton>
         </div>
       )}
-
+ 
     </div>
   )
 }
@@ -2965,6 +3013,12 @@ function RituelTransition({ introData, dayColor, onStart, onBack }) {
     return () => timers.forEach(clearTimeout)
   }, [lines])
 
+  function handleStart() {
+    const el = document.querySelector('.wof-modal > div:nth-child(3)')
+    if (el) el.scrollTop = 0
+    onStart()
+  }
+
   return (
     <div style={{ textAlign: 'center', padding: '40px 16px 40px' }}>
       <BackButton onClick={onBack} />
@@ -2990,7 +3044,7 @@ function RituelTransition({ introData, dayColor, onStart, onBack }) {
         ...fadeIn(phase > lines.length),
         pointerEvents: phase > lines.length ? 'auto' : 'none',
       }}>
-        <PrimaryButton onClick={onStart} style={{ background: `linear-gradient(135deg, ${dayColor}, ${dayColor}cc)` }}>
+        <PrimaryButton onClick={handleStart} style={{ background: `linear-gradient(135deg, ${dayColor}, ${dayColor}cc)` }}>
           {ctaLabel}
         </PrimaryButton>
       </div>
@@ -4171,6 +4225,9 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
 
   useEffect(() => {
     onScreenChange?.(showTransition ? 'rituel_transition' : 'rituel')
+    if (!showTransition) {
+      document.getElementById('wof-scroll').scrollTop = 0
+    }
   }, [showTransition])
 
   if (showTransition) {
@@ -4183,22 +4240,19 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
       />
     )
   }
+  if (data.isGuided === 'tige')       return <TigeGuidedRituel      onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'feuilles')   return <FeuillesGuidedRituel  onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'fleurs')     return <FleursGuidedRituel    onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'souffle')    return <SouffleGuidedRituel   onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'jardin')     return <JardinGuidedRituel    onNext={onNext} onBack={onBack} />
+  if (data.isGuided === 'communaute') return <CommunauteGuidedRituel onNext={onNext} onBack={onBack} />
+  if (data.isGuided)                  return <RacinesGuidedRituel   onNext={onNext} onBack={onBack} />
 
-  if (data.isGuided === 'tige')     return <TigeGuidedRituel     onNext={onNext} onBack={onBack} />
-  if (data.isGuided === 'feuilles') return <FeuillesGuidedRituel onNext={onNext} onBack={onBack} />
-  if (data.isGuided === 'fleurs')   return <FleursGuidedRituel   onNext={onNext} onBack={onBack} />
-  if (data.isGuided === 'souffle')  return <SouffleGuidedRituel  onNext={onNext} onBack={onBack} />
-  if (data.isGuided === 'jardin')      return <JardinGuidedRituel      onNext={onNext} onBack={onBack} />
-  if (data.isGuided === 'communaute') return <CommunauteGuidedRituel  onNext={onNext} onBack={onBack} />
-  if (data.isGuided)                  return <RacinesGuidedRituel     onNext={onNext} onBack={onBack} />
-
-  const isFree       = !!data.isFreeChoice
-  const activeLines  = isFree && freeChoice ? freeChoice.lines    : data.lines
-  const activeDur    = isFree && freeChoice ? freeChoice.timerDuration : data.timerDuration
-  const activeLabel  = isFree && freeChoice ? freeChoice.label    : data.timerLabel
-
-  // Si rituel libre, on ne bloque pas tant qu'un choix n'est pas fait + timer démarré
-  const canContinue  = isFree
+  const isFree      = !!data.isFreeChoice
+  const activeLines = isFree && freeChoice ? freeChoice.lines        : data.lines
+  const activeDur   = isFree && freeChoice ? freeChoice.timerDuration : data.timerDuration
+  const activeLabel = isFree && freeChoice ? freeChoice.label        : data.timerLabel
+  const canContinue = isFree
     ? (!choiceStarted || timerDone)
     : (!data.hasTimer || timerDone)
 
@@ -4206,55 +4260,23 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
     <div className="wof-in" style={{ padding: '8px 0 16px' }}>
       <BackButton onClick={onBack} />
 
-      <p style={{
-        fontFamily: 'Jost, sans-serif',
-        fontSize: 11,
-        fontWeight: 500,
-        color: dayColor || '#c8a0b0',
-        letterSpacing: '0.12em',
-        textTransform: 'uppercase',
-        margin: '8px 0 6px',
-        textAlign: 'center',
-      }}>
+      <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 500, color: dayColor || '#c8a0b0', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '8px 0 6px', textAlign: 'center' }}>
         {data.zone}
       </p>
 
       {[data.intro].filter(Boolean).map((line, i) => (
-        <p key={i} style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(15px, 3.5vw, 18px)',
-          fontStyle: 'italic',
-          color: '#000',
-          textAlign: 'center',
-          lineHeight: 1.7,
-          margin: i === 0 ? '0 0 12px' : '0 0 12px',
-        }}>
+        <p key={i} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(15px, 3.5vw, 18px)', fontStyle: 'italic', color: '#000', textAlign: 'center', lineHeight: 1.7, margin: '0 0 12px' }}>
           {line}
         </p>
       ))}
 
-      {/* Choix libre — Jour 7 */}
       {isFree && !choiceStarted && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
           {data.freeChoices.map((fc) => (
             <button
               key={fc.label}
               onClick={() => { setFreeChoice(fc); setChoiceStarted(true) }}
-              style={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: 14,
-                color: '#000',
-                background: '#f4eee8',
-                border: 'none',
-                borderRadius: 14,
-                padding: '14px 20px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'background 0.2s',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
+              style={{ fontFamily: 'Jost, sans-serif', fontSize: 14, color: '#000', background: '#f4eee8', border: 'none', borderRadius: 14, padding: '14px 20px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#ede4de' }}
               onMouseLeave={(e) => { e.currentTarget.style.background = '#f4eee8' }}
             >
@@ -4265,26 +4287,13 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
         </div>
       )}
 
-      {/* Lignes d'instructions */}
       {(!isFree || choiceStarted) && activeLines && (
-        <div style={{
-          background: '#f4eee8',
-          borderRadius: 14,
-          padding: '16px 20px',
-          marginBottom: 20,
-        }}>
+        <div style={{ background: '#f4eee8', borderRadius: 14, padding: '16px 20px', marginBottom: 20 }}>
           {activeLines.map((line, i) =>
             line === '' ? (
               <div key={i} style={{ height: 7 }} />
             ) : (
-              <p key={i} style={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: 14,
-                fontWeight: 300,
-                color: '#000',
-                lineHeight: 1.75,
-                margin: 0,
-              }}>
+              <p key={i} style={{ fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 300, color: '#000', lineHeight: 1.75, margin: 0 }}>
                 {line}
               </p>
             )
@@ -4292,7 +4301,6 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
         </div>
       )}
 
-      {/* Timer */}
       {(!isFree || choiceStarted) && data.hasTimer && (
         <RituelTimer
           duration={activeDur}
@@ -4742,6 +4750,11 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
 
   const dayConfig = WEEK_ONE_DATA[dayIndex]
 
+  useEffect(() => {
+    document.getElementById('wof-scroll').scrollTop = 0
+  }, [step, animKey])
+
+
   function notifyScreen(screenId) {
     setScreen(screenId)
     onStepChange?.(screenId, screenId, dayConfig)
@@ -4755,12 +4768,9 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
     const next = step + 1
     setStep(next)
     setAnimKey((k) => k + 1)
-    // Le screen sera mis à jour par le composant enfant via onScreenChange
   }
 
   function goBack() {
-    // Au jour 1, l'introspection est intégrée dans l'accueil (slide1).
-    // On saute le step 1 pour éviter le doublon.
     const skip = dayConfig.accueil?.layout === 'slide1' && step === 2
     const prev = skip ? 0 : Math.max(0, step - 1)
     setStep(prev)
@@ -4788,7 +4798,6 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
     onDayComplete({ type: 'complete' })
   }
 
-  // Pour le getTrace de J6, on passe les jours complétés en incluant le jour courant
   const completedWithCurrent = completedDays.includes(dayConfig.day)
     ? completedDays
     : [...completedDays, dayConfig.day]
@@ -5025,89 +5034,85 @@ function FleurDiscoveryModal({ onClose }) {
   )
 }
 
-function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth, isPro, onOpenProProfile }) {
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH A — dans WeekOneFlow (composant principal, ~ligne 6129)
+// Ajouter onReplayDay au GardenDashboard
+//
+// Remplacer :
+//   onContinue={() => setView('day')}
+// Par :
+//   onContinue={() => setView('day')}
+//   onReplayDay={(day) => {
+//     setWeekData(d => ({ ...d, currentDay: day }))
+//     setView('day')
+//   }}
+// ═══════════════════════════════════════════════════════════════════════════
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH B — remplacer GardenDashboard (lignes 5028–5370)
+// Ajout prop onReplayDay + bouton "Revoir" sur chaque carte accomplie
+// ═══════════════════════════════════════════════════════════════════════════
+
+function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth, isPro, onOpenProProfile, onReplayDay }) {
   const [showFleurModal, setShowFleurModal] = useState(false)
+  const [showRituelHint, setShowRituelHint] = useState(false)
 
   const completedZones = ZONE_DAYS
     .filter(z => completedDays.includes(z.day) && z.zone)
     .map(z => z.zone)
 
-  const today   = new Date().toISOString().split('T')[0]
+  const today         = new Date().toISOString().split('T')[0]
   const lastCompleted = Math.max(...completedDays, 0)
-  const nextDay = Math.min(lastCompleted + 1, 7)
+  const nextDay       = Math.min(lastCompleted + 1, 7)
 
-  // Jour suivant accessible seulement le lendemain de la complétion du précédent
+  const daysWithRituels = ZONE_DAYS.filter(z => completedDays.includes(z.day) && z.zoneId)
+  const hintTargetDay   = daysWithRituels.length > 0
+    ? daysWithRituels[daysWithRituels.length - 1].day
+    : null
+
+  useEffect(() => {
+    if (daysWithRituels.length === 0) return
+    const t = setTimeout(() => setShowRituelHint(true), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
   function isUnlocked(day) {
     if (day === 1) return true
     const prevDate = completionDates[day - 1]
     if (!prevDate) return false
-    return today > prevDate // strict : lendemain à partir de 0h01
+    return today > prevDate
   }
 
   return (
     <div style={{ padding: '32px 24px 80px', maxWidth: 480, margin: '0 auto', minHeight: '100%', background: 'linear-gradient(160deg, #0d2818, #071510)' }}>
+      <style>{`
+        @keyframes hintPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.55); }
+          50%  { box-shadow: 0 0 0 6px rgba(255,255,255,0.10); }
+          100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.00); }
+        }
+        .garden-card-pulse { animation: hintPulse 1.6s ease-in-out infinite; }
+      `}</style>
+
       {showFleurModal && <FleurDiscoveryModal onClose={() => setShowFleurModal(false)} />}
 
       {/* Titre */}
       <div style={{ textAlign: 'center', marginBottom: 40, background: 'rgba(0,0,0,0.22)', borderRadius: 16, padding: '20px 16px 12px', backdropFilter: 'blur(2px)' }}>
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(11px, 2.8vw, 13px)',
-          fontWeight: 500,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#ffe8c0',
-          margin: '0 0 8px',
-          textShadow: '0 1px 6px rgba(0,0,0,0.7)',
-        }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#ffe8c0', margin: '0 0 8px', textShadow: '0 1px 6px rgba(0,0,0,0.7)' }}>
           Ce qui prend forme
         </p>
-        <h2 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(28px, 7vw, 36px)',
-          fontWeight: 700,
-          fontStyle: 'italic',
-          color: '#ffffff',
-          lineHeight: 1.15,
-          margin: '0 0 10px',
-        }}>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 700, fontStyle: 'italic', color: '#ffffff', lineHeight: 1.15, margin: '0 0 10px' }}>
           Ma Fleur
         </h2>
-        <div style={{
-          width: 48, height: 2,
-          background: 'linear-gradient(to right, transparent, #b87c5a, transparent)',
-          margin: '0 auto 20px',
-        }} />
-        <p style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontStyle: 'italic',
-          fontSize: 'clamp(22px, 5.5vw, 28px)',
-          fontWeight: 500,
-          color: '#ffffff',
-          margin: '0 0 14px',
-          lineHeight: 1.5,
-        }}>
+        <div style={{ width: 48, height: 2, background: 'linear-gradient(to right, transparent, #b87c5a, transparent)', margin: '0 auto 20px' }} />
+        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(22px, 5.5vw, 28px)', fontWeight: 500, color: '#ffffff', margin: '0 0 14px', lineHeight: 1.5 }}>
           Ce que vous avez commencé… continue de grandir.
         </p>
-        <p style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontStyle: 'italic',
-          fontSize: 'clamp(20px, 5vw, 25px)',
-          fontWeight: 400,
-          color: '#ffffff',
-          margin: '0 0 12px',
-          lineHeight: 1.5,
-        }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 25px)', fontWeight: 400, color: '#ffffff', margin: '0 0 12px', lineHeight: 1.5 }}>
           Votre fleur se révèle.
         </p>
-        <p style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontStyle: 'normal',
-          fontSize: 'clamp(16px, 4vw, 19px)',
-          color: 'rgba(255,255,255,0.85)',
-          margin: 0,
-          lineHeight: 1.65,
-        }}>
+        <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'normal', fontSize: 'clamp(16px, 4vw, 19px)', color: 'rgba(255,255,255,0.85)', margin: 0, lineHeight: 1.65 }}>
           Chaque jour, une partie s'éveille. Chaque zone a un rôle pour vous.
         </p>
       </div>
@@ -5115,8 +5120,6 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
       {/* Fleur mosaïque */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 40, gap: 20 }}>
         <FlowerMosaic completedZones={completedZones} size={248} petalColor1={petalColor1} petalColor2={petalColor2} />
-
-        {/* Phrase d'encouragement — apparaît juste après l'éclosion complète */}
         {completedZones.length >= 5 && (() => {
           const h = plantHealth ?? 30
           const phrase =
@@ -5127,33 +5130,9 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
             h < 90 ? { text: 'Votre fleur rayonne. Elle est le reflet de votre engagement.', sub: 'Continuez — elle le ressent.' } :
                      { text: 'Votre fleur est en pleine éclosion.', sub: 'Elle reflète toute la vitalité que vous lui avez offerte.' }
           return (
-            <div style={{
-              textAlign: 'center', maxWidth: 260,
-              animation: 'softRise 900ms 1.6s cubic-bezier(0.25,0.46,0.45,0.94) both',
-              opacity: 0,
-              animationFillMode: 'forwards',
-            }}>
-              <p style={{
-                fontFamily: 'Cormorant Garamond, Georgia, serif',
-                fontStyle: 'italic',
-                fontSize: 'clamp(20px, 5vw, 25px)',
-                fontWeight: 500,
-                color: '#ffffff',
-                margin: '0 0 8px',
-                lineHeight: 1.5,
-              }}>
-                {phrase.text}
-              </p>
-              <p style={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: 16,
-                fontWeight: 400,
-                color: 'rgba(255,255,255,0.80)',
-                margin: 0,
-                letterSpacing: '0.03em',
-              }}>
-                {phrase.sub}
-              </p>
+            <div style={{ textAlign: 'center', maxWidth: 260, animation: 'softRise 900ms 1.6s cubic-bezier(0.25,0.46,0.45,0.94) both', opacity: 0, animationFillMode: 'forwards' }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 25px)', fontWeight: 500, color: '#ffffff', margin: '0 0 8px', lineHeight: 1.5 }}>{phrase.text}</p>
+              <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 16, fontWeight: 400, color: 'rgba(255,255,255,0.80)', margin: 0, letterSpacing: '0.03em' }}>{phrase.sub}</p>
             </div>
           )
         })()}
@@ -5162,160 +5141,149 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
       {/* Cartes zones */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {ZONE_DAYS.map((z, i) => {
-          const done      = completedDays.includes(z.day)
-          const unlocked  = isUnlocked(z.day)
-          const isCurrent = z.day === nextDay && unlocked && !done
-          const locked    = !done && !isCurrent
+          const done         = completedDays.includes(z.day)
+          const unlocked     = isUnlocked(z.day)
+          const isCurrent    = z.day === nextDay && unlocked && !done
+          const locked       = !done && !isCurrent
+          const isHintTarget = showRituelHint && z.day === hintTargetDay
+
+          // Clic sur la carte : ouvre les rituels si disponibles, sinon continue
           const clickable = done && z.zoneId ? () => onOpenZone(z.zoneId)
                           : isCurrent        ? onContinue
                           : undefined
 
           return (
-            <div
-              key={z.day}
-              onClick={clickable}
-              className="garden-day-card"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                padding: '14px 18px',
-                borderRadius: 14,
-                background: done
-                  ? 'rgba(20,10,5,0.58)'
-                  : isCurrent
-                    ? 'rgba(20,10,5,0.72)'
-                    : 'rgba(20,10,5,0.35)',
-                border: done
-                  ? `1.5px solid ${z.color}88`
-                  : isCurrent
-                    ? `1.5px solid ${z.color}`
-                    : '1.5px solid rgba(255,220,150,0.15)',
-                boxShadow: isCurrent
-                  ? `0 4px 20px ${z.color}44`
-                  : 'none',
-                cursor: clickable ? 'pointer' : 'default',
-                filter: locked ? 'blur(1.5px)' : 'none',
-                opacity: locked ? 0.5 : 1,
-                transition: 'all 0.3s ease',
-                animation: `softRise 600ms ${i * 80}ms cubic-bezier(0.25,0.46,0.45,0.94) both`,
-              }}
-            >
-              {/* Emoji + pastille */}
-              <div style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: done ? `${z.color}22` : isCurrent ? `${z.color}18` : 'rgba(200,180,170,0.15)',
-                border: `1.5px solid ${done || isCurrent ? z.color + '55' : 'rgba(180,140,120,0.18)'}`,
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                opacity: locked ? 0.4 : 1,
-              }}>
-                {z.emoji}
-              </div>
-
-              {/* Texte */}
-              <div style={{ flex: 1 }}>
-                <p style={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
-                  fontSize: 'clamp(13px, 3.2vw, 15px)',
-                  color: '#ffffff',
-                  margin: '0 0 3px',
-                  letterSpacing: '0.02em',
+            <div key={z.day}>
+              {/* Carte principale */}
+              <div
+                onClick={clickable}
+                className={`garden-day-card${isHintTarget ? ' garden-card-pulse' : ''}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                  padding: '14px 18px',
+                  borderRadius: isHintTarget ? '14px 14px 0 0' : 14,
+                  background: done ? 'rgba(20,10,5,0.58)' : isCurrent ? 'rgba(20,10,5,0.72)' : 'rgba(20,10,5,0.35)',
+                  border: done
+                    ? `1.5px solid ${z.color}88`
+                    : isCurrent
+                      ? `1.5px solid ${z.color}`
+                      : '1.5px solid rgba(255,220,150,0.15)',
+                  borderBottom: isHintTarget ? 'none' : undefined,
+                  boxShadow: isCurrent ? `0 4px 20px ${z.color}44` : 'none',
+                  cursor: clickable ? 'pointer' : 'default',
+                  filter: locked ? 'blur(1.5px)' : 'none',
+                  opacity: locked ? 0.5 : 1,
+                  transition: 'all 0.3s ease',
+                  animation: `softRise 600ms ${i * 80}ms cubic-bezier(0.25,0.46,0.45,0.94) both`,
+                }}
+              >
+                {/* Emoji */}
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: done ? `${z.color}22` : isCurrent ? `${z.color}18` : 'rgba(200,180,170,0.15)',
+                  border: `1.5px solid ${done || isCurrent ? z.color + '55' : 'rgba(180,140,120,0.18)'}`,
+                  flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, opacity: locked ? 0.4 : 1,
                 }}>
-                  Jour {z.day} — {z.label}
-                </p>
-                <p style={{
-                  fontFamily: 'Cormorant Garamond, Georgia, serif',
-                  fontStyle: 'italic',
-                  fontSize: 'clamp(13px, 3vw, 15px)',
-                  color: 'rgba(255,255,255,0.70)',
-                  margin: 0,
-                }}>
-                  {z.desc}
-                </p>
-              </div>
-
-              {/* Badge statut */}
-              {done && z.day === 6 && (
-                <button
-                  onClick={e => { e.stopPropagation(); setShowFleurModal(true) }}
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: '0.08em',
-                    color: '#fff',
-                    background: 'linear-gradient(135deg, #8878a8, #a890c8)',
-                    border: 'none',
-                    borderRadius: 100,
-                    padding: '6px 14px',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    boxShadow: '0 3px 12px rgba(136,120,168,0.35)',
-                  }}
-                >
-                  🌸 Je découvre ma fleur
-                </button>
-              )}
-              {done && z.day !== 6 && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                  <span className="badge-accompli" style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: '#1a1010',
-                    background: 'rgba(255,255,255,0.85)',
-                    border: `1px solid ${z.color}88`,
-                    borderRadius: 100,
-                    padding: '3px 10px',
-                  }}>
-                    accompli
-                  </span>
-                  {z.zoneId && (
-                    <span style={{
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: 10,
-                      color: 'rgba(255,255,255,0.45)',
-                      letterSpacing: '0.04em',
-                    }}>
-                      Voir les rituels →
-                    </span>
-                  )}
+                  {z.emoji}
                 </div>
-              )}
-              {isCurrent && (
-                <span style={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: '#fff',
-                  background: z.color,
-                  borderRadius: 100,
-                  padding: '3px 10px',
-                  flexShrink: 0,
+
+                {/* Texte */}
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: 'clamp(13px, 3.2vw, 15px)', color: '#ffffff', margin: '0 0 3px', letterSpacing: '0.02em' }}>
+                    Jour {z.day} — {z.label}
+                  </p>
+                  <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(13px, 3vw, 15px)', color: 'rgba(255,255,255,0.70)', margin: 0 }}>
+                    {z.desc}
+                  </p>
+                </div>
+
+                {/* Badge statut + bouton Revoir */}
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+  {done && z.day === 6 && (
+    <button
+      onClick={e => { e.stopPropagation(); setShowFleurModal(true) }}
+      style={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.08em', color: '#fff', background: 'linear-gradient(135deg, #8878a8, #a890c8)', border: 'none', borderRadius: 100, padding: '6px 14px', cursor: 'pointer', boxShadow: '0 3px 12px rgba(136,120,168,0.35)' }}
+    >
+      🌸 Je découvre ma fleur
+    </button>
+  )}
+
+  {done && z.day !== 6 && (
+    <div style={{ display: 'flex', flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+      <span className="badge-accompli" style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#1a1010', background: 'rgba(255,255,255,0.85)', border: `1px solid ${z.color}88`, borderRadius: 100, padding: '3px 10px' }}>
+        accompli
+      </span>
+      <button
+  className="btn-revoir"
+  onClick={e => { e.stopPropagation(); onReplayDay?.(z.day) }}
+  style={{ 
+    fontFamily: 'Jost, sans-serif', 
+    fontSize: 11, 
+    fontWeight: 700, 
+    letterSpacing: '0.1em', 
+    textTransform: 'uppercase', 
+    color: '#1a1010', 
+    WebkitTextFillColor: '#1a1010',
+    background: 'rgba(255,255,255,0.85)', 
+    border: `1px solid ${z.color}88`, 
+    borderRadius: 100, 
+    padding: '3px 10px', 
+    cursor: 'pointer' 
+  }}
+>
+  Revoir
+</button>
+    </div>
+  )}
+
+  {z.zoneId && done && (
+    <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.04em' }}>
+      Voir les rituels →
+    </span>
+  )}
+
+  {isCurrent && (
+    <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fff', background: z.color, borderRadius: 100, padding: '3px 10px' }}>
+      À vivre aujourd'hui
+    </span>
+  )}
+
+  {locked && (
+    <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 16, color: '#b8a090' }}>🔒</span>
+  )}
+</div>
+</div>
+
+              {/* Popup hint rituels — collé sous la carte cible */}
+              {isHintTarget && (
+                <div style={{
+                  background: '#ffffff',
+                  border: `1.5px solid ${z.color}55`,
+                  borderTop: 'none',
+                  borderRadius: '0 0 14px 14px',
+                  padding: '12px 16px 14px',
+                  animation: 'softRise 400ms cubic-bezier(0.25,0.46,0.45,0.94) both',
+                  display: 'flex', alignItems: 'center', gap: 12,
                 }}>
-                  À vivre aujourd'hui
-                </span>
-              )}
-              {locked && (
-                <span style={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: 16,
-                  color: '#b8a090',
-                  flexShrink: 0,
-                }}>
-                  🔒
-                </span>
+                  <span style={{ fontSize: 18, flexShrink: 0 }}>✨</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600, color: '#1a1010', margin: '0 0 2px', lineHeight: 1.4 }}>
+                      Vous pouvez aller plus loin.
+                    </p>
+                    <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 400, color: 'rgba(30,20,10,0.60)', margin: 0, lineHeight: 1.5 }}>
+                      Appuyez sur <strong style={{ color: '#1a1010' }}>Voir les rituels →</strong> ci-dessus pour découvrir les exercices de cette zone.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowRituelHint(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(30,20,10,0.30)', fontSize: 16, lineHeight: 1, padding: 4, flexShrink: 0 }}
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
           )
@@ -5326,39 +5294,15 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
       <div style={{ textAlign: 'center', marginTop: 24 }}>
         <button
           onClick={onClose}
-          style={{
-            fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontStyle: 'italic',
-            fontSize: 'clamp(16px, 4vw, 19px)',
-            color: '#1a1010',
-            background: 'rgba(255,255,255,0.90)',
-            border: '1px solid rgba(255,255,255,0.6)',
-            borderRadius: 100,
-            padding: '11px 32px',
-            cursor: 'pointer',
-            letterSpacing: '0.04em',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-          }}
+          style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(16px, 4vw, 19px)', color: '#1a1010', background: 'rgba(255,255,255,0.90)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 100, padding: '11px 32px', cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.2s ease', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}
         >
           {lastCompleted >= 7 ? 'À très bientôt' : 'À demain'}
         </button>
-
         {onSignOut && (
           <div style={{ marginTop: 20 }}>
             <button
               onClick={onSignOut}
-              style={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: 12,
-                fontWeight: 400,
-                color: 'rgba(120,80,60,0.45)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                letterSpacing: '0.06em',
-                padding: '4px 8px',
-              }}
+              style={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 400, color: 'rgba(120,80,60,0.45)', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.06em', padding: '4px 8px' }}
             >
               ⎋ Se déconnecter
             </button>
@@ -5624,6 +5568,7 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
   const [view, setView] = useState(
     forceDay > 1 || forceGarden ? 'garden' : 'day'
   )
+  const [isReplay, setIsReplay] = useState(false)
   const [activeZoneId, setActiveZoneId] = useState(null)
   const [completedRituals, setCompletedRituals] = useState({})
   const { rituals: plantRituals } = useRituels()
@@ -5828,48 +5773,64 @@ console.log('❌ Pas de données ou erreur:', error)
   }, [userId])
 
   // Sauvegarde dans Supabase
-  const saveWeekData = useCallback(async (updated) => {
-    weekDataRef.current = updated
-    setWeekData(updated)
-    if (!userId) return
-    await supabase
-      .from('profiles')
-      .update({ week_one_data: updated })
-      .eq('id', userId)
-  }, [userId])
+const saveWeekData = useCallback(async (updated) => {
+  weekDataRef.current = updated
+  setWeekData(updated)
+  if (!userId) return
+  await supabase
+    .from('profiles')
+    .update({ week_one_data: updated })
+    .eq('id', userId)
+}, [userId])
 
-  async function handleDayEvent(event) {
-    const current = weekDataRef.current
+async function handleDayEvent(event) {
+  const current = weekDataRef.current
 
-    if (event.type === 'answer') {
-      const updated = {
-        ...current,
-        answers: {
-          ...current.answers,
-          [event.dayKey]: {
-            ...(current.answers[event.dayKey] || {}),
-            [event.answerKey]: event.value,
-          },
-        },
-      }
-      await saveWeekData(updated)
+  if (event.type === 'answer') {
+  // Mode replay — on ne sauvegarde pas les réponses
+  if (isReplay) return
+
+  const updated = {
+    ...current,
+    answers: {
+      ...current.answers,
+      [event.dayKey]: {
+        ...(current.answers[event.dayKey] || {}),
+        [event.answerKey]: event.value,
+      },
+    },
+  }
+  await saveWeekData(updated)
+}
+
+  if (event.type === 'complete') {
+    // Mode replay — retour au garden sans toucher aux données
+    if (isReplay) {
+      setIsReplay(false)
+      setWeekData(d => ({
+        ...d,
+        currentDay: d.completedDays.length > 0
+          ? Math.min(Math.max(...d.completedDays) + 1, 7)
+          : 1
+      }))
+      setView('garden')
+      return
     }
 
-    if (event.type === 'complete') {
-      const dayNum  = current.currentDay
-      const nextDay = Math.min(dayNum + 1, 7)
-      const today   = new Date().toISOString().split('T')[0]
-      const updated = {
-        ...current,
-        currentDay:    nextDay,
-        completedDays: current.completedDays.includes(dayNum)
-          ? current.completedDays
-          : [...current.completedDays, dayNum],
-        completionDates: {
-          ...(current.completionDates || {}),
-          [dayNum]: today,
-        },
-      }
+    const dayNum  = current.currentDay
+    const nextDay = Math.min(dayNum + 1, 7)
+    const today   = new Date().toISOString().split('T')[0]
+    const updated = {
+      ...current,
+      currentDay:    nextDay,
+      completedDays: current.completedDays.includes(dayNum)
+        ? current.completedDays
+        : [...current.completedDays, dayNum],
+      completionDates: {
+        ...(current.completionDates || {}),
+        [dayNum]: today,
+      },
+    }
 
       // Lumens (non-bloquant)
       if (userId) {
@@ -5935,7 +5896,7 @@ console.log('❌ Pas de données ou erreur:', error)
         }
         // onAllDone = tous les 7 jours validés → aller au dashboard
         // onComplete = fallback (compatibilité test-weekone)
-        ;(onAllDone ?? onComplete)?.()
+        ;(onAllDone ?? onComplete)?.(updated.completedDays)
       } else {
         setView('garden')
         if (userId) {
@@ -6120,15 +6081,21 @@ console.log('❌ Pas de données ou erreur:', error)
             </div>
           </div>
 
-          {/* ── Contenu (scrollable) ── */}
-          <div style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', background: view === 'garden' ? 'linear-gradient(160deg, #0d2818, #071510)' : 'transparent' }}>
-            {view === 'garden' ? (
-              <GardenDashboard
-                completedDays={weekData.completedDays}
-                completionDates={weekData.completionDates || {}}
-                onContinue={() => setView('day')}
+   {/* ── Contenu (scrollable) ── */}
+<div id="wof-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', background: view === 'garden' ? 'linear-gradient(160deg, #0d2818, #071510)' : 'transparent' }}>
+  {view === 'garden' ? (
+    <GardenDashboard
+      completedDays={weekData.completedDays}
+      completionDates={weekData.completionDates || {}}
+      onContinue={() => setView('day')}
+      onReplayDay={(day) => {
+        setWeekData(d => ({ ...d, currentDay: day }))
+        setIsReplay(true)
+        setView('day')
+        document.getElementById('wof-scroll').scrollTop = 0
+      }}
                 onOpenZone={setActiveZoneId}
-                onClose={onComplete}
+                onClose={() => onComplete?.(weekData.completedDays)}
                 onSignOut={handleSignOut}
                 petalColor1={petalColor1}
                 petalColor2={petalColor2}

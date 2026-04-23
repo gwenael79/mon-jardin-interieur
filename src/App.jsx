@@ -13,6 +13,7 @@ import { WeekOneFlow }      from './pages/WeekOneFlow'
 import { EndOfWeekScreen }  from './pages/EndOfWeekScreen'
 import { ProProfile }       from './pages/ProProfile'
 import InstallPrompt from './components/InstallPrompt'
+import { EngagementModals } from './components/EngagementModals'
 
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
 import { useLastVisit }          from './hooks/useLastVisit'
@@ -46,6 +47,7 @@ export default function App() {
   const [showProLaunch,       setShowProLaunch]       = useState(false)
   const [proCancelLoading,     setProCancelLoading]     = useState(false)
   const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
+  const [weekOneCompletedDays, setWeekOneCompletedDays] = useState([])
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
   const toastTimer = useRef(null)
@@ -186,6 +188,7 @@ export default function App() {
         const { data: profileData } = await supabase
           .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
         const completedDays = profileData?.week_one_data?.completedDays ?? []
+        setWeekOneCompletedDays(completedDays)
         if (completedDays.length < 7) { setScreen('weekone'); return }
       }
 
@@ -603,6 +606,14 @@ export default function App() {
   }
 
   if (screen === 'weekone_rest') {
+    // Charger les completedDays si pas encore disponibles
+    if (!weekOneCompletedDays.length && user?.id) {
+      supabase.from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
+        .then(({ data }) => {
+          const days = data?.week_one_data?.completedDays ?? []
+          if (days.length) setWeekOneCompletedDays(days)
+        })
+    }
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(12,28,8,0.60)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
         <style>{`
@@ -627,6 +638,7 @@ export default function App() {
             </button>
           </div>
         </div>
+      <EngagementModals completedDays={weekOneCompletedDays} userId={user.id} />
       </div>
     )
   }
