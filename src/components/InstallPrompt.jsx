@@ -26,6 +26,7 @@ export default function InstallPrompt() {
     const handler = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
+      window._installPrompt = e  // partagé avec EngagementModals
       const visits = parseInt(localStorage.getItem('pwa_visits') || '0') + 1
       localStorage.setItem('pwa_visits', String(visits))
       if (visits >= 3) setTimeout(() => setShow(true), 2000)
