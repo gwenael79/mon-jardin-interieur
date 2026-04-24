@@ -57,6 +57,12 @@ function GlobalStyles() {
         50%      { box-shadow: 0 0 32px 8px rgba(200,160,112,0.35); }
       }
 
+      @keyframes timeBadgePulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(200,160,176,0.0); transform: scale(1); }
+        50%      { box-shadow: 0 0 0 6px rgba(200,160,176,0.35); transform: scale(1.06); }
+      }
+      .time-badge-pulse { animation: timeBadgePulse 2s ease-in-out infinite; }
+
       @keyframes helpPanelIn {
         from { transform: translateY(100%); }
         to   { transform: translateY(0);    }
@@ -201,7 +207,7 @@ const LABEL_MAP = {
   // Jour 3 — espace
   travail:       'le travail',
   relations:     'les relations',
-  corps:         'votre corps',
+  corps:         'ton corps',
   pensees:       'mes pensées',
   avenir:        "l'avenir",
   // Jour 4 — besoin
@@ -214,7 +220,7 @@ const LABEL_MAP = {
   pas_vraiment:  'Pas vraiment',
   un_peu:        'Un peu',
   avec_quelquun: "avec quelqu'un",
-  avec_moi:      'avec vous-même',
+  avec_moi:      'avec toi-même',
   profondement:  'Profondément',
   // Jour 6 — stress
   identique:     'identique',
@@ -253,7 +259,7 @@ export const WEEK_ONE_DATA = [
       pauseSeconds: 1,
     },
     introspection: {
-      question: 'Comment vous sentez-vous là, maintenant ?',
+      question: 'Comment tu te sens là, maintenant ?',
       answerKey: 'feel',
       choices: [
         { label: '😴 Fatigué·e', value: 'fatigue'  },
@@ -270,30 +276,30 @@ export const WEEK_ONE_DATA = [
         if (feel === 'fatigue' || feel === 'stresse') return {
           ctaLabel: 'Revenir à mes racines',
           lines: [
-            "Ce que vous ressentez peut être lourd aujourd'hui.",
-            "Et dans ces moments-là,\nce n'est pas ce qui est visible\nqui a le plus besoin d'attention…",
+            "Ce que tu ressens peut être lourd aujourd'hui.",
+            "Et dans ces moments-là, ce n'est pas ce qui est visible qui a le plus besoin d'attention…",
             "mais ce qui soutient tout le reste.",
-            "Comme une plante, il existe en vous\nune base invisible\nqui influence votre équilibre.",
+            "Comme une plante, il existe en toi une base invisible qui influence ton équilibre.",
             "On va commencer doucement, par là.",
           ],
         }
         if (feel === 'neutre') return {
           ctaLabel: 'Explorer mes racines',
           lines: [
-            "Ce que vous ressentez est peut-être\ndifficile à définir aujourd'hui.",
-            "Ni vraiment mal…\nni vraiment bien.",
-            "C'est souvent dans ces moments-là\nque quelque chose peut commencer à s'éclaircir.",
-            "Comme une plante, il existe en vous\nune base invisible\nqui soutient tout le reste.",
+            "Ce que tu ressens est peut-être difficile à définir aujourd'hui.",
+            "Ni vraiment mal… ni vraiment bien.",
+            "C'est souvent dans ces moments-là que quelque chose peut commencer à s'éclaircir.",
+            "Comme une plante, il existe en toi une base invisible qui soutient tout le reste.",
             "On va simplement s'en rapprocher.",
           ],
         }
         return {
           ctaLabel: 'Approfondir mes racines',
           lines: [
-            "Vous portez quelque chose de plus calme aujourd'hui.",
+            "Tu portes quelque chose de plus calme aujourd'hui.",
             "C'est un terrain favorable.",
-            "Comme une plante, il existe en vous\nune base invisible\nqui soutient tout le reste.",
-            "Quand le terrain est accueillant,\nles racines peuvent s'approfondir.",
+            "Comme une plante, il existe en toi une base invisible qui soutient tout le reste.",
+            "Quand le terrain est accueillant, les racines peuvent s'approfondir.",
             "On va simplement les laisser faire.",
           ],
         }
@@ -301,17 +307,18 @@ export const WEEK_ONE_DATA = [
       isGuided: true,
     },
     guidedValidation: true,
+    // videoAfterRitual: '/racine.mp4',
     getTrace: (ans) =>
-      `Vous vous sentiez ${labelFor(ans?.j1?.feel)}. Et vous avez quand même pris ce moment.`,
-    ouverture: 'Demain, vous découvrirez ce qui vous porte, même quand vous vacillez.',
+      `Tu te sentais ${labelFor(ans?.j1?.feel)}. Et tu as quand même pris ce moment.`,
+    ouverture: 'Demain, tu découvriras ce qui te porte, même quand tu vacilles.',
     helpTexts: {
-      accueil_intro:       "Ce moment n'exige rien de vous.\n\nPas de performance, pas d'état d'âme particulier à avoir. Juste cette respiration, ce corps, cette seconde qui existe.\n\nC'est suffisant pour commencer.",
-      accueil_arret:       "Vous êtes là. C'est déjà quelque chose.\n\nDans nos journées, on oublie souvent de simplement s'arrêter. Ce moment, vous venez de vous l'offrir.",
+      accueil_intro:       "Ce moment n'exige rien de toi.\n\nPas de performance, pas d'état d'âme particulier à avoir. Juste cette respiration, ce corps, cette seconde qui existe.\n\nC'est suffisant pour commencer.",
+      accueil_arret:       "Tu es là. C'est déjà quelque chose.\n\nDans nos journées, on oublie souvent de simplement s'arrêter. Ce moment, tu viens de te l'offrir.",
       accueil_respiration: "Le souffle est toujours disponible.\n\nQuand tout s'accélère, il reste là, fidèle. Quelques secondes à lui accorder suffisent pour revenir à soi.",
       introspection:       "Nommer ce que l'on ressent, c'est déjà sortir du brouillard.\n\nPas besoin d'être précis·e. Une direction suffit. Le corps sait avant les mots.",
-      rituel_transition:   "Ce que vous ressentez colore ce dont vous avez besoin.\n\nPas de bonne ou mauvaise réponse. Le rituel s'adapte à vous, pas l'inverse.",
-      rituel:              "Les racines d'une plante ne cherchent pas la lumière. Elles descendent, s'enfoncent, tiennent.\n\nC'est en vous ancrant dans le bas, le souffle, le sol, le corps, que vous trouvez la stabilité pour vous ouvrir vers le haut.\n\nCe rituel nourrit vos racines.",
-      validation:          "Ce que vous écrivez ici ne s'efface pas.\n\nDans un mois, dans un an, ces quelques mots vous diront d'où vous venez. C'est une forme de tendresse envers vous-même.",
+      rituel_transition:   "Ce que tu ressens colore ce dont tu as besoin.\n\nPas de bonne ou mauvaise réponse. Le rituel s'adapte à toi, pas l'inverse.",
+      rituel:              "Les racines d'une plante ne cherchent pas la lumière. Elles descendent, s'enfoncent, tiennent.\n\nC'est en t'ancrant dans le bas, le souffle, le sol, le corps, que tu trouves la stabilité pour t'ouvrir vers le haut.\n\nCe rituel nourrit tes racines.",
+      validation:          "Ce que tu écris ici ne s'efface pas.\n\nDans un mois, dans un an, ces quelques mots te diront d'où tu viens. C'est une forme de tendresse envers toi-même.",
     },
   },
 
@@ -323,21 +330,21 @@ export const WEEK_ONE_DATA = [
     accueil: {
       conditioning: true,
       skipBarometer: true,
-      headline: "Vous êtes revenu·e. Votre jardin s'en souvient.",
+      headline: "Tu es revenu·e. Ton jardin s'en souvient.",
       subtitle: 'La continuité est une forme de soin.',
       pauseSeconds: 1,
       getPreviousNote: (ans) => {
         const feel = ans?.j1?.feel
-        if (feel === 'fatigue')  return "Hier, vous portiez de la fatigue. Vous êtes revenu·e quand même."
-        if (feel === 'stresse')  return "Hier, quelque chose vous pesait. Et vous avez choisi de revenir."
-        if (feel === 'neutre')   return "Hier, vous étiez dans un entre-deux. Ce retour commence peut-être autrement."
-        if (feel === 'calme')    return "Hier, vous étiez calme. Ce terrain mérite qu'on continue de le cultiver."
-        if (feel === 'bien')     return "Hier, vous alliez bien. Voyons ce que ce nouveau jour apporte de plus."
+        if (feel === 'fatigue')  return "Hier, tu portais de la fatigue. Tu es revenu·e quand même."
+        if (feel === 'stresse')  return "Hier, quelque chose te pesait. Et tu as choisi de revenir."
+        if (feel === 'neutre')   return "Hier, tu étais dans un entre-deux. Ce retour commence peut-être autrement."
+        if (feel === 'calme')    return "Hier, tu étais calme. Ce terrain mérite qu'on continue de le cultiver."
+        if (feel === 'bien')     return "Hier, tu allais bien. Voyons ce que ce nouveau jour apporte de plus."
         return null
       },
     },
     introspection: {
-      question: 'Votre énergie en ce moment est plutôt…',
+      question: 'Ton énergie en ce moment est plutôt…',
       answerKey: 'energy',
       component: 'energy-battery',
     },
@@ -349,17 +356,17 @@ export const WEEK_ONE_DATA = [
         if (energy === 'vide' || energy === 'basse') return {
           ctaLabel: 'Trouver mon appui',
           lines: [
-            "Votre énergie est basse aujourd'hui.",
-            "La tige ne vous demande pas d'aller loin.",
+            "Ton énergie est basse aujourd'hui.",
+            "La tige ne te demande pas d'aller loin.",
             "Juste de trouver un appui. Un contact.",
-            "Ce qui vous porte, même dans les jours difficiles.",
+            "Ce qui te porte, même dans les jours difficiles.",
             "On va commencer par là.",
           ],
         }
         if (energy === 'correcte') return {
           ctaLabel: 'Retrouver mon centre',
           lines: [
-            "Vous êtes là. C'est l'essentiel.",
+            "Tu es là. C'est l'essentiel.",
             "La tige est ce qui relie.",
             "Elle n'a pas besoin d'être parfaite pour tenir.",
             "On va simplement y revenir.",
@@ -368,7 +375,7 @@ export const WEEK_ONE_DATA = [
         return {
           ctaLabel: 'Approfondir mon ancrage',
           lines: [
-            "Votre énergie est bien présente aujourd'hui.",
+            "Ton énergie est bien présente aujourd'hui.",
             "C'est un bon moment pour s'ancrer davantage.",
             "La tige grandit quand on lui donne de l'attention.",
             "On va l'utiliser.",
@@ -380,18 +387,18 @@ export const WEEK_ONE_DATA = [
     getTrace: (ans) => {
       const energy = ans?.j2?.energy
       return energy
-        ? `Votre énergie était ${labelFor(energy)} aujourd'hui. Vous êtes revenu·e malgré tout.`
-        : "Vous avez été présent·e deux jours de suite. Votre tige commence à tenir."
+        ? `Ton énergie était ${labelFor(energy)} aujourd'hui. Tu es revenu·e malgré tout.`
+        : "Tu as été présent·e deux jours de suite. Ta tige commence à tenir."
     },
     ouverture: 'Juste revenir… suffit. À demain.',
     helpTexts: {
       accueil_intro:       "Revenir, c'est déjà résister à l'oubli.\n\nLe corps se souvient de ce qu'on lui répète. Chaque retour grave un sillon un peu plus profond, même quand l'envie n'y est pas.",
       accueil_respiration: "Quelques respirations suffisent à changer la qualité de présence.\n\nPas besoin de méditer vingt minutes. Juste ce souffle, maintenant, avant de continuer.",
-      introspection:       "Le changement ne s'annonce pas toujours. Parfois, c'est juste une légère différence de teinte.\n\nCe que vous percevez aujourd'hui vous appartient, aussi petit soit-il.",
-      rituel_transition:   "Votre énergie du moment oriente ce dont vous avez besoin.\n\nLa tige s'adapte, elle ne se brise pas. Ce rituel part de là où vous en êtes.",
-      rituel:              "La tige porte sans plier. Elle tient la fleur vers le ciel tout en restant enracinée dans la terre.\n\nElle n'est ni rigide ni sans forme. Elle oscille, revient, tient bon.\n\nCe rituel renforce votre tige intérieure.",
+      introspection:       "Le changement ne s'annonce pas toujours. Parfois, c'est juste une légère différence de teinte.\n\nCe que tu perçois aujourd'hui t'appartient, aussi petit soit-il.",
+      rituel_transition:   "Ton énergie du moment oriente ce dont tu as besoin.\n\nLa tige s'adapte, elle ne se brise pas. Ce rituel part de là où tu en es.",
+      rituel:              "La tige porte sans plier. Elle tient la fleur vers le ciel tout en restant enracinée dans la terre.\n\nElle n'est ni rigide ni sans forme. Elle oscille, revient, tient bon.\n\nCe rituel renforce ta tige intérieure.",
       trace:               "Quelques mots honnêtes valent plus que de belles phrases.\n\nEcrire après la pratique, c'est laisser l'expérience se déposer, comme de la terre après la pluie.",
-      ouverture:           "Deux jours. Votre tige commence à se dresser.\n\nDemain, quelque chose de plus délicat vous attend : les premières feuilles.",
+      ouverture:           "Deux jours. Ta tige commence à se dresser.\n\nDemain, quelque chose de plus délicat t'attend : les premières feuilles.",
     },
   },
 
@@ -411,19 +418,19 @@ export const WEEK_ONE_DATA = [
         if (!feel && !energy) return null
 
         const feelPart = {
-          fatigue:  "vous portiez de la fatigue",
-          stresse:  "quelque chose vous pesait",
-          neutre:   "vous étiez dans un entre-deux",
-          calme:    "vous étiez calme",
-          bien:     "vous alliez bien",
+          fatigue:  "tu portais de la fatigue",
+          stresse:  "quelque chose te pesait",
+          neutre:   "tu étais dans un entre-deux",
+          calme:    "tu étais calme",
+          bien:     "tu allais bien",
         }[feel]
 
         const energyPart = {
-          vide:     "votre énergie s'est faite absente",
-          basse:    "votre énergie est restée discrète",
-          correcte: "votre énergie était là",
-          bonne:    "votre énergie était bien présente",
-          vive:     "vous étiez pleinement vivant·e",
+          vide:     "ton énergie s'est faite absente",
+          basse:    "ton énergie est restée discrète",
+          correcte: "ton énergie était là",
+          bonne:    "ton énergie était bien présente",
+          vive:     "tu étais pleinement vivant·e",
         }[energy]
 
         if (feelPart && energyPart)
@@ -434,13 +441,13 @@ export const WEEK_ONE_DATA = [
       },
     },
     introspection: {
-      question: "Qu'est-ce qui prend le plus de place en vous aujourd'hui ?",
+      question: "Qu'est-ce qui prend le plus de place en toi aujourd'hui ?",
       answerKey: 'space',
       layout: 'column',
       choices: [
         { label: 'Le travail',    emoji: '💼', value: 'travail'   },
         { label: 'Les relations', emoji: '🤝', value: 'relations' },
-        { label: 'Votre corps',     emoji: '🧘', value: 'corps'     },
+        { label: 'Ton corps',     emoji: '🧘', value: 'corps'     },
         { label: 'Mes pensées',   emoji: '🌀', value: 'pensees'   },
         { label: "L'avenir",      emoji: '🔭', value: 'avenir'    },
       ],
@@ -453,11 +460,11 @@ export const WEEK_ONE_DATA = [
         const feel  = ans?.j3?.conditioning_feel
 
         const feelLine = {
-          fatigue:  "Vous portez quelque chose de lourd en ce moment.",
-          stresse:  "Il y a de l'agitation en vous aujourd'hui.",
-          neutre:   "Vous êtes dans un entre-deux.",
-          calme:    "Il y a du calme en vous.",
-          bien:     "Vous vous sentez bien.",
+          fatigue:  "Tu portes quelque chose de lourd en ce moment.",
+          stresse:  "Il y a de l'agitation en toi aujourd'hui.",
+          neutre:   "Tu es dans un entre-deux.",
+          calme:    "Il y a du calme en toi.",
+          bien:     "Tu te sens bien.",
         }[feel]
 
         const opener = feelLine ? [feelLine] : []
@@ -496,7 +503,7 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Observer ce qui est là',
           lines: [
             ...opener,
-            `Ce qui occupe votre espace… c'est ${labelFor(space)}.`,
+            `Ce qui occupe ton espace… c'est ${labelFor(space)}.`,
             "Les feuilles reçoivent sans juger.",
             "Elles captent la lumière autant que l'ombre.",
             "On va simplement regarder ce qui est là.",
@@ -508,18 +515,18 @@ export const WEEK_ONE_DATA = [
     getTrace: (ans) => {
       const space = ans?.j3?.space
       return space
-        ? `Ce qui prenait le plus de place : ${labelFor(space)}. Vous l'avez observé sans le fuir.`
-        : "Vous avez nommé quelque chose. C'est plus courageux qu'il n'y paraît."
+        ? `Ce qui prenait le plus de place : ${labelFor(space)}. Tu l'as observé sans le fuir.`
+        : "Tu as nommé quelque chose. C'est plus courageux qu'il n'y paraît."
     },
-    ouverture: 'Demain, vous allez vous accorder quelque chose de rare.',
+    ouverture: "Demain, tu vas t'accorder quelque chose de rare.",
     helpTexts: {
-      accueil_intro:       "Observer sans intervenir, c'est l'une des postures les plus difficiles qui soit.\n\nPas pour changer ce que vous voyez, mais pour le voir vraiment. Ce regard honnête est déjà un acte de courage.",
-      accueil_respiration: "Ce souffle avant de plonger dans la journée.\n\nIl crée un espace entre ce que vous étiez hier et ce que vous choisissez d'observer aujourd'hui.",
-      introspection:       "Ce que vous voyez en vous aujourd'hui n'est pas un verdict.\n\nC'est une photographie du moment. Les photos changent. Et regarder franchement, c'est déjà voir autrement.",
-      rituel_transition:   "Ce que vous avez observé prépare le terrain pour ce qui suit.\n\nLes feuilles accueillent ce qui arrive. Ce rituel part de votre réalité du moment.",
-      rituel:              "Les feuilles d'une plante respirent. Elles absorbent, transforment, relâchent, en permanence.\n\nElles ne retiennent rien. Ce que le vent apporte, elles le laissent repartir.\n\nCe rituel travaille votre capacité à laisser circuler ce qui traverse.",
-      trace:               "Vous avez nommé quelque chose aujourd'hui, peut-être pour la première fois.\n\nLes mots que vous posez ici ne jugent pas. Ils témoignent. C'est différent.",
-      ouverture:           "Trois jours. Vous observez. Vous nommez.\n\nDemain, une nouvelle invitation : vous accorder ce qui manquait.",
+      accueil_intro:       "Observer sans intervenir, c'est l'une des postures les plus difficiles qui soit.\n\nPas pour changer ce que tu vois, mais pour le voir vraiment. Ce regard honnête est déjà un acte de courage.",
+      accueil_respiration: "Ce souffle avant de plonger dans la journée.\n\nIl crée un espace entre ce que tu étais hier et ce que tu choisis d'observer aujourd'hui.",
+      introspection:       "Ce que tu vois en toi aujourd'hui n'est pas un verdict.\n\nC'est une photographie du moment. Les photos changent. Et regarder franchement, c'est déjà voir autrement.",
+      rituel_transition:   "Ce que tu as observé prépare le terrain pour ce qui suit.\n\nLes feuilles accueillent ce qui arrive. Ce rituel part de ta réalité du moment.",
+      rituel:              "Les feuilles d'une plante respirent. Elles absorbent, transforment, relâchent, en permanence.\n\nElles ne retiennent rien. Ce que le vent apporte, elles le laissent repartir.\n\nCe rituel travaille ta capacité à laisser circuler ce qui traverse.",
+      trace:               "Tu as nommé quelque chose aujourd'hui, peut-être pour la première fois.\n\nLes mots que tu poses ici ne jugent pas. Ils témoignent. C'est différent.",
+      ouverture:           "Trois jours. Tu observes. Tu nommes.\n\nDemain, une nouvelle invitation : t'accorder ce qui manquait.",
     },
   },
 
@@ -530,19 +537,19 @@ export const WEEK_ONE_DATA = [
     color: '#d4a0b0',
     accueil: {
       conditioning: true,
-      headline: 'Vous pouvez ralentir ici.',
-      subtitle: 'Ce moment vous appartient entièrement.',
+      headline: 'Tu peux ralentir ici.',
+      subtitle: "Ce moment t'appartient entièrement.",
       pauseSeconds: 1,
       getNarrativeNote: (ans) => {
         const space  = ans?.j3?.space
         const energy = ans?.j2?.energy
 
         const spacePart = {
-          travail:   "le travail occupait votre espace",
+          travail:   "le travail occupait ton espace",
           relations: "les relations prenaient beaucoup de place",
-          corps:     "votre corps demandait de l'attention",
-          pensees:   "vos pensées tournaient en boucle",
-          avenir:    "l'avenir accaparait vos pensées",
+          corps:     "ton corps demandait de l'attention",
+          pensees:   "tes pensées tournaient en boucle",
+          avenir:    "l'avenir accaparait tes pensées",
         }[space]
 
         const energyPart = {
@@ -554,16 +561,16 @@ export const WEEK_ONE_DATA = [
         }[energy]
 
         if (spacePart && energyPart)
-          return `Hier, ${spacePart}. Vous étiez ${energyPart}. Aujourd'hui, vous pouvez ralentir.`
+          return `Hier, ${spacePart}. Tu étais ${energyPart}. Aujourd'hui, tu peux ralentir.`
         if (spacePart)
           return `Hier, ${spacePart}. Ce moment est fait pour déposer tout ça.`
         if (energyPart)
-          return `Ces derniers jours, vous avanciez ${energyPart}. Aujourd'hui, c'est différent.`
+          return `Ces derniers jours, tu avançais ${energyPart}. Aujourd'hui, c'est différent.`
         return null
       },
     },
     introspection: {
-      question: "De quoi auriez-vous besoin aujourd'hui ?",
+      question: "De quoi aurais-tu besoin aujourd'hui ?",
       answerKey: 'need',
       layout: 'column',
       choices: [
@@ -582,11 +589,11 @@ export const WEEK_ONE_DATA = [
         const feel = ans?.j4?.conditioning_feel
 
         const feelLine = {
-          fatigue:  "Vous portez de la fatigue aujourd'hui.",
-          stresse:  "Il y a de la tension en vous.",
-          neutre:   "Vous êtes dans un état neutre.",
-          calme:    "Il y a du calme en vous.",
-          bien:     "Vous vous sentez bien.",
+          fatigue:  "Tu portes de la fatigue aujourd'hui.",
+          stresse:  "Il y a de la tension en toi.",
+          neutre:   "Tu es dans un état neutre.",
+          calme:    "Il y a du calme en toi.",
+          bien:     "Tu te sens bien.",
         }[feel]
 
         const opener = feelLine ? [feelLine] : []
@@ -595,9 +602,9 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Entrer dans le silence',
           lines: [
             ...opener,
-            "Vous avez besoin de silence.",
+            "Tu as besoin de silence.",
             "Les fleurs s'ouvrent dans le calme.",
-            "Ce scan corporel va créer cet espace pour vous.",
+            "Ce scan corporel va créer cet espace pour toi.",
             "Rien à produire. Juste à recevoir.",
           ],
         }
@@ -605,18 +612,18 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Recevoir de la douceur',
           lines: [
             ...opener,
-            "Vous avez besoin de douceur.",
+            "Tu as besoin de douceur.",
             "Les fleurs s'ouvrent quand elles sont accueillies.",
-            "Ce moment est entièrement pour vous.",
-            "Laissez-vous simplement traverser.",
+            "Ce moment est entièrement pour toi.",
+            "Laisse-toi simplement traverser.",
           ],
         }
         if (need === 'mouvement') return {
           ctaLabel: 'Traverser mon corps',
           lines: [
             ...opener,
-            "Vous avez besoin de mouvement.",
-            "Ce scan vous invite à parcourir votre corps.",
+            "Tu as besoin de mouvement.",
+            "Ce scan t'invite à parcourir ton corps.",
             "Une façon douce de bouger… de l'intérieur.",
           ],
         }
@@ -624,9 +631,9 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Chercher la clarté',
           lines: [
             ...opener,
-            "Vous cherchez de la clarté.",
+            "Tu cherches de la clarté.",
             "Parfois, elle vient quand on s'arrête de chercher.",
-            "Ce scan va vous ramener dans le corps.",
+            "Ce scan va te ramener dans le corps.",
             "C'est souvent là qu'elle attend.",
           ],
         }
@@ -634,9 +641,9 @@ export const WEEK_ONE_DATA = [
           ctaLabel: "M'offrir de l'espace",
           lines: [
             ...opener,
-            `Vous avez besoin ${labelFor(need)}.`,
+            `Tu as besoin ${labelFor(need)}.`,
             "Les fleurs ne s'ouvrent que quand elles ont de l'espace.",
-            "C'est ce que vous allez vous offrir maintenant.",
+            "C'est ce que tu vas t'offrir maintenant.",
           ],
         }
       },
@@ -645,18 +652,18 @@ export const WEEK_ONE_DATA = [
     getTrace: (ans) => {
       const need = ans?.j4?.need
       return need
-        ? `Vous aviez besoin ${labelFor(need)}. Vous vous l'êtes accordé.`
-        : "Vous venez de vous accorder de l'espace. Même peu… compte."
+        ? `Tu avais besoin ${labelFor(need)}. tu te l'es accordé.`
+        : "Tu viens de t'accorder de l'espace. Même peu… compte."
     },
-    ouverture: 'Demain, quelque chose de nouveau entre dans votre jardin.',
+    ouverture: 'Demain, quelque chose de nouveau entre dans ton jardin.',
     helpTexts: {
       accueil_intro:       "Ralentir demande plus d'audace qu'accélérer.\n\nDans un monde qui valorise la vitesse, s'arrêter est un acte presque subversif. Et pourtant, c'est souvent là que tout se remet en ordre.",
-      accueil_respiration: "Avant d'explorer, juste s'installer.\n\nCe souffle crée le sol sur lequel vous allez poser ce qui vient ensuite.",
-      introspection:       "Il n'y a pas de bonne réponse à ce que vous explorez ici.\n\nSeulement la vôtre, toujours en mouvement, toujours juste pour ce moment.",
-      rituel_transition:   "Ce dont vous avez besoin guide le rituel d'aujourd'hui.\n\nLes fleurs ne s'ouvrent que dans les conditions qui leur conviennent. Ce rituel crée les vôtres.",
-      rituel:              "Une fleur ne s'ouvre pas sur commande.\n\nElle attend que la lumière soit là, que la chaleur soit suffisante. Elle ne se force pas.\n\nCe rituel vous invite à créer ces conditions pour vous, sans effort, juste en ouvrant l'espace.",
-      trace:               "L'espace que vous venez de vous accorder a laissé une empreinte.\n\nVotre système nerveux l'a enregistré, même si vous n'en avez pas conscience. Même peu compte.",
-      ouverture:           "Quatre jours. Vos fleurs commencent à s'ouvrir.\n\nDemain, quelque chose de nouveau entre dans votre jardin : la dimension du lien.",
+      accueil_respiration: "Avant d'explorer, juste s'installer.\n\nCe souffle crée le sol sur lequel tu vas poser ce qui vient ensuite.",
+      introspection:       "Il n'y a pas de bonne réponse à ce que tu explores ici.\n\nSeulement la tienne, toujours en mouvement, toujours juste pour ce moment.",
+      rituel_transition:   "Ce dont tu as besoin guide le rituel d'aujourd'hui.\n\nLes fleurs ne s'ouvrent que dans les conditions qui leur conviennent. Ce rituel crée les tiennes.",
+      rituel:              "Une fleur ne s'ouvre pas sur commande.\n\nElle attend que la lumière soit là, que la chaleur soit suffisante. Elle ne se force pas.\n\nCe rituel t'invite à créer ces conditions pour toi, sans effort, juste en ouvrant l'espace.",
+      trace:               "L'espace que tu viens de t'accorder a laissé une empreinte.\n\nTon système nerveux l'a enregistré, même si tu n'en as pas conscience. Même peu compte.",
+      ouverture:           "Quatre jours. Tes fleurs commencent à s'ouvrir.\n\nDemain, quelque chose de nouveau entre dans ton jardin : la dimension du lien.",
     },
   },
 
@@ -667,7 +674,7 @@ export const WEEK_ONE_DATA = [
     color: '#c8a870',
     accueil: {
       conditioning: true,
-      headline: "Vous n'êtes pas seul·e aujourd'hui.",
+      headline: "Tu n'es pas seul·e aujourd'hui.",
       subtitle: 'Le lien commence souvent par un seul geste silencieux.',
       pauseSeconds: 1,
       getNarrativeNote: (ans) => {
@@ -675,30 +682,30 @@ export const WEEK_ONE_DATA = [
         const feel  = ans?.j1?.feel
 
         const needPart = {
-          silence:   "vous aviez besoin de silence",
-          mouvement: "votre corps cherchait à bouger",
-          douceur:   "vous aviez besoin de douceur",
-          clarte:    "vous cherchiez de la clarté",
-          connexion: "vous aspiriez à de la connexion",
+          silence:   "tu avais besoin de silence",
+          mouvement: "ton corps cherchait à bouger",
+          douceur:   "tu avais besoin de douceur",
+          clarte:    "tu cherchais de la clarté",
+          connexion: "tu aspirais à de la connexion",
         }[need]
 
         const feelPart = {
-          fatigue:  "vous étiez fatigué·e",
-          stresse:  "quelque chose vous pesait",
-          neutre:   "vous étiez dans un entre-deux",
-          calme:    "vous étiez calme",
-          bien:     "vous alliez bien",
+          fatigue:  "tu étais fatigué·e",
+          stresse:  "quelque chose te pesait",
+          neutre:   "tu étais dans un entre-deux",
+          calme:    "tu étais calme",
+          bien:     "tu allais bien",
         }[feel]
 
         if (needPart)
-          return `Hier, ${needPart}. Quatre jours que vous revenez. Ce n'est pas rien.`
+          return `Hier, ${needPart}. Quatre jours que tu reviens. Ce n'est pas rien.`
         if (feelPart)
           return `Au départ, ${feelPart}. Regardez le chemin parcouru depuis.`
         return null
       },
     },
     introspection: {
-      question: 'Avez-vous ressenti du lien récemment ?',
+      question: 'As-tu ressenti du lien récemment ?',
       answerKey: 'connection',
       layout: 'column',
       choices: [
@@ -717,11 +724,11 @@ export const WEEK_ONE_DATA = [
         const feel       = ans?.j5?.conditioning_feel
 
         const feelLine = {
-          fatigue:  "Vous portez de la fatigue aujourd'hui.",
-          stresse:  "Il y a de la tension en vous.",
-          neutre:   "Vous êtes dans un entre-deux.",
-          calme:    "Il y a du calme en vous.",
-          bien:     "Vous vous sentez bien.",
+          fatigue:  "Tu portes de la fatigue aujourd'hui.",
+          stresse:  "Il y a de la tension en toi.",
+          neutre:   "Tu es dans un entre-deux.",
+          calme:    "Il y a du calme en toi.",
+          bien:     "Tu te sens bien.",
         }[feel]
 
         const opener = feelLine ? [feelLine] : []
@@ -732,7 +739,7 @@ export const WEEK_ONE_DATA = [
             ...opener,
             "Le lien peut sembler loin en ce moment.",
             "Le souffle ne juge pas.",
-            "Il part de vous… et va quelque part.",
+            "Il part de toi… et va quelque part.",
             "Ce rituel ne demande rien d'autre que ça.",
           ],
         }
@@ -740,7 +747,7 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Approfondir ce lien',
           lines: [
             ...opener,
-            "Vous avez ressenti un peu de lien.",
+            "Tu as ressenti un peu de lien.",
             "C'est souvent là que tout commence.",
             "Le souffle va l'amplifier doucement.",
           ],
@@ -749,7 +756,7 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Envoyer une pensée douce',
           lines: [
             ...opener,
-            "Vous avez ressenti du lien avec quelqu'un.",
+            "Tu as ressenti du lien avec quelqu'un.",
             "Ce rituel va prolonger ce geste.",
             "Une pensée envoyée en silence… arrive toujours quelque part.",
           ],
@@ -758,7 +765,7 @@ export const WEEK_ONE_DATA = [
           ctaLabel: "Relier vers l'extérieur",
           lines: [
             ...opener,
-            "Vous avez ressenti du lien avec vous-même.",
+            "Tu as ressenti du lien avec toi-même.",
             "C'est la meilleure base qui soit.",
             "Maintenant… envoyons ce lien vers quelqu'un d'autre.",
           ],
@@ -767,7 +774,7 @@ export const WEEK_ONE_DATA = [
           ctaLabel: 'Laisser le souffle relier',
           lines: [
             ...opener,
-            "Vous avez ressenti du lien profondément.",
+            "Tu as ressenti du lien profondément.",
             "Le souffle est le passage entre l'intérieur et l'extérieur.",
             "Il relie tout. Laissez-le faire.",
           ],
@@ -778,20 +785,20 @@ export const WEEK_ONE_DATA = [
     getTrace: (ans) => {
       const connection = ans?.j5?.connection
       if (connection === 'pas_vraiment')
-        return "Même quand le lien semblait loin… vous avez tendu la main. Les 5 zones sont maintenant actives."
+        return "Même quand le lien semblait loin… tu as tendu la main. Les 5 zones sont maintenant actives."
       if (connection === 'avec_moi')
-        return "Vous avez pris soin de vous-même, puis de quelqu'un d'autre. Les 5 zones de votre jardin sont actives."
-      return "Vous avez pris soin… au-delà de vous. Les 5 zones de votre jardin sont maintenant actives."
+        return "Tu as pris soin de toi-même, puis de quelqu'un d'autre. Les 5 zones de ton jardin sont actives."
+      return "Tu as pris soin… au-delà de toi. Les 5 zones de ton jardin sont maintenant actives."
     },
-    ouverture: "Demain, vous allez voir quelque chose que vous n'avez pas encore vu.",
+    ouverture: "Demain, tu vas voir quelque chose que tu n'as pas encore vu.",
     helpTexts: {
-      accueil_intro:       "Le lien ne se fabrique pas. Il s'ouvre.\n\nUne présence plus attentive, un regard moins pressé. Ce que vous cultivez ici change imperceptiblement la façon dont vous habitez vos relations.",
+      accueil_intro:       "Le lien ne se fabrique pas. Il s'ouvre.\n\nUne présence plus attentive, un regard moins pressé. Ce que tu cultives ici change imperceptiblement la façon dont tu habites tes relations.",
       accueil_respiration: "Ce souffle avant de rencontrer l'autre.\n\nOn oublie souvent que la qualité de notre présence commence dans notre propre corps.",
-      introspection:       "Vous dire quelque chose sur votre rapport aux autres, c'est aussi vous en apprendre sur vous-même.\n\nLe lien est un miroir. Ce qu'il vous renvoie aujourd'hui est précieux.",
-      rituel_transition:   "Ce que vous avez ressenti dans vos relations guide ce rituel.\n\nLe souffle relie tout. Il part de vous et va vers le monde.",
-      rituel:              "Le souffle tisse un fil invisible entre vous et le reste du vivant.\n\nIl entre, il sort. Il relie votre monde intérieur à ce qui vous entoure.\n\nTravailler avec le souffle, c'est apprendre à habiter cet entre-deux.",
-      trace:               "Ce geste vers l'autre, ou vers vous-même, a résonné dans votre jardin.\n\nLe lien laisse toujours une trace, même quand on ne sait pas encore la nommer.",
-      ouverture:           "Cinq zones éveillées. Votre jardin prend sa forme.\n\nDemain, pour la première fois, vous allez le voir en entier.",
+      introspection:       "Te dire quelque chose sur ton rapport aux autres, c'est aussi t'en apprendre sur toi-même.\n\nLe lien est un miroir. Ce qu'il te renvoie aujourd'hui est précieux.",
+      rituel_transition:   "Ce que tu as ressenti dans tes relations guide ce rituel.\n\nLe souffle relie tout. Il part de toi et va vers le monde.",
+      rituel:              "Le souffle tisse un fil invisible entre toi et le reste du vivant.\n\nIl entre, il sort. Il relie ton monde intérieur à ce qui t'entoure.\n\nTravailler avec le souffle, c'est apprendre à habiter cet entre-deux.",
+      trace:               "Ce geste vers l'autre, ou vers toi-même, a résonné dans ton jardin.\n\nLe lien laisse toujours une trace, même quand on ne sait pas encore la nommer.",
+      ouverture:           "Cinq zones éveillées. Ton jardin prend sa forme.\n\nDemain, pour la première fois, tu vas le voir en entier.",
     },
   },
 
@@ -803,8 +810,8 @@ export const WEEK_ONE_DATA = [
     accueil: {
       conditioning: true,
       skipBarometer: true,
-      headline: 'Vos cinq zones sont éveillées.',
-      subtitle: 'Votre jardin vous attend maintenant.',
+      headline: 'Tes cinq zones sont éveillées.',
+      subtitle: "Ton jardin t'attend maintenant.",
       pauseSeconds: 1,
       getNarrativeNote: (ans) => {
         const connection = ans?.j5?.connection
@@ -812,25 +819,25 @@ export const WEEK_ONE_DATA = [
 
         const connectionPart = {
           pas_vraiment:  "le lien semblait loin",
-          un_peu:        "vous avez ressenti un peu de lien",
-          avec_quelquun: "vous avez pensé à quelqu'un",
-          avec_moi:      "vous avez pris soin de vous-même",
-          profondement:  "vous avez ressenti du lien profondément",
+          un_peu:        "tu as ressenti un peu de lien",
+          avec_quelquun: "tu as pensé à quelqu'un",
+          avec_moi:      "tu as pris soin de toi-même",
+          profondement:  "tu as ressenti du lien profondément",
         }[connection]
 
         const needPart = {
-          silence:   "vous cherchiez du silence",
-          mouvement: "votre corps demandait à bouger",
-          douceur:   "vous aviez besoin de douceur",
-          clarte:    "vous cherchiez de la clarté",
-          connexion: "vous aspiriez à de la connexion",
+          silence:   "tu cherchais du silence",
+          mouvement: "ton corps demandait à bouger",
+          douceur:   "tu avais besoin de douceur",
+          clarte:    "tu cherchais de la clarté",
+          connexion: "tu aspirais à de la connexion",
         }[need]
 
         if (connectionPart && needPart)
           return `Hier, ${connectionPart}. Avant-hier, ${needPart}. Cinq jours, cinq zones. Quelque chose s'est éveillé.`
         if (connectionPart)
-          return `Hier, ${connectionPart}. Vous avez traversé cinq zones. Votre jardin est prêt.`
-        return "Cinq jours. Cinq zones. Ce que vous avez cultivé prend maintenant une forme visible."
+          return `Hier, ${connectionPart}. Tu as traversé cinq zones. Ton jardin est prêt.`
+        return "Cinq jours. Cinq zones. Ce que tu as cultivé prend maintenant une forme visible."
       },
     },
     introspection: {
@@ -843,16 +850,16 @@ export const WEEK_ONE_DATA = [
       isGuided: 'jardin',
     },
     getTrace: () =>
-      "Aujourd'hui, vous avez rencontré votre fleur. Elle vous attend chaque jour maintenant.",
-    ouverture: 'Demain, un dernier regard avant de prendre votre envol.',
+      "Aujourd'hui, tu as rencontré ta fleur. Elle t'attend chaque jour maintenant.",
+    ouverture: 'Demain, un dernier regard avant de prendre ton envol.',
     helpTexts: {
-      accueil_intro:       "Votre fleur ne ressemble à aucune autre.\n\nElle porte les couleurs de ce que vous avez traversé, les saisons difficiles autant que les belles lumières. Elle est fidèle à votre vérité.",
+      accueil_intro:       "Ta fleur ne ressemble à aucune autre.\n\nElle porte les couleurs de ce que tu as traversé, les saisons difficiles autant que les belles lumières. Elle est fidèle à ta vérité.",
       accueil_respiration: "Avant de la rencontrer, juste s'installer.\n\nCe souffle prépare l'espace intérieur pour accueillir ce qui arrive.",
-      introspection:       "Certaines choses résistent aux mots.\n\nC'est normal. Laissez venir ce qui vient : une image, une sensation, un silence. Ce sont aussi des réponses.",
-      rituel_transition:   "Vous avez cultivé cinq zones. Aujourd'hui elles convergent.\n\nVotre fleur est le reflet de tout ce travail.",
-      rituel:              "Rencontrer votre fleur, c'est rencontrer ce que vous avez cultivé.\n\nElle n'est pas un idéal. Elle est vous, maintenant, dans toute votre complexité. Laissez-la vous toucher sans chercher à l'interpréter.",
-      trace:               "Aujourd'hui, quelque chose a changé de forme.\n\nVotre fleur a un visage. Elle vous attend maintenant, chaque jour, dans votre jardin.",
-      ouverture:           "Six jours. Votre fleur a pris racine, votre tige se tient.\n\nDemain, un dernier jour avant d'entrer dans quelque chose de plus grand.",
+      introspection:       "Certaines choses résistent aux mots.\n\nC'est normal. Laisse venir ce qui vient : une image, une sensation, un silence. Ce sont aussi des réponses.",
+      rituel_transition:   "Tu as cultivé cinq zones. Aujourd'hui elles convergent.\n\nTa fleur est le reflet de tout ce travail.",
+      rituel:              "Rencontrer ta fleur, c'est rencontrer ce que tu as cultivé.\n\nElle n'est pas un idéal. Elle est toi, maintenant, dans toute ta complexité. Laisse-la te toucher sans chercher à l'interpréter.",
+      trace:               "Aujourd'hui, quelque chose a changé de forme.\n\nTa fleur a un visage. Elle t'attend maintenant, chaque jour, dans ton jardin.",
+      ouverture:           "Six jours. Ta fleur a pris racine, ta tige se tient.\n\nDemain, un dernier jour avant d'entrer dans quelque chose de plus grand.",
     },
   },
 
@@ -865,7 +872,7 @@ export const WEEK_ONE_DATA = [
     accueil: {
       conditioning: true,
       skipBarometer: true,
-      headline: 'Votre jardin existe.',
+      headline: 'Ton jardin existe.',
       subtitle: 'Mais un jardin ne pousse pas seul.',
       pauseSeconds: 1,
       getNarrativeNote: (ans) => {
@@ -879,8 +886,8 @@ export const WEEK_ONE_DATA = [
         }
         const label = map[notice]
         return label
-          ? `Sept jours. Vous avez ressenti ${label}. Il est temps d'aller plus loin.`
-          : "Sept jours. Votre fleur a pris racine. Aujourd'hui, elle rencontre les autres."
+          ? `Sept jours. Tu as ressenti ${label}. Il est temps d'aller plus loin.`
+          : "Sept jours. Ta fleur a pris racine. Aujourd'hui, elle rencontre les autres."
       },
     },
     introspection: {
@@ -898,13 +905,13 @@ export const WEEK_ONE_DATA = [
     isFinal: true,
     finalCTA: 'Entrer dans mon jardin',
     helpTexts: {
-      accueil_intro:       "Sept jours. Chaque jour avait sa lumière, sa résistance, sa couleur.\n\nCe que vous avez traversé n'est pas derrière vous. C'est en vous, désormais. Quelque chose a changé de forme.",
-      accueil_respiration: "Un dernier souffle avant d'entrer dans le jardin partagé.\n\nCe que vous portez aujourd'hui, vous allez le retrouver dans les autres aussi.",
-      introspection:       "Ce que vous emportez de cette semaine ne tient pas toujours dans un mot.\n\nPeut-être une sensation. Une image. Un peu plus de douceur envers vous-même. C'est suffisant.",
-      rituel_transition:   "Ce que vous avez remarqué cette semaine prend sens ici.\n\nLe jardin collectif n'efface pas le vôtre. Il le prolonge.",
-      rituel:              "Un jardin partagé n'efface pas le vôtre. Il l'enrichit.\n\nVotre pratique, votre présence, votre engagement cette semaine ont une résonance au-delà de vous.\n\nEntrer dans le jardin collectif, c'est continuer de grandir autrement.",
-      trace:               "Sept jours. Et vous n'êtes pas seul·e dans ce qui s'est passé.\n\nD'autres jardins poussent en même temps que le vôtre. Ce chemin se fait ensemble, maintenant.",
-      ouverture:           "Votre fleur existe. Votre jardin est vivant.\n\nCe n'est pas une fin. C'est le début de quelque chose qui dure.",
+      accueil_intro:       "Sept jours. Chaque jour avait sa lumière, sa résistance, sa couleur.\n\nCe que tu as traversé n'est pas derrière toi. C'est en toi, désormais. Quelque chose a changé de forme.",
+      accueil_respiration: "Un dernier souffle avant d'entrer dans le jardin partagé.\n\nCe que tu portes aujourd'hui, tu vas le retrouver dans les autres aussi.",
+      introspection:       "Ce que tu emportes de cette semaine ne tient pas toujours dans un mot.\n\nPeut-être une sensation. Une image. Un peu plus de douceur envers toi-même. C'est suffisant.",
+      rituel_transition:   "Ce que tu as remarqué cette semaine prend sens ici.\n\nLe jardin collectif n'efface pas le tien. Il le prolonge.",
+      rituel:              "Un jardin partagé n'efface pas le tien. Il l'enrichit.\n\nTa pratique, ta présence, ton engagement cette semaine ont une résonance au-delà de toi.\n\nEntrer dans le jardin collectif, c'est continuer de grandir autrement.",
+      trace:               "Sept jours. Et tu n'es pas seul·e dans ce qui s'est passé.\n\nD'autres jardins poussent en même temps que le tien. Ce chemin se fait ensemble, maintenant.",
+      ouverture:           "Ta fleur existe. Ton jardin est vivant.\n\nCe n'est pas une fin. C'est le début de quelque chose qui dure.",
     },
   },
 ]
@@ -1422,9 +1429,12 @@ function RituelTimer({ duration, label, color, onComplete }) {
 
 // ── Orbe respiratoire ──────────────────────────────────────────────────────
 
-function BreathingOrb() {
-  const [countdown, setCountdown] = useState(3)   // 3 → 2 → 1 → 0 (started)
+function BreathingOrb({ maxCycles, onComplete }) {
+  const [countdown, setCountdown] = useState(3)
   const [isInhale,  setIsInhale]  = useState(true)
+  const [finished,  setFinished]  = useState(false)
+  const halfCycles  = useRef(0)
+  const intervalRef = useRef(null)
 
   useEffect(() => {
     const t1 = setTimeout(() => setCountdown(2), 1000)
@@ -1435,8 +1445,16 @@ function BreathingOrb() {
 
   useEffect(() => {
     if (countdown > 0) return
-    const t = setInterval(() => setIsInhale(v => !v), 5000)
-    return () => clearInterval(t)
+    intervalRef.current = setInterval(() => {
+      halfCycles.current += 1
+      setIsInhale(v => !v)
+      if (maxCycles && halfCycles.current >= maxCycles * 2) {
+        clearInterval(intervalRef.current)
+        setFinished(true)
+        onComplete?.()
+      }
+    }, 5000)
+    return () => clearInterval(intervalRef.current)
   }, [countdown])
 
   const started = countdown === 0
@@ -1498,7 +1516,7 @@ function BreathingOrb() {
         maxWidth: 320,
         textAlign: 'center',
       }}>
-        Posez votre main sur le ventre et portez votre attention sur ce rythme lent.
+        Pose ta main sur le ventre et porte ton attention sur ce rythme lent.
       </p>
 
     </div>
@@ -1529,11 +1547,22 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
   const [pos,        setPos]        = useState(0.5)
   const [touched,    setTouched]    = useState(false)
   const [ctaVisible, setCtaVisible] = useState(false)
+  const [leaving,    setLeaving]    = useState(false)
   const trackRef  = useRef(null)
   const dragging  = useRef(false)
   const ctaTimer  = useRef(null)
- 
+  const stopRef   = useRef(null)
+
   useEffect(() => () => clearTimeout(ctaTimer.current), [])
+
+  useEffect(() => {
+    if (!ctaVisible) return
+    const t = setTimeout(() => {
+      setLeaving(true)
+      setTimeout(() => onAnswer(answerKey, stopRef.current.value), 700)
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [ctaVisible])
  
   function getStop(p) {
     return BAROMETER_STOPS.find(s => p >= s.min && p < s.max) ?? BAROMETER_STOPS[4]
@@ -1563,9 +1592,10 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
   function handlePointerUp() { dragging.current = false }
  
   const stop = getStop(pos)
+  stopRef.current = stop
  
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: leaving ? 0 : 1, transition: 'opacity 700ms ease' }}>
  
       {/* Phrase intro */}
       <p style={{
@@ -1577,8 +1607,7 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
         textAlign: 'center',
         margin: '0 0 16px',
       }}>
-        Il n'y a pas de bonne réponse.<br />
-        Juste ce qui est là aujourd'hui.
+        Il n'y a pas de bonne réponse. Juste ce qui est là aujourd'hui.
       </p>
  
       {/* Question */}
@@ -1591,11 +1620,11 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
         textAlign: 'center',
         margin: '0 0 36px',
       }}>
-        Comment vous vous sentez,<br />là, maintenant&nbsp;?
+        Comment tu te sens, là, maintenant&nbsp;?
       </p>
- 
+
       {/* Slider */}
-      <div style={{ width: '100%', padding: '0 4px', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', padding: '0 4px', boxSizing: 'border-box', marginTop: 20 }}>
  
         {/* Track */}
         <div
@@ -1705,10 +1734,17 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
  
       {/* CTA */}
       {ctaVisible && (
-        <div className="wof-soft" style={{ marginTop: 36 }}>
-          <PrimaryButton onClick={() => onAnswer(answerKey, stop.value)}>
-            Continuer
-          </PrimaryButton>
+        <div className="wof-soft" style={{ marginTop: 28 }}>
+          <p style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(18px, 4.5vw, 22px)',
+            fontWeight: 600,
+            color: '#0f0808',
+            margin: 0,
+            textAlign: 'center',
+          }}>
+            Merci pour cette honnêteté.
+          </p>
         </div>
       )}
  
@@ -1721,6 +1757,15 @@ function EmotionalBarometer({ answerKey, onAnswer }) {
 function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   const [subSlide, setSubSlide] = useState(0)
   const [phase,    setPhase]    = useState(0)
+  const [orbDone,  setOrbDone]  = useState(false)
+
+  useEffect(() => { setOrbDone(false) }, [subSlide])
+
+  useEffect(() => {
+    if (!orbDone) return
+    const t = setTimeout(() => setSubSlide(3), 4000)
+    return () => clearTimeout(t)
+  }, [orbDone])
 
   useEffect(() => {
     const screens = ['accueil_intro', 'accueil_arret', 'accueil_respiration', 'introspection']
@@ -1768,7 +1813,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
   if (subSlide === 0) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -1780,7 +1825,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           letterSpacing: '-0.01em',
           ...fadeStyle(true),
         }}>
-          Vous n'êtes pas ici par hasard.
+          Tu n'es pas ici par hasard.
         </p>
 
         <p style={{
@@ -1792,8 +1837,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           margin: '0 0 28px',
           ...fadeStyle(phase >= 1),
         }}>
-          Quelque chose en vous<br />
-          sait qu'il est temps de ralentir.
+          Quelque chose en toi sait qu'il est temps de ralentir.
         </p>
 
         <p style={{
@@ -1805,8 +1849,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           margin: '0 0 28px',
           ...fadeStyle(phase >= 2),
         }}>
-          Pas pour faire plus.<br />
-          Mais pour faire autrement.
+          Pas pour faire plus. Mais pour faire autrement.
         </p>
 
         <p style={{
@@ -1818,8 +1861,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           margin: '0 0 44px',
           ...fadeStyle(phase >= 3),
         }}>
-          Ce que vous allez commencer ici…<br />
-          se construit un jour à la fois.
+          Ce que tu vas commencer ici… se construit un jour à la fois.
         </p>
 
         <div style={{ ...fadeStyle(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
@@ -1835,7 +1877,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   /* ── SLIDE 1 — ARRÊT ─────────────────────────────────────────── */
   if (subSlide === 1) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
         <h1 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(30px, 7.5vw, 46px)',
@@ -1846,7 +1888,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           letterSpacing: '-0.01em',
           ...fadeStyle(true),
         }}>
-          Vous êtes là.
+          Tu es là.
         </h1>
 
         <p style={{
@@ -1858,8 +1900,19 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           margin: '0 0 44px',
           ...fadeStyle(phase >= 1),
         }}>
-          Et pour une fois…<br />
-          vous n'avez rien à faire de plus.
+          Et pour une fois… tu n'as rien à faire de plus.
+        </p>
+
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontWeight: 600,
+          color: '#0f0808',
+          lineHeight: 1.6,
+          margin: '0 0 44px',
+          ...fadeStyle(phase >= 1),
+        }}>
+          Juste être là.
         </p>
 
         <div style={{ ...fadeStyle(phase >= 2), pointerEvents: phase >= 2 ? 'auto' : 'none' }}>
@@ -1874,7 +1927,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   /* ── SLIDE 2 — CONNEXION ──────────────────────────────────────── */
   if (subSlide === 2) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(22px, 5.5vw, 30px)',
@@ -1884,25 +1937,34 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
           margin: '0 0 36px',
           ...fadeStyle(true),
         }}>
-          Prenez simplement un instant.
+          Prends simplement un instant.
         </p>
 
-        <div style={{ marginBottom: 36 }}>
-          <BreathingOrb />
+        <div style={{ marginBottom: orbDone ? 28 : 36 }}>
+          <BreathingOrb maxCycles={3} onComplete={() => setOrbDone(true)} />
         </div>
 
-        <div style={{ ...fadeStyle(phase >= 1), pointerEvents: phase >= 1 ? 'auto' : 'none' }}>
-          <PrimaryButton onClick={() => setSubSlide(3)}>
-            Observer
-          </PrimaryButton>
-        </div>
+        {orbDone && (
+          <div className="wof-soft">
+            <p style={{
+              fontFamily: 'Cormorant Garamond, Georgia, serif',
+              fontSize: 'clamp(20px, 5.5vw, 26px)',
+              fontWeight: 600,
+              color: '#0f0808',
+              lineHeight: 1.65,
+              margin: 0,
+            }}>
+              C'est déjà suffisant. Ton corps commence à ralentir.
+            </p>
+          </div>
+        )}
       </div>
     )
   }
 
   /* ── SLIDE 3 — BAROMÈTRE ÉMOTIONNEL ─────────────────────────── */
   return (
-    <div className="wof-soft" style={{ padding: '32px 16px 36px' }}>
+    <div className="wof-soft" style={{ padding: '32px 20px 36px' }}>
       <EmotionalBarometer answerKey={answerKey} onAnswer={onAnswer} />
     </div>
   )
@@ -1937,7 +1999,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
   /* ── Sub-slide 0 : accueil du jour ─── */
   if (subSlide === 0) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
         <h1 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(22px, 5.5vw, 30px)',
@@ -1991,7 +2053,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
   /* ── Sub-slide 1 : respiration ─── */
   if (subSlide === 1) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 16px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(20px, 5vw, 26px)',
@@ -2000,7 +2062,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
           lineHeight: 1.5,
           margin: '0 0 36px',
         }}>
-          Prenez simplement un instant.
+          Prends simplement un instant.
         </p>
 
         <div style={{ marginBottom: 40 }}>
@@ -2020,7 +2082,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
 
   /* ── Sub-slide 2 : baromètre émotionnel ─── */
   return (
-    <div className="wof-soft" style={{ padding: '32px 16px 36px' }}>
+    <div className="wof-soft" style={{ padding: '32px 20px 36px' }}>
       <EmotionalBarometer
         answerKey="conditioning_feel"
         onAnswer={(_, value) => onConditioningComplete(value)}
@@ -2070,7 +2132,7 @@ function DayAccueil({ data, introspectionData, answers, onAnswerFromAccueil, onC
 
 
   return (
-    <div className="wof-in" style={{ textAlign: 'center', padding: '28px 24px 16px' }}>
+    <div className="wof-in" style={{ textAlign: 'center', padding: '28px 20px 16px' }}>
       <h1 style={{
         fontFamily: 'Cormorant Garamond, Georgia, serif',
         fontSize: 'clamp(22px, 5vw, 32px)',
@@ -2117,7 +2179,7 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
   const selectedIdx = selected ? BATTERY_LEVELS.findIndex(l => l.value === selected) : -1
 
   return (
-    <div className="wof-in" style={{ padding: '8px 0 16px' }}>
+    <div className="wof-in" style={{ padding: '8px 20px 16px' }}>
       <BackButton onClick={onBack} />
 
       <h2 style={{
@@ -2129,7 +2191,7 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
         margin: '8px 0 40px',
         textAlign: 'center',
       }}>
-        Votre énergie en ce moment est plutôt…
+        Ton énergie en ce moment est plutôt…
       </h2>
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: 28, alignItems: 'center' }}>
@@ -2240,15 +2302,15 @@ function MaFleurLiveModal({ onClose }) {
 
   const ZONE_KEYS = [
     { key: 'zone_racines',  label: 'Racines',  emoji: '🌱', color: ZONE_COLORS.racines,
-      info: "Votre ancrage fondamental. Elle évalue votre stabilité, votre sentiment de sécurité et votre connexion à l'essentiel du quotidien." },
+      info: "Ton ancrage fondamental. Elle évalue ta stabilité, ton sentiment de sécurité et ton connexion à l'essentiel du quotidien." },
     { key: 'zone_tige',     label: 'Tige',     emoji: '🌿', color: ZONE_COLORS.tige,
-      info: "Votre structure intérieure. Elle mesure votre posture mentale et votre capacité à tenir debout, même sous la pression." },
+      info: "Ton structure intérieure. Elle mesure ta posture mentale et ta capacité à tenir debout, même sous la pression." },
     { key: 'zone_feuilles', label: 'Feuilles', emoji: '🍃', color: ZONE_COLORS.feuilles,
-      info: "Votre capacité à laisser passer. Elle évalue comment vous accueillez et relâchez les émotions sans vous y accrocher." },
+      info: "Ta capacité à laisser passer. Elle évalue comment tu accueilles et relâches les émotions sans t'y accrocher." },
     { key: 'zone_fleurs',   label: 'Fleurs',   emoji: '🌸', color: ZONE_COLORS.fleurs,
-      info: "Votre ouverture et votre vitalité. Elle reflète votre capacité à vous offrir de l'espace et à recevoir ce qui est bon pour vous." },
+      info: "Ton ouverture et ton vitalité. Elle reflète ta capacité à t'offrir de l'espace et à recevoir ce qui est bon pour toi." },
     { key: 'zone_souffle',  label: 'Souffle',  emoji: '🌬️', color: ZONE_COLORS.souffle,
-      info: "Votre lien au monde. Il mesure votre connexion aux autres et à ce qui vous dépasse — le fil invisible entre vous et le reste." },
+      info: "Ton lien au monde. Il mesure ton connexion aux autres et à ce qui te dépasse — le fil invisible entre toi et le reste." },
   ]
 
   async function fetchData() {
@@ -2364,9 +2426,9 @@ function MaFleurLiveModal({ onClose }) {
                   '#70b888'
 
   const dateLabel = plantData?._fromWeekData
-    ? 'Calculé depuis votre semaine'
+    ? 'Calculé depuis ta semaine'
     : plantData?._fromRituals
-      ? 'Calculé depuis vos rituels'
+      ? 'Calculé depuis tes rituels'
       : plantData?.date
         ? new Date(plantData.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
         : new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -2427,7 +2489,7 @@ function MaFleurLiveModal({ onClose }) {
             fontFamily: 'Cormorant Garamond, Georgia, serif',
             fontSize: 18, fontStyle: 'italic', color: '#1a1010',
           }}>
-            Votre fleur arrive…
+            Ta fleur arrive…
           </div>
         ) : !plantData ? (
           <div style={{
@@ -2435,8 +2497,8 @@ function MaFleurLiveModal({ onClose }) {
             fontFamily: 'Cormorant Garamond, Georgia, serif',
             fontSize: 18, fontStyle: 'italic', color: '#1a1010', lineHeight: 1.7,
           }}>
-            Votre fleur prend racine.<br />
-            Commencez votre bilan demain matin<br />pour la voir grandir.
+            Ta fleur prend racine.<br />
+            Commencez ton bilan demain matin<br />pour la voir grandir.
           </div>
         ) : (
           <>
@@ -2501,11 +2563,11 @@ function MaFleurLiveModal({ onClose }) {
                 {
                   icon: '🌹',
                   label: 'Bilan du matin',
-                  desc: 'Évaluez vos 5 zones en quelques minutes',
+                  desc: 'Évaluez tes 5 zones en quelques minutes',
                   color: '#a07060',
                   bg: 'rgba(184,120,100,0.08)',
                   border: 'rgba(184,120,100,0.22)',
-                  info: "Chaque matin, répondez à dix questions sur vos cinq zones. En quelques minutes, votre fleur s'adapte et reflète fidèlement votre état du jour.",
+                  info: "Chaque matin, répondez à dix questions sur tes cinq zones. En quelques minutes, ta fleur s'adapte et reflète fidèlement ton état du jour.",
                 },
                 {
                   icon: '⚡',
@@ -2514,7 +2576,7 @@ function MaFleurLiveModal({ onClose }) {
                   color: '#5878a8',
                   bg: 'rgba(88,120,168,0.08)',
                   border: 'rgba(88,120,168,0.22)',
-                  info: "Quand le temps manque, un rituel d'une minute reste toujours disponible. Il cible la zone qui en a le plus besoin et maintient votre jardin vivant, même les jours chargés.",
+                  info: "Quand le temps manque, un rituel d'une minute reste toujours disponible. Il cible la zone qui en a le plus besoin et maintient ton jardin vivant, même les jours chargés.",
                 },
                 {
                   icon: '🌱',
@@ -2523,7 +2585,7 @@ function MaFleurLiveModal({ onClose }) {
                   color: '#507860',
                   bg: 'rgba(80,120,96,0.08)',
                   border: 'rgba(80,120,96,0.22)',
-                  info: "Le soir, notez une chose positive de votre journée. Chaque graine plantée nourrit votre estime de vous-même et renforce votre ancrage dans le positif.",
+                  info: "Le soir, notez une chose positive de ton journée. Chaque graine plantée nourrit ton estime de toi-même et renforce ton ancrage dans le positif.",
                 },
               ].map(f => (
                 <div key={f.label}
@@ -2731,18 +2793,18 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
   const allZones = ['racines', 'tige', 'feuilles', 'fleurs', 'souffle']
 
   const zones = [
-    { zone: 'racines',  label: 'Racines',  desc: "Ce qui vous ancre au quotidien",       color: ZONE_COLORS.racines  },
-    { zone: 'tige',     label: 'Tige',     desc: "Ce qui vous structure et vous tient",   color: ZONE_COLORS.tige     },
-    { zone: 'feuilles', label: 'Feuilles', desc: "Ce qui traverse et se libère en vous",  color: ZONE_COLORS.feuilles },
-    { zone: 'fleurs',   label: 'Fleurs',   desc: "Ce qui vous ouvre à vous-même",         color: ZONE_COLORS.fleurs   },
-    { zone: 'souffle',  label: 'Souffle',  desc: "Ce qui vous relie au-delà de vous",     color: ZONE_COLORS.souffle  },
+    { zone: 'racines',  label: 'Racines',  desc: "Ce qui t'ancre au quotidien",       color: ZONE_COLORS.racines  },
+    { zone: 'tige',     label: 'Tige',     desc: "Ce qui te structure et te tient",   color: ZONE_COLORS.tige     },
+    { zone: 'feuilles', label: 'Feuilles', desc: "Ce qui traverse et se libère en toi",  color: ZONE_COLORS.feuilles },
+    { zone: 'fleurs',   label: 'Fleurs',   desc: "Ce qui t'ouvre à toi-même",         color: ZONE_COLORS.fleurs   },
+    { zone: 'souffle',  label: 'Souffle',  desc: "Ce qui te relie au-delà de toi",     color: ZONE_COLORS.souffle  },
   ]
 
   return (
     <>
       {showLive && <MaFleurLiveModal onClose={() => setShowLive(false)} />}
 
-      <div className="wof-in" style={{ padding: '8px 0 40px' }}>
+      <div className="wof-in" style={{ padding: '8px 20px 40px' }}>
         <BackButton onClick={onBack} />
 
         <div style={{ textAlign: 'center', margin: '8px 0 28px', ...fadeIn(phase >= 1) }}>
@@ -2755,7 +2817,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
             color: '#1a1010',
             margin: '0 0 8px',
           }}>
-            Votre fleur
+            Ta fleur
           </p>
           <h2 style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -2775,7 +2837,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
             color: '#1a1010',
             margin: 0,
           }}>
-            Elle vous attend dans votre jardin intérieur
+            Elle t'attend dans ton jardin intérieur
           </p>
         </div>
 
@@ -2877,7 +2939,7 @@ function DayIntrospection({ data, onAnswer, onBack, onScreenChange }) {
   }
 
   return (
-    <div className="wof-in" style={{ padding: '8px 0 16px' }}>
+    <div className="wof-in" style={{ padding: '8px 20px 16px' }}>
       <BackButton onClick={onBack} />
 
       <h2 style={{
@@ -3020,7 +3082,7 @@ function RituelTransition({ introData, dayColor, onStart, onBack }) {
   }
 
   return (
-    <div style={{ textAlign: 'center', padding: '40px 16px 40px' }}>
+    <div style={{ textAlign: 'center', padding: '40px 20px 40px' }}>
       <BackButton onClick={onBack} />
 
       {lines.map((line, i) => (
@@ -3087,7 +3149,7 @@ function RacinesGuidedRituel({ onNext, onBack }) {
   }
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       {/* Titre */}
@@ -3101,7 +3163,7 @@ function RacinesGuidedRituel({ onNext, onBack }) {
           color: '#1a1010',
           margin: '0 0 8px',
         }}>
-          Votre premier rituel
+          Ton premier rituel
         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -3112,7 +3174,7 @@ function RacinesGuidedRituel({ onNext, onBack }) {
           lineHeight: 1.15,
           margin: '0 0 10px',
         }}>
-          vos racines
+          tes racines
         </h2>
         <div style={{
           width: 48,
@@ -3122,11 +3184,11 @@ function RacinesGuidedRituel({ onNext, onBack }) {
         }} />
       </div>
 
-      {block(1, <p style={S}>Vous pouvez simplement <B>rester là</B>… quelques instants.</p>)}
-      {block(2, <p style={S}><B>Sentez</B> vos pieds. Leur <B>contact</B> avec le sol.</p>)}
+      {block(1, <p style={S}>Tu peux simplement <B>rester là</B>… quelques instants.</p>)}
+      {block(2, <p style={S}><B>Sens</B> tes pieds. Leur <B>contact</B> avec le sol.</p>)}
       {block(3, <p style={S}>Sans chercher à changer quoi que ce soit.</p>)}
       {block(4, <>
-        <p style={S}><B>Inspirez</B> doucement… et laissez l'air <B>sortir</B>.</p>
+        <p style={S}><B>Inspire</B> doucement… et laisse l'air <B>sortir</B>.</p>
         <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
           <span style={{
             display: 'inline-block',
@@ -3145,9 +3207,9 @@ function RacinesGuidedRituel({ onNext, onBack }) {
           </span>
         </div>
       </>)}
-      {block(5, <p style={S}><B>Imaginez</B> maintenant… quelque chose qui <B>descend</B> doucement sous vous.</p>)}
+      {block(5, <p style={S}><B>Imagine</B> maintenant… quelque chose qui <B>descend</B> doucement sous toi.</p>)}
       {block(6, <p style={S}>Comme des <B>racines</B>. Elles <B>s'enfoncent</B>… tranquillement.</p>)}
-      {block(7, <p style={S}>Et à chaque <B>expiration</B>… vous pouvez laisser votre <B>poids descendre</B> un peu plus.</p>)}
+      {block(7, <p style={S}>Et à chaque <B>expiration</B>… tu peux laisser ton <B>poids descendre</B> un peu plus.</p>)}
       {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}><B>Rien à faire</B> de plus. <B>Juste resentir.</B></p>)}
 
       {/* CTA */}
@@ -3193,7 +3255,7 @@ function TigeGuidedRituel({ onNext, onBack }) {
   }
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       {/* Titre */}
@@ -3207,7 +3269,7 @@ function TigeGuidedRituel({ onNext, onBack }) {
           color: '#1a1010',
           margin: '0 0 8px',
         }}>
-          Votre deuxième rituel
+          Ton deuxième rituel
         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -3218,7 +3280,7 @@ function TigeGuidedRituel({ onNext, onBack }) {
           lineHeight: 1.15,
           margin: '0 0 10px',
         }}>
-          votre tige
+          ta tige
         </h2>
         <div style={{
           width: 48,
@@ -3228,9 +3290,9 @@ function TigeGuidedRituel({ onNext, onBack }) {
         }} />
       </div>
 
-      {block(1, <p style={S}>Tenez-vous <B>debout</B>, ou assis·e, le dos naturellement <B>droit</B>. Sans forcer.</p>)}
+      {block(1, <p style={S}>Tiens-toi <B>debout</B>, ou assis·e, le dos naturellement <B>droit</B>. Sans forcer.</p>)}
       {block(2, <>
-        <p style={S}>Imaginez une <B>ligne</B> qui part de votre bassin jusqu'au sommet de votre <B>tête</B>.</p>
+        <p style={S}>Imaginez une <B>ligne</B> qui part de ton bassin jusqu'au sommet de ton <B>tête</B>.</p>
         <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
           <span style={{
             display: 'inline-block',
@@ -3251,8 +3313,8 @@ function TigeGuidedRituel({ onNext, onBack }) {
       </>)}
       {block(3, <p style={S}>À chaque <B>inspiration</B>, laissez cette ligne s'étirer <B>légèrement</B>.</p>)}
       {block(4, <p style={S}>À chaque <B>expiration</B>, relâchez toute <B>tension inutile</B>.</p>)}
-      {block(5, <p style={S}>Balancez doucement votre corps de quelques millimètres, <B>d'avant en arrière</B>…</p>)}
-      {block(6, <p style={S}>puis trouvez votre <B>point d'équilibre</B>.</p>)}
+      {block(5, <p style={S}>Balancez doucement ton corps de quelques millimètres, <B>d'avant en arrière</B>…</p>)}
+      {block(6, <p style={S}>puis trouvez ton <B>point d'équilibre</B>.</p>)}
       {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}><B>Stable…</B> mais <B>vivant·e.</B></p>)}
 
       {/* CTA */}
@@ -3298,7 +3360,7 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
   }
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
@@ -3311,7 +3373,7 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
           color: '#1a1010',
           margin: '0 0 8px',
         }}>
-          Votre troisième rituel
+          Ton troisième rituel
         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -3322,7 +3384,7 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
           lineHeight: 1.15,
           margin: '0 0 10px',
         }}>
-          vos feuilles
+          tes feuilles
         </h2>
         <div style={{
           width: 48, height: 2,
@@ -3355,7 +3417,7 @@ function FeuillesGuidedRituel({ onNext, onBack }) {
       </>)}
       {block(4, <p style={S}>Maintenant, <B>observez-la</B>.</p>)}
       {block(5, <p style={S}>Comme un <B>nuage qui passe</B> dans le ciel.</p>)}
-      {block(6, <p style={S}>Ne cherchez pas à la changer. Ne la retenez pas. <B>Laissez-la traverser.</B></p>)}
+      {block(6, <p style={S}>Ne cherchez pas à la changer. Ne la retenez pas. <B>Laisse-la traverser.</B></p>)}
       {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Les feuilles <B>reçoivent</B>. Et elles <B>lâchent</B>.</p>)}
 
       <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 8), pointerEvents: phase >= 8 ? 'auto' : 'none' }}>
@@ -3400,7 +3462,7 @@ function FleursGuidedRituel({ onNext, onBack }) {
   }
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
@@ -3413,7 +3475,7 @@ function FleursGuidedRituel({ onNext, onBack }) {
           color: '#1a1010',
           margin: '0 0 8px',
         }}>
-          Votre quatrième rituel
+          Ton quatrième rituel
         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -3424,7 +3486,7 @@ function FleursGuidedRituel({ onNext, onBack }) {
           lineHeight: 1.15,
           margin: '0 0 10px',
         }}>
-          vos fleurs
+          tes fleurs
         </h2>
         <div style={{
           width: 48, height: 2,
@@ -3433,10 +3495,10 @@ function FleursGuidedRituel({ onNext, onBack }) {
         }} />
       </div>
 
-      {block(1, <p style={S}>Installez-vous <B>confortablement</B>.</p>)}
-      {block(2, <p style={S}>Fermez les yeux si vous le souhaitez.</p>)}
+      {block(1, <p style={S}>Installe-toi <B>confortablement</B>.</p>)}
+      {block(2, <p style={S}>Ferme les yeux si tu le souhaites.</p>)}
       {block(3, <>
-        <p style={S}>Scannez votre corps <B>doucement</B>, de la tête aux pieds.</p>
+        <p style={S}>Scannez ton corps <B>doucement</B>, de la tête aux pieds.</p>
         <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
           <span style={{
             display: 'inline-block',
@@ -3458,7 +3520,7 @@ function FleursGuidedRituel({ onNext, onBack }) {
       {block(4, <p style={S}>Remarquez les zones <B>tendues</B>. Les zones <B>douces</B>.</p>)}
       {block(5, <p style={S}>Ne cherchez pas à <B>changer</B> quoi que ce soit.</p>)}
       {block(6, <p style={S}>Juste… <B>passer en revue</B>. Comme on traverse un jardin.</p>)}
-      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Vous venez de vous <B>offrir de l'espace</B>.</p>)}
+      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Tu viens de vous <B>offrir de l'espace</B>.</p>)}
 
       <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 8), pointerEvents: phase >= 8 ? 'auto' : 'none' }}>
         <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
@@ -3502,7 +3564,7 @@ function SouffleGuidedRituel({ onNext, onBack }) {
   }
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
@@ -3515,7 +3577,7 @@ function SouffleGuidedRituel({ onNext, onBack }) {
           color: '#1a1010',
           margin: '0 0 8px',
         }}>
-          Votre cinquième rituel
+          Ton cinquième rituel
         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -3526,7 +3588,7 @@ function SouffleGuidedRituel({ onNext, onBack }) {
           lineHeight: 1.15,
           margin: '0 0 10px',
         }}>
-          votre souffle
+          ton souffle
         </h2>
         <div style={{
           width: 48, height: 2,
@@ -3558,9 +3620,9 @@ function SouffleGuidedRituel({ onNext, onBack }) {
         </div>
       </>)}
       {block(4, <p style={S}>Inspirez doucement. Sur l'<B>expiration</B>…</p>)}
-      {block(5, <p style={S}>…dirigez votre <B>attention</B> vers elle.</p>)}
+      {block(5, <p style={S}>…dirigez ton <B>attention</B> vers elle.</p>)}
       {block(6, <p style={S}>Ce <B>geste invisible</B> est réel. Il suffit de l'intention.</p>)}
-      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Votre souffle <B>relie</B>. Toujours.</p>)}
+      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Ton souffle <B>relie</B>. Toujours.</p>)}
 
       <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 8), pointerEvents: phase >= 8 ? 'auto' : 'none' }}>
         <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
@@ -3664,7 +3726,7 @@ function JardinGuidedRituel({ onNext, onBack }) {
   }
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       {/* Titre */}
@@ -3678,7 +3740,7 @@ function JardinGuidedRituel({ onNext, onBack }) {
           color: '#1a1010',
           margin: '0 0 8px',
         }}>
-Laissez-moi vous présenter         </p>
+Laisse-moi te présenter         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(30px, 7.5vw, 40px)',
@@ -3688,7 +3750,7 @@ Laissez-moi vous présenter         </p>
           lineHeight: 1.15,
           margin: '0 0 10px',
         }}>
-          votre jardin
+          ton jardin
         </h2>
         <div style={{
           width: 48, height: 2,
@@ -3697,28 +3759,28 @@ Laissez-moi vous présenter         </p>
         }} />
       </div>
 
-      {block(1, <p style={S}>Vos cinq zones sont <B>éveillées</B>.<br />Elles font partie de votre jardin.</p>)}
+      {block(1, <p style={S}>Tes cinq zones sont <B>éveillées</B>.<br />Elles font partie de ton jardin.</p>)}
 
       {block(2, <>
-        <p style={S}>Lorsque vous ouvrez votre jardin intérieur, vous trouverez <B>votre fleur</B>.</p>
+        <p style={S}>Lorsque tu ouvres ton jardin intérieur, tu trouveras <B>ta fleur</B>.</p>
         <FeatureBadge
           label="Ma Fleur"
           color="#8878a8"
           bg="rgba(136,120,168,0.10)"
           border="rgba(136,120,168,0.28)"
         />
-        <p style={S}>Elle grandit à chaque soin que vous vous <B>apportez</B>.<br />Elle reflète votre état d'être <B>en temps réel</B>.</p>
+        <p style={S}>Elle grandit à chaque soin que tu te <B>portes</B>.<br />Elle reflète ton état d'être <B>en temps réel</B>.</p>
       </>)}
 
       {block(3, <>
-        <p style={S}>Chaque matin, un <B>bilan rapide</B> vous attend.</p>
+        <p style={S}>Chaque matin, un <B>bilan rapide</B> t'attend.</p>
         <FeatureBadge
           label="Bilan du matin"
           color="#a07060"
           bg="rgba(184,120,100,0.10)"
           border="rgba(184,120,100,0.28)"
         />
-        <p style={S}>Dix questions. Quelques minutes.<br />Cinq ressenti <B>évalués</B>… et votre fleur s'adapte.</p>
+        <p style={S}>Dix questions. Quelques minutes.<br />Cinq ressenti <B>évalués</B>… et ta fleur s'adapte.</p>
       </>)}
 
       {block(4, <>
@@ -3729,7 +3791,7 @@ Laissez-moi vous présenter         </p>
           bg="rgba(88,120,168,0.10)"
           border="rgba(88,120,168,0.28)"
         />
-        <p style={S}>Un rituel en une minute est <B>toujours disponible</B>.<br />Votre jardin reste vivant, même les jours <B>chargés</B>.</p>
+        <p style={S}>Un rituel en une minute est <B>toujours disponible</B>.<br />Ton jardin reste vivant, même les jours <B>chargés</B>.</p>
       </>)}
 
       {block(5, <>
@@ -3740,13 +3802,13 @@ Laissez-moi vous présenter         </p>
           bg="rgba(80,120,96,0.10)"
           border="rgba(80,120,96,0.28)"
         />
-        <p style={S}>Notez ce qui s'est bien passé aujourd'hui.<br />Chaque graine plantée nourrit votre <B>estime de vous même</B>.</p>
+        <p style={S}>Notez ce qui s'est bien passé aujourd'hui.<br />Chaque graine plantée nourrit ton <B>estime de toi-même</B>.</p>
       </>)}
 
       {block(6, (
         <div style={{ margin: '0 0 32px' }}>
           <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 24px' }}>
-            <B>Votre fleur existe.</B> Voici où elle en est.
+            <B>Ta fleur existe.</B> Voici où elle en est.
           </p>
           <div style={{
             borderRadius: 20, overflow: 'hidden',
@@ -3792,7 +3854,7 @@ Laissez-moi vous présenter         </p>
             })}
           </div>
           <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(15px, 4vw, 18px)', fontStyle: 'italic', color: 'rgba(30,20,8,.65)', lineHeight: 1.6, textAlign: 'center', margin: '20px 0 0' }}>
-            Chaque rituel que vous faites nourrit une zone — et change la forme de votre fleur.
+            Chaque rituel que tu fais nourrit une zone — et change la forme de ta fleur.
           </p>
         </div>
       ))}
@@ -3822,13 +3884,13 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
     { emoji: '🌍', label: 'Le Jardin Collectif',    desc: "Un espace partagé où chaque fleur contribue au jardin commun par sa présence",                                                color: '#1a1010' },
     { emoji: '🤝', label: 'Le Club des Jardiniers', desc: "Une communauté qui avance ensemble, se soutient et partage des ondes positives",                                              color: '#9a78b0' },
     { emoji: '🎯', label: 'Les Défis',              desc: "Des challenges pour partager ensemble des mises en action et s\u2019encourager",                                              color: '#b07860' },
-    { emoji: '🌿', label: 'Les Ateliers',           desc: "Des sessions guidées pour approfondir votre mieux-\u00eatre, accompagné par des professionnels",                              color: '#607860' },
-    { emoji: '✨', label: 'Les Lumens',             desc: "L\u2019\u00e9nergie de votre engagement, visible et partageable",                                                             color: '#a8a030' },
-    { emoji: '📚', label: 'La Jardinoth\èque', desc: "Un ensemble d\u2019outils pour vous accompagner dans votre bien-\u00eatre",                                                    color: '#1a1010' },
+    { emoji: '🌿', label: 'Les Ateliers',           desc: "Des sessions guidées pour approfondir ton mieux-\u00eatre, accompagné par des professionnels",                              color: '#607860' },
+    { emoji: '✨', label: 'Les Lumens',             desc: "L\u2019\u00e9nergie de ton engagement, visible et partageable",                                                             color: '#a8a030' },
+    { emoji: '📚', label: 'La Jardinoth\èque', desc: "Un ensemble d\u2019outils pour t'accompagner dans ton bien-\u00eatre",                                                    color: '#1a1010' },
   ]
 
   return (
-    <div className="wof-in" style={{ padding: '8px 0 40px' }}>
+    <div className="wof-in" style={{ padding: '8px 20px 40px' }}>
       <BackButton onClick={onBack} />
 
       <div style={{ textAlign: 'center', margin: '8px 0 28px', ...fadeIn(phase >= 1) }}>
@@ -3846,14 +3908,14 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
           fontWeight: 400, fontStyle: 'italic',
           color: '#2a1828', lineHeight: 1.25, margin: '0 0 6px',
         }}>
-          Vous n'êtes pas seul·e
+          Tu n'es pas seul·e
         </h2>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
           fontSize: 'clamp(14px, 3.5vw, 17px)',
           fontStyle: 'italic', color: '#1a1010', margin: 0,
         }}>
-          D'autres jardins vous attendent
+          D'autres jardins t'attendent
         </p>
       </div>
 
@@ -3922,7 +3984,7 @@ function CommunauteDiscovery({ answerKey, onAnswer, onBack }) {
             <div style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.10em', textTransform: 'uppercase', color: '#fff', background: 'linear-gradient(135deg, #3a9a28, #2a7a18)', borderRadius: 100, padding: '2px 7px' }}>Accès suivant abonnement</div>
           </div>
           <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(14px, 3.5vw, 17px)', fontStyle: 'italic', color: '#1a1010', lineHeight: 1.3 }}>
-            L'app mobile pour cultiver votre bien-être partout — rappels, inspirations positives et accès à votre Fleur, où que vous soyez.
+            L'app mobile pour cultiver ton bien-être partout — rappels, inspirations positives et accès à ta Fleur, où que tu sois.
           </div>
         </div>
       </div>
@@ -3962,7 +4024,7 @@ function PepsPage({ onNext }) {
           <img src="/icon_iOs.jpg" alt="Pep's app" style={{ width: 52, height: 52, borderRadius: 14, objectFit: 'cover', transform: 'rotate(-8deg)', boxShadow: '0 6px 18px rgba(58,154,40,.30)' }} />
           <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(34px, 8vw, 48px)', fontWeight: 700, fontStyle: 'italic', color: '#0a1808', margin: 0, lineHeight: 1.1 }}>Pep's</h2>
         </div>
-        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(13px, 3.5vw, 15px)', color: 'rgba(20,50,10,.55)', letterSpacing: '.06em', margin: 0 }}>L'application mobile de votre mieux-être</p>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(13px, 3.5vw, 15px)', color: 'rgba(20,50,10,.55)', letterSpacing: '.06em', margin: 0 }}>L'application mobile de ton mieux-être</p>
       </div>
 
       {/* Phone mockup + mascot */}
@@ -3977,7 +4039,7 @@ function PepsPage({ onNext }) {
             <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '.06em' }}>Bonjour ! 🌿</div>
             <div style={{ width: '100%', background: 'rgba(255,255,255,.15)', borderRadius: 12, padding: '10px 12px' }}>
               <div style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, color: 'rgba(255,255,255,.70)', marginBottom: 4 }}>Inspiration du jour</div>
-              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 13, fontStyle: 'italic', color: '#fff', lineHeight: 1.4 }}>"Chaque petit pas compte dans votre jardin intérieur."</div>
+              <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 13, fontStyle: 'italic', color: '#fff', lineHeight: 1.4 }}>"Chaque petit pas compte dans ton jardin intérieur."</div>
             </div>
             {[
               { label: '🔔 Rappels bien-être', v: 78 },
@@ -4024,12 +4086,12 @@ function PepsPage({ onNext }) {
       <div style={{ padding: '36px 24px 0', maxWidth: 380, margin: '0 auto', ...fadeIn(phase >= 3) }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
-            { icon: '🔔', title: 'Rappels personnalisés', sub: 'Recevez un rappel au moment idéal pour vous', desc: 'On vous relance au bon moment, juste ce qu\'il faut, quand il faut' },
-            { icon: '🌸', title: 'Ma fleur, partout', sub: 'Votre équilibre à portée de main', desc: 'Accédez à votre jardin, où que vous soyez' },
-            { icon: '☀️', title: 'Infos positives', sub: 'Nourrissez votre esprit autrement', desc: 'Un flux simple, inspirant et ressourçant' },
-            { icon: '🌿', title: 'Espace média sain', sub: 'Respirez loin du bruit', desc: 'Des contenus choisis pour vous apaiser' },
-            { icon: '📚', title: 'Jardinothèque', sub: 'Explorez, pratiquez, évoluez', desc: 'Des outils concrets pour avancer à votre rythme' },
-            { icon: '💎', title: 'Inclus Premium', sub: 'Accédez à l\'expérience complète', desc: 'Toutes les ressources dès l\'ouverture de l\'app' },
+            { icon: '🔔', title: 'Rappels personnalisés', sub: 'Reçois un rappel au moment idéal pour toi', desc: 'On te relance au bon moment, juste ce qu\'il faut, quand il faut' },
+            { icon: '🌸', title: 'Ma fleur, partout', sub: 'Ton équilibre à portée de main', desc: 'Accédez à ton jardin, où que tu sois' },
+            { icon: '☀️', title: 'Infos positives', sub: 'Nourris ton esprit autrement', desc: 'Un flux simple, inspirant et ressourçant' },
+            { icon: '🌿', title: 'Espace média sain', sub: 'Respire loin du bruit', desc: "Des contenus choisis pour t'apaiser" },
+            { icon: '📚', title: 'Jardinothèque', sub: 'Explore, pratique, évolue', desc: 'Des outils concrets pour avancer à ton rythme' },
+            { icon: '💎', title: 'Inclus Premium', sub: "Accède à l'expérience complète", desc: "Toutes les ressources dès l'ouverture de l'app" },
           ].map(f => (
             <div key={f.title} style={{ background: 'rgba(255,255,255,.72)', borderRadius: 14, border: '1px solid rgba(58,154,40,.18)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ fontSize: 22 }}>{f.icon}</div>
@@ -4044,7 +4106,7 @@ function PepsPage({ onNext }) {
       {/* CTA */}
       <div style={{ padding: '36px 24px 0', textAlign: 'center', ...fadeIn(phase >= 4) }}>
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(17px, 4.5vw, 20px)', fontStyle: 'italic', color: 'rgba(10,30,8,.65)', margin: '0 0 24px', lineHeight: 1.6 }}>
-          Pep's sera disponible <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>prochainement</strong>.<br />Votre abonnement Premium vous donnera accès dès sa sortie.
+          Pep's sera disponible <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>prochainement</strong>.<br />Ton abonnement Premium te donnera accès dès sa sortie.
         </p>
         <PrimaryButton onClick={onNext}>Commencer mon jardin</PrimaryButton>
       </div>
@@ -4124,7 +4186,7 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
   if (showPeps) return <PepsPage onNext={onNext} />
 
   return (
-    <div style={{ padding: '16px 24px 80px' }}>
+    <div style={{ padding: '16px 20px 80px' }}>
       <BackButton onClick={onBack} />
 
       <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
@@ -4134,7 +4196,7 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
           fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase',
           color: '#1a1010', margin: '0 0 8px',
         }}>
-          Laissez-moi vous présenter
+          Laisse-moi te présenter
         </p>
         <h2 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -4151,12 +4213,12 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
         }} />
       </div>
 
-      {block(1, <p style={S}>Votre fleur <B>existe</B>.<br />Et elle n'est pas seule.</p>)}
+      {block(1, <p style={S}>Ta fleur <B>existe</B>.<br />Et elle n'est pas seule.</p>)}
 
       {block(2, <FeatureCard
         accent="#7a9ab8"
         accentBg="rgba(122,154,184,0.08)"
-        intro={<>Autour de vous, d'autres jardiniers <B>cultivent</B> leur espace intérieur.</>}
+        intro={<>Autour de toi, d'autres jardiniers <B>cultivent</B> leur espace intérieur.</>}
         label="Le Jardin Collectif"
         desc={<>Un espace partagé où chaque fleur <B>contribue</B> au jardin commun par sa seule <B>présence</B>.</>}
       />)}
@@ -4164,7 +4226,7 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
       {block(3, <FeatureCard
         accent="#9a78b0"
         accentBg="rgba(154,120,176,0.08)"
-        intro={<>Vous n'avancez pas <B>seul·e</B>.</>}
+        intro={<>Tu n'avancez pas <B>seul·e</B>.</>}
         label="Le Club des Jardiniers"
         desc={<>Une communauté qui avance <B>ensemble</B>, se soutient et partage des <B>ondes positives</B>.</>}
       />)}
@@ -4182,7 +4244,7 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
         accentBg="rgba(96,120,96,0.08)"
         intro={<>Pour aller plus <B>loin</B>…</>}
         label="Les Ateliers"
-        desc={<>Des sessions guidées pour approfondir votre <B>mieux-être</B>, accompagné par des <B>professionnels</B>.</>}
+        desc={<>Des sessions guidées pour approfondir ton <B>mieux-être</B>, accompagné par des <B>professionnels</B>.</>}
       />)}
 
       {block(6, <FeatureCard
@@ -4190,7 +4252,7 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
         accentBg="rgba(168,160,48,0.08)"
         intro={<>Et enfin, une <B>énergie</B> qui se voit.</>}
         label="Les Lumens"
-        desc={<>L'énergie de votre <B>engagement</B>, visible et <B>partageable</B>.</>}
+        desc={<>L'énergie de ton <B>engagement</B>, visible et <B>partageable</B>.</>}
       />)}
 
       {block(7, <FeatureCard
@@ -4198,13 +4260,13 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
         accentBg="rgba(136,120,168,0.08)"
         intro={<>Et pour ne jamais <B>avancer seul·e</B>…</>}
         label="La Jardinothèque"
-        desc={<>Un ensemble d'outils pour vous <B>accompagner</B> dans votre <B>bien-être</B> au quotidien.</>}
+        desc={<>Un ensemble d'outils pour toi <B>accompagner</B> dans ton <B>bien-être</B> au quotidien.</>}
       />)}
 
       {block(8, <>
         <div style={{ height: 1, background: 'linear-gradient(to right, transparent, rgba(122,154,184,.30), transparent)', margin: '8px 0 36px' }} />
         <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px', textAlign: 'center' }}>
-          <B>Votre jardin vous attend.</B><br />Et les autres jardiniers aussi.
+          <B>Ton jardin t'attend.</B><br />Et les autres jardiniers aussi.
         </p>
       </>)}
 
@@ -4257,7 +4319,7 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
     : (!data.hasTimer || timerDone)
 
   return (
-    <div className="wof-in" style={{ padding: '8px 0 16px' }}>
+    <div className="wof-in" style={{ padding: '8px 20px 16px' }}>
       <BackButton onClick={onBack} />
 
       <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 500, color: dayColor || '#c8a0b0', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '8px 0 6px', textAlign: 'center' }}>
@@ -4324,7 +4386,7 @@ function DayRituel({ data, answers, dayColor, onNext, onBack, onScreenChange }) 
 function DayTrace({ text, onNext, onBack, onFleur, onScreenChange }) {
   useEffect(() => { onScreenChange?.('trace') }, [])
   return (
-    <div className="wof-in" style={{ padding: '8px 0 16px', textAlign: 'center' }}>
+    <div className="wof-in" style={{ padding: '8px 20px 16px', textAlign: 'center' }}>
       <BackButton onClick={onBack} />
 
       <div style={{
@@ -4383,7 +4445,7 @@ function DayTrace({ text, onNext, onBack, onFleur, onScreenChange }) {
 function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange }) {
   useEffect(() => { onScreenChange?.('ouverture') }, [])
   return (
-    <div className="wof-in" style={{ padding: '8px 0 16px', textAlign: 'center' }}>
+    <div className="wof-in" style={{ padding: '8px 20px 16px', textAlign: 'center' }}>
       {!isFinal && <BackButton onClick={onBack} />}
 
       {isFinal ? (
@@ -4399,7 +4461,7 @@ function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange 
             lineHeight: 1.5,
             margin: '0 0 10px',
           }}>
-            Ce jardin peut continuer à grandir avec vous.
+            Ce jardin peut continuer à grandir avec toi.
           </h2>
           <p style={{
             fontFamily: 'Jost, sans-serif',
@@ -4409,7 +4471,7 @@ function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange 
             lineHeight: 1.65,
             margin: '0 0 36px',
           }}>
-            Votre fleur vous attend.
+            Ta fleur t'attend.
           </p>
         </>
       ) : (
@@ -4436,15 +4498,23 @@ function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange 
 
 function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
-  const [phase, setPhase] = useState(0)
-  const phaseRefs = useRef({})
+  const [subSlide, setSubSlide] = useState(0)
+  const [phase,    setPhase]    = useState(0)
+  const phaseRefs  = useRef({})
   const hasBarometer = !!answers?.j1?.feel
 
   useEffect(() => {
-    const T = [0, 150, 300, hasBarometer ? 450 : 99999, 600]
-    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
-    return () => timers.forEach(clearTimeout)
-  }, [hasBarometer])
+    setPhase(0)
+    if (subSlide === 0) {
+      const T = [0, 150, 300, hasBarometer ? 450 : 99999, 600, 1600]
+      const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
+      return () => timers.forEach(clearTimeout)
+    } else {
+      const T = [0, 400, 1600, 3200]
+      const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
+      return () => timers.forEach(clearTimeout)
+    }
+  }, [subSlide, hasBarometer])
 
   const S = {
     fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -4468,63 +4538,81 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
     )
   }
 
-  const ctaPhase = hasBarometer ? 5 : 4
+  /* ── Slide 7 ── */
+  if (subSlide === 0) {
+    const ctaPhase = hasBarometer ? 6 : 5
+    return (
+      <div style={{ padding: '16px 20px 80px' }}>
+        <BackButton onClick={onBack} />
 
-  return (
-    <div style={{ padding: '16px 24px 80px' }}>
-      <BackButton onClick={onBack} />
+        <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+          <p style={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 'clamp(11px, 2.8vw, 13px)',
+            fontWeight: 500,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: '#1a1010',
+            margin: '0 0 8px',
+          }}>
+            Ce qui vient de se passer
+          </p>
+          <h2 style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(30px, 7.5vw, 40px)',
+            fontWeight: 700,
+            fontStyle: 'italic',
+            color: '#2a1010',
+            lineHeight: 1.15,
+            margin: '0 0 10px',
+          }}>
+            Un retour aux racines
+          </h2>
+          <div style={{
+            width: 48, height: 2,
+            background: 'linear-gradient(to right, transparent, #b87c5a, transparent)',
+            margin: '0 auto',
+          }} />
+        </div>
 
-      {/* Titre */}
-      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(11px, 2.8vw, 13px)',
-          fontWeight: 500,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#1a1010',
-          margin: '0 0 8px',
-        }}>
-          Ce qui vient de se passer
-        </p>
-        <h2 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(30px, 7.5vw, 40px)',
-          fontWeight: 700,
-          fontStyle: 'italic',
-          color: '#2a1010',
-          lineHeight: 1.15,
-          margin: '0 0 10px',
-        }}>
-          Un retour aux racines
-        </h2>
-        <div style={{
-          width: 48, height: 2,
-          background: 'linear-gradient(to right, transparent, #b87c5a, transparent)',
-          margin: '0 auto',
-        }} />
+        {block(1, <p style={S}>Tu viens de revenir à quelque chose de <B>simple</B>. Et souvent… c'est là que tout <B>commence</B>.</p>)}
+        {block(2, <p style={S}>Quand les racines trouvent un peu plus de <B>stabilité</B>, le reste suit… <B>naturellement</B>.</p>)}
+        {hasBarometer && block(3, <p style={S}>Et déjà, quelque chose est <B>légèrement différent</B>.</p>)}
+
+        {block(hasBarometer ? 4 : 3, <>
+          <div style={{
+            width: 40, height: 1,
+            background: 'rgba(180,130,100,0.3)',
+            margin: '8px auto 40px',
+          }} />
+        </>)}
+
+        {block(hasBarometer ? 5 : 4, (
+          <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(21px, 5.2vw, 26px)', margin: '0 0 48px' }}>
+            Et ce n'est que le début.
+          </p>
+        ))}
+
+        <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= ctaPhase), pointerEvents: phase >= ctaPhase ? 'auto' : 'none' }}>
+          <PrimaryButton onClick={() => { setSubSlide(1) }}>Je continue…</PrimaryButton>
+        </div>
       </div>
+    )
+  }
 
-      {block(1, <p style={S}>Vous venez de revenir à quelque chose de <B>simple</B>. Et souvent… c'est là que tout <B>commence</B>.</p>)}
-      {block(2, <p style={S}>Quand les racines trouvent un peu plus de <B>stabilité</B>, le reste suit… <B>naturellement</B>.</p>)}
-      {hasBarometer && block(3, <p style={S}>Et déjà, quelque chose est <B>légèrement différent</B>.</p>)}
+  /* ── Slide 8 ── */
+  const S8 = { ...S, fontSize: 'clamp(20px, 5.5vw, 28px)', lineHeight: 1.6, margin: '0 0 10px' }
+  return (
+    <div style={{ padding: '24px 20px 60px', textAlign: 'center' }}>
 
-      {block(hasBarometer ? 4 : 3, <>
-        <div style={{
-          width: 40, height: 1,
-          background: 'rgba(180,130,100,0.3)',
-          margin: '8px auto 40px',
-        }} />
-        <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 12px' }}>
-          <B>Demain</B>, vous allez découvrir ce qui vous tient debout…<br />même quand tout vacille.
-        </p>
-        <p style={{ ...S, margin: '0 0 48px' }}>
-          Et vous pourriez voir les choses <B>autrement</B>.
-        </p>
-      </>)}
+      {block(1, <p style={S8}>Aujourd'hui, tu as commencé à <B>t'écouter</B>.</p>)}
+      {block(2, <p style={S8}>Mais ton équilibre ne peut pas encore <B>apparaître</B>.</p>)}
+      {block(3, <p style={{ ...S8, margin: '0 0 24px' }}>
+        Demain, tu vas activer une autre partie de toi.<br /><B>Et c'est là que quelque chose évolue.</B>
+      </p>)}
 
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= ctaPhase), pointerEvents: phase >= ctaPhase ? 'auto' : 'none' }}>
-        <PrimaryButton onClick={onNext}>Je reviens demain</PrimaryButton>
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={onNext}>Continuer demain</PrimaryButton>
       </div>
     </div>
   )
@@ -4648,7 +4736,7 @@ function HelpBandeau({ helpText }) {
 
                 {/* Texte à gauche — avec padding droit pour laisser place au personnage */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 180 }}>
-                  {(helpText || "Un espace pour approfondir ce que vous venez de vivre.\n\nPrenez le temps de ressentir ce qui s'est passé en vous pendant cette étape.\n\nIl n'y a rien à forcer, laissez juste la pratique continuer de résonner.")
+                  {(helpText || "Un espace pour approfondir ce que tu viens de vivre.\n\nPrends le temps de ressentir ce qui s'est passé en toi pendant cette étape.\n\nIl n'y a rien à forcer, laisse juste la pratique continuer de résonner.")
                     .split('\n\n')
                     .map((para, i) => (
                       <p key={i} style={{
@@ -4709,6 +4797,9 @@ function HelpBandeau({ helpText }) {
           height: 150,
           overflow: 'hidden',
           flexShrink: 0,
+          width: '80%',
+          margin: '0 auto -16px',
+          borderRadius: 16,
           transition: 'filter 0.3s ease, transform 0.3s ease',
           filter: pulse ? 'brightness(1.15)' : 'brightness(1)',
           transform: pulse ? 'scale(1.01)' : 'scale(1)',
@@ -4746,6 +4837,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
   const [step, setStep] = useState(0)
   const [animKey, setAnimKey] = useState(0)
   const [showFleurModal, setShowFleurModal] = useState(false)
+  const [showRitualVideo, setShowRitualVideo] = useState(false)
   const [screen, setScreen] = useState('accueil_intro')
 
   const dayConfig = WEEK_ONE_DATA[dayIndex]
@@ -4826,12 +4918,24 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 2 && (
+      {step === 2 && showRitualVideo && (
+        <RitualVideoSlide
+          src={dayConfig.videoAfterRitual}
+          onContinue={advance}
+        />
+      )}
+      {step === 2 && !showRitualVideo && (
         <DayRituel
           data={dayConfig.rituel}
           answers={answers}
           dayColor={dayConfig.color}
-          onNext={advance}
+          onNext={() => {
+            if (dayConfig.videoAfterRitual) {
+              setShowRitualVideo(true)
+            } else {
+              advance()
+            }
+          }}
           onBack={goBack}
           onScreenChange={notifyScreen}
         />
@@ -4873,11 +4977,11 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
 
 const ZONE_DAYS = [
   { day: 1, zone: 'racines',  zoneId: 'roots',   emoji: '🌱', label: 'Racines',  desc: 'Une base qui se stabilise',    color: ZONE_COLORS.racines  },
-  { day: 2, zone: 'tige',     zoneId: 'stem',    emoji: '🌿', label: 'Tige',     desc: 'Ce qui vous tient debout',     color: ZONE_COLORS.tige     },
-  { day: 3, zone: 'feuilles', zoneId: 'leaves',  emoji: '🍃', label: 'Feuilles', desc: 'Ce qui circule en vous',       color: ZONE_COLORS.feuilles },
+  { day: 2, zone: 'tige',     zoneId: 'stem',    emoji: '🌿', label: 'Tige',     desc: 'Ce qui te tient debout',     color: ZONE_COLORS.tige     },
+  { day: 3, zone: 'feuilles', zoneId: 'leaves',  emoji: '🍃', label: 'Feuilles', desc: 'Ce qui circule en toi',       color: ZONE_COLORS.feuilles },
   { day: 4, zone: 'fleurs',   zoneId: 'flowers', emoji: '🌸', label: 'Fleurs',   desc: "Ce qui s'ouvre",               color: ZONE_COLORS.fleurs   },
   { day: 5, zone: 'souffle',  zoneId: 'breath',  emoji: '🌬️', label: 'Souffle',  desc: 'Ce qui relie tout',            color: ZONE_COLORS.souffle  },
-  { day: 6, zone: null,       zoneId: null,      emoji: '✨', label: 'Votre fleur', desc: 'La naissance',         color: '#b8a090'            },
+  { day: 6, zone: null,       zoneId: null,      emoji: '✨', label: 'Ta fleur', desc: 'La naissance',         color: '#b8a090'            },
   { day: 7, zone: null,       zoneId: null,      emoji: '🌻', label: 'Le jardin ensemble',   desc: 'La communauté',       color: '#a09080'            },
 ]
 
@@ -4950,10 +5054,10 @@ function FleurDiscoveryModal({ onClose }) {
         {/* Titre */}
         <div style={{ textAlign: 'center', marginBottom: 20, ...fadeIn(phase >= 1) }}>
           <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#000000', WebkitTextFillColor: '#000000', margin: '0 0 6px', background: 'none' }}>
-            Votre fleur intérieure
+            Ta fleur intérieure
           </p>
           <h2 style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(20px, 5vw, 26px)', fontWeight: 700, color: '#000000', WebkitTextFillColor: '#000000', lineHeight: 1.25, margin: 0, background: 'none', backgroundClip: 'unset', WebkitBackgroundClip: 'unset' }}>
-            Elle reflète ce que vous avez cultivé pendant 7 jours
+            Elle reflète ce que tu as cultivé pendant 7 jours
           </h2>
         </div>
 
@@ -4980,7 +5084,7 @@ function FleurDiscoveryModal({ onClose }) {
 
         {/* Phrase */}
         <p style={{ ...fadeIn(phase >= 2), fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: '#1a1208', lineHeight: 1.6, textAlign: 'center', margin: '0 0 16px' }}>
-          Chaque rituel nourrit une zone — et change la forme de votre fleur.
+          Chaque rituel nourrit une zone — et change la forme de ta fleur.
         </p>
 
         {/* Barres de zones */}
@@ -5107,13 +5211,13 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
         </h2>
         <div style={{ width: 48, height: 2, background: 'linear-gradient(to right, transparent, #b87c5a, transparent)', margin: '0 auto 20px' }} />
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(22px, 5.5vw, 28px)', fontWeight: 500, color: '#ffffff', margin: '0 0 14px', lineHeight: 1.5 }}>
-          Ce que vous avez commencé… continue de grandir.
+          Ce que tu as commencé… continue de grandir.
         </p>
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 25px)', fontWeight: 400, color: '#ffffff', margin: '0 0 12px', lineHeight: 1.5 }}>
-          Votre fleur se révèle.
+          Ta fleur se révèle.
         </p>
         <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'normal', fontSize: 'clamp(16px, 4vw, 19px)', color: 'rgba(255,255,255,0.85)', margin: 0, lineHeight: 1.65 }}>
-          Chaque jour, une partie s'éveille. Chaque zone a un rôle pour vous.
+          Chaque jour, une partie s'éveille. Chaque zone a un rôle pour toi.
         </p>
       </div>
 
@@ -5123,12 +5227,12 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
         {completedZones.length >= 5 && (() => {
           const h = plantHealth ?? 30
           const phrase =
-            h < 40 ? { text: 'Votre fleur vient de naître. Chaque jour qui passe l\'ancre un peu plus.', sub: 'Continuez, prendre soin d\'elle c\'est prendre soin de vous.' } :
-            h < 55 ? { text: 'Votre fleur prend racine. On sent qu\'elle cherche la lumière.', sub: 'Les rituels l\'aident à grandir.' } :
-            h < 65 ? { text: 'Votre fleur est en bouton. L\'éclosion est toute proche.', sub: 'Encore quelques soins et elle s\'ouvrira pleinement.' } :
-            h < 78 ? { text: 'Votre fleur s\'épanouit. Elle reflète votre constance.', sub: 'Vous prenez soin d\'elle avec régularité.' } :
-            h < 90 ? { text: 'Votre fleur rayonne. Elle est le reflet de votre engagement.', sub: 'Continuez — elle le ressent.' } :
-                     { text: 'Votre fleur est en pleine éclosion.', sub: 'Elle reflète toute la vitalité que vous lui avez offerte.' }
+            h < 40 ? { text: 'Ta fleur vient de naître. Chaque jour qui passe l\'ancre un peu plus.', sub: 'Continuez, prendre soin d\'elle c\'est prendre soin de vous.' } :
+            h < 55 ? { text: 'Ta fleur prend racine. On sent qu\'elle cherche la lumière.', sub: 'Les rituels l\'aident à grandir.' } :
+            h < 65 ? { text: 'Ta fleur est en bouton. L\'éclosion est toute proche.', sub: 'Encore quelques soins et elle s\'ouvrira pleinement.' } :
+            h < 78 ? { text: 'Ta fleur s\'épanouit. Elle reflète ta constance.', sub: 'Vous prenez soin d\'elle avec régularité.' } :
+            h < 90 ? { text: 'Ta fleur rayonne. Elle est le reflet de ton engagement.', sub: 'Continuez — elle le ressent.' } :
+                     { text: 'Ta fleur est en pleine éclosion.', sub: 'Elle reflète toute la vitalité que tu lui as offerte.' }
           return (
             <div style={{ textAlign: 'center', maxWidth: 260, animation: 'softRise 900ms 1.6s cubic-bezier(0.25,0.46,0.45,0.94) both', opacity: 0, animationFillMode: 'forwards' }}>
               <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(20px, 5vw, 25px)', fontWeight: 500, color: '#ffffff', margin: '0 0 8px', lineHeight: 1.5 }}>{phrase.text}</p>
@@ -5271,7 +5375,7 @@ function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOp
                   <span style={{ fontSize: 18, flexShrink: 0 }}>✨</span>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600, color: '#1a1010', margin: '0 0 2px', lineHeight: 1.4 }}>
-                      Vous pouvez aller plus loin.
+                      Tu peux aller plus loin.
                     </p>
                     <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 400, color: 'rgba(30,20,10,0.60)', margin: 0, lineHeight: 1.5 }}>
                       Appuyez sur <strong style={{ color: '#1a1010' }}>Voir les rituels →</strong> ci-dessus pour découvrir les exercices de cette zone.
@@ -5434,6 +5538,90 @@ function WelcomeVeil({ onDone }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Écran d'accueil WeekOne — vidéo + bouton démarrer
 // ─────────────────────────────────────────────────────────────────────────────
+function RitualVideoSlide({ src, onContinue }) {
+  const [muted,      setMuted]      = useState(true)
+  const [ctaVisible, setCtaVisible] = useState(false)
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    const t = setTimeout(() => setCtaVisible(true), 2000)
+    return () => clearTimeout(t)
+  }, [])
+
+  function handleSound() {
+    setMuted(false)
+    if (videoRef.current) {
+      videoRef.current.muted = false
+      videoRef.current.currentTime = 0
+      videoRef.current.play()
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      background: '#000',
+      zIndex: 150,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <video
+        ref={videoRef}
+        src={src}
+        autoPlay
+        playsInline
+        muted
+        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+      />
+
+      {/* Overlay bas */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        padding: '64px 20px 32px',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
+        display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end',
+        opacity: ctaVisible ? 1 : 0,
+        transition: 'opacity 700ms ease',
+        pointerEvents: ctaVisible ? 'auto' : 'none',
+      }}>
+        {/* Bouton son */}
+        <button
+          onClick={handleSound}
+          style={{
+            width: 56, height: 56, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.20)',
+            border: '2px solid rgba(255,255,255,0.45)',
+            backdropFilter: 'blur(6px)',
+            cursor: 'pointer', fontSize: 24,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff',
+          }}
+        >
+          {muted ? '🔇' : '🔊'}
+        </button>
+
+        {/* Bouton continuer */}
+        <button
+          onClick={onContinue}
+          style={{
+            width: '100%',
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 15, fontWeight: 500, letterSpacing: '0.04em',
+            color: '#fff',
+            background: 'linear-gradient(135deg, #c8a0b0, #a07888)',
+            border: 'none', borderRadius: 50, padding: '14px 24px',
+            cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(200,160,176,0.35)',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+        >
+          Continuer →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function WelcomeWeekOne({ onStart }) {
   const [phase, setPhase] = useState(0)
   const [muted, setMuted] = useState(true)
@@ -5924,7 +6112,7 @@ async function handleDayEvent(event) {
             color: '#a09090',
             letterSpacing: '0.04em',
           }}>
-            Votre jardin se prépare…
+            Ton jardin se prépare…
           </p>
         </div>
       </>
@@ -6071,18 +6259,40 @@ async function handleDayEvent(event) {
               }}>
                 {currentConfig.title}
               </span>
-              <span style={{
-                fontSize: 11, color: 'rgba(60,50,40,0.55)', letterSpacing: '.08em',
-                background: 'rgba(255,255,255,0.70)', padding: '3px 10px', borderRadius: 100,
-                backdropFilter: 'blur(4px)', fontFamily: 'Jost, sans-serif',
-              }}>
-                {String(weekData.currentDay).padStart(2,'0')} / 07
-              </span>
+              {weekData.currentDay === 1 && currentScreen === 'accueil_intro' ? (
+                <span className="time-badge-pulse" style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: 12, fontWeight: 600,
+                  color: '#7a4858',
+                  background: 'rgba(255,255,255,0.92)',
+                  border: '1.5px solid rgba(200,160,176,0.5)',
+                  padding: '5px 14px', borderRadius: 100,
+                  backdropFilter: 'blur(4px)',
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                }}>
+                  ⏱ 3 à 5 min · à ton rythme
+                </span>
+              ) : (() => {
+                const slideKeys = Object.keys(currentConfig.helpTexts || {})
+                const slideIdx  = slideKeys.indexOf(currentScreen)
+                const slideNum  = slideIdx >= 0 ? slideIdx + 1 : 1
+                const total     = slideKeys.length || 1
+                return (
+                  <span style={{
+                    fontSize: 11, color: 'rgba(60,50,40,0.55)', letterSpacing: '.08em',
+                    background: 'rgba(255,255,255,0.70)', padding: '3px 10px', borderRadius: 100,
+                    backdropFilter: 'blur(4px)', fontFamily: 'Jost, sans-serif',
+                  }}>
+                    {String(slideNum).padStart(2,'0')} / {String(total).padStart(2,'0')}
+                  </span>
+                )
+              })()}
             </div>
           </div>
 
    {/* ── Contenu (scrollable) ── */}
-<div id="wof-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', background: view === 'garden' ? 'linear-gradient(160deg, #0d2818, #071510)' : 'transparent' }}>
+<div id="wof-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', background: view === 'garden' ? 'linear-gradient(160deg, #0d2818, #071510)' : 'transparent', }}>
   {view === 'garden' ? (
     <GardenDashboard
       completedDays={weekData.completedDays}
