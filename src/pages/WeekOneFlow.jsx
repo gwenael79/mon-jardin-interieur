@@ -256,6 +256,7 @@ export const WEEK_ONE_DATA = [
     color: '#c8a0b0',
     accueil: {
       layout: 'slide1',
+      timeBadge: '⏱ 3 à 5 min · à ton rythme',
       pauseSeconds: 1,
     },
     introspection: {
@@ -331,6 +332,7 @@ export const WEEK_ONE_DATA = [
       conditioning: true,
       skipBarometer: true,
       headline: "Tu es revenu·e. Ton jardin s'en souvient.",
+      timeBadge: '⏱ 2 à 3 min · à ton rythme',
       subtitle: 'La continuité est une forme de soin.',
       pauseSeconds: 1,
       getPreviousNote: (ans) => {
@@ -369,7 +371,7 @@ export const WEEK_ONE_DATA = [
             "Tu es là. C'est l'essentiel.",
             "La tige est ce qui relie.",
             "Elle n'a pas besoin d'être parfaite pour tenir.",
-            "On va simplement y revenir.",
+            "**On va simplement retrouver un point d'appui.**",
           ],
         }
         return {
@@ -384,13 +386,14 @@ export const WEEK_ONE_DATA = [
       },
       isGuided: 'tige',
     },
-    getTrace: (ans) => {
-      const energy = ans?.j2?.energy
-      return energy
-        ? `Ton énergie était ${labelFor(energy)} aujourd'hui. Tu es revenu·e malgré tout.`
-        : "Tu as été présent·e deux jours de suite. Ta tige commence à tenir."
-    },
-    ouverture: 'Juste revenir… suffit. À demain.',
+    getTrace: () => "Aujourd'hui, tu as retrouvé un peu d'appui. Même discret… il est là.",
+    ouverture: null,
+    ouvertureSlides: [
+      "Aujourd'hui, tu as commencé à retrouver ton équilibre.",
+      "Mais quelque chose peut encore s'ouvrir.",
+      "**Demain, tu vas reconnecter avec ton ressenti. Et ça va changer la manière dont tu te perçois.**",
+    ],
+    finalCTA: 'Continuer demain',
     helpTexts: {
       accueil_intro:       "Revenir, c'est déjà résister à l'oubli.\n\nLe corps se souvient de ce qu'on lui répète. Chaque retour grave un sillon un peu plus profond, même quand l'envie n'y est pas.",
       accueil_respiration: "Quelques respirations suffisent à changer la qualité de présence.\n\nPas besoin de méditer vingt minutes. Juste ce souffle, maintenant, avant de continuer.",
@@ -1516,7 +1519,7 @@ function BreathingOrb({ maxCycles, onComplete }) {
         maxWidth: 320,
         textAlign: 'center',
       }}>
-        Pose ta main sur le ventre et porte ton attention sur ce rythme lent.
+        Pose ta main sur le ventre et imagine que tu gonfles un ballon de couleur.
       </p>
 
     </div>
@@ -1973,9 +1976,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 // ── Mise en condition (jours 2-7) ──────────────────────────────────────────
 
 function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenChange }) {
-  const [subSlide, setSubSlide] = useState(0)
-  const [ctaReady, setCtaReady] = useState(false)
-  const [breathCta, setBreathCta] = useState(false)
+  const [subSlide,   setSubSlide]   = useState(0)
+  const [ctaReady,   setCtaReady]   = useState(false)
+  const [tagVisible, setTagVisible] = useState(false)
+  const [orbDone,    setOrbDone]    = useState(false)
+  const orbPhraseRef = useRef(null)
 
   useEffect(() => {
     const screens = ['accueil_intro', 'accueil_respiration', 'introspection']
@@ -1984,14 +1989,14 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
 
   useEffect(() => {
     setCtaReady(false)
-    setBreathCta(false)
-    let timer
+    setTagVisible(false)
+    setOrbDone(false)
+    let t1, t2
     if (subSlide === 0) {
-      timer = setTimeout(() => setCtaReady(true), data.pauseSeconds * 1000)
-    } else if (subSlide === 1) {
-      timer = setTimeout(() => setBreathCta(true), 1500)
+      t1 = setTimeout(() => setTagVisible(true), 1000)
+      t2 = setTimeout(() => setCtaReady(true), data.pauseSeconds * 1000)
     }
-    return () => clearTimeout(timer)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [subSlide, data.pauseSeconds])
 
   const prevNote = data.getPreviousNote?.(answers) || data.getNarrativeNote?.(answers)
@@ -2002,7 +2007,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
       <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
         <h1 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(22px, 5.5vw, 30px)',
+          fontSize: 'clamp(24px, 6.5vw, 34px)',
           fontWeight: 500,
           color: '#0f0808',
           lineHeight: 1.3,
@@ -2012,15 +2017,28 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
           {data.headline}
         </h1>
 
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 26px)',
+          fontWeight: 700,
+          color: '#0f0808',
+          margin: '0 0 20px',
+          opacity: tagVisible ? 1 : 0,
+          transform: tagVisible ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'opacity 700ms ease, transform 700ms ease',
+        }}>
+          Et ça compte.
+        </p>
+
         {prevNote && (
           <p style={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: 14,
-            fontWeight: 300,
-            color: '#1a1010',
-            lineHeight: 1.65,
-            margin: '0 0 12px',
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(20px, 5.5vw, 28px)',
+            fontWeight: 400,
             fontStyle: 'italic',
+            color: '#2a1e1e',
+            lineHeight: 1.6,
+            margin: '0 0 12px',
           }}>
             {prevNote}
           </p>
@@ -2029,10 +2047,10 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
         {data.subtitle && (
           <p style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 'clamp(17px, 4vw, 20px)',
+            fontSize: 'clamp(20px, 5.5vw, 28px)',
             fontStyle: 'italic',
-            color: '#4a3838',
-            lineHeight: 1.65,
+            color: '#2a1e1e',
+            lineHeight: 1.6,
             margin: '0 0 32px',
           }}>
             {data.subtitle}
@@ -2056,24 +2074,54 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
       <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5vw, 26px)',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
           fontWeight: 400,
+          fontStyle: 'italic',
           color: '#0f0808',
-          lineHeight: 1.5,
-          margin: '0 0 36px',
+          lineHeight: 1.6,
+          margin: '0 0 12px',
         }}>
-          Prends simplement un instant.
+          Reviens à ton souffle.
         </p>
 
-        <div style={{ marginBottom: 40 }}>
-          <BreathingOrb />
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontWeight: 700,
+          color: '#0f0808',
+          lineHeight: 1.6,
+          margin: '0 0 32px',
+        }}>
+          Aujourd'hui, observe-le un peu plus finement.
+        </p>
+
+        <div style={{ marginBottom: orbDone ? 24 : 40 }}>
+          <BreathingOrb maxCycles={4} onComplete={() => setOrbDone(true)} />
         </div>
 
-        {breathCta && (
-          <div className="wof-soft">
-            <PrimaryButton onClick={() => data.skipBarometer ? onConditioningComplete(null) : setSubSlide(2)}>
-              {data.skipBarometer ? 'Ressentir mon énergie' : 'Observer'}
-            </PrimaryButton>
+        {orbDone && (
+          <div ref={el => {
+            orbPhraseRef.current = el
+            if (el) setTimeout(() => {
+              const scroll = document.getElementById('wof-scroll')
+              if (scroll) scroll.scrollTo({ top: scroll.scrollHeight, behavior: 'smooth' })
+            }, 100)
+          }}>
+            <p className="wof-soft" style={{
+              fontFamily: 'Cormorant Garamond, Georgia, serif',
+              fontSize: 'clamp(20px, 5.5vw, 28px)',
+              fontWeight: 700,
+              color: '#0f0808',
+              lineHeight: 1.6,
+              margin: '0 0 28px',
+            }}>
+              Ton souffle devient plus stable.
+            </p>
+            <div className="wof-soft">
+              <PrimaryButton onClick={() => data.skipBarometer ? onConditioningComplete(null) : setSubSlide(2)}>
+                {data.skipBarometer ? 'Ressentir mon énergie' : 'Observer'}
+              </PrimaryButton>
+            </div>
           </div>
         )}
       </div>
@@ -2176,7 +2224,15 @@ const BATTERY_LEVELS = [
 
 function EnergyBattery({ answerKey, onAnswer, onBack }) {
   const [selected, setSelected] = useState(null)
+  const [leaving,  setLeaving]  = useState(false)
   const selectedIdx = selected ? BATTERY_LEVELS.findIndex(l => l.value === selected) : -1
+
+  function handleSelect(value) {
+    if (selected) return
+    setSelected(value)
+    setTimeout(() => setLeaving(true),             4000)
+    setTimeout(() => onAnswer(answerKey, value),   4700)
+  }
 
   return (
     <div className="wof-in" style={{ padding: '8px 20px 16px' }}>
@@ -2190,6 +2246,7 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
         lineHeight: 1.45,
         margin: '8px 0 40px',
         textAlign: 'center',
+        opacity: leaving ? 0 : 1, transition: 'opacity 700ms ease',
       }}>
         Ton énergie en ce moment est plutôt…
       </h2>
@@ -2219,9 +2276,9 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
               return (
                 <div
                   key={level.value}
-                  onClick={() => setSelected(level.value)}
+                  onClick={() => handleSelect(level.value)}
                   style={{
-                    height: 54,
+                    height: 36,
                     background: isFilled
                       ? isSelected
                         ? `linear-gradient(to bottom, ${level.color}ff, ${level.color}cc)`
@@ -2248,18 +2305,18 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
             return (
               <div
                 key={level.value}
-                onClick={() => setSelected(level.value)}
+                onClick={() => handleSelect(level.value)}
                 style={{
-                  height: 54,
+                  height: 36,
                   display: 'flex',
                   alignItems: 'center',
                   cursor: 'pointer',
-                  paddingLeft: 6,
+                  paddingLeft: 8,
                 }}
               >
                 <span style={{
                   fontFamily: 'Jost, sans-serif',
-                  fontSize: 15,
+                  fontSize: 13,
                   fontWeight: 500,
                   color: isFilled ? level.color : 'rgba(80,55,55,0.38)',
                   transition: 'color 0.35s ease, opacity 0.35s ease',
@@ -2276,10 +2333,16 @@ function EnergyBattery({ answerKey, onAnswer, onBack }) {
       </div>
 
       {selected && (
-        <div className="wof-soft" style={{ marginTop: 36, display: 'flex', justifyContent: 'center' }}>
-          <PrimaryButton onClick={() => onAnswer(answerKey, selected)}>
-            Continuer
-          </PrimaryButton>
+        <div className="wof-soft" style={{ marginTop: 36, textAlign: 'center' }}>
+          <p style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(20px, 5.5vw, 26px)',
+            fontWeight: 700,
+            color: '#0f0808',
+            margin: 0,
+          }}>
+            Merci pour cette justesse.
+          </p>
         </div>
       )}
     </div>
@@ -3085,21 +3148,25 @@ function RituelTransition({ introData, dayColor, onStart, onBack }) {
     <div style={{ textAlign: 'center', padding: '40px 20px 40px' }}>
       <BackButton onClick={onBack} />
 
-      {lines.map((line, i) => (
-        <p key={i} style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(18px, 4.5vw, 24px)',
-          fontStyle: i === 0 ? 'normal' : 'italic',
-          fontWeight: i === 0 ? 500 : 400,
-          color: i === 0 ? '#0f0808' : '#3a2828',
-          lineHeight: 1.65,
-          whiteSpace: 'pre-line',
-          margin: '0 0 20px',
-          ...fadeIn(phase > i),
-        }}>
-          {line}
-        </p>
-      ))}
+      {lines.map((line, i) => {
+        const isBold = line.startsWith('**') && line.endsWith('**')
+        const text   = isBold ? line.slice(2, -2) : line
+        return (
+          <p key={i} style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(18px, 4.5vw, 24px)',
+            fontStyle: (i === 0 || isBold) ? 'normal' : 'italic',
+            fontWeight: isBold ? 700 : i === 0 ? 500 : 400,
+            color: i === 0 ? '#0f0808' : '#3a2828',
+            lineHeight: 1.65,
+            whiteSpace: 'pre-line',
+            margin: '0 0 20px',
+            ...fadeIn(phase > i),
+          }}>
+            {text}
+          </p>
+        )
+      })}
 
       <div style={{
         marginTop: 16,
@@ -3315,7 +3382,7 @@ function TigeGuidedRituel({ onNext, onBack }) {
       {block(4, <p style={S}>À chaque <B>expiration</B>, relâchez toute <B>tension inutile</B>.</p>)}
       {block(5, <p style={S}>Balancez doucement ton corps de quelques millimètres, <B>d'avant en arrière</B>…</p>)}
       {block(6, <p style={S}>puis trouvez ton <B>point d'équilibre</B>.</p>)}
-      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}><B>Stable…</B> mais <B>vivant·e.</B></p>)}
+      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Ton corps retrouve son axe.</p>)}
 
       {/* CTA */}
       <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 8), pointerEvents: phase >= 8 ? 'auto' : 'none' }}>
@@ -4442,6 +4509,53 @@ function DayTrace({ text, onNext, onBack, onFleur, onScreenChange }) {
 
 // ── OUVERTURE ──────────────────────────────────────────────────────────────
 
+function MultiPhaseOuverture({ slides, ctaLabel, onNext, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('ouverture') }, [])
+  const [phase, setPhase] = useState(0)
+
+  useEffect(() => {
+    const timers = slides.map((_, i) => setTimeout(() => setPhase(i + 1), i * 1600))
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const S = {
+    fontFamily: 'Cormorant Garamond, Georgia, serif',
+    fontStyle: 'italic',
+    fontSize: 'clamp(20px, 5.5vw, 28px)',
+    color: '#0f0808',
+    textAlign: 'center',
+    lineHeight: 1.6,
+    margin: '0 0 10px',
+  }
+
+  return (
+    <div style={{ padding: '24px 20px 60px', textAlign: 'center' }}>
+      {slides.map((line, i) => {
+        const isBold = line.startsWith('**') && line.endsWith('**')
+        const text   = isBold ? line.slice(2, -2) : line
+        return (
+          <p key={i} style={{
+            ...S,
+            fontWeight: isBold ? 700 : 400,
+            fontStyle: isBold ? 'normal' : 'italic',
+            ...fadeIn(phase > i),
+          }}>
+            {text}
+          </p>
+        )
+      })}
+
+      <div style={{
+        display: 'flex', justifyContent: 'center', marginTop: 24,
+        ...fadeIn(phase >= slides.length),
+        pointerEvents: phase >= slides.length ? 'auto' : 'none',
+      }}>
+        <PrimaryButton onClick={onNext}>{ctaLabel || 'Continuer demain'}</PrimaryButton>
+      </div>
+    </div>
+  )
+}
+
 function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange }) {
   useEffect(() => { onScreenChange?.('ouverture') }, [])
   return (
@@ -4957,7 +5071,15 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 4 && (
+      {step === 4 && dayConfig.ouvertureSlides && (
+        <MultiPhaseOuverture
+          slides={dayConfig.ouvertureSlides}
+          ctaLabel={dayConfig.finalCTA}
+          onNext={handleDayDone}
+          onScreenChange={notifyScreen}
+        />
+      )}
+      {step === 4 && !dayConfig.ouvertureSlides && (
         <DayOuverture
           text={dayConfig.ouverture}
           isFinal={!!dayConfig.isFinal}
@@ -6259,7 +6381,7 @@ async function handleDayEvent(event) {
               }}>
                 {currentConfig.title}
               </span>
-              {weekData.currentDay === 1 && currentScreen === 'accueil_intro' ? (
+              {currentScreen === 'accueil_intro' && currentConfig.accueil?.timeBadge ? (
                 <span className="time-badge-pulse" style={{
                   fontFamily: 'Jost, sans-serif',
                   fontSize: 12, fontWeight: 600,
@@ -6271,7 +6393,7 @@ async function handleDayEvent(event) {
                   letterSpacing: '0.04em',
                   whiteSpace: 'nowrap',
                 }}>
-                  ⏱ 3 à 5 min · à ton rythme
+                  {currentConfig.accueil.timeBadge}
                 </span>
               ) : (() => {
                 const slideKeys = Object.keys(currentConfig.helpTexts || {})
