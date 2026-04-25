@@ -10,7 +10,7 @@ export const DEFAULT_GARDEN_SETTINGS = {
 }
 
 let _svgN = 0
-function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible' }) {
+function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', clearSky = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
   const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
@@ -18,12 +18,12 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
 
   /* ── Soleil ── */
   const now   = new Date()
-  const nowH  = now.getHours() + now.getMinutes() / 60
+  const nowH  = clearSky ? 12 : now.getHours() + now.getMinutes() / 60
   const riseH = (gs.sunriseH || 7)  + (gs.sunriseM || 0) / 60
   const setH  = (gs.sunsetH  || 20) + (gs.sunsetM  || 0) / 60
-  const dp    = Math.max(0, Math.min(1, (nowH - riseH) / (setH - riseH)))
-  const isDay = nowH >= riseH && nowH <= setH
-  const isG   = isDay && (Math.abs(nowH - riseH) < 1.2 || Math.abs(nowH - setH) < 1.2)
+  const dp    = clearSky ? 0.5 : Math.max(0, Math.min(1, (nowH - riseH) / (setH - riseH)))
+  const isDay = clearSky ? true : (nowH >= riseH && nowH <= setH)
+  const isG   = clearSky ? false : (isDay && (Math.abs(nowH - riseH) < 1.2 || Math.abs(nowH - setH) < 1.2))
   const sunX  = 30 + dp * (W - 60)
   const sunY  = 18 + 58 * (1 - Math.sin(dp * Math.PI))
 
@@ -382,9 +382,9 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
 
   /* ── Ciel bleu — identique au jardin collectif ── */
   const skyHue = isDay ? Math.round(200 - dp * (1 - dp) * 4 * 60) : null
-  const skyA = isDay ? (isG ? '#1a0a04' : '#0b1e3a') : '#020510'
-  const skyB = isDay ? (isG ? `hsl(${skyHue},72%,22%)` : '#1e4e8a') : '#060c1e'
-  const skyC = isDay ? (isG ? '#d96418' : `hsl(${skyHue},60%,46%)`) : '#0a1228'
+  const skyA = clearSky ? '#4aa8e0' : isDay ? (isG ? '#1a0a04' : '#0b1e3a') : '#020510'
+  const skyB = clearSky ? '#7ec8f0' : isDay ? (isG ? `hsl(${skyHue},72%,22%)` : '#1e4e8a') : '#060c1e'
+  const skyC = clearSky ? '#b8e4f8' : isDay ? (isG ? '#d96418' : `hsl(${skyHue},60%,46%)`) : '#0a1228'
   const soilT = `rgba(${55+Math.round(15*r)},${36+Math.round(10*r)},${18+Math.round(5*r)},0.94)`
   const soilB = `rgba(${26+Math.round(8*r)},${16+Math.round(5*r)},${8+Math.round(2*r)},0.98)`
   const sunC  = isG ? `rgba(255,${Math.round(145+50*dp)},${Math.round(30+50*dp)},1)` : 'rgba(255,218,88,1)'
