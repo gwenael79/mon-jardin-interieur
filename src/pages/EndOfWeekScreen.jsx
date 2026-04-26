@@ -289,9 +289,9 @@ export function EndOfWeekScreen({ userId, onContinue }) {
             </div>
             <ul className="eow-features">
               <li><CheckGreen/>Suivi quotidien &amp; bilan personnel</li>
-              <li><CheckGreen/>Votre fleur intérieure &amp; tableau de bord</li>
-              <li><CheckGreen/>Rituels de base — racines &amp; souffle</li>
-              <li><CheckGreen/>Journal de croissance personnel</li>
+              <li><CheckGreen/>Votre fleur intérieure</li>
+              <li><CheckGreen/>Vos rituels</li>
+              <li><CheckGreen/>La jardinothèque</li>
             </ul>
             <button className="eow-btn eow-btn-free" onClick={handleFreePlan}>
               Rester sur la version gratuite →
