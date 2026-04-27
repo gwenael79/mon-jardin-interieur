@@ -1419,17 +1419,29 @@ export default function DashboardPage() {
   onCompleteRitual={async (needId, isLiked, delta) => {
   if (ritualCompleteCalledRef.current) return
   ritualCompleteCalledRef.current = true
-  console.log('[onCompleteRitual DashV2] called', { needId, isLiked, delta, plantId: todayPlant?.id, health: todayPlant?.health })
   track('ritual_need_complete', { needId, liked: isLiked }, 'jardin', 'engagement')
   if (!isLiked || !todayPlant?.id) return
+  // Zone principale associée à chaque besoin
+  const NEED_TO_ZONE = {
+    sleep:       'zone_souffle',
+    stress:      'zone_racines',
+    emotions:    'zone_fleurs',
+    grounding:   'zone_racines',
+    thoughts:    'zone_feuilles',
+    energy:      'zone_tige',
+    selfconnect: 'zone_fleurs',
+    softness:    'zone_souffle',
+  }
   const snapshot = { ...todayPlant }
+  const zoneKey  = NEED_TO_ZONE[needId]
   const newHealth = Math.min(100, (snapshot.health ?? 5) + delta)
-  const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', snapshot.id)
-  if (error) { console.error('[onCompleteRitual DashV2] update failed:', error.message); return }
-  console.log('[onCompleteRitual DashV2] success → health:', newHealth)
-  usePlantStore.getState().setTodayPlant({ ...snapshot, health: newHealth })
+  const update    = { health: newHealth }
+  if (zoneKey) update[zoneKey] = Math.min(100, (snapshot[zoneKey] ?? 0) + delta)
+  const { error } = await supabase.from('plants').update(update).eq('id', snapshot.id)
+  if (error) return
+  const updatedPlant = { ...snapshot, ...update }
+  usePlantStore.getState().setTodayPlant(updatedPlant)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
-  // Illumine la fleur dans le jardin collectif
   try { await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' }) } catch(e) {}
   window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId: user?.id } }))
 }}
