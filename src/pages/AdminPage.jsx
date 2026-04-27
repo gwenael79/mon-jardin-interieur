@@ -25,7 +25,7 @@ html,body,#root{height:100%;width:100%}
   --red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
   --zone-roots:#C8894A;--zone-stem:#5AAF78;--zone-leaves:#4A9E5C;--zone-flowers:#D4779A;--zone-breath:#6ABBE4;
 }
-.adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *{color:#ffffff!important;font-size:18px!important}
+.adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *{color:#ffffff!important;font-size:clamp(13px,3vw,18px)!important}
 .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:#353a3f!important;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em;color:#ffffff}
 .adm-logo em{font-style:italic;color:var(--green)}
@@ -72,39 +72,45 @@ html,body,#root{height:100%;width:100%}
 
 @media(max-width:700px){
   /* Topbar */
-  .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
-  .adm-logo{font-size:18px;flex:1}
-  .adm-topbar > div:last-child{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-  .adm-badge{font-size:18px;padding:3px 8px}
-  .adm-btn{padding:6px 10px;font-size:18px}
+  .adm-topbar{padding:10px 12px;gap:6px;flex-wrap:wrap}
+  .adm-logo{font-size:15px;flex:1}
+  .adm-topbar > div:last-child{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+  .adm-badge{font-size:11px!important;padding:3px 7px}
+  .adm-btn{padding:5px 10px;font-size:11px!important}
 
   /* Body */
-  .adm-body{padding:16px 14px}
+  .adm-body{padding:12px 10px}
 
-  /* Stats — 2 colonnes sur mobile */
-  .adm-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
-  .adm-stat{padding:14px 16px}
-  .adm-stat-val{font-size:38px}
-  .adm-stat-lbl{font-size:18px}
+  /* Stats */
+  .adm-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+  .adm-stat{padding:12px 12px}
+  .adm-stat-val{font-size:clamp(22px,7vw,38px)!important}
+  .adm-stat-lbl{font-size:10px!important}
 
-  /* Tabs — scrollables */
+  /* Tabs */
   .adm-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;gap:0;padding-bottom:0;scrollbar-width:none}
   .adm-tabs::-webkit-scrollbar{display:none}
-  .adm-tab{padding:10px 14px;font-size:18px;white-space:nowrap;flex-shrink:0}
+  .adm-tab{padding:8px 12px;white-space:nowrap;flex-shrink:0}
 
-  /* Table — scroll horizontal */
+  /* Table */
   .adm-section{overflow-x:auto}
-  .adm-table{min-width:540px}
-  .adm-th,.adm-td{padding:10px 12px;font-size:18px}
+  .adm-table{min-width:480px}
+  .adm-th{padding:8px 10px;font-size:10px!important}
+  .adm-td{padding:7px 10px;font-size:12px!important}
 
   /* Report cards */
-  .adm-report-card{padding:12px 14px;gap:10px}
-  .adm-report-graine{font-size:18px}
+  .adm-report-card{padding:10px 12px;gap:8px}
+  .adm-report-graine{font-size:14px!important}
   .adm-report-actions{flex-wrap:wrap;gap:6px}
-  .adm-report-actions .adm-btn{flex:1;text-align:center;padding:8px 10px;font-size:18px}
+  .adm-report-actions .adm-btn{flex:1;text-align:center;padding:7px 8px;font-size:11px!important}
 
   /* Toast */
   .adm-toast{bottom:16px;right:12px;left:12px;text-align:center}
+}
+@media(max-width:400px){
+  .adm-stats{grid-template-columns:1fr}
+  .adm-body{padding:8px 8px}
+  .adm-topbar{padding:8px 10px}
 }
 `
 

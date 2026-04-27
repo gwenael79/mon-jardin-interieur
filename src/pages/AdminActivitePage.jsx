@@ -18,7 +18,7 @@ html,body,#root{height:100%;width:100%}
   --red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
   --zone-roots:#C8894A;--zone-stem:#5AAF78;--zone-leaves:#4A9E5C;--zone-flowers:#D4779A;--zone-breath:#6ABBE4;
 }
-.adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *{color:#ffffff!important;font-size:18px!important}
+.adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *{color:#ffffff!important;font-size:clamp(13px,3vw,18px)!important}
 .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:#353a3f!important;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em;color:#ffffff}
 .adm-logo em{font-style:italic;color:var(--green)}
@@ -49,12 +49,24 @@ html,body,#root{height:100%;width:100%}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:700px){
   .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
-  .adm-logo{font-size:18px;flex:1}
-  .adm-body{padding:16px 14px}
-  .adm-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+  .adm-logo{font-size:15px;flex:1}
+  .adm-body{padding:12px 10px}
+  .adm-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+  .adm-stat{padding:12px 14px}
+  .adm-stat-val{font-size:clamp(22px,7vw,38px)!important}
+  .adm-stat-lbl{font-size:10px!important}
   .adm-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;gap:0;padding-bottom:0;scrollbar-width:none}
   .adm-tabs::-webkit-scrollbar{display:none}
-  .adm-tab{padding:10px 14px;font-size:18px;white-space:nowrap;flex-shrink:0}
+  .adm-tab{padding:8px 12px;white-space:nowrap;flex-shrink:0}
+  .adm-table{font-size:12px!important}
+  .adm-th{padding:8px 8px;font-size:10px!important}
+  .adm-td{padding:7px 8px;font-size:12px!important}
+  .adm-btn{padding:5px 10px;font-size:11px!important}
+  .adm-section{overflow-x:auto}
+}
+@media(max-width:400px){
+  .adm-stats{grid-template-columns:1fr}
+  .adm-body{padding:8px 8px}
 }
 `
 
