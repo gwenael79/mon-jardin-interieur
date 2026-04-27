@@ -2653,12 +2653,14 @@ function MaFleurLiveModal({ onClose }) {
       const rituals  = ritualsRes.status  === 'fulfilled' ? (ritualsRes.value.data  ?? [])  : []
       const profile0 = profileRes.status  === 'fulfilled' ? (profileRes.value.data  ?? null) : null
 
-
-
       let plant = plant0
 
-      // Cumul semaine — applique les bonus des jours complétés si la table plants
-      // ne les intègre pas encore (health < completedDays * 35 / 5)
+      // Fallback : si la santé en base est inférieure à l'attendu (jours faits sur
+      // des dates séparées avant le fix d'accumulation), on restitue le minimum.
+      // Règle : chaque jour complété = 35% sur sa zone (Math.max, pas +35).
+      // Les rituels (+5% chacun) sont déjà stockés dans plants via handleToggleRitual
+      // et ne sont pas recalculés ici (ils restent dans la valeur base si la table
+      // est correcte, et sont perdus uniquement en cas de corruption — acceptable).
       const completed = profile0?.week_one_data?.completedDays ?? []
       if (completed.length > 0) {
         const DAY_ZONE = { 1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles', 4: 'zone_fleurs', 5: 'zone_souffle' }
@@ -2666,7 +2668,6 @@ function MaFleurLiveModal({ onClose }) {
         const currentHealth = plant?.health ?? 0
 
         if (currentHealth < expectedMin) {
-          // La base existante ou zéro si aucun record
           const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
           const zones = {
             zone_racines:  base.zone_racines  ?? 0,
@@ -2675,15 +2676,21 @@ function MaFleurLiveModal({ onClose }) {
             zone_fleurs:   base.zone_fleurs   ?? 0,
             zone_souffle:  base.zone_souffle  ?? 0,
           }
+          // Math.max : garantit 35% par jour sans écraser les rituels (+5%) déjà accumulés
           completed.forEach(d => {
             const key = DAY_ZONE[d]
-            if (key) zones[key] = Math.min(100, zones[key] + 35)
-            if (d === 6) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, zones[k] + 10) })
-            if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, zones[k] + 15) })
+            if (key) zones[key] = Math.min(100, Math.max(zones[key], 35))
+            if (d === 6) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 35)) })
+            if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 35)) })
+          })
+          // Applique les rituels de la semaine depuis la table rituals
+          const RITUAL_ZONE_MAP = { racines: 'zone_racines', tige: 'zone_tige', feuilles: 'zone_feuilles', fleurs: 'zone_fleurs', souffle: 'zone_souffle' }
+          rituals.forEach(r => {
+            const key = RITUAL_ZONE_MAP[r.zone]
+            if (key && r.health_delta > 0) zones[key] = Math.min(100, zones[key] + r.health_delta)
           })
           const health = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
           plant = { ...zones, health, date: plant?.date ?? null, _fromWeekData: !plant }
-          // Écrire dans plants pour les prochaines consultations
           const today = new Date().toISOString().split('T')[0]
           supabase.from('plants')
             .upsert({ user_id: userId, date: today, ...zones, health }, { onConflict: 'user_id,date' })
