@@ -16,6 +16,7 @@ import InstallPrompt from './components/InstallPrompt'
 import { EngagementModals } from './components/EngagementModals'
 
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
+import { useNotificationSound } from './hooks/useNotificationSound'
 import { useLastVisit }          from './hooks/useLastVisit'
 import GardenNotificationBanner  from './components/GardenNotificationBanner'
 import PlantIcon                 from './components/PlantIcon'
@@ -56,6 +57,7 @@ export default function App() {
   const [plantState, setPlantState] = useState(0)
   const [badge,      setBadge]      = useState(false)
   const { daysSince } = useLastVisit(screen === 'dashboard' ? user?.id : null)
+  useNotificationSound()
   useGardenNotification({
     daysSince,
     onShowBanner: useCallback((msg) => setBanner(msg), []),

@@ -99,7 +99,7 @@ function AdminNav({ current }) {
 // ── Accordéon détail utilisateurs ─────────────────────────────────────────
 function FunnelUserDetail({ users }) {
   const [open, setOpen] = useState(false)
-  const sorted = [...users].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  const sorted = [...users].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
 
   return (
     <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14, marginTop: 4 }}>
@@ -130,9 +130,14 @@ function FunnelUserDetail({ users }) {
                 const completedDays = (u.completedDays ?? []).map(Number)
                 return (
                   <tr key={u.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
-                    {/* Nom */}
-                    <td style={{ padding: '7px 8px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 11 }}>
+                    {/* Nom + Fleur */}
+                    <td style={{ padding: '7px 8px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 11 }}>
                       {u.display_name || u.email || u.id.slice(0, 8)}
+                      {u.flower_name && (
+                        <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(200,160,180,0.7)' }}>
+                          · {u.flower_name}
+                        </span>
+                      )}
                     </td>
                     {/* Date inscription */}
                     <td style={{ padding: '7px 8px', textAlign: 'center', color: 'var(--text3)', whiteSpace: 'nowrap', fontSize: 10 }}>
@@ -477,7 +482,7 @@ export function AdminClientsPage() {
         { data: allUsers, error: e1 },
         { data: profiles, error: e2 },
       ] = await Promise.all([
-        supabase.from('users').select('id, email, display_name, created_at, onboarding_completed, plan').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
+        supabase.from('users').select('id, email, display_name, flower_name, created_at, onboarding_completed, plan').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
         supabase.from('profiles').select('id, week_one_data'),
       ])
       if (e1) console.error('[funnel] users:', e1)
@@ -493,7 +498,7 @@ export function AdminClientsPage() {
         const completedDays = (profileMap[u.id]?.week_one_data?.completedDays ?? []).map(Number)
         const maxDay        = completedDays.length > 0 ? Math.max(...completedDays) : 0
 
-        userList.push({ id: u.id, email: u.email, display_name: u.display_name, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, completedDays })
+        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, completedDays })
 
         if (!u.onboarding_completed)    { counts.inscrit++;              return }
         if (completedDays.length === 0) { counts.onboarding++;           return }

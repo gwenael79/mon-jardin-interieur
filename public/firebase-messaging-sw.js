@@ -13,39 +13,95 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-// ── Notification en arrière-plan ─────────────────────────
-messaging.onBackgroundMessage((payload) => {
-  const { title, body, tag, icon } = payload.notification ?? payload.data ?? {}
-  self.registration.showNotification(title ?? '🌿 Mon Jardin', {
-    body:    body    ?? 'Un moment pour vous.',
-    icon:    '/icons/icon-192.png',
-    badge:   '/icons/icon-192.png',
-    tag:     tag     ?? 'jardin',
-    vibrate: [200, 100, 200],
-    actions: [
-      { action: 'open',  title: '🌿 Ouvrir mon jardin' },
-      { action: 'later', title: 'Plus tard'            },
-    ],
-    data: payload.data,
+// ── Badge counter via Cache API (localStorage indisponible en SW) ─────────────
+async function getBadgeCount() {
+  try {
+    const cache = await caches.open('badge-store')
+    const res   = await cache.match('/badge-count')
+    return res ? parseInt(await res.text(), 10) : 0
+  } catch { return 0 }
+}
+
+async function incrementBadge() {
+  if (!('setAppBadge' in self.registration)) return
+  try {
+    const cache = await caches.open('badge-store')
+    const count = await getBadgeCount() + 1
+    await cache.put('/badge-count', new Response(String(count)))
+    await self.registration.setAppBadge(count)
+  } catch (_) {}
+}
+
+async function clearBadge() {
+  try {
+    const cache = await caches.open('badge-store')
+    await cache.put('/badge-count', new Response('0'))
+    if ('clearAppBadge' in self.registration) await self.registration.clearAppBadge()
+  } catch (_) {}
+}
+
+// ── Actions contextuelles par type ───────────────────────────────────────────
+function getActions(type) {
+  if (type === 'coeur_recu')
+    return [{ action: 'reply', title: '💚 Renvoyer' }, { action: 'view', title: 'Voir' }]
+  if (type === 'ritual_reminder')
+    return [{ action: 'view', title: '🌿 Commencer' }, { action: 'later', title: 'Plus tard' }]
+  if (type?.startsWith('degradation'))
+    return [{ action: 'view', title: '🌱 Prendre soin' }, { action: 'later', title: 'Pas maintenant' }]
+  return [{ action: 'view', title: '🌿 Ouvrir mon jardin' }, { action: 'later', title: 'Plus tard' }]
+}
+
+// ── Notification en arrière-plan ──────────────────────────────────────────────
+messaging.onBackgroundMessage(async (payload) => {
+  const notif = payload.notification ?? {}
+  const data  = payload.data ?? {}
+  const type  = data.type ?? notif.tag ?? 'ritual'
+  const url   = data.url  ?? '/'
+
+  // Si l'app est visible en premier plan → postMessage + pas de doublon système
+  const wins = await clients.matchAll({ type: 'window', includeUncontrolled: true })
+  const visibleWin = wins.find(w => w.visibilityState === 'visible')
+  if (visibleWin) {
+    visibleWin.postMessage({ type: 'PUSH_RECEIVED', data: { ...data, type, url } })
+    return
+  }
+
+  await incrementBadge()
+
+  self.registration.showNotification(notif.title ?? '🌿 Mon Jardin', {
+    body:     notif.body ?? 'Un moment pour vous.',
+    icon:     '/icons/icon-192.png',
+    badge:    '/icons/monochrome.png',
+    tag:      notif.tag ?? type,
+    renotify: true,
+    vibrate:  [200, 100, 200],
+    actions:  getActions(type),
+    data:     { ...data, url },
   })
 })
 
-// ── Clic sur la notification ─────────────────────────────
+// ── Clic sur la notification ──────────────────────────────────────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close()
 
-  // Bouton "Plus tard" → on ferme juste
-  if (e.action === 'later') return
-
-  // Bouton "Ouvrir" ou clic direct → ouvrir l'app
-  const url = e.notification.data?.url ?? 'https://monjardininterieur.com/'
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(wins => {
-      // Si une fenêtre est déjà ouverte → la focus
-      const existing = wins.find(w => w.url.includes('monjardininterieur.com'))
-      if (existing) return existing.focus()
-      // Sinon ouvrir une nouvelle fenêtre
-      return clients.openWindow(url)
+    clearBadge().then(() => {
+      if (e.action === 'later') return
+
+      const url = e.action === 'reply'
+        ? '/jardin?action=reply'
+        : (e.notification.data?.url ?? '/')
+
+      const fullUrl = `https://monjardininterieur.com${url}`
+
+      return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(wins => {
+        const existing = wins.find(w => w.url.includes('monjardininterieur.com'))
+        if (existing) {
+          existing.postMessage({ type: 'NOTIFICATION_CLICKED', action: e.action })
+          return existing.focus()
+        }
+        return clients.openWindow(fullUrl)
+      })
     })
   )
 })

@@ -64,15 +64,18 @@ async function getAccessToken(): Promise<string> {
 }
 
 // ── Payloads ──────────────────────────────────────────────────────────────────
+const BASE_URL = 'https://monjardininterieur.com'
+
 function buildPayload(type: string, data?: Record<string, string>) {
-  const map: Record<string, object> = {
-    ritual_reminder: { title: '✨ Votre rituel vous attend',       body: "Un moment pour vous aujourd'hui.",          tag: 'ritual' },
-    degradation_1:   { title: '🌿 Votre jardin vous attend',      body: 'Revenez cultiver votre équilibre.',          tag: 'degradation' },
-    degradation_3:   { title: '🍂 Votre plante a besoin de vous', body: 'Cela fait 3 jours…',                         tag: 'degradation' },
-    degradation_7:   { title: '🥀 Votre jardin vous attend',      body: 'Votre jardin est fragile.',                  tag: 'degradation' },
-    coeur_recu:      { title: "💚 Quelqu'un pense à vous",        body: data?.senderName ? `${data.senderName} vous a envoyé un cœur.` : 'Un cœur bienveillant.', tag: 'coeur' },
+  const map: Record<string, { title: string; body: string; tag: string; url: string }> = {
+    ritual_reminder: { title: '✨ Votre rituel vous attend',       body: "Un moment pour vous aujourd'hui.",          tag: 'ritual',      url: '/' },
+    degradation_1:   { title: '🌿 Votre jardin vous attend',      body: 'Revenez cultiver votre équilibre.',          tag: 'degradation', url: '/' },
+    degradation_3:   { title: '🍂 Votre plante a besoin de vous', body: 'Cela fait 3 jours…',                         tag: 'degradation', url: '/' },
+    degradation_7:   { title: '🥀 Votre jardin vous attend',      body: 'Votre jardin est fragile.',                  tag: 'degradation', url: '/' },
+    coeur_recu:      { title: "💚 Quelqu'un pense à vous",        body: data?.senderName ? `${data.senderName} vous a envoyé un cœur.` : 'Un cœur bienveillant.', tag: 'coeur', url: '/jardin' },
   }
-  return map[type] ?? map['ritual_reminder']
+  const notif = map[type] ?? map['ritual_reminder']
+  return { ...notif, type }
 }
 
 // ── Fetch REST Supabase ───────────────────────────────────────────────────────
@@ -138,9 +141,22 @@ async function sendToUser(userId: string, type: string, data?: Record<string, st
               },
               webpush: {
                 notification: {
-                  icon:  '/icon-192.png',
-                  badge: '/icon-192.png',
-                  tag:   notif.tag,
+                  icon:     '/icons/icon-192.png',
+                  badge:    '/icons/monochrome.png',
+                  tag:      notif.tag,
+                  renotify: true,
+                  vibrate:  [200, 100, 200],
+                  actions: notif.type === 'coeur_recu'
+                    ? [{ action: 'reply', title: '💚 Renvoyer' }, { action: 'view', title: 'Voir' }]
+                    : [{ action: 'view', title: '🌿 Ouvrir' }, { action: 'later', title: 'Plus tard' }],
+                },
+                data: {
+                  type: notif.type,
+                  url:  notif.url,
+                  ...(data ?? {}),
+                },
+                fcm_options: {
+                  link: `${BASE_URL}${notif.url}`,
                 },
               },
             },
