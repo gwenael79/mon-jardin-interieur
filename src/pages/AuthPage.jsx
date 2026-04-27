@@ -423,6 +423,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [password,     setPassword]     = useState('')
   const [displayName,  setDisplayName]  = useState('')
   const [birthdate,    setBirthdate]    = useState('')
+  const [bdDay,        setBdDay]        = useState('')
+  const [bdMonth,      setBdMonth]      = useState('')
+  const [bdYear,       setBdYear]       = useState('')
   const [newPassword,  setNewPassword]  = useState('')
   const [isLoading,    setIsLoading]    = useState(false)
   const [error,        setError]        = useState(resetError ?? null)
@@ -451,6 +454,15 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     } catch(e) {}
     return { nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'', proEmail:'', proPassword:'' }
   })
+
+  // Synchronise les 3 sélecteurs → birthdate YYYY-MM-DD
+  useEffect(() => {
+    if (bdDay && bdMonth && bdYear) {
+      setBirthdate(`${bdYear}-${bdMonth.padStart(2,'0')}-${bdDay.padStart(2,'0')}`)
+    } else {
+      setBirthdate('')
+    }
+  }, [bdDay, bdMonth, bdYear])
 
   const hasLoggedInBefore = !!localStorage.getItem('mji_has_logged_in')
 
@@ -841,7 +853,50 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                   </div>
                   <div className="auth-field">
                     <label className="auth-label">Date de naissance</label>
-                    <input className="auth-input" type="date" value={birthdate} onChange={e=>setBirthdate(e.target.value)} max={new Date(Date.now()-16*31557600000).toISOString().split('T')[0]} required/>
+                    <div style={{ display:'flex', gap:8 }}>
+                      {/* Jour */}
+                      <select
+                        className="auth-input"
+                        value={bdDay}
+                        onChange={e => setBdDay(e.target.value)}
+                        style={{ flex:'0 0 72px', cursor:'pointer' }}
+                        required
+                      >
+                        <option value="">Jour</option>
+                        {Array.from({length:31},(_,i)=>i+1).map(d=>(
+                          <option key={d} value={String(d)}>{d}</option>
+                        ))}
+                      </select>
+                      {/* Mois */}
+                      <select
+                        className="auth-input"
+                        value={bdMonth}
+                        onChange={e => setBdMonth(e.target.value)}
+                        style={{ flex:1, cursor:'pointer' }}
+                        required
+                      >
+                        <option value="">Mois</option>
+                        {['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>(
+                          <option key={i} value={String(i+1)}>{m}</option>
+                        ))}
+                      </select>
+                      {/* Année */}
+                      <select
+                        className="auth-input"
+                        value={bdYear}
+                        onChange={e => setBdYear(e.target.value)}
+                        style={{ flex:'0 0 88px', cursor:'pointer' }}
+                        required
+                      >
+                        <option value="">Année</option>
+                        {Array.from(
+                          {length: new Date().getFullYear() - 16 - 1919},
+                          (_,i) => new Date().getFullYear() - 16 - i
+                        ).map(y=>(
+                          <option key={y} value={String(y)}>{y}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   <div className="auth-field">
                     <label className="auth-label">Email</label>
