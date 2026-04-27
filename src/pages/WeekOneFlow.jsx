@@ -3090,16 +3090,54 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
   useEffect(() => {
     if (!userId) return
     ;(async () => {
-      const [plantRes, settingsRes] = await Promise.allSettled([
+      const [plantRes, settingsRes, profileRes] = await Promise.allSettled([
         supabase.from('plants')
           .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
           .eq('user_id', userId).order('date', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('garden_settings')
           .select('petal_color1, petal_color2, petal_shape')
           .eq('user_id', userId).maybeSingle(),
+        supabase.from('profiles')
+          .select('week_one_data')
+          .eq('id', userId).maybeSingle(),
       ])
-      setPlantData(plantRes.status === 'fulfilled' ? (plantRes.value.data ?? null) : null)
-      setSettings(settingsRes.status === 'fulfilled' ? (settingsRes.value.data ?? null) : null)
+
+      let plant       = plantRes.status    === 'fulfilled' ? (plantRes.value.data    ?? null) : null
+      const settings0 = settingsRes.status === 'fulfilled' ? (settingsRes.value.data ?? null) : null
+      const profile0  = profileRes.status  === 'fulfilled' ? (profileRes.value.data  ?? null) : null
+
+      // Garantit que chaque zone complétée vaut au moins 35%
+      // (corrige le cas où les jours ont été faits sur des dates différentes
+      //  et que la table plants ne cumule qu'une zone par jour)
+      const DAY_ZONE = { 1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles', 4: 'zone_fleurs', 5: 'zone_souffle' }
+      const completed = profile0?.week_one_data?.completedDays ?? []
+      const daysCount = completed.filter(d => d <= 5).length
+      const expectedMin = Math.round(daysCount * 35 / 5)
+      const currentHealth = plant?.health ?? 0
+
+      if (daysCount > 0 && currentHealth < expectedMin) {
+        const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
+        const zones = {
+          zone_racines:  base.zone_racines  ?? 0,
+          zone_tige:     base.zone_tige     ?? 0,
+          zone_feuilles: base.zone_feuilles ?? 0,
+          zone_fleurs:   base.zone_fleurs   ?? 0,
+          zone_souffle:  base.zone_souffle  ?? 0,
+        }
+        completed.forEach(d => {
+          const key = DAY_ZONE[d]
+          if (key) zones[key] = Math.min(100, Math.max(zones[key], 35))
+        })
+        const health = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
+        plant = { ...zones, health }
+        const today = new Date().toISOString().split('T')[0]
+        supabase.from('plants')
+          .upsert({ user_id: userId, date: today, ...zones, health }, { onConflict: 'user_id,date' })
+          .catch(() => {})
+      }
+
+      setPlantData(plant)
+      setSettings(settings0)
     })()
   }, [userId])
 
@@ -3114,7 +3152,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  const health = plantData?.health ?? 35
+  const health = Math.max(plantData?.health ?? 35, 35)
   const gardenSettings = settings ? {
     ...DEFAULT_GARDEN_SETTINGS,
     petalColor1: settings.petal_color1 ?? DEFAULT_GARDEN_SETTINGS.petalColor1,
@@ -6499,12 +6537,22 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
       if (!zoneKey) return  // jours 6 & 7 : pas de zone spécifique
       const today   = new Date().toISOString().split('T')[0]
       try {
-        const { data: existing } = await supabase
+        let { data: existing } = await supabase
           .from('plants')
           .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
           .eq('user_id', userId)
           .eq('date', today)
           .maybeSingle()
+        if (!existing) {
+          const { data: latest } = await supabase
+            .from('plants')
+            .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
+            .eq('user_id', userId)
+            .order('date', { ascending: false })
+            .limit(1)
+            .maybeSingle()
+          existing = latest
+        }
         const base = existing || { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
         const newZoneVal = Math.min(100, (base[zoneKey] ?? 0) + 5)
         const zones = {
@@ -6525,8 +6573,6 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
 
   // Chargement depuis Supabase
   useEffect(() => {
- console.log('🔍 WeekOneFlow useEffect — userId:', userId)
-
   if (forceGarden || forceDay) { setLoading(false); return }
   if (!userId) { setLoading(false); return }
 
@@ -6547,9 +6593,6 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
       .single()
 
     if (!error && data?.week_one_data) {
-console.log('✅ Données chargées:', data.week_one_data)
-  console.log('✅ completedDays:', data.week_one_data.completedDays)
-
       const saved = data.week_one_data
       setWeekData(saved)
       weekDataRef.current = saved
@@ -6558,8 +6601,6 @@ console.log('✅ Données chargées:', data.week_one_data)
         setShowWelcome(false)
       }
     } else {
-console.log('❌ Pas de données ou erreur:', error)
-
       weekDataRef.current = INITIAL_WEEK_DATA
     }
 
@@ -6681,12 +6722,25 @@ async function handleDayEvent(event) {
         const MINIMUM = 35
         ;(async () => {
           try {
-            const { data: existing } = await supabase
+            // Cherche d'abord le record d'aujourd'hui, sinon prend le dernier
+            // connu pour ne pas perdre les zones des jours précédents
+            let { data: existing } = await supabase
               .from('plants')
               .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
               .eq('user_id', userId)
               .eq('date', today)
               .maybeSingle()
+
+            if (!existing) {
+              const { data: latest } = await supabase
+                .from('plants')
+                .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
+                .eq('user_id', userId)
+                .order('date', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+              existing = latest
+            }
 
             const base = existing || { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
             const zoneKey = DAY_ZONE_KEY[dayNum]
