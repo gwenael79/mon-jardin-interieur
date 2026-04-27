@@ -656,7 +656,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     if (!displayName.trim()) { setError('Veuillez choisir un prénom ou pseudo.'); return }
     if (!birthdate) { setError('Veuillez indiquer votre date de naissance.'); return }
     const age = Math.floor((Date.now() - new Date(birthdate)) / 31557600000)
-    if (age < 16) { setError('Vous devez avoir au moins 16 ans.'); return }
+    if (age < 10) { setError('Vous devez avoir au moins 10 ans.'); return }
     setError(null); setIsLoading(true)
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -890,8 +890,8 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                       >
                         <option value="">Année</option>
                         {Array.from(
-                          {length: new Date().getFullYear() - 16 - 1919},
-                          (_,i) => new Date().getFullYear() - 16 - i
+                          {length: new Date().getFullYear() - 10 - 1919},
+                          (_,i) => new Date().getFullYear() - 10 - i
                         ).map(y=>(
                           <option key={y} value={String(y)}>{y}</option>
                         ))}
