@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
 import { ADMIN_IDS } from './AdminPage'
+import { useIsMobile } from './dashboardShared'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -333,6 +334,7 @@ function TabQCM() {
 export function AdminClientsPage() {
   useTheme()
   const { user, signOut } = useAuth()
+  const isMobile = useIsMobile()
 
   const [tab,           setTab]           = useState('frequentation')
   const [stats,         setStats]         = useState({})
@@ -680,80 +682,90 @@ export function AdminClientsPage() {
             })()}
 
             {/* ── ABONNEMENTS PREMIUM ── */}
-            <div style={{ background:'#3d4248', border:'1px solid rgba(255,255,255,0.10)', borderRadius:16, padding:28, marginBottom:24 }}>
-              <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)', letterSpacing:'.15em', textTransform:'uppercase', marginBottom:24 }}>💳 Abonnements Premium</div>
-              {!subStats ? <div className="adm-empty">Chargement…</div> : (
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 2fr', gap:20 }}>
-                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:4 }}>
-                      {[{ lbl:'Total', val: subStats.nbTotal, color:'#ffffff' }, { lbl:'Actifs', val: subStats.nbActifs, color:'#96d485' }].map((s, i) => (
-                        <div key={i} style={{ background:'rgba(0,0,0,0.20)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding:'12px 14px', textAlign:'center' }}>
-                          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:36, fontWeight:300, color:s.color, lineHeight:1 }}>{s.val}</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.08em', textTransform:'uppercase', marginTop:6 }}>{s.lbl}</div>
-                        </div>
-                      ))}
+            <div style={{ background:'#3d4248', border:'1px solid rgba(255,255,255,0.10)', borderRadius:16, padding: isMobile ? '14px 12px' : 28, marginBottom:24 }}>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.45)', letterSpacing:'.15em', textTransform:'uppercase', marginBottom: isMobile ? 12 : 24 }}>💳 Abonnements Premium</div>
+              {!subStats ? <div className="adm-empty">Chargement…</div> : (<>
+
+                {/* KPIs — 3 tuiles sur 1 ligne, compactes */}
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap: isMobile ? 8 : 12, marginBottom: isMobile ? 12 : 20 }}>
+                  {[
+                    { lbl:'Total', val: subStats.nbTotal, color:'#fff' },
+                    { lbl:'Actifs', val: subStats.nbActifs, color:'#96d485' },
+                    { lbl:'CA', val: subStats.caTotal.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}), color:'#F6C453' },
+                  ].map((s,i) => (
+                    <div key={i} style={{ background:'rgba(0,0,0,0.22)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:10, padding: isMobile ? '10px 8px' : '12px 14px', textAlign:'center' }}>
+                      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 'clamp(18px,6vw,28px)' : 34, fontWeight:300, color:s.color, lineHeight:1 }}>{s.val}</div>
+                      <div style={{ fontSize: isMobile ? 9 : 10, color:'rgba(255,255,255,0.35)', letterSpacing:'.08em', textTransform:'uppercase', marginTop:5 }}>{s.lbl}</div>
                     </div>
-                    <div style={{ background:'rgba(0,0,0,0.20)', border:'1px solid rgba(246,196,83,0.15)', borderRadius:10, padding:'12px 14px', textAlign:'center', marginBottom:8 }}>
-                      <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:36, fontWeight:300, color:'#F6C453', lineHeight:1 }}>{subStats.caTotal.toLocaleString('fr-FR', { style:'currency', currency:'EUR' })}</div>
-                      <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.08em', textTransform:'uppercase', marginTop:6 }}>CA total</div>
-                    </div>
-                    {subStats.plans.map((p, i) => (
-                      <div key={i} style={{ background:'rgba(0,0,0,0.15)', border:`1px solid ${p.total > 0 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'}`, borderRadius:10, padding:'12px 14px', display:'flex', alignItems:'center', gap:10, opacity: p.total === 0 ? 0.45 : 1 }}>
-                        <span style={{ fontSize:18, flexShrink:0 }}>{p.icon}</span>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:13, fontWeight:500, color:'#ffffff' }}>{p.key}</div>
-                          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>{p.actifs} actif{p.actifs !== 1 ? 's' : ''} · {p.total} total</div>
-                        </div>
-                        <div style={{ textAlign:'right', flexShrink:0 }}>
-                          <div style={{ fontSize:15, fontWeight:600, color: p.total > 0 ? '#F6C453' : 'rgba(255,255,255,0.20)' }}>{p.ca.toLocaleString('fr-FR', { style:'currency', currency:'EUR' })}</div>
-                          <div style={{ height:3, background:'rgba(255,255,255,0.07)', borderRadius:100, marginTop:5, width:60, overflow:'hidden' }}>
-                            <div style={{ height:'100%', width: subStats.nbTotal > 0 ? `${Math.round((p.total / subStats.nbTotal) * 100)}%` : '0%', background: p.color, borderRadius:100 }} />
-                          </div>
+                  ))}
+                </div>
+
+                {/* Plans — liste compacte */}
+                <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 6 : 8, marginBottom: isMobile ? 14 : 20 }}>
+                  {subStats.plans.map((p,i) => (
+                    <div key={i} style={{ background:'rgba(0,0,0,0.15)', border:`1px solid ${p.total>0?'rgba(255,255,255,0.10)':'rgba(255,255,255,0.04)'}`, borderRadius:10, padding: isMobile ? '8px 10px' : '10px 14px', display:'flex', alignItems:'center', gap: isMobile ? 8 : 10, opacity: p.total===0 ? 0.4 : 1 }}>
+                      <span style={{ fontSize: isMobile ? 15 : 18, flexShrink:0 }}>{p.icon}</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize: isMobile ? 12 : 13, fontWeight:500, color:'#fff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.key}</div>
+                        <div style={{ fontSize: isMobile ? 9 : 10, color:'rgba(255,255,255,0.35)', marginTop:1 }}>{p.actifs} actif{p.actifs!==1?'s':''} · {p.total} total</div>
+                      </div>
+                      <div style={{ textAlign:'right', flexShrink:0 }}>
+                        <div style={{ fontSize: isMobile ? 12 : 14, fontWeight:600, color: p.total>0 ? '#F6C453' : 'rgba(255,255,255,0.18)' }}>{p.ca.toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0})}</div>
+                        <div style={{ height:3, background:'rgba(255,255,255,0.07)', borderRadius:100, marginTop:4, width: isMobile ? 44 : 60, overflow:'hidden' }}>
+                          <div style={{ height:'100%', width: subStats.nbTotal>0 ? `${Math.round((p.total/subStats.nbTotal)*100)}%` : '0%', background:p.color, borderRadius:100 }} />
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Graphique — scrollable sur mobile */}
+                <div style={{ background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding: isMobile ? '10px 10px 8px' : '18px 18px 14px' }}>
+                  <div style={{ fontSize:9, color:'rgba(255,255,255,0.30)', letterSpacing:'.08em', textTransform:'uppercase', marginBottom:10 }}>CA mensuel · mensuel 13€ · annuel 108€</div>
+                  <div style={{ display:'flex', gap: isMobile ? 10 : 14, marginBottom:10, flexWrap:'wrap' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:5 }}><div style={{ width:8, height:8, borderRadius:2, background:'rgba(255,255,255,0.6)' }} /><span style={{ fontSize:9, color:'rgba(255,255,255,0.45)' }}>CA (€)</span></div>
+                    <div style={{ display:'flex', alignItems:'center', gap:5 }}><div style={{ width:8, height:8, borderRadius:2, background:'rgba(255,255,255,0.25)' }} /><span style={{ fontSize:9, color:'rgba(255,255,255,0.45)' }}>Actifs</span></div>
                   </div>
-                  <div style={{ background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:'20px 20px 16px', display:'flex', flexDirection:'column', justifyContent:'space-between' }}>
-                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:16 }}>CA mensuel — mars 2026 → févr. 2027 · mensuel 13€ · annuel 108€</div>
-                    {(() => {
-                      const histo = subStats.histogram ?? [], PLANS = subStats.PLANS ?? [], HEIGHT = 320
-                      const maxCA = Math.max(...histo.map(m => m.caTotal), 1), maxActif = Math.max(...histo.map(m => m.actifsTotal), 1)
-                      return (
-                        <div style={{ display:'flex', flexDirection:'column', gap:10, flex:1 }}>
-                          <div style={{ display:'flex', gap:16 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}><div style={{ width:10, height:10, borderRadius:2, background:'rgba(255,255,255,0.6)' }} /><span style={{ fontSize:10, color:'rgba(255,255,255,0.50)' }}>CA réalisé (€)</span></div>
-                            <div style={{ display:'flex', alignItems:'center', gap:6 }}><div style={{ width:10, height:10, borderRadius:2, background:'rgba(255,255,255,0.25)' }} /><span style={{ fontSize:10, color:'rgba(255,255,255,0.50)' }}>Abonnements actifs</span></div>
-                          </div>
-                          <div style={{ display:'flex', alignItems:'flex-end', gap:4, flex:1, minHeight:HEIGHT }}>
-                            {histo.map((m, i) => {
-                              const caH = maxCA > 0 ? Math.max(Math.round((m.caTotal / maxCA) * HEIGHT), m.caTotal > 0 ? 4 : 0) : 0
-                              const actifH = maxActif > 0 ? Math.max(Math.round((m.actifsTotal / maxActif) * HEIGHT), m.actifsTotal > 0 ? 4 : 0) : 0
+                  {(() => {
+                    const histo = subStats.histogram ?? [], PLANS = subStats.PLANS ?? [], HEIGHT = isMobile ? 100 : 200
+                    const maxCA = Math.max(...histo.map(m => m.caTotal), 1), maxActif = Math.max(...histo.map(m => m.actifsTotal), 1)
+                    return (
+                      <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+                        <div style={{ minWidth: isMobile ? 520 : 'auto' }}>
+                          <div style={{ display:'flex', alignItems:'flex-end', gap:3, height:HEIGHT }}>
+                            {histo.map((m,i) => {
+                              const caH = maxCA>0 ? Math.max(Math.round((m.caTotal/maxCA)*HEIGHT), m.caTotal>0?3:0) : 0
+                              const actifH = maxActif>0 ? Math.max(Math.round((m.actifsTotal/maxActif)*HEIGHT), m.actifsTotal>0?3:0) : 0
                               return (
                                 <div key={i} style={{ flex:1, display:'flex', alignItems:'flex-end', justifyContent:'center', gap:2, height:'100%' }}>
                                   <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', height:'100%' }}>
-                                    {m.caTotal > 0 && <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', marginBottom:2 }}>{m.caTotal}€</div>}
-                                    <div style={{ width:'100%', height:caH, display:'flex', flexDirection:'column', borderRadius:'3px 3px 0 0', overflow:'hidden' }}>
-                                      {PLANS.map((p, pi) => { const ca = m.caByPlan?.[p.key] ?? 0; if (!ca) return null; const segH = m.caTotal > 0 ? Math.max(Math.round((ca / m.caTotal) * caH), 2) : 0; return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0 }} title={`${p.key} · ${ca}€`} /> })}
+                                    {m.caTotal>0 && <div style={{ fontSize:7, color:'rgba(255,255,255,0.4)', marginBottom:1 }}>{m.caTotal}€</div>}
+                                    <div style={{ width:'100%', height:caH, display:'flex', flexDirection:'column', borderRadius:'2px 2px 0 0', overflow:'hidden' }}>
+                                      {PLANS.map((p,pi) => { const ca=m.caByPlan?.[p.key]??0; if(!ca) return null; const segH=m.caTotal>0?Math.max(Math.round((ca/m.caTotal)*caH),2):0; return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0 }} title={`${p.key} · ${ca}€`} /> })}
                                     </div>
                                   </div>
                                   <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-end', height:'100%' }}>
-                                    {m.actifsTotal > 0 && <div style={{ fontSize:8, color:'rgba(255,255,255,0.45)', marginBottom:2 }}>{m.actifsTotal}</div>}
-                                    <div style={{ width:'100%', height:actifH, display:'flex', flexDirection:'column', borderRadius:'3px 3px 0 0', overflow:'hidden' }}>
-                                      {PLANS.map((p, pi) => { const nb = m.actifsByPlan?.[p.key] ?? 0; if (!nb) return null; const segH = m.actifsTotal > 0 ? Math.max(Math.round((nb / m.actifsTotal) * actifH), 2) : 0; return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0, opacity:0.6 }} title={`${p.key} · ${nb} actifs`} /> })}
+                                    {m.actifsTotal>0 && <div style={{ fontSize:7, color:'rgba(255,255,255,0.4)', marginBottom:1 }}>{m.actifsTotal}</div>}
+                                    <div style={{ width:'100%', height:actifH, display:'flex', flexDirection:'column', borderRadius:'2px 2px 0 0', overflow:'hidden' }}>
+                                      {PLANS.map((p,pi) => { const nb=m.actifsByPlan?.[p.key]??0; if(!nb) return null; const segH=m.actifsTotal>0?Math.max(Math.round((nb/m.actifsTotal)*actifH),2):0; return <div key={pi} style={{ width:'100%', height:segH, background:p.color, flexShrink:0, opacity:0.6 }} title={`${p.key} · ${nb} actifs`} /> })}
                                     </div>
                                   </div>
                                 </div>
                               )
                             })}
                           </div>
-                          <div style={{ display:'flex', gap:4 }}>{histo.map((m, i) => <div key={i} style={{ flex:1, textAlign:'center', fontSize:9, color:'rgba(255,255,255,0.30)' }}>{m.label}</div>)}</div>
-                          <div style={{ display:'flex', flexWrap:'wrap', gap:'4px 12px' }}>{PLANS.map((p, i) => <div key={i} style={{ display:'flex', alignItems:'center', gap:4 }}><div style={{ width:7, height:7, borderRadius:2, background:p.color, flexShrink:0 }} /><span style={{ fontSize:9, color:'rgba(255,255,255,0.35)' }}>{p.icon} {p.key}</span></div>)}</div>
+                          <div style={{ display:'flex', gap:3, borderTop:'1px solid rgba(255,255,255,0.06)', paddingTop:5, marginTop:4 }}>
+                            {histo.map((m,i) => <div key={i} style={{ flex:1, textAlign:'center', fontSize:8, color:'rgba(255,255,255,0.28)' }}>{m.label}</div>)}
+                          </div>
                         </div>
-                      )
-                    })()}
+                      </div>
+                    )
+                  })()}
+                  <div style={{ display:'flex', flexWrap:'wrap', gap:'4px 10px', marginTop:10 }}>
+                    {(subStats.PLANS??[]).map((p,i) => <div key={i} style={{ display:'flex', alignItems:'center', gap:4 }}><div style={{ width:6, height:6, borderRadius:2, background:p.color }} /><span style={{ fontSize:9, color:'rgba(255,255,255,0.32)' }}>{p.icon} {p.key}</span></div>)}
                   </div>
                 </div>
-              )}
+              </>)}
             </div>
 
             {/* ── ACTIVITÉ QUOTIDIENNE ── */}

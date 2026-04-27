@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
 import { ADMIN_IDS } from './AdminPage'
+import { useIsMobile } from './dashboardShared'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -104,6 +105,7 @@ const ZONES_RITUELS = {
 }
 
 function RituelsEditor({ showToast }) {
+  const isMobile = useIsMobile()
   const [zone,      setZone]      = useState('')
   const [rituel,    setRituel]    = useState('')
   const [title,     setTitle]     = useState('')
@@ -179,9 +181,9 @@ function RituelsEditor({ showToast }) {
   const zc = zColors[zone] || '#96d485'
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '300px 1fr', gap: isMobile ? 16 : 24, alignItems: 'start' }}>
       {/* ── Colonne gauche : accordéon ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, position: 'sticky', top: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, position: isMobile ? 'static' : 'sticky', top: 20 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid var(--border2)' }}>
           Sélectionner un exercice
         </div>
@@ -258,18 +260,18 @@ function RituelsEditor({ showToast }) {
             </div>
             <div>
               <span style={label}>Durée (ex: "5 min")</span>
-              <input value={dur} onChange={e => setDur(e.target.value)} placeholder="5 min" style={{ ...inp, maxWidth: 160 }} />
+              <input value={dur} onChange={e => setDur(e.target.value)} placeholder="5 min" style={{ ...inp, maxWidth: isMobile ? '100%' : 160 }} />
             </div>
             <div>
               <span style={label}>Outil interactif</span>
-              <select value={toolType} onChange={e => setToolType(e.target.value)} style={{ ...inp, maxWidth: 220 }}>
+              <select value={toolType} onChange={e => setToolType(e.target.value)} style={{ ...inp, maxWidth: isMobile ? '100%' : 220 }}>
                 <option value="none">Aucun</option>
                 <option value="breath">Respiration guidée</option>
                 <option value="timer">Minuteur simple</option>
               </select>
             </div>
             {toolType === 'breath' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, padding: '14px 16px', background: 'rgba(106,187,228,0.07)', border: '1px solid rgba(106,187,228,0.20)', borderRadius: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3,1fr)' : 'repeat(5, 1fr)', gap: 10, padding: '14px 16px', background: 'rgba(106,187,228,0.07)', border: '1px solid rgba(106,187,228,0.20)', borderRadius: 10 }}>
                 {[['inhale', 'Inspire (s)'], ['hold', 'Rétention (s)'], ['exhale', 'Expire (s)'], ['holdEmpty', 'Vide (s)'], ['cycles', 'Cycles']].map(([k, lbl]) => (
                   <div key={k}>
                     <span style={label}>{lbl}</span>
@@ -293,6 +295,7 @@ function RituelsEditor({ showToast }) {
 //  VentesPartenairesAdmin
 // ═══════════════════════════════════════════════════════════
 function VentesPartenairesAdmin({ showToast }) {
+  const isMobile = useIsMobile()
   const [ventes,  setVentes]  = useState([])
   const [loading, setLoading] = useState(true)
   const [mois,    setMois]    = useState(() => {
@@ -334,9 +337,9 @@ function VentesPartenairesAdmin({ showToast }) {
 
   return (
     <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>Ventes partenaires</div>
-        <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={inp} />
+        <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp, width: isMobile ? '100%' : 'auto' }} />
       </div>
       {loading ? (
         <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Chargement…</div>
@@ -346,7 +349,7 @@ function VentesPartenairesAdmin({ showToast }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {Object.entries(byPro).map(([proKey, data]) => (
             <div key={proKey} style={{ padding: 16, borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div>
                   <div style={{ fontSize: 14, color: 'var(--text2)', fontWeight: 500 }}>
                     {data.partenaire?.nom_boutique}
@@ -360,7 +363,7 @@ function VentesPartenairesAdmin({ showToast }) {
                   <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, background: 'rgba(150,212,133,0.10)', border: '1px solid var(--greenT)', color: 'var(--green)' }}>✓ Reversé</span>
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? 6 : 10, marginBottom: 12 }}>
                 {[{ lbl: 'Total brut', val: fmt(data.total_brut), color: 'var(--text2)' }, { lbl: 'Commission 15%', val: fmt(data.total_commission), color: 'var(--gold)' }, { lbl: 'À reverser', val: fmt(data.total_net), color: '#96d485' }].map(({ lbl, val, color }) => (
                   <div key={lbl} style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ fontSize: 9, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 4 }}>{lbl}</div>
@@ -396,6 +399,7 @@ function VentesPartenairesAdmin({ showToast }) {
 //  ProWallet — Solde + historique inline dans la fiche pro
 // ═══════════════════════════════════════════════════════════
 function ProWallet({ userId, partenaireId }) {
+  const isMobile = useIsMobile()
   const [lumens,      setLumens]      = useState(null)
   const [ventesE,     setVentesE]     = useState([])
   const [ventesL,     setVentesL]     = useState([])
@@ -425,7 +429,7 @@ function ProWallet({ userId, partenaireId }) {
 
   return (
     <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? 6 : 8, marginBottom: 12 }}>
         {[{ bg: 'rgba(150,212,133,0.06)', border: 'rgba(150,212,133,0.15)', lbl: 'À reverser ce mois', val: fmt(totalNet), color: '#96d485' }, { bg: 'rgba(232,192,96,0.06)', border: 'rgba(232,192,96,0.15)', lbl: 'Lumens reçus (ventes)', val: `${totalLumens} ✦`, color: '#e8c060' }, { bg: 'rgba(180,160,240,0.06)', border: 'rgba(180,160,240,0.15)', lbl: 'Solde Lumens total', val: `${lumens ?? '…'} ✦`, color: '#b4a0f0' }].map(({ bg, border, lbl, val, color }) => (
           <div key={lbl} style={{ padding: '10px 12px', borderRadius: 8, background: bg, border: `1px solid ${border}` }}>
             <div style={{ fontSize: 9, color, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 3, opacity: 0.7 }}>{lbl}</div>
