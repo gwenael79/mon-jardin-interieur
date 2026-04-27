@@ -283,7 +283,8 @@ function RitualByTimeModal({ onClose }) {
     q.then(({ data }) => { setRituals(data || []); setLoading(false) })
   }, [bucket])
 
-  const ZONE_COLORS = { roots:'#c87840', stem:'#5a9a50', leaves:'#48a078', flowers:'#c87898', breath:'#6888c0' }
+  const ZONE_COLORS  = { roots:'#c87840', stem:'#5a9a50', leaves:'#48a078', flowers:'#c87898', breath:'#6888c0' }
+  const ZONE_LABELS  = { roots:'Racines', stem:'Tige', leaves:'Feuilles', flowers:'Fleurs', breath:'Souffle' }
 
   return (
     <div style={{
@@ -363,7 +364,7 @@ function RitualByTimeModal({ onClose }) {
                     <span style={{ fontSize:22, flexShrink:0 }}>{r.icon || '🌿'}</span>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'#1a1008', lineHeight:1.25, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.title}</div>
-                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color: ZONE_COLORS[r.zone] || '#888', marginTop:2 }}>{r.zone} · {r.dur}</div>
+                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color: ZONE_COLORS[r.zone] || '#888', marginTop:2 }}>{ZONE_LABELS[r.zone] || r.zone} · {r.dur}</div>
                     </div>
                     <span style={{ color:'rgba(30,20,8,0.25)', fontSize:16, flexShrink:0 }}>›</span>
                   </button>
@@ -379,7 +380,7 @@ function RitualByTimeModal({ onClose }) {
                 <span style={{ fontSize:36 }}>{selected.icon || '🌿'}</span>
                 <div>
                   <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:600, fontStyle:'italic', color:'#1a1008', margin:0, lineHeight:1.2 }}>{selected.title}</h3>
-                  <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color: ZONE_COLORS[selected.zone] || '#888', margin:'4px 0 0' }}>{selected.zone} · {selected.dur}</p>
+                  <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color: ZONE_COLORS[selected.zone] || '#888', margin:'4px 0 0' }}>{ZONE_LABELS[selected.zone] || selected.zone} · {selected.dur}</p>
                 </div>
               </div>
               <button onClick={() => setSelected(null)} style={{ background:'none', border:'none', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.45)', cursor:'pointer', padding:'0 0 12px', display:'flex', alignItems:'center', gap:4 }}>‹ Retour à la liste</button>
