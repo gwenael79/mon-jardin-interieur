@@ -1,6 +1,7 @@
 // NeedSelectionModal.jsx — premium living cards
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
+import { supabase } from '../core/supabaseClient'
 
 // ─── Données ────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,30 @@ const PARTICLES = [
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
+// Mapping zones bilan → ids de besoins (par priorité)
+const ZONE_TO_NEEDS = {
+  roots:   ['grounding', 'stress'],
+  stem:    ['energy', 'grounding'],
+  leaves:  ['thoughts', 'softness'],
+  flowers: ['emotions', 'selfconnect'],
+  breath:  ['sleep', 'stress', 'softness'],
+}
+
+function getRecommendedNeeds(degradation) {
+  if (!degradation || typeof degradation !== 'object') return []
+  const scores = {}
+  Object.entries(degradation).forEach(([zone, stress]) => {
+    ;(ZONE_TO_NEEDS[zone] || []).forEach((id, i) => {
+      scores[id] = (scores[id] || 0) + stress * (i === 0 ? 1 : 0.55)
+    })
+  })
+  return Object.entries(scores)
+    .sort((a, b) => b[1] - a[1])
+    .filter(([, s]) => s > 40)
+    .slice(0, 3)
+    .map(([id]) => id)
+}
+
 const CSS = `
   @keyframes nm_float {
     0%,100%{ transform:translateY(0) scale(1); opacity:.4; }
@@ -93,11 +118,18 @@ const CSS = `
   .nm-card:active {
     animation: nm_breathe .38s ease forwards !important;
   }
+  @keyframes nm_badge_pulse {
+    0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255,255,255,0.8); opacity: 1; }
+    50%       { transform: scale(1.12); box-shadow: 0 0 0 5px rgba(255,255,255,0); opacity: 0.85; }
+  }
+  .nm-recommended {
+    animation: nm_cardIn .42s ease both !important;
+  }
 `
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
-function NeedCard({ need, index, onSelect, isMobile }) {
+function NeedCard({ need, index, onSelect, isMobile, isRecommended }) {
   const btnRef = useRef(null)
 
   function handleClick(e) {
@@ -121,7 +153,7 @@ function NeedCard({ need, index, onSelect, isMobile }) {
     setTimeout(() => onSelect(need), 240)
   }
 
-  const cardH   = isMobile ? 130 : 155
+  const cardH   = isMobile ? 95 : 115
   const iconSz  = isMobile ? 26  : 32
   const titleFz = isMobile ? 16  : 22
   const descFz  = isMobile ? 12  : 15
@@ -134,9 +166,9 @@ function NeedCard({ need, index, onSelect, isMobile }) {
   return (
     <button
       ref={btnRef}
-      className="nm-card"
+      className={isRecommended ? 'nm-card nm-recommended' : 'nm-card'}
       onClick={handleClick}
-      style={{
+      style={{ '--card-glow': need.glow,
         display:'flex', flexDirection:'column', justifyContent:'space-between',
         padding:pad, height:cardH, width:'100%',
         borderRadius:20,
@@ -157,6 +189,23 @@ function NeedCard({ need, index, onSelect, isMobile }) {
         e.currentTarget.style.boxShadow = `0 10px 25px ${need.glow}, inset 0 1px 2px rgba(255,255,255,0.30)`
       }}
     >
+      {/* Badge recommandé */}
+      {isRecommended && (
+        <div style={{
+          position:'absolute', top:8, right:8, zIndex:8,
+          background:'rgba(255,255,255,0.92)',
+          border:'none',
+          borderRadius:100, padding:'4px 10px',
+          fontFamily:"'Jost',sans-serif", fontSize:9,
+          fontWeight:800, letterSpacing:'0.12em',
+          color: need.g1,
+          textTransform:'uppercase',
+          animation:'nm_badge_pulse 1.6s ease-in-out infinite',
+          boxShadow:'0 2px 8px rgba(0,0,0,0.18)',
+        }}>
+          ✦ Recommandé
+        </div>
+      )}
       {/* Lumière interne animée (shimmer lent) */}
       <div style={{
         position:'absolute', inset:0,
@@ -201,9 +250,152 @@ function NeedCard({ need, index, onSelect, isMobile }) {
   )
 }
 
+// ─── Rituels par durée ───────────────────────────────────────────────────────
+
+const TIME_BUCKETS = [
+  { id:'micro',  label:'Moins de 2 min', sub:'Une pause éclair',      emoji:'⚡', g1:'#2058B0', g2:'#5090E0', durs:['1 min'] },
+  { id:'short',  label:'2 à 5 min',      sub:'Un moment pour moi',    emoji:'🌱', g1:'#1A6645', g2:'#38A870', durs:['2 min','3 min'] },
+  { id:'medium', label:'5 à 15 min',     sub:'Une vraie pause',       emoji:'🌿', g1:'#A06010', g2:'#D8A030', durs:['10 min','10 min/soir','15 min'] },
+  { id:'long',   label:'Plus de 15 min', sub:'Une séance complète',   emoji:'🌸', g1:'#5B3FA0', g2:'#8B6FD0', durs:null },
+]
+
+const SHORT_DURS = ['1 min','2 min','3 min','10 min','10 min/soir','15 min']
+
+function RitualByTimeModal({ onClose }) {
+  const [bucket,   setBucket]   = useState(null)   // TIME_BUCKETS item
+  const [rituals,  setRituals]  = useState([])
+  const [loading,  setLoading]  = useState(false)
+  const [selected, setSelected] = useState(null)   // ritual detail
+  const isMobile = useIsMobile()
+
+  useEffect(() => {
+    if (!bucket) return
+    setLoading(true)
+    setRituals([])
+    setSelected(null)
+    let q = supabase.from('rituels').select('n, title, dur, zone, desc, icon').order('n')
+    if (bucket.durs) {
+      q = q.in('dur', bucket.durs)
+    } else {
+      q = q.not('dur', 'in', `(${SHORT_DURS.map(d => `"${d}"`).join(',')})`)
+        .not('dur', 'in', '("Variable","Journée","Journée entière","Demi-journée","1–2 jours")')
+    }
+    q.then(({ data }) => { setRituals(data || []); setLoading(false) })
+  }, [bucket])
+
+  const ZONE_COLORS = { roots:'#c87840', stem:'#5a9a50', leaves:'#48a078', flowers:'#c87898', breath:'#6888c0' }
+
+  return (
+    <div style={{
+      position:'fixed', inset:0, zIndex:400,
+      background:'rgba(10,8,5,0.82)', backdropFilter:'blur(10px)',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      padding: isMobile ? 0 : 24,
+    }}>
+      <div style={{
+        width: isMobile ? '100%' : 'min(520px,95vw)',
+        height: isMobile ? '100%' : 'auto',
+        maxHeight: isMobile ? '100%' : '90vh',
+        background:'linear-gradient(160deg,#fdf9f4,#f4ede4)',
+        borderRadius: isMobile ? 0 : 24,
+        display:'flex', flexDirection:'column',
+        overflow:'hidden',
+        boxShadow:'0 32px 80px rgba(0,0,0,0.4)',
+      }}>
+        {/* Header */}
+        <div style={{ padding:'20px 20px 12px', display:'flex', alignItems:'center', gap:12, borderBottom:'1px solid rgba(0,0,0,0.06)', flexShrink:0 }}>
+          {bucket && (
+            <button onClick={() => { setBucket(null); setSelected(null) }} style={{ background:'rgba(0,0,0,0.06)', border:'none', borderRadius:'50%', width:32, height:32, cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+          )}
+          <div style={{ flex:1 }}>
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: bucket ? 20 : 26, fontWeight:600, fontStyle:'italic', color:'#1a1008', margin:0, lineHeight:1.2 }}>
+              {bucket ? bucket.label : 'Choisissez le temps que vous y accordez'}
+            </p>
+            {!bucket && <p style={{ fontFamily:"'Jost',sans-serif", fontSize:16, fontWeight:600, color:'#1a1008', margin:'4px 0 0' }}>Parmi 120 rituels disponibles</p>}
+            {bucket && !loading && <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.5)', margin:'3px 0 0' }}>{rituals.length} rituel{rituals.length > 1 ? 's' : ''}</p>}
+          </div>
+          <button onClick={onClose} style={{ background:'rgba(0,0,0,0.06)', border:'none', borderRadius:'50%', width:32, height:32, cursor:'pointer', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(30,20,8,0.6)', flexShrink:0 }}>✕</button>
+        </div>
+
+        {/* Contenu */}
+        <div style={{ flex:1, overflowY:'auto', padding:'16px 16px 24px' }}>
+
+          {/* Sélection bucket */}
+          {!bucket && (
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              {TIME_BUCKETS.map(b => (
+                <button key={b.id} onClick={() => setBucket(b)} style={{
+                  background:`linear-gradient(135deg,${b.g1},${b.g2})`,
+                  border:'none', borderRadius:18, padding:'20px 16px',
+                  cursor:'pointer', textAlign:'left', color:'#fff',
+                  boxShadow:`0 6px 20px ${b.g1}55`,
+                  transition:'transform 0.15s',
+                }}
+                  onMouseEnter={e => e.currentTarget.style.transform='scale(1.03)'}
+                  onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
+                >
+                  <div style={{ fontSize:34, marginBottom:12 }}>{b.emoji}</div>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, fontStyle:'italic', lineHeight:1.2, marginBottom:6 }}>{b.label}</div>
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:14, opacity:0.85 }}>{b.sub}</div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Liste rituels */}
+          {bucket && !selected && (
+            loading ? (
+              <p style={{ textAlign:'center', color:'rgba(30,20,8,0.4)', fontFamily:"'Jost',sans-serif", fontSize:14, padding:'40px 0' }}>Chargement…</p>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {rituals.map(r => (
+                  <button key={r.n} onClick={() => setSelected(r)} style={{
+                    display:'flex', alignItems:'center', gap:12,
+                    background:'#fff', border:'1px solid rgba(0,0,0,0.07)',
+                    borderRadius:14, padding:'12px 14px',
+                    cursor:'pointer', textAlign:'left',
+                    transition:'box-shadow 0.15s',
+                    boxShadow:'0 1px 6px rgba(0,0,0,0.04)',
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.10)'}
+                    onMouseLeave={e => e.currentTarget.style.boxShadow='0 1px 6px rgba(0,0,0,0.04)'}
+                  >
+                    <span style={{ fontSize:22, flexShrink:0 }}>{r.icon || '🌿'}</span>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'#1a1008', lineHeight:1.25, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.title}</div>
+                      <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color: ZONE_COLORS[r.zone] || '#888', marginTop:2 }}>{r.zone} · {r.dur}</div>
+                    </div>
+                    <span style={{ color:'rgba(30,20,8,0.25)', fontSize:16, flexShrink:0 }}>›</span>
+                  </button>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* Détail rituel */}
+          {selected && (
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+                <span style={{ fontSize:36 }}>{selected.icon || '🌿'}</span>
+                <div>
+                  <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:600, fontStyle:'italic', color:'#1a1008', margin:0, lineHeight:1.2 }}>{selected.title}</h3>
+                  <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color: ZONE_COLORS[selected.zone] || '#888', margin:'4px 0 0' }}>{selected.zone} · {selected.dur}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelected(null)} style={{ background:'none', border:'none', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.45)', cursor:'pointer', padding:'0 0 12px', display:'flex', alignItems:'center', gap:4 }}>‹ Retour à la liste</button>
+              <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontStyle:'italic', color:'#1a1008', lineHeight:1.7, background:'rgba(0,0,0,0.03)', borderRadius:12, padding:'16px', margin:0 }}>{selected.desc}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
-function NeedModalInner({ onSelectNeed, onClose, isMobile }) {
+function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [] }) {
+  const [showByTime, setShowByTime] = useState(false)
   return (
     <>
       {/* Grain subtil */}
@@ -245,46 +437,73 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile }) {
         boxSizing:'border-box', display:'flex', flexDirection:'column',
       }}>
         {/* Header */}
-        <div style={{textAlign:'center', marginBottom:'20px', animation:'nm_fadeUp .45s ease both', flexShrink:0}}>
+        <div style={{textAlign:'center', marginBottom:'16px', animation:'nm_fadeUp .45s ease both', flexShrink:0}}>
           <h1 style={{
             fontFamily:"'Cormorant Garamond',serif",
             fontSize: isMobile ? 28 : 38,
             fontWeight:400, color:'#2A1F18', lineHeight:1.3,
-            margin:'0 0 8px', letterSpacing:'-.01em',
+            margin:'0 0 6px', letterSpacing:'-.01em',
           }}>
             Quel est votre besoin<br/>
             <em style={{fontStyle:'italic', fontWeight:300, color:'#4a3860'}}>en ce moment ?</em>
           </h1>
           <p style={{
-            fontFamily:"'Inter','Jost',sans-serif",
-            fontSize: isMobile ? 13 : 16,
-            fontWeight:300, color:'rgba(50,35,20,.50)',
-            margin:0, letterSpacing:'.02em',
+            fontFamily:"'Jost',sans-serif",
+            fontSize: isMobile ? 20 : 24,
+            fontWeight:600, color:'#1a1008',
+            margin:'0 0 10px', letterSpacing:'.01em',
           }}>Suivez ce qui résonne en vous</p>
+          <p style={{
+            fontFamily:"'Jost',sans-serif",
+            fontSize: isMobile ? 20 : 24,
+            fontWeight:600, color:'#1a1008',
+            margin:0, letterSpacing:'.01em',
+          }}>Un seul choix suffit pour commencer</p>
         </div>
         {/* Grille */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap: isMobile ? 12 : 18, flexShrink:0 }}>
           {NEEDS.map((need,i) => (
-            <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile}/>
+            <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile} isRecommended={recommendedIds.includes(need.id)}/>
           ))}
         </div>
-        {/* Footer */}
+        {/* Footer — accès aux 120 rituels */}
         <div style={{
-          textAlign:'center', padding: isMobile ? '16px 0 20px' : '20px 0 24px',
+          textAlign:'center', padding: isMobile ? '20px 0 24px' : '24px 0 28px',
           flexShrink:0, animation:'nm_fadeUp .5s ease .35s both',
         }}>
-          <p style={{ fontFamily:"'Inter','Jost',sans-serif", fontSize:18, fontWeight:400, color:'#1E1E1E', margin:0 }}>
-            Un seul choix suffit pour commencer
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 20 : 24, fontWeight:600, color:'#1a1008', margin:'0 0 12px', lineHeight:1.4, letterSpacing:'.01em' }}>
+            Vous désirez choisir votre propre rituel parmi 120 propositions ?
           </p>
+          <div style={{ display:'flex', justifyContent:'center' }}>
+            <button onClick={() => setShowByTime(true)} style={{
+              width:'50%', minWidth:160,
+              background:'linear-gradient(135deg, #c87840 0%, #9070c8 35%, #2058B0 65%, #1A6645 100%)',
+              border:'none', borderRadius:20, padding:'18px 14px',
+              cursor:'pointer', textAlign:'center', color:'#fff',
+              boxShadow:'0 6px 24px rgba(100,80,160,0.35)',
+              transition:'transform 0.15s, box-shadow 0.15s',
+              position:'relative', overflow:'hidden',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform='scale(1.04)'; e.currentTarget.style.boxShadow='0 10px 32px rgba(100,80,160,0.45)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 6px 24px rgba(100,80,160,0.35)' }}
+            >
+              <div style={{ fontSize:24, marginBottom:8 }}>✨</div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,5vw,22px)', fontWeight:700, fontStyle:'italic', lineHeight:1.25, width:'100%', wordBreak:'break-word' }}>
+                Je choisis mon rituel
+              </div>
+            </button>
+          </div>
         </div>
+        {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} />}
       </div>
     </>
   )
 }
 
-export default function NeedSelectionModal({ onSelectNeed, onClose }) {
+export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation }) {
   const isMobile = useIsMobile()
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
+  const recommendedIds = getRecommendedNeeds(bilanDegradation)
 
   if (!isMobile) return (
     <>
@@ -298,7 +517,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose }) {
           display:'flex', flexDirection:'column',
           boxShadow:'0 32px 80px rgba(0,0,0,0.32)',
         }}>
-          <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={false}/>
+          <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={false} recommendedIds={recommendedIds}/>
         </div>
       </div>
     </>
@@ -308,7 +527,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose }) {
     <>
       <style>{CSS}</style>
       <div style={{ position:'fixed', inset:0, zIndex:260, background:bg, display:'flex', flexDirection:'column' }}>
-        <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={true}/>
+        <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={true} recommendedIds={recommendedIds}/>
       </div>
     </>
   )

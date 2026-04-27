@@ -929,14 +929,14 @@ export const WEEK_ONE_DATA = [
     accueil: {
       conditioning: true,
       skipBarometer: true,
-      timeBadge: '⏱ 2 à 3 min · à ton rythme',
+      timeBadge: '⏱ 6 à 8 min · à ton rythme',
       headline: 'Ton jardin existe.',
       tagLine: "Et tu as commencé à le faire vivre.",
       subtitle: 'Mais un jardin ne pousse pas seul.',
       subtitleExtra: "Tu peux continuer à en prendre soin. À ton rythme.",
       breatheIntro: "Comme tu sais déjà le faire.",
-      timerDuration: 3,
-      timerButtonAfter: 2,
+      timerDuration: 300,
+      timerButtonAfter: 180,
       orbGuidanceList: [
         "La main sur le ventre",
         "Ventre (2 min) : un ballon qui respire",
@@ -970,12 +970,13 @@ export const WEEK_ONE_DATA = [
       isGuided: 'communaute',
     },
     isFinal: true,
+    rituelFirst: true,
     finalCTA: 'Entrer dans mon jardin',
     helpTexts: {
       accueil_intro:       "Sept jours. Chaque jour avait sa lumière, sa résistance, sa couleur.\n\nCe que tu as traversé n'est pas derrière toi. C'est en toi, désormais. Quelque chose a changé de forme.",
       accueil_respiration: "Un dernier souffle avant d'entrer dans le jardin partagé.\n\nCe que tu portes aujourd'hui, tu vas le retrouver dans les autres aussi.",
-      introspection:       "Ce que tu emportes de cette semaine ne tient pas toujours dans un mot.\n\nPeut-être une sensation. Une image. Un peu plus de douceur envers toi-même. C'est suffisant.",
       rituel:              "Un jardin partagé n'efface pas le tien. Il l'enrichit.\n\nTa pratique, ta présence, ton engagement cette semaine ont une résonance au-delà de toi.\n\nEntrer dans le jardin collectif, c'est continuer de grandir autrement.",
+      introspection:       "Ce que tu emportes de cette semaine ne tient pas toujours dans un mot.\n\nPeut-être une sensation. Une image. Un peu plus de douceur envers toi-même. C'est suffisant.",
     },
   },
 ]
@@ -4296,9 +4297,30 @@ function PhoneMockupModal({ feature, onClose }) {
           overflow: 'hidden', position: 'relative',
         }}>
           <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', width: 60, height: 8, background: '#111', borderRadius: 8, zIndex: 2 }} />
-          <div style={{ flex: 1, margin: 4, borderRadius: 32, overflow: 'hidden', background: '#0a1628' }}>
+          <div style={{ flex: 1, margin: 4, borderRadius: 32, overflow: 'hidden', background: '#0a1628', position: 'relative' }}>
             {feature.image ? (
-              <img src={feature.image} alt={feature.label} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'top', display: 'block', background: '#fff' }} />
+              <>
+                <img src={feature.image} alt={feature.label} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'top', display: 'block', background: '#fff' }} />
+                <div style={{
+                  position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  pointerEvents: 'none', overflow: 'hidden',
+                }}>
+                  <span style={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: 38,
+                    fontWeight: 700,
+                    letterSpacing: '0.18em',
+                    textTransform: 'uppercase',
+                    color: 'rgba(80,40,20,0.18)',
+                    transform: 'rotate(-35deg)',
+                    whiteSpace: 'nowrap',
+                    userSelect: 'none',
+                  }}>
+                    EXEMPLE
+                  </span>
+                </div>
+              </>
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 20 }}>
                 <span style={{ fontSize: 52 }}>{feature.emoji}</span>
@@ -4634,11 +4656,6 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
         Et d'autres <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>évoluent</strong> aussi.
       </p>
 
-      {/* Phrase intermédiaire */}
-      <p style={{ ...S, ...fadeIn(phase >= 3) }}>
-        D'autres vivent aussi des moments comme celui-ci.
-      </p>
-
       {/* 3 cartes — apparition une par une */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, margin: '8px auto 32px', maxWidth: '78%' }}>
         {FLOWERS.map((f, i) => (
@@ -4649,8 +4666,8 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
             overflow: 'hidden',
             boxShadow: '0 4px 18px rgba(0,0,0,0.08)',
             minHeight: 150,
-            opacity: phase >= 4 ? 1 : 0,
-            transform: phase >= 4 ? 'translateY(0)' : 'translateY(9px)',
+            opacity: phase >= 3 ? 1 : 0,
+            transform: phase >= 3 ? 'translateY(0)' : 'translateY(9px)',
             transition: `opacity 950ms cubic-bezier(0.25,0.46,0.45,0.94) ${i * 380}ms, transform 950ms cubic-bezier(0.25,0.46,0.45,0.94) ${i * 380}ms`,
           }}>
             {/* Fleur avec légère respiration */}
@@ -4680,6 +4697,11 @@ function CommunauteGuidedRituel({ onNext, onBack }) {
           </div>
         ))}
       </div>
+
+      {/* Phrase intermédiaire — après les cards */}
+      <p style={{ ...S, ...fadeIn(phase >= 4) }}>
+        D'autres vivent aussi des moments comme celui-ci.
+      </p>
 
       {/* Bas de page */}
       <p style={{ ...S, fontStyle: 'normal', color: '#0f0808', margin: '0 0 28px', ...fadeIn(phase >= 5) }}>
@@ -5479,7 +5501,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 1 && (
+      {step === 1 && !dayConfig.rituelFirst && (
         <DayIntrospection
           data={dayConfig.introspection}
           onAnswer={handleAnswer}
@@ -5487,13 +5509,35 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 2 && showRitualVideo && (
+      {step === 1 && dayConfig.rituelFirst && (
+        <DayRituel
+          data={dayConfig.rituel}
+          answers={answers}
+          dayColor={dayConfig.color}
+          onNext={advance}
+          onBack={goBack}
+          onScreenChange={notifyScreen}
+        />
+      )}
+      {step === 2 && dayConfig.rituelFirst && (
+        <DayIntrospection
+          data={dayConfig.introspection}
+          onAnswer={(key, val) => {
+            onDayComplete({ type: 'answer', dayKey: `j${dayConfig.day}`, answerKey: key, value: val })
+            if (dayConfig.isFinal) handleDayDone()
+            else advance()
+          }}
+          onBack={goBack}
+          onScreenChange={notifyScreen}
+        />
+      )}
+      {step === 2 && !dayConfig.rituelFirst && showRitualVideo && (
         <RitualVideoSlide
           src={dayConfig.videoAfterRitual}
           onContinue={advance}
         />
       )}
-      {step === 2 && !showRitualVideo && (
+      {step === 2 && !dayConfig.rituelFirst && !showRitualVideo && (
         <DayRituel
           data={dayConfig.rituel}
           answers={answers}

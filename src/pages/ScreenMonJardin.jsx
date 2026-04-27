@@ -2556,14 +2556,14 @@ const choose = (idx) => {
       <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'40px 28px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', position:'relative' }}>
         <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
-          <div style={{ fontSize:'var(--fs-emoji-lg, 52px)', marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
-          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h1, 36px)', color:'var(--quiz-modal-text)', fontWeight:300, lineHeight:1.1, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
+          <div style={{ fontSize:56, marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
+          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'clamp(32px, 8vw, 42px)', color:'#0f0a06', fontWeight:500, lineHeight:1.15, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
           <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
-          <p style={{ color:'rgba(var(--quiz-modal-text-rgb),0.5)', fontSize:'var(--fs-h4, 13px)', lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
-          <p style={{ color:'rgba(var(--quiz-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 11px)', lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
-          <button onClick={startQuiz} style={{ padding:'13px 40px', borderRadius:50, border:'1px solid rgba(var(--gold-warm-rgb),0.35)', background:'rgba(var(--gold-warm-rgb),0.1)', color:'var(--gold-warm)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:10 }}>Commencer le bilan</button>
-          <button onClick={onSkip} style={{ padding:10, borderRadius:50, border:'none', background:'none', color:'rgba(var(--quiz-modal-text-rgb),0.3)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', letterSpacing:'0.05em', width:'100%' }}>Passer pour aujourd'hui</button>
-          <p style={{ color:'rgba(var(--quiz-modal-text-rgb),0.2)', fontSize:'var(--fs-h5, 10px)', marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
+          <p style={{ color:'#0f0a06', fontSize:17, lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
+          <p style={{ color:'#1a1208', fontSize:15, lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
+          <button onClick={startQuiz} style={{ padding:'16px 40px', borderRadius:50, border:'none', background:'linear-gradient(135deg, #c8a040, #a07820)', color:'#fff', fontSize:16, fontWeight:700, cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:12, boxShadow:'0 4px 18px rgba(160,120,32,0.38)' }}>Commencer le bilan</button>
+          <button onClick={onSkip} style={{ padding:'12px 40px', borderRadius:50, border:'1.5px solid rgba(20,14,6,0.25)', background:'rgba(20,14,6,0.04)', color:'#1a1208', fontSize:14, fontWeight:500, cursor:'pointer', letterSpacing:'0.05em', display:'block', width:'100%' }}>Passer pour aujourd'hui</button>
+          <p style={{ color:'#1a1208', fontSize:13, marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
         </div>
       </div>
     </div>
@@ -2591,23 +2591,23 @@ const choose = (idx) => {
           })}
         </div>
         <div style={{ padding:'14px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontSize:13, textTransform:'uppercase', letterSpacing:'0.1em', color:zone.color, fontWeight:700 }}>{zone.name} · {q.theme}</span>
+          <span style={{ fontSize:14, textTransform:'uppercase', letterSpacing:'0.1em', color:zone.color, fontWeight:700 }}>{zone.name} · {q.theme}</span>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:15, color:'rgba(var(--quiz-modal-text-rgb),0.7)', fontWeight:600 }}>{step+1} <span style={{ opacity:0.6 }}>/ 10</span></span>
+            <span style={{ fontSize:16, color:'#0f0a06', fontWeight:700 }}>{step+1} <span style={{ opacity:0.45 }}>/ 10</span></span>
             <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.7)', fontSize:14, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
           </div>
         </div>
         <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'16px 24px 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
-          <div style={{ fontSize:40, marginBottom:12 }}>{q.icon}</div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:30, color:'var(--quiz-modal-text)', fontWeight:500, lineHeight:1.2, marginBottom:6 }}>{q.text}</h3>
-          <p style={{ fontSize:15, color:'rgba(var(--quiz-modal-text-rgb),0.7)', lineHeight:1.6, marginBottom:18, fontStyle:'italic' }}>{q.sub}</p>
+          <div style={{ fontSize:44, marginBottom:12 }}>{q.icon}</div>
+          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'clamp(26px, 7vw, 34px)', color:'#0f0a06', fontWeight:600, lineHeight:1.2, marginBottom:6 }}>{q.text}</h3>
+          <p style={{ fontSize:16, color:'rgba(20,14,6,0.6)', lineHeight:1.6, marginBottom:18, fontStyle:'italic' }}>{q.sub}</p>
           <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
             {q.answers.map((ans, i) => {
               const sel = selected === i
               return (
-                <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:14, padding:'13px 16px', borderRadius:14, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color : 'rgba(var(--quiz-modal-text-rgb),0.2)'}`, background: sel ? zone.color+'18' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}40` : 'none', transition:'all 0.18s ease' }}>
+                <button key={i} onClick={() => choose(i)} style={{ display:'flex', alignItems:'center', gap:14, padding:'13px 16px', borderRadius:14, textAlign:'left', cursor:'pointer', border:`1px solid ${sel ? zone.color : 'rgba(20,14,6,0.18)'}`, background: sel ? zone.color+'18' : 'var(--surface-1)', boxShadow: sel ? `0 0 0 1px ${zone.color}40` : 'none', transition:'all 0.18s ease' }}>
                   <span style={{ fontSize:22 }}>{ans.emoji}</span>
-                  <span style={{ flex:1, fontSize:18, color:'var(--quiz-modal-text)', fontWeight: sel ? 600 : 400 }}>{ans.label}</span>
+                  <span style={{ flex:1, fontSize:18, color:'#0f0a06', fontWeight: sel ? 700 : 500 }}>{ans.label}</span>
                   <div style={{ width:22, height:22, borderRadius:'50%', border:`2px solid ${sel ? zone.color : 'rgba(var(--quiz-modal-text-rgb),0.3)'}`, background: sel ? `${zone.color}30` : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.18s', flexShrink:0 }}>
                     {sel && <div style={{ width:8, height:8, borderRadius:'50%', background:zone.accent }} />}
                   </div>
@@ -5168,7 +5168,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                   {/* Hier */}
                   {yesterdayHealth != null && (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
-                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Hier</span>
+                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Précédemment</span>
                       <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 34 : 40, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1 }}>{yesterdayHealth}%</span>
                     </div>
                   )}

@@ -887,6 +887,123 @@ function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, onBilan, bi
   )
 }
 
+function OrientationModal({ visibleSlides, onNavigate, onBilan, onRituel, onClose }) {
+  const CARDS = [
+    {
+      emoji: '🌿',
+      title: "J'explore à mon rythme",
+      sub: "Découvre les différents espaces du jardin",
+      gradient: 'linear-gradient(135deg, #e8f5e4 0%, #d0eac8 100%)',
+      border: '#a8d4a0',
+      accent: '#4a8840',
+      action: onClose,
+    },
+    {
+      emoji: '🌅',
+      title: "Je commence par un bilan",
+      sub: "Mon bilan quotidien en 2 minutes",
+      gradient: 'linear-gradient(135deg, #fdf0f0 0%, #f4d8d8 100%)',
+      border: '#d4a0a0',
+      accent: '#a05858',
+      action: onBilan,
+    },
+    {
+      emoji: '🕯️',
+      title: "J'accède aux rituels selon mes besoins",
+      sub: "Choisir une pratique selon mon besoin du moment",
+      gradient: 'linear-gradient(135deg, #fdf6e8 0%, #f4e4c0 100%)',
+      border: '#d4b878',
+      accent: '#8a6828',
+      action: onRituel,
+    },
+    {
+      emoji: '🌸',
+      title: "Je retrouve ma fleur",
+      sub: "Observer et nourrir mon jardin intérieur",
+      gradient: 'linear-gradient(135deg, #f8f0fc 0%, #ead8f4 100%)',
+      border: '#c8a0d8',
+      accent: '#8060a8',
+      action: () => onNavigate('jardin'),
+    },
+    {
+      emoji: '✨',
+      title: "Je relève un défi",
+      sub: "Un petit engagement pour avancer aujourd'hui",
+      gradient: 'linear-gradient(135deg, #f4f0fc 0%, #dcd4f4 100%)',
+      border: '#a898d8',
+      accent: '#7060a8',
+      action: () => onNavigate('defis'),
+    },
+  ]
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 500,
+      background: 'rgba(8,12,8,0.78)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px 20px',
+    }}>
+      <div style={{
+        background: 'linear-gradient(160deg, #fdfaf6 0%, #f8f4ee 100%)',
+        borderRadius: 28, padding: '32px 24px 28px',
+        width: '100%', maxWidth: 400,
+        boxShadow: '0 32px 80px rgba(0,0,0,0.38)',
+      }}>
+        <p style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: 'clamp(11px, 3vw, 13px)',
+          fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase',
+          color: '#9a7858', margin: '0 0 10px', textAlign: 'center',
+        }}>Ton jardin t'attend</p>
+        <h2 style={{
+          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontSize: 'clamp(22px, 6vw, 28px)',
+          fontWeight: 400, fontStyle: 'italic',
+          color: '#1a1208', margin: '0 0 28px', textAlign: 'center', lineHeight: 1.3,
+        }}>
+          Par où veux-tu<br />commencer ?
+        </h2>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {CARDS.map((c, i) => (
+            <button key={i} onClick={c.action} style={{
+              background: c.gradient,
+              border: `1.5px solid ${c.border}`,
+              borderRadius: 16,
+              padding: '14px 18px',
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex', alignItems: 'center', gap: 14,
+              transition: 'transform 0.15s, box-shadow 0.15s',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.03)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.06)' }}
+            >
+              <div style={{ fontSize: 26, flexShrink: 0 }}>{c.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: 'clamp(16px, 4.2vw, 18px)',
+                  fontWeight: 600, fontStyle: 'italic',
+                  color: '#1a1208', lineHeight: 1.2, marginBottom: 3,
+                }}>{c.title}</div>
+                <div style={{
+                  fontFamily: "'Jost', sans-serif",
+                  fontSize: 'clamp(10px, 2.8vw, 11px)',
+                  color: c.accent, lineHeight: 1.4,
+                }}>{c.sub}</div>
+              </div>
+              <div style={{ fontSize: 16, color: c.accent, opacity: 0.5, flexShrink: 0 }}>›</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const isMobile = useIsMobile()
   useTheme()
@@ -947,12 +1064,14 @@ export default function DashboardPage() {
   const [openModalId,         setOpenModalId]         = useState(null)   // id du slide dont la modal est ouverte
   const [postRitualSlide,     setPostRitualSlide]     = useState(false)  // true = slide ouvert après rituel → animations
   const [showNeedModal,       setShowNeedModal]       = useState(false)
+  const [bilanDegradation,    setBilanDegradation]    = useState(null)
   const [showRitualSuggestion,setShowRitualSuggestion]= useState(false)
   const [selectedNeed,        setSelectedNeed]        = useState(null)
   const ritualCompleteCalledRef = useRef(false)
   const [bilanHistory,        setBilanHistory]        = useState([])
   const [showGuide,           setShowGuide]           = useState(false)
   const [showProLaunch,        setShowProLaunch]        = useState(() => localStorage.getItem('mji_show_pro_launch') === '1')
+  const [showOrientationModal, setShowOrientationModal] = useState(false)
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
@@ -976,6 +1095,15 @@ export default function DashboardPage() {
     }
     return isReturn
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const key = `mji_orientation_${user.id}`
+    if (localStorage.getItem(key) === '1') {
+      localStorage.setItem(key, 'seen')
+      setShowOrientationModal(true)
+    }
+  }, [user?.id])
 
   const isFirstToday = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10)
@@ -1257,10 +1385,24 @@ export default function DashboardPage() {
 
   const commonOverlays = (
     <>
+      {showOrientationModal && (
+        <OrientationModal
+          visibleSlides={visibleSlides}
+          onNavigate={(id) => {
+            const idx = visibleSlides.findIndex(s => s.id === id)
+            if (idx >= 0) { setSlideIdx(idx); setActive(id) }
+            setShowOrientationModal(false)
+          }}
+          onBilan={() => { setShowBilanModal(true); setShowOrientationModal(false) }}
+          onRituel={() => { setShowNeedModal(true); setShowOrientationModal(false) }}
+          onClose={() => setShowOrientationModal(false)}
+        />
+      )}
       {showNeedModal && (
         <NeedSelectionModal
           onSelectNeed={need => { setShowNeedModal(false); setSelectedNeed(need); ritualCompleteCalledRef.current = false; setShowRitualSuggestion(true) }}
           onClose={() => setShowNeedModal(false)}
+          bilanDegradation={bilanDegradation}
         />
       )}
       {showRitualSuggestion && selectedNeed && (
@@ -1325,6 +1467,7 @@ export default function DashboardPage() {
             const { error } = await supabase.from('daily_quiz').upsert({ user_id: user.id, date: today, degradation: deg }, { onConflict: 'user_id,date' })
             if (error) { console.error('[bilan] upsert failed:', error.message); return }
             setBilanDoneToday(true)
+            setBilanDegradation(deg)
             track('bilan_complete', { degradation: deg }, 'jardin', 'engagement')
             logActivity({ userId: user?.id, action: 'bilan' })
             window.dispatchEvent(new CustomEvent('bilanComplete', { detail: deg }))

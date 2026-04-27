@@ -647,7 +647,10 @@ export default function App() {
     return (
       <EndOfWeekScreen
         userId={user.id}
-        onContinue={(choice) => setScreen(choice === 'premium' ? 'access' : 'dashboard')}
+        onContinue={(choice) => {
+          if (choice !== 'premium') localStorage.setItem(`mji_orientation_${user.id}`, '1')
+          setScreen(choice === 'premium' ? 'access' : 'dashboard')
+        }}
       />
     )
   }
