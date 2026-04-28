@@ -36,6 +36,7 @@ import {
 } from './dashboardShared'
 
 import PushNotificationButton        from '../components/PushNotificationButton'
+import { usePushNotification }       from '../hooks/usePushNotification'
 import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
@@ -643,6 +644,14 @@ const FLOWER_NAMES_LIST = [
   'Chèvrefeuille','Coquelicot',
 ]
 
+const _settingsIsIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent)
+const _settingsIsStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+const HORAIRES_SETTINGS     = [
+  { id:'matin', label:'Matin', emoji:'🌅' },
+  { id:'midi',  label:'Midi',  emoji:'☀️' },
+  { id:'soir',  label:'Soir',  emoji:'🌙' },
+]
+
 function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
   const [portalLoading, setPortalLoading] = useState(false)
 
@@ -671,6 +680,53 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
   const [savingFlower,  setSavingFlower]  = useState(false)
   const [savedFlower,   setSavedFlower]   = useState(false)
   const [currentFlower, setCurrentFlower] = useState(null)
+
+  // ── Notifications ──
+  const { isSupported: pushSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotification(userId)
+  const [horaires,      setHoraires]      = useState(['soir'])
+  const [savingHoraires,setSavingHoraires]= useState(false)
+  const [savedHoraires, setSavedHoraires] = useState(false)
+
+  useEffect(() => {
+    if (!userId || !isSubscribed) return
+    supabase.from('push_subscriptions').select('horaires').eq('user_id', userId).limit(1).maybeSingle()
+      .then(({ data }) => { if (data?.horaires?.length) setHoraires(data.horaires) })
+  }, [userId, isSubscribed])
+
+  function toggleHoraire(id) {
+    setHoraires(prev => prev.includes(id)
+      ? prev.length > 1 ? prev.filter(h => h !== id) : prev
+      : [...prev, id])
+    setSavedHoraires(false)
+  }
+
+  async function saveHoraires() {
+    setSavingHoraires(true)
+    await supabase.from('push_subscriptions').update({ horaires }).eq('user_id', userId)
+    setSavedHoraires(true)
+    setTimeout(() => setSavedHoraires(false), 2000)
+    setSavingHoraires(false)
+  }
+
+  // ── Installation PWA ──
+  const [installPrompt, setInstallPrompt] = useState(window._installPrompt ?? null)
+  const [installing,    setInstalling]    = useState(false)
+  const [installDone,   setInstallDone]   = useState(false)
+
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); window._installPrompt = e }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  async function handleInstall() {
+    if (!installPrompt) return
+    setInstalling(true)
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') setInstallDone(true)
+    setInstalling(false)
+  }
 
   useEffect(() => {
     if (!userId) return
@@ -787,6 +843,98 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
             </button>
           </div>
         )}
+
+        {/* ── Notifications ── */}
+        <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: isSubscribed ? 12 : 0 }}>
+            <div>
+              <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:3 }}>Notifications</div>
+              <div style={{ fontSize:14, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>
+                {isSubscribed ? '🔔 Activées' : '🔕 Désactivées'}
+              </div>
+            </div>
+            {pushSupported && (
+              <button
+                onClick={isSubscribed ? unsubscribe : subscribe}
+                disabled={pushLoading}
+                style={{ padding:'7px 14px', borderRadius:20, border:'none', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: pushLoading ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: pushLoading ? 0.6 : 1, transition:'all .2s',
+                  background: isSubscribed ? 'rgba(200,80,80,.10)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
+                  color: isSubscribed ? '#c85050' : '#fff',
+                }}>
+                {pushLoading ? '…' : isSubscribed ? 'Désactiver' : 'Activer'}
+              </button>
+            )}
+          </div>
+          {/* Horaires — visible seulement si abonné */}
+          {isSubscribed && (
+            <div>
+              <div style={{ fontSize:11, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Rappels à quel moment ?</div>
+              <div style={{ display:'flex', gap:8, marginBottom:10 }}>
+                {HORAIRES_SETTINGS.map(h => {
+                  const sel = horaires.includes(h.id)
+                  return (
+                    <button key={h.id} onClick={() => toggleHoraire(h.id)} style={{
+                      flex:1, padding:'10px 4px', borderRadius:10, border:'none',
+                      background: sel ? 'linear-gradient(135deg,#c8a0b0,#a07888)' : 'rgba(0,0,0,.05)',
+                      color: sel ? '#fff' : 'rgba(30,20,8,.55)',
+                      fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight: sel ? 600 : 400,
+                      cursor:'pointer', transition:'all .2s',
+                      display:'flex', flexDirection:'column', alignItems:'center', gap:4,
+                    }}>
+                      <span style={{ fontSize:18 }}>{h.emoji}</span>
+                      {h.label}
+                    </button>
+                  )
+                })}
+              </div>
+              <button onClick={saveHoraires} disabled={savingHoraires} style={{
+                width:'100%', padding:'9px', borderRadius:8, border:'none',
+                background: savedHoraires ? 'rgba(122,170,80,.85)' : 'rgba(200,160,150,.25)',
+                color: savedHoraires ? '#fff' : 'rgba(30,20,8,.65)',
+                fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', transition:'all .2s',
+              }}>
+                {savedHoraires ? '✓ Sauvegardé' : savingHoraires ? '…' : 'Sauvegarder les horaires'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Installation PWA ── */}
+        <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+          <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:6 }}>Application</div>
+          {_settingsIsStandalone || installDone ? (
+            <div style={{ fontSize:14, color:'#5a9a28', fontFamily:"'Jost',sans-serif" }}>📲 Installée sur cet écran</div>
+          ) : _settingsIsIOS ? (
+            <div>
+              <div style={{ fontSize:13, color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontStyle:'italic', marginBottom:10 }}>
+                Pour installer sur iOS :
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                {[
+                  'Appuie sur Partager ⎙ en bas de Safari',
+                  'Choisis "Sur l\'écran d\'accueil"',
+                  'Appuie sur "Ajouter"',
+                ].map((t, i) => (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:13, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>
+                    <span style={{ width:20, height:20, borderRadius:'50%', background:'rgba(122,170,80,.15)', border:'1px solid rgba(122,170,80,.30)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:'#5a9a28', flexShrink:0 }}>{i+1}</span>
+                    {t}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : installPrompt ? (
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ fontSize:14, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Non installée</div>
+              <button onClick={handleInstall} disabled={installing} style={{ padding:'7px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#78c878,#4a9860)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: installing ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: installing ? 0.7 : 1 }}>
+                {installing ? '…' : '📲 Installer'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ fontSize:13, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>
+              Installation non disponible sur ce navigateur
+            </div>
+          )}
+        </div>
 
         {/* Abonnement */}
         <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
