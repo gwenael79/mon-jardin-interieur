@@ -1973,10 +1973,10 @@ function StepNotifications({ userId, onNext }) {
         </div>
 
         <div className="s1">
-          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(22px,5vw,30px)', fontWeight:300, color:'var(--text)', lineHeight:1.3, marginBottom:10 }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(28px,7vw,38px)', fontWeight:300, color:'var(--text)', lineHeight:1.3, marginBottom:12 }}>
             Reste en lien<br/>avec <em style={{ fontStyle:'italic', color:'var(--green)' }}>ton jardin</em>
           </h2>
-          <p style={{ fontSize:14, color:'var(--text3)', fontStyle:'italic', lineHeight:1.75 }}>
+          <p style={{ fontSize:'clamp(15px,4vw,17px)', color:'var(--text3)', fontStyle:'italic', lineHeight:1.75 }}>
             Reçois un rappel doux quand il est temps de prendre soin de toi.<br/>
             Un seul geste — tu peux désactiver à tout moment.
           </p>
@@ -1989,13 +1989,13 @@ function StepNotifications({ userId, onNext }) {
             { icon:'✨', text:'Ton jardin te manquera moins' },
           ].map(({ icon, text }) => (
             <div key={text} style={{
-              display:'flex', alignItems:'center', gap:12,
-              padding:'11px 14px', borderRadius:12,
+              display:'flex', alignItems:'center', gap:14,
+              padding:'13px 16px', borderRadius:12,
               background:'rgba(var(--text-rgb),0.04)',
               border:'1px solid rgba(var(--text-rgb),0.08)',
             }}>
-              <span style={{ fontSize:20, flexShrink:0 }}>{icon}</span>
-              <span style={{ fontSize:13, color:'var(--text2)', textAlign:'left' }}>{text}</span>
+              <span style={{ fontSize:24, flexShrink:0 }}>{icon}</span>
+              <span style={{ fontSize:'clamp(14px,3.8vw,16px)', color:'var(--text2)', textAlign:'left' }}>{text}</span>
             </div>
           ))}
         </div>
