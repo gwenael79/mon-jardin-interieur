@@ -15,6 +15,13 @@
 
     <!-- Thème — applique les CSS vars AVANT React pour éviter le flash de couleurs -->
     <script src="/theme-init.js"></script>
+    <!-- Capture beforeinstallprompt le plus tôt possible, avant React -->
+    <script>
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window._installPrompt = e;
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

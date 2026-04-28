@@ -2045,13 +2045,22 @@ function StepInstall({ onNext }) {
   const [installPrompt, setInstallPrompt] = useState(window._installPrompt ?? null)
   const [installing,    setInstalling]    = useState(false)
   const [done,          setDone]          = useState(false)
+  const [waited,        setWaited]        = useState(false)  // attend 1s avant de décider d'auto-skip
 
-  // Déjà installé → passe automatiquement
+  // Déjà en mode standalone → passe automatiquement
   useEffect(() => {
-    if (_isStandalone) onNext()
+    if (_isStandalone) { onNext(); return }
+    // Attend 1s que le prompt arrive (capturé dans index.html) avant d'auto-skipper
+    const t = setTimeout(() => setWaited(true), 1000)
+    return () => clearTimeout(t)
   }, [])
 
-  // Capture le prompt si pas encore disponible
+  // Auto-skip si pas iOS et pas de prompt après délai d'attente
+  useEffect(() => {
+    if (waited && !_isIOS && !installPrompt) onNext()
+  }, [waited, installPrompt])
+
+  // Capture le prompt s'il arrive pendant qu'on est sur cet écran
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); window._installPrompt = e }
     window.addEventListener('beforeinstallprompt', handler)
