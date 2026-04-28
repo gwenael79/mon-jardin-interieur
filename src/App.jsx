@@ -58,6 +58,19 @@ export default function App() {
   const [badge,      setBadge]      = useState(false)
   const { daysSince } = useLastVisit(screen === 'dashboard' ? user?.id : null)
   useNotificationSound()
+
+  // Trace l'installation PWA (ouverture en mode standalone)
+  useEffect(() => {
+    if (!user?.id) return
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true
+    if (!isStandalone) return
+    supabase.from('users')
+      .update({ pwa_installed_at: new Date().toISOString() })
+      .eq('id', user.id)
+      .is('pwa_installed_at', null)
+      .then(() => {})
+  }, [user?.id])
   useGardenNotification({
     daysSince,
     onShowBanner: useCallback((msg) => setBanner(msg), []),

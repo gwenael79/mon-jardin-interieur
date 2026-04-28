@@ -118,7 +118,7 @@ function FunnelUserDetail({ users }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Jost,sans-serif' }}>
             <thead>
               <tr>
-                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan'].map(h => (
+                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan', '🔔', '📲'].map(h => (
                   <th key={h} style={{ textAlign: h === 'Utilisateur' ? 'left' : 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
@@ -170,6 +170,18 @@ function FunnelUserDetail({ users }) {
                       }}>
                         {u.plan ?? 'free'}
                       </span>
+                    </td>
+                    {/* Notifications push */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.has_push ? 'Notifications activées' : 'Pas de notifications'}>
+                      {u.has_push
+                        ? <span style={{ color: '#78c85e', fontSize: 13 }}>✓</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
+                    </td>
+                    {/* Installation PWA */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.pwa_installed_at ? `Installé le ${new Date(u.pwa_installed_at).toLocaleDateString('fr-FR')}` : 'Appli non installée'}>
+                      {u.pwa_installed_at
+                        ? <span style={{ color: '#78c85e', fontSize: 13 }}>✓</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
                     </td>
                   </tr>
                 )
@@ -481,15 +493,18 @@ export function AdminClientsPage() {
       const [
         { data: allUsers, error: e1 },
         { data: profiles, error: e2 },
+        { data: pushSubs, error: e3 },
       ] = await Promise.all([
-        supabase.from('users').select('id, email, display_name, flower_name, created_at, onboarding_completed, plan').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
+        supabase.from('users').select('id, email, display_name, flower_name, created_at, onboarding_completed, plan, pwa_installed_at').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
         supabase.from('profiles').select('id, week_one_data'),
+        supabase.from('push_subscriptions').select('user_id'),
       ])
       if (e1) console.error('[funnel] users:', e1)
       if (e2) console.error('[funnel] profiles:', e2)
 
-      const profileMap = {}
+      const profileMap  = {}
       ;(profiles ?? []).forEach(p => { profileMap[p.id] = p })
+      const pushUserIds = new Set((pushSubs ?? []).map(s => s.user_id))
 
       const counts   = { inscrit: 0, onboarding: 0, jour: [0,0,0,0,0,0,0], dashboard: 0 }
       const userList = []
@@ -498,7 +513,7 @@ export function AdminClientsPage() {
         const completedDays = (profileMap[u.id]?.week_one_data?.completedDays ?? []).map(Number)
         const maxDay        = completedDays.length > 0 ? Math.max(...completedDays) : 0
 
-        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, completedDays })
+        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays })
 
         if (!u.onboarding_completed)    { counts.inscrit++;              return }
         if (completedDays.length === 0) { counts.onboarding++;           return }
