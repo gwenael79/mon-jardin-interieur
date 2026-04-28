@@ -1952,14 +1952,40 @@ const TAG_LABELS = {
 }
 
 // ─── Modal notifications ──────────────────────────────────────────────────────
+const HORAIRES_LIST = [
+  { id:'matin', label:'Matin', emoji:'🌅' },
+  { id:'midi',  label:'Midi',  emoji:'☀️' },
+  { id:'soir',  label:'Soir',  emoji:'🌙' },
+]
+
 function StepNotifications({ userId, onNext }) {
   const { isSupported, isSubscribed, isLoading, subscribe } = usePushNotification(userId)
-  const [done, setDone] = useState(false)
+  const [done,     setDone]     = useState(false)
+  const [horaires, setHoraires] = useState(['soir'])
+
+  function toggleHoraire(id) {
+    setHoraires(prev =>
+      prev.includes(id)
+        ? prev.length > 1 ? prev.filter(h => h !== id) : prev  // au moins 1 sélectionné
+        : [...prev, id]
+    )
+  }
 
   async function handleActivate() {
     await subscribe()
+    // Sauvegarde les horaires choisis dans push_subscriptions
+    await supabase.from('push_subscriptions')
+      .update({ horaires })
+      .eq('user_id', userId)
     setDone(true)
     setTimeout(onNext, 900)
+  }
+
+  async function handleUpdateAndContinue() {
+    await supabase.from('push_subscriptions')
+      .update({ horaires })
+      .eq('user_id', userId)
+    onNext()
   }
 
   const alreadyOn = isSubscribed && !done
@@ -1978,13 +2004,42 @@ function StepNotifications({ userId, onNext }) {
           </h2>
           <p style={{ fontSize:'clamp(15px,4vw,17px)', color:'var(--text3)', fontStyle:'italic', lineHeight:1.75 }}>
             Reçois un rappel doux quand il est temps de prendre soin de toi.<br/>
-            Un seul geste — tu peux désactiver à tout moment.
+            Tu peux désactiver à tout moment.
           </p>
         </div>
 
-        <div className="s2" style={{ width:'100%', display:'flex', flexDirection:'column', gap:10 }}>
+        {/* Sélection horaires */}
+        <div className="s2" style={{ width:'100%', display:'flex', flexDirection:'column', gap:12 }}>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:'clamp(13px,3.5vw,15px)', fontWeight:500, color:'var(--text2)', margin:0, letterSpacing:'.04em' }}>
+            À quel moment souhaitez-vous être rappelé ?
+          </p>
+          <div style={{ display:'flex', gap:10, justifyContent:'center' }}>
+            {HORAIRES_LIST.map(h => {
+              const sel = horaires.includes(h.id)
+              return (
+                <button
+                  key={h.id}
+                  onClick={() => toggleHoraire(h.id)}
+                  style={{
+                    flex:1, padding:'14px 8px', borderRadius:14, border:'none',
+                    background: sel ? 'linear-gradient(135deg,#c8a0b0,#a07888)' : 'rgba(var(--text-rgb),0.06)',
+                    color: sel ? '#fff' : 'var(--text2)',
+                    fontFamily:"'Jost',sans-serif",
+                    fontSize:'clamp(13px,3.5vw,15px)', fontWeight: sel ? 600 : 400,
+                    cursor:'pointer', transition:'all .2s ease',
+                    boxShadow: sel ? '0 4px 14px rgba(160,100,120,0.25)' : 'none',
+                    display:'flex', flexDirection:'column', alignItems:'center', gap:6,
+                  }}
+                >
+                  <span style={{ fontSize:22 }}>{h.emoji}</span>
+                  {h.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Autres bénéfices */}
           {[
-            { icon:'🌅', text:'Rappels au moment choisi par toi' },
             { icon:'🌿', text:'Jamais de spam, juste l\'essentiel' },
             { icon:'✨', text:'Ton jardin te manquera moins' },
           ].map(({ icon, text }) => (
@@ -2002,13 +2057,13 @@ function StepNotifications({ userId, onNext }) {
 
         <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
           {alreadyOn ? (
-            <button onClick={onNext} style={{
+            <button onClick={handleUpdateAndContinue} style={{
               padding:'16px 32px', borderRadius:50, border:'none',
               background:'var(--green)', color:'#fff',
               fontSize:15, fontWeight:600, letterSpacing:'.08em',
               cursor:'pointer', fontFamily:"'Jost',sans-serif",
             }}>
-              ✓ Déjà activées — Continuer
+              ✓ Enregistrer et continuer
             </button>
           ) : isSupported ? (
             <>
@@ -2030,7 +2085,6 @@ function StepNotifications({ userId, onNext }) {
               </button>
             </>
           ) : (
-            /* Navigateur sans support push */
             <button onClick={onNext} style={{
               padding:'16px 32px', borderRadius:50, border:'none',
               background:'rgba(var(--text-rgb),0.08)', color:'var(--text2)',
