@@ -1953,13 +1953,13 @@ const TAG_LABELS = {
 
 // ─── Modal notifications ──────────────────────────────────────────────────────
 function StepNotifications({ userId, onNext }) {
-  const { isSupported, permission, isSubscribed, isLoading, subscribe } = usePushNotification(userId)
+  const { isSupported, isSubscribed, isLoading, subscribe } = usePushNotification(userId)
   const [done, setDone] = useState(false)
 
-  // Déjà abonné → passe automatiquement
+  // Déjà abonné en base → passe automatiquement
   useEffect(() => {
-    if (isSubscribed || permission === 'granted') onNext()
-  }, [isSubscribed, permission])
+    if (isSubscribed) onNext()
+  }, [isSubscribed])
 
   async function handleActivate() {
     await subscribe()
