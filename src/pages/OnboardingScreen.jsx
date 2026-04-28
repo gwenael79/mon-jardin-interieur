@@ -1956,11 +1956,6 @@ function StepNotifications({ userId, onNext }) {
   const { isSupported, isSubscribed, isLoading, subscribe } = usePushNotification(userId)
   const [done, setDone] = useState(false)
 
-  // Déjà abonné en base → passe automatiquement
-  useEffect(() => {
-    if (isSubscribed) onNext()
-  }, [isSubscribed])
-
   async function handleActivate() {
     await subscribe()
     setDone(true)
@@ -1968,6 +1963,8 @@ function StepNotifications({ userId, onNext }) {
   }
 
   if (!isSupported) { onNext(); return null }
+
+  const alreadyOn = isSubscribed && !done
 
   return (
     <ModalShell onClick={null}>
@@ -2009,28 +2006,30 @@ function StepNotifications({ userId, onNext }) {
 
         <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
           <button
-            onClick={handleActivate}
-            disabled={isLoading || done}
+            onClick={alreadyOn ? onNext : handleActivate}
+            disabled={isLoading}
             style={{
               padding:'16px 32px', borderRadius:50, border:'none',
-              background: done ? 'var(--green)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
+              background: alreadyOn || done ? 'var(--green)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
               color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
-              cursor: isLoading || done ? 'default' : 'pointer',
+              cursor: isLoading ? 'default' : 'pointer',
               fontFamily:"'Jost',sans-serif", transition:'background .3s',
             }}
           >
-            {done ? '✓ Activées !' : isLoading ? '…' : '🔔  Activer les notifications'}
+            {done ? '✓ Activées !' : isLoading ? '…' : alreadyOn ? '✓ Déjà activées — Continuer' : '🔔  Activer les notifications'}
           </button>
-          <button
-            onClick={onNext}
-            style={{
-              padding:'10px', border:'none', background:'none',
-              fontSize:12, color:'var(--text3)', cursor:'pointer',
-              fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
-            }}
-          >
-            Passer pour l'instant
-          </button>
+          {!alreadyOn && (
+            <button
+              onClick={onNext}
+              style={{
+                padding:'10px', border:'none', background:'none',
+                fontSize:12, color:'var(--text3)', cursor:'pointer',
+                fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+              }}
+            >
+              Passer pour l'instant
+            </button>
+          )}
         </div>
       </div>
     </ModalShell>
