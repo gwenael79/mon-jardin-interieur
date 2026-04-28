@@ -2057,14 +2057,23 @@ function StepNotifications({ userId, onNext }) {
 
         <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
           {alreadyOn ? (
-            <button onClick={handleUpdateAndContinue} style={{
-              padding:'16px 32px', borderRadius:50, border:'none',
-              background:'var(--green)', color:'#fff',
-              fontSize:15, fontWeight:600, letterSpacing:'.08em',
-              cursor:'pointer', fontFamily:"'Jost',sans-serif",
-            }}>
-              ✓ Enregistrer et continuer
-            </button>
+            <>
+              <button onClick={handleUpdateAndContinue} style={{
+                padding:'16px 32px', borderRadius:50, border:'none',
+                background:'var(--green)', color:'#fff',
+                fontSize:15, fontWeight:600, letterSpacing:'.08em',
+                cursor:'pointer', fontFamily:"'Jost',sans-serif",
+              }}>
+                ✓ Enregistrer et continuer
+              </button>
+              <button onClick={onNext} style={{
+                padding:'10px', border:'none', background:'none',
+                fontSize:12, color:'var(--text3)', cursor:'pointer',
+                fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+              }}>
+                Passer
+              </button>
+            </>
           ) : isSupported ? (
             <>
               <button onClick={handleActivate} disabled={isLoading || done} style={{
