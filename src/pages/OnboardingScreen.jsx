@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../core/supabaseClient'
 import { useTheme } from '../hooks/useTheme'
+import { usePushNotification } from '../hooks/usePushNotification'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DONNÉES SLIDES
@@ -1950,6 +1951,233 @@ const TAG_LABELS = {
   projection:  'Et maintenant...',
 }
 
+// ─── Modal notifications ──────────────────────────────────────────────────────
+function StepNotifications({ userId, onNext }) {
+  const { isSupported, permission, isSubscribed, isLoading, subscribe } = usePushNotification(userId)
+  const [done, setDone] = useState(false)
+
+  // Déjà abonné → passe automatiquement
+  useEffect(() => {
+    if (isSubscribed || permission === 'granted') onNext()
+  }, [isSubscribed, permission])
+
+  async function handleActivate() {
+    await subscribe()
+    setDone(true)
+    setTimeout(onNext, 800)
+  }
+
+  if (!isSupported) { onNext(); return null }
+
+  return (
+    <ModalShell onClick={null}>
+      <div style={{ padding:'40px 28px 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:24, textAlign:'center' }}>
+
+        {/* Illustration */}
+        <div className="s0" style={{ fontSize:72, lineHeight:1, filter:'drop-shadow(0 4px 16px rgba(100,120,200,0.25))' }}>
+          🔔
+        </div>
+
+        <div className="s1">
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(22px,5vw,30px)', fontWeight:300, color:'var(--text)', lineHeight:1.3, marginBottom:10 }}>
+            Reste en lien<br/>avec <em style={{ fontStyle:'italic', color:'var(--green)' }}>ton jardin</em>
+          </h2>
+          <p style={{ fontSize:14, color:'var(--text3)', fontStyle:'italic', lineHeight:1.75 }}>
+            Reçois un rappel doux quand il est temps de prendre soin de toi.<br/>
+            Un seul geste — tu peux désactiver à tout moment.
+          </p>
+        </div>
+
+        {/* Bénéfices */}
+        <div className="s2" style={{ width:'100%', display:'flex', flexDirection:'column', gap:10 }}>
+          {[
+            { icon:'🌅', text:'Rappels au moment choisi par toi' },
+            { icon:'🌿', text:'Jamais de spam, juste l\'essentiel' },
+            { icon:'✨', text:'Ton jardin te manquera moins' },
+          ].map(({ icon, text }) => (
+            <div key={text} style={{
+              display:'flex', alignItems:'center', gap:12,
+              padding:'11px 14px', borderRadius:12,
+              background:'rgba(var(--text-rgb),0.04)',
+              border:'1px solid rgba(var(--text-rgb),0.08)',
+            }}>
+              <span style={{ fontSize:20, flexShrink:0 }}>{icon}</span>
+              <span style={{ fontSize:13, color:'var(--text2)', textAlign:'left' }}>{text}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
+          <button
+            onClick={handleActivate}
+            disabled={isLoading || done}
+            style={{
+              padding:'16px 32px', borderRadius:50, border:'none',
+              background: done ? 'var(--green)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
+              color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
+              cursor: isLoading || done ? 'default' : 'pointer',
+              fontFamily:"'Jost',sans-serif", transition:'background .3s',
+            }}
+          >
+            {done ? '✓ Activées !' : isLoading ? '…' : '🔔  Activer les notifications'}
+          </button>
+          <button
+            onClick={onNext}
+            style={{
+              padding:'10px', border:'none', background:'none',
+              fontSize:12, color:'var(--text3)', cursor:'pointer',
+              fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+            }}
+          >
+            Passer pour l'instant
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  )
+}
+
+// ─── Modal installation PWA ───────────────────────────────────────────────────
+const _isIOS        = /iphone|ipad|ipod/i.test(navigator.userAgent)
+const _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+
+function StepInstall({ onNext }) {
+  const [installPrompt, setInstallPrompt] = useState(window._installPrompt ?? null)
+  const [installing,    setInstalling]    = useState(false)
+  const [done,          setDone]          = useState(false)
+
+  // Déjà installé → passe automatiquement
+  useEffect(() => {
+    if (_isStandalone) onNext()
+  }, [])
+
+  // Capture le prompt si pas encore disponible
+  useEffect(() => {
+    const handler = (e) => { e.preventDefault(); setInstallPrompt(e); window._installPrompt = e }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  async function handleInstall() {
+    if (!installPrompt) return
+    setInstalling(true)
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') { setDone(true); setTimeout(onNext, 900) }
+    else setInstalling(false)
+  }
+
+  if (_isStandalone) return null
+
+  return (
+    <ModalShell onClick={null}>
+      <div style={{ padding:'40px 28px 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:24, textAlign:'center' }}>
+
+        {/* Illustration */}
+        <div className="s0" style={{ fontSize:68, lineHeight:1, filter:'drop-shadow(0 4px 16px rgba(60,160,90,0.25))' }}>
+          📲
+        </div>
+
+        <div className="s1">
+          <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(22px,5vw,30px)', fontWeight:300, color:'var(--text)', lineHeight:1.3, marginBottom:10 }}>
+            Installe ton jardin<br/>sur ton <em style={{ fontStyle:'italic', color:'var(--green)' }}>écran d'accueil</em>
+          </h2>
+          <p style={{ fontSize:14, color:'var(--text3)', fontStyle:'italic', lineHeight:1.75 }}>
+            Accède à ton espace en un geste, sans ouvrir le navigateur.
+          </p>
+        </div>
+
+        {/* iOS : guide étapes */}
+        {_isIOS ? (
+          <div className="s2" style={{ width:'100%', display:'flex', flexDirection:'column', gap:0, borderRadius:14, overflow:'hidden', border:'1px solid rgba(var(--text-rgb),0.09)' }}>
+            {[
+              { n:'1', text:<>Appuie sur <strong>Partager</strong> ⎙ en bas de Safari</> },
+              { n:'2', text:<>Choisis <strong>"Sur l'écran d'accueil"</strong></> },
+              { n:'3', text:<>Appuie sur <strong>"Ajouter"</strong></> },
+            ].map(({ n, text }, i) => (
+              <div key={n} style={{
+                display:'flex', alignItems:'center', gap:12, padding:'13px 16px',
+                background: i % 2 === 0 ? 'rgba(var(--text-rgb),0.03)' : 'transparent',
+                borderBottom: i < 2 ? '1px solid rgba(var(--text-rgb),0.07)' : 'none',
+              }}>
+                <div style={{
+                  width:24, height:24, borderRadius:'50%', flexShrink:0,
+                  background:'rgba(var(--green-rgb),0.12)',
+                  border:'1px solid rgba(var(--green-rgb),0.28)',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  fontSize:11, fontWeight:700, color:'var(--green)',
+                }}>{n}</div>
+                <span style={{ fontSize:13, color:'var(--text2)', textAlign:'left' }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Android / autres : bénéfices */
+          <div className="s2" style={{ width:'100%', display:'flex', flexDirection:'column', gap:10 }}>
+            {[
+              { icon:'⚡', text:'Accès instantané depuis l\'écran d\'accueil' },
+              { icon:'🌿', text:'Expérience native, sans navigateur' },
+              { icon:'🔒', text:'Fonctionne même avec peu de réseau' },
+            ].map(({ icon, text }) => (
+              <div key={text} style={{
+                display:'flex', alignItems:'center', gap:12,
+                padding:'11px 14px', borderRadius:12,
+                background:'rgba(var(--text-rgb),0.04)',
+                border:'1px solid rgba(var(--text-rgb),0.08)',
+              }}>
+                <span style={{ fontSize:20, flexShrink:0 }}>{icon}</span>
+                <span style={{ fontSize:13, color:'var(--text2)', textAlign:'left' }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
+          {/* Bouton principal : Android = install, iOS = "C'est fait" */}
+          {_isIOS ? (
+            <button
+              onClick={onNext}
+              style={{
+                padding:'16px 32px', borderRadius:50, border:'none',
+                background:'linear-gradient(135deg,#78c878,#4a9860)',
+                color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
+                cursor:'pointer', fontFamily:"'Jost',sans-serif",
+              }}
+            >
+              ✓ C'est fait, continuer
+            </button>
+          ) : installPrompt ? (
+            <button
+              onClick={handleInstall}
+              disabled={installing || done}
+              style={{
+                padding:'16px 32px', borderRadius:50, border:'none',
+                background: done ? 'var(--green)' : 'linear-gradient(135deg,#78c878,#4a9860)',
+                color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
+                cursor: installing || done ? 'default' : 'pointer',
+                fontFamily:"'Jost',sans-serif", transition:'background .3s',
+              }}
+            >
+              {done ? '✓ Installé !' : installing ? '…' : '📲  Installer l\'application'}
+            </button>
+          ) : null}
+
+          <button
+            onClick={onNext}
+            style={{
+              padding:'10px', border:'none', background:'none',
+              fontSize:12, color:'var(--text3)', cursor:'pointer',
+              fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+            }}
+          >
+            {_isIOS ? 'Passer pour l\'instant' : installPrompt ? 'Passer pour l\'instant' : 'Continuer sans installer'}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  )
+}
+
 function StepQuestionnaire({ userId, onComplete, onSkip }) {
   const [qIndex, setQIndex]     = useState(0)
   const [answers, setAnswers]   = useState({})   // { qIndex: choiceIndex }
@@ -2418,7 +2646,7 @@ function VeilScreen({ onDone }) {
 
 export function OnboardingScreen({ userId, onComplete }) {
   useTheme()
-  // phase : -2=voile -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=quizIntro 7=quiz
+  // phase : -2=voile -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=notifications 7=install 8=quizIntro 9=quiz
   const [phase,        setPhase]        = useState(-2)
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
@@ -2468,13 +2696,9 @@ export function OnboardingScreen({ userId, onComplete }) {
     setPhase(4)
   }
 
-  // Appelé quand StepEquipe clique "Suivant" → on va au quiz sauf si déjà fait
+  // Appelé quand StepEquipe clique "Suivant" → notifications → install → quiz
   function handleEquipeNext() {
-    if (quizAlready) {
-      onComplete()  // quiz déjà fait → directement WeekOneFlow
-    } else {
-      setPhase(6)
-    }
+    setPhase(6)
   }
 
   if (phase === -2 || phase === -1) return (
@@ -2491,12 +2715,17 @@ export function OnboardingScreen({ userId, onComplete }) {
   if (phase === 3)  return <StepGraine intention={intention} onPlant={handlePlant} />
   if (phase === 4)  return <StepCommunaute onComplete={() => setPhase(5)} />
   if (phase === 5)  return <StepEquipe onNext={handleEquipeNext} onSkip={onComplete} />
-  if (phase === 6)  return <StepQuizIntro onStart={() => setPhase(7)} onSkip={onComplete} onGoWeekOne={onComplete} />
-  if (phase === 7)  return (
+  if (phase === 6)  return <StepNotifications userId={userId} onNext={() => setPhase(7)} />
+  if (phase === 7)  return <StepInstall onNext={() => {
+    if (quizAlready) { onComplete(); return }
+    setPhase(8)
+  }} />
+  if (phase === 8)  return <StepQuizIntro onStart={() => setPhase(9)} onSkip={onComplete} onGoWeekOne={onComplete} />
+  if (phase === 9)  return (
     <StepQuestionnaire
       userId={userId}
-      onComplete={onComplete}   // → WeekOneFlow
-      onSkip={onComplete}       // → WeekOneFlow aussi (abandon en cours de route)
+      onComplete={onComplete}
+      onSkip={onComplete}
     />
   )
   return null
