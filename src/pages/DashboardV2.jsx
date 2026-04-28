@@ -709,9 +709,16 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
   }
 
   // ── Installation PWA ──
-  const [installPrompt, setInstallPrompt] = useState(window._installPrompt ?? null)
-  const [installing,    setInstalling]    = useState(false)
-  const [installDone,   setInstallDone]   = useState(false)
+  const [installPrompt,   setInstallPrompt]   = useState(window._installPrompt ?? null)
+  const [installing,      setInstalling]      = useState(false)
+  const [installDone,     setInstallDone]     = useState(false)
+  const [pwaInstalledAt,  setPwaInstalledAt]  = useState(null)
+
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('users').select('pwa_installed_at').eq('id', userId).single()
+      .then(({ data }) => { if (data?.pwa_installed_at) setPwaInstalledAt(data.pwa_installed_at) })
+  }, [userId])
 
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); window._installPrompt = e }
@@ -902,8 +909,10 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
         {/* ── Installation PWA ── */}
         <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
           <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:6 }}>Application</div>
-          {_settingsIsStandalone || installDone ? (
-            <div style={{ fontSize:14, color:'#5a9a28', fontFamily:"'Jost',sans-serif" }}>📲 Installée sur cet écran</div>
+          {_settingsIsStandalone || installDone || pwaInstalledAt ? (
+            <div style={{ fontSize:14, color:'#5a9a28', fontFamily:"'Jost',sans-serif" }}>
+              📲 Installée{pwaInstalledAt && !_settingsIsStandalone ? <span style={{ fontSize:11, color:'rgba(30,20,8,.40)', marginLeft:8 }}>· ouvrez depuis votre écran d'accueil</span> : ''}
+            </div>
           ) : _settingsIsIOS ? (
             <div>
               <div style={{ fontSize:13, color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontStyle:'italic', marginBottom:10 }}>
