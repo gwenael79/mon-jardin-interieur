@@ -1959,10 +1959,8 @@ function StepNotifications({ userId, onNext }) {
   async function handleActivate() {
     await subscribe()
     setDone(true)
-    setTimeout(onNext, 800)
+    setTimeout(onNext, 900)
   }
-
-  if (!isSupported) { onNext(); return null }
 
   const alreadyOn = isSubscribed && !done
 
@@ -1970,7 +1968,6 @@ function StepNotifications({ userId, onNext }) {
     <ModalShell onClick={null}>
       <div style={{ padding:'40px 28px 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:24, textAlign:'center' }}>
 
-        {/* Illustration */}
         <div className="s0" style={{ fontSize:72, lineHeight:1, filter:'drop-shadow(0 4px 16px rgba(100,120,200,0.25))' }}>
           🔔
         </div>
@@ -1985,7 +1982,6 @@ function StepNotifications({ userId, onNext }) {
           </p>
         </div>
 
-        {/* Bénéfices */}
         <div className="s2" style={{ width:'100%', display:'flex', flexDirection:'column', gap:10 }}>
           {[
             { icon:'🌅', text:'Rappels au moment choisi par toi' },
@@ -2005,29 +2001,43 @@ function StepNotifications({ userId, onNext }) {
         </div>
 
         <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
-          <button
-            onClick={alreadyOn ? onNext : handleActivate}
-            disabled={isLoading}
-            style={{
+          {alreadyOn ? (
+            <button onClick={onNext} style={{
               padding:'16px 32px', borderRadius:50, border:'none',
-              background: alreadyOn || done ? 'var(--green)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
-              color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
-              cursor: isLoading ? 'default' : 'pointer',
-              fontFamily:"'Jost',sans-serif", transition:'background .3s',
-            }}
-          >
-            {done ? '✓ Activées !' : isLoading ? '…' : alreadyOn ? '✓ Déjà activées — Continuer' : '🔔  Activer les notifications'}
-          </button>
-          {!alreadyOn && (
-            <button
-              onClick={onNext}
-              style={{
+              background:'var(--green)', color:'#fff',
+              fontSize:15, fontWeight:600, letterSpacing:'.08em',
+              cursor:'pointer', fontFamily:"'Jost',sans-serif",
+            }}>
+              ✓ Déjà activées — Continuer
+            </button>
+          ) : isSupported ? (
+            <>
+              <button onClick={handleActivate} disabled={isLoading || done} style={{
+                padding:'16px 32px', borderRadius:50, border:'none',
+                background: done ? 'var(--green)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
+                color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
+                cursor: isLoading || done ? 'default' : 'pointer',
+                fontFamily:"'Jost',sans-serif", transition:'background .3s',
+              }}>
+                {done ? '✓ Activées !' : isLoading ? '…' : '🔔  Activer les notifications'}
+              </button>
+              <button onClick={onNext} style={{
                 padding:'10px', border:'none', background:'none',
                 fontSize:12, color:'var(--text3)', cursor:'pointer',
                 fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
-              }}
-            >
-              Passer pour l'instant
+              }}>
+                Passer pour l'instant
+              </button>
+            </>
+          ) : (
+            /* Navigateur sans support push */
+            <button onClick={onNext} style={{
+              padding:'16px 32px', borderRadius:50, border:'none',
+              background:'rgba(var(--text-rgb),0.08)', color:'var(--text2)',
+              fontSize:15, fontWeight:500, cursor:'pointer',
+              fontFamily:"'Jost',sans-serif",
+            }}>
+              Continuer
             </button>
           )}
         </div>
@@ -2044,22 +2054,8 @@ function StepInstall({ onNext }) {
   const [installPrompt, setInstallPrompt] = useState(window._installPrompt ?? null)
   const [installing,    setInstalling]    = useState(false)
   const [done,          setDone]          = useState(false)
-  const [waited,        setWaited]        = useState(false)  // attend 1s avant de décider d'auto-skip
 
-  // Déjà en mode standalone → passe automatiquement
-  useEffect(() => {
-    if (_isStandalone) { onNext(); return }
-    // Attend 1s que le prompt arrive (capturé dans index.html) avant d'auto-skipper
-    const t = setTimeout(() => setWaited(true), 1000)
-    return () => clearTimeout(t)
-  }, [])
-
-  // Auto-skip si pas iOS et pas de prompt après délai d'attente
-  useEffect(() => {
-    if (waited && !_isIOS && !installPrompt) onNext()
-  }, [waited, installPrompt])
-
-  // Capture le prompt s'il arrive pendant qu'on est sur cet écran
+  // Capture le prompt s'il arrive pendant l'affichage du step
   useEffect(() => {
     const handler = (e) => { e.preventDefault(); setInstallPrompt(e); window._installPrompt = e }
     window.addEventListener('beforeinstallprompt', handler)
@@ -2074,8 +2070,6 @@ function StepInstall({ onNext }) {
     if (outcome === 'accepted') { setDone(true); setTimeout(onNext, 900) }
     else setInstalling(false)
   }
-
-  if (_isStandalone) return null
 
   return (
     <ModalShell onClick={null}>
@@ -2141,45 +2135,66 @@ function StepInstall({ onNext }) {
         )}
 
         <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
-          {/* Bouton principal : Android = install, iOS = "C'est fait" */}
-          {_isIOS ? (
-            <button
-              onClick={onNext}
-              style={{
+          {_isStandalone ? (
+            /* Déjà installé */
+            <button onClick={onNext} style={{
+              padding:'16px 32px', borderRadius:50, border:'none',
+              background:'var(--green)', color:'#fff',
+              fontSize:15, fontWeight:600, letterSpacing:'.08em',
+              cursor:'pointer', fontFamily:"'Jost',sans-serif",
+            }}>
+              ✓ Déjà installé — Continuer
+            </button>
+          ) : _isIOS ? (
+            /* iOS : guide manuel, bouton "C'est fait" */
+            <>
+              <button onClick={onNext} style={{
                 padding:'16px 32px', borderRadius:50, border:'none',
                 background:'linear-gradient(135deg,#78c878,#4a9860)',
                 color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
                 cursor:'pointer', fontFamily:"'Jost',sans-serif",
-              }}
-            >
-              ✓ C'est fait, continuer
-            </button>
+              }}>
+                ✓ C'est fait, continuer
+              </button>
+              <button onClick={onNext} style={{
+                padding:'10px', border:'none', background:'none',
+                fontSize:12, color:'var(--text3)', cursor:'pointer',
+                fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+              }}>
+                Passer pour l'instant
+              </button>
+            </>
           ) : installPrompt ? (
-            <button
-              onClick={handleInstall}
-              disabled={installing || done}
-              style={{
+            /* Android/Chrome : prompt natif disponible */
+            <>
+              <button onClick={handleInstall} disabled={installing || done} style={{
                 padding:'16px 32px', borderRadius:50, border:'none',
                 background: done ? 'var(--green)' : 'linear-gradient(135deg,#78c878,#4a9860)',
                 color:'#fff', fontSize:15, fontWeight:600, letterSpacing:'.08em',
                 cursor: installing || done ? 'default' : 'pointer',
                 fontFamily:"'Jost',sans-serif", transition:'background .3s',
-              }}
-            >
-              {done ? '✓ Installé !' : installing ? '…' : '📲  Installer l\'application'}
+              }}>
+                {done ? '✓ Installé !' : installing ? '…' : '📲  Installer l\'application'}
+              </button>
+              <button onClick={onNext} style={{
+                padding:'10px', border:'none', background:'none',
+                fontSize:12, color:'var(--text3)', cursor:'pointer',
+                fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+              }}>
+                Passer pour l'instant
+              </button>
+            </>
+          ) : (
+            /* Prompt non disponible (navigateur non supporté, déjà installé côté OS, etc.) */
+            <button onClick={onNext} style={{
+              padding:'16px 32px', borderRadius:50, border:'none',
+              background:'rgba(var(--text-rgb),0.08)', color:'var(--text2)',
+              fontSize:15, fontWeight:500, cursor:'pointer',
+              fontFamily:"'Jost',sans-serif",
+            }}>
+              Continuer
             </button>
-          ) : null}
-
-          <button
-            onClick={onNext}
-            style={{
-              padding:'10px', border:'none', background:'none',
-              fontSize:12, color:'var(--text3)', cursor:'pointer',
-              fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
-            }}
-          >
-            {_isIOS ? 'Passer pour l\'instant' : installPrompt ? 'Passer pour l\'instant' : 'Continuer sans installer'}
-          </button>
+          )}
         </div>
       </div>
     </ModalShell>
