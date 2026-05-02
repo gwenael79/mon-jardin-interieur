@@ -250,7 +250,7 @@ export function ProProfile({ onBack }) {
       console.log('[ProProfile] user.id:', user.id, '| user.email:', user.email)
 
       const { data: u } = await supabase
-        .from('users').select('id, display_name, flower_name, role, is_animator')
+        .from('users').select('id, display_name, flower_name, role, is_animator, premium_until')
         .eq('id', user.id).single()
       setUserData(u)
       const animator = u?.is_animator === true
@@ -430,6 +430,18 @@ export function ProProfile({ onBack }) {
     setShowApplyModal(false)
   }
 
+  async function handleUpgradePro(priceId) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { priceId },
+      })
+      if (error || !data?.url) throw new Error(error?.message ?? 'Erreur Stripe')
+      window.location.href = data.url
+    } catch (e) { alert('Erreur : ' + e.message) }
+  }
+
   function copyId() {
     if (!proData?.pro_id) return
     navigator.clipboard.writeText(proData.pro_id)
@@ -498,6 +510,11 @@ export function ProProfile({ onBack }) {
       </div>
     </div>
   )
+
+  const isProPremium = !!(userData?.premium_until && new Date(userData.premium_until) > new Date())
+  const thisYear = new Date().getFullYear()
+  const ateliersThisYear = ateliers.filter(a => a.created_at && new Date(a.created_at).getFullYear() === thisYear).length
+  const atelierAtLimit = !isProPremium && ateliersThisYear >= 2
 
   return (
     <div className="pp-wrap">
@@ -577,6 +594,25 @@ export function ProProfile({ onBack }) {
         ))}
       </div>
 
+      {!isProPremium && (
+        <div style={{maxWidth:840,margin:'0 auto',background:'linear-gradient(135deg,#1c1c1c,#2a2a2a)',borderLeft:'1px solid #333',borderRight:'1px solid #333',padding:'16px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap'}}>
+          <div>
+            <div style={{fontSize:11,fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(255,255,255,.45)',marginBottom:4}}>Plan Free</div>
+            <div style={{fontSize:13,color:'rgba(255,255,255,.75)'}}>2 ateliers/an · 2 produits en Jardinothèque — Passez en Premium pour tout débloquer.</div>
+          </div>
+          <div style={{display:'flex',gap:8,flexShrink:0}}>
+            <button onClick={() => handleUpgradePro('price_1TMpO0CIpPVJTaopHfQrzF8z')}
+              style={{padding:'8px 16px',borderRadius:8,border:'1px solid rgba(255,255,255,.20)',background:'rgba(255,255,255,.08)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
+              13 €/mois
+            </button>
+            <button onClick={() => handleUpgradePro('price_1TMpO0CIpPVJTaopzrpNDw8r')}
+              style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#5a9a28,#3a7a18)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
+              108 €/an
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="pp-tab-panel">
         <div className="pp-tab-body">
           {activeTab === 'ateliers' && (
@@ -612,11 +648,17 @@ export function ProProfile({ onBack }) {
               </div>
             ) :
             <div style={{display:'flex',flexDirection:'column',gap:14}}>
-              <button
-                onClick={() => { setEditAtelierModal(null); setShowAtelierModal(true) }}
-                style={{padding:'12px',borderRadius:12,border:'1px solid rgba(90,154,40,0.35)',background:'rgba(90,154,40,0.08)',color:'#3d7a12',fontSize:13,fontFamily:"'Jost',sans-serif",cursor:'pointer',fontWeight:600}}>
-                + Créer un atelier
-              </button>
+              {atelierAtLimit ? (
+                <div style={{padding:'12px 16px',borderRadius:12,border:'1px solid rgba(200,150,0,.30)',background:'rgba(200,150,0,.06)',color:'#7a5c00',fontSize:13,fontFamily:"'Jost',sans-serif",display:'flex',alignItems:'center',gap:8}}>
+                  🔒 Plan Free — limite de 2 ateliers par an atteinte. Passez en Premium pour en créer davantage.
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setEditAtelierModal(null); setShowAtelierModal(true) }}
+                  style={{padding:'12px',borderRadius:12,border:'1px solid rgba(90,154,40,0.35)',background:'rgba(90,154,40,0.08)',color:'#3d7a12',fontSize:13,fontFamily:"'Jost',sans-serif",cursor:'pointer',fontWeight:600}}>
+                  + Créer un atelier
+                </button>
+              )}
               {ateliers.length === 0 ? (
                 <div className="pp-empty">
                   <div className="pp-empty-icon">🌱</div>
@@ -675,6 +717,7 @@ export function ProProfile({ onBack }) {
               <VueEspace
                 partenaire={partenaireData}
                 onProductAdded={refreshData}
+                isProPremium={isProPremium}
               />
             ) : (
               <div className="pp-empty">

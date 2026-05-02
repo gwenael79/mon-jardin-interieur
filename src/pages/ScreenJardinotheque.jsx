@@ -1336,7 +1336,7 @@ function VueConnexion({ onSuccess, onBack }) {
 }
 
 // ── Vue espace vendeur ───────────────────────────────────────
-export function VueEspace({ partenaire, onLogout, onProductAdded }) {
+export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium = false }) {
   const [produits,  setProduits]  = useState([])
   const [loading,   setLoading]   = useState(true)
   const [showForm,  setShowForm]  = useState(false)
@@ -1369,22 +1369,6 @@ export function VueEspace({ partenaire, onLogout, onProductAdded }) {
     } catch (e) { alert('Erreur réseau : ' + e.message) }
     setAudioUploading(false)
   }
-
-  useEffect(() => {
-    const loadTherapeutes = async () => {
-      const { data, error } = await supabase
-        .from('users_pro')
-        .select('id, nom, prenom, entreprise, activite, adresse, cp, ville, telephone, siret, pro_id, site_web, facebook, instagram, linkedin')
-        .order('nom', { ascending: true })
-      console.log('[therapeutes] data:', data, '| error:', error)
-      if (data && data.length > 0) setTherapeutes(data)
-    }
-    // Attendre que la session soit prête avant de requêter
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('[therapeutes] session:', !!session)
-      loadTherapeutes()
-    })
-  }, [userId])
 
   const loadProduits = () => {
     setLoading(true)
@@ -1490,10 +1474,16 @@ export function VueEspace({ partenaire, onLogout, onProductAdded }) {
 
       {/* Bouton ajouter */}
       {!showForm && (
-        <button onClick={openNew}
-          style={{ padding:'12px', borderRadius:12, border:'1px solid rgba(90,154,40,0.35)', background:'rgba(90,154,40,0.08)', color:'#3d7a12', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:600 }}>
-          + Proposer un nouveau produit
-        </button>
+        !isProPremium && produits.length >= 2 ? (
+          <div style={{ padding:'12px 16px', borderRadius:12, border:'1px solid rgba(200,150,0,.30)', background:'rgba(200,150,0,.06)', color:'#7a5c00', fontSize:13, fontFamily:"'Jost',sans-serif", display:'flex', alignItems:'center', gap:8 }}>
+            🔒 Plan Free — limite de 2 produits dans la Jardinothèque. Passez en Premium pour en ajouter davantage.
+          </div>
+        ) : (
+          <button onClick={openNew}
+            style={{ padding:'12px', borderRadius:12, border:'1px solid rgba(90,154,40,0.35)', background:'rgba(90,154,40,0.08)', color:'#3d7a12', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:600 }}>
+            + Proposer un nouveau produit
+          </button>
+        )
       )}
 
       {/* Formulaire ajout/édition */}

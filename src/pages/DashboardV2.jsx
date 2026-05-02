@@ -1161,6 +1161,124 @@ function OrientationModal({ visibleSlides, onNavigate, onBilan, onRituel, onClos
   )
 }
 
+function UpgradeToProModal({ user, onClose, onSuccess }) {
+  const [form,    setForm]    = useState({ nom:'', prenom:'', entreprise:'', activite:'', adresse:'', cp:'', ville:'', telephone:'', siret:'' })
+  const [loading, setLoading] = useState(false)
+  const [error,   setError]   = useState(null)
+  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    supabase.from('users').select('display_name').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (!data?.display_name) return
+        const parts = data.display_name.trim().split(/\s+/)
+        setForm(f => ({ ...f, prenom: parts[0] ?? '', nom: parts.slice(1).join(' ') }))
+      })
+  }, [user.id])
+
+  const upd = field => e => setForm(f => ({ ...f, [field]: e.target.value }))
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const { nom, prenom, telephone, siret } = form
+    if (!nom.trim())       { setError('Le nom est obligatoire.'); return }
+    if (!prenom.trim())    { setError('Le prénom est obligatoire.'); return }
+    if (!telephone.trim()) { setError('Le téléphone est obligatoire.'); return }
+    if (!siret.trim())     { setError('Le SIRET est obligatoire.'); return }
+    if (!/^\d{14}$/.test(siret.replace(/\s/g, ''))) { setError('Le SIRET doit comporter 14 chiffres.'); return }
+    setError(null); setLoading(true)
+    try {
+      const { error: roleErr } = await supabase.from('users').update({ role: 'pro' }).eq('id', user.id)
+      if (roleErr) throw new Error(roleErr.message)
+
+      const { error: proErr } = await supabase.from('users_pro').insert({
+        user_id:    user.id,
+        email:      user.email,
+        nom:        nom.trim(),
+        prenom:     prenom.trim(),
+        entreprise: form.entreprise.trim() || null,
+        activite:   form.activite.trim()   || null,
+        adresse:    form.adresse.trim()    || null,
+        cp:         form.cp.trim()         || null,
+        ville:      form.ville.trim()      || null,
+        telephone:  telephone.trim(),
+        siret:      siret.replace(/\s/g, ''),
+        created_at: new Date().toISOString(),
+      })
+      if (proErr) throw new Error(proErr.message)
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          await supabase.functions.invoke('register-to-systemeio', {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            body: { record: { email: user.email, prenom: prenom.trim(), nom: nom.trim(), role: 'pro' } },
+          })
+        }
+      } catch(e) { console.warn('[upgrade-pro] systemeio:', e) }
+
+      setSuccess(true)
+    } catch(err) { setError(err.message) }
+    finally { setLoading(false) }
+  }
+
+  const input = { width:'100%', padding:'11px 14px', background:'rgba(255,255,255,.75)', border:'1.5px solid rgba(200,160,150,.28)', borderRadius:12, fontSize:14, fontFamily:"'Jost',sans-serif", color:'#1a1208', outline:'none', boxSizing:'border-box' }
+  const lbl   = { fontSize:11, letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(30,20,8,.42)', marginBottom:6, display:'block' }
+  const sec   = { fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(30,20,8,.30)', margin:'18px 0 10px', fontWeight:500, borderTop:'1px solid rgba(200,160,150,.18)', paddingTop:14 }
+  const overlay = { position:'fixed', inset:0, zIndex:1200, background:'rgba(10,20,5,.55)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20 }
+  const modal   = { background:'rgba(252,248,242,.98)', borderRadius:24, width:'min(520px,100%)', maxHeight:'90vh', overflowY:'auto', padding:'36px 32px 28px', position:'relative', boxShadow:'0 20px 60px rgba(30,60,10,.22)', border:'1.5px solid rgba(180,210,140,.35)' }
+
+  if (success) return (
+    <div style={overlay}>
+      <div style={{ ...modal, textAlign:'center', padding:'40px 32px' }}>
+        <div style={{ fontSize:52, marginBottom:16 }}>🌿</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'#2e6808', marginBottom:10 }}>Bienvenue, professionnel(le) !</div>
+        <div style={{ fontSize:14, color:'rgba(30,20,8,.60)', lineHeight:1.75, marginBottom:24 }}>
+          Votre espace pro est activé.<br/>Vous avez désormais accès au badge <strong style={{color:'#2e6808'}}>✦ Pro</strong>.
+        </div>
+        <button onClick={onSuccess} style={{ padding:'14px 32px', borderRadius:50, border:'none', background:'linear-gradient(135deg,#4a8a20,#2e6808)', color:'#fff', fontSize:15, fontWeight:600, fontFamily:"'Jost',sans-serif", cursor:'pointer', boxShadow:'0 5px 18px rgba(42,104,8,.28)' }}>
+          Accéder à mon espace pro →
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={modal}>
+        <button onClick={onClose} style={{ position:'absolute', top:14, right:16, background:'none', border:'none', fontSize:20, cursor:'pointer', color:'rgba(30,20,8,.35)', lineHeight:1, padding:4 }}>✕</button>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:600, color:'#1a1208', marginBottom:4 }}>Espace Professionnel 🌱</div>
+        <div style={{ fontSize:13, color:'rgba(30,20,8,.48)', marginBottom:22, lineHeight:1.6 }}>Complétez vos informations pour activer votre compte pro.</div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+            <div><label style={lbl}>Nom <span style={{color:'#c04040'}}>*</span></label><input style={input} type="text" placeholder="Dupont" value={form.nom} onChange={upd('nom')} required maxLength={80} autoFocus/></div>
+            <div><label style={lbl}>Prénom <span style={{color:'#c04040'}}>*</span></label><input style={input} type="text" placeholder="Marie" value={form.prenom} onChange={upd('prenom')} required maxLength={80}/></div>
+          </div>
+          <div style={sec}>Entreprise &amp; localisation</div>
+          <div style={{ marginBottom:14 }}><label style={lbl}>Nom de l'entreprise</label><input style={input} type="text" placeholder="Cabinet Marie Dupont" value={form.entreprise} onChange={upd('entreprise')} maxLength={120}/></div>
+          <div style={{ marginBottom:14 }}><label style={lbl}>Nature de l'activité</label><input style={input} type="text" placeholder="Ex : hypnothérapeute, coach bien-être…" value={form.activite} onChange={upd('activite')} maxLength={160}/></div>
+          <div style={{ marginBottom:14 }}><label style={lbl}>Adresse</label><input style={input} type="text" placeholder="12 rue des Lilas" value={form.adresse} onChange={upd('adresse')} maxLength={200}/></div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginBottom:14 }}>
+            <div><label style={lbl}>Code postal</label><input style={input} type="text" placeholder="33000" value={form.cp} onChange={upd('cp')} maxLength={10}/></div>
+            <div><label style={lbl}>Ville</label><input style={input} type="text" placeholder="Bordeaux" value={form.ville} onChange={upd('ville')} maxLength={80}/></div>
+          </div>
+          <div style={sec}>Contact &amp; identification</div>
+          <div style={{ marginBottom:14 }}><label style={lbl}>Téléphone <span style={{color:'#c04040'}}>*</span></label><input style={input} type="tel" placeholder="06 12 34 56 78" value={form.telephone} onChange={upd('telephone')} required maxLength={20}/></div>
+          <div style={{ marginBottom:14 }}>
+            <label style={lbl}>SIRET <span style={{color:'#c04040'}}>*</span></label>
+            <input style={input} type="text" placeholder="362 521 879 00034" value={form.siret} onChange={upd('siret')} required maxLength={18}/>
+            <div style={{ fontSize:11, color:'rgba(30,20,8,.38)', marginTop:4 }}>14 chiffres — visible uniquement par l'équipe MJI</div>
+          </div>
+          {error && <div style={{ fontSize:12, color:'rgba(180,60,60,.90)', padding:'10px 14px', background:'rgba(180,60,60,.07)', border:'1px solid rgba(180,60,60,.18)', borderRadius:10, marginBottom:12 }}>{error}</div>}
+          <button type="submit" disabled={loading} style={{ width:'100%', padding:14, borderRadius:50, border:'none', background:'linear-gradient(135deg,#4a8a20,#2e6808)', color:'#fff', fontSize:15, fontWeight:600, fontFamily:"'Jost',sans-serif", cursor:'pointer', boxShadow:'0 5px 18px rgba(42,104,8,.28)', marginTop:6, opacity:loading?0.6:1 }}>
+            {loading ? '…' : 'Activer mon compte professionnel'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const isMobile = useIsMobile()
   useTheme()
@@ -1227,6 +1345,7 @@ export default function DashboardPage() {
   const ritualCompleteCalledRef = useRef(false)
   const [bilanHistory,        setBilanHistory]        = useState([])
   const [showGuide,           setShowGuide]           = useState(false)
+  const [showUpgradeToProModal, setShowUpgradeToProModal] = useState(false)
   const [showProLaunch,        setShowProLaunch]        = useState(() => localStorage.getItem('mji_show_pro_launch') === '1')
   const [showOrientationModal, setShowOrientationModal] = useState(false)
 
@@ -1731,6 +1850,15 @@ export default function DashboardPage() {
                 <span style={{ fontSize:16 }}>🚪</span>
                 <div><div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Se déconnecter</div></div>
               </div>
+              {!isPro && (
+                <div onClick={() => { setShowProfileModal(false); setShowUpgradeToProModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.45)', borderRadius:12, border:'1px solid rgba(200,190,180,.22)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.75)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.45)'}>
+                  <span style={{ fontSize:15, opacity:.6 }}>🌿</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Espace professionnel</div>
+                    <div style={{ fontSize:10, color:'rgba(30,20,8,.35)', fontFamily:"'Jost',sans-serif" }}>Ateliers, outils, partenariats</div>
+                  </div>
+                </div>
+              )}
             </div>
             </>) : (
               <SettingsPanel
@@ -1753,6 +1881,17 @@ export default function DashboardPage() {
             <ProProfile onBack={() => setShowProProfileModal(false)} />
           </div>
         </div>
+      )}
+      {showUpgradeToProModal && (
+        <UpgradeToProModal
+          user={user}
+          onClose={() => setShowUpgradeToProModal(false)}
+          onSuccess={() => {
+            setShowUpgradeToProModal(false)
+            setIsPro(true)
+            setShowProProfileModal(true)
+          }}
+        />
       )}
       {showProLaunch && !showWelcome && (
         <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(10,20,5,.65)', backdropFilter:'blur(14px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20, animation:'authFadeIn .3s ease both' }}>

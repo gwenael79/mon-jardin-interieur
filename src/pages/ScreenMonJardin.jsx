@@ -903,10 +903,24 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
 
           return (
             <g>
+              <defs>
+                <filter id={`${id}ab3`} x="-150%" y="-150%" width="400%" height="400%">
+                  <feGaussianBlur stdDeviation={b3}/>
+                </filter>
+                <filter id={`${id}ab2`} x="-150%" y="-150%" width="400%" height="400%">
+                  <feGaussianBlur stdDeviation={b2}/>
+                </filter>
+                <filter id={`${id}ab1`} x="-150%" y="-150%" width="400%" height="400%">
+                  <feGaussianBlur stdDeviation={b1}/>
+                </filter>
+                <filter id={`${id}ab0`} x="-150%" y="-150%" width="400%" height="400%">
+                  <feGaussianBlur stdDeviation={b1 * 0.8}/>
+                </filter>
+              </defs>
               {/* Couche 3 — halo très diffus, large */}
               <ellipse cx={cx} cy={ay} rx={rX3} ry={rY3}
                 fill={col3}
-                style={{ filter:`blur(${b3}px)` }}>
+                filter={`url(#${id}ab3)`}>
                 <animate attributeName="opacity"
                   values={`${cfg.op3};${(cfg.op3*1.6).toFixed(3)};${cfg.op3}`}
                   dur="7s" repeatCount="indefinite"/>
@@ -914,7 +928,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               {/* Couche 2 — halo intermédiaire */}
               <ellipse cx={cx} cy={ay} rx={rX2} ry={rY2}
                 fill={col2}
-                style={{ filter:`blur(${b2}px)` }}>
+                filter={`url(#${id}ab2)`}>
                 <animate attributeName="opacity"
                   values={`${cfg.op2};${(cfg.op2*1.5).toFixed(3)};${cfg.op2}`}
                   dur="5s" repeatCount="indefinite"/>
@@ -922,7 +936,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               {/* Couche 1 — cœur de la lueur, plus concentré */}
               <ellipse cx={cx} cy={ay} rx={rX1} ry={rY1}
                 fill={col1}
-                style={{ filter:`blur(${b1}px)` }}>
+                filter={`url(#${id}ab1)`}>
                 <animate attributeName="opacity"
                   values={`${cfg.op1};${(cfg.op1*1.4).toFixed(3)};${cfg.op1}`}
                   dur="4s" repeatCount="indefinite"/>
@@ -930,7 +944,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
               {/* Reflet chaud sur le sol */}
               <ellipse cx={cx} cy={gY} rx={rX1 * 0.9} ry={rY1 * 0.25}
                 fill={`rgba(246,196,60,${(cfg.op1 * 0.5).toFixed(3)})`}
-                style={{ filter:`blur(${b1 * 0.8}px)` }}>
+                filter={`url(#${id}ab0)`}>
                 <animate attributeName="opacity"
                   values={`${cfg.op1*0.4};${cfg.op1*0.7};${cfg.op1*0.4}`}
                   dur="4s" repeatCount="indefinite"/>

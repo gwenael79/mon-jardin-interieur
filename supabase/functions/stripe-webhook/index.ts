@@ -154,6 +154,13 @@ Deno.serve(async (req: Request) => {
 
       if (error) { console.error('[webhook] Erreur premium:', error); return new Response('Erreur DB', { status: 500 }) }
 
+      // Mettre à jour pro_plan si l'utilisateur est un pro
+      const { data: proRow } = await supabase.from('users_pro').select('id').eq('user_id', uid).maybeSingle()
+      if (proRow) {
+        await supabase.from('users_pro').update({ pro_plan: 'premium' }).eq('id', proRow.id)
+        console.log(`[webhook] ✅ Pro premium activé — users_pro ${proRow.id}`)
+      }
+
       // Subscription history
       const isSolidaire = type === 'solidarity'
       const amountCents = parseInt(meta?.amount_cents ?? '0', 10)
@@ -275,6 +282,12 @@ Deno.serve(async (req: Request) => {
       await supabase.from('subscriptions').update({ is_active: false }).eq('user_id', uid).eq('is_active', true)
       await supabase.from('users').update({ plan: 'free', premium_until: null, stripe_plan_id: null }).eq('id', uid)
       console.log(`[webhook] ❌ Abonnement résilié — user ${uid}`)
+
+      const { data: proRow } = await supabase.from('users_pro').select('id').eq('user_id', uid).maybeSingle()
+      if (proRow) {
+        await supabase.from('users_pro').update({ pro_plan: 'free' }).eq('id', proRow.id)
+        console.log(`[webhook] ❌ Pro plan réinitialisé — users_pro ${proRow.id}`)
+      }
     }
 
     // Marquer le referral comme cancelled
