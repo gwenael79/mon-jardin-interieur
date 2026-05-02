@@ -1232,7 +1232,7 @@ function UpgradeToProModal({ user, onClose, onSuccess }) {
     <div style={overlay}>
       <div style={{ ...modal, textAlign:'center', padding:'40px 32px' }}>
         <div style={{ fontSize:52, marginBottom:16 }}>🌿</div>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'#2e6808', marginBottom:10 }}>Bienvenue, professionnel(le) !</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'#2e6808', marginBottom:10 }}>Bienvenue dans votre espace professionnel(le) !</div>
         <div style={{ fontSize:14, color:'rgba(30,20,8,.60)', lineHeight:1.75, marginBottom:24 }}>
           Votre espace pro est activé.<br/>Vous avez désormais accès au badge <strong style={{color:'#2e6808'}}>✦ Pro</strong>.
         </div>
