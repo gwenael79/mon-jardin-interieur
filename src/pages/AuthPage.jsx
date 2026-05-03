@@ -581,41 +581,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     setProEmailPending(false)
   }
 
-  // ── Envoi Systeme.io PRO ──
-  // Placé ICI intentionnellement : le clic sur "Commencer mon aventure pro"
-  // est la dernière étape irréversible. Tout pro ayant cliqué
-  // "Je ne souhaite pas créer de compte pro" ne passe jamais par cette fonction.
   async function handleStartProAdventure() {
-    try {
-      const { data: { session }, error: sessionErr } = await supabase.auth.getSession()
-      const { data: { user },    error: userErr }    = await supabase.auth.getUser()
-
-      console.log('[Systeme.io pro] session:', !!session, '| sessionErr:', sessionErr)
-      console.log('[Systeme.io pro] user:', user?.email, '| userErr:', userErr)
-      console.log('[Systeme.io pro] proForm.prenom:', proForm.prenom, '| proForm.nom:', proForm.nom)
-
-      if (session && user) {
-        const payload = {
-          record: {
-            email:  user.email,
-            prenom: proForm.prenom?.trim() || displayName?.trim() || '',
-            nom:    proForm.nom?.trim()    || '',
-            role:   'pro',
-          },
-        }
-        console.log('[Systeme.io pro] payload envoyé:', JSON.stringify(payload))
-
-        const { data: fnData, error: fnError } = await supabase.functions.invoke('register-to-systemeio', {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-          body: payload,
-        })
-        console.log('[Systeme.io pro] réponse fn:', JSON.stringify(fnData), '| erreur:', fnError)
-      } else {
-        console.warn('[Systeme.io pro] pas de session ou user — envoi annulé')
-      }
-    } catch(e) {
-      console.error('[Systeme.io pro] exception:', e)
-    }
+    // L'inscription systeme.io est gérée par le trigger DB (INSERT users).
+    // Cet appel n'est plus nécessaire et provoquait un double appel (502).
     setShowProWelcome(false)
     setShowProFlower(true)
   }

@@ -11,6 +11,9 @@ const PLAN_MONTHS: Record<string, number> = {
   'price_1TMpO0CIpPVJTaopzrpNDw8r': 12,
 }
 
+// Abonnement pro-premium : 50 €/an — remplacer par le vrai price_id Stripe
+const PRO_PREMIUM_PRICE_ID = 'price_PRO_PREMIUM_PLACEHOLDER'
+
 const ONE_TIME_PACKS: Record<string, { lumens?: number; months?: number }> = {
   'price_1TMpOGCIpPVJTaopkipwkvDT': { lumens: 50  },
   'price_1TMpOSCIpPVJTaopNRKgm3rn': { lumens: 100 },
@@ -174,6 +177,31 @@ Deno.serve(async (req: Request) => {
       }
       if (discounts) sessionBody.discounts = discounts
       const session = await stripePost('checkout/sessions', sessionBody)
+      return json({ url: session.url, sessionId: session.id })
+    }
+
+    // ── Cas pro-premium (50 €/an) ────────────────────────────────────────────
+    if (priceId === PRO_PREMIUM_PRICE_ID) {
+      const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE)
+      const { data: userData } = await admin.from('users').select('stripe_customer_id, display_name').eq('id', user.id).single()
+      let customerId = userData?.stripe_customer_id
+      if (!customerId) {
+        const cust = await stripePost('customers', { email: user.email ?? '', name: userData?.display_name ?? '', metadata: { supabase_uid: user.id } })
+        customerId = cust.id
+        await admin.from('users').update({ stripe_customer_id: customerId }).eq('id', user.id)
+      }
+      const baseUrl = req.headers.get('origin') ?? 'https://monjardininterieur.com'
+      const session = await stripePost('checkout/sessions', {
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{ price: PRO_PREMIUM_PRICE_ID, quantity: 1 }],
+        mode: 'subscription',
+        success_url: successUrl ?? `${baseUrl}/?pro_premium=success`,
+        cancel_url:  cancelUrl  ?? `${baseUrl}/?pro_premium=cancel`,
+        metadata: { supabase_uid: user.id, price_id: PRO_PREMIUM_PRICE_ID, type: 'pro_premium' },
+        subscription_data: { metadata: { supabase_uid: user.id, price_id: PRO_PREMIUM_PRICE_ID, type: 'pro_premium' } },
+      })
+      console.log(`[stripe-checkout] Pro-premium session créée pour ${user.id}`)
       return json({ url: session.url, sessionId: session.id })
     }
 

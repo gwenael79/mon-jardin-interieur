@@ -61,6 +61,19 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ received: true, warning: 'uid manquant' }), { status: 200 })
     }
 
+    // ── Cas pro-premium ──────────────────────────────────────────────────────
+    if (type === 'pro_premium') {
+      const { data: proRow } = await supabase.from('users_pro').select('id, pro_premium_until').eq('user_id', uid).maybeSingle()
+      if (!proRow) { console.error('[webhook] users_pro introuvable pour', uid); return ok() }
+      const base = proRow.pro_premium_until && new Date(proRow.pro_premium_until) > new Date()
+        ? new Date(proRow.pro_premium_until) : new Date()
+      const until = new Date(base)
+      until.setFullYear(until.getFullYear() + 1)
+      await supabase.from('users_pro').update({ pro_plan: 'premium', pro_premium_until: until.toISOString() }).eq('id', proRow.id)
+      console.log(`[webhook] ✅ Pro-premium activé pour ${uid} jusqu'au ${until.toISOString()}`)
+      return ok()
+    }
+
     // ── Cas Atelier payant ───────────────────────────────────────────────────
     if (type === 'atelier_achat' && atelierIdMeta) {
       // Idempotence
@@ -285,8 +298,13 @@ Deno.serve(async (req: Request) => {
 
       const { data: proRow } = await supabase.from('users_pro').select('id').eq('user_id', uid).maybeSingle()
       if (proRow) {
-        await supabase.from('users_pro').update({ pro_plan: 'free' }).eq('id', proRow.id)
-        console.log(`[webhook] ❌ Pro plan réinitialisé — users_pro ${proRow.id}`)
+        if (meta?.type === 'pro_premium') {
+          await supabase.from('users_pro').update({ pro_plan: 'free', pro_premium_until: null }).eq('id', proRow.id)
+          console.log(`[webhook] ❌ Pro-premium résilié — users_pro ${proRow.id}`)
+        } else {
+          await supabase.from('users_pro').update({ pro_plan: 'free' }).eq('id', proRow.id)
+          console.log(`[webhook] ❌ Pro plan réinitialisé — users_pro ${proRow.id}`)
+        }
       }
     }
 

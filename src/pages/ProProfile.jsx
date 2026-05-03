@@ -511,10 +511,14 @@ export function ProProfile({ onBack }) {
     </div>
   )
 
-  const isProPremium = !!(userData?.premium_until && new Date(userData.premium_until) > new Date())
-  const thisYear = new Date().getFullYear()
-  const ateliersThisYear = ateliers.filter(a => a.created_at && new Date(a.created_at).getFullYear() === thisYear).length
-  const atelierAtLimit = !isProPremium && ateliersThisYear >= 2
+  const isProPremium = !!(proData?.pro_premium_until && new Date(proData.pro_premium_until) > new Date())
+  const now = new Date()
+  const ateliersThisMonth = ateliers.filter(a => {
+    if (!a.created_at) return false
+    const d = new Date(a.created_at)
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+  }).length
+  const atelierAtLimit = !isProPremium && ateliersThisMonth >= 1
 
   return (
     <div className="pp-wrap">
@@ -598,16 +602,12 @@ export function ProProfile({ onBack }) {
         <div style={{maxWidth:840,margin:'0 auto',background:'linear-gradient(135deg,#1c1c1c,#2a2a2a)',borderLeft:'1px solid #333',borderRight:'1px solid #333',padding:'16px 28px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16,flexWrap:'wrap'}}>
           <div>
             <div style={{fontSize:11,fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(255,255,255,.45)',marginBottom:4}}>Plan Free</div>
-            <div style={{fontSize:13,color:'rgba(255,255,255,.75)'}}>2 ateliers/an · 2 produits en Jardinothèque — Passez en Premium pour tout débloquer.</div>
+            <div style={{fontSize:13,color:'rgba(255,255,255,.75)'}}>1 atelier/mois · 1 produit en Jardinothèque — Pro Premium pour tout débloquer.</div>
           </div>
-          <div style={{display:'flex',gap:8,flexShrink:0}}>
-            <button onClick={() => handleUpgradePro('price_1TMpO0CIpPVJTaopHfQrzF8z')}
-              style={{padding:'8px 16px',borderRadius:8,border:'1px solid rgba(255,255,255,.20)',background:'rgba(255,255,255,.08)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
-              13 €/mois
-            </button>
-            <button onClick={() => handleUpgradePro('price_1TMpO0CIpPVJTaopzrpNDw8r')}
-              style={{padding:'8px 16px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#5a9a28,#3a7a18)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
-              108 €/an
+          <div style={{flexShrink:0}}>
+            <button onClick={() => handleUpgradePro('price_PRO_PREMIUM_PLACEHOLDER')}
+              style={{padding:'8px 20px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#5a9a28,#3a7a18)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
+              Pro Premium — 50 €/an
             </button>
           </div>
         </div>
@@ -650,7 +650,7 @@ export function ProProfile({ onBack }) {
             <div style={{display:'flex',flexDirection:'column',gap:14}}>
               {atelierAtLimit ? (
                 <div style={{padding:'12px 16px',borderRadius:12,border:'1px solid rgba(200,150,0,.30)',background:'rgba(200,150,0,.06)',color:'#7a5c00',fontSize:13,fontFamily:"'Jost',sans-serif",display:'flex',alignItems:'center',gap:8}}>
-                  🔒 Plan Free — limite de 2 ateliers par an atteinte. Passez en Premium pour en créer davantage.
+                  🔒 Plan Free — 1 atelier par mois. Passez en Pro Premium pour créer sans limite.
                 </div>
               ) : (
                 <button

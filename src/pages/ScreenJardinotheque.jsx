@@ -1474,9 +1474,9 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
 
       {/* Bouton ajouter */}
       {!showForm && (
-        !isProPremium && produits.length >= 2 ? (
+        !isProPremium && produits.length >= 1 ? (
           <div style={{ padding:'12px 16px', borderRadius:12, border:'1px solid rgba(200,150,0,.30)', background:'rgba(200,150,0,.06)', color:'#7a5c00', fontSize:13, fontFamily:"'Jost',sans-serif", display:'flex', alignItems:'center', gap:8 }}>
-            🔒 Plan Free — limite de 2 produits dans la Jardinothèque. Passez en Premium pour en ajouter davantage.
+            🔒 Plan Free — 1 produit en Jardinothèque. Passez en Pro Premium pour en ajouter davantage.
           </div>
         ) : (
           <button onClick={openNew}
