@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
   const fields: { slug: string; value: string }[] = []
   if (prenom) fields.push({ slug: 'first_name', value: prenom })
-  if (nom)    fields.push({ slug: 'last_name',  value: nom })
+  if (nom)    fields.push({ slug: 'surname',    value: nom })
 
   const contactPayload: Record<string, unknown> = { email }
   if (fields.length > 0) contactPayload.fields = fields
