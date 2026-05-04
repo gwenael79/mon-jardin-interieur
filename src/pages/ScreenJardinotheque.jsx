@@ -149,6 +149,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGo
       const { data, error } = await supabase
         .from('users_pro')
         .select('id, nom, prenom, entreprise, activite, adresse, cp, ville, telephone, siret, pro_id, site_web, facebook, instagram, linkedin')
+        .eq('visible_jardinotheque', true)
         .order('nom', { ascending: true })
       console.log('[therapeutes] data:', data, '| error:', error)
       if (data && data.length > 0) setTherapeutes(data)

@@ -7,6 +7,7 @@ import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { AdminClientsPage } from './pages/AdminClientsPage'
 import { AdminActivitePage } from './pages/AdminActivitePage'
+import { AdminProsPage } from './pages/AdminProsPage'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
 import { WeekOneFlow }      from './pages/WeekOneFlow'
@@ -108,6 +109,7 @@ export default function App() {
     if (hash === '#admin')    setScreen('admin')
     if (hash === '#clients')  setScreen('admin-clients')
     if (hash === '#activite') setScreen('admin-activite')
+    if (hash === '#pros')     setScreen('admin-pros')
   }, [hash, user?.id])
 
   // ── Initialisation principale ──────────────────────────────────────────────
@@ -123,6 +125,7 @@ export default function App() {
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#admin')    { setScreen('admin');          return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#clients')  { setScreen('admin-clients');  return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#activite') { setScreen('admin-activite'); return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#pros')     { setScreen('admin-pros');     return }
 
     // Retour depuis Stripe — succès → vider le cache profil + attendre webhook
     if (params.get('premium') === 'success') {
@@ -250,6 +253,7 @@ export default function App() {
   if (screen === 'admin')          return <AdminPage />
   if (screen === 'admin-clients')  return <AdminClientsPage />
   if (screen === 'admin-activite') return <AdminActivitePage />
+  if (screen === 'admin-pros')     return <AdminProsPage />
 
   if (params.has('test-onboarding')) {
     return (

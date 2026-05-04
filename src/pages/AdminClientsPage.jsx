@@ -80,6 +80,7 @@ function AdminNav({ current }) {
     { hash: '#admin',    label: 'Admin',    icon: '🛡' },
     { hash: '#clients',  label: 'Clients',  icon: '👥' },
     { hash: '#activite', label: 'Activité', icon: '🌿' },
+    { hash: '#pros',     label: 'Pros',     icon: '💼' },
   ]
   return (
     <div style={{ display: 'flex', gap: 4 }}>

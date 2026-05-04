@@ -164,6 +164,64 @@ const css = `
 .pp-save-btn:disabled { opacity:.35; cursor:not-allowed; }
 .pp-error { font-size:12px; color:#c04040; padding:10px 14px; background:#fef2f2; border:1px solid #fca5a5; border-radius:9px; margin-bottom:12px; }
 
+.pp-badge-affiche {
+  display:inline-flex; align-items:center; gap:6px; padding:8px 18px; border-radius:8px;
+  background:rgba(232,212,168,0.10); border:1px solid rgba(232,212,168,0.35);
+  color:#9a7c3f; font-size:12.5px; font-weight:500;
+  font-family:'Jost',sans-serif; cursor:pointer; transition:all .18s;
+}
+.pp-badge-affiche:hover { background:rgba(232,212,168,0.20); border-color:rgba(232,212,168,0.55); }
+.pp-affiche-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:ppFadeIn .2s ease;
+}
+.pp-affiche-box {
+  background:#fff; border-radius:16px; width:100%; max-width:480px;
+  max-height:90vh; overflow-y:auto; padding:24px;
+  display:flex; flex-direction:column; align-items:center; gap:16px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+.pp-affiche-title {
+  font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600;
+  color:#111; align-self:flex-start;
+}
+.pp-affiche-img {
+  width:100%; border-radius:10px; border:1px solid #e5e2dc;
+  object-fit:contain; max-height:420px; background:#f9f7f4;
+}
+.pp-affiche-dl {
+  width:100%; padding:13px; border-radius:10px; border:none; background:#111;
+  color:#fff; font-size:13px; font-weight:600; font-family:'Jost',sans-serif;
+  cursor:pointer; transition:background .18s; text-align:center;
+  text-decoration:none; display:block;
+}
+.pp-affiche-dl:hover { background:#333; }
+.pp-affiche-nav {
+  display:flex; align-items:center; gap:10px; width:100%;
+}
+.pp-affiche-arrow {
+  flex-shrink:0; width:36px; height:36px; border-radius:50%;
+  border:1px solid #ccc; background:#111; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .18s; font-size:16px; font-weight:700;
+  color:#fff !important; line-height:1;
+}
+.pp-affiche-arrow:hover { background:#333; }
+.pp-affiche-dots {
+  display:flex; gap:7px; justify-content:center; width:100%;
+}
+.pp-affiche-dot {
+  width:8px; height:8px; border-radius:50%; border:none; cursor:pointer;
+  background:#ddd; transition:background .18s; padding:0;
+}
+.pp-affiche-dot.active { background:#111; }
+.pp-affiche-close {
+  align-self:flex-end; font-size:12px; color:#999; cursor:pointer;
+  background:none; border:none; font-family:'Jost',sans-serif;
+  text-decoration:underline; padding:0;
+}
+
 @media(max-width:600px) {
   .pp-wrap { padding:16px 12px 50px; }
   .pp-card-banner { flex-direction:column-reverse; padding:18px 16px; }
@@ -176,6 +234,55 @@ const css = `
   .pp-modal { padding:24px 16px; }
 }
 `
+
+const AFFICHES = [
+  { img: '/affiche-pub.png',  pdf: '/mon-jardin-affiche-1.pdf', label: 'Affiche 1', filename: 'mon-jardin-affiche-1.pdf' },
+  { img: '/affiche-pub2.png', pdf: '/mon-jardin-affiche-2.pdf', label: 'Affiche 2', filename: 'mon-jardin-affiche-2.pdf' },
+  { img: '/affiche-pub3.png', pdf: '/mon-jardin-affiche-3.pdf', label: 'Affiche 3', filename: 'mon-jardin-affiche-3.pdf' },
+]
+
+async function forcedDownload(url, filename) {
+  const res = await fetch(url)
+  const blob = await res.blob()
+  const blobUrl = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }))
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(blobUrl)
+}
+
+function AfficheModal({ onClose }) {
+  const [idx, setIdx] = useState(0)
+  const current = AFFICHES[idx]
+  return (
+    <div className="pp-affiche-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="pp-affiche-box">
+        <div className="pp-affiche-title">Affiches publicitaires</div>
+
+        <div className="pp-affiche-nav">
+          <button className="pp-affiche-arrow" onClick={() => setIdx(i => (i - 1 + AFFICHES.length) % AFFICHES.length)}>❮</button>
+          <img className="pp-affiche-img" src={current.img} alt={current.label} />
+          <button className="pp-affiche-arrow" onClick={() => setIdx(i => (i + 1) % AFFICHES.length)}>❯</button>
+        </div>
+
+        <div className="pp-affiche-dots">
+          {AFFICHES.map((_, i) => (
+            <button key={i} className={`pp-affiche-dot${i === idx ? ' active' : ''}`} onClick={() => setIdx(i)} />
+          ))}
+        </div>
+
+        <button className="pp-affiche-dl" onClick={() => forcedDownload(current.pdf, current.filename)}>
+          ⬇ Télécharger {current.label} (PDF)
+        </button>
+        <button className="pp-affiche-close" onClick={onClose}>Fermer</button>
+      </div>
+    </div>
+  )
+}
 
 function ApplyCandidatureForm({ onClose, onSubmit }) {
   const [motivation, setMotivation] = useState('')
@@ -225,6 +332,7 @@ export function ProProfile({ onBack }) {
   const [ateliers,         setAteliers]         = useState([])
   const [showAtelierModal, setShowAtelierModal] = useState(false)
   const [editAtelierModal, setEditAtelierModal] = useState(null)
+  const [showAffiche,      setShowAffiche]      = useState(false)
   const [partenaireData,   setPartenaireData]   = useState(null)
   const [isAnimator,       setIsAnimator]       = useState(false)
   const [hasApplied,       setHasApplied]       = useState(false)
@@ -579,12 +687,15 @@ export function ProProfile({ onBack }) {
               </div>
             ))}
           </div>
-          <button className="pp-edit-btn" onClick={openEdit}>
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Modifier mes informations
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <button className="pp-edit-btn" onClick={openEdit}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Modifier mes informations
+            </button>
+            <button className="pp-badge-affiche" onClick={() => setShowAffiche(true)}>📄 Affiches Pub</button>
+          </div>
         </div>
       </div>
 
@@ -1085,6 +1196,8 @@ export function ProProfile({ onBack }) {
           onEdit={handleEditAtelier}
         />
       )}
+
+      {showAffiche && <AfficheModal onClose={() => setShowAffiche(false)} />}
     </div>
   )
 }
