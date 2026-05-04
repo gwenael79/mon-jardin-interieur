@@ -412,6 +412,28 @@ html,body,#root{height:100%;width:100%}
 }
 `
 
+function translateAuthError(msg) {
+  if (!msg) return msg
+  const m = msg.toLowerCase()
+  if (m.includes('password should be at least') || m.includes('password must be at least'))
+    return 'Le mot de passe doit contenir au moins 8 caractères.'
+  if (m.includes('password should contain') || m.includes('password must contain'))
+    return 'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre.'
+  if (m.includes('password is too weak') || m.includes('weak password'))
+    return 'Le mot de passe est trop faible. Ajoutez des majuscules, chiffres ou caractères spéciaux.'
+  if (m.includes('email already registered') || m.includes('user already registered') || m.includes('already been registered'))
+    return 'Cette adresse email est déjà utilisée.'
+  if (m.includes('invalid email'))
+    return 'Adresse email invalide.'
+  if (m.includes('invalid login credentials') || m.includes('invalid credentials'))
+    return 'Email ou mot de passe incorrect.'
+  if (m.includes('email not confirmed'))
+    return 'Veuillez confirmer votre adresse email avant de vous connecter.'
+  if (m.includes('too many requests'))
+    return 'Trop de tentatives. Veuillez patienter quelques minutes.'
+  return msg
+}
+
 export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated }) {
   const { signIn } = useAuth()
 
@@ -519,7 +541,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         password: proPassword,
         options: { data: { display_name: prenom.trim() + ' ' + nom.trim(), role: 'pro' } }
       })
-      if (signUpError) throw new Error(signUpError.message)
+      if (signUpError) throw new Error(translateAuthError(signUpError.message))
       const userId = data?.user?.id
       if (!userId) throw new Error('Erreur lors de la création du compte.')
 
@@ -612,7 +634,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     try {
       await signIn(email, password)
       localStorage.setItem('mji_has_logged_in', '1')
-    } catch (err) { setError(err.message) }
+    } catch (err) { setError(translateAuthError(err.message)) }
     finally { setIsLoading(false) }
   }
 
@@ -631,7 +653,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         email, password,
         options: { data: { display_name: displayName.trim(), birthdate } }
       })
-      if (signUpError) throw new Error(signUpError.message)
+      if (signUpError) throw new Error(translateAuthError(signUpError.message))
       if (data?.user && data.session) {
         await supabase.from('users').upsert({
           id: data.user.id, email: data.user.email,
@@ -696,7 +718,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     setError(null); setIsLoading(true)
     try {
       const { error: ue } = await supabase.auth.updateUser({ password: newPassword })
-      if (ue) throw new Error(ue.message)
+      if (ue) throw new Error(translateAuthError(ue.message))
       if (onPasswordUpdated) onPasswordUpdated()
       else { goTo('login'); setNewPassword('') }
     } catch (err) { setError(err.message) }
