@@ -652,7 +652,7 @@ const HORAIRES_SETTINGS     = [
   { id:'soir',  label:'Soir',  emoji:'🌙' },
 ]
 
-function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
+function SettingsPanel({ name, email, isPremium, isPro, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
   const [portalLoading, setPortalLoading] = useState(false)
 
   async function openPortal() {
@@ -945,7 +945,8 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
           )}
         </div>
 
-        {/* Abonnement */}
+        {/* Abonnement — masqué pour les pros (géré dans Compte Pro) */}
+        {!isPro && (
         <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
             <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:5 }}>Abonnement</div>
@@ -962,6 +963,7 @@ function SettingsPanel({ name, email, isPremium, userId, onBack, onOpenFleur, on
             </button>
           )}
         </div>
+        )}
 
       </div>
     </div>
@@ -1203,6 +1205,7 @@ function UpgradeToProModal({ user, onClose, onSuccess }) {
         ville:      form.ville.trim()      || null,
         telephone:  telephone.trim(),
         siret:      siret.replace(/\s/g, ''),
+        pro_plan:   'free',
         created_at: new Date().toISOString(),
       })
       if (proErr) throw new Error(proErr.message)
@@ -1794,8 +1797,8 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Abonnement */}
-            <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            {/* Abonnement — masqué pour les pros (géré dans Compte Pro) */}
+            {!isPro && <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
                 <div style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>Abonnement</div>
                 <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? 'Premium actif' : 'Version gratuite'}</div>
@@ -1816,8 +1819,7 @@ export default function DashboardPage() {
                   Passer Premium
                 </div>
               )}
-
-            </div>
+            </div>}
 
             {/* Actions */}
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:4 }}>
@@ -1865,6 +1867,7 @@ export default function DashboardPage() {
                 name={name}
                 email={email}
                 isPremium={isPremium}
+                isPro={isPro}
                 userId={user?.id}
                 onBack={() => setProfileView('main')}
                 onOpenFleur={() => { setShowProfileModal(false); setProfileView('main'); setOpenModalId('jardin') }}

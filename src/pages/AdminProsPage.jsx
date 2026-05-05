@@ -74,20 +74,26 @@ html,body,#root{height:100%;width:100%}
 `
 
 function AdminNav({ current }) {
+  const [pending, setPending] = useState(0)
+  useEffect(() => {
+    supabase.from('pro_messages').select('id', { count: 'exact', head: true }).is('response', null)
+      .then(({ count }) => setPending(count ?? 0))
+  }, [])
   const navItems = [
     { hash: '#admin',    label: 'Admin',    icon: '🛡' },
     { hash: '#clients',  label: 'Clients',  icon: '👥' },
     { hash: '#activite', label: 'Activité', icon: '🌿' },
     { hash: '#pros',     label: 'Pros',     icon: '💼' },
+    { hash: '#messages', label: 'Messages', icon: '💬', badge: pending },
   ]
   return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {navItems.map(({ hash, label, icon }) => {
+    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+      {navItems.map(({ hash, label, icon, badge }) => {
         const active = current === hash
         return (
-          <a key={hash} href={hash}
-            style={{ padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
+          <a key={hash} href={hash} style={{ position: 'relative', padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
             {icon} {label}
+            {badge > 0 && <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, borderRadius: '50%', background: '#e05a2b' }} />}
           </a>
         )
       })}
@@ -204,12 +210,12 @@ export function AdminProsPage() {
   useTheme()
   const { user, signOut } = useAuth()
 
-  const [pros,       setPros]       = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [toast,      setToast]      = useState(null)
-  const [fiche,      setFiche]      = useState(null)
-  const [deleteId,   setDeleteId]   = useState(null)
-  const [deleteStep, setDeleteStep] = useState(1)
+  const [pros,         setPros]         = useState([])
+  const [loading,      setLoading]      = useState(true)
+  const [toast,        setToast]        = useState(null)
+  const [fiche,        setFiche]        = useState(null)
+  const [deleteId,     setDeleteId]     = useState(null)
+  const [deleteStep,   setDeleteStep]   = useState(1)
 
   const isAdmin = ADMIN_IDS.includes(user?.id)
 
@@ -377,6 +383,7 @@ export function AdminProsPage() {
             </table>
           </div>
         )}
+
       </div>
 
       {fiche && <FichePro pro={fiche} onClose={() => setFiche(null)} />}

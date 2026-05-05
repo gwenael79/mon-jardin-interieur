@@ -11,8 +11,7 @@ const PLAN_MONTHS: Record<string, number> = {
   'price_1TMpO0CIpPVJTaopzrpNDw8r': 12,
 }
 
-// Abonnement pro-premium : 50 €/an — remplacer par le vrai price_id Stripe
-const PRO_PREMIUM_PRICE_ID = 'price_PRO_PREMIUM_PLACEHOLDER'
+const PRO_PREMIUM_PRICE_ID = 'price_1TTjumCIpPVJTaopIY2O2o5K'
 
 const ONE_TIME_PACKS: Record<string, { lumens?: number; months?: number }> = {
   'price_1TMpOGCIpPVJTaopkipwkvDT': { lumens: 50  },

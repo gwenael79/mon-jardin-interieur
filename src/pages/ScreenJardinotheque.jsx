@@ -101,14 +101,14 @@ const TYPE_CONFIG = {
 
 // ── Catégories par type ──────────────────────────────────────────────────────
 const CATEGORIES = {
-  digital:  ['Tous', 'Audio', 'Formation', 'E-book'],
+  digital:  ['Tous', 'Audio', 'Formation', 'E-book', 'PDF'],
   physique: ['Tous', 'Livres', 'Bijoux', 'Pierres', 'Huiles essentielles', 'Autres'],
   occasion: ['Tous', 'Livres', 'Bijoux', 'Pierres', 'Accessoires', 'Autres'],
 }
 
 // ── Emoji par catégorie ──────────────────────────────────────────────────────
 const CAT_EMOJI = {
-  'Audio':'🎧', 'Formation':'📚', 'E-book':'📖', 'Partenaires':'🤝', 'Méditation':'🧘', 'Guide':'📖',
+  'Audio':'🎧', 'Formation':'🎓', 'E-book':'📖', 'PDF':'📄', 'Partenaires':'🤝', 'Méditation':'🧘', 'Guide':'📖',
   'Livres':'📕', 'Bijoux':'💍', 'Pierres':'💎', 'Huiles essentielles':'🌸',
   'Accessoires':'🎀', 'Autres':'✨',
 }
@@ -312,7 +312,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGo
           </div>
         ) : filtered.length === 0 ? (
           <div className="jt-empty">
-            <div className="jt-empty-icon">{tc.icon}</div>
+            <div className="jt-empty-icon">{CAT_EMOJI[cat] ?? tc.icon}</div>
             <div className="jt-empty-text">Aucun produit dans cette catégorie pour le moment.</div>
           </div>
         ) : (
@@ -1346,7 +1346,7 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
   const [form,      setForm]      = useState({ type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'' })
 
   const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'' }
-  const CAT_OPTS = { digital:['Audio','Formation','E-book'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
+  const CAT_OPTS = { digital:['Audio','Formation','E-book','PDF'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
   const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid #ccc', background:'#fff', color:'#111', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', colorScheme:'light' }
   const lbl = { fontSize:11, color:'#555', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:600 }
 
@@ -1568,32 +1568,45 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
             )}
           </div>
 
-          {/* Upload audio */}
-          {form.type === 'digital' && (
-            <div>
-              <span style={lbl}>Fichier audio <span style={{ color:'#888', textTransform:'none', letterSpacing:0, fontWeight:400 }}>(lecture sécurisée dans l'app)</span></span>
-              <label style={{ display:'block', padding:'12px 14px', borderRadius:8,
-                border:`1px dashed ${form.storage_path ? 'rgba(90,154,40,0.50)' : '#ccc'}`,
-                background: form.storage_path ? 'rgba(90,154,40,0.06)' : '#fafafa',
-                color: form.storage_path ? '#3d7a12' : '#888',
-                fontSize:12, cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
-                <input type="file" accept="audio/*" style={{ display:'none' }} onChange={e => handleAudioUpload(e.target.files[0])} disabled={audioUploading}/>
-                {audioUploading ? '⏳ Upload en cours…' : form.storage_path ? '✓ Fichier audio chargé' : '📁 Choisir un fichier audio (MP3, WAV, AAC…)'}
-              </label>
-              {form.storage_path && (
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
-                  <div style={{ fontSize:10, color:'#666', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
-                    {form.storage_path.split('/').pop()}
+          {/* Upload fichier digital */}
+          {form.type === 'digital' && (form.categorie === 'Audio' || form.categorie === 'PDF') && (() => {
+            const isPdf = form.categorie === 'PDF'
+            return (
+              <div>
+                <span style={lbl}>
+                  {isPdf ? 'Fichier PDF' : 'Fichier audio'}
+                  <span style={{ color:'#888', textTransform:'none', letterSpacing:0, fontWeight:400 }}>
+                    {isPdf ? ` (accès sécurisé dans l'app)` : ` (lecture sécurisée dans l'app)`}
+                  </span>
+                </span>
+                <label style={{ display:'block', padding:'12px 14px', borderRadius:8,
+                  border:`1px dashed ${form.storage_path ? 'rgba(90,154,40,0.50)' : '#ccc'}`,
+                  background: form.storage_path ? 'rgba(90,154,40,0.06)' : '#fafafa',
+                  color: form.storage_path ? '#3d7a12' : '#888',
+                  fontSize:12, cursor: audioUploading ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", textAlign:'center', transition:'all .2s' }}>
+                  <input type="file" accept={isPdf ? 'application/pdf' : 'audio/*'} style={{ display:'none' }}
+                    onChange={e => handleAudioUpload(e.target.files[0])} disabled={audioUploading}/>
+                  {audioUploading
+                    ? '⏳ Upload en cours…'
+                    : form.storage_path
+                      ? (isPdf ? '✓ Fichier PDF chargé' : '✓ Fichier audio chargé')
+                      : (isPdf ? '📄 Choisir un fichier PDF' : '📁 Choisir un fichier audio (MP3, WAV, AAC…)')}
+                </label>
+                {form.storage_path && (
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:6 }}>
+                    <div style={{ fontSize:10, color:'#666', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                      {form.storage_path.split('/').pop()}
+                    </div>
+                    <button onClick={() => setForm(f => ({ ...f, storage_path:'' }))}
+                      style={{ background:'none', border:'none', color:'rgba(180,60,60,0.70)', fontSize:11, cursor:'pointer', flexShrink:0, marginLeft:8 }}>
+                      ✕ Supprimer
+                    </button>
                   </div>
-                  <button onClick={() => setForm(f => ({ ...f, storage_path:'' }))}
-                    style={{ background:'none', border:'none', color:'rgba(180,60,60,0.70)', fontSize:11, cursor:'pointer', flexShrink:0, marginLeft:8 }}>
-                    ✕ Supprimer
-                  </button>
-                </div>
-              )}
-              <div style={{ fontSize:10, color:'#888', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
-            </div>
-          )}
+                )}
+                <div style={{ fontSize:10, color:'#888', marginTop:5 }}>Non téléchargeable · Accès limité aux acheteurs</div>
+              </div>
+            )
+          })()}
 
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={handleSubmit} disabled={saving}

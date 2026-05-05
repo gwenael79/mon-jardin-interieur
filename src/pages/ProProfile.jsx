@@ -233,6 +233,28 @@ const css = `
   .pp-row { grid-template-columns:1fr; }
   .pp-modal { padding:24px 16px; }
 }
+
+/* ── Messagerie ── */
+.pp-msg-overlay { position:fixed;inset:0;background:rgba(10,20,5,.55);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px; }
+.pp-msg-box { background:#fff;border-radius:20px;width:100%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(30,60,10,.18); }
+.pp-msg-head { display:flex;align-items:center;justify-content:space-between;padding:18px 22px 14px;border-bottom:1px solid rgba(0,0,0,.07); }
+.pp-msg-title { font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:#1a1208; }
+.pp-msg-close { background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1; }
+.pp-msg-list { flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px; }
+.pp-msg-empty { text-align:center;padding:32px 0;font-size:13px;color:rgba(30,20,8,.40);font-style:italic; }
+.pp-msg-item { display:flex;flex-direction:column;gap:8px; }
+.pp-msg-bubble { background:rgba(90,154,40,.08);border:1px solid rgba(90,154,40,.18);border-radius:12px 12px 12px 2px;padding:10px 14px; }
+.pp-msg-bubble-text { font-size:13.5px;color:#1a1208;line-height:1.55; }
+.pp-msg-bubble-date { font-size:10px;color:rgba(30,20,8,.35);margin-top:5px; }
+.pp-msg-reply { background:rgba(240,236,220,.70);border:1px solid rgba(200,160,100,.25);border-radius:12px 12px 2px 12px;padding:10px 14px;margin-left:20px; }
+.pp-msg-reply-label { font-size:9.5px;letter-spacing:.10em;text-transform:uppercase;color:rgba(30,20,8,.40);margin-bottom:4px;font-weight:600; }
+.pp-msg-reply-text { font-size:13.5px;color:#1a1208;line-height:1.55; }
+.pp-msg-form { padding:14px 20px 18px;border-top:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;gap:10px; }
+.pp-msg-textarea { width:100%;padding:10px 13px;border-radius:10px;border:1px solid rgba(90,154,40,.30);background:rgba(90,154,40,.04);font-size:13.5px;font-family:'Jost',sans-serif;color:#1a1208;resize:none;outline:none;line-height:1.5; }
+.pp-msg-textarea:focus { border-color:rgba(90,154,40,.55); }
+.pp-msg-send { align-self:flex-end;padding:9px 22px;border-radius:20px;border:none;background:linear-gradient(135deg,#5a9a28,#3a7a18);color:#fff;font-size:13px;font-weight:600;font-family:'Jost',sans-serif;cursor:pointer;transition:opacity .15s; }
+.pp-msg-send:disabled { opacity:.45;cursor:not-allowed; }
+.pp-msg-badge { position:absolute;top:-5px;right:-5px;width:16px;height:16px;background:#e05a2b;border-radius:50%;font-size:9px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700; }
 `
 
 const AFFICHES = [
@@ -279,6 +301,83 @@ function AfficheModal({ onClose }) {
           ⬇ Télécharger {current.label} (PDF)
         </button>
         <button className="pp-affiche-close" onClick={onClose}>Fermer</button>
+      </div>
+    </div>
+  )
+}
+
+function MessagingModal({ proId, onClose }) {
+  const [messages, setMessages] = useState([])
+  const [loading,  setLoading]  = useState(true)
+  const [newMsg,   setNewMsg]   = useState('')
+  const [sending,  setSending]  = useState(false)
+
+  useEffect(() => {
+    if (!proId) return
+    supabase.from('pro_messages').select('*').eq('users_pro_id', proId)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        setMessages(data ?? [])
+        setLoading(false)
+        // Marquer les réponses comme lues
+        const unread = (data ?? []).filter(m => m.response && !m.read_by_pro).map(m => m.id)
+        if (unread.length) {
+          supabase.from('pro_messages').update({ read_by_pro: true }).in('id', unread).then(() => {})
+        }
+      })
+  }, [proId])
+
+  async function send() {
+    if (!newMsg.trim() || !proId) return
+    setSending(true)
+    const { data } = await supabase.from('pro_messages')
+      .insert({ users_pro_id: proId, content: newMsg.trim() })
+      .select().single()
+    if (data) setMessages(m => [...m, data])
+    setNewMsg('')
+    setSending(false)
+  }
+
+  const fmt = d => new Date(d).toLocaleString('fr-FR', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })
+
+  return (
+    <div className="pp-msg-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="pp-msg-box">
+        <div className="pp-msg-head">
+          <div className="pp-msg-title">💬 Messagerie</div>
+          <button className="pp-msg-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="pp-msg-list">
+          {loading ? (
+            <div className="pp-msg-empty">Chargement…</div>
+          ) : messages.length === 0 ? (
+            <div className="pp-msg-empty">Aucun message pour l'instant.<br/>Posez votre première question ci-dessous.</div>
+          ) : messages.map(m => (
+            <div key={m.id} className="pp-msg-item">
+              <div className="pp-msg-bubble">
+                <div className="pp-msg-bubble-text">{m.content}</div>
+                <div className="pp-msg-bubble-date">{fmt(m.created_at)}</div>
+              </div>
+              {m.response && (
+                <div className="pp-msg-reply">
+                  <div className="pp-msg-reply-label">Réponse Mon Jardin</div>
+                  <div className="pp-msg-reply-text">{m.response}</div>
+                  <div className="pp-msg-bubble-date" style={{marginTop:4}}>{m.responded_at ? fmt(m.responded_at) : ''}</div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="pp-msg-form">
+          <textarea className="pp-msg-textarea" rows={3}
+            placeholder="Votre message à l'équipe Mon Jardin Intérieur…"
+            value={newMsg} onChange={e => setNewMsg(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) send() }}
+          />
+          <button className="pp-msg-send" onClick={send} disabled={sending || !newMsg.trim()}>
+            {sending ? '…' : 'Envoyer'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -333,6 +432,8 @@ export function ProProfile({ onBack }) {
   const [showAtelierModal, setShowAtelierModal] = useState(false)
   const [editAtelierModal, setEditAtelierModal] = useState(null)
   const [showAffiche,      setShowAffiche]      = useState(false)
+  const [showMessaging,    setShowMessaging]    = useState(false)
+  const [unreadMessages,   setUnreadMessages]   = useState(0)
   const [partenaireData,   setPartenaireData]   = useState(null)
   const [isAnimator,       setIsAnimator]       = useState(false)
   const [hasApplied,       setHasApplied]       = useState(false)
@@ -375,28 +476,7 @@ export function ProProfile({ onBack }) {
         pro = data ?? null
       } catch(_) {}
 
-      // 2. Fallback : récupérer toutes les lignes et matcher par nom/prénom
-      if (!pro) {
-        try {
-          const { data: rows } = await supabase.from('users_pro').select('*')
-          if (rows?.length) {
-            // Essayer de matcher avec le display_name (prenom nom ou nom prenom)
-            const parts = (u?.display_name ?? '').trim().toLowerCase().split(/\s+/)
-            pro = rows.find(r => {
-              const rp = (r.prenom ?? '').toLowerCase()
-              const rn = (r.nom ?? '').toLowerCase()
-              return parts.includes(rp) && parts.includes(rn)
-            }) ?? rows[0] // si un seul pro dans la base, on le prend
-            // Lier user_id si la colonne existe
-            if (pro) {
-              try { await supabase.from('users_pro').update({ user_id: user.id }).eq('id', pro.id) } catch(_) {}
-              pro = { ...pro, user_id: user.id }
-            }
-          }
-        } catch(_) {}
-      }
-
-      // 3. Générer pro_id si absent
+      // 2. Générer pro_id si absent
       if (pro && !pro.pro_id) {
         const newId = generateProId()
         try {
@@ -422,6 +502,14 @@ export function ProProfile({ onBack }) {
             if (refreshed) setProData(refreshed)
           }
         } catch (e) { console.warn('[ProProfile] init-pro-promo:', e) }
+      }
+
+      // Compter les réponses non lues
+      if (pro) {
+        const { count } = await supabase.from('pro_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('users_pro_id', pro.id).eq('read_by_pro', false).not('response', 'is', null)
+        setUnreadMessages(count ?? 0)
       }
 
       // Charger referrals, commissions, ateliers, produits
@@ -695,6 +783,10 @@ export function ProProfile({ onBack }) {
               Modifier mes informations
             </button>
             <button className="pp-badge-affiche" onClick={() => setShowAffiche(true)}>📄 Affiches Pub</button>
+            <button className="pp-badge-affiche" onClick={() => { setShowMessaging(true); setUnreadMessages(0) }} style={{ position:'relative' }}>
+              💬 Messagerie
+              {unreadMessages > 0 && <span className="pp-msg-badge">{unreadMessages}</span>}
+            </button>
           </div>
         </div>
       </div>
@@ -716,7 +808,7 @@ export function ProProfile({ onBack }) {
             <div style={{fontSize:13,color:'rgba(255,255,255,.75)'}}>1 atelier/mois · 1 produit en Jardinothèque — Pro Premium pour tout débloquer.</div>
           </div>
           <div style={{flexShrink:0}}>
-            <button onClick={() => handleUpgradePro('price_PRO_PREMIUM_PLACEHOLDER')}
+            <button onClick={() => handleUpgradePro('price_1TTjumCIpPVJTaopIY2O2o5K')}
               style={{padding:'8px 20px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#5a9a28,#3a7a18)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
               Pro Premium — 50 €/an
             </button>
@@ -1198,6 +1290,7 @@ export function ProProfile({ onBack }) {
       )}
 
       {showAffiche && <AfficheModal onClose={() => setShowAffiche(false)} />}
+      {showMessaging && <MessagingModal proId={proData?.id} onClose={() => setShowMessaging(false)} />}
     </div>
   )
 }

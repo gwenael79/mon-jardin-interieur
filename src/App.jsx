@@ -8,6 +8,7 @@ import { AdminPage } from './pages/AdminPage'
 import { AdminClientsPage } from './pages/AdminClientsPage'
 import { AdminActivitePage } from './pages/AdminActivitePage'
 import { AdminProsPage } from './pages/AdminProsPage'
+import { AdminMessagesPage } from './pages/AdminMessagesPage'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
 import { WeekOneFlow }      from './pages/WeekOneFlow'
@@ -110,6 +111,7 @@ export default function App() {
     if (hash === '#clients')  setScreen('admin-clients')
     if (hash === '#activite') setScreen('admin-activite')
     if (hash === '#pros')     setScreen('admin-pros')
+    if (hash === '#messages') setScreen('admin-messages')
   }, [hash, user?.id])
 
   // ── Initialisation principale ──────────────────────────────────────────────
@@ -126,6 +128,7 @@ export default function App() {
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#clients')  { setScreen('admin-clients');  return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#activite') { setScreen('admin-activite'); return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#pros')     { setScreen('admin-pros');     return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#messages') { setScreen('admin-messages'); return }
 
     // Retour depuis Stripe — succès → vider le cache profil + attendre webhook
     if (params.get('premium') === 'success') {
@@ -148,6 +151,26 @@ export default function App() {
       window.history.replaceState({}, '', window.location.pathname)
       setScreen('dashboard')
       sessionStorage.setItem('reopen_premium', '1')
+      return
+    }
+
+    // Retour depuis Stripe — pro-premium succès → attendre webhook + toast
+    if (params.get('pro_premium') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname)
+      setScreen('loading')
+      setTimeout(async () => {
+        await refresh()
+        setToast({ icon: '✦', msg: 'Compte Pro Premium activé — bienvenue !' })
+        setTimeout(() => setToast(null), 3500)
+        setScreen('dashboard')
+      }, 3000)
+      return
+    }
+
+    // Retour depuis Stripe — pro-premium annulation → dashboard
+    if (params.get('pro_premium') === 'cancel') {
+      window.history.replaceState({}, '', window.location.pathname)
+      setScreen('dashboard')
       return
     }
 
@@ -254,6 +277,7 @@ export default function App() {
   if (screen === 'admin-clients')  return <AdminClientsPage />
   if (screen === 'admin-activite') return <AdminActivitePage />
   if (screen === 'admin-pros')     return <AdminProsPage />
+  if (screen === 'admin-messages') return <AdminMessagesPage />
 
   if (params.has('test-onboarding')) {
     return (
@@ -609,7 +633,7 @@ export default function App() {
         <WeekOneFlow
           userId={user.id}
           onComplete={() => setScreen('weekone_rest')}
-          onAllDone={() => setScreen('endofweek')}
+          onAllDone={() => setScreen(isPro ? 'dashboard' : 'endofweek')}
           onOpenProProfile={() => setShowProProfile(true)}
           isPro={isPro}
         />
@@ -668,7 +692,7 @@ export default function App() {
         userId={user.id}
         onContinue={(choice) => {
           if (choice !== 'premium') localStorage.setItem(`mji_orientation_${user.id}`, '1')
-          setScreen(choice === 'premium' ? 'access' : 'dashboard')
+          setScreen(choice === 'premium' && !isPro ? 'access' : 'dashboard')
         }}
       />
     )

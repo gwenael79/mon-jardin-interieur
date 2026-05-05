@@ -568,6 +568,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         ville: proForm.ville.trim() || null,
         telephone: telephone.trim(),
         siret: siret.replace(/\s/g,''),
+        pro_plan: 'free',
         created_at: new Date().toISOString(),
       })
       if (dbError) throw new Error(dbError.message)
