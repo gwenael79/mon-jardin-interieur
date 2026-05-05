@@ -393,12 +393,13 @@ html,body,#root{height:100%;width:100%}
 
 /* Mobile */
 @media(max-width:767px) {
+  .auth-wrap { overflow-y:auto; }
   .auth-right-col { display:none; }
-  .auth-layout { flex-direction:column; }
+  .auth-layout { flex-direction:column; height:auto; min-height:100%; padding:0; }
   .auth-left-col {
-    width:100%; padding:32px 24px 28px;
+    width:100%; padding:24px 22px 28px;
     align-items:center; text-align:center;
-    justify-content:flex-start; gap:20px;
+    justify-content:flex-start; gap:16px;
   }
   .auth-logo-circle { width:72px; height:72px; }
   .auth-logo-circle img { width:52px; height:52px; }
@@ -738,7 +739,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       <div style={{ position:'absolute', inset:0, background:'rgba(240,236,220,.35)', zIndex:0 }}/>
 
       <div className="auth-layout">
-        <div style={{ display:'flex', alignItems:'center', gap:48, background: isMobile ? 'transparent' : 'rgba(252,250,244,.78)', backdropFilter: isMobile ? 'none' : 'blur(16px)', borderRadius: isMobile ? 0 : 28, border: isMobile ? 'none' : '1.5px solid rgba(180,210,140,.35)', padding: isMobile ? '40px 22px 28px' : '40px 40px', boxShadow: isMobile ? 'none' : '0 8px 40px rgba(60,100,20,.10)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:48, background: isMobile ? 'transparent' : 'rgba(252,250,244,.78)', backdropFilter: isMobile ? 'none' : 'blur(16px)', borderRadius: isMobile ? 0 : 28, border: isMobile ? 'none' : '1.5px solid rgba(180,210,140,.35)', padding: isMobile ? '0' : '40px 40px', boxShadow: isMobile ? 'none' : '0 8px 40px rgba(60,100,20,.10)' }}>
 
         {/* ── COLONNE GAUCHE — contenu de présentation ── */}
         {(!mobileForm) && (
@@ -765,7 +766,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
             </div>
 
             {/* Boutons — poussés en bas sur PC */}
-            <div style={{ marginTop:'auto' }}>
+            <div style={{ marginTop: isMobile ? 0 : 'auto' }}>
               <button className="auth-btn-primary" onClick={() => goTo('register')}>
                 Commencer mon jardin →
               </button>
