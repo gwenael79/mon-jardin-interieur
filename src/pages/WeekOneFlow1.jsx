@@ -5120,7 +5120,10 @@ console.log('❌ Pas de données ou erreur:', error)
 
       if (dayNum === 7) {
         if (userId) {
-          ;(async () => { try { await supabase.from('profiles').update({ week_one_data: updated }).eq('id', userId) } catch (_) {} })()
+          ;(async () => {
+            try { await supabase.from('profiles').update({ week_one_data: updated }).eq('id', userId) } catch (_) {}
+            try { await supabase.from('users').update({ week_one_completed: true }).eq('id', userId) } catch (_) {}
+          })()
         }
         // onAllDone = tous les 7 jours validés → aller au dashboard
         // onComplete = fallback (compatibilité test-weekone)

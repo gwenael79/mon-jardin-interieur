@@ -59,7 +59,8 @@ function polarToXY(angleDeg, r, cx = 130, cy = 130) {
 }
 
 function vitality(plant) {
-  if (!plant) return 5
+  if (!plant) return 50
+  if (plant.health != null) return plant.health
   const vals = ZONES.map(z => plant[z.key] ?? 5)
   return Math.round(vals.reduce((s, v) => s + v, 0) / vals.length)
 }
@@ -587,7 +588,7 @@ function FleurCard({ fleur, userId, senderName, alreadySent, bouquetMember, badg
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_JWT}` },
-        body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
+        body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName, senderId: userId } }),
       }).then(r => console.log('[push] coeur notif status:', r.status)).catch(e => console.error('[push] coeur notif error:', e))
     } catch(e) { console.error(e) }
     finally { setSending(false) }
@@ -757,7 +758,7 @@ function BouquetCard({ fleur, userId, senderName, alreadySent, onCoeurSent, badg
       fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-push`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_JWT}` },
-        body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName } }),
+        body: JSON.stringify({ type: 'coeur_recu', userId: fleur.id, data: { senderName, senderId: userId } }),
       }).then(r => console.log('[push] coeur notif status:', r.status)).catch(e => console.error('[push] coeur notif error:', e))
       logActivity({ userId, action: 'coeur', zone: weakest.key })
       logNetworkActivity(userId, 'coeur')
@@ -1170,6 +1171,7 @@ function ModalJardin({ userId, myName, bouquetIds, onClose, onCoeurSent, isPremi
   async function loadList(excludeSet) {
     const exIds = [...(excludeSet ?? excluded), userId].filter(Boolean)
     let q = supabase.from('users').select('id, display_name, flower_name, level')
+      .eq('week_one_completed', true)
     exIds.forEach(id => { q = q.neq('id', id) })
     const { data: users } = await q
     if (!users?.length) { setList([]); return }

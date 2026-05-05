@@ -43,7 +43,7 @@ async function clearBadge() {
 // ── Actions contextuelles par type ───────────────────────────────────────────
 function getActions(type) {
   if (type === 'coeur_recu')
-    return [{ action: 'reply', title: '💚 Renvoyer' }, { action: 'view', title: 'Voir' }]
+    return [{ action: 'reply', title: '💐 Renvoyer' }, { action: 'view', title: 'Voir' }]
   if (type === 'ritual_reminder')
     return [{ action: 'view', title: '🌿 Commencer' }, { action: 'later', title: 'Plus tard' }]
   if (type?.startsWith('degradation'))
@@ -88,8 +88,9 @@ self.addEventListener('notificationclick', e => {
     clearBadge().then(() => {
       if (e.action === 'later') return
 
+      const senderId = e.notification.data?.senderId
       const url = e.action === 'reply'
-        ? '/jardin?action=reply'
+        ? `/jardin${senderId ? `?from=${senderId}` : ''}`
         : (e.notification.data?.url ?? '/')
 
       const fullUrl = `https://monjardininterieur.com${url}`
@@ -97,8 +98,9 @@ self.addEventListener('notificationclick', e => {
       return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(wins => {
         const existing = wins.find(w => w.url.includes('monjardininterieur.com'))
         if (existing) {
-          existing.postMessage({ type: 'NOTIFICATION_CLICKED', action: e.action })
-          return existing.focus()
+          existing.postMessage({ type: 'NOTIFICATION_CLICKED', action: e.action, url: fullUrl })
+          existing.navigate(fullUrl).catch(() => existing.focus())
+          return
         }
         return clients.openWindow(fullUrl)
       })

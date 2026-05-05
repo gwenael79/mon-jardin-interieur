@@ -72,7 +72,7 @@ function buildPayload(type: string, data?: Record<string, string>) {
     degradation_1:   { title: '🌿 Votre jardin vous attend',      body: 'Revenez cultiver votre équilibre.',          tag: 'degradation', url: '/' },
     degradation_3:   { title: '🍂 Votre plante a besoin de vous', body: 'Cela fait 3 jours…',                         tag: 'degradation', url: '/' },
     degradation_7:   { title: '🥀 Votre jardin vous attend',      body: 'Votre jardin est fragile.',                  tag: 'degradation', url: '/' },
-    coeur_recu:      { title: "💚 Quelqu'un pense à vous",        body: data?.senderName ? `${data.senderName} vous a envoyé un cœur.` : 'Un cœur bienveillant.', tag: 'coeur', url: '/jardin' },
+    coeur_recu:      { title: "💐 Quelqu'un pense à vous",        body: data?.senderName ? `${data.senderName} vous a envoyé un bouquet.` : 'Un bouquet bienveillant.', tag: 'coeur', url: '/jardin' },
   }
   const notif = map[type] ?? map['ritual_reminder']
   return { ...notif, type }
@@ -147,7 +147,7 @@ async function sendToUser(userId: string, type: string, data?: Record<string, st
                   renotify: true,
                   vibrate:  [200, 100, 200],
                   actions: notif.type === 'coeur_recu'
-                    ? [{ action: 'reply', title: '💚 Renvoyer' }, { action: 'view', title: 'Voir' }]
+                    ? [{ action: 'reply', title: '💐 Renvoyer' }, { action: 'view', title: 'Voir' }]
                     : [{ action: 'view', title: '🌿 Ouvrir' }, { action: 'later', title: 'Plus tard' }],
                 },
                 data: {
