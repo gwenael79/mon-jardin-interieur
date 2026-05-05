@@ -394,6 +394,7 @@ html,body,#root{height:100%;width:100%}
 /* Mobile */
 @media(max-width:767px) {
   .auth-wrap { overflow-y:auto; }
+  .auth-bg { position:fixed; }
   .auth-right-col { display:none; }
   .auth-layout { flex-direction:column; height:auto; min-height:100%; padding:0; }
   .auth-left-col {
@@ -736,7 +737,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       <div className="auth-bg">
         <img src="/fond1.png" alt=""/>
       </div>
-      <div style={{ position:'absolute', inset:0, background:'rgba(240,236,220,.35)', zIndex:0 }}/>
+      <div style={{ position: isMobile ? 'fixed' : 'absolute', inset:0, background:'rgba(240,236,220,.35)', zIndex:0 }}/>
 
       <div className="auth-layout">
         <div style={{ display:'flex', alignItems:'center', gap:48, background: isMobile ? 'transparent' : 'rgba(252,250,244,.78)', backdropFilter: isMobile ? 'none' : 'blur(16px)', borderRadius: isMobile ? 0 : 28, border: isMobile ? 'none' : '1.5px solid rgba(180,210,140,.35)', padding: isMobile ? '0' : '40px 40px', boxShadow: isMobile ? 'none' : '0 8px 40px rgba(60,100,20,.10)' }}>
