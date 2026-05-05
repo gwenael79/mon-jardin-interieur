@@ -516,24 +516,27 @@ export function AdminClientsPage() {
 
         userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays })
 
-        if (!u.onboarding_completed)    { counts.inscrit++;              return }
-        if (completedDays.length === 0) { counts.onboarding++;           return }
-        if (maxDay >= 7)                { counts.dashboard++;            return }
-        if (maxDay >= 1 && maxDay <= 6)   counts.jour[maxDay - 1]++
+        const daysSinceReg = Math.floor((Date.now() - new Date(u.created_at)) / 86400000)
+
+        if (!u.onboarding_completed)    { counts.inscrit++;   return }
+        if (completedDays.length === 0) { counts.onboarding++;return }
+        if (maxDay >= 7)                { counts.jour[6]++;   return } // Semaine complète → Jour 7
+        if (maxDay >= 1 && maxDay <= 6) { counts.jour[maxDay - 1]++; return }
+        if (daysSinceReg >= 7)          { counts.dashboard++; return } // > 7 jours sans progresser
       })
 
       setFunnelUsers(userList)
       setFunnel([
-        { label: 'Inscrits',   count: counts.inscrit    },
-        { label: 'Onboarding', count: counts.onboarding },
-        { label: 'Jour 1',     count: counts.jour[0]    },
-        { label: 'Jour 2',     count: counts.jour[1]    },
-        { label: 'Jour 3',     count: counts.jour[2]    },
-        { label: 'Jour 4',     count: counts.jour[3]    },
-        { label: 'Jour 5',     count: counts.jour[4]    },
-        { label: 'Jour 6',     count: counts.jour[5]    },
-        { label: 'Jour 7',     count: counts.jour[6]    },
-        { label: 'Dashboard',  count: counts.dashboard  },
+        { label: 'Inscrits',        count: counts.inscrit    },
+        { label: 'Onboarding',      count: counts.onboarding },
+        { label: 'Jour 1',          count: counts.jour[0]    },
+        { label: 'Jour 2',          count: counts.jour[1]    },
+        { label: 'Jour 3',          count: counts.jour[2]    },
+        { label: 'Jour 4',          count: counts.jour[3]    },
+        { label: 'Jour 5',          count: counts.jour[4]    },
+        { label: 'Jour 6',          count: counts.jour[5]    },
+        { label: 'J7',    count: counts.jour[6]   },
+        { label: 'Fini',  count: counts.dashboard },
       ])
     } catch (e) {
       console.error('[funnel] exception:', e)

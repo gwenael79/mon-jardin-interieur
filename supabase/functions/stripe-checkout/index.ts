@@ -11,7 +11,8 @@ const PLAN_MONTHS: Record<string, number> = {
   'price_1TMpO0CIpPVJTaopzrpNDw8r': 12,
 }
 
-const PRO_PREMIUM_PRICE_ID = 'price_1TTjumCIpPVJTaopIY2O2o5K'
+const PRO_PREMIUM_PRICE_ID      = 'price_1TTjumCIpPVJTaopIY2O2o5K'
+const PRO_PREMIUM_TEST_PRICE_ID = 'price_1TTpRBCIpPVJTaopB8sYV25I' // 1€ test
 
 const ONE_TIME_PACKS: Record<string, { lumens?: number; months?: number }> = {
   'price_1TMpOGCIpPVJTaopkipwkvDT': { lumens: 50  },
@@ -179,8 +180,8 @@ Deno.serve(async (req: Request) => {
       return json({ url: session.url, sessionId: session.id })
     }
 
-    // ── Cas pro-premium (50 €/an) ────────────────────────────────────────────
-    if (priceId === PRO_PREMIUM_PRICE_ID) {
+    // ── Cas pro-premium (50 €/an ou test 1€) ────────────────────────────────
+    if (priceId === PRO_PREMIUM_PRICE_ID || priceId === PRO_PREMIUM_TEST_PRICE_ID) {
       const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE)
       const { data: userData } = await admin.from('users').select('stripe_customer_id, display_name').eq('id', user.id).single()
       let customerId = userData?.stripe_customer_id
@@ -193,12 +194,12 @@ Deno.serve(async (req: Request) => {
       const session = await stripePost('checkout/sessions', {
         customer: customerId,
         payment_method_types: ['card'],
-        line_items: [{ price: PRO_PREMIUM_PRICE_ID, quantity: 1 }],
+        line_items: [{ price: priceId, quantity: 1 }],
         mode: 'subscription',
         success_url: successUrl ?? `${baseUrl}/?pro_premium=success`,
         cancel_url:  cancelUrl  ?? `${baseUrl}/?pro_premium=cancel`,
-        metadata: { supabase_uid: user.id, price_id: PRO_PREMIUM_PRICE_ID, type: 'pro_premium' },
-        subscription_data: { metadata: { supabase_uid: user.id, price_id: PRO_PREMIUM_PRICE_ID, type: 'pro_premium' } },
+        metadata: { supabase_uid: user.id, price_id: priceId, type: 'pro_premium' },
+        subscription_data: { metadata: { supabase_uid: user.id, price_id: priceId, type: 'pro_premium' } },
       })
       console.log(`[stripe-checkout] Pro-premium session créée pour ${user.id}`)
       return json({ url: session.url, sessionId: session.id })

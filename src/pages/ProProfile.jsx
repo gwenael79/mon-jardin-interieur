@@ -56,6 +56,10 @@ const css = `
   color:rgba(255,255,255,.80); font-size:10px; font-weight:600;
   letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px;
 }
+.pp-badge-pro.premium {
+  background:rgba(120,200,80,.18); border-color:rgba(150,220,100,.45);
+  color:#a8e87a;
+}
 .pp-name {
   font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600;
   color:#fff; line-height:1.15; margin-bottom:5px;
@@ -733,7 +737,9 @@ export function ProProfile({ onBack }) {
       <div className="pp-card">
         <div className="pp-card-banner">
           <div>
-            <div className="pp-badge-pro">✦ Compte Pro</div>
+            <div className={`pp-badge-pro${isProPremium ? ' premium' : ''}`}>
+              {isProPremium ? '✦ Compte Pro Premium' : '✦ Compte Pro'}
+            </div>
             <div className="pp-name">{userData?.display_name ?? '—'}</div>
             {userData?.flower_name && <div className="pp-flower">🌸 {userData.flower_name}</div>}
           </div>
@@ -807,11 +813,17 @@ export function ProProfile({ onBack }) {
             <div style={{fontSize:11,fontWeight:600,letterSpacing:'.12em',textTransform:'uppercase',color:'rgba(255,255,255,.45)',marginBottom:4}}>Plan Free</div>
             <div style={{fontSize:13,color:'rgba(255,255,255,.75)'}}>1 atelier/mois · 1 produit en Jardinothèque — Pro Premium pour tout débloquer.</div>
           </div>
-          <div style={{flexShrink:0}}>
+          <div style={{flexShrink:0,display:'flex',gap:8,flexWrap:'wrap'}}>
             <button onClick={() => handleUpgradePro('price_1TTjumCIpPVJTaopIY2O2o5K')}
               style={{padding:'8px 20px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#5a9a28,#3a7a18)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
               Pro Premium — 50 €/an
             </button>
+            {import.meta.env.DEV && (
+              <button onClick={() => handleUpgradePro('price_1TTpRBCIpPVJTaopB8sYV25I')}
+                style={{padding:'8px 14px',borderRadius:8,border:'1px dashed rgba(90,154,40,.50)',background:'transparent',color:'rgba(90,154,40,.80)',fontSize:11,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
+                ◎ Test 1€
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -1000,17 +1012,7 @@ export function ProProfile({ onBack }) {
                     }}
                   >Solder</button>
                 </div>
-                <div style={{background:'#f9f7f4',border:'1px solid #e0ddd6',borderRadius:14,padding:'18px 20px',display:'flex',flexDirection:'column',justifyContent:'center',gap:10}}>
-                  <div>
-                    <div style={{fontSize:9.5,letterSpacing:'.12em',textTransform:'uppercase',color:'#888',marginBottom:4,fontWeight:600}}>Paiement via</div>
-                    <div style={{fontSize:17,fontWeight:700,color:'#111',letterSpacing:'.04em'}}>Wize</div>
-                    <div style={{fontSize:12,color:'#555',marginTop:3,fontWeight:500}}>Virement SEPA · 3–5 jours ouvrés</div>
-                  </div>
-                  <div style={{fontSize:12,color:'#333',lineHeight:1.7}}>
-                    Commission Mon Jardin : <strong style={{color:'#111'}}>15 %</strong> sur le montant HT.<br/>
-                    TVA applicable : <strong style={{color:'#111'}}>20 %</strong>.
-                  </div>
-                </div>
+                {/* Paiement Wize — désactivé temporairement */}
               </div>
 
               {/* Accordéon par mois */}
@@ -1125,17 +1127,7 @@ export function ProProfile({ onBack }) {
                     }}
                   >Solder</button>
                 </div>
-                <div style={{ background:'#f9f7f4', border:'1px solid #e0ddd6', borderRadius:14, padding:'18px 20px', display:'flex', flexDirection:'column', justifyContent:'center', gap:10 }}>
-                  <div>
-                    <div style={{ fontSize:9.5, letterSpacing:'.12em', textTransform:'uppercase', color:'#888', marginBottom:4, fontWeight:600 }}>Paiement via</div>
-                    <div style={{ fontSize:17, fontWeight:700, color:'#111', letterSpacing:'.04em' }}>Wize</div>
-                    <div style={{ fontSize:12, color:'#555', marginTop:3, fontWeight:500 }}>Virement SEPA · 3–5 jours ouvrés</div>
-                  </div>
-                  <div style={{ fontSize:12, color:'#333', lineHeight:1.7 }}>
-                    Commission Mon Jardin : <strong style={{ color:'#111' }}>10 %</strong> sur chaque renouvellement.<br/>
-                    Code promo client : <strong style={{ color:'#111' }}>{proData?.pro_id ?? '…'}</strong> (−10 %).
-                  </div>
-                </div>
+                {/* Paiement Wize — désactivé temporairement */}
               </div>
 
               {/* 2 colonnes : clients affiliés + historique CA */}

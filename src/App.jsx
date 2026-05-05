@@ -224,14 +224,11 @@ export default function App() {
         setScreen('onboarding'); return
       }
 
-      const daysSinceReg = Math.floor((Date.now() - new Date(user.created_at)) / 86400000)
-      if (daysSinceReg < 7) {
-        const { data: profileData } = await supabase
-          .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
-        const completedDays = profileData?.week_one_data?.completedDays ?? []
-        setWeekOneCompletedDays(completedDays)
-        if (completedDays.length < 7) { setScreen('weekone'); return }
-      }
+      const { data: profileData } = await supabase
+        .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
+      const completedDays = profileData?.week_one_data?.completedDays ?? []
+      setWeekOneCompletedDays(completedDays)
+      if (completedDays.length < 7) { setScreen('weekone'); return }
 
       setScreen('dashboard')
     })()
