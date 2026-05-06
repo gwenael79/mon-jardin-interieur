@@ -5063,6 +5063,10 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       <NeedSelectionModal
         onSelectNeed={handleNeedSelected}
         onClose={() => setShowNeedModal(false)}
+        userId={userId}
+        plantId={plant?.id ?? todayPlant?.id}
+        plantHealth={plant?.health ?? todayPlant?.health ?? 5}
+        onHealthUpdate={h => setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: h }))}
       />
     )}
     {showRitualSuggestion && selectedNeed && (

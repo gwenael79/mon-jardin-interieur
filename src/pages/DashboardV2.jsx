@@ -1691,6 +1691,10 @@ export default function DashboardPage() {
           onSelectNeed={need => { setShowNeedModal(false); setSelectedNeed(need); ritualCompleteCalledRef.current = false; setShowRitualSuggestion(true) }}
           onClose={() => setShowNeedModal(false)}
           bilanDegradation={bilanDegradation}
+          userId={user?.id}
+          plantId={todayPlant?.id}
+          plantHealth={todayPlant?.health}
+          onHealthUpdate={() => reloadPlant()}
         />
       )}
       {showRitualSuggestion && selectedNeed && (

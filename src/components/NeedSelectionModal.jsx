@@ -261,18 +261,83 @@ const TIME_BUCKETS = [
 
 const SHORT_DURS = ['1 min','2 min','3 min','10 min','10 min/soir','15 min']
 
-function RitualByTimeModal({ onClose }) {
-  const [bucket,   setBucket]   = useState(null)   // TIME_BUCKETS item
+// ─── Gestion de session (2 rituels max, cooldown 1h) ─────────────────────────
+const SESSION_KEY = 'ritual_session_v2'
+
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}')
+    if (s.cooldownUntil && Date.now() >= new Date(s.cooldownUntil).getTime()) {
+      return { count: 0, cooldownUntil: null, doneIds: [] }
+    }
+    return { count: s.count ?? 0, cooldownUntil: s.cooldownUntil ?? null, doneIds: s.doneIds ?? [] }
+  } catch { return { count: 0, cooldownUntil: null, doneIds: [] } }
+}
+
+function saveSession(s) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(s))
+}
+
+function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpdate }) {
+  const [bucket,   setBucket]   = useState(null)
   const [rituals,  setRituals]  = useState([])
   const [loading,  setLoading]  = useState(false)
-  const [selected, setSelected] = useState(null)   // ritual detail
+  const [selected, setSelected] = useState(null)
+  const [done,     setDone]     = useState(false)
+  const [session,  setSession]  = useState(loadSession)
+  const [, setTick]             = useState(0)
   const isMobile = useIsMobile()
+
+  // Tick chaque seconde pendant le cooldown pour mettre à jour l'affichage
+  useEffect(() => {
+    if (!session.cooldownUntil) return
+    const id = setInterval(() => {
+      // Auto-reset si expiré
+      if (Date.now() >= new Date(session.cooldownUntil).getTime()) {
+        const reset = { count: 0, cooldownUntil: null, doneIds: [] }
+        setSession(reset)
+        saveSession(reset)
+      }
+      setTick(t => t + 1)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [session.cooldownUntil])
+
+  const now = Date.now()
+  const cooldownMs = session.cooldownUntil ? Math.max(0, new Date(session.cooldownUntil).getTime() - now) : 0
+  const inCooldown = cooldownMs > 0
+  const canValidate = !inCooldown && session.count < 2
+  const cooldownH = Math.floor(cooldownMs / 3600000)
+  const cooldownM = Math.floor((cooldownMs % 3600000) / 60000)
+  const cooldownLabel = cooldownH > 0 ? `${cooldownH}h ${cooldownM} min` : `${cooldownM} min`
+
+  async function handleValidate() {
+    if (!canValidate || done) return
+    const newCount = session.count + 1
+    const newCooldownUntil = newCount >= 2 ? new Date(now + 60 * 60 * 1000).toISOString() : null
+    const newDoneIds = [...session.doneIds, selected.n]
+    const newSession = { count: newCount, cooldownUntil: newCooldownUntil, doneIds: newDoneIds }
+    setSession(newSession)
+    saveSession(newSession)
+    setDone(true)
+    // +1% santé de la fleur
+    if (plantId) {
+      const newHealth = Math.min(100, (plantHealth ?? 5) + 1)
+      onHealthUpdate?.(newHealth)
+      try {
+        await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
+        window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
+      } catch (e) { console.error('[ritual] health update failed:', e) }
+    }
+    setTimeout(onClose, 1400)
+  }
 
   useEffect(() => {
     if (!bucket) return
     setLoading(true)
     setRituals([])
     setSelected(null)
+    setDone(false)
     let q = supabase.from('rituels').select('n, title, dur, zone, desc, icon').order('n')
     if (bucket.durs) {
       q = q.in('dur', bucket.durs)
@@ -313,13 +378,26 @@ function RitualByTimeModal({ onClose }) {
               {bucket ? bucket.label : 'Choisissez le temps que vous y accordez'}
             </p>
             {!bucket && <p style={{ fontFamily:"'Jost',sans-serif", fontSize:16, fontWeight:600, color:'#1a1008', margin:'4px 0 0' }}>Parmi 120 rituels disponibles</p>}
-            {bucket && !loading && <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.5)', margin:'3px 0 0' }}>{rituals.length} rituel{rituals.length > 1 ? 's' : ''}</p>}
+            {bucket && !loading && (
+            <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+              <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.5)', margin:0 }}>{rituals.length} rituel{rituals.length > 1 ? 's' : ''}</p>
+              {inCooldown ? (
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, background:'rgba(200,80,60,0.10)', color:'#c04030', borderRadius:20, padding:'2px 8px' }}>
+                  Cooldown · {cooldownLabel}
+                </span>
+              ) : (
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, background:'rgba(60,140,80,0.10)', color:'#3a8050', borderRadius:20, padding:'2px 8px' }}>
+                  {session.count}/2 rituels
+                </span>
+              )}
+            </div>
+          )}
           </div>
           <button onClick={onClose} style={{ background:'rgba(0,0,0,0.06)', border:'none', borderRadius:'50%', width:32, height:32, cursor:'pointer', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(30,20,8,0.6)', flexShrink:0 }}>✕</button>
         </div>
 
         {/* Contenu */}
-        <div style={{ flex:1, overflowY:'auto', padding:'16px 16px 24px' }}>
+        <div style={{ flex:1, overflowY:'auto', padding:'16px 16px 40px', WebkitOverflowScrolling:'touch' }}>
 
           {/* Sélection bucket */}
           {!bucket && (
@@ -350,7 +428,7 @@ function RitualByTimeModal({ onClose }) {
             ) : (
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {rituals.map(r => (
-                  <button key={r.n} onClick={() => setSelected(r)} style={{
+                  <button key={r.n} onClick={() => { setSelected(r); setDone(session.doneIds.includes(r.n)) }} style={{
                     display:'flex', alignItems:'center', gap:12,
                     background:'#fff', border:'1px solid rgba(0,0,0,0.07)',
                     borderRadius:14, padding:'12px 14px',
@@ -366,7 +444,10 @@ function RitualByTimeModal({ onClose }) {
                       <div style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'#1a1008', lineHeight:1.25, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{r.title}</div>
                       <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color: ZONE_COLORS[r.zone] || '#888', marginTop:2 }}>{ZONE_LABELS[r.zone] || r.zone} · {r.dur}</div>
                     </div>
-                    <span style={{ color:'rgba(30,20,8,0.25)', fontSize:16, flexShrink:0 }}>›</span>
+                    {session.doneIds.includes(r.n)
+                      ? <span style={{ fontSize:14, color:'#3a8050', flexShrink:0 }}>✓</span>
+                      : <span style={{ color:'rgba(30,20,8,0.25)', fontSize:16, flexShrink:0 }}>›</span>
+                    }
                   </button>
                 ))}
               </div>
@@ -383,8 +464,38 @@ function RitualByTimeModal({ onClose }) {
                   <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color: ZONE_COLORS[selected.zone] || '#888', margin:'4px 0 0' }}>{ZONE_LABELS[selected.zone] || selected.zone} · {selected.dur}</p>
                 </div>
               </div>
-              <button onClick={() => setSelected(null)} style={{ background:'none', border:'none', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.45)', cursor:'pointer', padding:'0 0 12px', display:'flex', alignItems:'center', gap:4 }}>‹ Retour à la liste</button>
-              <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontStyle:'italic', color:'#1a1008', lineHeight:1.7, background:'rgba(0,0,0,0.03)', borderRadius:12, padding:'16px', margin:0 }}>{selected.desc}</p>
+              <button onClick={() => { setSelected(null); setDone(false) }} style={{ background:'none', border:'none', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.45)', cursor:'pointer', padding:'0 0 12px', display:'flex', alignItems:'center', gap:4 }}>‹ Retour à la liste</button>
+              <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontStyle:'italic', color:'#1a1008', lineHeight:1.7, background:'rgba(0,0,0,0.03)', borderRadius:12, padding:'16px', margin:'0 0 16px' }}>{selected.desc}</p>
+              {inCooldown ? (
+                <div style={{ textAlign:'center', padding:'14px 0' }}>
+                  <p style={{ fontFamily:"'Jost',sans-serif", fontSize:13, color:'#c04030', margin:'0 0 4px' }}>
+                    Vous avez fait 2 rituels dans cette session.
+                  </p>
+                  <p style={{ fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(30,20,8,0.55)', margin:0 }}>
+                    Revenez dans <strong>{cooldownLabel}</strong> pour continuer.
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleValidate}
+                  disabled={!canValidate || done}
+                  style={{
+                    width:'100%', padding:'15px 0', borderRadius:50, border:'none',
+                    cursor: (!canValidate || done) ? 'default' : 'pointer',
+                    fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600,
+                    letterSpacing:'.06em', transition:'background .3s, transform .15s',
+                    background: done
+                      ? 'linear-gradient(135deg,#4a9a60,#2a7a40)'
+                      : 'linear-gradient(135deg,#a07888,#c8a0b0)',
+                    color:'#fff',
+                    boxShadow: done ? '0 4px 16px rgba(40,120,60,0.30)' : '0 4px 16px rgba(160,100,120,0.28)',
+                  }}
+                  onMouseEnter={e => { if (canValidate && !done) e.currentTarget.style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'none' }}
+                >
+                  {done ? '✓ Accompli · +1% vitalité' : `J'ai fait ce rituel ✓`}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -395,7 +506,7 @@ function RitualByTimeModal({ onClose }) {
 
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
-function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [] }) {
+function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate }) {
   const [showByTime, setShowByTime] = useState(false)
   return (
     <>
@@ -495,16 +606,17 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [] }
             </button>
           </div>
         </div>
-        {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} />}
+        {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
       </div>
     </>
   )
 }
 
-export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation }) {
+export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate }) {
   const isMobile = useIsMobile()
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
   const recommendedIds = getRecommendedNeeds(bilanDegradation)
+  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate }
 
   if (!isMobile) return (
     <>
@@ -518,7 +630,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegrada
           display:'flex', flexDirection:'column',
           boxShadow:'0 32px 80px rgba(0,0,0,0.32)',
         }}>
-          <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={false} recommendedIds={recommendedIds}/>
+          <NeedModalInner {...shared} isMobile={false} />
         </div>
       </div>
     </>
@@ -528,7 +640,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegrada
     <>
       <style>{CSS}</style>
       <div style={{ position:'fixed', inset:0, zIndex:260, background:bg, display:'flex', flexDirection:'column' }}>
-        <NeedModalInner onSelectNeed={onSelectNeed} onClose={onClose} isMobile={true} recommendedIds={recommendedIds}/>
+        <NeedModalInner {...shared} isMobile={true} />
       </div>
     </>
   )
