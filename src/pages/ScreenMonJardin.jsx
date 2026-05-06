@@ -4784,6 +4784,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   ]
 
   const [gardenSettings, setGardenSettings] = useState(DEFAULT_GARDEN_SETTINGS)
+  const settingsLoaded = useRef(false)
   const [showGardenSettings, setShowGardenSettings] = useState(false)
   const [gardenTier, setGardenTier] = useState(1)
   const [showRitualsModal,        setShowRitualsModal]        = useState(false)
@@ -4879,12 +4880,14 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   // Charger les settings depuis Supabase
   useEffect(() => {
     if (!userId) return
+    settingsLoaded.current = false
     supabase
       .from('garden_settings')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.warn('[gardenSettings] load error:', error.message)
         if (data) setGardenSettings({
           sunriseH: data.sunrise_h ?? 7,
           sunriseM: data.sunrise_m ?? 0,
@@ -4894,6 +4897,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           petalColor2: data.petal_color2 ?? 'var(--zone-flowers)',
           petalShape:  data.petal_shape  ?? 'round',
         })
+        settingsLoaded.current = true
       })
   }, [userId])
 
@@ -4907,6 +4911,11 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   }
 
   const saveGardenSettings = async s => {
+    // Bloquer si les settings DB ne sont pas encore arrivés — évite d'écraser avec les valeurs par défaut
+    if (!settingsLoaded.current) {
+      console.warn('[gardenSettings] save bloqué — données pas encore chargées')
+      return
+    }
     setGardenSettings(s)
     await supabase.from('garden_settings').upsert({
       user_id: userId, sunrise_h: s.sunriseH, sunrise_m: s.sunriseM,

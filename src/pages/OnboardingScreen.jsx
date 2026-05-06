@@ -2797,12 +2797,13 @@ export function OnboardingScreen({ userId, onComplete }) {
     const color = SEED_COLORS[colorIdx]
     try {
       if (userId) {
+        // ignoreDuplicates: true → ne jamais écraser les préférences existantes
         await supabase.from('garden_settings').upsert({
           user_id:      userId,
           petal_color1: color.hex,
           petal_color2: color.hex2,
           petal_shape:  'round',
-        }, { onConflict: 'user_id' })
+        }, { onConflict: 'user_id', ignoreDuplicates: true })
         if (intention !== null) {
           await supabase.from('profiles').update({ onboarding_intention: intention }).eq('id', userId)
         }
