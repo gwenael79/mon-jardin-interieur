@@ -5077,12 +5077,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         plantHealth={plant?.health ?? 5}
         onCompleteRitual={async (needId, isLiked, delta) => {
           if (!isLiked) return
+          ritualJustCompleted.current = true  // toujours déclencher les étoiles si aimé
           const plantId = plant?.id ?? todayPlant?.id
           const currentHealth = plant?.health ?? todayPlant?.health ?? 5
           if (!plantId) { console.warn('[onCompleteRitual] plant.id manquant — plant:', plant, 'todayPlant:', todayPlant); return }
           const newHealth = Math.min(100, currentHealth + delta)
           setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: newHealth }))
-          ritualJustCompleted.current = true
           const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
           if (error) console.error('[onCompleteRitual] update failed:', error.message)
           else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
