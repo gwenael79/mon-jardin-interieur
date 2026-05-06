@@ -59,7 +59,10 @@ export function usePushNotification(userId) {
       // Demander la permission
       const perm = await Notification.requestPermission()
       setPermission(perm)
-      if (perm !== 'granted') { setIsLoading(false); return }
+      if (perm !== 'granted') {
+        setIsLoading(false)
+        throw new Error('permission-denied')
+      }
 
       const sw = await navigator.serviceWorker.ready
 
@@ -75,15 +78,13 @@ export function usePushNotification(userId) {
         const p256dh   = subJson.keys?.p256dh   ?? ''
         const auth     = subJson.keys?.auth      ?? ''
 
-        // Supprimer l'ancien et insérer le nouveau
-        await supabase.from('push_subscriptions').delete().eq('user_id', userId)
-        await supabase.from('push_subscriptions').insert({
+        await supabase.from('push_subscriptions').upsert({
           user_id:  userId,
           endpoint: endpoint,
           p256dh:   p256dh,
           auth:     auth,
           platform: 'ios',
-        })
+        }, { onConflict: 'user_id' })
       } else {
         // ── Android : Firebase Cloud Messaging ───────────────
         const app       = getFirebaseApp()
@@ -96,14 +97,13 @@ export function usePushNotification(userId) {
 
         if (!token) { console.error('[push] no FCM token'); setIsLoading(false); return }
 
-        await supabase.from('push_subscriptions').delete().eq('user_id', userId)
-        await supabase.from('push_subscriptions').insert({
+        await supabase.from('push_subscriptions').upsert({
           user_id:  userId,
           endpoint: `fcm:${token}`,
-          p256dh:   token.slice(0, 87),
-          auth:     token.slice(0, 22),
+          p256dh:   '',
+          auth:     '',
           platform: 'android',
-        })
+        }, { onConflict: 'user_id' })
       }
 
       setIsSubscribed(true)

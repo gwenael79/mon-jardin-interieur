@@ -1961,6 +1961,7 @@ const HORAIRES_LIST = [
 function StepNotifications({ userId, onNext }) {
   const { isSupported, isSubscribed, isLoading, subscribe } = usePushNotification(userId)
   const [done,     setDone]     = useState(false)
+  const [denied,   setDenied]   = useState(false)
   const [horaires, setHoraires] = useState(['soir'])
 
   function toggleHoraire(id) {
@@ -1972,8 +1973,13 @@ function StepNotifications({ userId, onNext }) {
   }
 
   async function handleActivate() {
-    await subscribe()
-    // Sauvegarde les horaires choisis dans push_subscriptions
+    setDenied(false)
+    try {
+      await subscribe()
+    } catch (e) {
+      if (e.message === 'permission-denied') setDenied(true)
+      return
+    }
     await supabase.from('push_subscriptions')
       .update({ horaires })
       .eq('user_id', userId)
@@ -2055,6 +2061,13 @@ function StepNotifications({ userId, onNext }) {
           ))}
         </div>
 
+        {denied && (
+          <p style={{ fontSize:13, color:'#c0624a', margin:0, textAlign:'center', lineHeight:1.5 }}>
+            Les notifications sont bloquées dans les réglages de ton navigateur.<br/>
+            Tu peux les activer plus tard dans les paramètres de l'app.
+          </p>
+        )}
+
         <div className="s3" style={{ width:'100%', display:'flex', flexDirection:'column', gap:8 }}>
           {alreadyOn ? (
             <>
@@ -2128,10 +2141,20 @@ function StepInstall({ onNext }) {
   async function handleInstall() {
     if (!installPrompt) return
     setInstalling(true)
-    installPrompt.prompt()
-    const { outcome } = await installPrompt.userChoice
-    if (outcome === 'accepted') { setDone(true); setTimeout(onNext, 900) }
-    else setInstalling(false)
+    try {
+      installPrompt.prompt()
+      const { outcome } = await installPrompt.userChoice
+      // Le prompt est consommé après usage — on le retire pour éviter un re-clic invalide
+      setInstallPrompt(null)
+      window._installPrompt = null
+      if (outcome === 'accepted') { setDone(true); setTimeout(onNext, 900) }
+      else setInstalling(false)
+    } catch (e) {
+      console.error('[install] prompt error:', e)
+      setInstalling(false)
+      setInstallPrompt(null)
+      window._installPrompt = null
+    }
   }
 
   return (
@@ -2139,8 +2162,16 @@ function StepInstall({ onNext }) {
       <div style={{ padding:'40px 28px 32px', display:'flex', flexDirection:'column', alignItems:'center', gap:24, textAlign:'center' }}>
 
         {/* Illustration */}
-        <div className="s0" style={{ fontSize:68, lineHeight:1, filter:'drop-shadow(0 4px 16px rgba(60,160,90,0.25))' }}>
-          📲
+        <div className="s0" style={{ display:'flex', justifyContent:'center' }}>
+          <img
+            src="/icons/feline.png"
+            alt="Mon Jardin Intérieur"
+            style={{
+              width: 120, height: 120, borderRadius: 28,
+              boxShadow: '0 8px 32px rgba(60,160,90,0.30)',
+              objectFit: 'cover',
+            }}
+          />
         </div>
 
         <div className="s1">
@@ -2782,7 +2813,7 @@ export function OnboardingScreen({ userId, onComplete }) {
     setPhase(4)
   }
 
-  // Appelé quand StepEquipe clique "Suivant" → notifications → install → quiz
+  // Appelé quand StepEquipe clique "Suivant" → install → notifications → quiz
   function handleEquipeNext() {
     setPhase(6)
   }
@@ -2801,8 +2832,8 @@ export function OnboardingScreen({ userId, onComplete }) {
   if (phase === 3)  return <StepGraine intention={intention} onPlant={handlePlant} />
   if (phase === 4)  return <StepCommunaute onComplete={() => setPhase(5)} />
   if (phase === 5)  return <StepEquipe onNext={handleEquipeNext} onSkip={onComplete} />
-  if (phase === 6)  return <StepNotifications userId={userId} onNext={() => setPhase(7)} />
-  if (phase === 7)  return <StepInstall onNext={() => {
+  if (phase === 6)  return <StepInstall onNext={() => setPhase(7)} />
+  if (phase === 7)  return <StepNotifications userId={userId} onNext={() => {
     if (quizAlready) { onComplete(); return }
     setPhase(8)
   }} />

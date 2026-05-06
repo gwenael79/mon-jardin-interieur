@@ -729,9 +729,17 @@ function SettingsPanel({ name, email, isPremium, isPro, userId, onBack, onOpenFl
   async function handleInstall() {
     if (!installPrompt) return
     setInstalling(true)
-    installPrompt.prompt()
-    const { outcome } = await installPrompt.userChoice
-    if (outcome === 'accepted') setInstallDone(true)
+    try {
+      installPrompt.prompt()
+      const { outcome } = await installPrompt.userChoice
+      setInstallPrompt(null)
+      window._installPrompt = null
+      if (outcome === 'accepted') setInstallDone(true)
+    } catch (e) {
+      console.error('[install] prompt error:', e)
+      setInstallPrompt(null)
+      window._installPrompt = null
+    }
     setInstalling(false)
   }
 
@@ -909,7 +917,15 @@ function SettingsPanel({ name, email, isPremium, isPro, userId, onBack, onOpenFl
         {/* ── Installation PWA ── */}
         <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
           <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:6 }}>Application</div>
-          {_settingsIsStandalone || installDone || pwaInstalledAt ? (
+          {installPrompt ? (
+            /* Le navigateur propose l'installation → l'app n'est pas installée, même si pwaInstalledAt est défini */
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div style={{ fontSize:14, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Non installée</div>
+              <button onClick={handleInstall} disabled={installing} style={{ padding:'7px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#78c878,#4a9860)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: installing ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: installing ? 0.7 : 1 }}>
+                {installing ? '…' : '📲 Installer'}
+              </button>
+            </div>
+          ) : _settingsIsStandalone || installDone || pwaInstalledAt ? (
             <div style={{ fontSize:14, color:'#5a9a28', fontFamily:"'Jost',sans-serif" }}>
               📲 Installée{pwaInstalledAt && !_settingsIsStandalone ? <span style={{ fontSize:11, color:'rgba(30,20,8,.40)', marginLeft:8 }}>· ouvrez depuis votre écran d'accueil</span> : ''}
             </div>
@@ -930,13 +946,6 @@ function SettingsPanel({ name, email, isPremium, isPro, userId, onBack, onOpenFl
                   </div>
                 ))}
               </div>
-            </div>
-          ) : installPrompt ? (
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <div style={{ fontSize:14, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Non installée</div>
-              <button onClick={handleInstall} disabled={installing} style={{ padding:'7px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#78c878,#4a9860)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: installing ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: installing ? 0.7 : 1 }}>
-                {installing ? '…' : '📲 Installer'}
-              </button>
             </div>
           ) : (
             <div style={{ fontSize:13, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>
