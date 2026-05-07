@@ -15,14 +15,18 @@ const EDGE_FN_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '')
 export function useAchats(userId) {
   const [achats,  setAchats]  = useState([])
   const [loading, setLoading] = useState(true)
+  const [tick,    setTick]    = useState(0)
+
+  const refetch = () => setTick(t => t + 1)
 
   useEffect(() => {
     if (!userId) return
+    setLoading(true)
     supabase
       .from('achats')
       .select(`
         id, created_at, statut,
-        produits (id, titre, categorie, type, image_url, description, storage_path)
+        produits (id, titre, categorie, type, image_url, description, storage_path, lien_externe)
       `)
       .eq('user_id', userId)
       .eq('statut', 'complete')
@@ -31,19 +35,76 @@ export function useAchats(userId) {
         setAchats(data || [])
         setLoading(false)
       })
-  }, [userId])
+  }, [userId, tick])
 
-  return { achats, loading }
+  return { achats, loading, refetch }
 }
 
 // ═══════════════════════════════════════════════════════════
 //  MaBibliotheque — composant principal
 // ═══════════════════════════════════════════════════════════
+const PDF_CATS = ['PDF', 'E-book', 'Formation']
+
 export function MaBibliotheque({ userId, onGoToJardinotheque }) {
-  const { achats, loading } = useAchats(userId)
-  const [playing, setPlaying] = useState(null) // produit_id en cours
+  const { achats, loading, refetch } = useAchats(userId)
+  const [playing,       setPlaying]       = useState(null)
+  const [pdfLoading,    setPdfLoading]    = useState(null)
+  const [pdfErr,        setPdfErr]        = useState({})
+  const [confirmDelete, setConfirmDelete] = useState(null) // achat.id en attente
+  const [deleting,      setDeleting]      = useState(null) // achat.id en cours de suppression
+
+  const handleDelete = async (achatId) => {
+    setDeleting(achatId)
+    await supabase.from('achats').delete().eq('id', achatId)
+    setConfirmDelete(null)
+    setDeleting(null)
+    refetch()
+  }
 
   const audioAchats = achats.filter(a => a.produits?.type === 'digital')
+
+  const handleOpenPdf = async (produit) => {
+    const { id: produitId, lien_externe, storage_path } = produit
+    setPdfErr(e => ({ ...e, [produitId]: null }))
+    setPdfLoading(produitId)
+    // Lien externe direct (pas besoin de passer par l'edge function)
+    if (lien_externe) {
+      window.open(lien_externe, '_blank')
+      setPdfLoading(null)
+      return
+    }
+    // Fichier dans le storage Supabase → URL signée via edge function
+    if (!storage_path) {
+      setPdfErr(prev => ({ ...prev, [produitId]: 'Fichier non disponible' }))
+      setPdfLoading(null)
+      return
+    }
+    // window.open avant l'await pour éviter le bloqueur de popups
+    const newWin = window.open('', '_blank')
+    try {
+      let token = null
+      for (let i = 0; i < 6; i++) {
+        const { data } = await supabase.auth.getSession()
+        token = data.session?.access_token ?? null
+        if (token) break
+        await new Promise(r => setTimeout(r, 500))
+      }
+      if (!token) throw new Error('Session expirée — reconnectez-vous')
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ produit_id: produitId }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Erreur serveur')
+      newWin.location.href = json.url
+    } catch (e) {
+      newWin?.close()
+      setPdfErr(prev => ({ ...prev, [produitId]: e.message }))
+    } finally {
+      setPdfLoading(null)
+    }
+  }
 
   if (loading) return (
     <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.30)', fontStyle:'italic', padding:'20px 0' }}>
@@ -78,7 +139,10 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(150px, 1fr))', gap:12, padding:10 }}>
       {audioAchats.map(a => {
         const p = a.produits
-        const isPlaying_ = playing === p.id
+        const isPdf = PDF_CATS.includes(p.categorie)
+        const isPlaying_ = !isPdf && playing === p.id
+        const isLoadingPdf = pdfLoading === p.id
+        const pdfErrMsg = pdfErr[p.id]
         return (
           <div key={a.id} style={{
             borderRadius:14, overflow:'hidden',
@@ -90,13 +154,13 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
             {/* Image carrée */}
             <div style={{
               width:'100%', aspectRatio:'1/1',
-              background:'rgba(var(--lumens-rgb),0.08)',
+              background:'#fff',
               display:'flex', alignItems:'center', justifyContent:'center',
               overflow:'hidden', flexShrink:0,
             }}>
               {p.image_url
-                ? <img src={p.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                : <span style={{ fontSize:36, opacity:.3 }}>🎧</span>
+                ? <img src={p.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'contain' }} />
+                : <span style={{ fontSize:36, opacity:.3 }}>{p.categorie === 'E-book' ? '📖' : p.categorie === 'Formation' ? '🎓' : p.categorie === 'PDF' ? '📄' : '🎧'}</span>
               }
             </div>
 
@@ -104,20 +168,42 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
             <div style={{ padding:'12px 20px 20px', display:'flex', flexDirection:'column', gap:6, flex:1 }}>
               <div style={{ fontSize:12, fontWeight:600, color:'#1a1208', lineHeight:1.3, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{p.titre}</div>
               <div style={{ fontSize:10, color:'rgba(var(--lumens-rgb),0.60)', textTransform:'uppercase', letterSpacing:'.06em' }}>{p.categorie}</div>
-              <button
-                onClick={() => setPlaying(isPlaying_ ? null : p.id)}
-                style={{
-                  marginTop:'auto', width:'100%', padding:'7px 0', borderRadius:20,
-                  background: isPlaying_ ? 'rgba(var(--lumens-rgb),0.22)' : 'rgba(var(--lumens-rgb),0.10)',
-                  border:`1px solid ${isPlaying_ ? 'rgba(var(--lumens-rgb),0.50)' : 'rgba(var(--lumens-rgb),0.22)'}`,
-                  color:'var(--lumens)', fontSize:14, cursor:'pointer', transition:'all .2s',
-                }}
-              >
-                {isPlaying_ ? '⏹' : '▶'}
-              </button>
+
+              {isPdf ? (
+                <>
+                  <button
+                    onClick={() => handleOpenPdf(p)}
+                    disabled={isLoadingPdf}
+                    style={{
+                      marginTop:'auto', width:'100%', padding:'7px 0', borderRadius:20,
+                      background:'rgba(var(--lumens-rgb),0.10)',
+                      border:'1px solid rgba(var(--lumens-rgb),0.22)',
+                      color:'var(--lumens)', fontSize:13, cursor: isLoadingPdf ? 'default' : 'pointer',
+                      transition:'all .2s', opacity: isLoadingPdf ? 0.6 : 1,
+                    }}
+                  >
+                    {isLoadingPdf ? '…' : p.categorie === 'E-book' ? '📖 Lire' : p.categorie === 'Formation' ? '🎓 Accéder' : '📄 Ouvrir'}
+                  </button>
+                  {pdfErrMsg && (
+                    <div style={{ fontSize:10, color:'var(--red)', textAlign:'center' }}>✗ {pdfErrMsg}</div>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={() => setPlaying(isPlaying_ ? null : p.id)}
+                  style={{
+                    marginTop:'auto', width:'100%', padding:'7px 0', borderRadius:20,
+                    background: isPlaying_ ? 'rgba(var(--lumens-rgb),0.22)' : 'rgba(var(--lumens-rgb),0.10)',
+                    border:`1px solid ${isPlaying_ ? 'rgba(var(--lumens-rgb),0.50)' : 'rgba(var(--lumens-rgb),0.22)'}`,
+                    color:'var(--lumens)', fontSize:14, cursor:'pointer', transition:'all .2s',
+                  }}
+                >
+                  {isPlaying_ ? '⏹' : '▶'}
+                </button>
+              )}
             </div>
 
-            {/* Lecteur sécurisé */}
+            {/* Lecteur sécurisé (audio uniquement) */}
             {isPlaying_ && (
               <SecureAudioPlayer
                 produitId={p.id}
@@ -126,6 +212,33 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
                 onClose={() => setPlaying(null)}
               />
             )}
+
+            {/* Supprimer */}
+            <div style={{ padding:'0 12px 12px' }}>
+              {confirmDelete === a.id ? (
+                <div style={{ display:'flex', gap:6 }}>
+                  <button
+                    onClick={() => handleDelete(a.id)}
+                    disabled={deleting === a.id}
+                    style={{ flex:1, padding:'6px 0', borderRadius:20, background:'rgba(180,40,40,0.12)', border:'1px solid rgba(180,40,40,0.35)', color:'#b42828', fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", fontWeight:600 }}>
+                    {deleting === a.id ? '…' : '✓ Confirmer'}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(null)}
+                    style={{ flex:1, padding:'6px 0', borderRadius:20, background:'transparent', border:'1px solid var(--track)', color:'var(--text3)', fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmDelete(a.id)}
+                  style={{ width:'100%', padding:'6px 0', borderRadius:20, background:'transparent', border:'1px solid var(--track)', color:'var(--text3)', fontSize:10, cursor:'pointer', fontFamily:"'Jost',sans-serif", transition:'all .15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(180,40,40,0.35)'; e.currentTarget.style.color='#b42828' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor='var(--track)'; e.currentTarget.style.color='var(--text3)' }}>
+                  Supprimer
+                </button>
+              )}
+            </div>
           </div>
         )
       })}

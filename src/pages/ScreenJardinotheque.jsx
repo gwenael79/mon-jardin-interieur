@@ -32,11 +32,10 @@ const css = `
 /* ── Card ── */
 .jt-card { border-radius:16px; overflow:hidden; border:1px solid var(--track);
            background:var(--surface-1); transition:all .2s; cursor:pointer; display:flex; flex-direction:column; }
-.jt-card:hover { background:rgba(255,255,255,0.055); border-color:rgba(255,255,255,0.14);
-                 transform:translateY(-2px); }
-.jt-card-img { width:100%; aspect-ratio:3/2; background:var(--surface-2);
-               display:flex; align-items:center; justify-content:center; font-size:32px; max-height:120px; overflow:hidden; position:relative; }
-.jt-card-img img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.jt-card:hover { transform:translateY(-2px); }
+.jt-card-img { width:100%; aspect-ratio:3/2; background:#fff;
+               display:flex; align-items:center; justify-content:center; font-size:32px; overflow:hidden; position:relative; }
+.jt-card-img img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
 .jt-card-body { padding:10px 14px 14px; flex:1; display:flex; flex-direction:column; gap:4px; }
 .jt-card-cat  { font-size:9px; letter-spacing:.12em; text-transform:uppercase;
                 color:var(--text3); }
@@ -71,9 +70,9 @@ const css = `
               animation:slideUp .35s cubic-bezier(.34,1.4,.64,1); }
 @keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
 @keyframes fadeIn { from{opacity:0;transform:scale(.97)} to{opacity:1;transform:scale(1)} }
-.jt-modal-img { width:100%; border-radius:12px; aspect-ratio:16/9; object-fit:cover;
-                background:var(--surface-2); display:flex; align-items:center;
-                justify-content:center; font-size:64px; margin-bottom:20px; }
+.jt-modal-img { width:100%; border-radius:12px; aspect-ratio:4/3; object-fit:contain;
+                background:#fff; display:flex; align-items:center;
+                justify-content:center; font-size:64px; margin-bottom:20px; overflow:hidden; }
 .jt-modal-cat   { font-size:9px; letter-spacing:.14em; text-transform:uppercase;
                   color:var(--text3); margin-bottom:6px; }
 .jt-modal-title { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:300;
@@ -539,9 +538,9 @@ function ProductCard({ produit: p, tc, onOpen, hasBought }) {
   return (
     <div className="jt-card" onClick={onOpen}>
       {/* Image / emoji fallback */}
-      <div className="jt-card-img" style={{ position:'relative', overflow:'hidden', aspectRatio:'3/2', maxHeight:120, background:'var(--surface-2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div className="jt-card-img" style={{ position:'relative', overflow:'hidden', aspectRatio:'3/2', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
         {p.image_url
-          ? <img src={p.image_url} alt={p.titre} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+          ? <img src={p.image_url} alt={p.titre} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'contain', display:'block' }} />
           : <span style={{ fontSize:'var(--fs-emoji-lg, 28px)', opacity:.35 }}>{emoji}</span>
         }
       </div>
@@ -560,13 +559,26 @@ function ProductCard({ produit: p, tc, onOpen, hasBought }) {
         )}
 
         <div className="jt-card-footer">
-          <div className="jt-card-price" style={{ color: tc.color }}>
-            {p.prix != null ? `${Number(p.prix).toFixed(2).replace('.', ',')} €` : 'Prix sur demande'}
-          </div>
-          <div className="jt-card-btn"
-            style={{ background: tc.bg, border:`1px solid ${tc.color}40`, color: tc.color }}>
-            {hasBought ? '✓ Acheté' : p.type === 'digital' ? 'Acheter' : p.type === 'occasion' ? 'Contacter' : 'Voir'}
-          </div>
+          {p.paiement_externe ? (
+            <div className="jt-card-btn" style={{ background: tc.bg, border:`1px solid ${tc.color}40`, color: tc.color, width:'100%', textAlign:'center', lineHeight:1.3, padding:'6px 12px' }}>
+              <div style={{ fontSize:12, fontWeight:500 }}>🔗 Offre partenaire</div>
+              <div style={{ fontSize:9, fontWeight:300, opacity:.75 }}>suivre le lien</div>
+            </div>
+          ) : (
+            <>
+              <div className="jt-card-price" style={{ color: tc.color }}>
+                {p.prix != null
+                  ? `${Number(p.prix).toFixed(2).replace('.', ',')} €`
+                  : p.prix_lumens != null
+                    ? `✦ ${p.prix_lumens} Lumens`
+                    : 'Prix sur demande'}
+              </div>
+              <div className="jt-card-btn"
+                style={{ background: tc.bg, border:`1px solid ${tc.color}40`, color: tc.color }}>
+                {hasBought ? '✓ Acheté' : p.type === 'digital' ? 'Acheter' : p.type === 'occasion' ? 'Contacter' : 'Voir'}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -671,7 +683,7 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
         {/* Image */}
         <div className="jt-modal-img">
           {p.image_url
-            ? <img src={p.image_url} alt={p.titre} style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:12 }} />
+            ? <img src={p.image_url} alt={p.titre} style={{ width:'100%', height:'100%', objectFit:'contain', borderRadius:12 }} />
             : <span style={{ opacity:.3 }}>{emoji}</span>
           }
         </div>
@@ -693,9 +705,15 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
         {!(isDigital && hasBought) && (
           <div style={{ marginBottom:4, textAlign:'center' }}>
             <div className="jt-modal-price" style={{ color: tc.color, fontSize:36, fontWeight:600, marginBottom:4 }}>
-              {p.prix != null ? `${Number(p.prix).toFixed(2).replace('.', ',')} €` : 'Prix sur demande'}
+              {p.paiement_externe
+                ? <span style={{ fontSize:28, fontWeight:400 }}>🔗 Offre partenaire, suivre le lien</span>
+                : p.prix != null
+                  ? `${Number(p.prix).toFixed(2).replace('.', ',')} €`
+                  : p.prix_lumens != null
+                    ? `✦ ${p.prix_lumens} Lumens`
+                    : 'Prix sur demande'}
             </div>
-            {isDigital && (
+            {isDigital && p.prix != null && Number(p.prix) > 0 && (
               <div style={{ fontSize:'var(--fs-h5, 10px)', color:'var(--text3)', lineHeight:1.6 }}>
                 Paiement sécurisé via Stripe · Accès immédiat après achat
               </div>
@@ -735,14 +753,22 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
         ) : (
           <>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {p.paiement_externe ? (
+              <button className="jt-modal-btn"
+                onClick={() => p.lien_externe && window.open(p.lien_externe, '_blank')}
+                style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color }}>
+                🔗 Accéder — paiement externe
+              </button>
+              ) : p.prix != null && Number(p.prix) > 0 && (
               <button className="jt-modal-btn" onClick={isPremium ? handleAction : onUpgrade} disabled={paying}
                 style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
                 {paying ? '⏳ Redirection…' : !isPremium ? '🔒 Premium requis — Découvrir' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
               </button>
-              {!!(p.accepte_lumens && p.prix_lumens) && (
+              )}
+              {!!(p.accepte_lumens && p.prix_lumens) && !p.paiement_externe && (
                 <button className="jt-modal-btn" onClick={handlePayLumens} disabled={payingLumens}
                   style={{ background:'rgba(var(--gold-rgb),0.10)', border:'1px solid rgba(var(--gold-rgb),0.40)', color:'var(--gold)', opacity: payingLumens ? 0.7 : 1 }}>
-                  {payingLumens ? '⏳ Traitement…' : `✦ Payer ${p.prix_lumens} Lumens`}
+                  {payingLumens ? '⏳ Traitement…' : `✦ Échange contre : ${p.prix_lumens} Lumens`}
                 </button>
               )}
             </div>
@@ -1345,7 +1371,7 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
   const [saving,    setSaving]    = useState(false)
   const [form,      setForm]      = useState({ type:'physique', categorie:'Autre', titre:'', description:'', prix:'', image_url:'', lien_externe:'' })
 
-  const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'' }
+  const EMPTY_FORM = { type:'digital', categorie:'Audio', titre:'', description:'', prix:'', image_url:'', lien_externe:'', storage_path:'', accepte_lumens:false, prix_lumens:'', paiement_externe:false }
   const CAT_OPTS = { digital:['Audio','Formation','E-book','PDF'], physique:['Livre','Bijou','Pierre','Huile essentielle','Autre'], occasion:['Livre','Bijou','Pierre','Accessoire','Autre'] }
   const inp = { padding:'9px 12px', borderRadius:8, border:'1px solid #ccc', background:'#fff', color:'#111', fontSize:13, fontFamily:"'Jost',sans-serif", outline:'none', width:'100%', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', colorScheme:'light' }
   const lbl = { fontSize:11, color:'#555', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:7, display:'block', fontWeight:600 }
@@ -1379,7 +1405,7 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
   useEffect(() => { loadProduits() }, [])
 
   const openEdit = (p) => {
-    setForm({ type:p.type, categorie:p.categorie||'Autre', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', storage_path:p.storage_path||'', accepte_lumens:p.accepte_lumens||false, prix_lumens:p.prix_lumens??'' })
+    setForm({ type:p.type, categorie:p.categorie||'Autre', titre:p.titre||'', description:p.description||'', prix:p.prix??'', image_url:p.image_url||'', lien_externe:p.lien_externe||'', storage_path:p.storage_path||'', accepte_lumens:p.accepte_lumens||false, prix_lumens:p.prix_lumens??'', paiement_externe:p.paiement_externe||false })
     setEditId(p.id)
     setShowForm(true)
   }
@@ -1403,10 +1429,11 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
       description:   form.description.trim() || null,
       prix:          form.prix !== '' ? parseFloat(form.prix) : null,
       image_url:     form.image_url.trim() || null,
-      lien_externe:  form.lien_externe.trim() || null,
-      storage_path:  form.storage_path || null,
-      accepte_lumens: form.accepte_lumens,
-      prix_lumens:   form.prix_lumens !== '' ? parseInt(form.prix_lumens, 10) : null,
+      lien_externe:     form.lien_externe.trim() || null,
+      storage_path:     form.storage_path || null,
+      accepte_lumens:   form.accepte_lumens,
+      prix_lumens:      form.prix_lumens !== '' ? parseInt(form.prix_lumens, 10) : null,
+      paiement_externe: form.paiement_externe,
       updated_at:    new Date().toISOString(),
     }
 
@@ -1526,21 +1553,47 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
             <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description:e.target.value.slice(0,350) }))} rows={3} style={{ ...inp, resize:'none', lineHeight:1.7 }}/>
           </div>
 
+          {/* Toggle paiement externe */}
+          <div style={{ padding:'12px 14px', background:'rgba(80,80,200,0.04)', border:'1px solid rgba(80,80,200,0.18)', borderRadius:10 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <div style={{ fontSize:12, color:'#333', fontWeight:600 }}>🔗 Paiement externe</div>
+                <div style={{ fontSize:10, color:'#777', marginTop:2 }}>Adhésion, boutique ou lien de paiement hors application</div>
+              </div>
+              <div onClick={() => setForm(f => ({ ...f, paiement_externe:!f.paiement_externe, prix: !f.paiement_externe ? '' : f.prix }))}
+                style={{ width:40, height:22, borderRadius:100, cursor:'pointer', flexShrink:0,
+                  background: form.paiement_externe ? 'rgba(80,80,200,0.35)' : '#ddd',
+                  border:`1px solid ${form.paiement_externe ? 'rgba(80,80,200,0.55)' : '#ccc'}`,
+                  position:'relative', transition:'all .25s' }}>
+                <div style={{ position:'absolute', top:3, left: form.paiement_externe ? 20 : 3, width:14, height:14, borderRadius:'50%',
+                  background: form.paiement_externe ? '#4444cc' : '#aaa', transition:'left .25s' }}/>
+              </div>
+            </div>
+          </div>
+
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            {!form.paiement_externe && (
             <div>
               <span style={lbl}>Prix (€)</span>
               <input type="number" min="0" step="0.01" value={form.prix} onChange={e => setForm(f => ({ ...f, prix:e.target.value }))} placeholder="0.00" style={{ ...inp }}/>
             </div>
-            <div>
+            )}
+            <div style={{ gridColumn: form.paiement_externe ? 'span 2' : 'auto' }}>
               <span style={lbl}>URL image</span>
               <input value={form.image_url} onChange={e => setForm(f => ({ ...f, image_url:e.target.value }))} placeholder="https://..." style={{ ...inp }}/>
             </div>
           </div>
 
           <div>
-            <span style={lbl}>Lien de téléchargement / boutique</span>
-            <input value={form.lien_externe} onChange={e => setForm(f => ({ ...f, lien_externe:e.target.value }))} placeholder="Ex: gumroad.com/l/votre-produit, drive.google.com/…" style={{ ...inp }}/>
-            <div style={{ fontSize:10, color:'#888', marginTop:5, lineHeight:1.6 }}>Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…</div>
+            <span style={lbl}>{form.paiement_externe ? 'Lien de paiement externe' : 'Lien de téléchargement / boutique'}</span>
+            <input value={form.lien_externe} onChange={e => setForm(f => ({ ...f, lien_externe:e.target.value }))}
+              placeholder={form.paiement_externe ? 'Ex: votre-site.com/adhesion, paypal.me/…' : 'Ex: gumroad.com/l/votre-produit, drive.google.com/…'}
+              style={{ ...inp }}/>
+            <div style={{ fontSize:10, color:'#888', marginTop:5, lineHeight:1.6 }}>
+              {form.paiement_externe
+                ? 'L\'acheteur sera redirigé vers ce lien pour finaliser son adhésion ou son achat.'
+                : 'Lien où vos acheteurs accèderont au fichier ou à la boutique. Peut être Gumroad, Google Drive, votre site…'}
+            </div>
           </div>
 
           {/* Paiement en Lumens */}
