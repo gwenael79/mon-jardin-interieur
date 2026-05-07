@@ -81,7 +81,7 @@ export default function PushNotificationButton({ userId, compact = false }) {
     }
     const sw = await navigator.serviceWorker.ready
     sw.showNotification('Mon Jardin Intérieur', {
-      body: 'Ton jardin t\'attend… prends un moment pour toi aujourd\'hui.',
+      body: 'Féline peut veiller doucement sur ton jardin et tes rituels. 🌱',
       icon: '/icons/logo.png',
       badge: '/icons/icon-192.png',
     })

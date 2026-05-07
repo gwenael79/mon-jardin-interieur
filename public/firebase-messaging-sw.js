@@ -45,10 +45,10 @@ function getActions(type) {
   if (type === 'coeur_recu')
     return [{ action: 'reply', title: '💐 Renvoyer' }, { action: 'view', title: 'Voir' }]
   if (type === 'ritual_reminder')
-    return [{ action: 'view', title: '🌿 Commencer' }, { action: 'later', title: 'Plus tard' }]
+    return [{ action: 'view', title: '🌸 Prendre un moment' }, { action: 'later', title: 'Plus tard' }]
   if (type?.startsWith('degradation'))
-    return [{ action: 'view', title: '🌱 Prendre soin' }, { action: 'later', title: 'Pas maintenant' }]
-  return [{ action: 'view', title: '🌿 Ouvrir mon jardin' }, { action: 'later', title: 'Plus tard' }]
+    return [{ action: 'view', title: '🌱 Ouvrir mon jardin' }, { action: 'later', title: 'Pas maintenant' }]
+  return [{ action: 'view', title: '🌸 Prendre un moment' }, { action: 'later', title: 'Plus tard' }]
 }
 
 // ── Notification en arrière-plan ──────────────────────────────────────────────

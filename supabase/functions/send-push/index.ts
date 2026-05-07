@@ -68,11 +68,11 @@ const BASE_URL = 'https://monjardininterieur.com'
 
 function buildPayload(type: string, data?: Record<string, string>) {
   const map: Record<string, { title: string; body: string; tag: string; url: string }> = {
-    ritual_reminder: { title: '✨ Votre rituel vous attend',       body: "Un moment pour vous aujourd'hui.",          tag: 'ritual',      url: '/' },
-    degradation_1:   { title: '🌿 Votre jardin vous attend',      body: 'Revenez cultiver votre équilibre.',          tag: 'degradation', url: '/' },
-    degradation_3:   { title: '🍂 Votre plante a besoin de vous', body: 'Cela fait 3 jours…',                         tag: 'degradation', url: '/' },
-    degradation_7:   { title: '🥀 Votre jardin vous attend',      body: 'Votre jardin est fragile.',                  tag: 'degradation', url: '/' },
-    coeur_recu:      { title: "💐 Quelqu'un pense à vous",        body: data?.senderName ? `${data.senderName} vous a envoyé un bouquet.` : 'Un bouquet bienveillant.', tag: 'coeur', url: '/jardin' },
+    ritual_reminder: { title: "🌱 Féline t'attend dans le jardin",                    body: "Et si tu prenais une minute pour toi aujourd'hui ?",       tag: 'ritual',      url: '/' },
+    degradation_1:   { title: "🍃 Ton jardin est resté calme aujourd'hui",            body: 'Une petite attention suffit parfois à le faire refleurir.', tag: 'degradation', url: '/' },
+    degradation_3:   { title: "🌧 Féline n'a plus vu tes pas depuis quelques jours", body: 'Ton jardin semble attendre doucement ton retour.',          tag: 'degradation', url: '/' },
+    degradation_7:   { title: '🌙 Féline veille encore sur ton jardin',               body: 'Même après plusieurs jours, il peut renaître.',             tag: 'degradation', url: '/' },
+    coeur_recu:      { title: "🌸 Quelqu'un a déposé une fleur pour toi",             body: data?.senderName ? `${data.senderName} a pensé à toi.` : 'Une présence bienveillante pense à toi.', tag: 'coeur', url: '/jardin' },
   }
   const notif = map[type] ?? map['ritual_reminder']
   return { ...notif, type }
@@ -148,7 +148,7 @@ async function sendToUser(userId: string, type: string, data?: Record<string, st
                   vibrate:  [200, 100, 200],
                   actions: notif.type === 'coeur_recu'
                     ? [{ action: 'reply', title: '💐 Renvoyer' }, { action: 'view', title: 'Voir' }]
-                    : [{ action: 'view', title: '🌿 Ouvrir' }, { action: 'later', title: 'Plus tard' }],
+                    : [{ action: 'view', title: '🌸 Prendre un moment' }, { action: 'later', title: 'Plus tard' }],
                 },
                 data: {
                   type: notif.type,
