@@ -1690,7 +1690,7 @@ export function VueEspace({ partenaire, onLogout, onProductAdded, isProPremium =
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:13, color:'#111', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{p.titre}</div>
                   <div style={{ fontSize:10, color:'#777', marginTop:2 }}>
-                    {p.categorie} · {p.prix != null ? `${Number(p.prix).toFixed(2)} €` : 'prix libre'}
+                    {p.categorie} · {p.prix != null ? `${Number(p.prix).toFixed(2)} €` : p.paiement_externe ? 'vente externe' : (p.accepte_lumens && p.prix_lumens != null) ? 'échange lumens' : 'prix libre'}
                   </div>
                 </div>
                 <span style={{ fontSize:9, padding:'2px 8px', borderRadius:20, flexShrink:0,
