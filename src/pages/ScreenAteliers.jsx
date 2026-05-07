@@ -552,7 +552,12 @@ function AtelierCard({ atelier, onInscrit, onPayEuros, onDesinscrit, isInscrit, 
                     ✓ S&apos;inscrire · {atelier.price} €
                   </button>
                 )}
-
+                {/* Bouton inscription gratuite */}
+                {!(atelier.price > 0) && !(atelier.lumen_price > 0) && (
+                  <button onClick={() => onInscrit?.(atelier.id)} style={{ padding:'8px 20px', fontSize:'var(--fs-h5, 12px)', fontWeight:700, borderRadius:9, background:'linear-gradient(135deg,#1c3a18,#2a5422)', border:'none', color:'#fff', cursor:'pointer', fontFamily:'Jost,sans-serif', letterSpacing:'.03em' }}>
+                    ✓ S&apos;inscrire · Gratuit
+                  </button>
+                )}
               </div>
             )}
             {!isInscrit && isFull && (
@@ -629,7 +634,6 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
   const [editAtelier,  setEditAtelier] = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [tab,         setTab]         = useState('upcoming') // upcoming | mine | past
-  const [showApply,   setShowApply]   = useState(false)
   const [hasApplied,  setHasApplied]  = useState(false)
   const [toast,       setToast]       = useState(null)
   const [searchTheme,  setSearchTheme]  = useState('')
@@ -892,8 +896,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         .contains('meta', { atelier_id: atelierIdVal })
         .limit(1)
       if (tx?.length > 0) {
-        await supabase.from('lumens').update({ available: (lumens?.available ?? 0) + lumenPrice }).eq('user_id', userId)
-        await supabase.from('lumen_transactions').insert({ user_id: userId, amount: lumenPrice, reason: 'atelier_refund', meta: { atelier_id: atelierIdVal } })
+        awardLumens?.(lumenPrice, 'atelier_refund', { atelier_id: atelierIdVal })
         showToastLocal(`↩ Désinscription · ${lumenPrice} ✦ remboursés`)
         return
       }
@@ -986,18 +989,13 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
 
   async function handleDelete(atelierIdVal, titleVal) {
     if (!confirm(`Supprimer l'atelier "${titleVal}" ?`)) return
+    await supabase.from('atelier_reviews').delete().eq('atelier_id', atelierIdVal)
+    await supabase.from('atelier_invitations').delete().eq('atelier_id', atelierIdVal)
+    await supabase.from('atelier_reminders').delete().eq('atelier_id', atelierIdVal)
     await supabase.from('atelier_registrations').delete().eq('atelier_id', atelierIdVal)
     await supabase.from('ateliers').delete().eq('id', atelierIdVal)
     loadAteliers()
     showToastLocal('🗑 Atelier supprimé')
-  }
-
-  async function handleApply(motivation, experience) {
-    track('animator_apply', {}, 'ateliers', 'ateliers')
-        await supabase.from('animator_applications').insert({ user_id: userId, motivation, experience })
-    setHasApplied(true)
-    setShowApply(false)
-    showToastLocal('📩 Candidature envoyée !')
   }
 
   const now = new Date()
@@ -1330,8 +1328,6 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
         />
       )}
 
-      {/* MODAL CANDIDATURE */}
-      {showApply && <ApplyAnimatorModal userId={userId} onClose={() => setShowApply(false)} onSubmit={handleApply} />}
       {reviewModal && (
         <ReviewModal
           atelier={reviewModal}
@@ -1347,43 +1343,5 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
     </div>
   )
 }
-
-function ApplyAnimatorModal({ onClose, onSubmit }) {
-  const [motivation,  setMotivation]  = useState('')
-  const [experience,  setExperience]  = useState('')
-  const [loading,     setLoading]     = useState(false)
-
-  async function handleSend() {
-    if (!motivation.trim()) return
-    setLoading(true)
-    await onSubmit(motivation.trim(), experience.trim())
-    setLoading(false)
-  }
-
-  return (
-    <div style={{ position:'fixed', inset:0, background:'var(--overlay)', zIndex:200, display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ background:'var(--bg)', border:'1px solid var(--border)', borderRadius:16, padding:32, width:440 }}>
-        <div style={{ fontFamily:'Cormorant Garamond,serif', fontSize:'var(--fs-h2, 22px)', color:'var(--gold)', marginBottom:6 }}>Devenir animateur</div>
-        <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--text3)', marginBottom:24 }}>Votre candidature sera examinée par l'équipe Mon Jardin.</div>
-        <div style={{ marginBottom:14 }}>
-          <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5 }}>Votre motivation *</div>
-          <textarea style={{...iStyle, height:90, resize:'none'}} value={motivation} onChange={e=>setMotivation(e.target.value)} placeholder="Pourquoi souhaitez-vous animer des ateliers bien-être ?" />
-        </div>
-        <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:'var(--fs-h5, 10px)', letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text3)', marginBottom:5 }}>Expérience (optionnel)</div>
-          <textarea style={{...iStyle, height:70, resize:'none'}} value={experience} onChange={e=>setExperience(e.target.value)} placeholder="Formation, pratique, certifications…" />
-        </div>
-        <div style={{ display:'flex', gap:10 }}>
-          <button onClick={onClose} style={{ ...btnStyle, background:'var(--surface-2)', color:'var(--text3)', flex:1 }}>Annuler</button>
-          <button onClick={handleSend} disabled={loading || !motivation.trim()} style={{ ...btnStyle, flex:2, opacity:!motivation.trim()?0.4:1 }}>
-            {loading ? '…' : '📩 Envoyer ma candidature'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-
 
 export { ScreenAteliers }
