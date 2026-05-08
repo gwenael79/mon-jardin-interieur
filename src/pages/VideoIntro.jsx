@@ -1,32 +1,36 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 
+// src   : chemin dans public/video/
+// delay : ms entre la fin de la vidéo et le fondu sortant
 const VIDEOS = [
-  '/video/video1.mp4',
-  '/video/video2.mp4',
-  '/video/video3.mp4',
-  '/video/video4.mp4',
-  '/video/video5.mp4',
-  '/video/video6.mp4',
-  '/video/video7.mp4',
-  '/video/video8.mp4',
-  '/video/video9.mp4',
-  '/video/video10.mp4',
-  '/video/video11.mp4',
-  '/video/video12.mp4',
-  '/video/video13.mp4',
-  '/video/video14.mp4',
-  '/video/video15.mp4',
-  '/video/video16.mp4',
-  '/video/video17.mp4',
-  '/video/video18.mp4',
-  '/video/video19.mp4',
-  '/video/video20.mp4',
+  { src: '/video/video1.mp4',  delay: 10000 },
+  { src: '/video/video2.mp4',  delay: 0 },
+  { src: '/video/video3.mp4',  delay: 0 },
+  { src: '/video/video4.mp4',  delay: 0 },
+  { src: '/video/video5.mp4',  delay: 0 },
+  { src: '/video/video6.mp4',  delay: 0 },
+  { src: '/video/video7.mp4',  delay: 0 },
+  { src: '/video/video8.mp4',  delay: 0 },
+  { src: '/video/video9.mp4',  delay: 0 },
+  { src: '/video/video10.mp4', delay: 0 },
+  { src: '/video/video11.mp4', delay: 0 },
+  { src: '/video/video12.mp4', delay: 0 },
+  { src: '/video/video13.mp4', delay: 0 },
+  { src: '/video/video14.mp4', delay: 0 },
+  { src: '/video/video15.mp4', delay: 0 },
+  { src: '/video/video16.mp4', delay: 0 },
+  { src: '/video/video17.mp4', delay: 0 },
+  { src: '/video/video18.mp4', delay: 0 },
+  { src: '/video/video19.mp4', delay: 0 },
+  { src: '/video/video20.mp4', delay: 0 },
 ]
 
-const MIN_GAP      = 5   // jours minimum avant de revoir la même vidéo
+const MIN_GAP = 5  // jours minimum avant de revoir la même vidéo
 const HISTORY_KEY  = uid => `video_intro_history__${uid}`
 
-function pickVideo(userId) {
+export function pickVideo(userId) {
+  if (import.meta.env.DEV) return VIDEOS[0]
+
   let history = []
   try { history = JSON.parse(localStorage.getItem(HISTORY_KEY(userId)) || '[]') } catch { /* */ }
 
@@ -51,32 +55,78 @@ function pickVideo(userId) {
   return VIDEOS[idx]
 }
 
-export function VideoIntro({ userId, onDone }) {
-  // Appel unique à l'initialisation du composant
-  const [src]      = useState(() => pickVideo(userId))
+// video : objet { src, delay } pré-sélectionné par DashboardV2 (déjà chargé)
+export function VideoIntro({ video, withSound = false, onDone }) {
   const videoRef   = useRef(null)
-  const [muted,    setMuted]    = useState(true)
-  const [exiting,  setExiting]  = useState(false)
+  const [muted,    setMuted]    = useState(!withSound)
+  const [visible,  setVisible]  = useState(false)
+  const [ready,    setReady]    = useState(false)
+  const [fading,   setFading]   = useState(false)  // cache la vidéo pendant la transition
+  const [whiteOut, setWhiteOut] = useState(false)
+
+  // Fondu entrant du conteneur dès le montage
+  useEffect(() => { requestAnimationFrame(() => setVisible(true)) }, [])
+
+  // useCallback vide = appelé une seule fois au montage, jamais sur les re-renders
+  const setVideoRef = useCallback((el) => {
+    videoRef.current = el
+    if (el) el.muted = !withSound
+  }, [withSound])
+
+  const audioFadingRef = useRef(false)
+
+  // Fondu audio sur les 3 dernières secondes de lecture (pendant que l'audio joue encore)
+  const handleTimeUpdate = () => {
+    const v = videoRef.current
+    if (!v || v.muted || audioFadingRef.current || !v.duration) return
+    const timeLeft = v.duration - v.currentTime
+    if (timeLeft > 3) return
+
+    audioFadingRef.current = true
+    const STEP_MS   = 50
+    const totalSteps = Math.round((timeLeft * 1000) / STEP_MS)
+    const startVol   = v.volume
+    let   step       = 0
+
+    const timer = setInterval(() => {
+      const el = videoRef.current
+      if (!el || step >= totalSteps) { clearInterval(timer); return }
+      el.volume = Math.max(0, startVol * (1 - step / totalSteps))
+      step++
+    }, STEP_MS)
+  }
 
   const dismiss = () => {
-    if (exiting) return
-    setExiting(true)
-    setTimeout(onDone, 600)
+    if (whiteOut) return
+    // Fondu audio rapide (0.5s) puis voile blanc
+    const v = videoRef.current
+    if (v && !v.muted && v.volume > 0) {
+      const STEP_MS = 50
+      const steps   = Math.round(500 / STEP_MS)
+      const start   = v.volume
+      let   s       = 0
+      const timer   = setInterval(() => {
+        const el = videoRef.current
+        if (!el || s >= steps) { clearInterval(timer); return }
+        el.volume = Math.max(0, start * (1 - s / steps))
+        s++
+      }, STEP_MS)
+      setTimeout(() => { setFading(true); setWhiteOut(true); setTimeout(onDone, 800) }, 500)
+    } else {
+      setFading(true); setWhiteOut(true); setTimeout(onDone, 800)
+    }
   }
 
   const handleEnded = () => {
-    if (exiting) return
-    setTimeout(() => {
-      setExiting(true)
-      setTimeout(onDone, 600)
-    }, 10000)
+    if (whiteOut) return
+    setTimeout(() => { setFading(true); setWhiteOut(true); setTimeout(onDone, 800) }, video.delay)
   }
 
   const handleSound = () => {
     const v = videoRef.current
     if (!v) return
+    v.muted = false   // DOM direct — React ne réappliquera plus muted
     v.currentTime = 0
-    v.muted = false
     v.play()
     setMuted(false)
   }
@@ -86,18 +136,33 @@ export function VideoIntro({ userId, onDone }) {
       position: 'fixed', inset: 0, zIndex: 9999,
       background: '#0a1205',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      opacity:    exiting ? 0 : 1,
-      transition: exiting ? 'opacity 0.6s ease' : 'opacity 0.5s ease',
-      animation:  exiting ? 'none' : 'viIntroIn 0.5s ease both',
     }}>
-      <style>{`@keyframes viIntroIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+      {/* Spinner affiché tant que la vidéo n'est pas prête */}
+      {!ready && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: '50%',
+            border: '2px solid rgba(255,255,255,0.15)',
+            borderTop: '2px solid rgba(255,255,255,0.55)',
+            animation: 'viSpin 0.9s linear infinite',
+          }} />
+          <style>{`@keyframes viSpin { to { transform: rotate(360deg) } }`}</style>
+        </div>
+      )}
+
       <video
-        ref={videoRef}
-        src={src}
+        ref={setVideoRef}
+        src={video.src}
         autoPlay
-        muted
         playsInline
-        style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block' }}
+        style={{
+          maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', display: 'block',
+          opacity: (!fading && ready) ? 1 : 0,
+          transition: 'opacity 0.6s ease',
+        }}
+        onCanPlay={() => setReady(true)}
+        onError={() => onDone()}
+        onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
       />
 
@@ -134,6 +199,24 @@ export function VideoIntro({ userId, onDone }) {
       >
         Passer →
       </button>
+
+      {/* Voile noir d'entrée — se dissipe au chargement */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: '#000',
+        opacity: visible ? 0 : 1,
+        transition: 'opacity 0.7s ease',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Voile blanc de sortie */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: '#fff',
+        opacity: whiteOut ? 1 : 0,
+        transition: 'opacity 0.8s ease',
+        pointerEvents: 'none',
+      }} />
     </div>
   )
 }

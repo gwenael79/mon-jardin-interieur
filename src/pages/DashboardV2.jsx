@@ -39,7 +39,7 @@ import PushNotificationButton        from '../components/PushNotificationButton'
 import { usePushNotification }       from '../hooks/usePushNotification'
 import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
-import { VideoIntro }               from './VideoIntro'
+import { VideoIntro, pickVideo }    from './VideoIntro'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers }      from './ScreenClubJardiniers'
 import { ScreenAteliers }            from './ScreenAteliers'
@@ -1328,6 +1328,9 @@ export default function DashboardPage() {
   const [bilanDoneToday,      setBilanDoneToday]      = useState(false)
   const [showWelcome,         setShowWelcome]         = useState(false)
   const [showVideoIntro,      setShowVideoIntro]      = useState(false)
+  const [introVideo,          setIntroVideo]          = useState(null)
+  const [introSoundUnlocked,  setIntroSoundUnlocked]  = useState(false)
+  const preloadVideoRef = useRef(null)
   const [prefetchDone,        setPrefetchDone]        = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
   const [welcomeReady,        setWelcomeReady]        = useState(false)
@@ -1411,6 +1414,13 @@ export default function DashboardPage() {
     setIsNewUser(!!isJustCreated)
     setWelcomeReady(true)
     setShowWelcome(true)
+    // Pré-sélectionne la vidéo dès l'affichage du WelcomeScreen pour démarrer le buffering
+    const today = new Date().toISOString().split('T')[0]
+    const key   = `video_intro_last_seen__${user.id}`
+    const isDev = import.meta.env.DEV
+    if (isDev || localStorage.getItem(key) !== today) {
+      setIntroVideo(pickVideo(user.id))
+    }
   }, [user?.id])
 
   const refreshGardenCount = useCallback(() => {
@@ -1750,8 +1760,16 @@ export default function DashboardPage() {
 />    
       )}
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
-      {showVideoIntro && <VideoIntro userId={user?.id} onDone={() => setShowVideoIntro(false)} />}
+      {/* Buffering anticipé pendant le WelcomeScreen */}
+      {introVideo && !showVideoIntro && (
+        <video ref={preloadVideoRef} src={introVideo.src} preload="auto" muted style={{ display: 'none' }} />
+      )}
+      {showVideoIntro && introVideo && <VideoIntro video={introVideo} withSound={introSoundUnlocked} onDone={() => setShowVideoIntro(false)} />}
       {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => {
+        // Déverrouille l'audio page pendant le user gesture du bouton
+        const pv = preloadVideoRef.current
+        if (pv) { pv.muted = false; pv.play().catch(() => {}) }
+        setIntroSoundUnlocked(true)
         setShowWelcome(false)
         const today = new Date().toISOString().split('T')[0]
         const key   = `video_intro_last_seen__${user?.id}`
@@ -1760,6 +1778,7 @@ export default function DashboardPage() {
           if (!isDev) localStorage.setItem(key, today)
           setShowVideoIntro(true)
         }
+        // introVideo est déjà pré-sélectionné et buffurisé depuis le WelcomeScreen
       }} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
