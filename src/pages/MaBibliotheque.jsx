@@ -50,6 +50,7 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
   const [playing,       setPlaying]       = useState(null)
   const [pdfLoading,    setPdfLoading]    = useState(null)
   const [pdfErr,        setPdfErr]        = useState({})
+  const [pdfViewer,     setPdfViewer]     = useState(null) // { url, titre }
   const [confirmDelete, setConfirmDelete] = useState(null) // achat.id en attente
   const [deleting,      setDeleting]      = useState(null) // achat.id en cours de suppression
 
@@ -64,23 +65,19 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
   const audioAchats = achats.filter(a => a.produits?.type === 'digital')
 
   const handleOpenPdf = async (produit) => {
-    const { id: produitId, lien_externe, storage_path } = produit
+    const { id: produitId, lien_externe, storage_path, titre } = produit
     setPdfErr(e => ({ ...e, [produitId]: null }))
     setPdfLoading(produitId)
-    // Lien externe direct (pas besoin de passer par l'edge function)
     if (lien_externe) {
-      window.open(lien_externe, '_blank')
+      setPdfViewer({ url: lien_externe, titre })
       setPdfLoading(null)
       return
     }
-    // Fichier dans le storage Supabase → URL signée via edge function
     if (!storage_path) {
       setPdfErr(prev => ({ ...prev, [produitId]: 'Fichier non disponible' }))
       setPdfLoading(null)
       return
     }
-    // window.open avant l'await pour éviter le bloqueur de popups
-    const newWin = window.open('', '_blank')
     try {
       let token = null
       for (let i = 0; i < 6; i++) {
@@ -97,14 +94,47 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Erreur serveur')
-      newWin.location.href = json.url
+      setPdfViewer({ url: json.url, titre })
     } catch (e) {
-      newWin?.close()
       setPdfErr(prev => ({ ...prev, [produitId]: e.message }))
     } finally {
       setPdfLoading(null)
     }
   }
+
+  if (pdfViewer) return (
+    <div style={{ position:'fixed', inset:0, zIndex:9999, background:'#111', display:'flex', flexDirection:'column' }}>
+      {/* Barre de navigation */}
+      <div style={{
+        display:'flex', alignItems:'center', gap:12, padding:'12px 16px',
+        background:'#1a1208', flexShrink:0,
+        borderBottom:'1px solid rgba(255,255,255,0.08)',
+      }}>
+        <button
+          onClick={() => setPdfViewer(null)}
+          style={{ background:'none', border:'none', color:'#fff', fontSize:20, cursor:'pointer', lineHeight:1, padding:'4px 8px' }}
+        >✕</button>
+        <span style={{ flex:1, color:'rgba(255,255,255,0.85)', fontSize:14, fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+          {pdfViewer.titre}
+        </span>
+        {/* Fallback Android : ouvre dans le navigateur natif */}
+        <a
+          href={pdfViewer.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color:'rgba(var(--gold-rgb,212,175,55),0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", textDecoration:'none', whiteSpace:'nowrap', padding:'6px 10px', borderRadius:12, border:'1px solid rgba(212,175,55,0.30)' }}
+        >
+          ↗ Ouvrir
+        </a>
+      </div>
+      {/* Lecteur PDF */}
+      <iframe
+        src={pdfViewer.url}
+        title={pdfViewer.titre}
+        style={{ flex:1, border:'none', width:'100%', background:'#fff' }}
+      />
+    </div>
+  )
 
   if (loading) return (
     <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.30)', fontStyle:'italic', padding:'20px 0' }}>
