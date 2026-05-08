@@ -1750,7 +1750,7 @@ export default function DashboardPage() {
 />    
       )}
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
-      {showVideoIntro && <VideoIntro onDone={() => setShowVideoIntro(false)} />}
+      {showVideoIntro && <VideoIntro userId={user?.id} onDone={() => setShowVideoIntro(false)} />}
       {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => {
         setShowWelcome(false)
         const today = new Date().toISOString().split('T')[0]

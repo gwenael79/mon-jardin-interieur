@@ -2,16 +2,58 @@ import { useRef, useState } from 'react'
 
 const VIDEOS = [
   '/video/video1.mp4',
+  '/video/video2.mp4',
+  '/video/video3.mp4',
+  '/video/video4.mp4',
+  '/video/video5.mp4',
+  '/video/video6.mp4',
+  '/video/video7.mp4',
+  '/video/video8.mp4',
+  '/video/video9.mp4',
+  '/video/video10.mp4',
+  '/video/video11.mp4',
+  '/video/video12.mp4',
+  '/video/video13.mp4',
+  '/video/video14.mp4',
+  '/video/video15.mp4',
+  '/video/video16.mp4',
+  '/video/video17.mp4',
+  '/video/video18.mp4',
+  '/video/video19.mp4',
+  '/video/video20.mp4',
 ]
 
-// Même vidéo toute la journée, tourne chaque jour
-function pickVideo() {
-  const day = Math.floor(Date.now() / 86_400_000)
-  return VIDEOS[day % VIDEOS.length]
+const MIN_GAP      = 5   // jours minimum avant de revoir la même vidéo
+const HISTORY_KEY  = uid => `video_intro_history__${uid}`
+
+function pickVideo(userId) {
+  let history = []
+  try { history = JSON.parse(localStorage.getItem(HISTORY_KEY(userId)) || '[]') } catch { /* */ }
+
+  // Indices des vidéos diffusées lors des MIN_GAP derniers jours
+  const recentSet = new Set(history.slice(-MIN_GAP))
+
+  // Pool : toutes les vidéos sauf celles trop récentes
+  const pool = VIDEOS
+    .map((_, i) => i)
+    .filter(i => !recentSet.has(i))
+
+  // Fallback si le pool est vide (< MIN_GAP vidéos dispo)
+  const eligible = pool.length > 0 ? pool : VIDEOS.map((_, i) => i)
+
+  const idx = eligible[Math.floor(Math.random() * eligible.length)]
+
+  // Sauvegarde l'historique (on ne garde que les MIN_GAP dernières entrées)
+  history.push(idx)
+  if (history.length > MIN_GAP) history = history.slice(-MIN_GAP)
+  try { localStorage.setItem(HISTORY_KEY(userId), JSON.stringify(history)) } catch { /* */ }
+
+  return VIDEOS[idx]
 }
 
-export function VideoIntro({ onDone }) {
-  const src        = pickVideo()
+export function VideoIntro({ userId, onDone }) {
+  // Appel unique à l'initialisation du composant
+  const [src]      = useState(() => pickVideo(userId))
   const videoRef   = useRef(null)
   const [muted,    setMuted]    = useState(true)
   const [exiting,  setExiting]  = useState(false)
@@ -19,7 +61,7 @@ export function VideoIntro({ onDone }) {
   const dismiss = () => {
     if (exiting) return
     setExiting(true)
-    setTimeout(onDone, 1600) // 1s pause + 0.6s fondu
+    setTimeout(onDone, 600)
   }
 
   const handleEnded = () => {
@@ -59,7 +101,6 @@ export function VideoIntro({ onDone }) {
         onEnded={handleEnded}
       />
 
-      {/* Bouton son — disparaît après activation */}
       {muted && (
         <button
           onClick={handleSound}
@@ -80,7 +121,6 @@ export function VideoIntro({ onDone }) {
         </button>
       )}
 
-      {/* Passer */}
       <button
         onClick={dismiss}
         style={{
