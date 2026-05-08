@@ -651,15 +651,24 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
       const vendeurUserId = produitData?.partenaires?.user_id ?? null
 
       // Débite l'acheteur
-      await supabase.rpc('award_lumens', { p_user_id: userId, p_amount: -p.prix_lumens, p_reason: 'achat_produit', p_meta: { produit_id: p.id, produit_titre: p.titre } })
+      const { error: debitErr } = await supabase.rpc('award_lumens', { p_user_id: userId, p_amount: -p.prix_lumens, p_reason: 'achat_produit', p_meta: { produit_id: p.id, produit_titre: p.titre } })
+      if (debitErr) throw new Error('Débit Lumens impossible : ' + debitErr.message)
+
+      // Enregistre l'achat — fait avant de créditer le vendeur pour pouvoir détecter l'idempotence
+      const { error: upsertErr } = await supabase.from('achats').upsert(
+        { user_id: userId, produit_id: p.id, statut: 'complete', montant: 0 },
+        { onConflict: 'user_id,produit_id' }
+      )
+      if (upsertErr) {
+        // Remboursement : recrédite les lumens débités
+        await supabase.rpc('award_lumens', { p_user_id: userId, p_amount: p.prix_lumens, p_reason: 'remboursement_erreur', p_meta: { produit_id: p.id } })
+        throw new Error('Enregistrement achat impossible : ' + upsertErr.message)
+      }
 
       // Crédite le vendeur si lié à un compte MaFleur
       if (vendeurUserId) {
         await supabase.rpc('award_lumens', { p_user_id: vendeurUserId, p_amount: p.prix_lumens, p_reason: 'vente_produit', p_meta: { produit_id: p.id, produit_titre: p.titre, acheteur_id: userId } })
       }
-
-      // Enregistre l'achat
-      await supabase.from('achats').upsert({ user_id: userId, produit_id: p.id, statut: 'complete', montant: 0 }, { onConflict: 'user_id,produit_id' })
 
       setPayingLumens(false)
       onAchatLumens?.()
