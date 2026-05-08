@@ -39,6 +39,7 @@ import PushNotificationButton        from '../components/PushNotificationButton'
 import { usePushNotification }       from '../hooks/usePushNotification'
 import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
+import { VideoIntro }               from './VideoIntro'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers }      from './ScreenClubJardiniers'
 import { ScreenAteliers }            from './ScreenAteliers'
@@ -1326,6 +1327,7 @@ export default function DashboardPage() {
   const [openRitualsModal,    setOpenRitualsModal]    = useState(false)
   const [bilanDoneToday,      setBilanDoneToday]      = useState(false)
   const [showWelcome,         setShowWelcome]         = useState(false)
+  const [showVideoIntro,      setShowVideoIntro]      = useState(false)
   const [prefetchDone,        setPrefetchDone]        = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
   const [welcomeReady,        setWelcomeReady]        = useState(false)
@@ -1748,7 +1750,17 @@ export default function DashboardPage() {
 />    
       )}
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
-      {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => setShowWelcome(false)} />}
+      {showVideoIntro && <VideoIntro onDone={() => setShowVideoIntro(false)} />}
+      {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => {
+        setShowWelcome(false)
+        const today = new Date().toISOString().split('T')[0]
+        const key   = `video_intro_last_seen__${user?.id}`
+        const isDev = import.meta.env.DEV
+        if (isDev || localStorage.getItem(key) !== today) {
+          if (!isDev) localStorage.setItem(key, today)
+          setShowVideoIntro(true)
+        }
+      }} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
         <DailyQuizModal
