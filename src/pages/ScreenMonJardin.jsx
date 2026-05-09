@@ -5600,7 +5600,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           userId={userId}
           degradation={degradation}
           completedRituals={completedRituals}
-          onToggleRitual={handleToggleRitual}
+          onToggleRitual={(id) => { handleToggleRitual(id); setCelebrateKey(k => k + 1) }}
           onQuizComplete={handleQuizComplete}
           todayPlant={plant}
           onOpenBilan={onOpenBilan}
