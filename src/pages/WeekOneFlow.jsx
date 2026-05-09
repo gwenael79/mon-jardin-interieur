@@ -1676,15 +1676,16 @@ function CountdownTimer({ duration, buttonAfter, guidanceText, guidanceList, onC
       {/* Orbe */}
       <div style={{ position: 'relative', width: ORB, height: ORB, isolation: 'isolate' }}>
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
           borderRadius: '50%',
           background: 'radial-gradient(circle at 42% 38%, #fff6f2 0%, #f0c8b4 38%, #9a6070 100%)',
+          transform: isRunning && isInhale ? 'scale(1.55)' : 'scale(1)',
           boxShadow: isRunning && isInhale
-            ? '0 0 70px 36px rgba(240,175,145,0.65), 0 0 120px 55px rgba(200,130,110,0.28)'
+            ? '0 0 55px 22px rgba(240,175,145,0.52), 0 0 90px 36px rgba(200,130,110,0.22)'
             : '0 0 14px 4px rgba(200,140,120,0.18)',
-          transition: isRunning ? 'box-shadow 5s ease-in-out' : 'none',
+          transition: isRunning ? 'transform 5s ease-in-out, box-shadow 5s ease-in-out' : 'none',
         }} />
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2, willChange: 'transform', transform: 'translateZ(0)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           {phase === 'starting' ? (
             <p key={preCount} style={{ fontFamily: 'Jost, sans-serif', fontSize: 36, fontWeight: 700, color: '#3a1818', margin: 0, animation: 'stepIn 0.25s ease both' }}>{preCount}</p>
           ) : (
