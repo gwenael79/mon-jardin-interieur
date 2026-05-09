@@ -398,7 +398,7 @@ function PhaseBreathing({ ritual, need, isMobile, onDone, onClose }) {
           <div style={{ position:'absolute', width:30, height:30, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0.08) 75%, transparent 100%)', filter:'blur(2.5px)', zIndex:2, pointerEvents:'none' }}/>
           {/* Compte à rebours */}
           <span key={`tl-${timeLeft}`} style={{ position:'relative', zIndex:3, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 52 : 64, fontWeight:300, color:'rgba(255,255,255,1)', lineHeight:1, letterSpacing:'-.02em', animation:'rs_label_in .35s ease both', textShadow:'0 2px 12px rgba(30,10,70,0.50)' }}>
-            {timeLeft}
+            {currentPhase.key === 'inhale' ? currentPhase.duration - timeLeft + 1 : timeLeft}
           </span>
         </div>
       </div>
