@@ -1674,8 +1674,9 @@ function CountdownTimer({ duration, buttonAfter, guidanceText, guidanceList, onC
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
 
       {/* Orbe */}
-      <div style={{ position: 'relative', width: ORB, height: ORB }}>
+      <div style={{ width: ORB, height: ORB, display: 'grid' }}>
         <div style={{
+          gridArea: '1/1',
           width: ORB, height: ORB, borderRadius: '50%',
           background: 'radial-gradient(circle at 42% 38%, #fff6f2 0%, #f0c8b4 38%, #9a6070 100%)',
           transform: isRunning && isInhale ? 'scale(1.55)' : 'scale(1)',
@@ -1684,7 +1685,7 @@ function CountdownTimer({ duration, buttonAfter, guidanceText, guidanceList, onC
             : '0 0 14px 4px rgba(200,140,120,0.18)',
           transition: isRunning ? 'transform 5s ease-in-out, box-shadow 5s ease-in-out' : 'none',
         }} />
-        <div style={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ gridArea: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           {phase === 'starting' ? (
             <p key={preCount} style={{ fontFamily: 'Jost, sans-serif', fontSize: 36, fontWeight: 700, color: '#3a1818', margin: 0, animation: 'stepIn 0.25s ease both' }}>{preCount}</p>
           ) : (
