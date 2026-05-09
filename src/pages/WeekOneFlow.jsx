@@ -1528,9 +1528,9 @@ function BreathingOrb({ maxCycles, onComplete, guidanceText }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
 
       {/* Orbe */}
-      <div style={{ position: 'relative', width: 72, height: 72 }}>
+      <div style={{ position: 'relative', width: 72, height: 72, isolation: 'isolate' }}>
         <div style={{
-          width: 72, height: 72,
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1,
           borderRadius: '50%',
           background: 'radial-gradient(circle at 42% 38%, #fff6f2 0%, #f0c8b4 38%, #9a6070 100%)',
           transform: started && isInhale ? 'scale(1.7)' : 'scale(1)',
@@ -1540,7 +1540,8 @@ function BreathingOrb({ maxCycles, onComplete, guidanceText }) {
           transition: started ? 'transform 5s ease-in-out, box-shadow 5s ease-in-out' : 'none',
         }} />
         <div style={{
-          position: 'absolute', inset: 0,
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2,
+          willChange: 'transform', transform: 'translateZ(0)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none',
         }}>
