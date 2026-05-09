@@ -6034,7 +6034,19 @@ function GardenDashboard({ completedDays: completedDaysProp, completionDates = {
   )}
 
   {z.zoneId && done && (
-    <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.04em' }}>
+    <span style={{
+      fontFamily: 'Jost, sans-serif',
+      fontSize: 10,
+      fontWeight: 600,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: '#7ecb8f',
+      background: 'rgba(126,203,143,0.12)',
+      border: '1px solid rgba(126,203,143,0.45)',
+      borderRadius: 100,
+      padding: '3px 10px',
+      cursor: 'pointer',
+    }}>
       Voir les rituels →
     </span>
   )}
