@@ -1674,10 +1674,10 @@ function CountdownTimer({ duration, buttonAfter, guidanceText, guidanceList, onC
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
 
       {/* Orbe */}
-      <div style={{ width: ORB, height: ORB, display: 'grid' }}>
+      <div style={{ position: 'relative', width: ORB, height: ORB, isolation: 'isolate' }}>
         <div style={{
-          gridArea: '1/1',
-          width: ORB, height: ORB, borderRadius: '50%',
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0,
+          borderRadius: '50%',
           background: 'radial-gradient(circle at 42% 38%, #fff6f2 0%, #f0c8b4 38%, #9a6070 100%)',
           transform: isRunning && isInhale ? 'scale(1.55)' : 'scale(1)',
           boxShadow: isRunning && isInhale
@@ -1685,11 +1685,11 @@ function CountdownTimer({ duration, buttonAfter, guidanceText, guidanceList, onC
             : '0 0 14px 4px rgba(200,140,120,0.18)',
           transition: isRunning ? 'transform 5s ease-in-out, box-shadow 5s ease-in-out' : 'none',
         }} />
-        <div style={{ gridArea: '1/1', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           {phase === 'starting' ? (
             <p key={preCount} style={{ fontFamily: 'Jost, sans-serif', fontSize: 36, fontWeight: 700, color: '#3a1818', margin: 0, animation: 'stepIn 0.25s ease both' }}>{preCount}</p>
           ) : (
-            <p style={{ fontFamily: 'Jost, sans-serif', fontSize: isRunning ? 22 : 20, fontWeight: 700, color: '#3a1818', margin: 0, letterSpacing: '0.04em' }}>
+            <p style={{ fontFamily: 'Jost, sans-serif', fontSize: isRunning ? 24 : 22, fontWeight: 700, color: '#1a0808', margin: 0, letterSpacing: '0.04em' }}>
               {String(mins).padStart(2,'0')}:{String(secs).padStart(2,'0')}
             </p>
           )}
