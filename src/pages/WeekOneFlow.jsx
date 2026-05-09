@@ -936,7 +936,7 @@ export const WEEK_ONE_DATA = [
       subtitleExtra: "Tu peux continuer à en prendre soin. À ton rythme.",
       breatheIntro: "Comme tu sais déjà le faire.",
       timerDuration: 300,
-      timerButtonAfter: 180,
+      timerButtonAfter: 60,
       orbGuidanceList: [
         "La main sur le ventre",
         "Ventre (2 min) : un ballon qui respire",
@@ -1684,7 +1684,7 @@ function CountdownTimer({ duration, buttonAfter, guidanceText, guidanceList, onC
             : '0 0 14px 4px rgba(200,140,120,0.18)',
           transition: isRunning ? 'transform 5s ease-in-out, box-shadow 5s ease-in-out' : 'none',
         }} />
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           {phase === 'starting' ? (
             <p key={preCount} style={{ fontFamily: 'Jost, sans-serif', fontSize: 36, fontWeight: 700, color: '#3a1818', margin: 0, animation: 'stepIn 0.25s ease both' }}>{preCount}</p>
           ) : (
@@ -5845,7 +5845,8 @@ function FleurDiscoveryModal({ onClose }) {
 // Ajout prop onReplayDay + bouton "Revoir" sur chaque carte accomplie
 // ═══════════════════════════════════════════════════════════════════════════
 
-function GardenDashboard({ completedDays, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth, isPro, onOpenProProfile, onReplayDay }) {
+function GardenDashboard({ completedDays: completedDaysProp, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth, isPro, onOpenProProfile, onReplayDay }) {
+  const completedDays = completedDaysProp ?? []
   const [showFleurModal, setShowFleurModal] = useState(false)
   const [showRituelHint, setShowRituelHint] = useState(false)
 
@@ -6687,23 +6688,22 @@ async function handleDayEvent(event) {
       setIsReplay(false)
       setWeekData(d => ({
         ...d,
-        currentDay: d.completedDays.length > 0
-          ? Math.min(Math.max(...d.completedDays) + 1, 7)
+        currentDay: (d.completedDays ?? []).length > 0
+          ? Math.min(Math.max(...(d.completedDays ?? [])) + 1, 7)
           : 1
       }))
       setView('garden')
       return
     }
 
-    const dayNum  = current.currentDay
-    const nextDay = Math.min(dayNum + 1, 7)
-    const today   = new Date().toISOString().split('T')[0]
+    const dayNum      = current.currentDay
+    const nextDay     = Math.min(dayNum + 1, 7)
+    const today       = new Date().toISOString().split('T')[0]
+    const prevDays    = current.completedDays ?? []
     const updated = {
       ...current,
       currentDay:    nextDay,
-      completedDays: current.completedDays.includes(dayNum)
-        ? current.completedDays
-        : [...current.completedDays, dayNum],
+      completedDays: prevDays.includes(dayNum) ? prevDays : [...prevDays, dayNum],
       completionDates: {
         ...(current.completionDates || {}),
         [dayNum]: today,
