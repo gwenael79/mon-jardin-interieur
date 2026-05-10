@@ -10,6 +10,7 @@ import { AdminActivitePage } from './pages/AdminActivitePage'
 import { AdminProsPage } from './pages/AdminProsPage'
 import { AdminMessagesPage } from './pages/AdminMessagesPage'
 import { AdminJardinothequePage } from './pages/AdminJardinothequePage'
+import { AppAvisModal } from './components/AppAvisModal'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
 import { WeekOneFlow }      from './pages/WeekOneFlow'
@@ -50,7 +51,8 @@ export default function App() {
   const [showProCancelConfirm, setShowProCancelConfirm] = useState(false)
   const [showProLaunch,       setShowProLaunch]       = useState(false)
   const [proCancelLoading,     setProCancelLoading]     = useState(false)
-  const [reopenPremium, setReopenPremium] = useState(() => sessionStorage.getItem('reopen_premium') === '1')
+  const [reopenPremium,   setReopenPremium]   = useState(() => sessionStorage.getItem('reopen_premium') === '1')
+  const [showReviewPopup, setShowReviewPopup] = useState(false)
   const [weekOneCompletedDays, setWeekOneCompletedDays] = useState([])
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
@@ -105,6 +107,23 @@ export default function App() {
     window.openAccessModal = () => setScreen('access')
     return () => { delete window.openAccessModal }
   }, [])
+
+  // ── Popup avis aléatoire — 1 fois par mois ─────────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return
+    // if (ADMIN_IDS.includes(user.id)) return   // ← décommenter en prod
+    if (screen === 'loading' || screen === 'auth' || screen.startsWith('admin')) return
+    const monthKey = `mji_review_shown_${new Date().toISOString().slice(0, 7)}`
+    if (localStorage.getItem(monthKey)) return
+     if (Math.random() > 0.5) return           // ← décommenter en prod
+    const delay = Math.floor(Math.random() * 75000) + 45000  // ← décommenter en prod
+    
+    const timer = setTimeout(() => {
+      setShowReviewPopup(true)
+      localStorage.setItem(monthKey, '1')
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [user?.id, screen])
 
   useEffect(() => {
     if (!ADMIN_IDS.includes(user?.id)) return
@@ -276,6 +295,10 @@ export default function App() {
   if (screen === 'admin')          return <AdminPage />
   if (screen === 'admin-clients')  return <AdminClientsPage />
   if (screen === 'admin-activite')      return <AdminActivitePage />
+  // Popup avis — rendu par-dessus n'importe quel écran non-admin
+  const reviewPopup = showReviewPopup && user?.id // && !ADMIN_IDS.includes(user.id)  // ← décommenter en prod
+    ? <AppAvisModal userId={user.id} onClose={() => setShowReviewPopup(false)} />
+    : null
   if (screen === 'admin-jardinotheque') return <AdminJardinothequePage />
   if (screen === 'admin-pros')          return <AdminProsPage />
   if (screen === 'admin-messages')      return <AdminMessagesPage />
@@ -645,6 +668,7 @@ export default function App() {
             </div>
           </div>
         )}
+        {reviewPopup}
       </>
     )
   }
@@ -683,6 +707,7 @@ export default function App() {
           </div>
         </div>
       <EngagementModals completedDays={weekOneCompletedDays} userId={user.id} />
+      {reviewPopup}
       </div>
     )
   }
@@ -731,6 +756,7 @@ export default function App() {
         </div>
       )}
       <InstallPrompt />
+      {reviewPopup}
       {toast && <div style={styles.toast}><span>{toast.icon}</span><span>{toast.msg}</span></div>}
       <style>{`
         @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(16px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }

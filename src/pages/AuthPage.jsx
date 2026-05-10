@@ -1462,7 +1462,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
           </div>
 
           {/* Liste */}
-          <div style={{ overflowY: reviewsList.length > 5 ? 'auto' : 'visible', maxHeight: reviewsList.length > 5 ? 500 : 'none', display:'flex', flexDirection:'column', gap:14, paddingRight: reviewsList.length > 5 ? 4 : 0 }}>
+          <div style={{ overflowY: reviewsList.length > 2 ? 'auto' : 'visible', maxHeight: reviewsList.length > 2 ? 500 : 'none', display:'flex', flexDirection:'column', gap:14, paddingRight: reviewsList.length > 2 ? 4 : 0 }}>
             {reviewsList.map((r, i) => (
               <div key={i} style={{ padding:'16px 18px', borderRadius:14, background:'rgba(90,154,40,.05)', border:'1px solid rgba(90,154,40,.15)' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: r.comment ? 12 : 0 }}>
