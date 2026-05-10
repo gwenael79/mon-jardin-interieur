@@ -789,7 +789,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 Retrouver mon jardin
               </button>
               {reviewStats ? (
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginTop:12 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginTop:12, ...(isMobile ? { background:'rgba(255,255,255,0.88)', borderRadius:50, padding:'8px 18px', boxShadow:'0 2px 12px rgba(0,0,0,0.10)', backdropFilter:'blur(6px)' } : {}) }}>
                   <div style={{ position:'relative', display:'inline-block', fontSize:36, lineHeight:1 }}>
                     <span style={{ color:'rgba(30,20,8,0.13)', letterSpacing:6 }}>★★★★★</span>
                     <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(reviewStats.avg / 5) * 100}%`, color:'#e8c060', letterSpacing:6, whiteSpace:'nowrap' }}>★★★★★</span>
