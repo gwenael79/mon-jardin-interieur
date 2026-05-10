@@ -1467,13 +1467,13 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               <div key={i} style={{ padding:'16px 18px', borderRadius:14, background:'rgba(90,154,40,.05)', border:'1px solid rgba(90,154,40,.15)' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: r.comment ? 12 : 0 }}>
                   <div style={{ fontSize:17, fontWeight:600, color:'#0d0d0d', fontFamily:"'Jost',sans-serif" }}>{r.prenom}</div>
-                  <div style={{ position:'relative', display:'inline-block', fontSize:22, lineHeight:1 }}>
-                    <span style={{ color:'rgba(30,20,8,0.12)', letterSpacing:3 }}>★★★★★</span>
-                    <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(r.rating / 5) * 100}%`, color:'#e8c060', letterSpacing:3, whiteSpace:'nowrap' }}>★★★★★</span>
+                  <div style={{ position:'relative', display:'inline-block', fontSize: isMobile ? 14 : 22, lineHeight:1 }}>
+                    <span style={{ color:'rgba(30,20,8,0.12)', letterSpacing: isMobile ? 2 : 3 }}>★★★★★</span>
+                    <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(r.rating / 5) * 100}%`, color:'#e8c060', letterSpacing: isMobile ? 2 : 3, whiteSpace:'nowrap' }}>★★★★★</span>
                   </div>
                 </div>
                 {r.comment && (
-                  <div style={{ fontSize:24, color:'#1a1208', lineHeight:1.75, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:400 }}>« {r.comment} »</div>
+                  <div style={{ fontSize: isMobile ? 16 : 24, color:'#1a1208', lineHeight:1.75, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:400 }}>« {r.comment} »</div>
                 )}
               </div>
             ))}
