@@ -76,8 +76,9 @@ function AdminNav({ current }) {
   const navItems = [
     { hash: '#admin',    label: 'Admin',    icon: '🛡' },
     { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite', label: 'Activité', icon: '🌿' },
-    { hash: '#pros',     label: 'Pros',     icon: '💼' },
+    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
+    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
+    { hash: '#pros',          label: 'Pros',          icon: '💼' },
   ]
   return (
     <div style={{ display: 'flex', gap: 4 }}>
@@ -960,7 +961,7 @@ export function AdminActivitePage() {
   useTheme()
   const { user, signOut } = useAuth()
 
-  const [tab,             setTab]             = useState('boutique')
+  const [tab,             setTab]             = useState('rituels')
   const [pendingReviews,  setPendingReviews]  = useState([])
   const [reviewsLoading,  setReviewsLoading]  = useState(false)
   const [lumensData,      setLumensData]      = useState([])
@@ -1045,7 +1046,6 @@ export function AdminActivitePage() {
 
         {/* TABS */}
         <div className="adm-tabs">
-          <div className={`adm-tab${tab === 'boutique' ? ' active' : ''}`} onClick={() => setTab('boutique')}>🌿 Jardinothèque</div>
           <div className={`adm-tab${tab === 'rituels'  ? ' active' : ''}`} onClick={() => setTab('rituels')}>✨ Rituels</div>
           <div className={`adm-tab${tab === 'lumens'   ? ' active' : ''}`} onClick={() => setTab('lumens')}>✦ Lumens</div>
           <div className={`adm-tab${tab === 'avis'     ? ' active' : ''}`} onClick={() => setTab('avis')} style={{ position: 'relative' }}>
@@ -1055,13 +1055,6 @@ export function AdminActivitePage() {
             )}
           </div>
         </div>
-
-        {/* ── JARDINOTHÈQUE / BOUTIQUE ── */}
-        {tab === 'boutique' && (
-          <div className="adm-section">
-            <BoutiqueEditor showToast={showToast} />
-          </div>
-        )}
 
         {/* ── RITUELS ── */}
         {tab === 'rituels' && (

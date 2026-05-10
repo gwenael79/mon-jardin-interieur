@@ -459,6 +459,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [savingFlower, setSavingFlower] = useState(false)
   const [newUserId,    setNewUserId]    = useState(null)
   const [isMobile,     setIsMobile]     = useState(() => window.innerWidth < 768)
+  const [reviewStats,  setReviewStats]  = useState(null)
+  const [reviewsList,  setReviewsList]  = useState([])
+  const [showReviews,  setShowReviews]  = useState(false)
 
   // ── Modal PRO ──
   const [showProModal,      setShowProModal]      = useState(false)
@@ -494,6 +497,16 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
     const check = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  useEffect(() => {
+    supabase.from('app_reviews').select('rating, comment, display_name').eq('status', 'approved')
+      .then(({ data }) => {
+        if (!data?.length) return
+        const avg = data.reduce((s, r) => s + Number(r.rating), 0) / data.length
+        setReviewStats({ avg, count: data.length })
+        setReviewsList(data.map(r => ({ ...r, prenom: r.display_name || 'Anonyme' })))
+      })
   }, [])
 
   useEffect(() => {
@@ -775,7 +788,19 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               <button className="auth-btn-ghost" onClick={() => goTo('login')}>
                 Retrouver mon jardin
               </button>
-              <div className="auth-tagline">Chaque geste de soin est une graine.</div>
+              {reviewStats ? (
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginTop:12 }}>
+                  <div style={{ position:'relative', display:'inline-block', fontSize:36, lineHeight:1 }}>
+                    <span style={{ color:'rgba(30,20,8,0.13)', letterSpacing:6 }}>★★★★★</span>
+                    <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(reviewStats.avg / 5) * 100}%`, color:'#e8c060', letterSpacing:6, whiteSpace:'nowrap' }}>★★★★★</span>
+                  </div>
+                  <div style={{ fontSize:16, color:'rgba(30,20,8,0.55)', fontFamily:"'Jost',sans-serif", fontWeight:500, whiteSpace:'nowrap' }}>
+                    {reviewStats.avg.toFixed(1)} <span onClick={() => setShowReviews(true)} style={{ fontWeight:400, opacity:.65, cursor:'pointer', textDecoration:'underline', textUnderlineOffset:3 }}>({reviewStats.count} avis)</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="auth-tagline">Chaque geste de soin est une graine.</div>
+              )}
 
               {/* Entrée pro — séparée visuellement */}
               <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid rgba(42,104,8,.15)',textAlign:'center'}}>
@@ -1421,6 +1446,42 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
       )}
 
     </div>
+
+    {/* Modal avis */}
+    {showReviews && (
+      <div style={{ position:'fixed', inset:0, zIndex:2000, background:'rgba(0,0,0,0.50)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', padding:20, animation:'authFadeIn .25s ease both' }} onClick={() => setShowReviews(false)}>
+        <div style={{ width:'100%', maxWidth:480, borderRadius:24, background:'#faf8f4', padding:'28px 24px', boxShadow:'0 20px 60px rgba(30,60,10,.20)', border:'1px solid rgba(180,210,140,.30)', maxHeight:'80vh', display:'flex', flexDirection:'column', animation:'authFormIn .3s cubic-bezier(.22,1,.36,1) both' }} onClick={e => e.stopPropagation()}>
+
+          {/* Header */}
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20, flexShrink:0 }}>
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, color:'#0d0d0d', fontWeight:600 }}>Avis des utilisateurs</div>
+              <div style={{ fontSize:14, color:'rgba(30,20,8,.55)', marginTop:3, fontFamily:"'Jost',sans-serif" }}>{reviewStats.count} avis · moyenne {reviewStats.avg.toFixed(1)} / 5</div>
+            </div>
+            <button onClick={() => setShowReviews(false)} style={{ background:'none', border:'none', fontSize:22, cursor:'pointer', color:'rgba(30,20,8,.50)', padding:4 }}>✕</button>
+          </div>
+
+          {/* Liste */}
+          <div style={{ overflowY: reviewsList.length > 5 ? 'auto' : 'visible', maxHeight: reviewsList.length > 5 ? 500 : 'none', display:'flex', flexDirection:'column', gap:14, paddingRight: reviewsList.length > 5 ? 4 : 0 }}>
+            {reviewsList.map((r, i) => (
+              <div key={i} style={{ padding:'16px 18px', borderRadius:14, background:'rgba(90,154,40,.05)', border:'1px solid rgba(90,154,40,.15)' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: r.comment ? 12 : 0 }}>
+                  <div style={{ fontSize:17, fontWeight:600, color:'#0d0d0d', fontFamily:"'Jost',sans-serif" }}>{r.prenom}</div>
+                  <div style={{ position:'relative', display:'inline-block', fontSize:22, lineHeight:1 }}>
+                    <span style={{ color:'rgba(30,20,8,0.12)', letterSpacing:3 }}>★★★★★</span>
+                    <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(r.rating / 5) * 100}%`, color:'#e8c060', letterSpacing:3, whiteSpace:'nowrap' }}>★★★★★</span>
+                  </div>
+                </div>
+                {r.comment && (
+                  <div style={{ fontSize:24, color:'#1a1208', lineHeight:1.75, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif", fontWeight:400 }}>« {r.comment} »</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+
     </>
   )
 }

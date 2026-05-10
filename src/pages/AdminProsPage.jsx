@@ -82,9 +82,10 @@ function AdminNav({ current }) {
   const navItems = [
     { hash: '#admin',    label: 'Admin',    icon: '🛡' },
     { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite', label: 'Activité', icon: '🌿' },
-    { hash: '#pros',     label: 'Pros',     icon: '💼' },
-    { hash: '#messages', label: 'Messages', icon: '💬', badge: pending },
+    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
+    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
+    { hash: '#pros',          label: 'Pros',          icon: '💼' },
+    { hash: '#messages',      label: 'Messages',      icon: '💬', badge: pending },
   ]
   return (
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>

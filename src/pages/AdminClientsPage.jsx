@@ -79,8 +79,9 @@ function AdminNav({ current }) {
   const navItems = [
     { hash: '#admin',    label: 'Admin',    icon: '🛡' },
     { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite', label: 'Activité', icon: '🌿' },
-    { hash: '#pros',     label: 'Pros',     icon: '💼' },
+    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
+    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
+    { hash: '#pros',          label: 'Pros',          icon: '💼' },
   ]
   return (
     <div style={{ display: 'flex', gap: 4 }}>
@@ -191,6 +192,223 @@ function FunnelUserDetail({ users }) {
           </table>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Statistiques post-J7 ─────────────────────────────────────────────────
+function TabStatistiques({ funnelUsers }) {
+  const isMobile = useIsMobile()
+  const [period, setPeriod] = useState(30)
+  const [data, setData]     = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const PERIODS = [
+    { val: 0,  label: "Aujourd'hui" },
+    { val: 7,  label: '7j' },
+    { val: 15, label: '15j' },
+    { val: 30, label: '30j' },
+    { val: 60, label: '60j' },
+    { val: 90, label: '90j' },
+  ]
+
+  useEffect(() => {
+    const j7Ids = funnelUsers
+      .filter(u => (u.completedDays ?? []).some(d => Number(d) >= 7))
+      .map(u => u.id)
+    load(j7Ids)
+  }, [period, funnelUsers.length])
+
+  async function load(j7Ids) {
+    setLoading(true)
+    if (j7Ids.length === 0) { setData(null); setLoading(false); return }
+
+    const today   = new Date().toISOString().slice(0, 10)
+    const ago     = n => new Date(Date.now() - n * 86400000)
+    const fromDate = period === 0 ? today : ago(period - 1).toISOString().slice(0, 10)
+    const fromISO  = fromDate + 'T00:00:00'
+    const dates    = period === 0
+      ? [today]
+      : Array.from({ length: period }, (_, i) => ago(period - 1 - i).toISOString().slice(0, 10))
+
+    const [{ data: eventsData }] =
+      await Promise.all([
+        supabase.from('analytics_events').select('user_id, event_type, page, created_at').in('user_id', j7Ids).gte('created_at', fromISO),
+      ])
+
+    // ── Visiteurs de slides par jour (basé sur page_view)
+    const visitorsByDay = Object.fromEntries(dates.map(d => [d, new Set()]))
+    ;(eventsData ?? []).forEach(r => {
+      if (r.event_type !== 'page_view' || !r.page) return
+      const d = r.created_at.slice(0, 10)
+      if (visitorsByDay[d]) visitorsByDay[d].add(r.user_id)
+    })
+    const dailyActive = dates.map(d => ({ date: d, count: visitorsByDay[d].size }))
+
+    // ── Utilisateurs uniques par slide (page_view events, champ page = slide id)
+    const SLIDE_DEFS = [
+      { key: 'bilan',        label: 'Bilan',              icon: '🌅', color: '#d49040', verb: 'ont ouvert le bilan' },
+      { key: 'jardin',       label: 'Ma Fleur',           icon: '🌸', color: '#b090c8', verb: 'ont visité Ma Fleur' },
+      { key: 'champ',        label: 'Jardin Collectif',   icon: '🌼', color: '#c8a040', verb: 'ont visité le Jardin Collectif' },
+      { key: 'defis',        label: 'Défis',              icon: '✨', color: '#9080c0', verb: 'ont visité les Défis' },
+      { key: 'club',         label: 'Club des Jardiniers',icon: '👥', color: '#6898c0', verb: 'ont visité le Club' },
+      { key: 'ateliers',     label: 'Ateliers',           icon: '📘', color: '#60a870', verb: 'ont visité les Ateliers' },
+      { key: 'jardinotheque',label: 'Jardinothèque',      icon: '🌿', color: '#5890a0', verb: 'ont visité la Jardinothèque' },
+      { key: 'boite_graine', label: 'Boîte à Graines',   icon: '🌱', color: '#4a8060', verb: 'ont ouvert la Boîte à Graines' },
+    ]
+
+    // Grouper les page_view par slide
+    const slideUserMap = {}
+    ;(eventsData ?? []).forEach(r => {
+      if (r.event_type !== 'page_view' || !r.page) return
+      if (!slideUserMap[r.page]) slideUserMap[r.page] = new Set()
+      slideUserMap[r.page].add(r.user_id)
+    })
+
+    const sections = SLIDE_DEFS.map(s => {
+      const count = slideUserMap[s.key]?.size ?? 0
+      return {
+        ...s,
+        count,
+        pctOfJ7: j7Ids.length > 0 ? Math.round((count / j7Ids.length) * 100) : 0,
+      }
+    }).sort((a, b) => b.count - a.count)
+
+    const totalSessions  = (eventsData ?? []).filter(r => r.event_type === 'session_start').length
+    // Visiteurs = J7 users ayant visité au moins un slide sur la période
+    const slideVisitors  = new Set(
+      (eventsData ?? []).filter(r => r.event_type === 'page_view' && r.page).map(r => r.user_id)
+    )
+
+    setData({
+      j7Count:           j7Ids.length,
+      slideVisitors:     slideVisitors.size,
+      retentionRate:     j7Ids.length > 0 ? Math.round((slideVisitors.size / j7Ids.length) * 100) : 0,
+      totalSessions,
+      sessionsPerVisitor: slideVisitors.size > 0 ? (totalSessions / slideVisitors.size).toFixed(1) : '–',
+      dailyActive,
+      sections,
+    })
+    setLoading(false)
+  }
+
+  if (loading) return <div className="adm-empty">Chargement…</div>
+  if (!data)   return <div className="adm-empty">Aucun utilisateur n'a encore terminé les 7 jours.</div>
+
+  const maxDaily = Math.max(...data.dailyActive.map(d => d.count), 1)
+  const periodLbl = PERIODS.find(p => p.val === period)?.label ?? `${period}j`
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* ── Sélecteur période ── */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {PERIODS.map(p => (
+          <button key={p.val} onClick={() => setPeriod(p.val)}
+            style={{ padding: '6px 16px', borderRadius: 100, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif",
+              background: period === p.val ? 'rgba(150,212,133,0.18)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${period === p.val ? 'rgba(150,212,133,0.40)' : 'rgba(255,255,255,0.09)'}`,
+              color: period === p.val ? '#c8f0b8' : 'var(--text3)', transition: 'all .18s' }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Bloc 1 : Vue d'ensemble de la période ── */}
+      <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border2)', borderRadius: 16, padding: isMobile ? '16px' : '22px 26px' }}>
+        <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: 18 }}>
+          Activité · {periodLbl}
+        </div>
+
+        {/* 3 KPIs fiables */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10, marginBottom: period > 0 ? 20 : 0 }}>
+          {[
+            { lbl: 'Ont terminé J7',  val: data.j7Count,            color: 'rgba(255,255,255,0.75)', sub: 'base totale des utilisateurs' },
+            { lbl: `Ont ouvert l'app · ${periodLbl}`, val: data.slideVisitors, color: '#7ab5f5', sub: `${data.retentionRate}% de retour` },
+            { lbl: 'Sessions · total',val: data.totalSessions,       color: '#b4a0f0',               sub: `moy. ${data.sessionsPerVisitor} par personne` },
+          ].map((k, i) => (
+            <div key={i} style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 36, fontWeight: 300, color: k.color, lineHeight: 1, marginBottom: 6 }}>{k.val}</div>
+              <div style={{ fontSize: 10, color: 'var(--text2)', fontWeight: 500, marginBottom: 2 }}>{k.lbl}</div>
+              <div style={{ fontSize: 9, color: 'var(--text3)' }}>{k.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Courbe actifs / jour (masquée pour "aujourd'hui") */}
+        {period > 0 && (
+          <>
+            <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>Ouvertures de l'app · par jour</div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: period > 30 ? 1 : 2, height: 56 }}>
+              {data.dailyActive.map((d, i) => {
+                const h = Math.max(3, Math.round((d.count / maxDaily) * 100))
+                const isToday = d.date === new Date().toISOString().slice(0, 10)
+                const lbl = new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                return (
+                  <div key={i} title={`${lbl} : ${d.count} actif${d.count > 1 ? 's' : ''}`}
+                    style={{ flex: 1, height: `${h}%`, minHeight: 3, borderRadius: '2px 2px 0 0',
+                      background: isToday ? '#96d485' : 'rgba(150,212,133,0.28)',
+                      boxShadow: isToday ? '0 0 8px rgba(150,212,133,0.45)' : 'none' }} />
+                )
+              })}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 8, color: 'rgba(255,255,255,0.2)' }}>
+              <span>−{period - 1}j</span>
+              <span style={{ color: '#96d485' }}>aujourd'hui</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Bloc 2 : Qui fait quoi ? ── */}
+      <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid var(--border2)', borderRadius: 16, padding: isMobile ? '16px' : '22px 26px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 18 }}>
+          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.14em', textTransform: 'uppercase', flex: 1 }}>
+            Visites par slide · {periodLbl}
+          </div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)' }}>sur {data.j7Count} utilisateurs J7</div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10 }}>
+          {data.sections.map(s => {
+            const pct = s.pctOfJ7
+            const pctColor = pct >= 60 ? '#96d485' : pct >= 30 ? s.color : '#e8c060'
+            return (
+              <div key={s.key} style={{ padding: '14px 16px', borderRadius: 14,
+                background: `linear-gradient(145deg, ${s.color}08 0%, rgba(255,255,255,0.02) 100%)`,
+                border: `1px solid ${s.color}22` }}>
+
+                {/* En-tête */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+                  <span style={{ fontSize: 15 }}>{s.icon}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text2)', fontWeight: 500 }}>{s.label}</span>
+                </div>
+
+                {/* Nombre + % côte à côte */}
+                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div>
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 38, fontWeight: 300, color: s.color, lineHeight: 1 }}>{s.count}</div>
+                    <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 3 }}>personnes</div>
+                  </div>
+                  <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontWeight: 300, color: pctColor, lineHeight: 1, textAlign: 'right' }}>
+                    {pct}%
+                  </div>
+                </div>
+
+                {/* Barre unique */}
+                <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.07)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: s.color, borderRadius: 2, transition: 'width .5s ease' }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Note ── */}
+      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.22)', padding: '10px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px dashed rgba(255,255,255,0.07)', lineHeight: 1.8 }}>
+        💡 Les données proviennent des événements <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 3, fontSize: 9 }}>page_view</code> tracés dans DashboardV2 à chaque changement de slide. Les données historiques (avant le déploiement de ce tracking) apparaîtront à 0.
+      </div>
     </div>
   )
 }
@@ -349,20 +567,174 @@ function TabQCM() {
 }
 
 // ── Page principale ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  TabAvisClients — avis des ateliers avec modération
+// ═══════════════════════════════════════════════════════════
+function TabAvisClients({ onPendingCount }) {
+  const [avis,      setAvis]      = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [filter,    setFilter]    = useState('all')
+  const [editingId, setEditingId] = useState(null)
+  const [editText,  setEditText]  = useState('')
+  const [saving,    setSaving]    = useState(false)
+
+  const load = async () => {
+    setLoading(true)
+    const { data: reviews } = await supabase
+      .from('app_reviews')
+      .select('id, user_id, rating, comment, display_name, status, created_at')
+      .order('created_at', { ascending: false })
+
+    if (!reviews?.length) { setAvis([]); setLoading(false); onPendingCount?.(0); return }
+
+    const userIds = [...new Set(reviews.map(r => r.user_id))]
+    const { data: users } = await supabase
+      .from('users').select('id, email').in('id', userIds)
+    const emailMap = Object.fromEntries((users ?? []).map(u => [u.id, u.email ?? '']))
+
+    const mapped = reviews.map(r => ({
+      ...r,
+      reviewerName:  r.display_name || 'Anonyme',
+      reviewerEmail: emailMap[r.user_id] ?? '',
+    }))
+    setAvis(mapped)
+    onPendingCount?.(mapped.filter(a => a.status === 'pending').length)
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  const moderate = async (id, status) => {
+    await supabase.from('app_reviews').update({ status }).eq('id', id)
+    setAvis(prev => {
+      const next = prev.map(a => a.id === id ? { ...a, status } : a)
+      onPendingCount?.(next.filter(a => a.status === 'pending').length)
+      return next
+    })
+  }
+
+  const saveEdit = async (id) => {
+    setSaving(true)
+    await supabase.from('app_reviews').update({ comment: editText }).eq('id', id)
+    setAvis(prev => prev.map(a => a.id === id ? { ...a, comment: editText } : a))
+    setSaving(false)
+    setEditingId(null)
+  }
+
+  const filtered = filter === 'all' ? avis : avis.filter(a => a.status === filter)
+  const counts   = { pending: avis.filter(a => a.status === 'pending').length, approved: avis.filter(a => a.status === 'approved').length, rejected: avis.filter(a => a.status === 'rejected').length }
+
+  const STARS  = (n) => '★'.repeat(n || 0) + '☆'.repeat(5 - (n || 0))
+  const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+
+  const statusStyle = {
+    pending:  { bg: 'rgba(232,192,96,0.12)',  border: 'rgba(232,192,96,0.30)',  color: '#e8c060', label: '⏳ En attente' },
+    approved: { bg: 'rgba(150,212,133,0.10)', border: 'rgba(150,212,133,0.25)', color: '#96d485', label: '✓ Approuvé'   },
+    rejected: { bg: 'rgba(210,80,80,0.08)',   border: 'rgba(210,80,80,0.25)',   color: 'rgba(255,140,140,0.7)', label: '✕ Refusé' },
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Filtres */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {[['all', 'Tous', avis.length], ['pending', '⏳ En attente', counts.pending], ['approved', '✓ Approuvés', counts.approved], ['rejected', '✕ Refusés', counts.rejected]].map(([key, label, count]) => (
+          <button key={key} onClick={() => setFilter(key)}
+            style={{ padding: '5px 14px', borderRadius: 20, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", border: filter === key ? '1px solid rgba(150,212,133,0.40)' : '1px solid rgba(255,255,255,0.08)', background: filter === key ? 'rgba(150,212,133,0.12)' : 'transparent', color: filter === key ? '#96d485' : 'rgba(242,237,224,0.40)' }}>
+            {label} <span style={{ opacity: 0.6 }}>({count})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Liste */}
+      {loading ? (
+        <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Chargement…</div>
+      ) : filtered.length === 0 ? (
+        <div className="adm-empty">Aucun avis dans cette catégorie</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {filtered.map(a => {
+            const ss = statusStyle[a.status] || statusStyle.pending
+            const isEditing = editingId === a.id
+            return (
+              <div key={a.id} style={{ padding: '16px 20px', borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: `1px solid ${a.status === 'pending' ? 'rgba(232,192,96,0.20)' : 'rgba(255,255,255,0.06)'}` }}>
+
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10, flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ fontSize: 13, color: 'rgba(242,237,224,0.88)', fontWeight: 500 }}>{a.reviewerName}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(242,237,224,0.35)', marginTop: 3 }}>
+                      {a.reviewerEmail && <span style={{ marginRight: 6 }}>{a.reviewerEmail} ·</span>}{fmtDate(a.created_at)}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {a.rating != null && <span style={{ fontSize: 13, color: '#e8c060', letterSpacing: 1 }}>{STARS(a.rating)}</span>}
+                    <span style={{ fontSize: 9, padding: '3px 10px', borderRadius: 20, background: ss.bg, border: `1px solid ${ss.border}`, color: ss.color }}>{ss.label}</span>
+                  </div>
+                </div>
+
+                {/* Commentaire — éditable si pending */}
+                {isEditing ? (
+                  <div style={{ marginBottom: 12 }}>
+                    <textarea
+                      value={editText}
+                      onChange={e => setEditText(e.target.value)}
+                      rows={3}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(232,192,96,0.35)', background: 'rgba(232,192,96,0.06)', color: '#f2ede0', fontSize: 12, fontFamily: "'Jost',sans-serif", resize: 'vertical', outline: 'none', lineHeight: 1.7, boxSizing: 'border-box' }}
+                    />
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      <button onClick={() => saveEdit(a.id)} disabled={saving} style={{ padding: '5px 14px', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(150,212,133,0.12)', border: '1px solid rgba(150,212,133,0.35)', color: '#96d485' }}>{saving ? '…' : '✓ Enregistrer'}</button>
+                      <button onClick={() => setEditingId(null)} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(242,237,224,0.40)' }}>Annuler</button>
+                    </div>
+                  </div>
+                ) : (
+                  a.comment && (
+                    <div style={{ fontSize: 12, color: 'rgba(242,237,224,0.60)', lineHeight: 1.7, fontStyle: 'italic', marginBottom: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, borderLeft: '2px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                      <span>« {a.comment} »</span>
+                      {a.status === 'pending' && (
+                        <button onClick={() => { setEditingId(a.id); setEditText(a.comment) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: '#e8c060', flexShrink: 0, padding: '0 2px' }}>✏ Modifier</button>
+                      )}
+                    </div>
+                  )
+                )}
+
+                {/* Pas de commentaire + pending → bouton ajouter */}
+                {!a.comment && a.status === 'pending' && !isEditing && (
+                  <button onClick={() => { setEditingId(a.id); setEditText('') }} style={{ fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'none', border: 'none', color: 'rgba(232,192,96,0.55)', marginBottom: 10, padding: 0 }}>✏ Ajouter un commentaire</button>
+                )}
+
+                {/* Actions modération */}
+                {a.status === 'pending' && !isEditing && (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => moderate(a.id, 'approved')} style={{ padding: '6px 16px', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(150,212,133,0.12)', border: '1px solid rgba(150,212,133,0.35)', color: '#96d485' }}>✓ Approuver</button>
+                    <button onClick={() => moderate(a.id, 'rejected')} style={{ padding: '6px 16px', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(210,80,80,0.08)', border: '1px solid rgba(210,80,80,0.25)', color: 'rgba(255,140,140,0.7)' }}>✕ Refuser</button>
+                  </div>
+                )}
+                {a.status !== 'pending' && (
+                  <button onClick={() => moderate(a.id, 'pending')} style={{ padding: '5px 12px', borderRadius: 8, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(242,237,224,0.35)' }}>↺ Remettre en attente</button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AdminClientsPage() {
   useTheme()
   const { user, signOut } = useAuth()
   const isMobile = useIsMobile()
 
   const [tab,           setTab]           = useState('frequentation')
+  const [pendingAvis,   setPendingAvis]   = useState(0)
   const [stats,         setStats]         = useState({})
   const [attendance,    setAttendance]    = useState(null)
   const [palmares,      setPalmares]      = useState([])
   const [funnel,        setFunnel]        = useState(null)
   const [funnelUsers,   setFunnelUsers]   = useState([])
   const [subStats,      setSubStats]      = useState(null)
-  const [fullStats,     setFullStats]     = useState(null)
-  const [statsPeriod,   setStatsPeriod]   = useState('week')
   const [loading,       setLoading]       = useState(true)
   const [toast,         setToast]         = useState(null)
   const [inscriptions,  setInscriptions]  = useState(null)
@@ -394,7 +766,6 @@ export function AdminClientsPage() {
     return () => clearInterval(interval)
   }, [isAdmin])
 
-  useEffect(() => { if (tab === 'statistiques') loadFullStats() }, [tab])
 
   async function loadStats() {
     const { count: totalUsers } = await supabase
@@ -470,22 +841,80 @@ export function AdminClientsPage() {
     } catch (e) { console.error('[clients] attendance error:', e) }
 
     try {
-      const { data: pal } = await supabase.rpc('get_admin_connexion_palmares')
-      if (pal !== null && pal !== undefined) {
-        const parsed = typeof pal === 'string' ? JSON.parse(pal) : pal
-        setPalmares(Array.isArray(parsed) ? parsed : [])
-      } else {
-        const { data: users }      = await supabase.from('users').select('id, display_name, email').not('id', 'in', `(${ADMIN_IDS.join(',')})`)
-        const { data: quizRows }   = await supabase.from('daily_quiz').select('user_id, date').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`)
-        const { data: lumensRows } = await supabase.from('lumens').select('user_id, streak_days').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`)
-        const countMap = {}, lastMap = {}, streakMap = {}
-        ;(quizRows ?? []).forEach(q => {
-          countMap[q.user_id] = (countMap[q.user_id] ?? 0) + 1
-          if (!lastMap[q.user_id] || q.date > lastMap[q.user_id]) lastMap[q.user_id] = q.date
-        })
-        ;(lumensRows ?? []).forEach(l => { streakMap[l.user_id] = l.streak_days ?? 0 })
-        setPalmares((users ?? []).map(u => ({ id: u.id, display_name: u.display_name, email: u.email, connexions: countMap[u.id] ?? 0, last_active: lastMap[u.id] ?? null, streak_days: streakMap[u.id] ?? 0 })).sort((a, b) => b.connexions - a.connexions).slice(0, 20))
+      // Charge tous les inscrits + leurs profils pour filtrer les J7 complétés
+      const [{ data: allUsers }, { data: profiles }] = await Promise.all([
+        supabase.from('users').select('id, display_name, email, created_at')
+          .not('id', 'in', `(${ADMIN_IDS.join(',')})`)
+          .limit(1000),
+        supabase.from('profiles').select('id, week_one_data'),
+      ])
+
+      // Seuls les utilisateurs ayant terminé les 7 jours apparaissent dans le palmarès
+      const j7Set = new Set(
+        (profiles ?? [])
+          .filter(p => (p.week_one_data?.completedDays ?? []).some(d => Number(d) >= 7))
+          .map(p => p.id)
+      )
+      const j7Users = (allUsers ?? []).filter(u => j7Set.has(u.id))
+
+      // Pagine session_start + page_view ensemble
+      // session_start = ouverture de l'app (fiable depuis le début)
+      // page_view = navigation entre slides (depuis le déploiement du tracking)
+      let evtRows = [], offset = 0
+      while (true) {
+        const { data: batch } = await supabase
+          .from('analytics_events').select('user_id, created_at')
+          .in('event_type', ['session_start', 'page_view'])
+          .not('user_id', 'in', `(${ADMIN_IDS.join(',')})`)
+          .range(offset, offset + 999)
+        if (!batch?.length) break
+        evtRows = evtRows.concat(batch)
+        if (batch.length < 1000) break
+        offset += 1000
       }
+
+      // Grouper les jours uniques par utilisateur (union session_start + page_view)
+      const userDaysMap = {}
+      evtRows.forEach(r => {
+        const d = r.created_at.slice(0, 10)
+        if (!userDaysMap[r.user_id]) userDaysMap[r.user_id] = new Set()
+        userDaysMap[r.user_id].add(d)
+      })
+
+      // Streak : jours consécutifs depuis aujourd'hui (ou hier si pas encore ouvert)
+      function calcStreak(datesSet) {
+        if (!datesSet?.size) return 0
+        const today  = new Date().toISOString().slice(0, 10)
+        const sorted = [...datesSet].sort((a, b) => b.localeCompare(a))
+        let cursor = sorted[0] >= today ? today : sorted[0]
+        let streak = 0
+        for (const d of sorted) {
+          if (d === cursor) {
+            streak++
+            const prev = new Date(cursor)
+            prev.setDate(prev.getDate() - 1)
+            cursor = prev.toISOString().slice(0, 10)
+          } else if (d < cursor) {
+            break
+          }
+        }
+        return streak
+      }
+
+      const pal = j7Users.map(u => {
+        const days   = userDaysMap[u.id]
+        const sorted = days ? [...days].sort() : []
+        return {
+          id:           u.id,
+          display_name: u.display_name ?? null,
+          email:        u.email ?? null,
+          connexions:   days?.size ?? 0,
+          last_active:  sorted[sorted.length - 1] ?? null,
+          streak_days:  calcStreak(days),
+        }
+      }).sort((a, b) => b.connexions - a.connexions || b.streak_days - a.streak_days)
+
+      setPalmares(pal)
     } catch (e) { console.error('[clients] palmares error:', e) }
   }
 
@@ -545,52 +974,6 @@ export function AdminClientsPage() {
     }
   }
 
-  async function loadFullStats() {
-    const ago  = n => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10)
-    const periods = { day: ago(0), week: ago(6), month: ago(29), year: ago(364) }
-    const [
-      { data: usersData },
-      { data: sessData },
-      { data: actData },
-      { data: atelierData },
-      { data: regData },
-      { data: defiData },
-    ] = await Promise.all([
-      supabase.from('users').select('id, created_at').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
-      supabase.from('analytics_events').select('user_id, created_at').eq('event_type', 'session_start').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
-      supabase.from('activity').select('user_id, action, created_at').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
-      supabase.from('ateliers').select('id, created_at').not('animator_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
-      supabase.from('atelier_registrations').select('created_at').gte('created_at', ago(364)),
-      supabase.from('analytics_events').select('created_at').eq('event_type', 'defi_join').not('user_id', 'in', `(${ADMIN_IDS.join(',')})`).gte('created_at', ago(364)),
-    ])
-    const usersByDate = {}
-    ;(usersData ?? []).forEach(u => { const d = u.created_at?.slice(0,10); if (d) usersByDate[d] = (usersByDate[d] ?? 0) + 1 })
-    const sessUsersByDate = {}
-    ;(sessData ?? []).forEach(s => { const d = s.created_at?.slice(0,10); if (!d) return; if (!sessUsersByDate[d]) sessUsersByDate[d] = new Set(); sessUsersByDate[d].add(s.user_id) })
-    const actByDateAction = {}
-    ;(actData ?? []).forEach(a => { const d = a.created_at?.slice(0,10); if (!d) return; const key = `${d}__${a.action}`; actByDateAction[key] = (actByDateAction[key] ?? 0) + 1 })
-    const ateliersByDate = {}
-    ;(atelierData ?? []).forEach(a => { const d = a.created_at?.slice(0,10); if (d) ateliersByDate[d] = (ateliersByDate[d] ?? 0) + 1 })
-    const regsByDate = {}
-    ;(regData ?? []).forEach(r => { const d = r.created_at?.slice(0,10); if (d) regsByDate[d] = (regsByDate[d] ?? 0) + 1 })
-    const defisByDate = {}
-    ;(defiData ?? []).forEach(d => { const day = d.created_at?.slice(0,10); if (day) defisByDate[day] = (defisByDate[day] ?? 0) + 1 })
-    const sumFrom  = (map, from) => Object.entries(map).filter(([d]) => d >= from).reduce((s, [, v]) => s + v, 0)
-    const uniqFrom = (map, from) => new Set(Object.entries(map).filter(([d]) => d >= from).flatMap(([, s]) => [...s])).size
-    const build    = (map) => ({ day: sumFrom(map, periods.day), week: sumFrom(map, periods.week), month: sumFrom(map, periods.month), year: sumFrom(map, periods.year) })
-    const chart30  = (map) => { const days = []; for (let i = 29; i >= 0; i--) { const d = ago(i); days.push({ date: d, count: map[d] ?? 0 }) }; return days }
-    const actMap   = (action) => { const m = {}; Object.entries(actByDateAction).forEach(([key, v]) => { const [d, a] = key.split('__'); if (a === action) m[d] = (m[d] ?? 0) + v }); return m }
-    setFullStats({
-      inscriptions:      { ...build(usersByDate), chart: chart30(usersByDate) },
-      connexions:        { day: uniqFrom(sessUsersByDate, periods.day), week: uniqFrom(sessUsersByDate, periods.week), month: uniqFrom(sessUsersByDate, periods.month), year: uniqFrom(sessUsersByDate, periods.year), chart: chart30(Object.fromEntries(Object.entries(sessUsersByDate).map(([d, s]) => [d, s.size]))) },
-      bilans:            { ...build(actMap('bilan')), chart: chart30(actMap('bilan')) },
-      rituels:           { ...build(actMap('ritual')), chart: chart30(actMap('ritual')) },
-      coeurs:            { ...build(actMap('coeur')), chart: chart30(actMap('coeur')) },
-      ateliers_crees:    { ...build(ateliersByDate), chart: chart30(ateliersByDate) },
-      ateliers_inscrits: { ...build(regsByDate), chart: chart30(regsByDate) },
-      defis:             { ...build(defisByDate), chart: chart30(defisByDate) },
-    })
-  }
 
   if (!isAdmin) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg)', color: 'var(--text3)', fontFamily: 'Jost,sans-serif', fontSize: 13 }}>
@@ -635,6 +1018,10 @@ export function AdminClientsPage() {
           <div className={`adm-tab${tab === 'frequentation' ? ' active' : ''}`} onClick={() => setTab('frequentation')}>📊 Fréquentation</div>
           <div className={`adm-tab${tab === 'statistiques'  ? ' active' : ''}`} onClick={() => setTab('statistiques')}>📈 Statistiques</div>
           <div className={`adm-tab${tab === 'qcm'           ? ' active' : ''}`} onClick={() => setTab('qcm')}>📋 QCM</div>
+          <div className={`adm-tab${tab === 'avis'          ? ' active' : ''}`} onClick={() => setTab('avis')} style={{ position: 'relative' }}>
+            ⭐ Avis clients
+            {pendingAvis > 0 && <span style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(232,192,96,0.35)', border: '1px solid rgba(232,192,96,0.5)', borderRadius: 100, fontSize: 8, padding: '1px 5px', color: '#e8c060', lineHeight: 1.4 }}>{pendingAvis}</span>}
+          </div>
         </div>
 
         {/* ── FRÉQUENTATION ── */}
@@ -792,47 +1179,40 @@ export function AdminClientsPage() {
               </>)}
             </div>
 
-            {/* ── ACTIVITÉ QUOTIDIENNE ── */}
-            {attendance?.daily_active?.length > 0 && (
-              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, padding: 20, marginBottom: 24 }}>
-                <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 16 }}>Activité quotidienne — 14 derniers jours</div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
-                  {(() => {
-                    const days = attendance.daily_active, max = Math.max(...days.map(d => d.count), 1)
-                    const allDays = []
-                    for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); const key = d.toISOString().slice(0,10); allDays.push({ date: key, count: days.find(x => x.date === key)?.count ?? 0 }) }
-                    return allDays.map((d, i) => {
-                      const pct = Math.max(4, Math.round((d.count / max) * 100)), isToday = d.date === new Date().toISOString().slice(0,10)
-                      return (
-                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                          <div title={`${d.count} actifs`} style={{ width: '100%', height: `${pct}%`, background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)', borderRadius: 4, minHeight: 4, boxShadow: isToday ? '0 0 8px rgba(150,212,133,0.4)' : 'none', transition: 'height .3s' }} />
-                          {d.count > 0 && <div style={{ fontSize: 8, color: 'var(--text3)' }}>{d.count}</div>}
-                        </div>
-                      )
-                    })
-                  })()}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                  <div style={{ fontSize: 8, color: 'var(--text3)' }}>il y a 13 jours</div>
-                  <div style={{ fontSize: 8, color: 'var(--green)' }}>aujourd'hui</div>
-                </div>
-              </div>
-            )}
-
             {/* ── PALMARÈS ── */}
-            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>🏆 Palmarès — jours actifs</div>
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>🏆 Palmarès post-J7 — jours d'ouverture</div>
             {loading ? <div className="adm-empty">Chargement…</div> : palmares.length === 0 ? <div className="adm-empty">Aucune donnée disponible</div> : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {palmares.map((p, i) => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border2)', borderRadius: 10 }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'var(--text3)', width: 24, textAlign: 'center', flexShrink: 0 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.display_name ?? p.email ?? p.id?.slice(0,8)}</div>
-                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 2 }}>Dernière activité : {p.last_active ? new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}{p.streak_days > 0 && ` · 🔥 ${p.streak_days}j de streak`}</div>
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border2)', borderRadius: 10 }}>
+                    {/* Rang */}
+                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'var(--text3)', width: 22, textAlign: 'center', flexShrink: 0 }}>
+                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, color: 'var(--green)', lineHeight: 1 }}>{p.connexions}</div>
-                      <div style={{ fontSize: 9, color: 'var(--text3)' }}>jours actifs</div>
+                    {/* Nom + dernière ouverture */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {p.display_name ?? p.email ?? p.id?.slice(0, 8)}
+                      </div>
+                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 1 }}>
+                        {p.last_active
+                          ? `Dernière ouverture : ${new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
+                          : 'Aucune ouverture trackée'}
+                      </div>
+                    </div>
+                    {/* Streak */}
+                    <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 40 }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: p.streak_days >= 7 ? '#e8c060' : p.streak_days >= 3 ? '#96d485' : 'var(--text3)', lineHeight: 1 }}>
+                        {p.streak_days > 0 ? p.streak_days : '—'}
+                      </div>
+                      <div style={{ fontSize: 7, color: 'var(--text3)', marginTop: 1 }}>🔥 streak</div>
+                    </div>
+                    {/* Jours totaux */}
+                    <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 44 }}>
+                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: 'var(--green)', lineHeight: 1 }}>
+                        {p.connexions > 0 ? p.connexions : '—'}
+                      </div>
+                      <div style={{ fontSize: 7, color: 'var(--text3)', marginTop: 1 }}>jours</div>
                     </div>
                   </div>
                 ))}
@@ -842,87 +1222,20 @@ export function AdminClientsPage() {
         )}
 
         {/* ── STATISTIQUES ── */}
-        {tab === 'statistiques' && (() => {
-          const P = statsPeriod
-          const pLabel = { day: "Aujourd'hui", week: '7 derniers jours', month: '30 derniers jours', year: '365 derniers jours' }
-          const METRICS = fullStats ? [
-            { key: 'inscriptions',      icon: '🌱', label: 'Inscriptions',         color: '#96d485' },
-            { key: 'connexions',        icon: '🔗', label: 'Connexions uniques',    color: '#7ab5f5' },
-            { key: 'bilans',            icon: '🌹', label: 'Bilans complétés',      color: '#e8d4a8' },
-            { key: 'rituels',           icon: '✨', label: 'Rituels effectués',     color: '#c8a882' },
-            { key: 'coeurs',            icon: '💚', label: 'Cœurs envoyés',         color: '#96d485' },
-            { key: 'ateliers_crees',    icon: '📖', label: 'Ateliers créés',        color: '#b8a0d8' },
-            { key: 'ateliers_inscrits', icon: '✓',  label: 'Inscriptions ateliers', color: '#7ab5f5' },
-            { key: 'defis',             icon: '🏅', label: 'Défis rejoints',        color: '#F6C453' },
-          ] : []
-          return (
-            <div className="adm-section">
-              <div style={{ display: 'flex', gap: 6, marginBottom: 24, flexWrap: 'wrap' }}>
-                {['day', 'week', 'month', 'year'].map(p => (
-                  <button key={p} onClick={() => setStatsPeriod(p)} style={{ padding: '6px 16px', borderRadius: 100, fontSize: 10, letterSpacing: '.08em', fontFamily: 'Jost,sans-serif', cursor: 'pointer', background: P === p ? 'rgba(150,212,133,0.2)' : 'rgba(255,255,255,0.04)', border: `1px solid ${P === p ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.1)'}`, color: P === p ? '#c8f0b8' : 'var(--text3)', transition: 'all .2s' }}>
-                    {p === 'day' ? 'Jour' : p === 'week' ? 'Semaine' : p === 'month' ? 'Mois' : 'Année'}
-                  </button>
-                ))}
-                <span style={{ fontSize: 10, color: 'var(--text3)', alignSelf: 'center', marginLeft: 4, fontStyle: 'italic' }}>{pLabel[P]}</span>
-              </div>
-              {!fullStats ? <div className="adm-empty">Chargement…</div> : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginBottom: 32 }}>
-                    {METRICS.map(m => (
-                      <div key={m.key} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border2)', borderRadius: 14, padding: '16px 18px' }}>
-                        <div style={{ fontSize: 18, marginBottom: 6 }}>{m.icon}</div>
-                        <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 36, fontWeight: 300, color: m.color, lineHeight: 1 }}>{fullStats[m.key]?.[P] ?? 0}</div>
-                        <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', marginTop: 6 }}>{m.label}</div>
-                        {fullStats[m.key]?.chart && (() => { const data = fullStats[m.key].chart.slice(-14), max = Math.max(...data.map(d => d.count), 1); return <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 24, marginTop: 10 }}>{data.map((d, i) => <div key={i} title={`${d.date}: ${d.count}`} style={{ flex: 1, height: `${Math.max(2, Math.round(d.count / max * 100))}%`, background: m.color, opacity: 0.4, borderRadius: 2, minHeight: 2 }} />)}</div> })()}
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, padding: 20, marginBottom: 24 }}>
-                    <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 16 }}>Activité quotidienne — 30 derniers jours</div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>{METRICS.map(m => <div key={m.key} style={{ fontSize: 9, padding: '3px 8px', borderRadius: 100, background: `${m.color}22`, border: `1px solid ${m.color}44`, color: m.color }}>{m.icon} {m.label}</div>)}</div>
-                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 100 }}>
-                      {fullStats.connexions.chart.map((d, i) => {
-                        const vals = METRICS.map(m => fullStats[m.key].chart[i]?.count ?? 0), total = vals.reduce((a, b) => a + b, 0)
-                        const maxTotal = Math.max(...fullStats.connexions.chart.map((_, j) => METRICS.map(m => fullStats[m.key].chart[j]?.count ?? 0).reduce((a, b) => a + b, 0)), 1)
-                        const pct = Math.max(3, Math.round(total / maxTotal * 100)), isToday = d.date === new Date().toISOString().slice(0,10)
-                        return (
-                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                            <div title={`${d.date}\n${METRICS.map((m, j) => `${m.label}: ${vals[j]}`).join('\n')}`} style={{ width: '100%', height: `${pct}%`, background: isToday ? 'var(--green)' : 'rgba(150,212,133,0.35)', borderRadius: 3, minHeight: 3, boxShadow: isToday ? '0 0 6px rgba(150,212,133,0.4)' : 'none', transition: 'height .3s' }} />
-                            {total > 0 && <div style={{ fontSize: 7, color: 'var(--text3)' }}>{total}</div>}
-                          </div>
-                        )
-                      })}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                      <div style={{ fontSize: 8, color: 'var(--text3)' }}>il y a 29 jours</div>
-                      <div style={{ fontSize: 8, color: 'var(--green)' }}>aujourd'hui</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>Récapitulatif</div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="adm-table">
-                      <thead>
-                        <tr>{['MÉTRIQUE', 'JOUR', '7J', '30J', '365J'].map(h => <th key={h} style={{ padding: '10px 14px', textAlign: h === 'MÉTRIQUE' ? 'left' : 'center', fontSize: 9, letterSpacing: '.1em', color: 'var(--text3)', fontWeight: 400 }}>{h}</th>)}</tr>
-                      </thead>
-                      <tbody>
-                        {METRICS.map((m, i) => (
-                          <tr key={m.key} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
-                            <td style={{ padding: '10px 14px', fontSize: 11, color: 'var(--text)' }}>{m.icon} {m.label}</td>
-                            {['day', 'week', 'month', 'year'].map(p => <td key={p} style={{ padding: '10px 14px', textAlign: 'center', fontSize: 13, fontFamily: "'Cormorant Garamond',serif", color: m.color }}>{fullStats[m.key]?.[p] ?? 0}</td>)}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
-          )
-        })()}
+        {tab === 'statistiques' && (
+          <div className="adm-section">
+            <TabStatistiques funnelUsers={funnelUsers} />
+          </div>
+        )}
 
         {/* ── QCM ── */}
         {tab === 'qcm' && (
           <div className="adm-section"><TabQCM /></div>
+        )}
+
+        {/* ── AVIS CLIENTS ── */}
+        {tab === 'avis' && (
+          <div className="adm-section"><TabAvisClients onPendingCount={setPendingAvis} /></div>
         )}
 
       </div>
