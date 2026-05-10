@@ -61,15 +61,15 @@ const _dailyLoginAwarded = new Set()
 // ─────────────────────────────────────────────────────────────────────────────
 const SLIDES_CONFIG = [
   {
-    id:        'bilan',     illusKey: 'bilan',
+    id:        'bilan',     illusKey: 'bilan',    image: '/matin.png',
     badge:     'Chaque matin',      icon: '🌅',
-    title:     'Comment te sens-tu aujourd\'hui ?',
-    subtitle:  'Ton bilan quotidien en 2 minutes — humeur, énergie, intention.',
+    title:     'Comment tu vas\nce matin ?',
+    subtitle:  'Ton espace de 2 minutes, juste pour toi.',
     guideDesc: 'Ton bilan en 2 minutes',
-    color:     '#c87878',
-    btnLabel:  'Commencer le bilan',
-    btnGrad:   'linear-gradient(135deg, #c87878, #a05858)',
-    btnShadow: 'rgba(180,80,80,.38)',
+    color:     '#d49040',
+    btnLabel:  'Je commence ma journée',
+    btnGrad:   'linear-gradient(135deg, #e0a848, #c07830)',
+    btnShadow: 'rgba(200,140,50,.38)',
     isBilan:   true,
     Component: null,
   },
@@ -331,11 +331,11 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
 
       {/* ── Historique bilan 7 jours — juste sous l'image ── */}
       {slide.isBilan && (
-        <div style={{ flexShrink:0, background:'linear-gradient(135deg,rgba(255,255,255,0.72),rgba(232,245,232,0.60))', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(26,74,40,0.10)', padding:'12px 16px 10px', boxShadow:'0 2px 10px rgba(26,74,40,0.06)' }}>
+        <div style={{ flexShrink:0, background:'linear-gradient(135deg,rgba(255,255,255,0.72),rgba(252,240,218,0.60))', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(160,100,30,0.10)', padding:'12px 16px 10px', boxShadow:'0 2px 10px rgba(160,100,30,0.06)' }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:10 }}>
-            <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,transparent,rgba(26,74,40,0.15))' }}/>
-            <span style={{ fontSize:9, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(26,74,40,0.45)', letterSpacing:'.14em', textTransform:'uppercase' }}>Mon humeur · 7 jours</span>
-            <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,rgba(26,74,40,0.15),transparent)' }}/>
+            <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,transparent,rgba(160,100,30,0.15))' }}/>
+            <span style={{ fontSize:9, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(160,100,30,0.55)', letterSpacing:'.14em', textTransform:'uppercase' }}>Mon humeur · 7 jours</span>
+            <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,rgba(160,100,30,0.15),transparent)' }}/>
           </div>
           <BilanHistory7Days history={bilanHistory ?? []} maxDays={7} />
         </div>
@@ -2105,11 +2105,11 @@ export default function DashboardPage() {
 
               {/* ── Historique bilan 7 jours — juste sous l'image ── */}
               {slide.isBilan && (
-                <div style={{ flexShrink:0, background:'linear-gradient(135deg,rgba(255,255,255,0.72),rgba(232,245,232,0.60))', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(26,74,40,0.10)', padding:'12px 24px 10px', boxShadow:'0 2px 10px rgba(26,74,40,0.06)' }}>
+                <div style={{ flexShrink:0, background:'linear-gradient(135deg,rgba(255,255,255,0.72),rgba(252,240,218,0.60))', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(160,100,30,0.10)', padding:'12px 24px 10px', boxShadow:'0 2px 10px rgba(160,100,30,0.06)' }}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:6, marginBottom:10 }}>
-                    <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,transparent,rgba(26,74,40,0.15))' }}/>
-                    <span style={{ fontSize:9, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(26,74,40,0.45)', letterSpacing:'.14em', textTransform:'uppercase' }}>Mon humeur · 15 jours</span>
-                    <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,rgba(26,74,40,0.15),transparent)' }}/>
+                    <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,transparent,rgba(160,100,30,0.15))' }}/>
+                    <span style={{ fontSize:9, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(160,100,30,0.55)', letterSpacing:'.14em', textTransform:'uppercase' }}>Mon humeur · 15 jours</span>
+                    <div style={{ flex:1, height:'1px', background:'linear-gradient(90deg,rgba(160,100,30,0.15),transparent)' }}/>
                   </div>
                   <BilanHistory7Days history={bilanHistory ?? []} maxDays={15} />
                 </div>
