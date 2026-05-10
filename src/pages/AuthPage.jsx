@@ -789,10 +789,10 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 Retrouver mon jardin
               </button>
               {reviewStats ? (
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, marginTop:12, ...(isMobile ? { background:'rgba(255,255,255,0.88)', borderRadius:50, padding:'8px 18px', boxShadow:'0 2px 12px rgba(0,0,0,0.10)', backdropFilter:'blur(6px)' } : {}) }}>
-                  <div style={{ position:'relative', display:'inline-block', fontSize:36, lineHeight:1 }}>
-                    <span style={{ color:'rgba(30,20,8,0.13)', letterSpacing:6 }}>★★★★★</span>
-                    <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(reviewStats.avg / 5) * 100}%`, color:'#e8c060', letterSpacing:6, whiteSpace:'nowrap' }}>★★★★★</span>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:10, ...(isMobile ? { background:'rgba(255,255,255,0.88)', borderRadius:50, padding:'6px 14px', boxShadow:'0 2px 10px rgba(0,0,0,0.10)', backdropFilter:'blur(6px)', alignSelf:'center', width:'fit-content', margin:'10px auto 0' } : {}) }}>
+                  <div style={{ position:'relative', display:'inline-block', fontSize: isMobile ? 20 : 28, lineHeight:1 }}>
+                    <span style={{ color:'rgba(30,20,8,0.13)', letterSpacing: isMobile ? 3 : 5 }}>★★★★★</span>
+                    <span style={{ position:'absolute', top:0, left:0, overflow:'hidden', display:'inline-block', width:`${(reviewStats.avg / 5) * 100}%`, color:'#e8c060', letterSpacing: isMobile ? 3 : 5, whiteSpace:'nowrap' }}>★★★★★</span>
                   </div>
                   <div style={{ fontSize:16, color:'rgba(30,20,8,0.55)', fontFamily:"'Jost',sans-serif", fontWeight:500, whiteSpace:'nowrap' }}>
                     {reviewStats.avg.toFixed(1)} <span onClick={() => setShowReviews(true)} style={{ fontWeight:400, opacity:.65, cursor:'pointer', textDecoration:'underline', textUnderlineOffset:3 }}>({reviewStats.count} avis)</span>
