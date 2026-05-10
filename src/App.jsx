@@ -111,7 +111,7 @@ export default function App() {
   // ── Popup avis aléatoire — 1 fois par mois ─────────────────────────────────
   useEffect(() => {
     if (!user?.id) return
-    // if (ADMIN_IDS.includes(user.id)) return   // ← décommenter en prod
+    if (ADMIN_IDS.includes(user.id)) return   // ← décommenter en prod
     if (screen === 'loading' || screen === 'auth' || screen.startsWith('admin')) return
     const monthKey = `mji_review_shown_${new Date().toISOString().slice(0, 7)}`
     if (localStorage.getItem(monthKey)) return

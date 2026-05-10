@@ -102,39 +102,84 @@ export function MaBibliotheque({ userId, onGoToJardinotheque }) {
     }
   }
 
-  if (pdfViewer) return (
-    <div style={{ position:'fixed', inset:0, zIndex:9999, background:'#111', display:'flex', flexDirection:'column' }}>
-      {/* Barre de navigation */}
-      <div style={{
-        display:'flex', alignItems:'center', gap:12, padding:'12px 16px',
-        background:'#1a1208', flexShrink:0,
-        borderBottom:'1px solid rgba(255,255,255,0.08)',
-      }}>
-        <button
-          onClick={() => setPdfViewer(null)}
-          style={{ background:'none', border:'none', color:'#fff', fontSize:20, cursor:'pointer', lineHeight:1, padding:'4px 8px' }}
-        >✕</button>
-        <span style={{ flex:1, color:'rgba(255,255,255,0.85)', fontSize:14, fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-          {pdfViewer.titre}
-        </span>
-        {/* Fallback Android : ouvre dans le navigateur natif */}
-        <a
-          href={pdfViewer.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color:'rgba(var(--gold-rgb,212,175,55),0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", textDecoration:'none', whiteSpace:'nowrap', padding:'6px 10px', borderRadius:12, border:'1px solid rgba(212,175,55,0.30)' }}
-        >
-          ↗ Ouvrir
-        </a>
+  // Détection plateforme mobile
+  const isAndroid = /android/i.test(navigator.userAgent)
+  const isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  const isMobile  = isAndroid || isIOS
+
+  if (pdfViewer) {
+    // ── Android : l'iframe ne fonctionne pas → on ouvre directement dans le navigateur
+    if (isAndroid) {
+      window.open(pdfViewer.url, '_blank', 'noopener,noreferrer')
+      setPdfViewer(null)
+      return null
+    }
+
+    // ── iOS & desktop : affichage dans un viewer plein écran adapté
+    return (
+      <div style={{ position:'fixed', inset:0, zIndex:9999, background:'#111', display:'flex', flexDirection:'column' }}>
+        {/* Barre de navigation */}
+        <div style={{
+          display:'flex', alignItems:'center', gap:12,
+          padding: isIOS ? '16px 16px env(safe-area-inset-top, 0px)' : '12px 16px',
+          background:'#1a1208', flexShrink:0,
+          borderBottom:'1px solid rgba(255,255,255,0.08)',
+        }}>
+          <button
+            onClick={() => setPdfViewer(null)}
+            style={{ background:'none', border:'none', color:'#fff', fontSize:20, cursor:'pointer', lineHeight:1, padding:'8px', minWidth:40, minHeight:40 }}
+          >✕</button>
+          <span style={{ flex:1, color:'rgba(255,255,255,0.85)', fontSize:14, fontFamily:"'Jost',sans-serif", overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+            {pdfViewer.titre}
+          </span>
+          {/* Bouton ouvrir dans le navigateur natif (utile sur iOS aussi) */}
+          <a
+            href={pdfViewer.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color:'rgba(var(--gold-rgb,212,175,55),0.85)', fontSize:13, fontFamily:"'Jost',sans-serif", textDecoration:'none', whiteSpace:'nowrap', padding:'8px 12px', borderRadius:12, border:'1px solid rgba(212,175,55,0.30)', minHeight:40, display:'flex', alignItems:'center' }}
+          >
+            ↗ Ouvrir
+          </a>
+        </div>
+
+        {/* Lecteur PDF — iframe sur iOS/desktop, Google Docs viewer en fallback */}
+        <iframe
+          key={pdfViewer.url}
+          src={
+            isIOS
+              ? `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(pdfViewer.url)}`
+              : pdfViewer.url
+          }
+          title={pdfViewer.titre}
+          style={{
+            flex:1,
+            border:'none',
+            width:'100%',
+            height:'100%',
+            background:'#fff',
+            // iOS : empêche le scroll de la page parente de bloquer l'iframe
+            WebkitOverflowScrolling:'touch',
+            overflowY:'auto',
+          }}
+          allow="fullscreen"
+        />
+
+        {/* Message d'aide iOS si l'iframe reste vide */}
+        {isIOS && (
+          <div style={{
+            position:'absolute', bottom: 'env(safe-area-inset-bottom, 16px)',
+            left:'50%', transform:'translateX(-50%)',
+            background:'rgba(0,0,0,0.65)', borderRadius:12,
+            padding:'8px 16px', fontSize:12, color:'rgba(255,255,255,0.7)',
+            fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap', pointerEvents:'none',
+          }}>
+            Si le document ne s'affiche pas, tapez ↗ Ouvrir
+          </div>
+        )}
       </div>
-      {/* Lecteur PDF */}
-      <iframe
-        src={pdfViewer.url}
-        title={pdfViewer.titre}
-        style={{ flex:1, border:'none', width:'100%', background:'#fff' }}
-      />
-    </div>
-  )
+    )
+  }
 
   if (loading) return (
     <div style={{ fontSize:'var(--fs-h5, 12px)', color:'rgba(var(--text-on-dark-rgb),0.30)', fontStyle:'italic', padding:'20px 0' }}>
