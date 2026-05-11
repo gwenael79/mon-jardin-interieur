@@ -127,7 +127,7 @@ const DEMO_PRODUITS = [
 // ── Composant principal ──────────────────────────────────────────────────────
 export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGoToBibliotheque }) {
   const [tab,           setTab]           = useState('digital')
-  const [cat,           setCat]           = useState('Tous')
+  const [cat,           setCat]           = useState('Audio')
   const [produits,      setProduits]      = useState([])
   const [loading,       setLoading]       = useState(true)
   const [selected,      setSelected]      = useState(null)
@@ -184,7 +184,7 @@ export function ScreenJardinotheque({ userId, isPremium = false, onUpgrade, onGo
   }, [])
 
   // Reset catégorie au changement d'onglet
-  useEffect(() => { setCat('Tous') }, [tab])
+  useEffect(() => { setCat(tab === 'digital' ? 'Audio' : 'Tous') }, [tab])
 
   // Liste dynamique des vendeurs pour le tab courant
   const vendeurs = useMemo(() => {
