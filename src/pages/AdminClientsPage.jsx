@@ -120,8 +120,16 @@ function FunnelUserDetail({ users }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Jost,sans-serif' }}>
             <thead>
               <tr>
-                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan', '🔔', '📲'].map(h => (
+                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan'].map(h => (
                   <th key={h} style={{ textAlign: h === 'Utilisateur' ? 'left' : 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
+                    {h}
+                  </th>
+                ))}
+                <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: 11, color: 'var(--text3)', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
+                  <span style={{ textDecoration: 'line-through' }}>$</span>
+                </th>
+                {['🔔', '📲'].map(h => (
+                  <th key={h} style={{ textAlign: 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
                 ))}
@@ -172,6 +180,12 @@ function FunnelUserDetail({ users }) {
                       }}>
                         {u.plan ?? 'free'}
                       </span>
+                    </td>
+                    {/* Quiz 22q — mois premium gratuit */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.premium_trial_until ? `Mois gratuit jusqu'au ${new Date(u.premium_trial_until).toLocaleDateString('fr-FR')}` : 'Pas de mois gratuit questionnaire'}>
+                      {u.premium_trial_until
+                        ? <span style={{ color: '#78c85e', fontSize: 13 }}>✓</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
                     </td>
                     {/* Notifications push */}
                     <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.has_push ? 'Notifications activées' : 'Pas de notifications'}>
@@ -926,7 +940,7 @@ export function AdminClientsPage() {
         { data: pushSubs, error: e3 },
       ] = await Promise.all([
         supabase.from('users').select('id, email, display_name, flower_name, created_at, onboarding_completed, plan, pwa_installed_at').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
-        supabase.from('profiles').select('id, week_one_data'),
+        supabase.from('profiles').select('id, week_one_data, premium_trial_until'),
         supabase.from('push_subscriptions').select('user_id'),
       ])
       if (e1) console.error('[funnel] users:', e1)
@@ -943,7 +957,7 @@ export function AdminClientsPage() {
         const completedDays = (profileMap[u.id]?.week_one_data?.completedDays ?? []).map(Number)
         const maxDay        = completedDays.length > 0 ? Math.max(...completedDays) : 0
 
-        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays })
+        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays, premium_trial_until: profileMap[u.id]?.premium_trial_until ?? null })
 
         const daysSinceReg = Math.floor((Date.now() - new Date(u.created_at)) / 86400000)
 

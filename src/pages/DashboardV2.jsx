@@ -372,7 +372,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
             }}
             style={{ padding:'18px 0', borderRadius:100, border:'none', cursor:'pointer', touchAction:'manipulation', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 28px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease', width:'100%', maxWidth:340 }}
           >
-            {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
+            {slide.isBilan && bilanDoneToday ? 'Refaire mon bilan ›' : slide.btnLabel}
           </button>
           {slide.id === 'jardin' && (
             <button
@@ -586,7 +586,7 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
                 onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)' }}
                 onMouseLeave={e => { e.currentTarget.style.transform='none' }}
               >
-                {bilanDoneToday ? 'Revoir mon bilan ›' : 'Commencer le bilan ✦'}
+                {bilanDoneToday ? 'Refaire mon bilan ›' : 'Commencer le bilan ✦'}
               </button>
             </div>
           ) : (
@@ -2181,7 +2181,7 @@ export default function DashboardPage() {
                   }}
                   style={{ padding:'18px 52px', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:19, fontWeight:700, color:'#1a1208', letterSpacing:'.05em', background:slide.btnGrad, boxShadow:`0 10px 30px ${slide.btnShadow}`, whiteSpace:'nowrap', transition:'transform .18s ease, box-shadow .18s ease' }}
                 >
-                  {slide.isBilan && bilanDoneToday ? 'Revoir mon bilan ›' : slide.btnLabel}
+                  {slide.isBilan && bilanDoneToday ? 'Refaire mon bilan ›' : slide.btnLabel}
                 </button>
 
                 {slide.id === 'jardin' && (
