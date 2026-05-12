@@ -16,13 +16,13 @@ const VIDEOS = [
   { src: '/video/video11.mp4', delay: 0 },
   { src: '/video/video12.mp4', delay: 0 },
   { src: '/video/video13.mp4', delay: 0 },
-  //{ src: '/video/video14.mp4', delay: 0 },
-  //{ src: '/video/video15.mp4', delay: 0 },
-  //{ src: '/video/video16.mp4', delay: 0 },
-  //{ src: '/video/video17.mp4', delay: 0 },
-  //{ src: '/video/video18.mp4', delay: 0 },
-  //{ src: '/video/video19.mp4', delay: 0 },
-  //{ src: '/video/video20.mp4', delay: 0 },
+  { src: '/video/video14.mp4', delay: 0 },
+  { src: '/video/video15.mp4', delay: 0 },
+  { src: '/video/video16.mp4', delay: 0 },
+  { src: '/video/video17.mp4', delay: 0 },
+  { src: '/video/video18.mp4', delay: 0 },
+  { src: '/video/video19.mp4', delay: 0 },
+  { src: '/video/video20.mp4', delay: 0 },
 ]
 
 const MIN_GAP = 5  // jours minimum avant de revoir la même vidéo
