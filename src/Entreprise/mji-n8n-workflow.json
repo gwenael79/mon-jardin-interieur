@@ -1,0 +1,183 @@
+{
+  "name": "MJI — Générateur de contenu IA 24h/24",
+  "nodes": [
+    {
+      "id": "node-cron",
+      "name": "Déclencheur planifié",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "cronExpression", "expression": "0 7 * * 1" },
+            { "field": "cronExpression", "expression": "0 12 * * 2" },
+            { "field": "cronExpression", "expression": "30 12 * * 3" },
+            { "field": "cronExpression", "expression": "0 8 * * 4" },
+            { "field": "cronExpression", "expression": "0 19 * * 5" },
+            { "field": "cronExpression", "expression": "0 10 * * 6" },
+            { "field": "cronExpression", "expression": "0 20 * * 0" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-pilier",
+      "name": "Pilier du jour",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Détermine le pilier éditorial et le prompt selon le jour de la semaine\nconst now = new Date();\nconst day = now.getDay(); // 0=Dim, 1=Lun, 2=Mar, 3=Mer, 4=Jeu, 5=Ven, 6=Sam\n\nconst schedule = {\n  1: { pillar: 'Rituel du jour',     platforms: ['instagram', 'tiktok'] },\n  2: { pillar: 'Neuro & science',    platforms: ['instagram'] },\n  3: { pillar: 'Ma fleur & moi',     platforms: ['instagram', 'tiktok'] },\n  4: { pillar: 'Bien-être pratique', platforms: ['linkedin'] },\n  5: { pillar: 'Témoignages',        platforms: ['instagram'] },\n  6: { pillar: 'Bien-être pratique', platforms: ['tiktok'] },\n  0: { pillar: 'Rituel du jour',     platforms: ['instagram'] },\n};\n\nconst config = schedule[day] || schedule[1];\n\nconst systemPrompt = `Tu es le générateur de contenu IA de Mon Jardin Intérieur, une application de bien-être où l'utilisateur prend soin de sa \\'fleur intérieure\\', reflet de son état émotionnel. Philosophie : ralentir permet au cortex de baisser en intensité, activant les zones antérieures du cerveau pour libérer de l\\'espace mental. Ton : personnel, poétique, ancré dans la réalité. Réponds UNIQUEMENT en JSON valide sans markdown ni explication.`;\n\nconst userPrompt = `Génère un post ${config.platforms[0]} pour le pilier \"${config.pillar}\".\\n\\nJSON attendu :\\n{\\n  \"hook\": \"Accroche 1-2 phrases, arrête le scroll\",\\n  \"caption\": \"Caption complète avec \\\\n pour les sauts de ligne, emojis naturels, question d\\'engagement finale\",\\n  \"hashtags\": [\"tag1\", \"tag2\"] avec exactement 25 hashtags sans #,\\n  \"note_format\": \"Conseil de format en 1 phrase\",\\n  \"note_heure\": \"Meilleure heure de publication en 1 phrase\"\\n}`;\n\nreturn [{\n  json: {\n    ...config,\n    systemPrompt,\n    userPrompt,\n    generatedAt: now.toISOString(),\n    dayOfWeek: day,\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-claude",
+      "name": "Claude API — Générer contenu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",           "value": "={{ $vars.CLAUDE_API_KEY }}" },
+            { "name": "anthropic-version",    "value": "2023-06-01" },
+            { "name": "content-type",         "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1000,\n  \"system\": \"{{ $json.systemPrompt }}\",\n  \"messages\": [{ \"role\": \"user\", \"content\": \"{{ $json.userPrompt }}\" }]\n}"
+      }
+    },
+    {
+      "id": "node-parser",
+      "name": "Parser réponse Claude",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Parse la réponse Claude et effectue un contrôle qualité\nconst claudeResponse = $input.first().json;\nconst pillarData = $('Pilier du jour').first().json;\n\nconst rawText = claudeResponse.content?.[0]?.text || '';\nconst jsonMatch = rawText.match(/\\{[\\s\\S]*\\}/);\n\nif (!jsonMatch) {\n  throw new Error(`Réponse Claude sans JSON valide. Début: ${rawText.substring(0, 200)}`);\n}\n\nlet content;\ntry {\n  content = JSON.parse(jsonMatch[0]);\n} catch (e) {\n  throw new Error(`Erreur de parsing JSON: ${e.message}`);\n}\n\n// Contrôle qualité — 4 critères\nconst checks = {\n  hasHook:      (content.hook?.length || 0) > 15,\n  hasCaption:   (content.caption?.length || 0) > 80,\n  hasHashtags:  Array.isArray(content.hashtags) && content.hashtags.length >= 20,\n  hasQuestion:  (content.caption || '').includes('?'),\n};\n\nconst qualityScore = Object.values(checks).filter(Boolean).length;\nconst isValid = qualityScore >= 3;\n\nreturn [{\n  json: {\n    ...content,\n    pillar:       pillarData.pillar,\n    platforms:    pillarData.platforms,\n    generatedAt:  pillarData.generatedAt,\n    isValid,\n    qualityScore,\n    checks,\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-quality",
+      "name": "Qualité OK ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "quality-check",
+              "leftValue":  "={{ $json.isValid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-buffer",
+      "name": "Buffer — Planifier Instagram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.bufferapp.com/1/updates/create.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $vars.BUFFER_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "profile_ids[]",
+              "value": "={{ $vars.BUFFER_IG_PROFILE_ID }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.hook + '\\n\\n' + $json.caption + '\\n\\n' + $json.hashtags.map(h => '#' + h).join(' ') }}"
+            },
+            {
+              "name": "scheduled_at",
+              "value": "={{ new Date(Date.now() + 3600000).toISOString() }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-slack-ok",
+      "name": "Slack — Succès",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 180],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"text\": \"✅ *MJI Content Studio* — Post planifié sur Buffer !\\n*Pilier :* {{ $('Parser réponse Claude').first().json.pillar }}\\n*Score qualité :* {{ $('Parser réponse Claude').first().json.qualityScore }}/4\\n*Accroche :* {{ $('Parser réponse Claude').first().json.hook.substring(0, 100) }}...\"}"
+      }
+    },
+    {
+      "id": "node-slack-err",
+      "name": "Slack — Alerte qualité",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"text\": \"⚠️ *MJI Content Studio* — Contenu non conforme, non publié.\\n*Score :* {{ $json.qualityScore }}/4\\n*Pilier :* {{ $json.pillar }}\\n*Détails :* hook={{ $json.checks.hasHook }}, caption={{ $json.checks.hasCaption }}, hashtags={{ $json.checks.hasHashtags }}, question={{ $json.checks.hasQuestion }}\"}"
+      }
+    }
+  ],
+  "connections": {
+    "Déclencheur planifié": {
+      "main": [[{ "node": "Pilier du jour", "type": "main", "index": 0 }]]
+    },
+    "Pilier du jour": {
+      "main": [[{ "node": "Claude API — Générer contenu", "type": "main", "index": 0 }]]
+    },
+    "Claude API — Générer contenu": {
+      "main": [[{ "node": "Parser réponse Claude", "type": "main", "index": 0 }]]
+    },
+    "Parser réponse Claude": {
+      "main": [[{ "node": "Qualité OK ?", "type": "main", "index": 0 }]]
+    },
+    "Qualité OK ?": {
+      "main": [
+        [{ "node": "Buffer — Planifier Instagram", "type": "main", "index": 0 }],
+        [{ "node": "Slack — Alerte qualité",       "type": "main", "index": 0 }]
+      ]
+    },
+    "Buffer — Planifier Instagram": {
+      "main": [[{ "node": "Slack — Succès", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "staticData": null,
+  "meta": { "templateCredsSetupCompleted": true },
+  "pinData": {}
+}

@@ -1321,8 +1321,12 @@ export default function DashboardPage() {
   const { lumens, award: awardLumens, refresh } = useLumens(user?.id)
   const { track }                              = useAnalytics(user?.id)
 
-  const isPremium = (profile?.plan === 'premium' || !!profile?.premium_until)
+  const [isPro,               setIsPro]               = useState(false)
+
+  const isPremium = isPro || (
+    (profile?.plan === 'premium' || !!profile?.premium_until)
     && profile?.premium_until && new Date(profile.premium_until) > new Date()
+  )
 
   // ── Modals & états ── (identique à DashboardPage)
   const [active,              setActive]              = useState('jardin')
@@ -1342,7 +1346,6 @@ export default function DashboardPage() {
   const [showLumensModal,     setShowLumensModal]     = useState(false)
   const [showLumenInfo,       setShowLumenInfo]       = useState(false)
   const [showProfileModal,    setShowProfileModal]    = useState(false)
-  const [isPro,               setIsPro]               = useState(false)
   const [showProProfileModal, setShowProProfileModal] = useState(false)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
   const [profileView,         setProfileView]         = useState('main') // 'main' | 'settings'
