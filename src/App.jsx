@@ -18,6 +18,7 @@ import { EndOfWeekScreen }  from './pages/EndOfWeekScreen'
 import { ProProfile }       from './pages/ProProfile'
 import InstallPrompt from './components/InstallPrompt'
 import { EngagementModals } from './components/EngagementModals'
+import Entreprise from './Entreprise'
 
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
 import { useNotificationSound } from './hooks/useNotificationSound'
@@ -133,6 +134,7 @@ export default function App() {
     if (hash === '#jardinotheque') setScreen('admin-jardinotheque')
     if (hash === '#pros')          setScreen('admin-pros')
     if (hash === '#messages')      setScreen('admin-messages')
+    if (hash === '#entreprise')    setScreen('entreprise')
   }, [hash, user?.id])
 
   // ── Initialisation principale ──────────────────────────────────────────────
@@ -151,6 +153,7 @@ export default function App() {
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#jardinotheque') { setScreen('admin-jardinotheque'); return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#pros')          { setScreen('admin-pros');          return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#messages')      { setScreen('admin-messages');      return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#entreprise')    { setScreen('entreprise');          return }
 
     // Retour depuis Stripe — succès → vider le cache profil + attendre webhook
     if (params.get('premium') === 'success') {
@@ -302,6 +305,8 @@ export default function App() {
   if (screen === 'admin-jardinotheque') return <AdminJardinothequePage />
   if (screen === 'admin-pros')          return <AdminProsPage />
   if (screen === 'admin-messages')      return <AdminMessagesPage />
+
+  if (screen === 'entreprise') return <Entreprise />
 
   if (params.has('test-onboarding')) {
     return (
