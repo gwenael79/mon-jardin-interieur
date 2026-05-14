@@ -72,7 +72,8 @@ function buildPayload(type: string, data?: Record<string, string>) {
     degradation_1:   { title: "🍃 Ton jardin est resté calme aujourd'hui",            body: 'Une petite attention suffit parfois à le faire refleurir.', tag: 'degradation', url: '/' },
     degradation_3:   { title: "🌧 Féline n'a plus vu tes pas depuis quelques jours", body: 'Ton jardin semble attendre doucement ton retour.',          tag: 'degradation', url: '/' },
     degradation_7:   { title: '🌙 Féline veille encore sur ton jardin',               body: 'Même après plusieurs jours, il peut renaître.',             tag: 'degradation', url: '/' },
-    coeur_recu:      { title: "🌸 Quelqu'un a déposé une fleur pour toi",             body: data?.senderName ? `${data.senderName} a pensé à toi.` : 'Une présence bienveillante pense à toi.', tag: 'coeur', url: '/jardin' },
+    coeur_recu:      { title: "🌸 Quelqu'un a déposé une fleur pour toi",             body: data?.senderName ? `${data.senderName} a pensé à toi.` : 'Une présence bienveillante pense à toi.', tag: 'coeur', url: '/' },
+    relance:         { title: '🌿 Ton jardin intérieur t\'attend',                    body: 'Reviens quand tu veux — sans pression, sans jugement.',      tag: 'relance',     url: '/' },
   }
   const notif = map[type] ?? map['ritual_reminder']
   return { ...notif, type }

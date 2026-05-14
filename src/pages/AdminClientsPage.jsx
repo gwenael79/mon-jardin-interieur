@@ -47,6 +47,14 @@ html,body,#root{height:100%;width:100%}
 .adm-btn{padding:7px 16px;border-radius:8px;font-size:18px;letter-spacing:.06em;cursor:pointer;border:none;font-family:'Jost',sans-serif;transition:all .2s;white-space:nowrap}
 .adm-btn.ghost{background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.20);color:#ffffff}
 .adm-btn.ghost:hover{background:rgba(255,255,255,0.12);color:var(--text)}
+.adm-num-xl{font-family:'Jost',sans-serif!important;font-size:38px!important;font-weight:200!important;line-height:1!important}
+.adm-num-gold{color:#e8c060!important}
+.adm-num-green{color:#96d485!important}
+.adm-num-dim{color:rgba(255,255,255,0.30)!important}
+.adm-num-teal{color:#96d485!important}
+.adm-pal-name{font-size:20px!important;font-weight:400!important}
+.adm-pal-email{font-size:14px!important;color:rgba(255,255,255,0.22)!important}
+.adm-num-red{font-size:22px!important;font-weight:700!important;color:#e05555!important}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a!important;border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:18px;color:#ffffff;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:700px){
@@ -746,6 +754,8 @@ export function AdminClientsPage() {
   const [stats,         setStats]         = useState({})
   const [attendance,    setAttendance]    = useState(null)
   const [palmares,      setPalmares]      = useState([])
+  const [selectedMails, setSelectedMails] = useState(new Set())
+  const [sendingMail,   setSendingMail]   = useState(false)
   const [funnel,        setFunnel]        = useState(null)
   const [funnelUsers,   setFunnelUsers]   = useState([])
   const [subStats,      setSubStats]      = useState(null)
@@ -753,6 +763,7 @@ export function AdminClientsPage() {
   const [toast,         setToast]         = useState(null)
   const [inscriptions,  setInscriptions]  = useState(null)
   const [lastRefresh,   setLastRefresh]   = useState(null)
+  const [showSubscribers, setShowSubscribers] = useState(false)
 
   const isAdmin = ADMIN_IDS.includes(user?.id)
 
@@ -826,7 +837,20 @@ export function AdminClientsPage() {
         return { ...m, caByPlan, caTotal, actifsByPlan, actifsTotal }
       })
       const caTotal  = rows.filter(r => r.product_name !== 'Inconnu').reduce((s, r) => s + Number(r.price ?? 0), 0)
-      setSubStats({ plans, caTotal, nbTotal: rows.length, nbActifs: rows.filter(r => r.is_active).length, histogram, PLANS })
+      const premiumRows = rows.filter(r => r.product_name !== 'Inconnu')
+      const subUserIds = [...new Set(premiumRows.map(r => r.user_id))]
+      let subscribers = []
+      if (subUserIds.length > 0) {
+        const { data: subUsers } = await supabase.from('users').select('id, display_name, email').in('id', subUserIds)
+        const userMap = Object.fromEntries((subUsers ?? []).map(u => [u.id, u]))
+        const subMap = {}
+        premiumRows.forEach(r => {
+          if (!subMap[r.user_id]) subMap[r.user_id] = { display_name: userMap[r.user_id]?.display_name ?? null, email: userMap[r.user_id]?.email ?? null, total: 0 }
+          subMap[r.user_id].total += Number(r.price ?? 0)
+        })
+        subscribers = Object.values(subMap).sort((a, b) => b.total - a.total)
+      }
+      setSubStats({ plans, caTotal, nbTotal: rows.length, nbActifs: rows.filter(r => r.is_active).length, histogram, PLANS, subscribers })
     } catch (e) { console.error('[subscriptions] exception:', e) }
   }
 
@@ -895,38 +919,21 @@ export function AdminClientsPage() {
         userDaysMap[r.user_id].add(d)
       })
 
-      // Streak : jours consécutifs depuis aujourd'hui (ou hier si pas encore ouvert)
-      function calcStreak(datesSet) {
-        if (!datesSet?.size) return 0
-        const today  = new Date().toISOString().slice(0, 10)
-        const sorted = [...datesSet].sort((a, b) => b.localeCompare(a))
-        let cursor = sorted[0] >= today ? today : sorted[0]
-        let streak = 0
-        for (const d of sorted) {
-          if (d === cursor) {
-            streak++
-            const prev = new Date(cursor)
-            prev.setDate(prev.getDate() - 1)
-            cursor = prev.toISOString().slice(0, 10)
-          } else if (d < cursor) {
-            break
-          }
-        }
-        return streak
-      }
+      const ago30 = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
 
       const pal = j7Users.map(u => {
         const days   = userDaysMap[u.id]
         const sorted = days ? [...days].sort() : []
+        const actifs30j = days ? [...days].filter(d => d >= ago30).length : 0
         return {
           id:           u.id,
           display_name: u.display_name ?? null,
           email:        u.email ?? null,
           connexions:   days?.size ?? 0,
           last_active:  sorted[sorted.length - 1] ?? null,
-          streak_days:  calcStreak(days),
+          actifs30j,
         }
-      }).sort((a, b) => b.connexions - a.connexions || b.streak_days - a.streak_days)
+      }).sort((a, b) => b.connexions - a.connexions || b.actifs30j - a.actifs30j)
 
       setPalmares(pal)
     } catch (e) { console.error('[clients] palmares error:', e) }
@@ -988,6 +995,24 @@ export function AdminClientsPage() {
     }
   }
 
+
+  async function sendReengagementEmails() {
+    if (selectedMails.size === 0) return
+    setSendingMail(true)
+    try {
+      const emails  = [...selectedMails]
+      const userIds = palmares.filter(p => p.email && selectedMails.has(p.email)).map(p => p.id)
+      const { error } = await supabase.functions.invoke('send-reengagement-email', {
+        body: { emails, userIds },
+      })
+      if (error) throw error
+      showToast(`✉️ Email envoyé à ${emails.length} contact${emails.length > 1 ? 's' : ''}`)
+      setSelectedMails(new Set())
+    } catch (e) {
+      showToast(`⚠️ Erreur : ${e.message}`)
+    }
+    setSendingMail(false)
+  }
 
   if (!isAdmin) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg)', color: 'var(--text3)', fontFamily: 'Jost,sans-serif', fontSize: 13 }}>
@@ -1190,48 +1215,140 @@ export function AdminClientsPage() {
                     {(subStats.PLANS??[]).map((p,i) => <div key={i} style={{ display:'flex', alignItems:'center', gap:4 }}><div style={{ width:6, height:6, borderRadius:2, background:p.color }} /><span style={{ fontSize:9, color:'rgba(255,255,255,0.32)' }}>{p.icon} {p.key}</span></div>)}
                   </div>
                 </div>
+
+                {/* Accordéon — Liste des abonnés */}
+                <div style={{ marginTop: isMobile ? 10 : 16 }}>
+                  <div
+                    onClick={() => setShowSubscribers(v => !v)}
+                    style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding: isMobile ? '10px 12px' : '11px 16px', background:'rgba(0,0,0,0.20)', border:'1px solid rgba(255,255,255,0.10)', borderRadius: showSubscribers ? '10px 10px 0 0' : 10, cursor:'pointer', userSelect:'none' }}
+                  >
+                    <span style={{ fontSize:10, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(255,255,255,0.50)' }}>
+                      👤 Liste des abonnés · {(subStats.subscribers ?? []).length}
+                    </span>
+                    <span style={{ fontSize:12, color:'rgba(255,255,255,0.30)', display:'inline-block', transform: showSubscribers ? 'rotate(180deg)' : 'none', transition:'transform .2s' }}>▾</span>
+                  </div>
+                  {showSubscribers && (
+                    <div style={{ background:'rgba(0,0,0,0.15)', border:'1px solid rgba(255,255,255,0.10)', borderTop:'none', borderRadius:'0 0 10px 10px', overflow:'hidden' }}>
+                      {(subStats.subscribers ?? []).length === 0 ? (
+                        <div style={{ padding:'18px', textAlign:'center', fontSize:11, color:'rgba(255,255,255,0.35)', fontStyle:'italic' }}>Aucun abonné</div>
+                      ) : (
+                        <div style={{ overflowX:'auto' }}>
+                          <table style={{ width:'100%', borderCollapse:'collapse', minWidth: isMobile ? 320 : 'auto' }}>
+                            <thead>
+                              <tr>
+                                {['Prénom', 'Email', 'Total dépensé'].map((h, hi) => (
+                                  <th key={h} style={{ padding: isMobile ? '8px 10px' : '9px 14px', textAlign: hi === 2 ? 'right' : 'left', fontSize:9, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(255,255,255,0.30)', fontWeight:400, borderBottom:'1px solid rgba(255,255,255,0.06)', whiteSpace:'nowrap' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(subStats.subscribers ?? []).map((s, i) => (
+                                <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.018)' }}>
+                                  <td style={{ padding: isMobile ? '8px 10px' : '9px 14px', fontSize:12, color:'rgba(255,255,255,0.80)' }}>{s.display_name ?? '—'}</td>
+                                  <td style={{ padding: isMobile ? '8px 10px' : '9px 14px', fontSize:11, color:'rgba(255,255,255,0.45)' }}>{s.email ?? '—'}</td>
+                                  <td style={{ padding: isMobile ? '8px 10px' : '9px 14px', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:'#F6C453', textAlign:'right', fontWeight:300 }}>
+                                    {s.total > 0 ? s.total.toLocaleString('fr-FR', { style:'currency', currency:'EUR', maximumFractionDigits:0 }) : '—'}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </>)}
             </div>
 
             {/* ── PALMARÈS ── */}
-            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>🏆 Palmarès post-J7 — jours d'ouverture</div>
-            {loading ? <div className="adm-empty">Chargement…</div> : palmares.length === 0 ? <div className="adm-empty">Aucune donnée disponible</div> : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {palmares.map((p, i) => (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border2)', borderRadius: 10 }}>
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, overflow: 'hidden' }}>
+              {/* Barre d'action sélection */}
+              {selectedMails.size > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: 'rgba(150,212,133,0.07)', borderBottom: '1px solid rgba(150,212,133,0.15)' }}>
+                  <span style={{ fontSize: 12, color: 'rgba(150,212,133,0.8)' }}>{selectedMails.size} contact{selectedMails.size > 1 ? 's' : ''} sélectionné{selectedMails.size > 1 ? 's' : ''}</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => setSelectedMails(new Set())}
+                      style={{ padding: '5px 12px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)' }}>
+                      Désélectionner
+                    </button>
+                    <button onClick={sendReengagementEmails} disabled={sendingMail}
+                      style={{ padding: '5px 16px', borderRadius: 7, fontSize: 11, cursor: sendingMail ? 'default' : 'pointer', fontFamily: "'Jost',sans-serif", background: sendingMail ? 'rgba(150,212,133,0.08)' : 'rgba(150,212,133,0.18)', border: '1px solid rgba(150,212,133,0.35)', color: '#96d485' }}>
+                      {sendingMail ? '⏳ Envoi…' : '✉️ Envoyer email de relance'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {/* En-tête */}
+              <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 90px 90px 44px', gap: 0, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>🏆</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Utilisateur</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Dernière ouv.</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Inactif</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>/ 30j</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>Total</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>✉️</div>
+              </div>
+              {loading ? <div className="adm-empty">Chargement…</div> : palmares.length === 0 ? <div className="adm-empty">Aucune donnée disponible</div> : (
+                palmares.map((p, i) => {
+                  const daysSince = p.last_active
+                    ? Math.floor((Date.now() - new Date(p.last_active).getTime()) / 86400000)
+                    : null
+                  const isSelected = p.email && selectedMails.has(p.email)
+                  const toggleSelect = () => {
+                    if (!p.email) return
+                    setSelectedMails(prev => {
+                      const next = new Set(prev)
+                      next.has(p.email) ? next.delete(p.email) : next.add(p.email)
+                      return next
+                    })
+                  }
+                  return (
+                  <div key={p.id} onClick={toggleSelect} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 90px 90px 44px', gap: 0, padding: '11px 20px', alignItems: 'center', borderBottom: i < palmares.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: isSelected ? 'rgba(150,212,133,0.06)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', cursor: p.email ? 'pointer' : 'default', transition: 'background .15s' }}>
                     {/* Rang */}
-                    <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 16, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'var(--text3)', width: 22, textAlign: 'center', flexShrink: 0 }}>
+                    <div style={{ fontSize: i < 3 ? 18 : 13, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'rgba(255,255,255,0.25)', textAlign: 'center', fontFamily: i >= 3 ? "'Cormorant Garamond',serif" : 'inherit' }}>
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                     </div>
-                    {/* Nom + dernière ouverture */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {/* Nom + email */}
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, overflow: 'hidden', paddingRight: 12 }}>
+                      <div className="adm-pal-name" style={{ color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
                         {p.display_name ?? p.email ?? p.id?.slice(0, 8)}
                       </div>
-                      <div style={{ fontSize: 9, color: 'var(--text3)', marginTop: 1 }}>
-                        {p.last_active
-                          ? `Dernière ouverture : ${new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`
-                          : 'Aucune ouverture trackée'}
-                      </div>
+                      {!isMobile && p.email && p.display_name && (
+                        <div className="adm-pal-email" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.email}
+                        </div>
+                      )}
                     </div>
-                    {/* Streak */}
-                    <div style={{ textAlign: 'center', flexShrink: 0, minWidth: 40 }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: p.streak_days >= 7 ? '#e8c060' : p.streak_days >= 3 ? '#96d485' : 'var(--text3)', lineHeight: 1 }}>
-                        {p.streak_days > 0 ? p.streak_days : '—'}
-                      </div>
-                      <div style={{ fontSize: 7, color: 'var(--text3)', marginTop: 1 }}>🔥 streak</div>
+                    {/* Dernière ouverture */}
+                    <div style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
+                      {p.last_active ? new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}
                     </div>
-                    {/* Jours totaux */}
-                    <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 44 }}>
-                      <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 18, color: 'var(--green)', lineHeight: 1 }}>
-                        {p.connexions > 0 ? p.connexions : '—'}
-                      </div>
-                      <div style={{ fontSize: 7, color: 'var(--text3)', marginTop: 1 }}>jours</div>
+                    {/* Jours d'inactivité */}
+                    <div className="adm-num-red" style={{ textAlign: 'center' }}>
+                      {daysSince !== null ? `${daysSince}j` : '—'}
+                    </div>
+                    {/* Actifs 30j */}
+                    <div className={`adm-num-xl ${p.actifs30j >= 15 ? 'adm-num-gold' : p.actifs30j >= 5 ? 'adm-num-green' : 'adm-num-dim'}`} style={{ textAlign: 'right' }}>
+                      {p.actifs30j > 0 ? p.actifs30j : '—'}
+                    </div>
+                    {/* Total */}
+                    <div className="adm-num-xl adm-num-teal" style={{ textAlign: 'right' }}>
+                      {p.connexions > 0 ? p.connexions : '—'}
+                    </div>
+                    {/* Case à cocher */}
+                    <div style={{ textAlign: 'center' }}>
+                      <input type="checkbox" checked={isSelected} onChange={toggleSelect}
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: 16, height: 16, cursor: p.email ? 'pointer' : 'not-allowed', accentColor: '#96d485' }}
+                        disabled={!p.email}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  )
+                })
+              )}
+            </div>
           </div>
         )}
 

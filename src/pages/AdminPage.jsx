@@ -9,6 +9,8 @@ import { supabase } from '../core/supabaseClient'
 export const ADMIN_IDS = [
   'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7', // Gwenaël (fondateur)
   'fbcfb88f-0280-40ab-98d3-bcf750c5764d', // Co-admin
+  'b6d0d66c-7b3c-4dec-be98-dbae3bef54e7', // Admin (bonjour@monjardininterieur.com)
+  '504b3dfd-c23c-425c-9ce2-7f6cd7ba0679', // Gwenael JEAUNEAU (gwenael.jeauneau@monhypnotherapeute.com)
 ]
 
 const css = `
