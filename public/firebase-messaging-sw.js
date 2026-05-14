@@ -90,7 +90,7 @@ self.addEventListener('notificationclick', e => {
 
       const senderId = e.notification.data?.senderId
       const url = e.action === 'reply'
-        ? `/jardin${senderId ? `?from=${senderId}` : ''}`
+        ? `/${senderId ? `?from=${senderId}` : ''}`
         : (e.notification.data?.url ?? '/')
 
       const fullUrl = `https://monjardininterieur.com${url}`
