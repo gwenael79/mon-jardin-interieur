@@ -69,6 +69,9 @@ html,body,#root{height:100%;width:100%}
   .adm-stats{grid-template-columns:1fr}
   .adm-body{padding:8px 8px}
 }
+.adm-inp{color:#1a1208!important;background:#ffffff!important}
+.adm-inp::placeholder{color:#888!important}
+.adm-sel{color:#1a1208!important;background:#ffffff!important}
 `
 
 // ── Navigation partagée ────────────────────────────────────────────────────
@@ -247,26 +250,26 @@ function RituelsEditor({ showToast }) {
             </div>
             <div>
               <span style={label}>Nom du rituel</span>
-              <input value={editRituel} onChange={e => setEditRituel(e.target.value)} style={inp} />
+              <input className="adm-inp" value={editRituel} onChange={e => setEditRituel(e.target.value)} style={inp} />
             </div>
             <div>
               <span style={label}>Titre de l'exercice</span>
-              <input value={editTitle} onChange={e => setEditTitle(e.target.value)} style={inp} />
+              <input className="adm-inp" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={inp} />
             </div>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={label}>Description</span>
                 <span style={{ fontSize: 10, color: desc.length > 450 ? '#e87060' : 'rgba(242,237,224,0.22)' }}>{desc.length} / 500</span>
               </div>
-              <textarea value={desc} onChange={e => setDesc(e.target.value.slice(0, 500))} rows={6} style={{ ...inp, resize: 'vertical', lineHeight: 1.8 }} />
+              <textarea className="adm-inp" value={desc} onChange={e => setDesc(e.target.value.slice(0, 500))} rows={6} style={{ ...inp, resize: 'vertical', lineHeight: 1.8 }} />
             </div>
             <div>
               <span style={label}>Durée (ex: "5 min")</span>
-              <input value={dur} onChange={e => setDur(e.target.value)} placeholder="5 min" style={{ ...inp, maxWidth: isMobile ? '100%' : 160 }} />
+              <input className="adm-inp" value={dur} onChange={e => setDur(e.target.value)} placeholder="5 min" style={{ ...inp, maxWidth: isMobile ? '100%' : 160 }} />
             </div>
             <div>
               <span style={label}>Outil interactif</span>
-              <select value={toolType} onChange={e => setToolType(e.target.value)} style={{ ...inp, maxWidth: isMobile ? '100%' : 220 }}>
+              <select className="adm-inp adm-sel" value={toolType} onChange={e => setToolType(e.target.value)} style={{ ...inp, maxWidth: isMobile ? '100%' : 220 }}>
                 <option value="none">Aucun</option>
                 <option value="breath">Respiration guidée</option>
                 <option value="timer">Minuteur simple</option>
@@ -277,7 +280,7 @@ function RituelsEditor({ showToast }) {
                 {[['inhale', 'Inspire (s)'], ['hold', 'Rétention (s)'], ['exhale', 'Expire (s)'], ['holdEmpty', 'Vide (s)'], ['cycles', 'Cycles']].map(([k, lbl]) => (
                   <div key={k}>
                     <span style={label}>{lbl}</span>
-                    <input type="number" min="0" max="60" value={toolObj[k]} onChange={e => setToolObj(o => ({ ...o, [k]: Number(e.target.value) }))} style={inp} />
+                    <input className="adm-inp" type="number" min="0" max="60" value={toolObj[k]} onChange={e => setToolObj(o => ({ ...o, [k]: Number(e.target.value) }))} style={inp} />
                   </div>
                 ))}
               </div>
@@ -341,7 +344,7 @@ function VentesPartenairesAdmin({ showToast }) {
     <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.07)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.12em', textTransform: 'uppercase' }}>Ventes partenaires</div>
-        <input type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp, width: isMobile ? '100%' : 'auto' }} />
+        <input className="adm-inp" type="month" value={mois} onChange={e => setMois(e.target.value)} style={{ ...inp, width: isMobile ? '100%' : 'auto' }} />
       </div>
       {loading ? (
         <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Chargement…</div>
@@ -987,7 +990,7 @@ export function AdminActivitePage() {
   }
 
   async function loadLumensData() {
-    const { data } = await supabase.from('lumens').select('*, users:user_id(display_name, email)').order('total', { ascending: false }).limit(20)
+    const { data } = await supabase.from('lumens').select('*, users:user_id(display_name, email)').order('total', { ascending: false })
     setLumensData(data ?? [])
   }
 
@@ -1071,7 +1074,7 @@ export function AdminActivitePage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <select value={lumenAward.userId} onChange={e => setLumenAward(p => ({ ...p, userId: e.target.value }))} style={{ width: '100%', padding: '10px 12px', background: '#1e3a1e', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, fontSize: 12, color: '#f2ede0', fontFamily: 'Jost,sans-serif' }}>
                   <option value="">— Choisir un utilisateur —</option>
-                  {allUsers.map(u => <option key={u.id} value={u.id}>{u.display_name ?? u.email}</option>)}
+                  {allUsers.map(u => <option key={u.id} value={u.id}>{u.display_name ? `${u.display_name} — ${u.email}` : u.email}</option>)}
                 </select>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <input type="number" placeholder="Lumens" value={lumenAward.amount} onChange={e => setLumenAward(p => ({ ...p, amount: e.target.value }))} style={{ width: 90, flexShrink: 0, padding: '10px 12px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, fontSize: 12, color: '#f2ede0', fontFamily: 'Jost,sans-serif' }} />
@@ -1093,19 +1096,20 @@ export function AdminActivitePage() {
             {lumensData.length === 0 ? (
               <div className="adm-empty">Aucun Lumen attribué pour l'instant.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, paddingRight: 4 }}>
                 {lumensData.map((l, i) => (
-                  <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: 'rgba(246,196,83,0.04)', border: '1px solid rgba(246,196,83,0.12)', borderRadius: 10 }}>
-                    <div style={{ fontSize: 16, fontFamily: 'Cormorant Garamond,serif', color: 'rgba(246,196,83,0.4)', width: 24, textAlign: 'center' }}>{i + 1}</div>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: '#f2ede0' }}>{l.users?.display_name ?? l.users?.email ?? l.user_id?.slice(0, 8)}</div>
-                      <div style={{ fontSize: 9, color: 'rgba(242,237,224,0.4)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 2 }}>{l.level === 'faible' ? 'Lumière faible' : l.level === 'halo' ? 'Halo visible' : l.level === 'aura' ? 'Aura douce' : 'Rayonnement actif'}</div>
+                  <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(246,196,83,0.04)', border: '1px solid rgba(246,196,83,0.10)', borderRadius: 8 }}>
+                    <div style={{ fontSize: 12, color: 'rgba(246,196,83,0.35)', width: 20, textAlign: 'center', flexShrink: 0 }}>{i + 1}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 12, color: '#f2ede0' }}>{l.users?.display_name ?? l.users?.email ?? l.user_id?.slice(0, 8)}</span>
+                      {l.users?.display_name && l.users?.email && (
+                        <span style={{ fontSize: 11, color: 'rgba(242,237,224,0.28)', marginLeft: 8 }}>{l.users.email}</span>
+                      )}
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 16, fontFamily: 'Cormorant Garamond,serif', color: '#F6C453' }}>{l.total} ✦</div>
-                      <div style={{ fontSize: 9, color: 'rgba(242,237,224,0.35)' }}>{l.available} disponibles</div>
-                    </div>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F6C453', boxShadow: `0 0 ${l.total >= 200 ? 12 : l.total >= 80 ? 8 : l.total >= 20 ? 4 : 2}px rgba(246,196,83,0.6)` }} />
+                    <div style={{ fontSize: 9, color: 'rgba(242,237,224,0.30)', letterSpacing: '.04em', flexShrink: 0 }}>{l.level === 'faible' ? 'Faible' : l.level === 'halo' ? 'Halo' : l.level === 'aura' ? 'Aura' : 'Rayonnement'}</div>
+                    <div style={{ fontSize: 13, color: '#F6C453', fontWeight: 500, flexShrink: 0, minWidth: 60, textAlign: 'right' }}>{l.total} ✦</div>
+                    <div style={{ fontSize: 10, color: 'rgba(242,237,224,0.30)', flexShrink: 0, minWidth: 70, textAlign: 'right' }}>{l.available} dispo</div>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#F6C453', flexShrink: 0, boxShadow: `0 0 ${l.total >= 200 ? 10 : l.total >= 80 ? 6 : l.total >= 20 ? 3 : 1}px rgba(246,196,83,0.6)` }} />
                   </div>
                 ))}
               </div>
