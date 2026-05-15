@@ -188,10 +188,11 @@ function CheckLight() { return <span className="eow-check eow-check-light">✓</
 
 export function EndOfWeekScreen({ userId, onContinue }) {
   useTheme()
-  const [hasTrial, setHasTrial]       = useState(false)
+  const [quizDone, setQuizDone]        = useState(false)   // questionnaire complété → éligible
+  const [hasTrial, setHasTrial]        = useState(false)   // trial déjà activé et encore valide
   const [showPremium, setShowPremium]  = useState(false)
-  const [trialUntil, setTrialUntil]   = useState(null)
-  const [loading, setLoading]         = useState(true)
+  const [trialUntil, setTrialUntil]    = useState(null)
+  const [loading, setLoading]          = useState(true)
 
   useEffect(() => {
     if (!userId) { setLoading(false); return }
@@ -201,12 +202,10 @@ export function EndOfWeekScreen({ userId, onContinue }) {
       .eq('id', userId)
       .single()
       .then(({ data }) => {
+        if (data?.quiz_completed_at) setQuizDone(true)
         if (data?.premium_trial_until) {
           const until = new Date(data.premium_trial_until)
-          if (until > new Date()) {
-            setHasTrial(true)
-            setTrialUntil(until)
-          }
+          if (until > new Date()) { setHasTrial(true); setTrialUntil(until) }
         }
         setLoading(false)
       })
@@ -215,10 +214,17 @@ export function EndOfWeekScreen({ userId, onContinue }) {
 
   if (loading) return null
 
-  // Calcul des jours restants du trial
   const daysLeft = trialUntil
     ? Math.ceil((trialUntil - new Date()) / (1000 * 60 * 60 * 24))
-    : 0
+    : 30 // avant activation, on affiche 30j
+
+  // Active le trial au clic si pas encore démarré
+  async function activateTrial() {
+    if (!userId || hasTrial) { onContinue('free'); return }
+    const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    await supabase.from('profiles').update({ premium_trial_until: until }).eq('id', userId)
+    onContinue('free')
+  }
 
   const handleFreePlan = () => onContinue('free')
   const handlePremium  = () => setShowPremium(true)
@@ -251,11 +257,13 @@ export function EndOfWeekScreen({ userId, onContinue }) {
         <div className="eow-cards">
 
           {/* ── CARD 1 : Mois premium offert (si quiz complété) ── */}
-          {hasTrial && (
+          {quizDone && (
             <div className="eow-card eow-card-trial">
-              <div className="eow-card-badge eow-badge-trial">🎁 Cadeau · Déjà actif</div>
+              <div className="eow-card-badge eow-badge-trial">
+                {hasTrial ? '🎁 Cadeau · Déjà actif' : '🎁 Cadeau · À activer'}
+              </div>
               <div className="eow-card-title">
-                Votre mois Premium<br/>est offert — profitez-en.
+                {hasTrial ? 'Votre mois Premium\nest offert — profitez-en.' : 'Un mois Premium\nvous est offert.'}
               </div>
               <div className="eow-card-body">
                 En répondant au questionnaire lors de votre découverte, vous avez débloqué un mois complet sans restriction. Tout est accessible, sans carte bancaire.
@@ -267,10 +275,10 @@ export function EndOfWeekScreen({ userId, onContinue }) {
                 <li><CheckGold/>Défis communautaires complets</li>
                 <li><CheckGold/>Aucune carte bancaire requise</li>
               </ul>
-              <button className="eow-btn eow-btn-trial" onClick={handleFreePlan}>
-                ✨ Entrer dans mon jardin
+              <button className="eow-btn eow-btn-trial" onClick={activateTrial}>
+                ✨ {hasTrial ? 'Entrer dans mon jardin' : 'Activer mon mois offert'}
               </button>
-              {daysLeft > 0 && (
+              {hasTrial && daysLeft > 0 && (
                 <div className="eow-timer">
                   Votre période Premium se termine dans {daysLeft} jour{daysLeft > 1 ? 's' : ''}.
                 </div>

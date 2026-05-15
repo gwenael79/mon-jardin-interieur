@@ -2317,9 +2317,8 @@ function StepQuestionnaire({ userId, onComplete, onSkip }) {
         answer:   q.choices[finalAnswers[i] ?? -1] ?? null,
       }))
       await supabase.from('profiles').update({
-        quiz_answers:        payload,
-        quiz_completed_at:   new Date().toISOString(),   // ← marque "déjà fait" pour les connexions suivantes
-        premium_trial_until: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+        quiz_answers:      payload,
+        quiz_completed_at: new Date().toISOString(), // éligibilité — le trial démarre au clic d'activation
       }).eq('id', userId)
     } catch (e) {
       console.warn('[quiz] save error', e)

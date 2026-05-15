@@ -654,7 +654,7 @@ const HORAIRES_SETTINGS     = [
   { id:'soir',  label:'Soir',  emoji:'🌙' },
 ]
 
-function TrialInfoModal({ daysLeft, onClose, onUpgrade }) {
+function TrialInfoModal({ daysLeft, trialActive, onActivate, onClose, onUpgrade }) {
   return (
     <div style={{ position:'fixed', inset:0, zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px' }}>
       <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.45)', backdropFilter:'blur(8px)' }} onClick={onClose} />
@@ -699,8 +699,8 @@ function TrialInfoModal({ daysLeft, onClose, onUpgrade }) {
         </div>
 
         {/* CTA principal */}
-        <button onClick={onClose} style={{ width:'100%', padding:'13px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#c8a040,#a07820)', color:'#fff', fontSize:14, fontWeight:500, cursor:'pointer', marginBottom:10 }}>
-          ✨ Explorer mon jardin
+        <button onClick={trialActive ? onClose : onActivate} style={{ width:'100%', padding:'13px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#c8a040,#a07820)', color:'#fff', fontSize:14, fontWeight:500, cursor:'pointer', marginBottom:10 }}>
+          {trialActive ? '✨ Explorer mon jardin' : '🎁 Activer mon mois offert'}
         </button>
 
         {/* CTA secondaire */}
@@ -1491,17 +1491,27 @@ export default function DashboardPage() {
     return isReturn
   }, [])
 
+  const [quizCompleted, setQuizCompleted] = useState(false)
+
   useEffect(() => {
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('premium_trial_until')
+      .select('premium_trial_until, quiz_completed_at')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
         if (data?.premium_trial_until) setPremiumTrialUntil(new Date(data.premium_trial_until))
+        if (data?.quiz_completed_at)   setQuizCompleted(true)
       })
   }, [user?.id])
+
+  async function activateTrialNow() {
+    if (!user?.id || isTrialActive) return
+    const until = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    await supabase.from('profiles').update({ premium_trial_until: until.toISOString() }).eq('id', user.id)
+    setPremiumTrialUntil(until)
+  }
 
   useEffect(() => {
     if (!user?.id) return
@@ -1952,7 +1962,7 @@ export default function DashboardPage() {
         </div>
       )}
       {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => setShowPremiumModal(false)} />}
-      {showTrialInfoModal && <TrialInfoModal daysLeft={trialDaysLeft} onClose={() => setShowTrialInfoModal(false)} onUpgrade={() => { setShowTrialInfoModal(false); setShowPremiumModal(true) }} />}
+      {showTrialInfoModal && <TrialInfoModal daysLeft={trialDaysLeft} trialActive={isTrialActive} onActivate={async () => { await activateTrialNow(); setShowTrialInfoModal(false) }} onClose={() => setShowTrialInfoModal(false)} onUpgrade={() => { setShowTrialInfoModal(false); setShowPremiumModal(true) }} />}
       {showAvisModal && <AppAvisModal userId={user?.id} displayName={profile?.display_name ?? ''} onClose={() => setShowAvisModal(false)} />}
       {showProfileModal && (
         <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -1998,8 +2008,8 @@ export default function DashboardPage() {
               )}
             </div>}
 
-            {/* Bouton essai offert — masqué après première ouverture */}
-            {isTrialActive && !trialCardSeen && (
+            {/* Bouton essai offert — visible si éligible (quiz fait) et pas encore vu */}
+            {quizCompleted && !trialCardSeen && (
               <div onClick={() => { localStorage.setItem(`trial_card_seen_${user?.id}`, '1'); setTrialCardSeen(true); setShowProfileModal(false); setShowTrialInfoModal(true) }} style={{
                 display:'flex', alignItems:'center', gap:12,
                 padding:'13px 15px', borderRadius:14, marginBottom:16, cursor:'pointer',
