@@ -754,8 +754,10 @@ export function AdminClientsPage() {
   const [stats,         setStats]         = useState({})
   const [attendance,    setAttendance]    = useState(null)
   const [palmares,      setPalmares]      = useState([])
-  const [selectedMails, setSelectedMails] = useState(new Set())
-  const [sendingMail,   setSendingMail]   = useState(false)
+  const [selectedMails1, setSelectedMails1] = useState(new Set())  // rappel  1–5j
+  const [selectedMails2, setSelectedMails2] = useState(new Set())  // inquiet 6–14j
+  const [selectedMails3, setSelectedMails3] = useState(new Set())  // oublié  15j+
+  const [sendingMail,    setSendingMail]    = useState(false)
   const [funnel,        setFunnel]        = useState(null)
   const [funnelUsers,   setFunnelUsers]   = useState([])
   const [subStats,      setSubStats]      = useState(null)
@@ -895,6 +897,18 @@ export function AdminClientsPage() {
       )
       const j7Users = (allUsers ?? []).filter(u => j7Set.has(u.id))
 
+      // Santé la plus récente par utilisateur (plante)
+      const j7Ids = j7Users.map(u => u.id)
+      const plantHealthMap = {}
+      if (j7Ids.length > 0) {
+        const { data: plants } = await supabase
+          .from('plants').select('user_id, health').order('date', { ascending: false })
+          .in('user_id', j7Ids)
+        ;(plants ?? []).forEach(p => {
+          if (plantHealthMap[p.user_id] === undefined) plantHealthMap[p.user_id] = p.health
+        })
+      }
+
       // Pagine session_start + page_view ensemble
       // session_start = ouverture de l'app (fiable depuis le début)
       // page_view = navigation entre slides (depuis le déploiement du tracking)
@@ -932,6 +946,7 @@ export function AdminClientsPage() {
           connexions:   days?.size ?? 0,
           last_active:  sorted[sorted.length - 1] ?? null,
           actifs30j,
+          health:       plantHealthMap[u.id] ?? null,
         }
       }).sort((a, b) => b.connexions - a.connexions || b.actifs30j - a.actifs30j)
 
@@ -945,13 +960,21 @@ export function AdminClientsPage() {
         { data: allUsers, error: e1 },
         { data: profiles, error: e2 },
         { data: pushSubs, error: e3 },
+        { data: plants },
       ] = await Promise.all([
         supabase.from('users').select('id, email, display_name, flower_name, created_at, onboarding_completed, plan, pwa_installed_at').not('id', 'in', `(${ADMIN_IDS.join(',')})`),
         supabase.from('profiles').select('id, week_one_data, premium_trial_until'),
         supabase.from('push_subscriptions').select('user_id'),
+        supabase.from('plants').select('user_id, health').order('date', { ascending: false }),
       ])
       if (e1) console.error('[funnel] users:', e1)
       if (e2) console.error('[funnel] profiles:', e2)
+
+      // Santé la plus récente par utilisateur
+      const plantHealthMap = {}
+      ;(plants ?? []).forEach(p => {
+        if (plantHealthMap[p.user_id] === undefined) plantHealthMap[p.user_id] = p.health
+      })
 
       const profileMap  = {}
       ;(profiles ?? []).forEach(p => { profileMap[p.id] = p })
@@ -964,7 +987,7 @@ export function AdminClientsPage() {
         const completedDays = (profileMap[u.id]?.week_one_data?.completedDays ?? []).map(Number)
         const maxDay        = completedDays.length > 0 ? Math.max(...completedDays) : 0
 
-        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays, premium_trial_until: profileMap[u.id]?.premium_trial_until ?? null })
+        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays, premium_trial_until: profileMap[u.id]?.premium_trial_until ?? null, health: plantHealthMap[u.id] ?? null })
 
         const daysSinceReg = Math.floor((Date.now() - new Date(u.created_at)) / 86400000)
 
@@ -996,18 +1019,18 @@ export function AdminClientsPage() {
   }
 
 
-  async function sendReengagementEmails() {
-    if (selectedMails.size === 0) return
+  async function sendReengagementEmails(mailSet, setMailSet, type) {
+    if (mailSet.size === 0) return
     setSendingMail(true)
     try {
-      const emails  = [...selectedMails]
-      const userIds = palmares.filter(p => p.email && selectedMails.has(p.email)).map(p => p.id)
+      const emails  = [...mailSet]
+      const userIds = palmares.filter(p => p.email && mailSet.has(p.email)).map(p => p.id)
       const { error } = await supabase.functions.invoke('send-reengagement-email', {
-        body: { emails, userIds },
+        body: { emails, userIds, type },
       })
       if (error) throw error
       showToast(`✉️ Email envoyé à ${emails.length} contact${emails.length > 1 ? 's' : ''}`)
-      setSelectedMails(new Set())
+      setMailSet(new Set())
     } catch (e) {
       showToast(`⚠️ Erreur : ${e.message}`)
     }
@@ -1263,48 +1286,54 @@ export function AdminClientsPage() {
 
             {/* ── PALMARÈS ── */}
             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border2)', borderRadius: 14, overflow: 'hidden' }}>
-              {/* Barre d'action sélection */}
-              {selectedMails.size > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', background: 'rgba(150,212,133,0.07)', borderBottom: '1px solid rgba(150,212,133,0.15)' }}>
-                  <span style={{ fontSize: 12, color: 'rgba(150,212,133,0.8)' }}>{selectedMails.size} contact{selectedMails.size > 1 ? 's' : ''} sélectionné{selectedMails.size > 1 ? 's' : ''}</span>
+              {/* Barres d'action — une par type d'email */}
+              {[
+                { set: selectedMails1, setFn: setSelectedMails1, type: 'rappel',  bg: 'rgba(120,184,93,0.07)',  border: 'rgba(120,184,93,0.18)',  color: '#78c85e', icon: '📩', label: 'Rappel doux' },
+                { set: selectedMails2, setFn: setSelectedMails2, type: 'inquiet', bg: 'rgba(232,192,96,0.07)',  border: 'rgba(232,192,96,0.18)',  color: '#e8c060', icon: '🌿', label: 'Ton jardin manque d\'attention' },
+                { set: selectedMails3, setFn: setSelectedMails3, type: 'oubli',   bg: 'rgba(210,100,100,0.07)', border: 'rgba(210,100,100,0.18)', color: '#e08080', icon: '💔', label: 'Tu m\'as oublié' },
+              ].map(({ set, setFn, type, bg, border, color, icon, label }) => set.size > 0 && (
+                <div key={type} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 20px', background: bg, borderBottom: `1px solid ${border}` }}>
+                  <span style={{ fontSize: 11, color }}>{set.size} contact{set.size > 1 ? 's' : ''} · {icon} {label}</span>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => setSelectedMails(new Set())}
-                      style={{ padding: '5px 12px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)' }}>
-                      Désélectionner
+                    <button onClick={() => setFn(new Set())}
+                      style={{ padding: '4px 11px', borderRadius: 7, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.40)' }}>
+                      ✕
                     </button>
-                    <button onClick={sendReengagementEmails} disabled={sendingMail}
-                      style={{ padding: '5px 16px', borderRadius: 7, fontSize: 11, cursor: sendingMail ? 'default' : 'pointer', fontFamily: "'Jost',sans-serif", background: sendingMail ? 'rgba(150,212,133,0.08)' : 'rgba(150,212,133,0.18)', border: '1px solid rgba(150,212,133,0.35)', color: '#96d485' }}>
-                      {sendingMail ? '⏳ Envoi…' : '✉️ Envoyer email de relance'}
+                    <button onClick={() => sendReengagementEmails(set, setFn, type)} disabled={sendingMail}
+                      style={{ padding: '4px 14px', borderRadius: 7, fontSize: 11, cursor: sendingMail ? 'default' : 'pointer', fontFamily: "'Jost',sans-serif", background: sendingMail ? 'rgba(255,255,255,0.04)' : `${bg}`, border: `1px solid ${border}`, color, opacity: sendingMail ? 0.5 : 1 }}>
+                      {sendingMail ? '⏳ Envoi…' : `✉️ Envoyer`}
                     </button>
                   </div>
                 </div>
-              )}
+              ))}
               {/* En-tête */}
-              <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 90px 90px 44px', gap: 0, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'center' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 60px 90px 90px 44px 44px 44px', gap: 0, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'center' }}>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>🏆</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Utilisateur</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Dernière ouv.</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Inactif</div>
+                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Vit.</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>/ 30j</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>Total</div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', textAlign: 'center' }}>✉️</div>
+                <div style={{ fontSize: 10, color: '#78c85e', textAlign: 'center' }} title="Rappel doux · inactif 1–5j">📩</div>
+                <div style={{ fontSize: 10, color: '#e8c060', textAlign: 'center' }} title="Jardin manque d'attention · inactif 6–14j">🌿</div>
+                <div style={{ fontSize: 10, color: '#e08080', textAlign: 'center' }} title="Tu m'as oublié · inactif 15j+">💔</div>
               </div>
               {loading ? <div className="adm-empty">Chargement…</div> : palmares.length === 0 ? <div className="adm-empty">Aucune donnée disponible</div> : (
                 palmares.map((p, i) => {
                   const daysSince = p.last_active
                     ? Math.floor((Date.now() - new Date(p.last_active).getTime()) / 86400000)
                     : null
-                  const isSelected = p.email && selectedMails.has(p.email)
-                  const toggleSelect = () => {
-                    if (!p.email) return
-                    setSelectedMails(prev => {
-                      const next = new Set(prev)
-                      next.has(p.email) ? next.delete(p.email) : next.add(p.email)
-                      return next
-                    })
-                  }
+                  const inRange1 = daysSince !== null && daysSince >= 1  && daysSince <= 5
+                  const inRange2 = daysSince !== null && daysSince >= 6  && daysSince <= 14
+                  const inRange3 = daysSince !== null && daysSince >= 15
+                  const isSel1 = p.email && selectedMails1.has(p.email)
+                  const isSel2 = p.email && selectedMails2.has(p.email)
+                  const isSel3 = p.email && selectedMails3.has(p.email)
+                  const toggle = (setFn, has) => e => { e.stopPropagation(); if (!p.email) return; setFn(prev => { const n = new Set(prev); has ? n.delete(p.email) : n.add(p.email); return n }) }
+                  const anySelected = isSel1 || isSel2 || isSel3
                   return (
-                  <div key={p.id} onClick={toggleSelect} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 90px 90px 44px', gap: 0, padding: '11px 20px', alignItems: 'center', borderBottom: i < palmares.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: isSelected ? 'rgba(150,212,133,0.06)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', cursor: p.email ? 'pointer' : 'default', transition: 'background .15s' }}>
+                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 60px 90px 90px 44px 44px 44px', gap: 0, padding: '11px 20px', alignItems: 'center', borderBottom: i < palmares.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: anySelected ? 'rgba(150,212,133,0.04)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', transition: 'background .15s' }}>
                     {/* Rang */}
                     <div style={{ fontSize: i < 3 ? 18 : 13, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'rgba(255,255,255,0.25)', textAlign: 'center', fontFamily: i >= 3 ? "'Cormorant Garamond',serif" : 'inherit' }}>
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
@@ -1328,6 +1357,12 @@ export function AdminClientsPage() {
                     <div className="adm-num-red" style={{ textAlign: 'center' }}>
                       {daysSince !== null ? `${daysSince}j` : '—'}
                     </div>
+                    {/* Vitalité */}
+                    <div title={p.health != null ? `Vitalité : ${p.health}%` : 'Inconnue'} style={{ textAlign: 'center' }}>
+                      {p.health != null
+                        ? <span style={{ fontSize: 12, fontWeight: 600, color: p.health >= 70 ? '#78c85e' : p.health >= 40 ? '#e8c060' : '#e05555' }}>{p.health}%</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.18)', fontSize: 11 }}>—</span>}
+                    </div>
                     {/* Actifs 30j */}
                     <div className={`adm-num-xl ${p.actifs30j >= 15 ? 'adm-num-gold' : p.actifs30j >= 5 ? 'adm-num-green' : 'adm-num-dim'}`} style={{ textAlign: 'right' }}>
                       {p.actifs30j > 0 ? p.actifs30j : '—'}
@@ -1336,13 +1371,23 @@ export function AdminClientsPage() {
                     <div className="adm-num-xl adm-num-teal" style={{ textAlign: 'right' }}>
                       {p.connexions > 0 ? p.connexions : '—'}
                     </div>
-                    {/* Case à cocher */}
+                    {/* 📩 Rappel 1–5j */}
                     <div style={{ textAlign: 'center' }}>
-                      <input type="checkbox" checked={isSelected} onChange={toggleSelect}
-                        onClick={e => e.stopPropagation()}
-                        style={{ width: 16, height: 16, cursor: p.email ? 'pointer' : 'not-allowed', accentColor: '#96d485' }}
-                        disabled={!p.email}
-                      />
+                      {inRange1
+                        ? <input type="checkbox" checked={isSel1} onChange={toggle(setSelectedMails1, isSel1)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#78c85e' }} />
+                        : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
+                    </div>
+                    {/* 🌿 Inquiet 6–14j */}
+                    <div style={{ textAlign: 'center' }}>
+                      {inRange2
+                        ? <input type="checkbox" checked={isSel2} onChange={toggle(setSelectedMails2, isSel2)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#e8c060' }} />
+                        : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
+                    </div>
+                    {/* 💔 Oublié 15j+ */}
+                    <div style={{ textAlign: 'center' }}>
+                      {inRange3
+                        ? <input type="checkbox" checked={isSel3} onChange={toggle(setSelectedMails3, isSel3)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#e08080' }} />
+                        : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
                     </div>
                   </div>
                   )
