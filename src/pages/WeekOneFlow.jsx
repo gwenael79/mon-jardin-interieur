@@ -5847,10 +5847,100 @@ function FleurDiscoveryModal({ onClose }) {
 // Ajout prop onReplayDay + bouton "Revoir" sur chaque carte accomplie
 // ═══════════════════════════════════════════════════════════════════════════
 
+const _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
+const _isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+
+function InstallModal({ onClose, onInstalled }) {
+  const [done, setDone] = useState(false)
+
+  async function handleInstall() {
+    const prompt = window._installPrompt
+    if (prompt) {
+      prompt.prompt()
+      const { outcome } = await prompt.userChoice
+      if (outcome === 'accepted') { onInstalled?.(); setDone(true); return }
+    }
+    setDone(true)
+  }
+
+  if (done) return (
+    <div style={{ position:'fixed', inset:0, zIndex:600, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 20px' }}>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.45)', backdropFilter:'blur(8px)' }} onClick={onClose} />
+      <div style={{ position:'relative', background:'linear-gradient(160deg,#f4ede4,#ece3d6)', borderRadius:24, padding:'32px 24px', maxWidth:360, width:'100%', textAlign:'center', border:'1px solid rgba(200,180,140,.35)', boxShadow:'0 32px 80px rgba(0,0,0,.25)', fontFamily:"'Jost',sans-serif" }}>
+        <div style={{ fontSize:40, marginBottom:12 }}>🌱</div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:'#2a1e0a', marginBottom:8 }}>Votre jardin est installé !</div>
+        <p style={{ fontSize:12, fontWeight:300, color:'rgba(60,40,10,.60)', lineHeight:1.7, marginBottom:20 }}>Retrouvez-le depuis votre écran d'accueil, chaque jour.</p>
+        <button onClick={onClose} style={{ width:'100%', padding:'13px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:14, fontWeight:500, cursor:'pointer' }}>✨ Continuer</button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:600, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.45)', backdropFilter:'blur(8px)' }} onClick={onClose} />
+      <div style={{ position:'relative', width:'100%', maxWidth:480, background:'linear-gradient(170deg,#f4ede4,#ece3d6)', borderRadius:'24px 24px 0 0', padding:'8px 24px calc(28px + env(safe-area-inset-bottom, 0px))', border:'1px solid rgba(200,180,140,.30)', borderBottom:'none', boxShadow:'0 -16px 60px rgba(0,0,0,.20)', fontFamily:"'Jost',sans-serif" }}>
+        <div style={{ width:32, height:3, borderRadius:100, background:'rgba(60,40,10,.15)', margin:'12px auto 20px' }} />
+
+        <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18 }}>
+          <div style={{ width:48, height:48, borderRadius:13, background:'linear-gradient(135deg,#78c040,#4a8820)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>📲</div>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'#2a1e0a', lineHeight:1.15 }}>Installer l'application</div>
+            <div style={{ fontSize:11, color:'rgba(60,40,10,.50)', marginTop:3 }}>Accès rapide depuis votre écran d'accueil</div>
+          </div>
+        </div>
+
+        {_isIOS ? (
+          <div style={{ background:'rgba(60,40,10,.05)', border:'1px solid rgba(60,40,10,.10)', borderRadius:14, padding:'14px 16px', marginBottom:18, display:'flex', flexDirection:'column', gap:10 }}>
+            {[
+              { n:1, text: <>Appuyez sur <strong>Partager</strong> ⎙ en bas de Safari</> },
+              { n:2, text: <>Choisissez <strong>"Sur l'écran d'accueil"</strong></> },
+              { n:3, text: <>Appuyez sur <strong>"Ajouter"</strong></> },
+            ].map(({ n, text }) => (
+              <div key={n} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                <div style={{ width:22, height:22, borderRadius:'50%', background:'rgba(90,154,40,.15)', border:'1px solid rgba(90,154,40,.35)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:600, color:'#4a8820', flexShrink:0 }}>{n}</div>
+                <span style={{ fontSize:13, fontWeight:300, color:'rgba(40,28,10,.72)', lineHeight:1.55 }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:18 }}>
+            {[['🌱','Accès instantané','Sans navigateur, en un geste'],['🔔','Rappels doux','Rituels quotidiens à votre rythme'],['✨','Toujours avec vous','Votre espace intérieur, partout']].map(([icon, title, desc]) => (
+              <div key={title} style={{ display:'flex', gap:12, alignItems:'center', padding:'10px 12px', background:'rgba(60,40,10,.05)', border:'1px solid rgba(60,40,10,.09)', borderRadius:11 }}>
+                <span style={{ fontSize:18, width:34, height:34, borderRadius:9, background:'rgba(90,154,40,.12)', border:'1px solid rgba(90,154,40,.20)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</span>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:'#2a1e0a' }}>{title}</div>
+                  <div style={{ fontSize:11, fontWeight:300, color:'rgba(40,28,10,.55)' }}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!_isIOS && (
+          <button onClick={handleInstall} style={{ width:'100%', padding:'14px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:14, fontWeight:500, cursor:'pointer', marginBottom:8 }}>
+            🌿 Installer l'application
+          </button>
+        )}
+        <button onClick={onClose} style={{ width:'100%', padding:'11px', borderRadius:14, border:'none', background:'transparent', color:'rgba(60,40,10,.38)', fontSize:12, cursor:'pointer' }}>
+          {_isIOS ? 'Fermer' : 'Plus tard'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function GardenDashboard({ completedDays: completedDaysProp, completionDates = {}, onContinue, onOpenZone, onClose, onSignOut, petalColor1, petalColor2, plantHealth, isPro, onOpenProProfile, onReplayDay }) {
   const completedDays = completedDaysProp ?? []
-  const [showFleurModal, setShowFleurModal] = useState(false)
-  const [showRituelHint, setShowRituelHint] = useState(false)
+  const [showFleurModal,   setShowFleurModal]   = useState(false)
+  const [showRituelHint,   setShowRituelHint]   = useState(false)
+  const [showInstallModal, setShowInstallModal] = useState(false)
+  const [installed,        setInstalled]        = useState(false)
+
+  useEffect(() => {
+    const handler = () => setInstalled(true)
+    window.addEventListener('appinstalled', handler)
+    return () => window.removeEventListener('appinstalled', handler)
+  }, [])
 
   const completedZones = ZONE_DAYS
     .filter(z => completedDays.includes(z.day) && z.zone)
@@ -6096,14 +6186,24 @@ function GardenDashboard({ completedDays: completedDaysProp, completionDates = {
         })}
       </div>
 
-      {/* Bouton fermeture */}
+      {/* Bouton fermeture + installation */}
       <div style={{ textAlign: 'center', marginTop: 24 }}>
-        <button
-          onClick={onClose}
-          style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(16px, 4vw, 19px)', color: '#1a1010', background: 'rgba(255,255,255,0.90)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 100, padding: '11px 32px', cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.2s ease', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}
-        >
-          {lastCompleted >= 7 ? 'À très bientôt' : 'À demain'}
-        </button>
+        <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
+          <button
+            onClick={onClose}
+            style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(16px, 4vw, 19px)', color: '#1a1010', background: 'rgba(255,255,255,0.90)', border: '1px solid rgba(255,255,255,0.6)', borderRadius: 100, padding: '11px 32px', cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.2s ease', boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }}
+          >
+            {lastCompleted >= 7 ? 'À très bientôt' : 'À demain'}
+          </button>
+          {!_isStandalone && !installed && (
+            <button
+              onClick={() => setShowInstallModal(true)}
+              style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(13px, 3.5vw, 15px)', color: '#fff', background: 'linear-gradient(135deg,#c8a040,#a07820)', border: 'none', borderRadius: 100, padding: '11px 22px', cursor: 'pointer', letterSpacing: '0.03em', boxShadow: '0 2px 12px rgba(180,140,40,0.35)', display:'flex', alignItems:'center', gap:7 }}
+            >
+              📲 Installer l'appli
+            </button>
+          )}
+        </div>
         {onSignOut && (
           <div style={{ marginTop: 20 }}>
             <button
@@ -6115,6 +6215,7 @@ function GardenDashboard({ completedDays: completedDaysProp, completionDates = {
           </div>
         )}
       </div>
+      {showInstallModal && <InstallModal onClose={() => setShowInstallModal(false)} onInstalled={() => { setInstalled(true); setShowInstallModal(false) }} />}
     </div>
   )
 }
