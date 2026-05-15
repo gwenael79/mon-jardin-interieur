@@ -4626,7 +4626,7 @@ function FleurShareModal({ imageUrl, onClose }) {
 
         {/* Preview */}
         <div style={{ position:'relative' }}>
-          <img src={imageUrl} alt="Ma fleur" style={{ width:'100%', display:'block', height:210, objectFit:'cover', objectPosition:'top' }} />
+          <img src={imageUrl} alt="Ma fleur" style={{ width:'100%', display:'block', height:180, objectFit:'cover', objectPosition:'top' }} />
           <button onClick={onClose} style={{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,.55)', border:'1px solid rgba(255,255,255,.18)', borderRadius:20, color:'rgba(255,255,255,.85)', fontSize:12, padding:'4px 12px', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✕</button>
         </div>
 
@@ -5451,10 +5451,10 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <button
                 onClick={generateShareImage}
                 disabled={generatingShare}
-                title="Partager ma fleur"
-                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:100, background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', cursor: generatingShare ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,.80)', opacity: generatingShare ? 0.55 : 1 }}
+                style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 18px', borderRadius:100, background:'rgba(255,255,255,.10)', border:'1px solid rgba(255,255,255,.20)', cursor: generatingShare ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(255,255,255,.90)', opacity: generatingShare ? 0.55 : 1 }}
               >
-                {generatingShare ? '⏳' : '📷'}
+                <span style={{ fontSize:20 }}>{generatingShare ? '⏳' : '📷'}</span>
+                {generatingShare ? 'Génération…' : 'Partager'}
               </button>
             </div>
             {streak >= 1 && (
