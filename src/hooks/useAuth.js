@@ -8,11 +8,20 @@ export function useAuthInit() {
   const { setSession, setLoading, reset } = useAuthStore()
 
   useEffect(() => {
+    // Filet de sécurité : force setLoading(false) après 8s si getSession accroche
+    const safetyTimer = setTimeout(() => setLoading(false), 8000)
+
     // Récupère la session existante au démarrage
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setLoading(false)
-    })
+    supabase.auth.getSession()
+      .then(({ data }) => {
+        clearTimeout(safetyTimer)
+        setSession(data.session)
+        setLoading(false)
+      })
+      .catch(() => {
+        clearTimeout(safetyTimer)
+        setLoading(false)
+      })
 
     // Écoute les changements en temps réel
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {

@@ -212,50 +212,55 @@ export default function App() {
 
     setScreen('loading')
     ;(async () => {
-      const { data: userData } = await supabase
-        .from('users').select('onboarded, onboarding_completed, role').eq('id', user.id).maybeSingle()
+      try {
+        const { data: userData } = await supabase
+          .from('users').select('onboarded, onboarding_completed, role').eq('id', user.id).maybeSingle()
 
-      // Détecter le rôle pro dès le départ
-      if (userData?.role === 'pro') {
-        setIsPro(true)
-        if (localStorage.getItem('mji_show_pro_welcome') === '1') {
-          setShowProWelcome(true)
+        // Détecter le rôle pro dès le départ
+        if (userData?.role === 'pro') {
+          setIsPro(true)
+          if (localStorage.getItem('mji_show_pro_welcome') === '1') {
+            setShowProWelcome(true)
+          }
         }
-      }
 
-      const isOnboarded = userData?.onboarded === true
+        const isOnboarded = userData?.onboarded === true
 
-      if (isOnboarded && sessionStorage.getItem('pendingOnboarding') === 'true') {
-        sessionStorage.removeItem('pendingOnboarding')
-        setScreen('dashboard'); return
-      }
-
-      if (!isOnboarded) {
-        setScreen('activating')
-        try {
-          await activateFree()
-          await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
-          await refresh()
-        } catch (e) { console.warn('[auto-activate]', e) }
-        if (localStorage.getItem('mji_show_pro_welcome') === '1') {
-          setProDisplayName(user.user_metadata?.display_name?.split(' ')[0] || '')
-          setScreen('pro_welcome'); return
+        if (isOnboarded && sessionStorage.getItem('pendingOnboarding') === 'true') {
+          sessionStorage.removeItem('pendingOnboarding')
+          setScreen('dashboard'); return
         }
-        setScreen('flower'); return
+
+        if (!isOnboarded) {
+          setScreen('activating')
+          try {
+            await activateFree()
+            await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
+            await refresh()
+          } catch (e) { console.warn('[auto-activate]', e) }
+          if (localStorage.getItem('mji_show_pro_welcome') === '1') {
+            setProDisplayName(user.user_metadata?.display_name?.split(' ')[0] || '')
+            setScreen('pro_welcome'); return
+          }
+          setScreen('flower'); return
+        }
+
+        // Si l'onboarding n'est pas terminé → retourner à l'onboarding
+        if (!userData?.onboarding_completed) {
+          setScreen('onboarding'); return
+        }
+
+        const { data: profileData } = await supabase
+          .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
+        const completedDays = profileData?.week_one_data?.completedDays ?? []
+        setWeekOneCompletedDays(completedDays)
+        if (completedDays.length < 7) { setScreen('weekone'); return }
+
+        setScreen('dashboard')
+      } catch (e) {
+        console.error('[init]', e)
+        setScreen('dashboard')
       }
-
-      // Si l'onboarding n'est pas terminé → retourner à l'onboarding
-      if (!userData?.onboarding_completed) {
-        setScreen('onboarding'); return
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
-      const completedDays = profileData?.week_one_data?.completedDays ?? []
-      setWeekOneCompletedDays(completedDays)
-      if (completedDays.length < 7) { setScreen('weekone'); return }
-
-      setScreen('dashboard')
     })()
   }, [user?.id, authLoading, isRecovery])
 
