@@ -712,7 +712,7 @@ function TrialInfoModal({ daysLeft, onClose, onUpgrade }) {
   )
 }
 
-function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, isAdmin, userId, onBack, onOpenFleur, onUpgrade, onTrialInfo, onNameSaved }) {
+function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCardSeen, isPro, isAdmin, userId, onBack, onOpenFleur, onUpgrade, onTrialInfo, onNameSaved }) {
   const [portalLoading, setPortalLoading] = useState(false)
 
   async function openPortal() {
@@ -1028,11 +1028,6 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, 
               {portalLoading ? '…' : 'Gérer'}
             </button>
           )}
-          {isTrial && (
-            <button onClick={onUpgrade} style={{ padding:'8px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', whiteSpace:'nowrap' }}>
-              Continuer →
-            </button>
-          )}
           {!isPremium && (
             <button onClick={onUpgrade} style={{ padding:'8px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', whiteSpace:'nowrap' }}>
               Passer Premium
@@ -1041,8 +1036,8 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, 
         </div>
         )}
 
-        {/* Bouton essai offert — visible uniquement si questionnaire complété et trial actif */}
-        {isTrialActive && (
+        {/* Bouton essai offert — masqué après première ouverture */}
+        {isTrialActive && !trialCardSeen && (
           <div onClick={onTrialInfo} style={{
             display:'flex', alignItems:'center', gap:12,
             padding:'13px 15px', borderRadius:14, marginTop:10, cursor:'pointer',
@@ -1446,6 +1441,7 @@ export default function DashboardPage() {
   const [showProProfileModal, setShowProProfileModal] = useState(false)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
   const [showTrialInfoModal,  setShowTrialInfoModal]  = useState(false)
+  const [trialCardSeen,       setTrialCardSeen]       = useState(() => !!localStorage.getItem(`trial_card_seen_${user?.id}`))
   const [profileView,         setProfileView]         = useState('main') // 'main' | 'settings'
   const [showSettingsDrawer,  setShowSettingsDrawer]  = useState(false)
   const [showHelp,            setShowHelp]            = useState(false)
@@ -1995,11 +1991,6 @@ export default function DashboardPage() {
                   Gérer mon abonnement
                 </button>
               )}
-              {isTrialActive && !isPaidPremium && (
-                <div onClick={() => { setShowProfileModal(false); setShowPremiumModal(true) }} style={{ padding:'5px 14px', borderRadius:100, background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
-                  Continuer →
-                </div>
-              )}
               {!isPremium && (
                 <div onClick={() => { setShowProfileModal(false); setShowPremiumModal(true) }} style={{ padding:'5px 14px', borderRadius:100, background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
                   Passer Premium
@@ -2007,9 +1998,9 @@ export default function DashboardPage() {
               )}
             </div>}
 
-            {/* Bouton essai offert — visible uniquement si questionnaire complété et trial actif */}
-            {isTrialActive && (
-              <div onClick={() => { setShowProfileModal(false); setShowTrialInfoModal(true) }} style={{
+            {/* Bouton essai offert — masqué après première ouverture */}
+            {isTrialActive && !trialCardSeen && (
+              <div onClick={() => { localStorage.setItem(`trial_card_seen_${user?.id}`, '1'); setTrialCardSeen(true); setShowProfileModal(false); setShowTrialInfoModal(true) }} style={{
                 display:'flex', alignItems:'center', gap:12,
                 padding:'13px 15px', borderRadius:14, marginBottom:16, cursor:'pointer',
                 background:'linear-gradient(135deg,rgba(210,168,60,.16),rgba(185,145,45,.10))',
@@ -2093,7 +2084,8 @@ export default function DashboardPage() {
                 onBack={() => setProfileView('main')}
                 onOpenFleur={() => { setShowProfileModal(false); setProfileView('main'); setOpenModalId('jardin') }}
                 onUpgrade={() => { setShowProfileModal(false); setProfileView('main'); setShowPremiumModal(true) }}
-                onTrialInfo={() => { setShowProfileModal(false); setShowTrialInfoModal(true) }}
+                onTrialInfo={() => { localStorage.setItem(`trial_card_seen_${user?.id}`, '1'); setTrialCardSeen(true); setShowProfileModal(false); setShowTrialInfoModal(true) }}
+                trialCardSeen={trialCardSeen}
                 onNameSaved={() => clearProfileCache(user?.id)}
               />
             )}
