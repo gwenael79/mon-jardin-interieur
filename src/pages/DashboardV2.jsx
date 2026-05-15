@@ -654,7 +654,7 @@ const HORAIRES_SETTINGS     = [
   { id:'soir',  label:'Soir',  emoji:'🌙' },
 ]
 
-function SettingsPanel({ name, email, isPremium, isPro, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
+function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
   const [portalLoading, setPortalLoading] = useState(false)
 
   async function openPortal() {
@@ -961,11 +961,18 @@ function SettingsPanel({ name, email, isPremium, isPro, userId, onBack, onOpenFl
         <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
             <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:5 }}>Abonnement</div>
-            <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? '✦ Premium actif' : 'Version gratuite'}</div>
+            <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>
+              {isTrial ? `🎁 Essai offert · ${trialDaysLeft} jour${trialDaysLeft > 1 ? 's' : ''}` : isPremium ? '✦ Premium actif' : 'Version gratuite'}
+            </div>
           </div>
-          {isPremium && (
+          {isPremium && !isTrial && (
             <button onClick={openPortal} disabled={portalLoading} style={{ padding:'8px 14px', borderRadius:20, border:'1px solid rgba(90,154,40,.35)', background:'rgba(90,154,40,.08)', color:'#5a9a28', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: portalLoading ? 'wait' : 'pointer', opacity: portalLoading ? 0.6 : 1, whiteSpace:'nowrap' }}>
               {portalLoading ? '…' : 'Gérer'}
+            </button>
+          )}
+          {isTrial && (
+            <button onClick={onUpgrade} style={{ padding:'8px 14px', borderRadius:20, border:'none', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontSize:12, fontFamily:"'Jost',sans-serif", cursor:'pointer', whiteSpace:'nowrap' }}>
+              Continuer →
             </button>
           )}
           {!isPremium && (
@@ -1322,11 +1329,17 @@ export default function DashboardPage() {
   const { track }                              = useAnalytics(user?.id)
 
   const [isPro,               setIsPro]               = useState(false)
+  const [premiumTrialUntil,   setPremiumTrialUntil]   = useState(null)
 
-  const isPremium = isPro || (
+  const isPaidPremium = isPro || (
     (profile?.plan === 'premium' || !!profile?.premium_until)
     && profile?.premium_until && new Date(profile.premium_until) > new Date()
   )
+  const isTrialActive  = !!premiumTrialUntil && premiumTrialUntil > new Date()
+  const isPremium      = isPaidPremium || isTrialActive
+  const trialDaysLeft  = isTrialActive
+    ? Math.ceil((premiumTrialUntil - new Date()) / (1000 * 60 * 60 * 24))
+    : 0
 
   // ── Modals & états ── (identique à DashboardPage)
   const [active,              setActive]              = useState('jardin')
@@ -1396,6 +1409,18 @@ export default function DashboardPage() {
     }
     return isReturn
   }, [])
+
+  useEffect(() => {
+    if (!user?.id) return
+    supabase
+      .from('profiles')
+      .select('premium_trial_until')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.premium_trial_until) setPremiumTrialUntil(new Date(data.premium_trial_until))
+      })
+  }, [user?.id])
 
   useEffect(() => {
     if (!user?.id) return
@@ -1942,6 +1967,8 @@ export default function DashboardPage() {
                 name={name}
                 email={email}
                 isPremium={isPremium}
+                isTrial={isTrialActive && !isPaidPremium}
+                trialDaysLeft={trialDaysLeft}
                 isPro={isPro}
                 userId={user?.id}
                 onBack={() => setProfileView('main')}

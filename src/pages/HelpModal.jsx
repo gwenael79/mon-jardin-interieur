@@ -66,8 +66,8 @@ const GUIDE_STEPS = [
     icon: '✦',
     title: 'Lumens',
     subtitle: 'Votre lumière intérieure',
-    description: 'Les Lumens mesurent votre rayonnement. Vous en gagnez en complétant des rituels, en participant aux défis et en interagissant chaque jour. Votre aura grandit avec vous.',
-    tip: '💡 Consultez vos Lumens depuis le bandeau doré en bas de l\'écran.',
+    description: 'Les Lumens mesurent votre rayonnement. Vous en gagnez en complétant des rituels, en participant aux défis et en interagissant chaque jour. Ils ont aussi une valeur concrète : certains professionnels vous permettent de les échanger pour accéder à des ateliers ou acquérir des contenus dans la jardinothèque. Votre aura grandit, et elle s\'ouvre.',
+    tip: '💡 Consultez vos Lumens depuis le badge doré en haut de l\'écran. Les échanges disponibles dépendent de ce que chaque professionnel propose.',
     accent: 'var(--gold)',
     bg: 'rgba(var(--gold-rgb),0.10)',
     border: 'rgba(var(--gold-rgb),0.22)',
@@ -77,7 +77,7 @@ const GUIDE_STEPS = [
 const FAQ = [
   { q: 'À quelle fréquence dois-je utiliser l\'app ?',   a: 'Idéalement chaque jour — même 2 minutes suffisent. C\'est la régularité, pas la durée, qui produit les effets.' },
   { q: 'Que se passe-t-il si je saute un jour ?',         a: 'Votre plante perd légèrement de sa vitalité, mais elle ne disparaît pas. Revenez quand vous pouvez, sans culpabilité.' },
-  { q: 'À quoi servent les Lumens ?',                     a: 'Les Lumens récompensent votre régularité. Ils reflètent votre engagement dans l\'app et débloquent des badges au fil du temps.' },
+  { q: 'À quoi servent les Lumens ?',                     a: 'Les Lumens récompensent votre régularité et reflètent votre engagement. Ils débloquent des badges, mais aussi — selon ce que propose chaque professionnel — ils peuvent s\'échanger pour accéder à des ateliers ou acquérir des contenus dans la jardinothèque.' },
   { q: 'Mes données sont-elles privées ?',                a: 'Oui. Par défaut, votre jardin est privé. Vous choisissez ce que vous partagez dans les paramètres de confidentialité.' },
   { q: 'Comment fonctionne le bilan quotidien ?',         a: 'Le bilan évalue vos 5 zones intérieures. Il guide la progression de votre plante et vos rituels du jour.' },
 ]
