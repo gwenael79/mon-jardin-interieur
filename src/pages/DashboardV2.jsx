@@ -654,7 +654,65 @@ const HORAIRES_SETTINGS     = [
   { id:'soir',  label:'Soir',  emoji:'🌙' },
 ]
 
-function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, userId, onBack, onOpenFleur, onUpgrade, onNameSaved }) {
+function TrialInfoModal({ daysLeft, onClose, onUpgrade }) {
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:500, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px' }}>
+      <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.45)', backdropFilter:'blur(8px)' }} onClick={onClose} />
+      <div style={{
+        position:'relative', width:'100%', maxWidth:400, borderRadius:22,
+        background:'linear-gradient(160deg,#fdf6ec,#f5ead8)',
+        border:'1px solid rgba(200,158,55,.40)',
+        boxShadow:'0 32px 80px rgba(0,0,0,.25)',
+        padding:'28px 24px 24px',
+        fontFamily:"'Jost',sans-serif",
+      }}>
+        <button onClick={onClose} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,100,.3)', borderRadius:'50%', width:28, height:28, cursor:'pointer', color:'rgba(30,20,8,.5)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
+
+        {/* Icône + titre */}
+        <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:18 }}>
+          <div style={{ width:52, height:52, borderRadius:14, background:'linear-gradient(135deg,#c8a040,#a07820)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>🎁</div>
+          <div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:400, color:'#4a3808', lineHeight:1.1 }}>Votre mois Premium<br/>est actif</div>
+            <div style={{ fontSize:11, color:'rgba(140,100,20,.75)', marginTop:3 }}>Accès complet · {daysLeft} jour{daysLeft > 1 ? 's' : ''} restant{daysLeft > 1 ? 's' : ''}</div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p style={{ fontSize:12, fontWeight:300, color:'rgba(80,55,10,.65)', lineHeight:1.75, marginBottom:16 }}>
+          En répondant au questionnaire, vous avez débloqué un mois complet sans restriction, sans carte bancaire requise.
+        </p>
+
+        {/* Features */}
+        <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:22 }}>
+          {[
+            'Tous les espaces et rituels débloqués',
+            'Club des jardiniers & jardin collectif',
+            'Jardinothèque complète (audio, vidéo, e-books)',
+            'Défis communautaires complets',
+            'Ateliers guidés & accompagnements',
+          ].map((f, i) => (
+            <div key={i} style={{ display:'flex', gap:9, alignItems:'flex-start' }}>
+              <span style={{ color:'#c8a040', fontSize:13, flexShrink:0, marginTop:1 }}>✓</span>
+              <span style={{ fontSize:12, fontWeight:300, color:'rgba(80,55,10,.72)', lineHeight:1.5 }}>{f}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA principal */}
+        <button onClick={onClose} style={{ width:'100%', padding:'13px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#c8a040,#a07820)', color:'#fff', fontSize:14, fontWeight:500, cursor:'pointer', marginBottom:10 }}>
+          ✨ Explorer mon jardin
+        </button>
+
+        {/* CTA secondaire */}
+        <button onClick={onUpgrade} style={{ width:'100%', padding:'10px', borderRadius:14, border:'1px solid rgba(140,100,20,.25)', background:'transparent', color:'rgba(140,100,20,.65)', fontSize:12, cursor:'pointer' }}>
+          Passer au Premium payant →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, isAdmin, userId, onBack, onOpenFleur, onUpgrade, onTrialInfo, onNameSaved }) {
   const [portalLoading, setPortalLoading] = useState(false)
 
   async function openPortal() {
@@ -956,8 +1014,8 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, 
           )}
         </div>
 
-        {/* Abonnement — masqué pour les pros (géré dans Compte Pro) */}
-        {!isPro && (
+        {/* Abonnement — masqué pour les pros sauf admin (géré dans Compte Pro) */}
+        {(!isPro || isAdmin) && (
         <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
             <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:5 }}>Abonnement</div>
@@ -981,6 +1039,31 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, isPro, 
             </button>
           )}
         </div>
+        )}
+
+        {/* Bouton essai offert — visible uniquement si questionnaire complété et trial actif */}
+        {isTrialActive && (
+          <div onClick={onTrialInfo} style={{
+            display:'flex', alignItems:'center', gap:12,
+            padding:'13px 15px', borderRadius:14, marginTop:10, cursor:'pointer',
+            background:'linear-gradient(135deg,rgba(210,168,60,.16),rgba(185,145,45,.10))',
+            border:'1px solid rgba(200,158,55,.42)',
+          }}>
+            <div style={{
+              width:38, height:38, borderRadius:11, flexShrink:0,
+              background:'linear-gradient(135deg,#c8a040,#a07820)',
+              display:'flex', alignItems:'center', justifyContent:'center', fontSize:19,
+            }}>🎁</div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:12, fontWeight:600, color:'#7a5c10', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>
+                Votre mois Premium offert
+              </div>
+              <div style={{ fontSize:11, fontWeight:300, color:'rgba(130,95,18,.68)', fontFamily:"'Jost',sans-serif", lineHeight:1.5 }}>
+                {trialDaysLeft} jour{trialDaysLeft > 1 ? 's' : ''} d'accès complet · sans carte bancaire
+              </div>
+            </div>
+            <span style={{ fontSize:16, color:'rgba(130,95,18,.40)' }}>›</span>
+          </div>
         )}
 
       </div>
@@ -1330,6 +1413,7 @@ export default function DashboardPage() {
 
   const [isPro,               setIsPro]               = useState(false)
   const [premiumTrialUntil,   setPremiumTrialUntil]   = useState(null)
+  const isAdmin = ADMIN_IDS.includes(user?.id)
 
   const isPaidPremium = isPro || (
     (profile?.plan === 'premium' || !!profile?.premium_until)
@@ -1361,6 +1445,7 @@ export default function DashboardPage() {
   const [showProfileModal,    setShowProfileModal]    = useState(false)
   const [showProProfileModal, setShowProProfileModal] = useState(false)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
+  const [showTrialInfoModal,  setShowTrialInfoModal]  = useState(false)
   const [profileView,         setProfileView]         = useState('main') // 'main' | 'settings'
   const [showSettingsDrawer,  setShowSettingsDrawer]  = useState(false)
   const [showHelp,            setShowHelp]            = useState(false)
@@ -1871,6 +1956,7 @@ export default function DashboardPage() {
         </div>
       )}
       {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => setShowPremiumModal(false)} />}
+      {showTrialInfoModal && <TrialInfoModal daysLeft={trialDaysLeft} onClose={() => setShowTrialInfoModal(false)} onUpgrade={() => { setShowTrialInfoModal(false); setShowPremiumModal(true) }} />}
       {showAvisModal && <AppAvisModal userId={user?.id} displayName={profile?.display_name ?? ''} onClose={() => setShowAvisModal(false)} />}
       {showProfileModal && (
         <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -1890,13 +1976,15 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Abonnement — masqué pour les pros (géré dans Compte Pro) */}
-            {!isPro && <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            {/* Abonnement — masqué pour les pros sauf admin (géré dans Compte Pro) */}
+            {(!isPro || isAdmin) && <div style={{ padding:'12px 16px', background: isPremium ? 'rgba(122,170,80,.08)' : 'rgba(0,0,0,.04)', borderRadius:12, border: isPremium ? '1px solid rgba(122,170,80,.25)' : '1px solid rgba(0,0,0,.08)', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
               <div>
                 <div style={{ fontSize:10, letterSpacing:'.14em', textTransform:'uppercase', color: isPremium ? '#5a9a28' : 'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>Abonnement</div>
-                <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>{isPremium ? 'Premium actif' : 'Version gratuite'}</div>
+                <div style={{ fontSize:15, fontWeight:500, color: isPremium ? '#3a7a18' : 'rgba(30,20,8,.80)', fontFamily:"'Jost',sans-serif" }}>
+                  {isTrialActive && !isPaidPremium ? `🎁 Essai offert · ${trialDaysLeft} jour${trialDaysLeft > 1 ? 's' : ''}` : isPremium ? 'Premium actif' : 'Version gratuite'}
+                </div>
               </div>
-              {isPremium && (
+              {isPaidPremium && (
                 <button onClick={async () => {
                   try {
                     const { data, error } = await supabase.functions.invoke('stripe-portal', { body: { returnUrl: window.location.origin } })
@@ -1907,12 +1995,42 @@ export default function DashboardPage() {
                   Gérer mon abonnement
                 </button>
               )}
+              {isTrialActive && !isPaidPremium && (
+                <div onClick={() => { setShowProfileModal(false); setShowPremiumModal(true) }} style={{ padding:'5px 14px', borderRadius:100, background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
+                  Continuer →
+                </div>
+              )}
               {!isPremium && (
                 <div onClick={() => { setShowProfileModal(false); setShowPremiumModal(true) }} style={{ padding:'5px 14px', borderRadius:100, background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontSize:11, fontWeight:500, cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
                   Passer Premium
                 </div>
               )}
             </div>}
+
+            {/* Bouton essai offert — visible uniquement si questionnaire complété et trial actif */}
+            {isTrialActive && (
+              <div onClick={() => { setShowProfileModal(false); setShowTrialInfoModal(true) }} style={{
+                display:'flex', alignItems:'center', gap:12,
+                padding:'13px 15px', borderRadius:14, marginBottom:16, cursor:'pointer',
+                background:'linear-gradient(135deg,rgba(210,168,60,.16),rgba(185,145,45,.10))',
+                border:'1px solid rgba(200,158,55,.42)',
+              }}>
+                <div style={{
+                  width:40, height:40, borderRadius:12, flexShrink:0,
+                  background:'linear-gradient(135deg,#c8a040,#a07820)',
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:20,
+                }}>🎁</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600, color:'#7a5c10', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>
+                    Votre mois Premium offert
+                  </div>
+                  <div style={{ fontSize:11, fontWeight:300, color:'rgba(130,95,18,.68)', fontFamily:"'Jost',sans-serif", lineHeight:1.5 }}>
+                    {trialDaysLeft} jour{trialDaysLeft > 1 ? 's' : ''} d'accès complet · sans carte bancaire
+                  </div>
+                </div>
+                <span style={{ fontSize:16, color:'rgba(130,95,18,.40)' }}>›</span>
+              </div>
+            )}
 
             {/* Actions */}
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:4 }}>
@@ -1970,10 +2088,12 @@ export default function DashboardPage() {
                 isTrial={isTrialActive && !isPaidPremium}
                 trialDaysLeft={trialDaysLeft}
                 isPro={isPro}
+                isAdmin={isAdmin}
                 userId={user?.id}
                 onBack={() => setProfileView('main')}
                 onOpenFleur={() => { setShowProfileModal(false); setProfileView('main'); setOpenModalId('jardin') }}
                 onUpgrade={() => { setShowProfileModal(false); setProfileView('main'); setShowPremiumModal(true) }}
+                onTrialInfo={() => { setShowProfileModal(false); setShowTrialInfoModal(true) }}
                 onNameSaved={() => clearProfileCache(user?.id)}
               />
             )}
