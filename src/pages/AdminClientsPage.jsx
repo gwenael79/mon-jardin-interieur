@@ -758,6 +758,19 @@ export function AdminClientsPage() {
   const [selectedMails2, setSelectedMails2] = useState(new Set())  // inquiet 6–14j
   const [selectedMails3, setSelectedMails3] = useState(new Set())  // oublié  15j+
   const [sendingMail,    setSendingMail]    = useState(false)
+  const [sentCooldowns,  setSentCooldowns]  = useState(() => {
+    // Charge les cooldowns depuis localStorage au montage
+    const map = {}
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (!k.startsWith('email_sent_')) return
+        const ts = parseInt(localStorage.getItem(k) ?? '0')
+        if (Date.now() - ts < 10 * 86400000) map[k] = ts
+        else localStorage.removeItem(k) // nettoyage auto des entrées expirées
+      })
+    } catch {}
+    return map
+  })
   const [funnel,        setFunnel]        = useState(null)
   const [funnelUsers,   setFunnelUsers]   = useState([])
   const [subStats,      setSubStats]      = useState(null)
@@ -1024,11 +1037,21 @@ export function AdminClientsPage() {
     setSendingMail(true)
     try {
       const emails  = [...mailSet]
-      const userIds = palmares.filter(p => p.email && mailSet.has(p.email)).map(p => p.id)
+      const sentUsers = palmares.filter(p => p.email && mailSet.has(p.email))
+      const userIds = sentUsers.map(p => p.id)
       const { error } = await supabase.functions.invoke('send-reengagement-email', {
         body: { emails, userIds, type },
       })
       if (error) throw error
+      // Enregistre le cooldown 10j pour chaque utilisateur envoyé
+      const now = Date.now()
+      const newCooldowns = { ...sentCooldowns }
+      sentUsers.forEach(p => {
+        const key = `email_sent_${p.id}_${type}`
+        try { localStorage.setItem(key, String(now)) } catch {}
+        newCooldowns[key] = now
+      })
+      setSentCooldowns(newCooldowns)
       showToast(`✉️ Email envoyé à ${emails.length} contact${emails.length > 1 ? 's' : ''}`)
       setMailSet(new Set())
     } catch (e) {
@@ -1327,6 +1350,10 @@ export function AdminClientsPage() {
                   const inRange1 = daysSince !== null && daysSince >= 1  && daysSince <= 5
                   const inRange2 = daysSince !== null && daysSince >= 6  && daysSince <= 14
                   const inRange3 = daysSince !== null && daysSince >= 15
+                  const cooled1  = !!sentCooldowns[`email_sent_${p.id}_rappel`]
+                  const cooled2  = !!sentCooldowns[`email_sent_${p.id}_inquiet`]
+                  const cooled3  = !!sentCooldowns[`email_sent_${p.id}_oubli`]
+                  const daysLeft = (key) => { const ts = sentCooldowns[key]; return ts ? Math.ceil((10 - (Date.now() - ts) / 86400000)) : 0 }
                   const isSel1 = p.email && selectedMails1.has(p.email)
                   const isSel2 = p.email && selectedMails2.has(p.email)
                   const isSel3 = p.email && selectedMails3.has(p.email)
@@ -1372,22 +1399,28 @@ export function AdminClientsPage() {
                       {p.connexions > 0 ? p.connexions : '—'}
                     </div>
                     {/* 📩 Rappel 1–5j */}
-                    <div style={{ textAlign: 'center' }}>
-                      {inRange1
-                        ? <input type="checkbox" checked={isSel1} onChange={toggle(setSelectedMails1, isSel1)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#78c85e' }} />
-                        : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
+                    <div style={{ textAlign: 'center' }} title={cooled1 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_rappel`)}j` : ''}>
+                      {cooled1
+                        ? <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.20)' }}>{daysLeft(`email_sent_${p.id}_rappel`)}j</span>
+                        : inRange1
+                          ? <input type="checkbox" checked={isSel1} onChange={toggle(setSelectedMails1, isSel1)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#78c85e' }} />
+                          : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
                     </div>
                     {/* 🌿 Inquiet 6–14j */}
-                    <div style={{ textAlign: 'center' }}>
-                      {inRange2
-                        ? <input type="checkbox" checked={isSel2} onChange={toggle(setSelectedMails2, isSel2)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#e8c060' }} />
-                        : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
+                    <div style={{ textAlign: 'center' }} title={cooled2 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_inquiet`)}j` : ''}>
+                      {cooled2
+                        ? <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.20)' }}>{daysLeft(`email_sent_${p.id}_inquiet`)}j</span>
+                        : inRange2
+                          ? <input type="checkbox" checked={isSel2} onChange={toggle(setSelectedMails2, isSel2)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#e8c060' }} />
+                          : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
                     </div>
                     {/* 💔 Oublié 15j+ */}
-                    <div style={{ textAlign: 'center' }}>
-                      {inRange3
-                        ? <input type="checkbox" checked={isSel3} onChange={toggle(setSelectedMails3, isSel3)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#e08080' }} />
-                        : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
+                    <div style={{ textAlign: 'center' }} title={cooled3 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_oubli`)}j` : ''}>
+                      {cooled3
+                        ? <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.20)' }}>{daysLeft(`email_sent_${p.id}_oubli`)}j</span>
+                        : inRange3
+                          ? <input type="checkbox" checked={isSel3} onChange={toggle(setSelectedMails3, isSel3)} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: '#e08080' }} />
+                          : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
                     </div>
                   </div>
                   )

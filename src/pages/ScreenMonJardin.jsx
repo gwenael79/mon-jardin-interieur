@@ -4558,6 +4558,142 @@ function AllRitualsModal({ completedRituals, onToggle, onClose }) {
   )
 }
 
+/* ── Modal de partage de fleur ── */
+
+function FleurShareModal({ imageUrl, onClose }) {
+  const shareText = "Je vous présente ma fleur, que je cultive dans mon jardin intérieur. J'apprends à prendre soin de moi par de petites actions quotidiennes. Ma fleur devient un peu mon reflet. Tu souhaites prendre soin de toi ? Rejoins-moi sur monjardininterieur.com"
+  const [toast,   setToast]   = useState(null)
+  const [posting, setPosting] = useState(false)
+
+  function showToast(msg, duration = 4000) {
+    setToast(msg)
+    setTimeout(() => setToast(null), duration)
+  }
+
+  function download() {
+    const a = document.createElement('a')
+    a.href = imageUrl; a.download = 'ma-fleur.jpg'; a.click()
+  }
+
+  async function shareToBuffer() {
+    if (posting) return
+    setPosting(true)
+    try {
+      // 1. Upload image vers Supabase Storage (bucket n8n-images/posts/)
+      const res  = await fetch(imageUrl)
+      const blob = await res.blob()
+      const filename = `fleur-${Date.now()}.jpg`
+
+      const { error: uploadErr } = await supabase.storage
+        .from('n8n-images')
+        .upload(`posts/${filename}`, blob, { contentType: 'image/jpeg', upsert: false })
+      if (uploadErr) throw new Error('Upload Supabase : ' + uploadErr.message)
+
+      const { data: urlData } = supabase.storage
+        .from('n8n-images')
+        .getPublicUrl(`posts/${filename}`)
+      const photoUrl = urlData.publicUrl
+
+      // 2. Planifier via Edge Function (proxy Buffer — évite CORS)
+      const bufRes = await fetch(
+        'https://islnwrgghdjozbhvugan.supabase.co/functions/v1/buffer-share',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoUrl, caption: shareText }),
+        }
+      )
+      if (!bufRes.ok) {
+        const errText = await bufRes.text().catch(() => String(bufRes.status))
+        throw new Error(errText)
+      }
+
+      showToast('✓ Publié sur Instagram, TikTok & Facebook dans 10 min !', 5000)
+    } catch (e) {
+      console.error('[shareToBuffer]', e)
+      showToast('Erreur lors de la publication — ' + e.message)
+    } finally {
+      setPosting(false)
+    }
+  }
+
+  return (
+    <div
+      style={{ position:'fixed', inset:0, zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20, background:'rgba(0,0,0,0.78)', backdropFilter:'blur(10px)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{ background:'#12121e', borderRadius:20, overflow:'hidden', maxWidth:400, width:'100%', border:'1px solid rgba(255,255,255,.12)', boxShadow:'0 20px 80px rgba(0,0,0,.7)' }}>
+
+        {/* Preview */}
+        <div style={{ position:'relative' }}>
+          <img src={imageUrl} alt="Ma fleur" style={{ width:'100%', display:'block', height:210, objectFit:'cover', objectPosition:'top' }} />
+          <button onClick={onClose} style={{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,.55)', border:'1px solid rgba(255,255,255,.18)', borderRadius:20, color:'rgba(255,255,255,.85)', fontSize:12, padding:'4px 12px', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✕</button>
+        </div>
+
+        {/* Boutons */}
+        <div style={{ padding:'18px 16px 20px', display:'flex', flexDirection:'column', gap:10 }}>
+
+          {/* Partager sur les réseaux de Féline */}
+          <button
+            onClick={shareToBuffer}
+            disabled={posting}
+            style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:10,
+              padding:'14px 0', borderRadius:14,
+              background: posting ? 'rgba(93,200,122,0.06)' : 'linear-gradient(135deg,rgba(93,200,122,0.18),rgba(93,200,122,0.08))',
+              border:'1px solid rgba(93,200,122,0.35)',
+              color: posting ? 'rgba(93,200,122,0.5)' : 'rgba(93,200,122,0.95)',
+              cursor: posting ? 'wait' : 'pointer',
+              fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, letterSpacing:'.03em',
+              transition:'all .2s',
+            }}
+          >
+            {posting ? (
+              <>
+                <span style={{ display:'inline-block', width:14, height:14, border:'2px solid rgba(93,200,122,0.4)', borderTopColor:'rgba(93,200,122,0.9)', borderRadius:'50%', animation:'bufSpin .7s linear infinite' }}/>
+                Publication en cours…
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+                Partager sur les réseaux de Féline
+              </>
+            )}
+          </button>
+
+          {/* Enregistrer */}
+          <button
+            onClick={download}
+            style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              padding:'12px 0', borderRadius:14,
+              background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.10)',
+              color:'rgba(255,255,255,0.45)',
+              cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13,
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Enregistrer l'image
+          </button>
+
+          {/* Légende réseaux */}
+          <div style={{ textAlign:'center', fontSize:10, color:'rgba(255,255,255,0.22)', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em' }}>
+            Instagram · TikTok · Facebook
+          </div>
+        </div>
+
+        {/* Toast */}
+        {toast && (
+          <div style={{ margin:'0 16px 16px', padding:'11px 14px', borderRadius:10, background:'rgba(93,200,122,0.08)', border:'1px solid rgba(93,200,122,0.22)', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(200,240,210,0.85)', textAlign:'center', lineHeight:1.55 }}>
+            {toast}
+          </div>
+        )}
+        <style>{`@keyframes bufSpin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    </div>
+  )
+}
+
 function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal, isPostRitual = false }) {
   // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
   const { rituals: _rituals, loading: ritualsLoading } = useRituels()
@@ -4796,6 +4932,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const ritualJustCompleted = useRef(false)
 
   const prevShowRitualSuggestion = useRef(false)
+  const fleurZoneRef   = useRef(null)
+  const [shareImageUrl,   setShareImageUrl]   = useState(null)
+  const [generatingShare, setGeneratingShare] = useState(false)
   useEffect(() => {
     if (prevShowRitualSuggestion.current && !showRitualSuggestion) {
       requestAnimationFrame(() => {
@@ -5039,6 +5178,125 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     return () => clearTimeout(delay)
   }, [plant?.id, plant?.health])
 
+  async function generateShareImage() {
+    if (!fleurZoneRef.current || generatingShare) return
+    setGeneratingShare(true)
+    try {
+      const svgEl = fleurZoneRef.current.querySelector('svg')
+      if (!svgEl) return
+
+      const W_SVG = 1080, H_SVG = Math.round(1080 * 260 / 400)  // 702
+      const clone = svgEl.cloneNode(true)
+      clone.setAttribute('width',  String(W_SVG))
+      clone.setAttribute('height', String(H_SVG))
+      clone.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+
+      let svgStr = new XMLSerializer().serializeToString(clone)
+      if (!svgStr.includes('xmlns='))
+        svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+      // Resolve CSS custom properties — unresolved var(--x) renders as black in isolated SVG images
+      const rootStyle = getComputedStyle(document.documentElement)
+      svgStr = svgStr.replace(/var\(--([^)]+)\)/g, (_, name) =>
+        rootStyle.getPropertyValue('--' + name.trim()).trim() || 'transparent'
+      )
+
+      const svgUrl = URL.createObjectURL(new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' }))
+      const svgImg = await new Promise((res, rej) => {
+        const img = new Image()
+        img.onload = () => res(img)
+        img.onerror = rej
+        img.src = svgUrl
+      })
+      URL.revokeObjectURL(svgUrl)
+
+      const CW = 1080, CH = 1350
+      const canvas = document.createElement('canvas')
+      canvas.width = CW; canvas.height = CH
+      const ctx = canvas.getContext('2d')
+
+      // Background
+      const bg = ctx.createLinearGradient(0, 0, 0, CH)
+      bg.addColorStop(0, '#07070f'); bg.addColorStop(0.55, '#12121e'); bg.addColorStop(1, '#090913')
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH)
+
+      // Stars
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'
+      for (const [x,y,r] of [[80,55,1.2],[260,85,1],[500,38,1.5],[820,68,1],[1000,48,1.2],[155,155,0.9],[700,125,1.1],[28,275,1],[1045,195,0.9],[400,30,0.8],[600,170,0.7]]) {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
+      }
+
+      // Flower SVG — crop bottom soil (keep ~50px of soil strip)
+      const soilCrop = Math.round(H_SVG * (72 / 260)) - 50  // remove most of underground area
+      const croppedH = H_SVG - soilCrop
+      ctx.drawImage(svgImg, 0, 0, W_SVG, croppedH, 0, 10, W_SVG, croppedH)
+
+      await document.fonts.ready
+      ctx.textAlign = 'center'
+
+      // Separator
+      const sepY = 10 + croppedH + 50
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(120, sepY); ctx.lineTo(CW - 120, sepY); ctx.stroke()
+
+      // Share message — grande police
+      const firstName = (profile?.display_name ?? '').split(' ')[0] || ''
+      ctx.fillStyle = 'rgba(255,252,238,0.82)'
+      ctx.font = "300 46px 'Cormorant Garamond', Georgia, serif"
+      const msgLines = [
+        'Je vous présente ma fleur,',
+        'que je cultive dans mon jardin intérieur.',
+        '',
+        "J'apprends à prendre soin de moi",
+        'par de petites actions quotidiennes.',
+        '',
+        'Ma fleur devient un peu mon reflet.',
+      ]
+      let ly = sepY + 70
+      for (const line of msgLines) {
+        if (line) { ctx.fillText(line, CW / 2, ly); ly += 64 }
+        else ly += 22
+      }
+
+      // Signature prénom
+      if (firstName) {
+        ly += 14
+        ctx.font = "400 italic 38px 'Cormorant Garamond', Georgia, serif"
+        ctx.fillStyle = 'rgba(255,252,238,0.55)'
+        ctx.fillText(`Rejoins-nous ! — ${firstName}`, CW / 2, ly)
+        ly += 14
+      }
+
+      // URL branding
+      const urlY = ly + 48
+      ctx.strokeStyle = 'rgba(93,200,122,0.18)'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(200, urlY - 34); ctx.lineTo(CW - 200, urlY - 34); ctx.stroke()
+      ctx.font = "600 34px 'Jost', system-ui, sans-serif"
+      ctx.fillStyle = 'rgba(93,200,122,0.92)'; ctx.fillText('monjardininterieur.com', CW / 2, urlY)
+      ctx.font = "300 22px 'Jost', system-ui, sans-serif"
+      ctx.fillStyle = 'rgba(255,255,255,0.20)'; ctx.fillText('Mon Jardin Intérieur', CW / 2, urlY + 46)
+
+      // Lutin — bas gauche de l'image partagée
+      const lutinImg = await new Promise(res => {
+        const img = new Image()
+        img.onload = () => res(img)
+        img.onerror = () => res(null)
+        img.src = '/lutin-gauche.png'
+      })
+      if (lutinImg) {
+        const lutinW = 340
+        const lutinH = Math.round(lutinW * lutinImg.naturalHeight / lutinImg.naturalWidth)
+        ctx.drawImage(lutinImg, 0, CH - lutinH, lutinW, lutinH)
+      }
+
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.93))
+      setShareImageUrl(URL.createObjectURL(blob))
+    } catch (e) {
+      console.error('[generateShareImage]', e)
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
   if (isLoading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'rgba(30,20,8,.4)', fontFamily:"'Jost',sans-serif", fontSize:13 }}>
       Votre jardin se réveille…
@@ -5105,6 +5363,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         onClose={() => setShowRitualsModal(false)}
       />
     )}
+    {shareImageUrl && (
+      <FleurShareModal
+        imageUrl={shareImageUrl}
+        onClose={() => { URL.revokeObjectURL(shareImageUrl); setShareImageUrl(null) }}
+      />
+    )}
 
     {/* ── Wrapper relatif pour l'image de fond ── */}
     <div style={{ position:'relative', flex:1, overflow:'hidden', display:'flex', flexDirection:'column' }}>
@@ -5136,7 +5400,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       }}>
 
         {/* Zone fleur */}
-        <div style={{ position:'relative', height: isMobile ? 300 : 460, animation: isPostRitual ? 'mjFlowerIn 2.2s ease-out forwards' : 'none' }}>
+        <div ref={fleurZoneRef} style={{ position:'relative', height: isMobile ? 300 : 460, animation: isPostRitual ? 'mjFlowerIn 2.2s ease-out forwards' : 'none' }}>
           <PlantSVG key={celebrateKey} health={plant?.health ?? 5} gardenSettings={gardenSettings} lumensLevel={lumens?.level ?? 'faible'} lumensTotal={lumens?.total ?? 0} celebrate={celebrateKey > 0 || isPostRitual} />
 
           {/* Streak badge — desktop only (mobile: rendered below) */}
@@ -5159,17 +5423,40 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               🎨
             </button>
           )}
+          {/* Bouton partage photo — desktop */}
+          {!isMobile && (
+            <button
+              onClick={generateShareImage}
+              disabled={generatingShare}
+              title="Générer une image de partage"
+              style={{ position:'absolute', bottom:12, right:12, zIndex:3, display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:100, background:'rgba(20,10,5,.52)', border:'1px solid rgba(255,255,255,.20)', cursor: generatingShare ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,.82)', backdropFilter:'blur(4px)', transition:'all .15s', opacity: generatingShare ? 0.55 : 1 }}
+              onMouseEnter={e => { if (!generatingShare) e.currentTarget.style.background='rgba(20,10,5,.75)' }}
+              onMouseLeave={e => { e.currentTarget.style.background='rgba(20,10,5,.52)' }}
+            >
+              {generatingShare ? '⏳' : '📷'} Partager
+            </button>
+          )}
         </div>
 
-        {/* Mobile only — palette + streak sous la fleur */}
+        {/* Mobile only — palette + share + streak sous la fleur */}
         {isMobile && (
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 16px 4px' }}>
-            <button
-              onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
-              style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:100, background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:22, color:'rgba(255,255,255,.85)' }}
-            >
-              🎨
-            </button>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <button
+                onClick={() => { setGardenTier(profile?.level ?? 1); setShowGardenSettings(true) }}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:100, background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:22, color:'rgba(255,255,255,.85)' }}
+              >
+                🎨
+              </button>
+              <button
+                onClick={generateShareImage}
+                disabled={generatingShare}
+                title="Partager ma fleur"
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:100, background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.15)', cursor: generatingShare ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,.80)', opacity: generatingShare ? 0.55 : 1 }}
+              >
+                {generatingShare ? '⏳' : '📷'}
+              </button>
+            </div>
             {streak >= 1 && (
               <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:12, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,200,80,.2)' }}>
                 <span style={{ fontSize:16 }}>🔥</span>
