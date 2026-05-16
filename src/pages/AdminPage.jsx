@@ -3467,12 +3467,13 @@ export function AdminNav({ current }) {
       .then(({ count }) => setPending(count ?? 0))
   }, [])
   const navItems = [
-    { hash: '#admin',    label: 'Admin',    icon: '🛡' },
-    { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
+    { hash: '#admin',       label: 'Admin',        icon: '🛡' },
+    { hash: '#clients',     label: 'Clients',      icon: '👥' },
+    { hash: '#activite',    label: 'Activité',     icon: '🌿' },
     { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',          label: 'Pros',          icon: '💼' },
-    { hash: '#messages',      label: 'Messages',      icon: '💬', badge: pending },
+    { hash: '#pros',        label: 'Pros',         icon: '💼' },
+    { hash: '#messages',    label: 'Messages',     icon: '💬', badge: pending },
+    { hash: '#entreprise',  label: 'Back-office',  icon: '🤖' },
   ]
   return (
     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>

@@ -18,10 +18,11 @@ const TABS = [
 ];
 
 const HUB_CARDS = [
-  { id:"reseaux",    icon:"📱", label:"Réseaux",    desc:"Posts Instagram · TikTok · LinkedIn",       color:"#27500A", bg:"#EAF3DE", bd:"#C0DD97" },
-  { id:"commercial", icon:"💌", label:"Commercial",  desc:"Emails B2C & B2B · 11 étapes de parcours",  color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
-  { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                 color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
-  { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
+  { id:"agent",      icon:"🤖", label:"MAESTRO",     desc:"Orchestrateur IA · données temps réel · actions",  color:"#1c3818", bg:"#1c3818", bd:"#3B6D11", dark:true },
+  { id:"reseaux",    icon:"📱", label:"Réseaux",    desc:"Posts Instagram · TikTok · LinkedIn",               color:"#27500A", bg:"#EAF3DE", bd:"#C0DD97" },
+  { id:"commercial", icon:"💌", label:"Commercial",  desc:"Emails B2C & B2B · 11 étapes de parcours",          color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
+  { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                         color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
+  { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",        color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
 ];
 
 const BRAND = { dark:"#1c3818", text:"#c8e6b0", sub:"#7ab36a" };
@@ -41,18 +42,22 @@ function Hub({ setActive }) {
         </div>
       </div>
       <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
-        {HUB_CARDS.map(c => (
-          <div key={c.id} onClick={() => setActive(c.id)}
-            style={{ background:c.bg, border:`.5px solid ${c.bd}`, borderRadius:"12px",
-              padding:"14px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:"14px" }}>
-            <span style={{ fontSize:"22px", flexShrink:0 }}>{c.icon}</span>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:"14px", fontWeight:"500", color:c.color, marginBottom:"2px" }}>{c.label}</div>
-              <div style={{ fontSize:"12px", color:c.color, opacity:.75, lineHeight:"1.4" }}>{c.desc}</div>
+        {HUB_CARDS.map(c => {
+          const lbl = c.dark ? "#c8e6b0" : c.color;
+          const sub = c.dark ? "#7ab36a"  : c.color;
+          return (
+            <div key={c.id} onClick={() => setActive(c.id)}
+              style={{ background:c.bg, border:`.5px solid ${c.bd}`, borderRadius:"12px",
+                padding:"14px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:"14px" }}>
+              <span style={{ fontSize:"22px", flexShrink:0 }}>{c.icon}</span>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:"14px", fontWeight:"500", color:lbl, marginBottom:"2px" }}>{c.label}</div>
+                <div style={{ fontSize:"12px", color:sub, opacity:.85, lineHeight:"1.4" }}>{c.desc}</div>
+              </div>
+              <span style={{ fontSize:"16px", color:lbl, opacity:.5 }}>↗</span>
             </div>
-            <span style={{ fontSize:"16px", color:c.color, opacity:.4 }}>↗</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
