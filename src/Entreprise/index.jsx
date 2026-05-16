@@ -6,6 +6,7 @@ import ReseauxStudio    from "./ReseauxStudio";
 import CommercialStudio from "./CommercialStudio";
 import SeoStudio        from "./SeoStudio";
 import FinanceStudio    from "./FinanceStudio";
+import AgentChat        from "./AgentChat";
 
 const TABS = [
   { id:"hub",        icon:"🌿", label:"Hub"        },
@@ -13,6 +14,7 @@ const TABS = [
   { id:"commercial", icon:"💌", label:"Commercial" },
   { id:"seo",        icon:"🔍", label:"SEO"        },
   { id:"finance",    icon:"📊", label:"Financier"  },
+  { id:"agent",      icon:"🤖", label:"Agent"      },
 ];
 
 const HUB_CARDS = [
@@ -113,6 +115,7 @@ export default function Entreprise() {
         {active==="commercial" && <CommercialStudio />}
         {active==="seo"        && <SeoStudio />}
         {active==="finance"    && <FinanceStudio />}
+        {active==="agent"      && <AgentChat />}
       </div>
 
     </div>
