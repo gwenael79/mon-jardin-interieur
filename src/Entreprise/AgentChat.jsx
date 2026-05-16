@@ -492,99 +492,67 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
     );
   }
 
-  // ── Blocs réutilisables ────────────────────────────────────────────────────
-  const Header = () => (
+  // ── JSX partagés (inlinés pour éviter le remontage sur chaque frappe) ────────
+  const headerJSX = (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-      paddingBottom: 12, marginBottom: 12, borderBottom:`.5px solid ${agentColor}20` }}>
+      paddingBottom:12, marginBottom:12, borderBottom:`.5px solid ${agentColor}20` }}>
       <div>
-        <div style={{ fontFamily:"Georgia,serif", fontSize: isMobile?13:16, fontWeight:600, color:agentColor }}>{agentFullName}</div>
+        <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?13:16, fontWeight:600, color:agentColor }}>{agentFullName}</div>
         {!isMobile && <div style={{ fontSize:11, color:agentColor, opacity:.6, marginTop:2 }}>{agentDesc}</div>}
       </div>
       <div style={{ display:"flex", gap:6, alignItems:"center" }}>
         {SR && !isMobile && (
-          <button onClick={enterVoiceMode}
-            style={{ padding:"5px 12px", borderRadius:20, border:".5px solid #C0DD97",
-              background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:11, fontWeight:500 }}>
+          <button onClick={enterVoiceMode} style={{ padding:"5px 12px", borderRadius:20, border:".5px solid #C0DD97", background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:11, fontWeight:500 }}>
             🎙 Vocal
           </button>
         )}
-        <button onClick={clearHistory}
-          style={{ padding:"4px 10px", borderRadius:20, border:".5px solid #dde8d8",
-            background:"#f3f5f1", color:"#8a9e88", cursor:"pointer", fontSize:11 }}>↺ Nouveau</button>
-        <button onClick={() => setShowHelp(true)}
-          style={{ width:26, height:26, borderRadius:"50%", border:`.5px solid ${agentColor}40`,
-            background:agentBg, color:agentColor, cursor:"pointer", fontSize:12, fontWeight:700,
-            display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
+        <button onClick={clearHistory} style={{ padding:"4px 10px", borderRadius:20, border:".5px solid #dde8d8", background:"#f3f5f1", color:"#8a9e88", cursor:"pointer", fontSize:11 }}>↺ Nouveau</button>
+        <button onClick={() => setShowHelp(true)} style={{ width:26, height:26, borderRadius:"50%", border:`.5px solid ${agentColor}40`, background:agentBg, color:agentColor, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
       </div>
     </div>
   );
 
-  const Welcome = () => (
+  const welcomeJSX = (
     <div>
-      <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12,
-        padding:"16px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+      <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"16px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
         <div>
           <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?15:18, fontWeight:600, color:agentColor, marginBottom:4 }}>{agentFullName}</div>
           <div style={{ fontSize:isMobile?12:13, color:agentColor, opacity:.75, lineHeight:1.6 }}>{agentDesc}</div>
         </div>
-        <button onClick={() => setShowHelp(true)}
-          style={{ width:28, height:28, borderRadius:"50%", border:`.5px solid ${agentColor}40`,
-            background:"rgba(255,255,255,.6)", color:agentColor, cursor:"pointer", fontSize:13,
-            fontWeight:700, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
+        <button onClick={() => setShowHelp(true)} style={{ width:28, height:28, borderRadius:"50%", border:`.5px solid ${agentColor}40`, background:"rgba(255,255,255,.6)", color:agentColor, cursor:"pointer", fontSize:13, fontWeight:700, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
       </div>
       {SR && isMobile && (
-        <button onClick={enterVoiceMode}
-          style={{ width:"100%", padding:10, borderRadius:10, border:".5px solid #C0DD97",
-            background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:13, fontWeight:500, marginBottom:12,
-            display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+        <button onClick={enterVoiceMode} style={{ width:"100%", padding:10, borderRadius:10, border:".5px solid #C0DD97", background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:13, fontWeight:500, marginBottom:12, display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
           🎙 Démarrer le mode vocal
         </button>
       )}
       <p style={{ fontSize:10, fontWeight:500, letterSpacing:".08em", color:"#8a9e88", margin:"0 0 8px" }}>SUGGESTIONS</p>
-      <div style={{ display:"grid", gridTemplateColumns: isMobile?"1fr":"1fr 1fr", gap:6 }}>
+      <div style={{ display:"grid", gridTemplateColumns:isMobile?"1fr":"1fr 1fr", gap:6 }}>
         {SUGGESTIONS.map((s,i) => (
-          <button key={i} onClick={() => send(s)}
-            style={{ textAlign:"left", padding:"10px 14px", borderRadius:10, border:".5px solid #dde8d8",
-              background:"#f3f5f1", color:"#3d4d3b", cursor:"pointer", fontSize:13, lineHeight:1.4, fontFamily:"inherit" }}>
-            {s}
-          </button>
+          <button key={i} onClick={() => send(s)} style={{ textAlign:"left", padding:"10px 14px", borderRadius:10, border:".5px solid #dde8d8", background:"#f3f5f1", color:"#3d4d3b", cursor:"pointer", fontSize:13, lineHeight:1.4, fontFamily:"inherit" }}>{s}</button>
         ))}
       </div>
     </div>
   );
 
-  const Messages = () => (
+  const messagesJSX = (
     <div style={{ flex:1, overflowY:"auto", paddingBottom:12 }}>
-      {msgs.length === 0 ? <Welcome /> : msgs.map((m,i) => (
-        <div key={i} style={{ marginBottom:10, display:"flex",
-          justifyContent: m.role==="user" ? "flex-end":"flex-start" }}>
-          <div style={{
-            maxWidth: isMobile?"88%":"72%",
-            padding:      m.role==="user" ? "10px 14px":"12px 16px",
-            borderRadius: m.role==="user" ? "14px 14px 3px 14px":"14px 14px 14px 3px",
-            background:   m.role==="user" ? "#1c3818" : m.err ? "#fff0ee":"#fff",
-            border:       m.role==="user" ? "none":`.5px solid ${m.err?"#f0a090":"#dde8d8"}`,
-            boxShadow:    m.role==="assistant" ? "0 1px 4px rgba(0,0,0,.04)":"none",
-          }}>
+      {msgs.length === 0 ? welcomeJSX : msgs.map((m,i) => (
+        <div key={i} style={{ marginBottom:10, display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start" }}>
+          <div style={{ maxWidth:isMobile?"88%":"72%", padding:m.role==="user"?"10px 14px":"12px 16px", borderRadius:m.role==="user"?"14px 14px 3px 14px":"14px 14px 14px 3px", background:m.role==="user"?"#1c3818":m.err?"#fff0ee":"#fff", border:m.role==="user"?"none":`.5px solid ${m.err?"#f0a090":"#dde8d8"}`, boxShadow:m.role==="assistant"?"0 1px 4px rgba(0,0,0,.04)":"none" }}>
             {m.role==="user"
-              ? <span style={{ fontSize: isMobile?13:14, color:"#c8e6b0", lineHeight:1.65 }}>{m.content}</span>
+              ? <span style={{ fontSize:isMobile?13:14, color:"#c8e6b0", lineHeight:1.65 }}>{m.content}</span>
               : <Markdown text={m.content} />}
             {m.role==="assistant" && !m.err && (
-              <button onClick={() => speakWithCallback(m.content,()=>{})}
-                style={{ display:"block", marginTop:8, background:"none", border:"none",
-                  color:"#c8d5c5", fontSize:11, cursor:"pointer", padding:0 }}>🔊 Réécouter</button>
+              <button onClick={() => speakWithCallback(m.content,()=>{})} style={{ display:"block", marginTop:8, background:"none", border:"none", color:"#c8d5c5", fontSize:11, cursor:"pointer", padding:0 }}>🔊 Réécouter</button>
             )}
           </div>
         </div>
       ))}
       {loading && (
         <div style={{ display:"flex", marginBottom:10 }}>
-          <div style={{ padding:"12px 16px", borderRadius:"14px 14px 14px 3px",
-            background:"#fff", border:".5px solid #dde8d8", display:"flex", gap:5 }}>
-            {[0,1,2].map(j=>(
-              <div key={j} style={{ width:6, height:6, borderRadius:"50%", background:"#C0DD97",
-                animation:`mji-dot 1.2s ${j*.2}s ease-in-out infinite` }} />
-            ))}
+          <div style={{ padding:"12px 16px", borderRadius:"14px 14px 14px 3px", background:"#fff", border:".5px solid #dde8d8", display:"flex", gap:5 }}>
+            {[0,1,2].map(j => <div key={j} style={{ width:6, height:6, borderRadius:"50%", background:"#C0DD97", animation:`mji-dot 1.2s ${j*.2}s ease-in-out infinite` }} />)}
           </div>
         </div>
       )}
@@ -592,92 +560,61 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
     </div>
   );
 
-  const Input = () => (
+  const inputJSX = (
     <div style={{ borderTop:".5px solid #dde8d8", paddingTop:12 }}>
       <div style={{ display:"flex", gap:8 }}>
-        <textarea value={input} onChange={e=>setInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(input);} }}
+        <textarea
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(input); } }}
           placeholder="Écris ta question…"
           rows={isMobile?2:3}
-          style={{ flex:1, padding:"10px 14px", borderRadius:10, border:".5px solid #dde8d8",
-            background:"#fff", color:"#1a2e18", fontSize: isMobile?13:14,
-            fontFamily:"inherit", resize:"none", outline:"none", lineHeight:1.55 }} />
-        <button onClick={()=>send(input)} disabled={!input.trim()||loading}
-          style={{ padding:"10px 20px", borderRadius:10, border:"none",
-            background: input.trim()&&!loading?"#2d5a27":"#c8d5c5",
-            color:      input.trim()&&!loading?"#c8e6b0":"#8a9e88",
-            cursor:     input.trim()&&!loading?"pointer":"not-allowed",
-            fontSize:22, flexShrink:0 }}>↑</button>
+          style={{ flex:1, padding:"10px 14px", borderRadius:10, border:".5px solid #dde8d8", background:"#fff", color:"#1a2e18", fontSize:isMobile?13:14, fontFamily:"inherit", resize:"none", outline:"none", lineHeight:1.55 }}
+        />
+        <button onClick={() => send(input)} disabled={!input.trim() || loading}
+          style={{ padding:"10px 20px", borderRadius:10, border:"none", background:input.trim()&&!loading?"#2d5a27":"#c8d5c5", color:input.trim()&&!loading?"#c8e6b0":"#8a9e88", cursor:input.trim()&&!loading?"pointer":"not-allowed", fontSize:22, flexShrink:0 }}>↑</button>
       </div>
-      {!isMobile && (
-        <div style={{ fontSize:10, color:"#b0bfae", marginTop:5 }}>Entrée · envoyer · Shift+Entrée · nouvelle ligne</div>
-      )}
+      {!isMobile && <div style={{ fontSize:10, color:"#b0bfae", marginTop:5 }}>Entrée · envoyer · Shift+Entrée · nouvelle ligne</div>}
     </div>
   );
 
-  // ── Rendu PC : colonne chat + panneau latéral ───────────────────────────────
+  const modalJSX = showHelp && <AgentModal agentId={agentId} agentName={agentName} agentFullName={agentFullName} agentColor={agentColor} agentBg={agentBg} onClose={() => setShowHelp(false)} onAsk={q => send(q)} />;
+  const styleJSX = <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}`}</style>;
+
+  // ── Rendu PC ────────────────────────────────────────────────────────────────
   if (!isMobile) return (
     <div style={{ display:"flex", gap:20, height:"calc(100vh - 130px)" }}>
-
-      {/* Colonne principale */}
       <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
-        <Header />
-        <Messages />
-        <Input />
+        {headerJSX}
+        {messagesJSX}
+        {inputJSX}
       </div>
-
-      {/* Panneau latéral */}
       <div style={{ width:260, flexShrink:0, display:"flex", flexDirection:"column", gap:12 }}>
-        {/* Infos agent */}
         <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"14px 16px" }}>
           <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:agentColor, marginBottom:8 }}>AGENT</div>
           <div style={{ fontSize:13, fontWeight:600, color:agentColor, fontFamily:"Georgia,serif", marginBottom:4 }}>{agentName}</div>
           <div style={{ fontSize:11, color:agentColor, opacity:.7, lineHeight:1.6 }}>{AGENT_HELP[agentId]?.quand}</div>
-          <button onClick={()=>setShowHelp(true)}
-            style={{ marginTop:10, width:"100%", padding:"7px", borderRadius:8, border:`.5px solid ${agentColor}30`,
-              background:"rgba(255,255,255,.5)", color:agentColor, cursor:"pointer", fontSize:11, fontWeight:500 }}>
-            Voir les exemples →
-          </button>
+          <button onClick={() => setShowHelp(true)} style={{ marginTop:10, width:"100%", padding:"7px", borderRadius:8, border:`.5px solid ${agentColor}30`, background:"rgba(255,255,255,.5)", color:agentColor, cursor:"pointer", fontSize:11, fontWeight:500 }}>Voir les exemples →</button>
         </div>
-
-        {/* Mode vocal */}
-        {SR && (
-          <button onClick={enterVoiceMode}
-            style={{ padding:"10px", borderRadius:10, border:".5px solid #C0DD97", background:"#EAF3DE",
-              color:"#27500A", cursor:"pointer", fontSize:12, fontWeight:500,
-              display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
-            🎙 Mode vocal · dialogue continu
-          </button>
-        )}
-
-        {/* Raccourcis */}
+        {SR && <button onClick={enterVoiceMode} style={{ padding:"10px", borderRadius:10, border:".5px solid #C0DD97", background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:12, fontWeight:500, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>🎙 Mode vocal · dialogue continu</button>}
         <div style={{ background:"#fff", border:".5px solid #dde8d8", borderRadius:12, padding:"14px 16px", flex:1 }}>
           <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:"#8a9e88", marginBottom:8 }}>ACCÈS RAPIDE</div>
           <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-            {SUGGESTIONS.map((s,i)=>(
-              <button key={i} onClick={()=>send(s)}
-                style={{ textAlign:"left", padding:"8px 10px", borderRadius:8, border:".5px solid #eef1eb",
-                  background:"#f9faf8", color:"#3d4d3b", cursor:"pointer", fontSize:11, lineHeight:1.4, fontFamily:"inherit" }}>
-                {s}
-              </button>
-            ))}
+            {SUGGESTIONS.map((s,i) => <button key={i} onClick={() => send(s)} style={{ textAlign:"left", padding:"8px 10px", borderRadius:8, border:".5px solid #eef1eb", background:"#f9faf8", color:"#3d4d3b", cursor:"pointer", fontSize:11, lineHeight:1.4, fontFamily:"inherit" }}>{s}</button>)}
           </div>
         </div>
       </div>
-
-      {showHelp && <AgentModal agentId={agentId} agentName={agentName} agentFullName={agentFullName} agentColor={agentColor} agentBg={agentBg} onClose={()=>setShowHelp(false)} onAsk={q=>{send(q);}} />}
-      <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}`}</style>
+      {modalJSX}{styleJSX}
     </div>
   );
 
-  // ── Rendu Mobile : colonne pleine largeur ──────────────────────────────────
+  // ── Rendu Mobile ────────────────────────────────────────────────────────────
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 130px)" }}>
-      {msgs.length > 0 && <Header />}
-      <Messages />
-      <Input />
-      {showHelp && <AgentModal agentId={agentId} agentName={agentName} agentFullName={agentFullName} agentColor={agentColor} agentBg={agentBg} onClose={()=>setShowHelp(false)} onAsk={q=>{send(q);}} />}
-      <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}`}</style>
+      {msgs.length > 0 && headerJSX}
+      {messagesJSX}
+      {inputJSX}
+      {modalJSX}{styleJSX}
     </div>
   );
 }
