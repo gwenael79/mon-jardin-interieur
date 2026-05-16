@@ -1438,6 +1438,29 @@ export default function DashboardPage() {
   const [showLumensModal,     setShowLumensModal]     = useState(false)
   const [showLumenInfo,       setShowLumenInfo]       = useState(false)
   const [showProfileModal,    setShowProfileModal]    = useState(false)
+  const [userActionCount,     setUserActionCount]     = useState(null)
+  const [userLevel,           setUserLevel]           = useState(1)
+  const [showLevelInfo,       setShowLevelInfo]       = useState(false)
+  const [levelInfoPerks,      setLevelInfoPerks]      = useState(null)
+  const [levelInfoTab,        setLevelInfoTab]        = useState(1)
+
+  useEffect(() => {
+    if (!showLevelInfo) return
+    setLevelInfoTab(userLevel)
+    supabase.from('app_settings').select('value').eq('key', 'level_perks').maybeSingle()
+      .then(({ data }) => { try { setLevelInfoPerks(JSON.parse(data?.value ?? '{}')) } catch {} })
+  }, [showLevelInfo])
+
+  useEffect(() => {
+    if (!showProfileModal || !user?.id) return
+    Promise.all([
+      supabase.from('activity').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+      supabase.from('profiles').select('level').eq('id', user.id).maybeSingle(),
+    ]).then(([{ count }, { data: prof }]) => {
+      setUserActionCount(count ?? 0)
+      setUserLevel(prof?.level ?? 1)
+    })
+  }, [showProfileModal, user?.id])
   const [showProProfileModal, setShowProProfileModal] = useState(false)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
   const [showTrialInfoModal,  setShowTrialInfoModal]  = useState(false)
@@ -1964,6 +1987,63 @@ export default function DashboardPage() {
       {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => setShowPremiumModal(false)} />}
       {showTrialInfoModal && <TrialInfoModal daysLeft={trialDaysLeft} trialActive={isTrialActive} onActivate={async () => { await activateTrialNow(); setShowTrialInfoModal(false) }} onClose={() => setShowTrialInfoModal(false)} onUpgrade={() => { setShowTrialInfoModal(false); setShowPremiumModal(true) }} />}
       {showAvisModal && <AppAvisModal userId={user?.id} displayName={profile?.display_name ?? ''} onClose={() => setShowAvisModal(false)} />}
+      {showLevelInfo && (() => {
+        const LEVELS = [
+          { lvl:1, label:'Niveau 1', range:'0 – 100',  color:'rgba(30,20,8,.45)',  bg:'rgba(30,20,8,.06)',  border:'rgba(30,20,8,.14)',  activeBg:'rgba(30,20,8,.08)' },
+          { lvl:2, label:'Niveau 2', range:'101 – 200', color:'#4a8820',            bg:'rgba(90,154,40,.06)',border:'rgba(90,154,40,.20)', activeBg:'rgba(90,154,40,.10)' },
+          { lvl:3, label:'Niveau 3', range:'201 – 300', color:'#a06030',            bg:'rgba(200,137,74,.06)',border:'rgba(200,137,74,.20)',activeBg:'rgba(200,137,74,.10)' },
+        ]
+        const planKey = isPremium ? 'premium' : 'free'
+        const active  = LEVELS.find(l => l.lvl === levelInfoTab) ?? LEVELS[0]
+        const perks   = levelInfoPerks?.[planKey]?.[levelInfoTab]
+        return (
+          <div style={{ position:'fixed', inset:0, zIndex:400, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={() => setShowLevelInfo(false)}>
+            <div style={{ background:'#faf8f4', borderRadius:22, padding:'24px', width:'min(380px,100%)', boxShadow:'0 20px 60px rgba(30,20,8,.22)', border:'1px solid rgba(200,160,150,.25)', position:'relative' }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowLevelInfo(false)} style={{ position:'absolute', top:12, right:12, background:'rgba(200,160,150,.15)', border:'none', borderRadius:'50%', width:26, height:26, cursor:'pointer', fontSize:12, color:'rgba(30,20,8,.45)', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:600, color:'#000', marginBottom:4 }}>Les niveaux du Jardin</div>
+              <div style={{ fontSize:11, color:'#000', fontFamily:"'Jost',sans-serif", marginBottom:18, lineHeight:1.5 }}>
+                <strong>{userActionCount ?? '…'} action{userActionCount > 1 ? 's' : ''} cumulée{userActionCount > 1 ? 's' : ''}</strong> — Rituels, bouquets, mercis, bilans et défis font progresser votre niveau.
+              </div>
+
+              {/* 3 niveaux en ligne */}
+              <div style={{ display:'flex', gap:8, marginBottom:18 }}>
+                {LEVELS.map(({ lvl: l, label, range, color, bg, border, activeBg }) => {
+                  const isCurrent = l === userLevel
+                  const isSelected = l === levelInfoTab
+                  return (
+                    <div key={l} onClick={() => setLevelInfoTab(l)}
+                      style={{ flex:1, padding:'10px 8px', borderRadius:14, textAlign:'center', cursor:'pointer', border:`1.5px solid ${isSelected ? color : 'rgba(200,160,150,.2)'}`, background: isSelected ? activeBg : 'rgba(255,255,255,.5)', transition:'all .18s' }}>
+                      <div style={{ fontSize:11, fontWeight:700, color: isSelected ? color : '#000', fontFamily:"'Jost',sans-serif", letterSpacing:'.05em', marginBottom:3 }}>{label}</div>
+                      <div style={{ fontSize:9, color:'#000', fontFamily:"'Jost',sans-serif" }}>{range}</div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Avantages du niveau sélectionné */}
+              <div style={{ minHeight:90, padding:'14px 16px', borderRadius:14, background: active.activeBg, border:`1px solid ${active.border}` }}>
+                {!levelInfoPerks ? (
+                  <div style={{ fontSize:11, color:'rgba(30,20,8,.35)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Chargement…</div>
+                ) : perks?.perks?.length ? (
+                  <>
+                    {perks.title && <div style={{ fontSize:13, fontWeight:600, color: active.color, fontFamily:"'Cormorant Garamond',serif", marginBottom:10 }}>{perks.title}</div>}
+                    <ul style={{ margin:0, padding:0, listStyle:'none', display:'flex', flexDirection:'column', gap:7 }}>
+                      {perks.perks.map((p, i) => (
+                        <li key={i} style={{ display:'flex', gap:8, fontSize:12, color:'#000', fontFamily:"'Jost',sans-serif", alignItems:'flex-start' }}>
+                          <span style={{ color: active.color, flexShrink:0 }}>✦</span>{p}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <div style={{ fontSize:12, color:'#000', fontFamily:"'Jost',sans-serif", fontStyle:'italic', lineHeight:1.6 }}>Profitez d'une application riche de découvertes et d'apprentissages autour du mieux-être.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
       {showProfileModal && (
         <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.25)', backdropFilter:'blur(6px)' }} onClick={() => setShowProfileModal(false)} />
@@ -1976,10 +2056,43 @@ export default function DashboardPage() {
             {/* Avatar + identité */}
             <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20, padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:14, border:'1px solid rgba(200,160,150,.18)' }}>
               <div style={{ width:58, height:58, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</div>
-              <div>
+              <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:14, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>{name ?? 'Jardinier·ère'}</div>
                 <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
               </div>
+              {/* Badge niveau + barre */}
+              {(() => {
+                const lvl = userLevel
+                const isMax = lvl >= 3
+                const cfg = lvl === 3
+                  ? { label:'NIVEAU 3', bg:'rgba(200,137,74,0.14)', border:'rgba(200,137,74,0.38)', color:'#a06030' }
+                  : lvl === 2
+                  ? { label:'NIVEAU 2', bg:'rgba(90,154,40,0.12)', border:'rgba(90,154,40,0.35)', color:'#4a8820' }
+                  : { label:'NIVEAU 1', bg:'rgba(30,20,8,0.06)', border:'rgba(30,20,8,0.14)', color:'rgba(30,20,8,0.40)' }
+                const base = (lvl - 1) * 100
+                const pct = userActionCount !== null ? Math.min(100, Math.max(2, Math.round(((userActionCount - base) / 100) * 100))) : 0
+                const remaining = userActionCount !== null ? (lvl * 100) - userActionCount : null
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:7, flexShrink:0 }}>
+                    <span style={{ fontSize:15, padding:'6px 16px', borderRadius:20, background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.color, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.10em' }}>{cfg.label}</span>
+                    {!isMax && (
+                      <div style={{ width:120 }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                          <span style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(30,20,8,.40)' }}>Niv. {lvl}</span>
+                          <span style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(90,154,40,.70)' }}>Niv. {lvl+1}</span>
+                        </div>
+                        <div style={{ height:7, borderRadius:4, background:'rgba(90,154,40,0.12)', overflow:'hidden', marginBottom:5 }}>
+                          <div style={{ height:'100%', width:`${pct}%`, borderRadius:4, background:'linear-gradient(90deg,#78c040,#4a8820)', transition:'width .6s ease' }} />
+                        </div>
+                        <button onClick={() => setShowLevelInfo(true)} style={{ width:'100%', padding:'3px 8px', background:'rgba(140,100,200,0.15)', border:'1px solid rgba(140,100,200,0.35)', borderRadius:20, fontSize:10, color:'rgba(120,80,180,0.9)', fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:600, letterSpacing:'.04em' }}>
+                          En savoir +
+                        </button>
+                      </div>
+                    )}
+                    {isMax && <div style={{ fontSize:11, color:'#a06030', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em' }}>Maximum ✦</div>}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Abonnement — masqué pour les pros sauf admin (géré dans Compte Pro) */}
