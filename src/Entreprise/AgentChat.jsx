@@ -73,26 +73,121 @@ function VoiceOrb({ state, onClick }) {
 
 // ── Composant principal ──────────────────────────────────────────────────────
 export default function AgentChat() {
-  const [msgs,       setMsgs]      = useState([]);
-  const [input,      setInput]     = useState("");
-  const [loading,    setLoading]   = useState(false);
-  const [voiceMode,  setVoiceMode] = useState(false);
-  const [voiceState, setVoiceState]= useState("idle");
-  const [sessionId]                = useState(genSession);
-  const bottomRef                  = useRef(null);
-  const recRef                     = useRef(null);
-  const loopRef                    = useRef(true); // contrôle la boucle vocale
+  const [msgs,        setMsgs]       = useState([]);
+  const [input,       setInput]      = useState("");
+  const [loading,     setLoading]    = useState(false);
+  const [voiceMode,   setVoiceMode]  = useState(false);
+  const [voiceState,  _setVoiceState]= useState("idle");
+  const [sessionId]                  = useState(genSession);
+  const bottomRef   = useRef(null);
+  const recRef      = useRef(null);
+  const loopRef     = useRef(false);
+  const vsRef       = useRef("idle"); // ref synchrone — évite les closures périmées
+
+  // Setter qui maintient ref + state en sync
+  const setVoiceState = (s) => { vsRef.current = s; _setVoiceState(s); };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
   useEffect(() => () => { window.speechSynthesis?.cancel(); stopRec(); }, []);
 
-  // ── Envoi (texte ou voix) ──────────────────────────────────────────────────
-  const send = useCallback(async (content, isVoice = false) => {
-    if (!content?.trim() || loading) return;
-    setInput("");
-    if (isVoice) setVoiceState("thinking");
+  // ── Arrêt micro ────────────────────────────────────────────────────────────
+  const stopRec = useCallback(() => {
+    try { recRef.current?.abort(); } catch {}
+    recRef.current = null;
+  }, []);
 
-    const next = [...msgs, { role: "user", content: content.trim() }];
+  // ── Démarrage micro ────────────────────────────────────────────────────────
+  const startRec = useCallback(() => {
+    if (!SR || !loopRef.current) return;
+    stopRec();
+    const rec = new SR();
+    rec.lang = "fr-FR";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    rec.onstart = () => setVoiceState("listening");
+
+    rec.onerror = (e) => {
+      // "no-speech" = silence normal, on relance
+      if (loopRef.current && vsRef.current === "listening") {
+        setTimeout(startRec, 600);
+      }
+    };
+
+    rec.onend = () => {
+      // Ne relancer que si on est bien en écoute (pas en train de parler ou de penser)
+      if (loopRef.current && vsRef.current === "listening") {
+        setTimeout(startRec, 400);
+      }
+    };
+
+    rec.onresult = (e) => {
+      const text = e.results[0]?.[0]?.transcript?.trim();
+      if (text) {
+        stopRec(); // couper le micro AVANT d'envoyer
+        sendVoice(text);
+      }
+    };
+
+    recRef.current = rec;
+    try { rec.start(); } catch {}
+  }, [stopRec]);
+
+  // ── Envoi vocal (séparé pour éviter les dépendances circulaires) ───────────
+  const sendVoice = useCallback(async (content) => {
+    if (!content || !loopRef.current) return;
+    setVoiceState("thinking");
+    setLoading(true);
+
+    setMsgs(prev => {
+      const next = [...prev, { role: "user", content }];
+
+      fetch(AGENT_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ messages: next, session_id: sessionId }),
+      })
+        .then(r => { if (!r.ok) throw new Error(`Erreur ${r.status}`); return r.json(); })
+        .then(data => {
+          if (data.error) throw new Error(data.error);
+          setMsgs(p => [...p, { role: "assistant", content: data.text }]);
+
+          if (loopRef.current) {
+            setVoiceState("speaking");
+            stopRec(); // s'assurer que le micro est bien coupé pendant le TTS
+            speakWithCallback(data.text, () => {
+              setLoading(false);
+              if (loopRef.current) {
+                // Tampon 800ms après la fin du TTS avant de réécouter
+                setTimeout(() => {
+                  setVoiceState("listening");
+                  startRec();
+                }, 800);
+              } else {
+                setVoiceState("idle");
+              }
+            });
+          } else {
+            setLoading(false);
+          }
+        })
+        .catch(e => {
+          setMsgs(p => [...p, { role: "assistant", content: `⚠️ ${e.message}`, err: true }]);
+          setVoiceState("idle");
+          setLoading(false);
+        });
+
+      return next;
+    });
+  }, [sessionId, stopRec, startRec]);
+
+  // ── Envoi texte ────────────────────────────────────────────────────────────
+  const send = useCallback(async (content) => {
+    const text = (content ?? input).trim();
+    if (!text || loading) return;
+    setInput("");
+
+    const next = [...msgs, { role: "user", content: text }];
     setMsgs(next);
     setLoading(true);
 
@@ -105,72 +200,20 @@ export default function AgentChat() {
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-
       setMsgs(p => [...p, { role: "assistant", content: data.text }]);
-
-      if (isVoice && loopRef.current) {
-        setVoiceState("speaking");
-        speakWithCallback(data.text, () => {
-          // Après avoir parlé → réécouter si le mode est encore actif
-          if (loopRef.current) {
-            setVoiceState("listening");
-            startRec(true);
-          } else {
-            setVoiceState("idle");
-          }
-        });
-      }
     } catch (e) {
       setMsgs(p => [...p, { role: "assistant", content: `⚠️ ${e.message}`, err: true }]);
-      if (isVoice) setVoiceState("idle");
     } finally {
       setLoading(false);
     }
-  }, [msgs, loading, sessionId]);
-
-  // ── Reconnaissance vocale ──────────────────────────────────────────────────
-  const stopRec = useCallback(() => {
-    try { recRef.current?.stop(); } catch {}
-    recRef.current = null;
-  }, []);
-
-  const startRec = useCallback((auto = false) => {
-    if (!SR) return;
-    stopRec();
-    const rec = new SR();
-    rec.lang = "fr-FR";
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-
-    rec.onstart = () => setVoiceState("listening");
-    rec.onerror = () => {
-      if (loopRef.current) {
-        setVoiceState("listening");
-        setTimeout(() => startRec(true), 800);
-      }
-    };
-    rec.onend = () => {
-      // Si aucun résultat et mode actif → réécouter
-      if (loopRef.current && voiceState === "listening") {
-        setTimeout(() => startRec(true), 400);
-      }
-    };
-    rec.onresult = (e) => {
-      const text = e.results[0]?.[0]?.transcript?.trim();
-      if (text) send(text, true);
-    };
-
-    recRef.current = rec;
-    rec.start();
-    if (!auto) setVoiceState("listening");
-  }, [send, stopRec, voiceState]);
+  }, [msgs, loading, input, sessionId]);
 
   // ── Activer / désactiver le mode vocal ────────────────────────────────────
   const enterVoiceMode = useCallback(() => {
     loopRef.current = true;
     setVoiceMode(true);
     setVoiceState("listening");
-    startRec(false);
+    startRec();
   }, [startRec]);
 
   const exitVoiceMode = useCallback(() => {
@@ -182,10 +225,13 @@ export default function AgentChat() {
   }, [stopRec]);
 
   const handleOrb = useCallback(() => {
-    if (voiceState === "idle") startRec(false);
-    else if (voiceState === "listening") stopRec(); // pause manuelle
+    if (vsRef.current === "idle") startRec();
+    else if (vsRef.current === "listening") {
+      stopRec();
+      setVoiceState("idle");
+    }
     // en thinking/speaking : on ne coupe pas
-  }, [voiceState, startRec, stopRec]);
+  }, [startRec, stopRec]);
 
   // ── Rendu mode vocal ───────────────────────────────────────────────────────
   if (voiceMode) {
