@@ -1037,7 +1037,7 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
         )}
 
         {/* Bouton essai offert — masqué après première ouverture */}
-        {isTrialActive && !trialCardSeen && (
+        {isTrial && !trialCardSeen && (
           <div onClick={onTrialInfo} style={{
             display:'flex', alignItems:'center', gap:12,
             padding:'13px 15px', borderRadius:14, marginTop:10, cursor:'pointer',

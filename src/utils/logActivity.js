@@ -16,7 +16,8 @@ export async function logActivity({ userId, action, ritual = null, zone = null, 
       supabase.from('users').select('plan').eq('id', userId).maybeSingle(),
     ])
     const newLevel = profile?.level ?? 1
-    const plan = userData?.plan === 'premium' ? 'premium' : 'free'
+    const planRaw = userData?.plan ?? 'free'
+    const plan = ['premium', 'pro-premium'].includes(planRaw) ? 'premium' : 'free'
 
     localStorage.setItem(`mji_level_${userId}`, String(newLevel))
 
