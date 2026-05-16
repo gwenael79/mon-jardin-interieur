@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
-import { ADMIN_IDS } from './AdminPage'
+import { ADMIN_IDS, AdminNav } from './AdminPage'
 import { useIsMobile } from './dashboardShared'
 
 const css = `
@@ -73,30 +73,6 @@ html,body,#root{height:100%;width:100%}
 .adm-inp::placeholder{color:#888!important}
 .adm-sel{color:#1a1208!important;background:#ffffff!important}
 `
-
-// ── Navigation partagée ────────────────────────────────────────────────────
-function AdminNav({ current }) {
-  const navItems = [
-    { hash: '#admin',    label: 'Admin',    icon: '🛡' },
-    { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
-    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',          label: 'Pros',          icon: '💼' },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {navItems.map(({ hash, label, icon }) => {
-        const active = current === hash
-        return (
-          <a key={hash} href={hash}
-            style={{ padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
-            {icon} {label}
-          </a>
-        )
-      })}
-    </div>
-  )
-}
 
 // ═══════════════════════════════════════════════════════════
 //  RituelsEditor
@@ -972,6 +948,22 @@ export function AdminActivitePage() {
   const [allUsers,        setAllUsers]        = useState([])
   const [loading,         setLoading]         = useState(false)
   const [toast,           setToast]           = useState(null)
+  const [reports,         setReports]         = useState([])
+  const [applications,    setApplications]    = useState([])
+  const [reportsLoading,  setReportsLoading]  = useState(false)
+  const [appsLoading,     setAppsLoading]     = useState(false)
+  const [ateliers,        setAteliers]        = useState([])
+  const [ateliersLoading, setAteliersLoading] = useState(false)
+  const [defis,           setDefis]           = useState([])
+  const [defisLoading,    setDefisLoading]    = useState(false)
+  const [palmares,        setPalmares]        = useState([])
+  const [palmaresLoading, setPalmaresLoading] = useState(false)
+  const [palmaresSort,    setPalmaresSort]    = useState('nb_actions')
+  const EMPTY_PERKS = { free: { 2: { title: '', perks: [] }, 3: { title: '', perks: [] } }, premium: { 2: { title: '', perks: [] }, 3: { title: '', perks: [] } } }
+  const [levelPerks,       setLevelPerks]       = useState(EMPTY_PERKS)
+  const [levelPerksSaving, setLevelPerksSaving] = useState(false)
+  const [showLevelEditor,  setShowLevelEditor]  = useState(false)
+  const [levelEditorPlan,  setLevelEditorPlan]  = useState('free')
 
   const isAdmin = ADMIN_IDS.includes(user?.id)
 
@@ -983,6 +975,142 @@ export function AdminActivitePage() {
   }, [isAdmin])
 
   useEffect(() => { if (tab === 'avis') loadPendingReviews() }, [tab])
+  useEffect(() => { if (tab === 'signalements') loadReports() }, [tab])
+  useEffect(() => { if (tab === 'animateurs') loadApplications() }, [tab])
+  useEffect(() => { if (tab === 'ateliers') loadAteliers() }, [tab])
+  useEffect(() => { if (tab === 'defis')    loadDefis()    }, [tab])
+  useEffect(() => { if (tab === 'palmares') loadPalmares() }, [tab])
+
+  async function loadPalmares() {
+    setPalmaresLoading(true)
+    const [{ data, error }, { data: setting }] = await Promise.all([
+      supabase.rpc('get_activity_palmares'),
+      supabase.from('app_settings').select('value').eq('key', 'level_perks').maybeSingle(),
+    ])
+    if (error) showToast('❌ Palmarès : ' + error.message)
+    setPalmares(data ?? [])
+    if (setting?.value) {
+      try { setLevelPerks(JSON.parse(setting.value)) } catch {}
+    }
+    setPalmaresLoading(false)
+  }
+
+  async function saveLevelPerks() {
+    setLevelPerksSaving(true)
+    const { error } = await supabase.from('app_settings')
+      .upsert({ key: 'level_perks', value: JSON.stringify(levelPerks) }, { onConflict: 'key' })
+    setLevelPerksSaving(false)
+    if (error) showToast('❌ ' + error.message)
+    else showToast('✅ Avantages sauvegardés')
+  }
+
+  function updatePerk(plan, level, index, value) {
+    setLevelPerks(prev => ({ ...prev, [plan]: { ...prev[plan], [level]: { ...prev[plan][level], perks: prev[plan][level].perks.map((p, i) => i === index ? value : p) } } }))
+  }
+  function addPerk(plan, level) {
+    setLevelPerks(prev => ({ ...prev, [plan]: { ...prev[plan], [level]: { ...prev[plan][level], perks: [...(prev[plan][level]?.perks ?? []), ''] } } }))
+  }
+  function removePerk(plan, level, index) {
+    setLevelPerks(prev => ({ ...prev, [plan]: { ...prev[plan], [level]: { ...prev[plan][level], perks: prev[plan][level].perks.filter((_, i) => i !== index) } } }))
+  }
+  function updateTitle(plan, level, value) {
+    setLevelPerks(prev => ({ ...prev, [plan]: { ...prev[plan], [level]: { ...prev[plan][level], title: value } } }))
+  }
+
+  async function loadReports() {
+    setReportsLoading(true)
+    const { data: reps } = await supabase.from('reports').select('id, reason, created_at, resolved, circle_id, reported_by').order('created_at', { ascending: false }).limit(50)
+    if (!reps?.length) { setReports([]); setReportsLoading(false); return }
+    const circleIds = [...new Set(reps.map(r => r.circle_id).filter(Boolean))]
+    const { data: circlesData } = await supabase.from('circles').select('id, name, theme').in('id', circleIds)
+    const circleMap = Object.fromEntries((circlesData ?? []).map(c => [c.id, c]))
+    const reporterIds = [...new Set(reps.map(r => r.reported_by).filter(Boolean))]
+    const { data: usersData } = await supabase.from('users').select('id, display_name, email').in('id', reporterIds)
+    const userMap = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
+    setReports(reps.map(r => ({ ...r, circles: circleMap[r.circle_id] ?? null, reporter: userMap[r.reported_by] ?? null })))
+    setReportsLoading(false)
+  }
+
+  async function loadApplications() {
+    setAppsLoading(true)
+    const { data } = await supabase.from('animator_applications').select('id, motivation, experience, status, created_at, user_id').order('created_at', { ascending: false })
+    if (data?.length) {
+      const ids = data.map(a => a.user_id)
+      const { data: usersData } = await supabase.from('users').select('id, display_name, email').in('id', ids)
+      const userMap = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
+      setApplications(data.map(a => ({ ...a, user: userMap[a.user_id] ?? null })))
+    } else { setApplications([]) }
+    setAppsLoading(false)
+  }
+
+  async function handleApproveAnimator(appId, userId) {
+    await supabase.from('animator_applications').update({ status: 'approved' }).eq('id', appId)
+    await supabase.from('users').update({ is_animator: true }).eq('id', userId)
+    showToast('✅ Animateur validé !'); loadApplications()
+  }
+
+  async function handleRejectAnimator(appId) {
+    await supabase.from('animator_applications').update({ status: 'rejected' }).eq('id', appId)
+    showToast('❌ Candidature refusée'); loadApplications()
+  }
+
+  async function handleResolveReport(reportId) {
+    await supabase.from('reports').update({ resolved: true }).eq('id', reportId)
+    showToast('✅ Signalement résolu'); loadReports()
+  }
+
+  async function handleDeleteFromReport(report) {
+    if (!report.circles?.id) return
+    if (!confirm(`Supprimer la graine "${report.circles.name}" ?`)) return
+    await supabase.from('circle_members').delete().eq('circle_id', report.circles.id)
+    await supabase.from('circles').delete().eq('id', report.circles.id)
+    await supabase.from('reports').update({ resolved: true }).eq('id', report.id)
+    showToast('🗑️ Graine supprimée'); loadReports()
+  }
+
+  async function loadAteliers() {
+    setAteliersLoading(true)
+    const { data: ats } = await supabase
+      .from('ateliers')
+      .select('id, title, theme, starts_at, format, location, price, lumen_price, is_published, max_participants, created_at, animator_id')
+      .order('starts_at', { ascending: false })
+    if (!ats?.length) { setAteliers([]); setAteliersLoading(false); return }
+    const { data: regs } = await supabase
+      .from('atelier_registrations').select('atelier_id')
+    const regMap = {}
+    ;(regs ?? []).forEach(r => { regMap[r.atelier_id] = (regMap[r.atelier_id] ?? 0) + 1 })
+    const animIds = [...new Set(ats.map(a => a.animator_id).filter(Boolean))]
+    const { data: animUsers } = animIds.length
+      ? await supabase.from('users').select('id, display_name, email').in('id', animIds)
+      : { data: [] }
+    const animMap = Object.fromEntries((animUsers ?? []).map(u => [u.id, u]))
+    setAteliers(ats.map(a => ({ ...a, registrations: regMap[a.id] ?? 0, animator: animMap[a.animator_id] ?? null })))
+    setAteliersLoading(false)
+  }
+
+  async function loadDefis() {
+    setDefisLoading(true)
+    const { data: ds } = await supabase
+      .from('defis')
+      .select('id, emoji, title, description, zone, duration_days, is_featured, is_active, is_seen_by_admin, created_at')
+      .order('created_at', { ascending: false })
+    if (!ds?.length) { setDefis([]); setDefisLoading(false); return }
+    const { data: parts } = await supabase.from('defi_participants').select('defi_id')
+    const partMap = {}
+    ;(parts ?? []).forEach(p => { partMap[p.defi_id] = (partMap[p.defi_id] ?? 0) + 1 })
+    setDefis(ds.map(d => ({ ...d, participants: partMap[d.id] ?? 0 })))
+    setDefisLoading(false)
+  }
+
+  async function toggleAtelier(id, field, val) {
+    await supabase.from('ateliers').update({ [field]: val }).eq('id', id)
+    setAteliers(prev => prev.map(a => a.id === id ? { ...a, [field]: val } : a))
+  }
+
+  async function toggleDefi(id, field, val) {
+    await supabase.from('defis').update({ [field]: val }).eq('id', id)
+    setDefis(prev => prev.map(d => d.id === id ? { ...d, [field]: val } : d))
+  }
 
   async function loadAllUsers() {
     const { data } = await supabase.from('users').select('id, display_name, email').order('display_name')
@@ -1049,14 +1177,24 @@ export function AdminActivitePage() {
 
         {/* TABS */}
         <div className="adm-tabs">
-          <div className={`adm-tab${tab === 'rituels'  ? ' active' : ''}`} onClick={() => setTab('rituels')}>✨ Rituels</div>
-          <div className={`adm-tab${tab === 'lumens'   ? ' active' : ''}`} onClick={() => setTab('lumens')}>✦ Lumens</div>
-          <div className={`adm-tab${tab === 'avis'     ? ' active' : ''}`} onClick={() => setTab('avis')} style={{ position: 'relative' }}>
+          <div className={`adm-tab${tab === 'rituels'      ? ' active' : ''}`} onClick={() => setTab('rituels')}>✨ Rituels</div>
+          <div className={`adm-tab${tab === 'lumens'       ? ' active' : ''}`} onClick={() => setTab('lumens')}>✦ Lumens</div>
+          <div className={`adm-tab${tab === 'avis'         ? ' active' : ''}`} onClick={() => setTab('avis')} style={{ position: 'relative' }}>
             ⭐ Avis
             {pendingReviews.length > 0 && (
               <span style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(246,196,83,0.35)', border: '1px solid rgba(246,196,83,0.5)', borderRadius: 100, fontSize: 8, padding: '1px 5px', color: '#F6C453', lineHeight: 1.4 }}>{pendingReviews.length}</span>
             )}
           </div>
+          <div className={`adm-tab${tab === 'signalements' ? ' active' : ''}`} onClick={() => setTab('signalements')} style={{ position: 'relative' }}>
+            🚩 Signalements
+            {reports.filter(r => !r.resolved).length > 0 && (
+              <span style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(210,80,80,0.35)', border: '1px solid rgba(210,80,80,0.5)', borderRadius: 100, fontSize: 8, padding: '1px 5px', color: '#ff8080', lineHeight: 1.4 }}>{reports.filter(r => !r.resolved).length}</span>
+            )}
+          </div>
+          <div className={`adm-tab${tab === 'animateurs'   ? ' active' : ''}`} onClick={() => setTab('animateurs')}>🌿 Animateurs</div>
+          <div className={`adm-tab${tab === 'ateliers'     ? ' active' : ''}`} onClick={() => setTab('ateliers')}>🎓 Ateliers</div>
+          <div className={`adm-tab${tab === 'defis'        ? ' active' : ''}`} onClick={() => setTab('defis')}>✨ Défis</div>
+          <div className={`adm-tab${tab === 'palmares'     ? ' active' : ''}`} onClick={() => setTab('palmares')}>🏆 Palmarès</div>
         </div>
 
         {/* ── RITUELS ── */}
@@ -1153,6 +1291,384 @@ export function AdminActivitePage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── SIGNALEMENTS ── */}
+        {tab === 'signalements' && (
+          <div className="adm-section">
+            {reportsLoading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : (() => {
+              const pending  = reports.filter(r => !r.resolved)
+              const resolved = reports.filter(r => r.resolved)
+              return (
+                <>
+                  {pending.length === 0
+                    ? <div className="adm-empty">✅ Aucun signalement en attente</div>
+                    : <div className="adm-grid">
+                        {pending.map(r => (
+                          <div key={r.id} className="adm-report-card">
+                            <div className="adm-report-flag">🚩</div>
+                            <div className="adm-report-body">
+                              <div className="adm-report-graine">
+                                {r.circles?.name ?? 'Graine inconnue'}
+                                <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text3)' }}>{r.circles?.theme}</span>
+                              </div>
+                              <div className="adm-report-meta">
+                                Signalé par {r.reporter?.display_name ?? r.reporter?.email ?? 'anonyme'} · {new Date(r.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                              <div className="adm-report-actions">
+                                <button className="adm-btn danger" onClick={() => handleDeleteFromReport(r)}>🗑️ Supprimer la graine</button>
+                                <button className="adm-btn success" onClick={() => handleResolveReport(r.id)}>✓ Marquer résolu</button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                  }
+                  {resolved.length > 0 && (
+                    <div style={{ marginTop: 32 }}>
+                      <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>Signalements résolus</div>
+                      <div className="adm-grid">
+                        {resolved.map(r => (
+                          <div key={r.id} className="adm-report-card resolved">
+                            <div className="adm-report-flag">✅</div>
+                            <div className="adm-report-body">
+                              <div className="adm-report-graine">{r.circles?.name ?? 'Graine supprimée'}</div>
+                              <div className="adm-report-meta">Résolu · {new Date(r.created_at).toLocaleDateString('fr-FR')}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )
+            })()}
+          </div>
+        )}
+
+        {/* ── ANIMATEURS ── */}
+        {tab === 'animateurs' && (
+          <div className="adm-section">
+            {appsLoading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : applications.length === 0 ? (
+              <div className="adm-empty">Aucune candidature pour l'instant.</div>
+            ) : (
+              <>
+                {applications.filter(a => a.status === 'pending' || !a.status).length > 0 && (
+                  <div style={{ marginBottom: 24 }}>
+                    <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>
+                      En attente · {applications.filter(a => a.status === 'pending' || !a.status).length}
+                    </div>
+                    <div className="adm-grid">
+                      {applications.filter(a => a.status === 'pending' || !a.status).map(a => (
+                        <div key={a.id} className="adm-report-card">
+                          <div className="adm-report-flag">🌿</div>
+                          <div className="adm-report-body">
+                            <div className="adm-report-graine">
+                              {a.user?.display_name ?? a.user?.email ?? a.user_id?.slice(0, 8)}
+                              <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text3)' }}>{a.user?.email}</span>
+                            </div>
+                            <div className="adm-report-meta">Candidature du {new Date(a.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}</div>
+                            {a.motivation && <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 8, fontStyle: 'italic' }}>"{a.motivation}"</div>}
+                            {a.experience && <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5, marginBottom: 10 }}>Expérience : {a.experience}</div>}
+                            <div className="adm-report-actions">
+                              <button className="adm-btn success" onClick={() => handleApproveAnimator(a.id, a.user_id)}>✅ Valider</button>
+                              <button className="adm-btn danger"  onClick={() => handleRejectAnimator(a.id)}>✕ Refuser</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {applications.filter(a => a.status === 'approved' || a.status === 'rejected').length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>Traitées</div>
+                    <table className="adm-table">
+                      <thead>
+                        <tr>
+                          <th className="adm-th">Candidat</th>
+                          <th className="adm-th">Email</th>
+                          <th className="adm-th">Date</th>
+                          <th className="adm-th">Statut</th>
+                          <th className="adm-th">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {applications.filter(a => a.status === 'approved' || a.status === 'rejected').map(a => (
+                          <tr key={a.id} className="adm-tr">
+                            <td className="adm-td">{a.user?.display_name ?? a.user_id?.slice(0, 8)}</td>
+                            <td className="adm-td" style={{ color: 'var(--text3)' }}>{a.user?.email ?? '—'}</td>
+                            <td className="adm-td">{new Date(a.created_at).toLocaleDateString('fr-FR')}</td>
+                            <td className="adm-td">
+                              <span style={{ fontSize: 10, padding: '3px 10px', borderRadius: 100, background: a.status === 'approved' ? 'var(--green3)' : 'var(--red2)', border: `1px solid ${a.status === 'approved' ? 'var(--greenT)' : 'var(--redT)'}`, color: a.status === 'approved' ? '#c8f0b8' : 'rgba(255,160,160,0.9)' }}>
+                                {a.status === 'approved' ? '✅ Validé' : '✕ Refusé'}
+                              </span>
+                            </td>
+                            <td className="adm-td">
+                              {a.status === 'approved' && <button className="adm-btn danger"  onClick={() => handleRejectAnimator(a.id)}>Révoquer</button>}
+                              {a.status === 'rejected' && <button className="adm-btn success" onClick={() => handleApproveAnimator(a.id, a.user_id)}>Valider</button>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── ATELIERS ── */}
+        {tab === 'ateliers' && (
+          <div className="adm-section">
+            {ateliersLoading ? <div className="adm-empty">Chargement…</div> : ateliers.length === 0 ? <div className="adm-empty">Aucun atelier</div> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {ateliers.map(a => {
+                  const isPast = a.starts_at && new Date(a.starts_at) < new Date()
+                  const fmtDate = a.starts_at
+                    ? new Date(a.starts_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : '—'
+                  const full = a.max_participants && a.registrations >= a.max_participants
+                  return (
+                    <div key={a.id} style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: `1px solid ${a.is_published ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)'}`, opacity: isPast ? 0.6 : 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, marginBottom: 3 }}>{a.title}</div>
+                          <div style={{ fontSize: 10, color: 'var(--text3)', marginBottom: 5, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            <span>📅 {fmtDate}</span>
+                            {a.format && <span>· {a.format === 'en_ligne' ? '🌐 En ligne' : '📍 Présentiel'}</span>}
+                            {a.location && <span>· {a.location}</span>}
+                            {a.animator && <span>· par {a.animator.display_name ?? a.animator.email}</span>}
+                          </div>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                            {a.theme && <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(106,187,228,0.12)', border: '1px solid rgba(106,187,228,0.25)', color: '#6ABBE4' }}>{a.theme}</span>}
+                            <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: 'var(--text3)' }}>
+                              👥 {a.registrations}{a.max_participants ? `/${a.max_participants}` : ''} inscrits{full ? ' · 🔴 Complet' : ''}
+                            </span>
+                            {a.price != null && <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(232,192,96,0.10)', border: '1px solid rgba(232,192,96,0.25)', color: '#e8c060' }}>{a.price === 0 ? 'Gratuit' : `${a.price} €`}</span>}
+                            {a.lumen_price > 0 && <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(180,160,240,0.10)', border: '1px solid rgba(180,160,240,0.25)', color: '#b4a0f0' }}>{a.lumen_price} ✦</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: 9, padding: '3px 10px', borderRadius: 20, background: a.is_published ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${a.is_published ? 'rgba(150,212,133,0.30)' : 'rgba(255,255,255,0.10)'}`, color: a.is_published ? '#96d485' : 'var(--text3)' }}>
+                            {a.is_published ? '● Publié' : '○ Brouillon'}
+                          </span>
+                          <button onClick={() => toggleAtelier(a.id, 'is_published', !a.is_published)}
+                            style={{ padding: '5px 12px', borderRadius: 8, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: a.is_published ? 'rgba(210,80,80,0.08)' : 'rgba(150,212,133,0.10)', border: `1px solid ${a.is_published ? 'rgba(210,80,80,0.25)' : 'rgba(150,212,133,0.30)'}`, color: a.is_published ? 'rgba(255,140,140,0.7)' : '#96d485' }}>
+                            {a.is_published ? 'Dépublier' : 'Publier'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── DÉFIS ── */}
+        {tab === 'defis' && (
+          <div className="adm-section">
+            {defisLoading ? <div className="adm-empty">Chargement…</div> : defis.length === 0 ? <div className="adm-empty">Aucun défi</div> : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {defis.map(d => {
+                  const zoneColor = { roots: '#C8894A', stem: '#5AAF78', leaves: '#4A9E5C', flowers: '#D4779A', breath: '#6ABBE4' }[d.zone] ?? '#96d485'
+                  return (
+                    <div key={d.id} style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: `1px solid ${d.is_active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)'}` }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 22, flexShrink: 0 }}>{d.emoji ?? '✨'}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500, marginBottom: 3 }}>{d.title}</div>
+                          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 4 }}>
+                            {d.zone && <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: `${zoneColor}15`, border: `1px solid ${zoneColor}40`, color: zoneColor }}>{d.zone}</span>}
+                            <span style={{ fontSize: 9, color: 'var(--text3)' }}>⏱ {d.duration_days}j</span>
+                            <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', color: 'var(--text3)' }}>👥 {d.participants} participant{d.participants > 1 ? 's' : ''}</span>
+                            {d.is_featured && <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(232,192,96,0.12)', border: '1px solid rgba(232,192,96,0.30)', color: '#e8c060' }}>⭐ Mis en avant</span>}
+                            {!d.is_seen_by_admin && <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, background: 'rgba(180,160,240,0.12)', border: '1px solid rgba(180,160,240,0.30)', color: '#b4a0f0' }}>🆕 Nouveau</span>}
+                          </div>
+                          {d.description && <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>{d.description}</div>}
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          <span style={{ fontSize: 9, padding: '3px 10px', borderRadius: 20, background: d.is_active ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${d.is_active ? 'rgba(150,212,133,0.30)' : 'rgba(255,255,255,0.10)'}`, color: d.is_active ? '#96d485' : 'var(--text3)' }}>
+                            {d.is_active ? '● Actif' : '○ Inactif'}
+                          </span>
+                          <button onClick={() => toggleDefi(d.id, 'is_active', !d.is_active)}
+                            style={{ padding: '5px 12px', borderRadius: 8, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: d.is_active ? 'rgba(210,80,80,0.08)' : 'rgba(150,212,133,0.10)', border: `1px solid ${d.is_active ? 'rgba(210,80,80,0.25)' : 'rgba(150,212,133,0.30)'}`, color: d.is_active ? 'rgba(255,140,140,0.7)' : '#96d485' }}>
+                            {d.is_active ? 'Désactiver' : 'Activer'}
+                          </button>
+                          <button onClick={() => toggleDefi(d.id, 'is_featured', !d.is_featured)}
+                            style={{ padding: '5px 12px', borderRadius: 8, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: d.is_featured ? 'rgba(232,192,96,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${d.is_featured ? 'rgba(232,192,96,0.30)' : 'rgba(255,255,255,0.10)'}`, color: d.is_featured ? '#e8c060' : 'var(--text3)' }}>
+                            {d.is_featured ? '★ Retirer' : '☆ Mettre en avant'}
+                          </button>
+                          {!d.is_seen_by_admin && (
+                            <button onClick={() => toggleDefi(d.id, 'is_seen_by_admin', true)}
+                              style={{ padding: '5px 12px', borderRadius: 8, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(180,160,240,0.10)', border: '1px solid rgba(180,160,240,0.25)', color: '#b4a0f0' }}>
+                              Vu
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── PALMARÈS ── */}
+        {tab === 'palmares' && (
+          <div className="adm-section">
+            {/* Tri */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap' }}>
+              {[
+                { key: 'nb_actions',    label: '⚡ Actions' },
+                { key: 'rituels',       label: '✨ Rituels' },
+                { key: 'coeurs',        label: '💐 Bouquets' },
+                { key: 'nb_visites',    label: '📅 Visites' },
+                { key: 'lumens_gagnes', label: '✦ Lumens' },
+              ].map(({ key, label }) => (
+                <button key={key} onClick={() => setPalmaresSort(key)}
+                  style={{ padding: '5px 14px', borderRadius: 20, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", border: `1px solid ${palmaresSort === key ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.12)'}`, background: palmaresSort === key ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.05)', color: palmaresSort === key ? '#96d485' : 'rgba(255,255,255,0.5)' }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* ── Éditeur avantages niveaux ── */}
+            <div style={{ marginBottom: 20, borderRadius: 14, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <div onClick={() => setShowLevelEditor(v => !v)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', cursor: 'pointer', background: 'rgba(255,255,255,0.03)' }}>
+                <span style={{ fontSize: 12, fontWeight: 500, letterSpacing: '.06em', color: 'rgba(255,255,255,0.6)' }}>⚙️ Avantages par niveau</span>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>{showLevelEditor ? '▲' : '▼'}</span>
+              </div>
+              {showLevelEditor && (
+                <>
+                {/* Toggle Free / Premium */}
+                <div style={{ padding: '12px 16px 0', display: 'flex', gap: 6 }}>
+                  {['free', 'premium'].map(p => (
+                    <button key={p} onClick={() => setLevelEditorPlan(p)}
+                      style={{ padding: '5px 16px', borderRadius: 20, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontWeight: 600, border: `1px solid ${levelEditorPlan === p ? (p === 'premium' ? 'rgba(232,192,96,0.50)' : 'rgba(150,212,133,0.45)') : 'rgba(255,255,255,0.12)'}`, background: levelEditorPlan === p ? (p === 'premium' ? 'rgba(232,192,96,0.12)' : 'rgba(150,212,133,0.10)') : 'rgba(255,255,255,0.04)', color: levelEditorPlan === p ? (p === 'premium' ? '#e8c060' : '#96d485') : 'rgba(255,255,255,0.4)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                      {p === 'premium' ? '✦ Premium' : '○ Free'}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'row', gap: 12, flexWrap: 'wrap' }}>
+                  {[2, 3].map(niv => {
+                    const cfg = niv === 3
+                      ? { color: '#c8894a', border: 'rgba(200,137,74,0.35)', bg: 'rgba(200,137,74,0.08)' }
+                      : { color: '#96d485', border: 'rgba(150,212,133,0.35)', bg: 'rgba(150,212,133,0.06)' }
+                    const data = levelPerks?.[levelEditorPlan]?.[niv] ?? { title: '', perks: [] }
+                    return (
+                      <div key={niv} style={{ flex: '1 1 220px', padding: 14, borderRadius: 12, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                        <div style={{ fontSize: 11, color: cfg.color, fontWeight: 600, letterSpacing: '.08em', marginBottom: 10 }}>NIVEAU {niv}</div>
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>Titre</div>
+                          <input className="adm-inp" value={data.title} onChange={e => updateTitle(levelEditorPlan, niv, e.target.value)}
+                            placeholder="ex : Jardinier Confirmé"
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', fontSize: 12, fontFamily: "'Jost',sans-serif", boxSizing: 'border-box' }} />
+                        </div>
+                        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>Avantages</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          {(data.perks ?? []).map((p, idx) => (
+                            <div key={idx} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                              <input className="adm-inp" value={p} onChange={e => updatePerk(levelEditorPlan, niv, idx, e.target.value)}
+                                placeholder="Avantage…"
+                                style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', fontSize: 12, fontFamily: "'Jost',sans-serif" }} />
+                              <button onClick={() => removePerk(levelEditorPlan, niv, idx)}
+                                style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid rgba(210,80,80,0.25)', background: 'rgba(210,80,80,0.08)', color: 'rgba(255,120,120,0.7)', cursor: 'pointer', fontSize: 11, fontFamily: "'Jost',sans-serif" }}>✕</button>
+                            </div>
+                          ))}
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button onClick={() => addPerk(levelEditorPlan, niv)}
+                              style={{ padding: '4px 12px', borderRadius: 8, border: `1px solid ${cfg.border}`, background: cfg.bg, color: cfg.color, cursor: 'pointer', fontSize: 11, fontFamily: "'Jost',sans-serif" }}>
+                              + Ajouter
+                            </button>
+                            <button onClick={() => window.dispatchEvent(new CustomEvent('mji:levelup', { detail: { level: niv, plan: levelEditorPlan } }))}
+                              style={{ padding: '4px 12px', borderRadius: 8, border: '1px solid rgba(180,160,240,0.35)', background: 'rgba(180,160,240,0.08)', color: 'rgba(200,180,255,0.8)', cursor: 'pointer', fontSize: 11, fontFamily: "'Jost',sans-serif" }}>
+                              ▶ Tester
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div style={{ padding: '0 16px 16px', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button onClick={saveLevelPerks} disabled={levelPerksSaving}
+                    style={{ padding: '8px 22px', borderRadius: 10, border: '1px solid rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.12)', color: '#96d485', cursor: levelPerksSaving ? 'default' : 'pointer', fontSize: 12, fontFamily: "'Jost',sans-serif", fontWeight: 500, opacity: levelPerksSaving ? 0.6 : 1 }}>
+                    {levelPerksSaving ? '⏳ Sauvegarde…' : '✓ Sauvegarder'}
+                  </button>
+                </div>
+                </>
+              )}
+            </div>
+
+            {palmaresLoading ? (
+              <div className="adm-empty">Chargement…</div>
+            ) : palmares.length === 0 ? (
+              <div className="adm-empty">Aucune donnée</div>
+            ) : (() => {
+              const sorted = [...palmares].sort((a, b) => Number(b[palmaresSort]) - Number(a[palmaresSort]))
+              const max = Number(sorted[0]?.[palmaresSort]) || 1
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {sorted.map((u, i) => {
+                    const val = Number(u[palmaresSort])
+                    const pct = Math.max(4, Math.round((val / max) * 100))
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
+                    return (
+                      <div key={u.user_id} style={{ padding: '12px 16px', borderRadius: 12, background: i < 3 ? 'rgba(150,212,133,0.04)' : 'rgba(255,255,255,0.02)', border: `1px solid ${i < 3 ? 'rgba(150,212,133,0.12)' : 'rgba(255,255,255,0.06)'}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                          <span style={{ fontSize: 16, minWidth: 24, textAlign: 'center' }}>{medal ?? <span style={{ fontSize: 11, color: 'var(--text3)' }}>#{i + 1}</span>}</span>
+                          <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{u.display_name || '—'}</span>
+                          <span style={{ fontSize: 13, color: '#96d485', fontWeight: 600 }}>{val.toLocaleString('fr-FR')}</span>
+                          {(() => {
+                            const actions = Number(u.nb_actions)
+                            const niv = actions >= 201 ? 3 : actions >= 101 ? 2 : 1
+                            const cfg = niv === 3
+                              ? { label: 'NIVEAU 3', bg: 'rgba(200,137,74,0.15)', border: 'rgba(200,137,74,0.40)', color: '#c8894a' }
+                              : niv === 2
+                              ? { label: 'NIVEAU 2', bg: 'rgba(150,212,133,0.12)', border: 'rgba(150,212,133,0.35)', color: '#96d485' }
+                              : { label: 'NIVEAU 1', bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.45)' }
+                            return <span style={{ fontSize: 9, padding: '3px 8px', borderRadius: 20, background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.color, letterSpacing: '.08em', fontWeight: 600, flexShrink: 0 }}>{cfg.label}</span>
+                          })()}
+                        </div>
+                        {/* Barre de progression */}
+                        <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', marginBottom: 8 }}>
+                          <div style={{ height: '100%', width: `${pct}%`, borderRadius: 2, background: i === 0 ? '#e8c060' : i === 1 ? 'rgba(200,200,210,0.7)' : i === 2 ? '#c8894a' : 'rgba(150,212,133,0.5)', transition: 'width .4s ease' }} />
+                        </div>
+                        {/* Détail */}
+                        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                          {[
+                            { icon: '✨', val: u.rituels,       lbl: 'rituels' },
+                            { icon: '💐', val: u.coeurs,        lbl: 'bouquets' },
+                            { icon: '🙏', val: u.mercis,        lbl: 'mercis' },
+                            { icon: '🎯', val: u.defis,         lbl: 'défis' },
+                            { icon: '📓', val: u.bilans,        lbl: 'bilans' },
+                            { icon: '📅', val: u.nb_visites,    lbl: 'visites' },
+                            { icon: '✦',  val: u.lumens_gagnes, lbl: 'lumens' },
+                          ].map(({ icon, val: v, lbl }) => (
+                            Number(v) > 0 && (
+                              <span key={lbl} style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                                {icon} <span style={{ color: 'rgba(255,255,255,0.75)' }}>{Number(v).toLocaleString('fr-FR')}</span> {lbl}
+                              </span>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
         )}
 

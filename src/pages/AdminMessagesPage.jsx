@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
-import { ADMIN_IDS } from './AdminPage'
+import { ADMIN_IDS, AdminNav } from './AdminPage'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -15,7 +15,7 @@ html,body,#root{height:100%;width:100%}
   --gold:#e8d4a8;
 }
 .adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#fff!important;display:flex;flex-direction:column}
-.adm-root *{color:#fff!important}
+.adm-root *{color:#fff!important;font-size:clamp(13px,3vw,18px)!important}
 .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:#353a3f!important;position:sticky;top:0;z-index:10}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em}
 .adm-logo em{font-style:italic;color:var(--green)}
@@ -113,30 +113,6 @@ html,body,#root{height:100%;width:100%}
   .filter-chip{font-size:11px;padding:5px 10px}
 }
 `
-
-function AdminNav({ current, pendingMessages = 0 }) {
-  const navItems = [
-    { hash: '#admin',    label: 'Admin',    icon: '🛡' },
-    { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
-    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',          label: 'Pros',          icon: '💼' },
-    { hash: '#messages',      label: 'Messages',      icon: '💬', badge: pendingMessages },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-      {navItems.map(({ hash, label, icon, badge }) => {
-        const active = current === hash
-        return (
-          <a key={hash} href={hash} style={{ position: 'relative', padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
-            {icon}<span className="nav-label"> {label}</span>
-            {badge > 0 && <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, borderRadius: '50%', background: '#e05a2b' }} />}
-          </a>
-        )
-      })}
-    </div>
-  )
-}
 
 export function AdminMessagesPage() {
   useTheme()

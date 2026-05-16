@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
-import { ADMIN_IDS } from './AdminPage'
+import { ADMIN_IDS, AdminNav } from './AdminPage'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -72,35 +72,6 @@ html,body,#root{height:100%;width:100%}
   .fiche-lbl{min-width:110px}
 }
 `
-
-function AdminNav({ current }) {
-  const [pending, setPending] = useState(0)
-  useEffect(() => {
-    supabase.from('pro_messages').select('id', { count: 'exact', head: true }).is('response', null)
-      .then(({ count }) => setPending(count ?? 0))
-  }, [])
-  const navItems = [
-    { hash: '#admin',    label: 'Admin',    icon: '🛡' },
-    { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
-    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',          label: 'Pros',          icon: '💼' },
-    { hash: '#messages',      label: 'Messages',      icon: '💬', badge: pending },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-      {navItems.map(({ hash, label, icon, badge }) => {
-        const active = current === hash
-        return (
-          <a key={hash} href={hash} style={{ position: 'relative', padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
-            {icon} {label}
-            {badge > 0 && <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, borderRadius: '50%', background: '#e05a2b' }} />}
-          </a>
-        )
-      })}
-    </div>
-  )
-}
 
 async function forcedDownload(url, filename) {
   const res = await fetch(url)

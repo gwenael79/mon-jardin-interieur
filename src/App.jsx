@@ -18,6 +18,7 @@ import { EndOfWeekScreen }  from './pages/EndOfWeekScreen'
 import { ProProfile }       from './pages/ProProfile'
 import InstallPrompt from './components/InstallPrompt'
 import { EngagementModals } from './components/EngagementModals'
+import { LevelUpModal } from './components/LevelUpModal'
 import Entreprise from './Entreprise'
 
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
@@ -766,6 +767,7 @@ export default function App() {
         </div>
       )}
       <InstallPrompt />
+      <LevelUpModal />
       {reviewPopup}
       {toast && <div style={styles.toast}><span>{toast.icon}</span><span>{toast.msg}</span></div>}
       <style>{`

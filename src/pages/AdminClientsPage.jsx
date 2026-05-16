@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
-import { ADMIN_IDS } from './AdminPage'
+import { ADMIN_IDS, AdminNav } from './AdminPage'
 import { useIsMobile } from './dashboardShared'
 
 const css = `
@@ -83,30 +83,6 @@ html,body,#root{height:100%;width:100%}
   .adm-topbar{padding:8px 10px}
 }
 `
-
-// ── Navigation partagée ────────────────────────────────────────────────────
-function AdminNav({ current }) {
-  const navItems = [
-    { hash: '#admin',    label: 'Admin',    icon: '🛡' },
-    { hash: '#clients',  label: 'Clients',  icon: '👥' },
-    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
-    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',          label: 'Pros',          icon: '💼' },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {navItems.map(({ hash, label, icon }) => {
-        const active = current === hash
-        return (
-          <a key={hash} href={hash}
-            style={{ padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
-            {icon} {label}
-          </a>
-        )
-      })}
-    </div>
-  )
-}
 
 // ── Accordéon détail utilisateurs ─────────────────────────────────────────
 function FunnelUserDetail({ users }) {
@@ -786,7 +762,7 @@ export function AdminClientsPage() {
     const today = new Date().toISOString().slice(0, 10)
     const result = {}
     try {
-      ;['onboarding','j1','j2','j3','j4','j5','j6','j7'].forEach(k => {
+      ;['onboarding','j1','j2','j3','j4','j5','j6'].forEach(k => {
         if (localStorage.getItem(`funnel_sent_${k}`) === today) result[k] = true
       })
     } catch {}
@@ -1104,7 +1080,6 @@ export function AdminClientsPage() {
         case 'j4': return u.onboarding_completed && maxDay === 4 && isStuck
         case 'j5': return u.onboarding_completed && maxDay === 5 && isStuck
         case 'j6': return u.onboarding_completed && maxDay === 6 && isStuck
-        case 'j7': return u.onboarding_completed && maxDay >= 7 && isStuck
         default: return false
       }
     }).filter(u => u.email)
@@ -1194,8 +1169,7 @@ export function AdminClientsPage() {
                 { label: 'Jour 4',     short: 'J4',    key: 'j4',         count: get(5), color: '#6cc450' },
                 { label: 'Jour 5',     short: 'J5',    key: 'j5',         count: get(6), color: '#60c044' },
                 { label: 'Jour 6',     short: 'J6',    key: 'j6',         count: get(7), color: '#54bc3a' },
-                { label: 'Jour 7',     short: 'J7',    key: 'j7',         count: get(8), color: '#48b830' },
-                { label: 'Complet',    short: 'Fini',  key: null,          count: get(9), color: '#7ab5f5' },
+                { label: 'Jour 7',     short: 'J7',    key: null,          count: get(8), color: '#48b830' },
               ]
               const max = Math.max(...steps.map(s => s.count), 1)
               return (

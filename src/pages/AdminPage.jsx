@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
+import { invalidateAdminCache } from '../hooks/useAdminPermissions'
 
 // ── IDs des administrateurs ─────────────────────────────────────────────────
 // Ajoutez ici les UUIDs des utilisateurs ayant accès à l'interface admin.
@@ -3459,7 +3460,7 @@ function MigrationGardenColors({ showToast }) {
 }
 
 // ── Navigation partagée ────────────────────────────────────────────────────
-function AdminNav({ current }) {
+export function AdminNav({ current }) {
   const [pending, setPending] = useState(0)
   useEffect(() => {
     supabase.from('pro_messages').select('id', { count: 'exact', head: true }).is('response', null)
@@ -3491,116 +3492,77 @@ function AdminNav({ current }) {
 export function AdminPage() {
   useTheme()
   const { user, signOut } = useAuth()
-  const [tab,          setTab]          = useState('reports')
-  const [reports,      setReports]      = useState([])
-  const [circles,      setCircles]      = useState([])
-  const [applications, setApplications] = useState([])
+  const [tab,          setTab]          = useState('administrateurs')
   const [stats,        setStats]        = useState({})
-  const [loading,      setLoading]      = useState(true)
   const [toast,        setToast]        = useState(null)
+  const [adminsUsers,  setAdminsUsers]  = useState([])
+  const [adminsConfig, setAdminsConfig] = useState([])
+  const [adminsSaving, setAdminsSaving] = useState(false)
+  const [pinUnlocked,  setPinUnlocked]  = useState(false)
+  const [pinTarget,    setPinTarget]    = useState(null)
+  const [pinInput,     setPinInput]     = useState('')
+  const [pinError,     setPinError]     = useState(false)
 
   const isAdmin = ADMIN_IDS.includes(user?.id)
 
+  const DROITS_DEFS = [
+    { key: 'admin',       label: 'Admin' },
+    { key: 'premium',     label: 'Premium' },
+    { key: 'compte_pros', label: 'Compte pros' },
+    { key: 'pro_premium', label: 'Pro-premium' },
+  ]
+
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(null), 2800) }
 
-  useEffect(() => { if (isAdmin) { loadAll() } }, [isAdmin])
-
-  async function loadAll() {
-    setLoading(true)
-    await Promise.all([loadReports(), loadCircles(), loadStats(), loadApplications()])
-    setLoading(false)
-  }
-
-  async function loadReports() {
-    const { data: reps } = await supabase
-      .from('reports')
-      .select('id, reason, created_at, resolved, circle_id, reported_by')
-      .order('created_at', { ascending: false })
-      .limit(50)
-    if (!reps?.length) { setReports([]); return }
-
-    const circleIds = [...new Set(reps.map(r => r.circle_id).filter(Boolean))]
-    const { data: circlesData } = await supabase
-      .from('circles').select('id, name, theme').in('id', circleIds)
-    const circleMap = Object.fromEntries((circlesData ?? []).map(c => [c.id, c]))
-
-    const reporterIds = [...new Set(reps.map(r => r.reported_by).filter(Boolean))]
-    const { data: usersData } = await supabase
-      .from('users').select('id, display_name, email').in('id', reporterIds)
-    const userMap = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
-
-    setReports(reps.map(r => ({
-      ...r,
-      circles: circleMap[r.circle_id] ?? null,
-      reporter: userMap[r.reported_by] ?? null
-    })))
-  }
-
-  async function loadApplications() {
-    const { data } = await supabase
-      .from('animator_applications')
-      .select('id, motivation, experience, status, created_at, user_id')
-      .order('created_at', { ascending: false })
-    if (data?.length) {
-      const ids = data.map(a => a.user_id)
-      const { data: usersData } = await supabase.from('users').select('id, display_name, email').in('id', ids)
-      const userMap = Object.fromEntries((usersData ?? []).map(u => [u.id, u]))
-      setApplications(data.map(a => ({ ...a, user: userMap[a.user_id] ?? null })))
-    } else {
-      setApplications([])
-    }
-  }
-
-  async function loadCircles() {
-    const { data } = await supabase
-      .from('circles')
-      .select('id, name, theme, is_open, expires_at, created_at, created_by, circle_members(count)')
-      .order('created_at', { ascending: false })
-      .limit(50)
-    setCircles((data ?? []).map(c => ({ ...c, memberCount: c.circle_members?.[0]?.count ?? 0 })))
-  }
+  useEffect(() => { if (isAdmin) { loadStats() } }, [isAdmin])
+  useEffect(() => { if (isAdmin && tab === 'administrateurs') loadAdmins() }, [isAdmin, tab])
 
   async function loadStats() {
-    const [{ count: totalUsers }, { count: totalCircles }, { count: totalReports }] = await Promise.all([
-      supabase.from('users').select('*', { count: 'exact', head: true }).not('id', 'in', `(${ADMIN_IDS.join(',')})`),
-      supabase.from('circles').select('*', { count: 'exact', head: true }),
-      supabase.from('reports').select('*', { count: 'exact', head: true }),
+    const { count: totalUsers } = await supabase
+      .from('users').select('*', { count: 'exact', head: true }).not('id', 'in', `(${ADMIN_IDS.join(',')})`)
+    setStats({ totalUsers })
+  }
+
+  async function loadAdmins() {
+    const [{ data: users }, { data: adminRows }] = await Promise.all([
+      supabase.from('users').select('id, email, display_name, created_at').in('id', ADMIN_IDS),
+      supabase.from('admin_users').select('user_id, nom, prenom, statut, droits').in('user_id', ADMIN_IDS),
     ])
-    setStats({ totalUsers, totalCircles, totalReports })
+    setAdminsUsers(users ?? [])
+    setAdminsConfig(ADMIN_IDS.map(id => {
+      const row = (adminRows ?? []).find(r => r.user_id === id) ?? {}
+      return {
+        id,
+        nom:    row.nom    ?? '',
+        prenom: row.prenom ?? '',
+        statut: row.statut ?? 'actif',
+        droits: { admin: true, premium: true, compte_pros: true, pro_premium: true, ...(row.droits ?? {}) },
+      }
+    }))
   }
 
-  async function handleApproveAnimator(appId, userId) {
-    await supabase.from('animator_applications').update({ status: 'approved' }).eq('id', appId)
-    await supabase.from('users').update({ is_animator: true }).eq('id', userId)
-    showToast('✅ Animateur validé !')
-    loadApplications()
+  async function saveAdmins() {
+    setAdminsSaving(true)
+    const rows = adminsConfig.map(cfg => ({
+      user_id:    cfg.id,
+      nom:        cfg.nom,
+      prenom:     cfg.prenom,
+      statut:     cfg.statut,
+      droits:     cfg.droits,
+      updated_at: new Date().toISOString(),
+    }))
+    const { error } = await supabase.from('admin_users').upsert(rows, { onConflict: 'user_id' })
+    invalidateAdminCache()
+    setAdminsSaving(false)
+    if (error) { showToast('❌ Erreur : ' + error.message) } else { showToast('✅ Configuration sauvegardée') }
   }
 
-  async function handleRejectAnimator(appId) {
-    await supabase.from('animator_applications').update({ status: 'rejected' }).eq('id', appId)
-    showToast('❌ Candidature refusée')
-    loadApplications()
+  function updateAdminField(id, field, value) {
+    setAdminsConfig(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a))
   }
 
-  async function handleDeleteCircle(circleId, circleName) {
-    if (!confirm(`Supprimer la graine "${circleName}" ?`)) return
-    await supabase.from('circle_members').delete().eq('circle_id', circleId)
-    await supabase.from('circles').delete().eq('id', circleId)
-    showToast('🗑️ Graine supprimée')
-    loadAll()
-  }
-
-  async function handleResolveReport(reportId) {
-    await supabase.from('reports').update({ resolved: true }).eq('id', reportId)
-    showToast('✅ Signalement résolu')
-    loadReports()
-  }
-
-  async function handleDeleteFromReport(report) {
-    if (!report.circles?.id) return
-    await handleDeleteCircle(report.circles.id, report.circles.name)
-    await supabase.from('reports').update({ resolved: true }).eq('id', report.id)
-    loadReports()
+  function updateAdminDroit(id, droit, value) {
+    setAdminsConfig(prev => prev.map(a => a.id === id ? { ...a, droits: { ...a.droits, [droit]: value } } : a))
   }
 
   if (!isAdmin) return (
@@ -3610,10 +3572,6 @@ export function AdminPage() {
     </div>
   )
 
-  const pendingReports = reports.filter(r => !r.resolved)
-  const resolvedReports = reports.filter(r => r.resolved)
-  const pendingApplications = applications.filter(a => a.status === 'pending' || !a.status)
-
   return (
     <div className="adm-root">
       <style>{css}</style>
@@ -3621,13 +3579,10 @@ export function AdminPage() {
       {/* TOPBAR */}
       <div className="adm-topbar">
         <div className="adm-logo" style={{ display:'flex', alignItems:'center', gap:8 }}>
-            <img src="/icons/icon-192.png" alt="logo" style={{ width:28, height:28, borderRadius:'50%' }} />
-            Mon <em>Jardin</em> — <span style={{ fontFamily:'Jost', fontSize:12, color:'var(--text3)', letterSpacing:'.2em' }}>ADMIN</span>
-          </div>
+          <img src="/icons/icon-192.png" alt="logo" style={{ width:28, height:28, borderRadius:'50%' }} />
+          Mon <em>Jardin</em> — <span style={{ fontFamily:'Jost', fontSize:12, color:'var(--text3)', letterSpacing:'.2em' }}>ADMIN</span>
+        </div>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          {pendingReports.length > 0 && (
-            <div className="adm-badge">🚩 {pendingReports.length} signalement{pendingReports.length > 1 ? 's' : ''}</div>
-          )}
           <AdminNav current="#admin" />
           <div className="adm-btn ghost" onClick={() => { signOut(); window.location.href = "/"; }}>Déconnexion</div>
         </div>
@@ -3637,191 +3592,55 @@ export function AdminPage() {
 
         {/* STATS */}
         <div className="adm-stats">
-          {[
-            { val: stats.totalUsers ?? '—',   lbl: 'Utilisateurs' },
-            { val: pendingReports.length,     lbl: 'Signalements en attente' },
-            { val: stats.totalReports ?? '—', lbl: 'Total signalements' },
-          ].map((s, i) => (
-            <div key={i} className="adm-stat">
-              <div className="adm-stat-val">{s.val}</div>
-              <div className="adm-stat-lbl">{s.lbl}</div>
-            </div>
-          ))}
+          <div className="adm-stat">
+            <div className="adm-stat-val">{stats.totalUsers ?? '—'}</div>
+            <div className="adm-stat-lbl">Utilisateurs</div>
+          </div>
         </div>
 
         {/* TABS */}
         <div className="adm-tabs">
-          <div className={`adm-tab${tab === 'reports' ? ' active' : ''}`} onClick={() => setTab('reports')}>
-            🚩 Signalements {pendingReports.length > 0 && `(${pendingReports.length})`}
-          </div>
-          <div className={`adm-tab${tab === 'applications' ? ' active' : ''}`} onClick={() => setTab('applications')}>
-            🌿 Animateurs {applications.length > 0 && `(${applications.length})`}
-          </div>
-          <div className={`adm-tab${tab === 'theme' ? ' active' : ''}`} onClick={() => setTab('theme')}>
-            🎨 Thème
-          </div>
-          <div className={`adm-tab${tab === 'maintenance' ? ' active' : ''}`} onClick={() => setTab('maintenance')}>
-            🔧 Maintenance
-          </div>
+          <div className={`adm-tab${tab === 'theme'            ? ' active' : ''}`} onClick={() => { if (pinUnlocked) setTab('theme'); else { setPinTarget('theme'); setPinInput(''); setPinError(false) } }}>🎨 Thème{!pinUnlocked && <span style={{ fontSize:9, marginLeft:4, opacity:0.45 }}>🔒</span>}</div>
+          <div className={`adm-tab${tab === 'maintenance'      ? ' active' : ''}`} onClick={() => { if (pinUnlocked) setTab('maintenance'); else { setPinTarget('maintenance'); setPinInput(''); setPinError(false) } }}>🔧 Maintenance{!pinUnlocked && <span style={{ fontSize:9, marginLeft:4, opacity:0.45 }}>🔒</span>}</div>
+          <div className={`adm-tab${tab === 'administrateurs'  ? ' active' : ''}`} onClick={() => setTab('administrateurs')}>🛡️ Administrateurs</div>
         </div>
 
-        {/* ── SIGNALEMENTS ── */}
-        {tab === 'reports' && (
-          <div className="adm-section">
-            {loading ? (
-              <div className="adm-empty">Chargement…</div>
-            ) : pendingReports.length === 0 ? (
-              <div className="adm-empty">✅ Aucun signalement en attente</div>
-            ) : (
-              <div className="adm-grid">
-                {pendingReports.map(r => (
-                  <div key={r.id} className="adm-report-card">
-                    <div className="adm-report-flag">🚩</div>
-                    <div className="adm-report-body">
-                      <div className="adm-report-graine">
-                        {r.circles?.name ?? 'Graine inconnue'}
-                        <span style={{ marginLeft:8, fontSize:10, color:'var(--text3)' }}>{r.circles?.theme}</span>
-                      </div>
-                      <div className="adm-report-meta">
-                        Signalé par {r.reporter?.display_name ?? r.reporter?.email ?? 'anonyme'} · {new Date(r.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' })}
-                      </div>
-                      <div className="adm-report-actions">
-                        <button className="adm-btn danger" onClick={() => handleDeleteFromReport(r)}>
-                          🗑️ Supprimer la graine
-                        </button>
-                        <button className="adm-btn success" onClick={() => handleResolveReport(r.id)}>
-                          ✓ Marquer résolu
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {resolvedReports.length > 0 && (
-              <div style={{ marginTop:32 }}>
-                <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>Signalements résolus</div>
-                <div className="adm-grid">
-                  {resolvedReports.map(r => (
-                    <div key={r.id} className="adm-report-card resolved">
-                      <div className="adm-report-flag">✅</div>
-                      <div className="adm-report-body">
-                        <div className="adm-report-graine">{r.circles?.name ?? 'Graine supprimée'}</div>
-                        <div className="adm-report-meta">Résolu · {new Date(r.created_at).toLocaleDateString('fr-FR')}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-
-
-        {/* ── ANIMATEURS ── */}
-        {tab === 'applications' && (
-          <div className="adm-section">
-            {loading ? (
-              <div className="adm-empty">Chargement…</div>
-            ) : applications.length === 0 ? (
-              <div className="adm-empty">Aucune candidature pour l'instant.</div>
-            ) : (
-              <>
-                {pendingApplications.length > 0 && (
-                  <div style={{ marginBottom:24 }}>
-                    <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>
-                      En attente · {pendingApplications.length}
-                    </div>
-                    <div className="adm-grid">
-                      {pendingApplications.map(a => (
-                        <div key={a.id} className="adm-report-card">
-                          <div className="adm-report-flag">🌿</div>
-                          <div className="adm-report-body">
-                            <div className="adm-report-graine">
-                              {a.user?.display_name ?? a.user?.email ?? a.user_id?.slice(0,8)}
-                              <span style={{ marginLeft:8, fontSize:10, color:'var(--text3)' }}>{a.user?.email}</span>
-                            </div>
-                            <div className="adm-report-meta">
-                              Candidature du {new Date(a.created_at).toLocaleDateString('fr-FR', { day:'numeric', month:'long' })}
-                            </div>
-                            {a.motivation && (
-                              <div style={{ fontSize:12, color:'var(--text2)', lineHeight:1.6, marginBottom:8, fontStyle:'italic' }}>
-                                "{a.motivation}"
-                              </div>
-                            )}
-                            {a.experience && (
-                              <div style={{ fontSize:11, color:'var(--text3)', lineHeight:1.5, marginBottom:10 }}>
-                                Expérience : {a.experience}
-                              </div>
-                            )}
-                            <div className="adm-report-actions">
-                              <button className="adm-btn success" onClick={() => handleApproveAnimator(a.id, a.user_id)}>
-                                ✅ Valider
-                              </button>
-                              <button className="adm-btn danger" onClick={() => handleRejectAnimator(a.id)}>
-                                ✕ Refuser
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {applications.filter(a => a.status === 'approved' || a.status === 'rejected').length > 0 && (
-                  <div>
-                    <div style={{ fontSize:10, color:'var(--text3)', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:12 }}>
-                      Traitées
-                    </div>
-                    <table className="adm-table">
-                      <thead>
-                        <tr>
-                          <th className="adm-th">Candidat</th>
-                          <th className="adm-th">Email</th>
-                          <th className="adm-th">Date</th>
-                          <th className="adm-th">Statut</th>
-                          <th className="adm-th">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {applications.filter(a => a.status === 'approved' || a.status === 'rejected').map(a => (
-                          <tr key={a.id} className="adm-tr">
-                            <td className="adm-td">{a.user?.display_name ?? a.user_id?.slice(0,8)}</td>
-                            <td className="adm-td" style={{ color:'var(--text3)' }}>{a.user?.email ?? '—'}</td>
-                            <td className="adm-td">{new Date(a.created_at).toLocaleDateString('fr-FR')}</td>
-                            <td className="adm-td">
-                              <span style={{
-                                fontSize:10, padding:'3px 10px', borderRadius:100,
-                                background: a.status === 'approved' ? 'var(--green3)' : 'var(--red2)',
-                                border: `1px solid ${a.status === 'approved' ? 'var(--greenT)' : 'var(--redT)'}`,
-                                color: a.status === 'approved' ? '#c8f0b8' : 'rgba(255,160,160,0.9)',
-                              }}>
-                                {a.status === 'approved' ? '✅ Validé' : '✕ Refusé'}
-                              </span>
-                            </td>
-                            <td className="adm-td">
-                              {a.status === 'approved' && (
-                                <button className="adm-btn danger" onClick={() => handleRejectAnimator(a.id)}>
-                                  Révoquer
-                                </button>
-                              )}
-                              {a.status === 'rejected' && (
-                                <button className="adm-btn success" onClick={() => handleApproveAnimator(a.id, a.user_id)}>
-                                  Valider
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </>
-            )}
+        {/* MODALE PIN */}
+        {pinTarget && (
+          <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center' }}
+            onClick={() => setPinTarget(null)}>
+            <div style={{ background:'#1a1e28', border:'1px solid rgba(255,255,255,0.10)', borderRadius:18, padding:'32px 28px', width:260, textAlign:'center' }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize:28, marginBottom:10 }}>🔒</div>
+              <div style={{ fontSize:13, fontWeight:600, color:'#f2ede0', marginBottom:4 }}>Accès restreint</div>
+              <div style={{ fontSize:11, color:'rgba(242,237,224,0.45)', marginBottom:20 }}>Entrez le code pour déverrouiller</div>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                value={pinInput}
+                autoFocus
+                onChange={e => {
+                  const v = e.target.value.replace(/\D/g, '').slice(0, 4)
+                  setPinInput(v)
+                  setPinError(false)
+                  if (v.length === 4) {
+                    if (v === '1234') {
+                      setPinUnlocked(true)
+                      setTab(pinTarget)
+                      setPinTarget(null)
+                      setPinInput('')
+                    } else {
+                      setPinError(true)
+                      setTimeout(() => { setPinInput(''); setPinError(false) }, 700)
+                    }
+                  }
+                }}
+                onKeyDown={e => { if (e.key === 'Escape') setPinTarget(null) }}
+                style={{ width:'100%', boxSizing:'border-box', textAlign:'center', fontSize:24, letterSpacing:10, padding:'10px 14px', borderRadius:10, border:`1.5px solid ${pinError ? '#e07070' : 'rgba(255,255,255,0.18)'}`, background:'rgba(255,255,255,0.07)', color: pinError ? '#e07070' : '#f2ede0', outline:'none', fontFamily:"'Jost',sans-serif", transition:'border-color .2s, color .2s' }}
+              />
+              {pinError && <div style={{ fontSize:11, color:'#e07070', marginTop:8 }}>Code incorrect</div>}
+            </div>
           </div>
         )}
 
@@ -3834,6 +3653,105 @@ export function AdminPage() {
         {tab === 'maintenance' && (
           <div className="adm-section">
             <MigrationGardenColors showToast={showToast} />
+          </div>
+        )}
+
+        {/* ── ADMINISTRATEURS ── */}
+        {tab === 'administrateurs' && (
+          <div className="adm-section">
+            <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 20 }}>
+              Gestion des accès administrateurs · {ADMIN_IDS.length} comptes
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {ADMIN_IDS.map(id => {
+                const u = adminsUsers.find(u => u.id === id)
+                const cfg = adminsConfig.find(c => c.id === id)
+                if (!cfg) return null
+                const isRevoked = cfg.statut === 'révoqué'
+                return (
+                  <div key={id} style={{ padding: '18px 20px', borderRadius: 14, background: 'rgba(255,255,255,0.025)', border: `1px solid ${isRevoked ? 'rgba(210,80,80,0.20)' : 'rgba(255,255,255,0.08)'}`, opacity: isRevoked ? 0.7 : 1 }}>
+
+                    {/* Ligne 1 : identité + statut */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap', marginBottom: 14 }}>
+
+                      {/* Champs Nom / Prénom */}
+                      <div style={{ display: 'flex', gap: 8, flex: 1, minWidth: 280 }}>
+                        {[['prenom', 'Prénom'], ['nom', 'Nom']].map(([field, lbl]) => (
+                          <div key={field} style={{ flex: 1 }}>
+                            <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>{lbl}</div>
+                            <input
+                              value={cfg[field]}
+                              onChange={e => updateAdminField(id, field, e.target.value)}
+                              placeholder={lbl}
+                              style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 12, fontFamily: "'Jost',sans-serif", outline: 'none', boxSizing: 'border-box' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Email (readonly) */}
+                      <div style={{ flex: 1, minWidth: 200 }}>
+                        <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>Email</div>
+                        <div style={{ fontSize: 12, color: u ? 'rgba(255,255,255,0.65)' : 'var(--text3)', padding: '7px 0', fontStyle: u ? 'normal' : 'italic' }}>
+                          {u?.email ?? 'Utilisateur non trouvé'}
+                          {u?.display_name && <span style={{ marginLeft: 8, fontSize: 10, color: 'var(--text3)' }}>· {u.display_name}</span>}
+                        </div>
+                      </div>
+
+                      {/* Statut */}
+                      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                        <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Statut</div>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {['actif', 'révoqué'].map(s => (
+                            <button key={s} onClick={() => updateAdminField(id, 'statut', s)}
+                              style={{ padding: '5px 12px', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif",
+                                background: cfg.statut === s ? (s === 'actif' ? 'rgba(150,212,133,0.15)' : 'rgba(210,80,80,0.15)') : 'rgba(255,255,255,0.05)',
+                                border: cfg.statut === s ? `1px solid ${s === 'actif' ? 'rgba(150,212,133,0.40)' : 'rgba(210,80,80,0.40)'}` : '1px solid rgba(255,255,255,0.10)',
+                                color: cfg.statut === s ? (s === 'actif' ? '#96d485' : 'rgba(255,140,140,0.85)') : 'var(--text3)' }}>
+                              {s === 'actif' ? '✓ Validé' : '✕ Révoqué'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ligne 2 : droits */}
+                    <div>
+                      <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>Droits d'accès</div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        {DROITS_DEFS.map(({ key, label }) => {
+                          const checked = cfg.droits[key] ?? true
+                          return (
+                            <label key={key}
+                              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 8, cursor: 'pointer',
+                                background: checked ? 'rgba(150,212,133,0.08)' : 'rgba(255,255,255,0.04)',
+                                border: `1px solid ${checked ? 'rgba(150,212,133,0.25)' : 'rgba(255,255,255,0.08)'}`,
+                                transition: 'all .15s' }}>
+                              <input type="checkbox" checked={checked} onChange={e => updateAdminDroit(id, key, e.target.checked)}
+                                style={{ accentColor: '#96d485', width: 13, height: 13, cursor: 'pointer' }} />
+                              <span style={{ fontSize: 11, color: checked ? '#c8f0b8' : 'var(--text3)', userSelect: 'none' }}>{label}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Bouton sauvegarder */}
+            <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={saveAdmins} disabled={adminsSaving}
+                style={{ padding: '10px 24px', borderRadius: 10, fontSize: 13, cursor: adminsSaving ? 'default' : 'pointer', fontFamily: "'Jost',sans-serif", fontWeight: 500, background: 'rgba(150,212,133,0.15)', border: '1px solid rgba(150,212,133,0.35)', color: '#96d485', opacity: adminsSaving ? 0.6 : 1 }}>
+                {adminsSaving ? '⏳ Sauvegarde…' : '✓ Sauvegarder'}
+              </button>
+            </div>
+
+            <div style={{ marginTop: 12, fontSize: 10, color: 'rgba(255,255,255,0.20)', lineHeight: 1.8 }}>
+              ℹ️ Les IDs autorisés restent définis dans le code source (<code style={{ fontSize: 9, background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: 3 }}>ADMIN_IDS</code>). Cette interface gère les informations affichées et les droits d'accès aux sections.
+            </div>
           </div>
         )}
 

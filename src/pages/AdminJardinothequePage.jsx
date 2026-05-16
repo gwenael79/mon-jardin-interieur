@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
-import { ADMIN_IDS } from './AdminPage'
+import { ADMIN_IDS, AdminNav } from './AdminPage'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -42,30 +42,6 @@ html,body,#root{height:100%;width:100%}
   .adm-btn{padding:5px 10px;font-size:11px!important}
 }
 `
-
-function AdminNav({ current }) {
-  const navItems = [
-    { hash: '#admin',         label: 'Admin',         icon: '🛡' },
-    { hash: '#clients',       label: 'Clients',       icon: '👥' },
-    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
-    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',          label: 'Pros',          icon: '💼' },
-    { hash: '#messages',      label: 'Messages',      icon: '💬' },
-  ]
-  return (
-    <div style={{ display: 'flex', gap: 4 }}>
-      {navItems.map(({ hash, label, icon }) => {
-        const active = current === hash
-        return (
-          <a key={hash} href={hash}
-            style={{ padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
-            {icon} {label}
-          </a>
-        )
-      })}
-    </div>
-  )
-}
 
 // ═══════════════════════════════════════════════════════════
 //  TabDigital — liste des produits digitaux par date de création
