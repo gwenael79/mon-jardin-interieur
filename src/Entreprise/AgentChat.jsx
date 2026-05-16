@@ -10,7 +10,7 @@ const SUGGESTIONS = [
   "Montre-moi les derniers contenus générés",
 ];
 
-const genSession = () => `s_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+const genSession = (id) => `${id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
 // ── TTS : parle phrase par phrase, appelle onDone quand terminé ──────────────
 function speakWithCallback(text, onDone) {
@@ -72,13 +72,13 @@ function VoiceOrb({ state, onClick }) {
 }
 
 // ── Composant principal ──────────────────────────────────────────────────────
-export default function AgentChat() {
+export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", agentDesc = "Orchestrateur IA · données temps réel · actions" }) {
   const [msgs,        setMsgs]       = useState([]);
   const [input,       setInput]      = useState("");
   const [loading,     setLoading]    = useState(false);
   const [voiceMode,   setVoiceMode]  = useState(false);
   const [voiceState,  _setVoiceState]= useState("idle");
-  const [sessionId]                  = useState(genSession);
+  const [sessionId]                  = useState(() => genSession(agentId));
   const bottomRef   = useRef(null);
   const recRef      = useRef(null);
   const loopRef     = useRef(false);
@@ -145,7 +145,7 @@ export default function AgentChat() {
       fetch(AGENT_URL, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ messages: next, session_id: sessionId }),
+        body:    JSON.stringify({ messages: next, session_id: sessionId, agent_id: agentId }),
       })
         .then(r => { if (!r.ok) throw new Error(`Erreur ${r.status}`); return r.json(); })
         .then(data => {
@@ -195,7 +195,7 @@ export default function AgentChat() {
       const res = await fetch(AGENT_URL, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ messages: next, session_id: sessionId }),
+        body:    JSON.stringify({ messages: next, session_id: sessionId, agent_id: agentId }),
       });
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
@@ -292,9 +292,9 @@ export default function AgentChat() {
             <div style={{ background: "#EAF3DE", border: ".5px solid #C0DD97", borderRadius: "12px",
               padding: "14px 16px", marginBottom: "16px" }}>
               <div style={{ fontFamily: "Georgia,serif", fontSize: "15px", fontWeight: "600",
-                color: "#1c3818", marginBottom: "4px" }}>MAESTRO · Orchestrateur IA</div>
+                color: "#1c3818", marginBottom: "4px" }}>{agentName}</div>
               <div style={{ fontSize: "13px", color: "#3B6D11", lineHeight: "1.7" }}>
-                Lance le mode vocal pour un dialogue continu, ou écris ci-dessous.
+                {agentDesc}
               </div>
             </div>
             <p style={{ fontSize: "10px", fontWeight: "500", letterSpacing: ".08em",

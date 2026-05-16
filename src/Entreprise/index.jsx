@@ -14,15 +14,21 @@ const TABS = [
   { id:"commercial", icon:"💌", label:"Commercial" },
   { id:"seo",        icon:"🔍", label:"SEO"        },
   { id:"finance",    icon:"📊", label:"Financier"  },
-  { id:"agent",      icon:"🤖", label:"Agent"      },
+  { id:"maestro",    icon:"🤖", label:"MAESTRO"    },
+  { id:"stratege",   icon:"🎯", label:"Stratège"   },
+  { id:"growth",     icon:"📈", label:"Growth"     },
+  { id:"contenu",    icon:"✍️",  label:"Contenu"    },
 ];
 
 const HUB_CARDS = [
-  { id:"agent",      icon:"🤖", label:"MAESTRO",     desc:"Orchestrateur IA · données temps réel · actions",  color:"#1c3818", bg:"#1c3818", bd:"#3B6D11", dark:true },
-  { id:"reseaux",    icon:"📱", label:"Réseaux",    desc:"Posts Instagram · TikTok · LinkedIn",               color:"#27500A", bg:"#EAF3DE", bd:"#C0DD97" },
-  { id:"commercial", icon:"💌", label:"Commercial",  desc:"Emails B2C & B2B · 11 étapes de parcours",          color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
-  { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                         color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
-  { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",        color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
+  { id:"maestro",  icon:"🤖", label:"MAESTRO",   desc:"Données temps réel · pilotage · actions",                        color:"#1c3818", bg:"#1c3818", bd:"#3B6D11", dark:true },
+  { id:"stratege", icon:"🎯", label:"Stratège",  desc:"Acquisition · conversion · pricing · plateformes",               color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
+  { id:"growth",   icon:"📈", label:"Growth",    desc:"Analyse cohortes · métriques SaaS · recommandations",            color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
+  { id:"contenu",  icon:"✍️",  label:"Contenu",   desc:"Planning éditorial · repurposing · stratégie cross-canal",      color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
+  { id:"reseaux",    icon:"📱", label:"Réseaux",    desc:"Posts Instagram · TikTok · LinkedIn",                          color:"#27500A", bg:"#EAF3DE", bd:"#C0DD97" },
+  { id:"commercial", icon:"💌", label:"Commercial",  desc:"Emails B2C & B2B · 11 étapes de parcours",                   color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
+  { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                                  color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
+  { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",                 color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
 ];
 
 const BRAND = { dark:"#1c3818", text:"#c8e6b0", sub:"#7ab36a" };
@@ -120,7 +126,10 @@ export default function Entreprise() {
         {active==="commercial" && <CommercialStudio />}
         {active==="seo"        && <SeoStudio />}
         {active==="finance"    && <FinanceStudio />}
-        {active==="agent"      && <AgentChat />}
+        {active==="maestro"   && <AgentChat agentId="maestro"  agentName="MAESTRO"  agentDesc="Orchestrateur IA · données temps réel · actions directes" />}
+        {active==="stratege"  && <AgentChat agentId="stratege" agentName="STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes e-commerce" />}
+        {active==="growth"    && <AgentChat agentId="growth"   agentName="GROWTH"   agentDesc="Analyse cohortes · métriques SaaS · recommandations chiffrées" />}
+        {active==="contenu"   && <AgentChat agentId="contenu"  agentName="CONTENU"  agentDesc="Planning éditorial · repurposing · stratégie cross-canal" />}
       </div>
 
     </div>
