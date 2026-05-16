@@ -120,17 +120,27 @@ export default function Entreprise() {
       </div>
 
       {/* ── Content ── */}
-      <div style={{ padding:"16px", maxWidth:"600px", margin:"0 auto" }}>
-        {active==="hub"        && <Hub setActive={setActive} />}
-        {active==="reseaux"    && <ReseauxStudio />}
-        {active==="commercial" && <CommercialStudio />}
-        {active==="seo"        && <SeoStudio />}
-        {active==="finance"    && <FinanceStudio />}
-        {active==="maestro"  && <AgentChat agentId="maestro"  agentName="MAX"   agentFullName="MAX · MAESTRO"  agentDesc="Données temps réel · actions directes sur Supabase et n8n" agentColor="#1c3818" agentBg="#EAF3DE" />}
-        {active==="stratege" && <AgentChat agentId="stratege" agentName="SAM"   agentFullName="SAM · STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes" agentColor="#0C447C" agentBg="#E6F1FB" />}
-        {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · GROWTH"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" />}
-        {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" />}
-      </div>
+      {(() => {
+        const isAgent = ["maestro","stratege","growth","contenu"].includes(active);
+        const isStudio = ["hub","reseaux","commercial","seo","finance"].includes(active);
+        return (
+          <div style={{ padding: isAgent ? "20px 4%" : "16px",
+            maxWidth: isAgent ? "none" : "600px",
+            width: isAgent ? "80%" : "auto",
+            margin: "0 auto",
+            boxSizing: "border-box" }}>
+            {active==="hub"        && <Hub setActive={setActive} />}
+            {active==="reseaux"    && <ReseauxStudio />}
+            {active==="commercial" && <CommercialStudio />}
+            {active==="seo"        && <SeoStudio />}
+            {active==="finance"    && <FinanceStudio />}
+            {active==="maestro"  && <AgentChat agentId="maestro"  agentName="MAX"   agentFullName="MAX · MAESTRO"  agentDesc="Données temps réel · actions directes sur Supabase et n8n" agentColor="#1c3818" agentBg="#EAF3DE" />}
+            {active==="stratege" && <AgentChat agentId="stratege" agentName="SAM"   agentFullName="SAM · STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes" agentColor="#0C447C" agentBg="#E6F1FB" />}
+            {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · GROWTH"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" />}
+            {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" />}
+          </div>
+        );
+      })()}
 
     </div>
   );
