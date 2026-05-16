@@ -53,7 +53,7 @@ html,body,#root{height:100%;width:100%}
 /* Colonne droite — cadre */
 .auth-right-col {
   flex:0 0 auto;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
 }
 .auth-frame {
   width:420px; height:640px;
@@ -391,6 +391,71 @@ html,body,#root{height:100%;width:100%}
 .auth-success-title { font-family:'Cormorant Garamond',serif; font-size:24px; color:#7a5a08; margin-bottom:10px; }
 .auth-success-text { font-size:14px; font-weight:300; color:rgba(30,20,8,.60); line-height:1.75; }
 
+/* ── Barre légale sous le cadre ── */
+.auth-legal-bar {
+  font-size:11px; color:rgba(30,20,8,.35);
+  text-align:center; letter-spacing:.01em;
+  font-family:'Jost',sans-serif; line-height:1;
+}
+.auth-legal-link {
+  cursor:pointer; transition:color .15s;
+  text-decoration:underline; text-underline-offset:2px;
+}
+.auth-legal-link:hover { color:rgba(30,20,8,.65); }
+
+/* ── Modal légal ── */
+.legal-modal-overlay {
+  position:fixed; inset:0; z-index:1500;
+  background:rgba(10,20,5,.52); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:authFadeIn .22s ease both;
+}
+.legal-modal {
+  background:#faf8f4; border-radius:20px;
+  width:min(640px,100%); max-height:86vh;
+  display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(30,60,10,.20);
+  border:1px solid rgba(180,210,140,.30);
+  animation:authFormIn .3s cubic-bezier(.22,1,.36,1) both;
+  position:relative; overflow:hidden;
+}
+.legal-modal-header {
+  padding:22px 26px 16px; flex-shrink:0;
+  border-bottom:1px solid rgba(200,190,175,.28);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.legal-modal-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:21px; font-weight:600; color:#1a1208;
+}
+.legal-modal-close {
+  background:none; border:none; font-size:18px; cursor:pointer;
+  color:rgba(30,20,8,.35); padding:4px; line-height:1;
+  transition:color .15s; flex-shrink:0;
+}
+.legal-modal-close:hover { color:rgba(30,20,8,.70); }
+.legal-modal-body {
+  overflow-y:auto; padding:20px 26px 28px;
+  font-size:12.5px; color:rgba(30,20,8,.72);
+  line-height:1.85; font-family:'Jost',sans-serif;
+  scrollbar-width:thin; scrollbar-color:rgba(90,154,40,.20) transparent;
+}
+.legal-modal-body h3 {
+  font-family:'Cormorant Garamond',serif;
+  font-size:15px; font-weight:600; color:#1a1208;
+  margin:18px 0 5px; letter-spacing:.01em;
+}
+.legal-modal-body h3:first-child { margin-top:0; }
+.legal-modal-body p { margin-bottom:9px; }
+.legal-modal-body ul { margin:4px 0 10px 18px; }
+.legal-modal-body li { margin-bottom:4px; }
+.legal-modal-body strong { color:#1a1208; font-weight:600; }
+.legal-ph {
+  background:rgba(220,160,50,.14); color:#7a5010;
+  border-radius:3px; padding:1px 4px;
+  font-style:italic; font-size:11.5px;
+}
+
 /* Mobile */
 @media(max-width:767px) {
   .auth-wrap { overflow-y:auto; }
@@ -413,6 +478,160 @@ html,body,#root{height:100%;width:100%}
   .auth-tagline { font-size:13px; }
 }
 `
+
+const Ph = ({ children }) => <span className="legal-ph">{children}</span>
+
+const LEGAL_DOCS = {
+  mentions: {
+    title: 'Mentions légales',
+    content: (
+      <div>
+        <h3>Éditeur de l'application</h3>
+        <p>
+          Gwenael JEAUNEAU — Mon Jardin Intérieur<br/>
+          Forme juridique : Auto-entrepreneur<br/>
+          SIRET : 41403849700064<br/>
+          Siège social : 95 boulevard de l'Atlantique, 79000 Niort<br/>
+          Email : bonjour@monjardininterieur.com<br/>
+          Directeur de la publication : Gwenael JEAUNEAU
+        </p>
+        <h3>Hébergement</h3>
+        <p>
+          <strong>Base de données :</strong> Supabase Inc. — 970 Trestle Glen Rd, Oakland, CA 94610, États-Unis<br/>
+          <strong>Application web :</strong> Vercel Inc. — 340 Pine Street Suite 900, San Francisco, CA 94104, États-Unis
+        </p>
+        <h3>Propriété intellectuelle</h3>
+        <p>L'ensemble des contenus de l'application Mon Jardin Intérieur (textes, visuels, interfaces, logotypes, code) est protégé par le droit d'auteur et appartient à Gwenael JEAUNEAU — Mon Jardin Intérieur ou à ses ayants droit. Toute reproduction, même partielle, est interdite sans autorisation écrite préalable.</p>
+        <h3>Avertissement</h3>
+        <p>Mon Jardin Intérieur est un outil de bien-être personnel et d'accompagnement émotionnel. Il ne constitue en aucun cas un acte médical, psychologique ou thérapeutique, et ne saurait se substituer à un suivi professionnel de santé.</p>
+        <p style={{color:'rgba(30,20,8,.45)',fontSize:'11px',marginTop:14}}>Dernière mise à jour : 16/05/2026</p>
+      </div>
+    ),
+  },
+  cgv: {
+    title: 'Conditions Générales de Vente',
+    content: (
+      <div>
+        <h3>1. Objet</h3>
+        <p>Les présentes Conditions Générales de Vente (CGV) régissent la souscription aux abonnements Premium de l'application Mon Jardin Intérieur, éditée par Gwenael JEAUNEAU — Mon Jardin Intérieur, ci-après « l'Éditeur ».</p>
+        <h3>2. Prix et modalités de paiement</h3>
+        <p>L'abonnement Premium est proposé en trois formules :</p>
+        <ul>
+          <li><strong>Mensuel :</strong> 13,00 € TTC / mois — résiliable à tout moment</li>
+          <li><strong>Annuel :</strong> 108,00 € TTC / an (soit 9,00 € / mois, −30 %) — engagement 12 mois</li>
+          <li><strong>Tarif solidaire :</strong> prix libre, minimum 108 € pour 12 mois</li>
+        </ul>
+        <p>Le paiement est effectué par carte bancaire via <strong>Stripe</strong>, plateforme sécurisée. Les données de paiement ne sont pas stockées par l'Éditeur.</p>
+        <h3>3. Droit de rétractation</h3>
+        <p>Conformément à l'article L.221-28 du Code de la consommation, <strong>le droit de rétractation de 14 jours ne s'applique pas</strong> aux contenus numériques dont l'exécution a commencé avec votre accord exprès avant l'expiration du délai légal.</p>
+        <p>Pour tout autre achat, vous disposez de 14 jours à compter de la date de souscription pour exercer votre droit de rétractation, par email à bonjour@monjardininterieur.com.</p>
+        <h3>4. Durée et résiliation</h3>
+        <p>L'abonnement est souscrit pour une durée d'un an, renouvelable tacitement. Vous pouvez résilier à tout moment depuis votre espace personnel. La résiliation prend effet à l'échéance de la période en cours, sans remboursement au prorata.</p>
+        <h3>5. Responsabilité</h3>
+        <p>L'Éditeur s'engage à maintenir l'application disponible 24h/24, sauf interruptions de maintenance ou cas de force majeure. En cas d'indisponibilité prolongée imputable à l'Éditeur, un avoir ou un remboursement au prorata pourra être accordé sur demande.</p>
+        <p>L'Éditeur ne saurait être tenu responsable des dommages indirects, pertes de données ou préjudices résultant de l'utilisation de l'application.</p>
+        <h3>6. Litiges et droit applicable</h3>
+        <p>En cas de litige, une solution amiable sera recherchée en priorité. À défaut, les tribunaux compétents de Niort seront saisis. Le droit français est applicable.</p>
+        <p>Conformément à l'article L.612-1 du Code de la consommation, tout consommateur peut recourir gratuitement à un médiateur de la consommation : <Ph>[Nom et coordonnées du médiateur]</Ph>.</p>
+        <p style={{color:'rgba(30,20,8,.45)',fontSize:'11px',marginTop:14}}>Dernière mise à jour : 16/05/2026</p>
+      </div>
+    ),
+  },
+  confidentialite: {
+    title: 'Politique de confidentialité',
+    content: (
+      <div>
+        <h3>Responsable du traitement</h3>
+        <p>Gwenael JEAUNEAU — Mon Jardin Intérieur — bonjour@monjardininterieur.com<br/>
+        95 boulevard de l'Atlantique, 79000 Niort</p>
+        <h3>Données collectées</h3>
+        <ul>
+          <li><strong>Données d'inscription :</strong> email, prénom/pseudo, date de naissance</li>
+          <li><strong>Données de profil :</strong> fleur choisie, niveau, contenus créés (bilans émotionnels, rituels)</li>
+          <li><strong>Données de navigation :</strong> logs de connexion, interactions dans l'application</li>
+          <li><strong>Données de paiement :</strong> traitées par <strong>Stripe</strong> — non stockées chez l'Éditeur</li>
+        </ul>
+        <h3>Finalités et bases légales</h3>
+        <ul>
+          <li>Fourniture et gestion du service → <strong>Exécution du contrat</strong></li>
+          <li>Amélioration de l'application → <strong>Intérêt légitime</strong></li>
+          <li>Communications marketing → <strong>Consentement</strong></li>
+          <li>Obligations comptables et légales → <strong>Obligation légale</strong></li>
+        </ul>
+        <h3>Durée de conservation</h3>
+        <p>Les données sont conservées pendant toute la durée du compte, puis 3 ans après sa suppression ou la résiliation définitive, sauf obligation légale contraire (ex : données comptables conservées 10 ans).</p>
+        <h3>Destinataires des données</h3>
+        <p>Vos données sont traitées par les sous-traitants suivants :</p>
+        <ul>
+          <li><strong>Supabase</strong> — hébergement base de données (USA, clauses contractuelles types UE)</li>
+          <li><strong>Vercel</strong> — hébergement application (USA, clauses contractuelles types UE)</li>
+          <li><strong>Systeme.io</strong> — gestion des emails et automatisations marketing</li>
+          <li><strong>Stripe</strong> — traitement sécurisé des paiements</li>
+        </ul>
+        <h3>Vos droits (RGPD)</h3>
+        <p>Vous disposez des droits suivants : accès, rectification, suppression, portabilité, opposition, limitation du traitement. Pour les exercer : rgpd@monjardininterieur.com.</p>
+        <p>Vous pouvez également introduire une réclamation auprès de la <strong>CNIL</strong> : <a href="https://www.cnil.fr" target="_blank" rel="noreferrer" style={{color:'#4a8a20'}}>www.cnil.fr</a></p>
+        <p style={{color:'rgba(30,20,8,.45)',fontSize:'11px',marginTop:14}}>Dernière mise à jour : 16/05/2026</p>
+      </div>
+    ),
+  },
+  cgu: {
+    title: "Conditions Générales d'Utilisation",
+    content: (
+      <div>
+        <h3>1. Accès au service</h3>
+        <p>L'accès à Mon Jardin Intérieur est réservé aux personnes âgées de <strong>10 ans et plus</strong>. Les mineurs de moins de 16 ans doivent disposer de l'autorisation d'un représentant légal. L'inscription au plan de base est gratuite.</p>
+        <h3>2. Compte utilisateur</h3>
+        <p>Vous êtes responsable de la confidentialité de vos identifiants. Tout accès depuis votre compte vous est imputable. En cas de compromission, contactez-nous immédiatement à bonjour@monjardininterieur.com.</p>
+        <h3>3. Contenu utilisateur</h3>
+        <p>Vos bilans émotionnels et contenus personnels restent <strong>privés par défaut</strong>. Vous conservez l'entière propriété de vos données. En participant au Jardin Collectif, vous acceptez que vos contributions anonymisées soient visibles par la communauté selon les paramètres choisis.</p>
+        <h3>4. Règles de la communauté</h3>
+        <p>Sont strictement interdits dans l'espace communautaire :</p>
+        <ul>
+          <li>Propos haineux, discriminatoires ou à caractère offensant</li>
+          <li>Contenus à caractère médical ou thérapeutique non qualifié</li>
+          <li>Spam, démarchage commercial non autorisé</li>
+          <li>Usurpation d'identité</li>
+          <li>Partage de contenus protégés par le droit d'auteur sans autorisation</li>
+        </ul>
+        <p>L'Éditeur se réserve le droit de suspendre ou supprimer tout compte en infraction, sans préavis.</p>
+        <h3>5. Propriété intellectuelle</h3>
+        <p>Les contenus de l'application (rituels, outils, design, algorithmes) sont la propriété de Gwenael JEAUNEAU — Mon Jardin Intérieur. Toute reproduction, redistribution ou exploitation commerciale est interdite sans autorisation écrite préalable.</p>
+        <h3>6. Modification des CGU</h3>
+        <p>L'Éditeur peut modifier les présentes CGU. Vous serez informé(e) par email 30 jours avant l'entrée en vigueur des nouvelles conditions. La poursuite de l'utilisation du service vaut acceptation.</p>
+        <p style={{color:'rgba(30,20,8,.45)',fontSize:'11px',marginTop:14}}>Dernière mise à jour : 16/05/2026</p>
+      </div>
+    ),
+  },
+  cookies: {
+    title: 'Politique de cookies',
+    content: (
+      <div>
+        <h3>Qu'est-ce qu'un cookie ?</h3>
+        <p>Un cookie est un petit fichier texte déposé sur votre appareil lors de la visite d'un site ou de l'utilisation d'une application. Il permet de conserver certaines informations entre vos sessions.</p>
+        <h3>Cookies essentiels — toujours actifs</h3>
+        <p>Ces cookies sont indispensables au fonctionnement de l'application. Ils ne peuvent pas être désactivés.</p>
+        <ul>
+          <li><strong>Session d'authentification Supabase</strong> — maintient votre connexion active</li>
+          <li><strong>Préférences de l'application</strong> — thème, paramètres d'affichage</li>
+          <li><strong>Sécurité</strong> — protection contre les requêtes frauduleuses (CSRF)</li>
+        </ul>
+        <h3>Cookies analytiques</h3>
+        <p>Aucun outil de mesure d'audience n'est actuellement utilisé. Aucun cookie analytique n'est déposé sur votre appareil.</p>
+        <h3>Cookies tiers</h3>
+        <ul>
+          <li><strong>Stripe</strong> — déposés uniquement lors du processus de paiement</li>
+        </ul>
+        <h3>Durée de conservation</h3>
+        <p>Les cookies de session expirent à la fermeture du navigateur. Les cookies persistants ont une durée maximale de <strong>13 mois</strong>, conformément aux recommandations de la CNIL.</p>
+        <h3>Gérer vos préférences</h3>
+        <p>Vous pouvez à tout moment modifier vos préférences cookies via les paramètres de votre navigateur (Chrome, Firefox, Safari…). La désactivation des cookies essentiels peut altérer significativement le fonctionnement de l'application.</p>
+        <p>Pour toute question : bonjour@monjardininterieur.com</p>
+        <p style={{color:'rgba(30,20,8,.45)',fontSize:'11px',marginTop:14}}>Dernière mise à jour : 16/05/2026</p>
+      </div>
+    ),
+  },
+}
 
 function translateAuthError(msg) {
   if (!msg) return msg
@@ -462,6 +681,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
   const [reviewStats,  setReviewStats]  = useState(null)
   const [reviewsList,  setReviewsList]  = useState([])
   const [showReviews,  setShowReviews]  = useState(false)
+  const [showLegal,    setShowLegal]    = useState(null)
 
   // ── Modal PRO ──
   const [showProModal,      setShowProModal]      = useState(false)
@@ -821,6 +1041,24 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 </button>
               )}
             </div>
+
+            {/* Barre légale — mobile uniquement */}
+            {isMobile && (
+              <div className="auth-legal-bar" style={{paddingBottom:8}}>
+                {[
+                  ['mentions',       'Mentions légales'],
+                  ['cgv',            'CGV'],
+                  ['confidentialite','Confidentialité'],
+                  ['cgu',            'CGU'],
+                  ['cookies',        'Cookies'],
+                ].map(([key, label], i, arr) => (
+                  <span key={key}>
+                    <span className="auth-legal-link" onClick={() => setShowLegal(key)}>{label}</span>
+                    {i < arr.length - 1 && <span style={{opacity:.45,margin:'0 4px'}}>·</span>}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -998,6 +1236,24 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
             )}
 
           </div>
+
+          {/* Barre légale — PC uniquement, sous le cadre */}
+          {!mobileForm && !isMobile && (
+            <div className="auth-legal-bar">
+              {[
+                ['mentions',       'Mentions légales'],
+                ['cgv',            'CGV'],
+                ['confidentialite','Confidentialité'],
+                ['cgu',            'CGU'],
+                ['cookies',        'Cookies'],
+              ].map(([key, label], i, arr) => (
+                <span key={key}>
+                  <span className="auth-legal-link" onClick={() => setShowLegal(key)}>{label}</span>
+                  {i < arr.length - 1 && <span style={{opacity:.45,margin:'0 4px'}}>·</span>}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         </div>
       </div>
@@ -1477,6 +1733,21 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Modal légal ── */}
+    {showLegal && (
+      <div className="legal-modal-overlay" onClick={e => e.target === e.currentTarget && setShowLegal(null)}>
+        <div className="legal-modal">
+          <div className="legal-modal-header">
+            <div className="legal-modal-title">{LEGAL_DOCS[showLegal].title}</div>
+            <button className="legal-modal-close" onClick={() => setShowLegal(null)} aria-label="Fermer">✕</button>
+          </div>
+          <div className="legal-modal-body">
+            {LEGAL_DOCS[showLegal].content}
           </div>
         </div>
       </div>
