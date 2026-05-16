@@ -979,8 +979,9 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
 }
 
 
-function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade, gardenFlowerCount, communityStats }) {
+function ScreenJardinCollectif({ userId, isPremium = false, userLevel = 1, onUpgrade, gardenFlowerCount, communityStats }) {
   const isMobile = useIsMobile()
+  const canAccess = isPremium || userLevel >= 3
   const flowerCount = gardenFlowerCount ?? 0
   const gardenContainerRef = useRef(null)
   const [containerH, setContainerH] = useState(null)
@@ -999,13 +1000,13 @@ function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade, gardenFlo
       {/* Jardin — prend tout l'espace */}
       <div ref={gardenContainerRef} style={{ flex:1, overflow:'hidden', position:'relative', background:'linear-gradient(180deg, #0a1a0e 0%, #060d07 100%)' }}>
 
-        {/* Jardin — flouté si non-premium */}
-        <div style={{ width:'100%', height:'100%', minHeight:'100%', filter: isPremium ? 'none' : 'blur(7px)', transform: isPremium ? 'none' : 'scale(1.04)', transition:'filter .4s ease', pointerEvents: isPremium ? 'auto' : 'none' }}>
-          <CommunityGarden currentUserId={userId} embedded isPremium={isPremium} containerH={containerH} />
+        {/* Jardin — flouté si accès non autorisé */}
+        <div style={{ width:'100%', height:'100%', minHeight:'100%', filter: canAccess ? 'none' : 'blur(7px)', transform: canAccess ? 'none' : 'scale(1.04)', transition:'filter .4s ease', pointerEvents: canAccess ? 'auto' : 'none' }}>
+          <CommunityGarden currentUserId={userId} embedded isPremium={canAccess} containerH={containerH} />
         </div>
 
-        {/* Carte d'invitation premium */}
-        {!isPremium && (
+        {/* Carte d'invitation */}
+        {!canAccess && (
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>
             <div onClick={onUpgrade} style={{ cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:12, padding: isMobile ? '24px 28px' : '32px 44px', borderRadius:20, background:'rgba(6,14,7,.55)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.10)', boxShadow:'0 8px 40px rgba(0,0,0,.35)' }}>
               <span style={{ fontSize: isMobile ? 32 : 40 }}>🌿</span>
@@ -1014,7 +1015,7 @@ function ScreenJardinCollectif({ userId, isPremium = false, onUpgrade, gardenFlo
                   Rejoindre le jardin collectif
                 </div>
                 <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 13, color:'rgba(240,235,220,.50)', maxWidth:220, lineHeight:1.6 }}>
-                  Découvrez les fleurs de la communauté et cultivez ensemble
+                  {userLevel >= 2 ? 'Atteignez le Niveau 3 ou passez Premium pour accéder au jardin collectif' : 'Découvrez les fleurs de la communauté et cultivez ensemble'}
                 </div>
               </div>
               <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'8px 20px', borderRadius:100, background:'rgba(var(--green-rgb),.15)', border:'1px solid rgba(var(--green-rgb),.30)' }}>

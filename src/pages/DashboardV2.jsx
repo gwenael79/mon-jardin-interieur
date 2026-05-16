@@ -1452,14 +1452,15 @@ export default function DashboardPage() {
   }, [showLevelInfo])
 
   useEffect(() => {
+    if (!user?.id) return
+    supabase.from('profiles').select('level').eq('id', user.id).maybeSingle()
+      .then(({ data }) => setUserLevel(data?.level ?? 1))
+  }, [user?.id])
+
+  useEffect(() => {
     if (!showProfileModal || !user?.id) return
-    Promise.all([
-      supabase.from('activity').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-      supabase.from('profiles').select('level').eq('id', user.id).maybeSingle(),
-    ]).then(([{ count }, { data: prof }]) => {
-      setUserActionCount(count ?? 0)
-      setUserLevel(prof?.level ?? 1)
-    })
+    supabase.from('activity').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+      .then(({ count }) => setUserActionCount(count ?? 0))
   }, [showProfileModal, user?.id])
   const [showProProfileModal, setShowProProfileModal] = useState(false)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
@@ -1723,7 +1724,8 @@ export default function DashboardPage() {
   const screenProps = useMemo(() => ({
     user,
     userId:         user?.id,          // requis par tous les Screen components
-    profile,
+    profile:        { ...profile, level: userLevel },
+    userLevel,
     isPremium,
     todayPlant,
     stats:          plantStats,
@@ -1757,7 +1759,7 @@ export default function DashboardPage() {
     onCloseRituals: () => setOpenRitualsModal(false),
     bilanDoneToday,
     track,
-  }), [user, profile, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, postRitualSlide, track])
+  }), [user, profile, userLevel, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, postRitualSlide, track])
 
   // ── Prefetch IA — tous les slides en parallèle dès que l'user est connu ──
   // Les résultats sont mis en cache sessionStorage (clé = userId + slideId + date).
