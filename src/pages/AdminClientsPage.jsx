@@ -57,6 +57,8 @@ html,body,#root{height:100%;width:100%}
 .adm-num-red{font-size:22px!important;font-weight:700!important;color:#e05555!important}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a!important;border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:18px;color:#ffffff;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.funnel-mail-btn{font-size:66px!important;display:flex;flex-direction:column;align-items:center;gap:2px}
+.funnel-mail-count{font-size:13px!important;line-height:1;color:rgba(255,255,255,0.55)!important}
 @media(max-width:700px){
   .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
   .adm-logo{font-size:16px;flex:1}
@@ -134,7 +136,7 @@ function FunnelUserDetail({ users }) {
                   </th>
                 ))}
                 <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: 11, color: 'var(--text3)', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
-                  <span style={{ textDecoration: 'line-through' }}>$</span>
+                  🎁
                 </th>
                 {['🔔', '📲'].map(h => (
                   <th key={h} style={{ textAlign: 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
@@ -779,6 +781,17 @@ export function AdminClientsPage() {
   const [inscriptions,  setInscriptions]  = useState(null)
   const [lastRefresh,   setLastRefresh]   = useState(null)
   const [showSubscribers, setShowSubscribers] = useState(false)
+  const [sendingFunnelStep, setSendingFunnelStep] = useState(null)
+  const [funnelDaySent, setFunnelDaySent] = useState(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    const result = {}
+    try {
+      ;['onboarding','j1','j2','j3','j4','j5','j6','j7'].forEach(k => {
+        if (localStorage.getItem(`funnel_sent_${k}`) === today) result[k] = true
+      })
+    } catch {}
+    return result
+  })
 
   const isAdmin = ADMIN_IDS.includes(user?.id)
 
@@ -1011,7 +1024,23 @@ export function AdminClientsPage() {
         if (daysSinceReg >= 7)          { counts.dashboard++; return } // > 7 jours sans progresser
       })
 
-      setFunnelUsers(userList)
+      // Charge last_active pour tous les users du funnel via analytics_events
+      const allIds = userList.map(u => u.id)
+      const lastActiveMap = {}
+      if (allIds.length > 0) {
+        const { data: evts } = await supabase
+          .from('analytics_events')
+          .select('user_id, created_at')
+          .in('event_type', ['session_start', 'page_view'])
+          .in('user_id', allIds)
+          .order('created_at', { ascending: false })
+        ;(evts ?? []).forEach(e => {
+          if (!lastActiveMap[e.user_id]) lastActiveMap[e.user_id] = e.created_at.slice(0, 10)
+        })
+      }
+      const enrichedUserList = userList.map(u => ({ ...u, last_active: lastActiveMap[u.id] ?? null }))
+
+      setFunnelUsers(enrichedUserList)
       setFunnel([
         { label: 'Inscrits',        count: counts.inscrit    },
         { label: 'Onboarding',      count: counts.onboarding },
@@ -1058,6 +1087,44 @@ export function AdminClientsPage() {
       showToast(`⚠️ Erreur : ${e.message}`)
     }
     setSendingMail(false)
+  }
+
+  function getUsersAtStep(stepKey) {
+    return funnelUsers.filter(u => {
+      const cd = (u.completedDays ?? []).map(Number)
+      const maxDay = cd.length > 0 ? Math.max(...cd) : 0
+      const ref = u.last_active ?? u.created_at
+      const daysSinceActive = Math.floor((Date.now() - new Date(ref)) / 86400000)
+      const isStuck = daysSinceActive >= 2
+      switch (stepKey) {
+        case 'onboarding': return u.onboarding_completed && cd.length === 0 && isStuck
+        case 'j1': return u.onboarding_completed && maxDay === 1 && isStuck
+        case 'j2': return u.onboarding_completed && maxDay === 2 && isStuck
+        case 'j3': return u.onboarding_completed && maxDay === 3 && isStuck
+        case 'j4': return u.onboarding_completed && maxDay === 4 && isStuck
+        case 'j5': return u.onboarding_completed && maxDay === 5 && isStuck
+        case 'j6': return u.onboarding_completed && maxDay === 6 && isStuck
+        case 'j7': return u.onboarding_completed && maxDay >= 7 && isStuck
+        default: return false
+      }
+    }).filter(u => u.email)
+  }
+
+  async function sendFunnelEmail(stepKey, users) {
+    setSendingFunnelStep(stepKey)
+    try {
+      const { error } = await supabase.functions.invoke('send-funnel-email', {
+        body: { emails: users.map(u => u.email), userIds: users.map(u => u.id), step: stepKey },
+      })
+      if (error) throw error
+      const today = new Date().toISOString().slice(0, 10)
+      try { localStorage.setItem(`funnel_sent_${stepKey}`, today) } catch {}
+      setFunnelDaySent(prev => ({ ...prev, [stepKey]: true }))
+      showToast(`✉️ Email envoyé à ${users.length} contact${users.length > 1 ? 's' : ''}`)
+    } catch (e) {
+      showToast(`⚠️ Erreur : ${e.message}`)
+    }
+    setSendingFunnelStep(null)
   }
 
   if (!isAdmin) return (
@@ -1120,15 +1187,15 @@ export function AdminClientsPage() {
               const get = (i) => funnel[i]?.count ?? 0
               const totalInscrits = funnel.reduce((s, f) => s + f.count, 0)
               const steps = [
-                { label: 'Onboarding', short: 'Onb.',  count: get(1), color: '#a78bf5' },
-                { label: 'Jour 1',     short: 'J1',    count: get(2), color: '#90d07a' },
-                { label: 'Jour 2',     short: 'J2',    count: get(3), color: '#84cc6c' },
-                { label: 'Jour 3',     short: 'J3',    count: get(4), color: '#78c85e' },
-                { label: 'Jour 4',     short: 'J4',    count: get(5), color: '#6cc450' },
-                { label: 'Jour 5',     short: 'J5',    count: get(6), color: '#60c044' },
-                { label: 'Jour 6',     short: 'J6',    count: get(7), color: '#54bc3a' },
-                { label: 'Jour 7',     short: 'J7',    count: get(8), color: '#48b830' },
-                { label: 'Complet',  short: 'Fini',  count: get(9), color: '#7ab5f5' },
+                { label: 'Onboarding', short: 'Onb.',  key: 'onboarding', count: get(1), color: '#a78bf5' },
+                { label: 'Jour 1',     short: 'J1',    key: 'j1',         count: get(2), color: '#90d07a' },
+                { label: 'Jour 2',     short: 'J2',    key: 'j2',         count: get(3), color: '#84cc6c' },
+                { label: 'Jour 3',     short: 'J3',    key: 'j3',         count: get(4), color: '#78c85e' },
+                { label: 'Jour 4',     short: 'J4',    key: 'j4',         count: get(5), color: '#6cc450' },
+                { label: 'Jour 5',     short: 'J5',    key: 'j5',         count: get(6), color: '#60c044' },
+                { label: 'Jour 6',     short: 'J6',    key: 'j6',         count: get(7), color: '#54bc3a' },
+                { label: 'Jour 7',     short: 'J7',    key: 'j7',         count: get(8), color: '#48b830' },
+                { label: 'Complet',    short: 'Fini',  key: null,          count: get(9), color: '#7ab5f5' },
               ]
               const max = Math.max(...steps.map(s => s.count), 1)
               return (
@@ -1159,12 +1226,36 @@ export function AdminClientsPage() {
                   </div>
 
                   {/* Axe X */}
-                  <div style={{ display: 'flex', gap: 6, borderTop: '1px solid var(--border2)', paddingTop: 10, marginBottom: 4 }}>
+                  <div style={{ display: 'flex', gap: 6, borderTop: '1px solid var(--border2)', paddingTop: 10, marginBottom: 0 }}>
                     {steps.map((step) => (
                       <div key={step.label} style={{ flex: 1, textAlign: 'center' }}>
                         <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.02em', fontFamily: 'Jost,sans-serif' }}>{step.short}</div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Boutons email par étape */}
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 14, marginTop: 4 }}>
+                    {steps.map((step) => {
+                      if (!step.key) return <div key={step.label} style={{ flex: 1 }} />
+                      const usersAtStep = getUsersAtStep(step.key)
+                      const alreadySent = funnelDaySent[step.key]
+                      const isSending   = sendingFunnelStep === step.key
+                      const canSend     = !alreadySent && !isSending && usersAtStep.length > 0
+                      return (
+                        <div key={step.label} style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                          <button
+                            onClick={() => canSend && sendFunnelEmail(step.key, usersAtStep)}
+                            title={alreadySent ? 'Déjà envoyé aujourd\'hui' : usersAtStep.length === 0 ? 'Aucun destinataire' : `Envoyer à ${usersAtStep.length} personne${usersAtStep.length > 1 ? 's' : ''}`}
+                            className="funnel-mail-btn" style={{ background: 'none', border: 'none', padding: '2px 4px', cursor: canSend ? 'pointer' : 'default', opacity: canSend ? 0.65 : 0.15, transition: 'opacity .15s', lineHeight: 1 }}
+                            onMouseEnter={e => { if (canSend) e.currentTarget.style.opacity = '1' }}
+                            onMouseLeave={e => { if (canSend) e.currentTarget.style.opacity = '0.65' }}
+                          >
+                            {isSending ? '⏳' : <>✉️{usersAtStep.length > 0 && <span className="funnel-mail-count">{usersAtStep.length}</span>}</>}
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
 
                   {/* Accordéon détail utilisateurs */}
