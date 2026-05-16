@@ -14,10 +14,10 @@ const TABS = [
   { id:"commercial", icon:"💌", label:"Commercial" },
   { id:"seo",        icon:"🔍", label:"SEO"        },
   { id:"finance",    icon:"📊", label:"Financier"  },
-  { id:"maestro",    icon:"🤖", label:"MAESTRO"    },
-  { id:"stratege",   icon:"🎯", label:"Stratège"   },
-  { id:"growth",     icon:"📈", label:"Growth"     },
-  { id:"contenu",    icon:"✍️",  label:"Contenu"    },
+  { id:"maestro",    icon:"🤖", label:"MAX"    },
+  { id:"stratege",   icon:"🎯", label:"SAM"   },
+  { id:"growth",     icon:"📈", label:"LÉO"   },
+  { id:"contenu",    icon:"✍️",  label:"LUCIE" },
 ];
 
 const HUB_CARDS = [
@@ -126,10 +126,10 @@ export default function Entreprise() {
         {active==="commercial" && <CommercialStudio />}
         {active==="seo"        && <SeoStudio />}
         {active==="finance"    && <FinanceStudio />}
-        {active==="maestro"   && <AgentChat agentId="maestro"  agentName="MAESTRO"  agentDesc="Orchestrateur IA · données temps réel · actions directes" />}
-        {active==="stratege"  && <AgentChat agentId="stratege" agentName="STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes e-commerce" />}
-        {active==="growth"    && <AgentChat agentId="growth"   agentName="GROWTH"   agentDesc="Analyse cohortes · métriques SaaS · recommandations chiffrées" />}
-        {active==="contenu"   && <AgentChat agentId="contenu"  agentName="CONTENU"  agentDesc="Planning éditorial · repurposing · stratégie cross-canal" />}
+        {active==="maestro"  && <AgentChat agentId="maestro"  agentName="MAX"   agentFullName="MAX · MAESTRO"  agentDesc="Données temps réel · actions directes sur Supabase et n8n" agentColor="#1c3818" agentBg="#EAF3DE" />}
+        {active==="stratege" && <AgentChat agentId="stratege" agentName="SAM"   agentFullName="SAM · STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes" agentColor="#0C447C" agentBg="#E6F1FB" />}
+        {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · GROWTH"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" />}
+        {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" />}
       </div>
 
     </div>

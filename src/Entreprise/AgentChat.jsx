@@ -91,7 +91,17 @@ const SUGGESTIONS = [
   "Montre-moi les derniers contenus générés",
 ];
 
-const genSession = (id) => `${id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+// ── Persistance localStorage par agent ──────────────────────────────────────
+const storageKey  = (id) => `mji_chat_msgs_${id}`;
+const sessionKey  = (id) => `mji_chat_session_${id}`;
+
+const loadMsgs    = (id) => { try { return JSON.parse(localStorage.getItem(storageKey(id))) ?? []; } catch { return []; } };
+const saveMsgs    = (id, msgs) => { try { localStorage.setItem(storageKey(id), JSON.stringify(msgs)); } catch {} };
+const getSession  = (id) => {
+  let s = localStorage.getItem(sessionKey(id));
+  if (!s) { s = `${id}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; localStorage.setItem(sessionKey(id), s); }
+  return s;
+};
 
 // ── TTS : parle phrase par phrase, appelle onDone quand terminé ──────────────
 function speakWithCallback(text, onDone) {
@@ -120,6 +130,111 @@ function speakWithCallback(text, onDone) {
   if (v.length > 0) fire(v);
   else window.speechSynthesis.addEventListener("voiceschanged",
     () => fire(window.speechSynthesis.getVoices()), { once: true });
+}
+
+// ── Config modals par agent ──────────────────────────────────────────────────
+const AGENT_HELP = {
+  maestro: {
+    role: "MAX est ton assistant de direction. Il a accès en temps réel à toutes tes données Supabase et à tes workflows n8n. C'est le seul qui peut déclencher des actions concrètes.",
+    quand: "Quand tu veux savoir ce qui se passe dans l'appli, ou déclencher une action directement.",
+    exemples: [
+      "Combien d'utilisateurs actifs cette semaine ?",
+      "Liste mes workflows n8n et dis-moi lesquels tournent",
+      "Déclenche le workflow de génération de contenu",
+      "Cherche l'utilisateur avec l'email X",
+    ],
+    tips: "Sois direct et précis. MAX aime les questions avec un objectif clair. Si tu veux une action, dis-le explicitement.",
+  },
+  stratege: {
+    role: "SAM est ton consultant commercial. Il connaît les stratégies d'acquisition, de conversion freemium→premium, le pricing, les benchmarks du secteur bien-être (Headspace, Petit Bambou...) et les plateformes (App Store, Stripe, Systeme.io).",
+    quand: "Quand tu as un problème business à résoudre ou une décision stratégique à prendre.",
+    exemples: [
+      "J'ai 61 users et 0 abonnements payants, qu'est-ce que je fais ?",
+      "Comment je convertis mes pros en ambassadeurs payants ?",
+      "Quel prix mettre pour maximiser les conversions ?",
+      "Comment je devrais structurer mon onboarding pour réduire le churn ?",
+    ],
+    tips: "Donne-lui du contexte. Plus tu lui expliques ta situation, plus ses recommandations sont précises. Demande-lui toujours les 3 options (rapide / moyen terme / long terme).",
+  },
+  growth: {
+    role: "LÉO est ton analyste data. Il lit tes chiffres, cherche les anomalies, les opportunités cachées et traduit les métriques SaaS (MRR, churn, LTV, CAC) en décisions actionnables. Il est factuel — il ne te rassure pas.",
+    quand: "Quand tu veux comprendre ce qui se passe vraiment dans tes chiffres ou identifier un levier de croissance.",
+    exemples: [
+      "Analyse mon activation — est-ce que les users terminent l'onboarding ?",
+      "Quel est mon vrai taux de churn sur les 30 derniers jours ?",
+      "Où est-ce que je perds le plus d'utilisateurs dans le funnel ?",
+      "Montre-moi les dernières exécutions n8n — est-ce que le contenu tourne bien ?",
+    ],
+    tips: "Laisse LÉO interroger les données avant de conclure. S'il dit que les chiffres sont mauvais, c'est qu'ils le sont — c'est sa valeur. Demande-lui toujours '1 action prioritaire'.",
+  },
+  contenu: {
+    role: "LUCIE est ta directrice éditoriale. Elle planifie, structure et repurpose ton contenu sur tous les canaux. Elle connaît les algorithmes Instagram, TikTok, LinkedIn et le ton de MJI : poétique, ancré, humain.",
+    quand: "Quand tu veux produire du contenu, planifier ta semaine éditoriale ou repurposer une idée sur plusieurs formats.",
+    exemples: [
+      "Génère un planning éditorial pour la semaine prochaine",
+      "J'ai une idée sur les rituels du matin — transforme-la en 5 formats différents",
+      "Écris un hook Instagram qui arrête le scroll sur le thème de la fleur intérieure",
+      "Quelle stratégie de contenu pour attirer des coachs professionnels ?",
+    ],
+    tips: "Donne-lui une idée brute, même imparfaite. LUCIE sait la structurer. Précise le réseau cible si tu en as un. Demande-lui toujours le repurposing pour maximiser chaque idée.",
+  },
+};
+
+function AgentModal({ agentId, agentName, agentFullName, agentColor, agentBg, onClose, onAsk }) {
+  const help = AGENT_HELP[agentId] ?? AGENT_HELP.maestro;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,.45)",
+      display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "0 0 0 0" }}>
+      <div onClick={e => e.stopPropagation()}
+        style={{ background: "#fff", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 600,
+          maxHeight: "85vh", overflowY: "auto", padding: "24px 20px 32px" }}>
+
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+          <div style={{ background: agentBg, border: `.5px solid ${agentColor}30`,
+            borderRadius: 12, padding: "10px 16px" }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: agentColor, fontFamily: "Georgia,serif" }}>{agentFullName}</div>
+            <div style={{ fontSize: 11, color: agentColor, opacity: .7, marginTop: 2 }}>Agent IA · Back-office MJI</div>
+          </div>
+          <button onClick={onClose} style={{ background: "#f3f5f1", border: "none", borderRadius: "50%",
+            width: 32, height: 32, cursor: "pointer", fontSize: 16, color: "#8a9e88" }}>✕</button>
+        </div>
+
+        {/* Rôle */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".1em", color: "#8a9e88", marginBottom: 6 }}>RÔLE</div>
+          <div style={{ fontSize: 13, color: "#2a3d28", lineHeight: 1.75 }}>{help.role}</div>
+        </div>
+
+        {/* Quand l'utiliser */}
+        <div style={{ background: agentBg, borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".1em", color: agentColor, marginBottom: 4 }}>QUAND L'UTILISER</div>
+          <div style={{ fontSize: 13, color: agentColor, lineHeight: 1.65 }}>{help.quand}</div>
+        </div>
+
+        {/* Exemples */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".1em", color: "#8a9e88", marginBottom: 8 }}>EXEMPLES DE QUESTIONS</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {help.exemples.map((ex, i) => (
+              <button key={i} onClick={() => { onAsk(ex); onClose(); }}
+                style={{ textAlign: "left", padding: "9px 13px", borderRadius: 10,
+                  border: `.5px solid ${agentColor}25`, background: "#f9faf8",
+                  color: "#2a3d28", fontSize: 13, cursor: "pointer", lineHeight: 1.5, fontFamily: "inherit" }}>
+                {ex}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tip */}
+        <div style={{ background: "#f3f5f1", borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".1em", color: "#8a9e88", marginBottom: 4 }}>💡 CONSEIL</div>
+          <div style={{ fontSize: 12, color: "#6b7c69", lineHeight: 1.65, fontStyle: "italic" }}>{help.tips}</div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Reconnaissance vocale ────────────────────────────────────────────────────
@@ -153,13 +268,29 @@ function VoiceOrb({ state, onClick }) {
 }
 
 // ── Composant principal ──────────────────────────────────────────────────────
-export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", agentDesc = "Orchestrateur IA · données temps réel · actions" }) {
-  const [msgs,        setMsgs]       = useState([]);
+export default function AgentChat({ agentId = "maestro", agentName = "MAX", agentFullName = "MAX · MAESTRO", agentDesc = "Orchestrateur IA · données temps réel · actions", agentColor = "#1c3818", agentBg = "#EAF3DE" }) {
+  const [msgs,        setMsgs]       = useState(() => loadMsgs(agentId));
   const [input,       setInput]      = useState("");
   const [loading,     setLoading]    = useState(false);
+  const [showHelp,    setShowHelp]   = useState(false);
   const [voiceMode,   setVoiceMode]  = useState(false);
   const [voiceState,  _setVoiceState]= useState("idle");
-  const [sessionId]                  = useState(() => genSession(agentId));
+  const [sessionId]                  = useState(() => getSession(agentId));
+
+  // Wrapper setMsgs qui persiste aussi dans localStorage
+  const setAndSaveMsgs = useCallback((updater) => {
+    setMsgs(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveMsgs(agentId, next);
+      return next;
+    });
+  }, [agentId]);
+
+  const clearHistory = useCallback(() => {
+    localStorage.removeItem(storageKey(agentId));
+    localStorage.removeItem(sessionKey(agentId));
+    setMsgs([]);
+  }, [agentId]);
   const bottomRef   = useRef(null);
   const recRef      = useRef(null);
   const loopRef     = useRef(false);
@@ -220,7 +351,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
     setVoiceState("thinking");
     setLoading(true);
 
-    setMsgs(prev => {
+    setAndSaveMsgs(prev => {
       const next = [...prev, { role: "user", content }];
 
       fetch(AGENT_URL, {
@@ -231,7 +362,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
         .then(r => { if (!r.ok) throw new Error(`Erreur ${r.status}`); return r.json(); })
         .then(data => {
           if (data.error) throw new Error(data.error);
-          setMsgs(p => [...p, { role: "assistant", content: data.text }]);
+          setAndSaveMsgs(p => [...p, { role: "assistant", content: data.text }]);
 
           if (loopRef.current) {
             setVoiceState("speaking");
@@ -253,7 +384,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
           }
         })
         .catch(e => {
-          setMsgs(p => [...p, { role: "assistant", content: `⚠️ ${e.message}`, err: true }]);
+          setAndSaveMsgs(p => [...p, { role: "assistant", content: `⚠️ ${e.message}`, err: true }]);
           setVoiceState("idle");
           setLoading(false);
         });
@@ -269,7 +400,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
     setInput("");
 
     const next = [...msgs, { role: "user", content: text }];
-    setMsgs(next);
+    setAndSaveMsgs(next);
     setLoading(true);
 
     try {
@@ -281,9 +412,9 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setMsgs(p => [...p, { role: "assistant", content: data.text }]);
+      setAndSaveMsgs(p => [...p, { role: "assistant", content: data.text }]);
     } catch (e) {
-      setMsgs(p => [...p, { role: "assistant", content: `⚠️ ${e.message}`, err: true }]);
+      setAndSaveMsgs(p => [...p, { role: "assistant", content: `⚠️ ${e.message}`, err: true }]);
     } finally {
       setLoading(false);
     }
@@ -354,6 +485,25 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 140px)", maxHeight: 680 }}>
 
+      {/* Header agent (visible quand messages) */}
+      {msgs.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+          marginBottom: 10, paddingBottom: 10, borderBottom: ".5px solid #eef1eb" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: agentColor, fontFamily: "Georgia,serif" }}>{agentFullName}</div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={clearHistory} title="Nouvelle conversation"
+              style={{ padding: "3px 10px", borderRadius: 20, border: ".5px solid #dde8d8",
+                background: "#f3f5f1", color: "#8a9e88", cursor: "pointer", fontSize: 11 }}>
+              ↺ Nouveau
+            </button>
+            <button onClick={() => setShowHelp(true)}
+              style={{ width: 24, height: 24, borderRadius: "50%", border: `.5px solid ${agentColor}40`,
+                background: agentBg, color: agentColor, cursor: "pointer",
+                fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>?</button>
+          </div>
+        </div>
+      )}
+
       {/* Bouton mode vocal */}
       {SR && (
         <button onClick={enterVoiceMode}
@@ -370,13 +520,22 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
 
         {msgs.length === 0 && (
           <div>
-            <div style={{ background: "#EAF3DE", border: ".5px solid #C0DD97", borderRadius: "12px",
-              padding: "14px 16px", marginBottom: "16px" }}>
-              <div style={{ fontFamily: "Georgia,serif", fontSize: "15px", fontWeight: "600",
-                color: "#1c3818", marginBottom: "4px" }}>{agentName}</div>
-              <div style={{ fontSize: "13px", color: "#3B6D11", lineHeight: "1.7" }}>
-                {agentDesc}
+            <div style={{ background: agentBg, border: `.5px solid ${agentColor}30`,
+              borderRadius: "12px", padding: "14px 16px", marginBottom: "16px",
+              display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ fontFamily: "Georgia,serif", fontSize: "15px", fontWeight: "600",
+                  color: agentColor, marginBottom: "4px" }}>{agentFullName}</div>
+                <div style={{ fontSize: "12px", color: agentColor, opacity: .75, lineHeight: "1.6" }}>
+                  {agentDesc}
+                </div>
               </div>
+              <button onClick={() => setShowHelp(true)}
+                title="Comment interagir avec cet agent ?"
+                style={{ width: 28, height: 28, borderRadius: "50%", border: `.5px solid ${agentColor}40`,
+                  background: "rgba(255,255,255,.6)", color: agentColor, cursor: "pointer",
+                  fontSize: 13, fontWeight: 700, flexShrink: 0, display: "flex",
+                  alignItems: "center", justifyContent: "center" }}>?</button>
             </div>
             <p style={{ fontSize: "10px", fontWeight: "500", letterSpacing: ".08em",
               color: "#8a9e88", margin: "0 0 8px" }}>SUGGESTIONS</p>
@@ -454,6 +613,18 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
               fontSize: "20px", flexShrink: 0 }}>↑</button>
         </div>
       </div>
+
+      {showHelp && (
+        <AgentModal
+          agentId={agentId}
+          agentName={agentName}
+          agentFullName={agentFullName}
+          agentColor={agentColor}
+          agentBg={agentBg}
+          onClose={() => setShowHelp(false)}
+          onAsk={(q) => { send(q); }}
+        />
+      )}
 
       <style>{`
         @keyframes mji-dot {
