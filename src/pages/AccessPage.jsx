@@ -967,14 +967,14 @@ export function PremiumModal({ onSuccess, onClose }) {
               </div>
             ))}
 
-            {/* Plan solidaire */}
+            {/* Plan soutien */}
             <div
               className={'pm-plan pm-plan-solidarity' + (selectedPlan?.id === 'solidarity' ? ' pm-sel' : '')}
-              onClick={() => setSelectedPlan({ id:'solidarity', label:'Tarif solidaire', note:'/ an' })}
+              onClick={() => setSelectedPlan({ id:'solidarity', label:'Tarif soutien', note:'/ an' })}
               style={{ borderColor: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.60)' : 'rgba(200,160,48,.25)', background: selectedPlan?.id === 'solidarity' ? 'rgba(200,160,48,.07)' : 'rgba(255,255,255,.65)' }}
             >
               <div style={{ flex:1 }}>
-                <span className="pm-plan-label" style={{ fontSize:18 }}>Tarif solidaire ✦</span>
+                <span className="pm-plan-label" style={{ fontSize:18 }}>Tarif soutien ✦</span>
                 <span className="pm-plan-desc" style={{ color:'rgba(30,20,8,.68)' }}>Prix libre · minimum {SOLIDARITY_MIN} € · 12 mois</span>
                 <div style={{ fontSize:12.5, color:'rgba(30,20,8,.60)', marginTop:4, lineHeight:1.5, fontStyle:'italic' }}>
                   Votre générosité nous aide à garder l'accès accessible à tous.
@@ -993,7 +993,7 @@ export function PremiumModal({ onSuccess, onClose }) {
                     </div>
                     {solidaryError && (
                       <div style={{ fontSize:11, color:'#c04a4a', marginTop:5, fontFamily:"'Jost',sans-serif" }}>
-                        Minimum {SOLIDARITY_MIN} € pour ce tarif solidaire.
+                        Minimum {SOLIDARITY_MIN} € pour ce tarif soutien.
                       </div>
                     )}
                   </div>

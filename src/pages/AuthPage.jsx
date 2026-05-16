@@ -519,7 +519,7 @@ const LEGAL_DOCS = {
         <ul>
           <li><strong>Mensuel :</strong> 13,00 € TTC / mois — résiliable à tout moment</li>
           <li><strong>Annuel :</strong> 108,00 € TTC / an (soit 9,00 € / mois, −30 %) — engagement 12 mois</li>
-          <li><strong>Tarif solidaire :</strong> prix libre, minimum 108 € pour 12 mois</li>
+          <li><strong>Tarif soutien :</strong> prix libre, minimum 108 € pour 12 mois</li>
         </ul>
         <p>Le paiement est effectué par carte bancaire via <strong>Stripe</strong>, plateforme sécurisée. Les données de paiement ne sont pas stockées par l'Éditeur.</p>
         <h3>3. Droit de rétractation</h3>

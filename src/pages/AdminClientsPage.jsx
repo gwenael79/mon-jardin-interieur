@@ -814,7 +814,7 @@ export function AdminClientsPage() {
       const PLANS = [
         { key: '1 mois',         icon: '🌱', months: 1,  price: 13,  color: '#7ab5f5' },
         { key: '1 an',           icon: '✨', months: 12, price: 108, color: '#e8a020' },
-        { key: '1 an solidaire', icon: '💚', months: 12, price: null, color: '#d4779a' },
+        { key: '1 an soutien', icon: '💚', months: 12, price: null, color: '#d4779a' },
       ]
       const knownKeys = PLANS.map(p => p.key)
       const plans = PLANS.map(p => {
