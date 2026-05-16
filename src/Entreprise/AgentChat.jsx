@@ -1,6 +1,87 @@
 // src/Entreprise/AgentChat.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
 
+// ── Renderer markdown léger ──────────────────────────────────────────────────
+function renderInline(text) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return parts.map((p, i) => {
+    if (p.startsWith("**") && p.endsWith("**"))
+      return <strong key={i} style={{ fontWeight: 600, color: "#1a2e18" }}>{p.slice(2, -2)}</strong>;
+    if (p.startsWith("*") && p.endsWith("*"))
+      return <em key={i}>{p.slice(1, -1)}</em>;
+    if (p.startsWith("`") && p.endsWith("`"))
+      return <code key={i} style={{ background: "#f0f4ee", padding: "1px 5px", borderRadius: 4, fontSize: "12px", fontFamily: "monospace" }}>{p.slice(1, -1)}</code>;
+    return p;
+  });
+}
+
+function Markdown({ text }) {
+  const lines = (text ?? "").split("\n");
+  const out   = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Table markdown
+    if (line.startsWith("|") && lines[i + 1]?.match(/^\|[-| :]+\|/)) {
+      const headers = line.split("|").filter(Boolean).map(h => h.trim());
+      i += 2; // skip separator
+      const rows = [];
+      while (i < lines.length && lines[i].startsWith("|")) {
+        rows.push(lines[i].split("|").filter(Boolean).map(c => c.trim()));
+        i++;
+      }
+      out.push(
+        <div key={i} style={{ overflowX: "auto", margin: "10px 0" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+            <thead>
+              <tr>{headers.map((h, j) => <th key={j} style={{ textAlign: "left", padding: "6px 10px", borderBottom: "1.5px solid #dde8d8", color: "#3B6D11", fontWeight: 600, whiteSpace: "nowrap" }}>{renderInline(h)}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((row, j) => <tr key={j} style={{ borderBottom: ".5px solid #eef1eb" }}>
+                {row.map((cell, k) => <td key={k} style={{ padding: "6px 10px", verticalAlign: "top" }}>{renderInline(cell)}</td>)}
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+
+    if (line.startsWith("### ")) {
+      out.push(<div key={i} style={{ fontSize: "12px", fontWeight: 700, color: "#27500A", letterSpacing: ".06em", textTransform: "uppercase", margin: "14px 0 4px" }}>{renderInline(line.slice(4))}</div>);
+    } else if (line.startsWith("## ")) {
+      out.push(<div key={i} style={{ fontSize: "14px", fontWeight: 600, color: "#1a2e18", margin: "16px 0 6px", fontFamily: "Georgia,serif" }}>{renderInline(line.slice(3))}</div>);
+    } else if (line.startsWith("# ")) {
+      out.push(<div key={i} style={{ fontSize: "16px", fontWeight: 600, color: "#1a2e18", margin: "16px 0 8px", fontFamily: "Georgia,serif" }}>{renderInline(line.slice(2))}</div>);
+    } else if (line === "---" || line === "***") {
+      out.push(<hr key={i} style={{ border: "none", borderTop: ".5px solid #dde8d8", margin: "12px 0" }} />);
+    } else if (line.match(/^[-*] /)) {
+      out.push(
+        <div key={i} style={{ display: "flex", gap: "8px", padding: "2px 0" }}>
+          <span style={{ color: "#3B6D11", flexShrink: 0, marginTop: 1 }}>·</span>
+          <span>{renderInline(line.slice(2))}</span>
+        </div>
+      );
+    } else if (line.match(/^\d+\. /)) {
+      const num = line.match(/^(\d+)\. /)[1];
+      out.push(
+        <div key={i} style={{ display: "flex", gap: "8px", padding: "2px 0" }}>
+          <span style={{ color: "#3B6D11", flexShrink: 0, minWidth: 16, fontWeight: 600 }}>{num}.</span>
+          <span>{renderInline(line.replace(/^\d+\. /, ""))}</span>
+        </div>
+      );
+    } else if (line === "") {
+      out.push(<div key={i} style={{ height: "8px" }} />);
+    } else {
+      out.push(<div key={i} style={{ lineHeight: "1.7" }}>{renderInline(line)}</div>);
+    }
+    i++;
+  }
+  return <div style={{ fontSize: "13px", color: "#2a3d28" }}>{out}</div>;
+}
+
 const AGENT_URL = "https://islnwrgghdjozbhvugan.supabase.co/functions/v1/entreprise-agent";
 
 const SUGGESTIONS = [
@@ -243,8 +324,8 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
         <div style={{ width: "100%", maxHeight: "40%", overflowY: "auto" }}>
           {msgs.filter(m => m.role === "assistant").slice(-1).map((m, i) => (
             <div key={i} style={{ background: "#fff", border: ".5px solid #dde8d8", borderRadius: "12px",
-              padding: "12px 14px", fontSize: "13px", color: "#1a2e18", lineHeight: "1.75", whiteSpace: "pre-wrap" }}>
-              {m.content}
+              padding: "14px 16px", boxShadow: "0 1px 4px rgba(0,0,0,.04)" }}>
+              <Markdown text={m.content} />
             </div>
           ))}
         </div>
@@ -316,18 +397,21 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAESTRO", 
           <div key={i} style={{ marginBottom: "10px", display: "flex",
             justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
             <div style={{
-              maxWidth: "85%", padding: "10px 14px",
+              maxWidth: "88%",
+              padding:      m.role === "user" ? "10px 14px" : "12px 16px",
               borderRadius: m.role === "user" ? "12px 12px 3px 12px" : "12px 12px 12px 3px",
               background:   m.role === "user" ? "#1c3818" : m.err ? "#fff0ee" : "#fff",
               border:       m.role === "user" ? "none" : `.5px solid ${m.err ? "#f0a090" : "#dde8d8"}`,
-              color:        m.role === "user" ? "#c8e6b0" : m.err ? "#993c1d" : "#1a2e18",
-              fontSize: "13px", lineHeight: "1.75", whiteSpace: "pre-wrap",
+              boxShadow:    m.role === "assistant" ? "0 1px 4px rgba(0,0,0,.04)" : "none",
             }}>
-              {m.content}
+              {m.role === "user"
+                ? <span style={{ fontSize: "13px", color: "#c8e6b0", lineHeight: "1.6" }}>{m.content}</span>
+                : <Markdown text={m.content} />
+              }
               {m.role === "assistant" && !m.err && (
                 <button onClick={() => speakWithCallback(m.content, () => {})}
-                  style={{ display: "block", marginTop: "6px", background: "none", border: "none",
-                    color: "#b0bfae", fontSize: "11px", cursor: "pointer", padding: 0 }}>
+                  style={{ display: "block", marginTop: "8px", background: "none", border: "none",
+                    color: "#c8d5c5", fontSize: "11px", cursor: "pointer", padding: 0 }}>
                   🔊 Réécouter
                 </button>
               )}
