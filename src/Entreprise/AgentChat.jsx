@@ -1,5 +1,5 @@
 // src/Entreprise/AgentChat.jsx
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 const AGENT_URL = "https://islnwrgghdjozbhvugan.supabase.co/functions/v1/entreprise-agent";
 
@@ -12,17 +12,77 @@ const SUGGESTIONS = [
 
 const genSession = () => `s_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
 
+function useSpeech({ onTranscript, onListeningChange }) {
+  const recRef = useRef(null);
+  const [listening, setListening] = useState(false);
+  const [supported] = useState(() =>
+    typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+  );
+
+  const start = useCallback(() => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "fr-FR";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    rec.onstart  = () => { setListening(true);  onListeningChange?.(true);  };
+    rec.onend    = () => { setListening(false); onListeningChange?.(false); };
+    rec.onerror  = () => { setListening(false); onListeningChange?.(false); };
+    rec.onresult = (e) => {
+      const text = e.results[0]?.[0]?.transcript ?? "";
+      if (text) onTranscript(text);
+    };
+    recRef.current = rec;
+    rec.start();
+  }, [onTranscript, onListeningChange]);
+
+  const stop = useCallback(() => {
+    recRef.current?.stop();
+  }, []);
+
+  const toggle = useCallback(() => {
+    listening ? stop() : start();
+  }, [listening, start, stop]);
+
+  return { listening, supported, toggle };
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang  = "fr-FR";
+  utt.rate  = 1.05;
+  utt.pitch = 1;
+  // Préférer une voix française si disponible
+  const voices = window.speechSynthesis.getVoices();
+  const fr = voices.find(v => v.lang.startsWith("fr") && v.localService);
+  if (fr) utt.voice = fr;
+  window.speechSynthesis.speak(utt);
+}
+
 export default function AgentChat() {
-  const [msgs,     setMsgs]    = useState([]);
-  const [input,    setInput]   = useState("");
-  const [loading,  setLoading] = useState(false);
-  const [sessionId]            = useState(genSession);
-  const bottomRef              = useRef(null);
+  const [msgs,      setMsgs]     = useState([]);
+  const [input,     setInput]    = useState("");
+  const [loading,   setLoading]  = useState(false);
+  const [autoSpeak, setAutoSpeak]= useState(true);
+  const [sessionId]              = useState(genSession);
+  const [listening,  setListening] = useState(false);
+  const bottomRef                = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
+  // Stop TTS quand on quitte
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  const { supported: micSupported, toggle: toggleMic } = useSpeech({
+    onTranscript:     (text) => send(text),
+    onListeningChange: setListening,
+  });
+
   const send = async (text) => {
-    const content = (text ?? input).trim();
+    const content = (typeof text === "string" ? text : input).trim();
     if (!content || loading) return;
     setInput("");
 
@@ -40,6 +100,7 @@ export default function AgentChat() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setMsgs(p => [...p, { role:"assistant", content: data.text }]);
+      if (autoSpeak) speak(data.text);
     } catch (e) {
       setMsgs(p => [...p, { role:"assistant", content:`⚠️ ${e.message}`, err:true }]);
     } finally {
@@ -49,6 +110,18 @@ export default function AgentChat() {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 140px)", maxHeight:"680px" }}>
+
+      {/* Barre options */}
+      <div style={{ display:"flex", justifyContent:"flex-end", gap:"6px", marginBottom:"10px" }}>
+        <button onClick={() => { window.speechSynthesis?.cancel(); setAutoSpeak(p => !p); }}
+          title={autoSpeak ? "Désactiver la voix" : "Activer la voix"}
+          style={{ padding:"5px 10px", borderRadius:"20px", border:`.5px solid ${autoSpeak?"#C0DD97":"#dde8d8"}`,
+            background: autoSpeak ? "#EAF3DE":"#f3f5f1",
+            color:      autoSpeak ? "#27500A":"#8a9e88",
+            fontSize:"11px", cursor:"pointer" }}>
+          {autoSpeak ? "🔊 Voix activée" : "🔇 Voix off"}
+        </button>
+      </div>
 
       {/* Zone messages */}
       <div style={{ flex:1, overflowY:"auto", paddingBottom:"12px" }}>
@@ -60,8 +133,7 @@ export default function AgentChat() {
               <div style={{ fontFamily:"Georgia,serif", fontSize:"15px", fontWeight:"600",
                 color:"#1c3818", marginBottom:"4px" }}>MAESTRO · Orchestrateur IA</div>
               <div style={{ fontSize:"13px", color:"#3B6D11", lineHeight:"1.7" }}>
-                Je connais tout l'écosystème Mon Jardin Intérieur — utilisateurs,
-                contenus, métriques. Pose-moi n'importe quelle question.
+                Parle-moi ou écris — je connais tout l'écosystème Mon Jardin Intérieur.
               </div>
             </div>
             <p style={{ fontSize:"10px", fontWeight:"500", letterSpacing:".08em",
@@ -89,7 +161,17 @@ export default function AgentChat() {
               border:       m.role==="user" ? "none":`.5px solid ${m.err?"#f0a090":"#dde8d8"}`,
               color:        m.role==="user" ? "#c8e6b0" : m.err ? "#993c1d":"#1a2e18",
               fontSize:"13px", lineHeight:"1.75", whiteSpace:"pre-wrap",
-            }}>{m.content}</div>
+            }}>
+              {m.content}
+              {m.role==="assistant" && !m.err && (
+                <button onClick={() => speak(m.content)}
+                  title="Réécouter"
+                  style={{ display:"block", marginTop:"6px", background:"none", border:"none",
+                    color:"#b0bfae", fontSize:"11px", cursor:"pointer", padding:0 }}>
+                  🔊 Réécouter
+                </button>
+              )}
+            </div>
           </div>
         ))}
 
@@ -112,16 +194,33 @@ export default function AgentChat() {
       {/* Zone saisie */}
       <div style={{ borderTop:".5px solid #dde8d8", paddingTop:"12px" }}>
         <div style={{ display:"flex", gap:"8px" }}>
+
+          {/* Bouton micro */}
+          {micSupported && (
+            <button onClick={toggleMic}
+              title={listening ? "Arrêter l'écoute" : "Parler à MAESTRO"}
+              style={{ padding:"10px 14px", borderRadius:"10px", border:"none", flexShrink:0,
+                background: listening ? "#e74c3c":"#f3f5f1",
+                color:      listening ? "#fff":"#8a9e88",
+                cursor:"pointer", fontSize:"16px",
+                animation: listening ? "mji-pulse 1s ease-in-out infinite" : "none" }}>
+              🎙
+            </button>
+          )}
+
           <textarea
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            placeholder="Pose une question à MAESTRO…"
+            placeholder={listening ? "J'écoute…" : "Écris ou parle à MAESTRO…"}
             rows={2}
             style={{ flex:1, padding:"10px 12px", borderRadius:"10px",
-              border:".5px solid #dde8d8", background:"#fff", color:"#1a2e18",
-              fontSize:"13px", fontFamily:"inherit", resize:"none", outline:"none", lineHeight:"1.5" }}
+              border: listening ? ".5px solid #e74c3c" : ".5px solid #dde8d8",
+              background:"#fff", color:"#1a2e18",
+              fontSize:"13px", fontFamily:"inherit", resize:"none", outline:"none", lineHeight:"1.5",
+              transition:"border-color .2s" }}
           />
+
           <button onClick={() => send()} disabled={!input.trim() || loading}
             style={{ padding:"10px 18px", borderRadius:"10px", border:"none",
               background: input.trim() && !loading ? "#2d5a27":"#c8d5c5",
@@ -130,7 +229,9 @@ export default function AgentChat() {
               fontSize:"20px", flexShrink:0 }}>↑</button>
         </div>
         <div style={{ fontSize:"10px", color:"#b0bfae", marginTop:"6px", textAlign:"center" }}>
-          Entrée · envoyer · Shift+Entrée · nouvelle ligne
+          {micSupported
+            ? "🎙 Micro · Entrée · envoyer · Shift+Entrée · nouvelle ligne"
+            : "Entrée · envoyer · Shift+Entrée · nouvelle ligne"}
         </div>
       </div>
 
@@ -138,6 +239,10 @@ export default function AgentChat() {
         @keyframes mji-dot {
           0%,100% { opacity:.25; transform:scale(.9); }
           50%      { opacity:1;   transform:scale(1.2); }
+        }
+        @keyframes mji-pulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,.4); }
+          50%      { box-shadow: 0 0 0 8px rgba(231,76,60,0); }
         }
       `}</style>
     </div>
