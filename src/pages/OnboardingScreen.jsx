@@ -2841,6 +2841,48 @@ function VitalitySparkle({ x, y }) {
   return <>{stars}</>
 }
 
+function CelebOverlay({ milestone, src, onClose }) {
+  const [ended, setEnded] = useState(false)
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10300, background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 20 }}>
+      {/* Vidéo avec bouton en overlay bas */}
+      <div style={{ position: 'relative', width: 'min(400px, 80vw)', borderRadius: 28, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.60)', animation: 'onbIn .35s ease both' }}>
+        <video
+          src={src}
+          autoPlay playsInline
+          style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }}
+          onEnded={() => setEnded(true)}
+          onError={onClose}
+        />
+        {/* Bouton seul en overlay bas — apparaît à la fin */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '48px 16px 18px',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)',
+          display: 'flex', justifyContent: 'center',
+          opacity: ended ? 1 : 0,
+          transform: ended ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'opacity 500ms ease, transform 500ms ease',
+          pointerEvents: ended ? 'auto' : 'none',
+        }}>
+          <button onClick={onClose} style={{ padding: '11px 36px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#3B6D11,#1c3818)', color: '#c8e6b0', fontSize: 14, fontWeight: 600, fontFamily: "'Jost',sans-serif", letterSpacing: '.05em', boxShadow: '0 4px 18px rgba(28,56,24,0.55)' }}>
+            Continuer →
+          </button>
+        </div>
+      </div>
+      {/* Titre + message sous la vidéo */}
+      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 600, color: '#fff', margin: '0 0 8px', lineHeight: 1.3, textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+          {milestone?.title}
+        </p>
+        <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.80)', margin: 0, lineHeight: 1.7, textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+          {milestone?.message}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function RitualModal({ userId, onClose, onEnterApp }) {
   const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem('mji_vitality') || '0', 10))
   const [celebVideo, setCelebVideo]   = useState(null)
@@ -3017,25 +3059,11 @@ function RitualModal({ userId, onClose, onEnterApp }) {
       {celebVideo && (() => {
         const milestone = Object.values(VITALITY_MILESTONES).find(m => m.video === celebVideo)
         return (
-          <div style={{ position: 'fixed', inset: 0, zIndex: 10300, background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
-            <video
-              src={celebVideo}
-              autoPlay playsInline
-              style={{ width: 'min(400px, 80vw)', height: 'min(400px, 80vw)', objectFit: 'cover', borderRadius: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.60)', animation: 'onbIn .35s ease both' }}
-              onError={() => setCelebVideo(null)}
-            />
-            <div onClick={e => e.stopPropagation()} style={{ textAlign: 'center', maxWidth: 360 }}>
-              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 600, color: '#fff', margin: '0 0 8px', lineHeight: 1.3, textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
-                {milestone?.title}
-              </p>
-              <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.80)', margin: '0 0 20px', lineHeight: 1.7, textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
-                {milestone?.message}
-              </p>
-              <button onClick={() => setCelebVideo(null)} style={{ padding: '13px 40px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#3B6D11,#1c3818)', color: '#c8e6b0', fontSize: 15, fontWeight: 600, fontFamily: "'Jost',sans-serif", letterSpacing: '.05em', boxShadow: '0 6px 24px rgba(28,56,24,0.55)' }}>
-                Continuer →
-              </button>
-            </div>
-          </div>
+          <CelebOverlay
+            milestone={milestone}
+            src={celebVideo}
+            onClose={() => setCelebVideo(null)}
+          />
         )
       })()}
     </div>
