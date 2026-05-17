@@ -1,5 +1,6 @@
 // src/Entreprise/AgentChat.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
+import TodoPanel from "./TodoPanel";
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
@@ -283,6 +284,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   const [input,       setInput]      = useState("");
   const [loading,     setLoading]    = useState(false);
   const [showHelp,    setShowHelp]   = useState(false);
+  const [showTodo,    setShowTodo]   = useState(false);
   const [voiceMode,   setVoiceMode]  = useState(false);
   const [voiceState,  _setVoiceState]= useState("idle");
   const [sessionId]                  = useState(() => getSession(agentId));
@@ -509,6 +511,12 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
             🎙 Vocal
           </button>
         )}
+        {agentId === "maestro" && (
+          <button onClick={() => setShowTodo(t => !t)}
+            style={{ padding:"4px 10px", borderRadius:20, border:`.5px solid ${showTodo ? "#3B6D11" : "#dde8d8"}`, background: showTodo ? "#EAF3DE" : "#f3f5f1", color: showTodo ? "#27500A" : "#8a9e88", cursor:"pointer", fontSize:11, fontWeight: showTodo ? 600 : 400 }}>
+            📋 ToDoListe
+          </button>
+        )}
         <button onClick={clearHistory} style={{ padding:"4px 10px", borderRadius:20, border:".5px solid #dde8d8", background:"#f3f5f1", color:"#8a9e88", cursor:"pointer", fontSize:11 }}>↺ Nouveau</button>
         <button onClick={() => setShowHelp(true)} style={{ width:26, height:26, borderRadius:"50%", border:`.5px solid ${agentColor}40`, background:agentBg, color:agentColor, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
       </div>
@@ -595,6 +603,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
         {messagesJSX}
         {inputJSX}
       </div>
+      {showTodo && <TodoPanel onClose={() => setShowTodo(false)} sessionId={sessionId} />}
       <div style={{ width:260, flexShrink:0, display:"flex", flexDirection:"column", gap:12 }}>
         <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"14px 16px" }}>
           <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:agentColor, marginBottom:10 }}>AGENT</div>
@@ -621,7 +630,12 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
 
   // ── Rendu Mobile ────────────────────────────────────────────────────────────
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 130px)" }}>
+    <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 130px)", position:"relative" }}>
+      {showTodo && (
+        <div style={{ position:"absolute", inset:0, zIndex:50, overflowY:"auto" }}>
+          <TodoPanel onClose={() => setShowTodo(false)} sessionId={sessionId} />
+        </div>
+      )}
       {msgs.length > 0 && headerJSX}
       {messagesJSX}
       {inputJSX}
