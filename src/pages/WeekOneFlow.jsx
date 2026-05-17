@@ -6252,6 +6252,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   const videoRef = useRef(null)
   const [muted,      setMuted]      = useState(true)
   const [ctaVisible, setCtaVisible] = useState(false)
+  const [videoReady, setVideoReady] = useState(false)
 
   function handleSound() {
     const v = videoRef.current
@@ -6275,11 +6276,22 @@ function WelcomeVeil({ onDone, isReturn = false }) {
         boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
         position: 'relative',
       }}>
+        {/* Barrière — visible pendant le chargement de la vidéo */}
+        {!videoReady && (
+          <img
+            src="/barriere.png"
+            alt=""
+            style={{ width: '100%', height: 'auto', display: 'block', minHeight: 260, objectFit: 'cover' }}
+          />
+        )}
+
         <video
           ref={videoRef}
           src="/video/cheminjours.mp4"
           autoPlay playsInline muted
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          preload="auto"
+          style={{ width: '100%', height: 'auto', display: videoReady ? 'block' : 'none' }}
+          onCanPlayThrough={() => setVideoReady(true)}
           onEnded={() => setCtaVisible(true)}
           onError={onDone}
         />

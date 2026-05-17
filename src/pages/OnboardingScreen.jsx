@@ -3170,7 +3170,7 @@ En 3 phrases courtes et directes (tutoiement), explique pourquoi cette applicati
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLabel, initialShowRitual = false }) {
+function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLabel, initialShowRitual = false, onSignOut }) {
   const [showPanel,        setShowPanel]        = useState(false)
   const [showRitual,       setShowRitual]       = useState(initialShowRitual)
   const [showInitieConfirm, setShowInitieConfirm] = useState(false)
@@ -3329,6 +3329,19 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
         />
       )}
 
+      {/* Lien déconnexion */}
+      {onSignOut && (
+        <button onClick={onSignOut} style={{
+          position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+          background: 'none', border: 'none', cursor: 'pointer',
+          fontFamily: "'Jost',sans-serif", fontSize: 11,
+          color: 'rgba(255,255,255,0.35)', letterSpacing: '.06em',
+          zIndex: 3, textDecoration: 'underline', textUnderlineOffset: 3,
+        }}>
+          Se déconnecter
+        </button>
+      )}
+
       {showInitieConfirm && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 10400,
@@ -3461,6 +3474,7 @@ export function OnboardingScreen({ userId, onComplete }) {
       onComprendre={() => setPhase(0)}
       onAgir={() => onComplete('free')}
       onInitie={onComplete}
+      onSignOut={handleSignOut}
       comprendreLabel={hasCompris ? 'Relire à nouveau →' : undefined}
       initialShowRitual={openRitual}
     />
@@ -3486,6 +3500,7 @@ export function OnboardingScreen({ userId, onComplete }) {
         onAgir={() => onComplete('free')}
         onInitie={onComplete}
         comprendreLabel="Relire à nouveau →"
+        onSignOut={handleSignOut}
       />
       {showOverlay && phase === 6 && (
         <StepInstall onNext={() => {
