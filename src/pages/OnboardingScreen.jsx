@@ -2884,9 +2884,10 @@ function CelebOverlay({ milestone, src, onClose }) {
 }
 
 function RitualModal({ userId, onClose, onEnterApp }) {
-  const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem('mji_vitality') || '0', 10))
+  const vKey = userId ? `mji_vitality_${userId}` : 'mji_vitality'
+  const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem(vKey) || '0', 10))
   const [celebVideo, setCelebVideo]   = useState(null)
-  const [appUnlocked, setAppUnlocked] = useState(() => parseInt(localStorage.getItem('mji_vitality') || '0', 10) >= 50)
+  const [appUnlocked, setAppUnlocked] = useState(() => parseInt(localStorage.getItem(vKey) || '0', 10) >= 50)
   const [activeNeed, setActiveNeed]   = useState(null)
   const [sparkle, setSparkle]         = useState(null)
   const [glowing, setGlowing]         = useState(false)
@@ -2896,17 +2897,23 @@ function RitualModal({ userId, onClose, onEnterApp }) {
   const isMobile = window.innerWidth < 768
   const markers = [50, 40, 20, 14, 8, 2]
 
-  // Sync vitalité depuis Supabase au montage
+  // Sync vitalité depuis Supabase au montage — cherche la plante la plus récente
   useEffect(() => {
     if (!userId) return
-    const today = new Date().toISOString().split('T')[0]
-    supabase.from('plants').select('health').eq('user_id', userId).eq('date', today).maybeSingle()
+    supabase.from('plants').select('health').eq('user_id', userId)
+      .order('date', { ascending: false }).limit(1).maybeSingle()
       .then(({ data }) => {
-        if (!data) return
+        if (!data) {
+          // Aucune plante → reset complet
+          setVitality(0)
+          setAppUnlocked(false)
+          localStorage.setItem(vKey, '0')
+          return
+        }
         const real = Math.max(0, (data.health ?? 5) - 5)
         setVitality(real)
         setAppUnlocked(real >= 50)
-        localStorage.setItem('mji_vitality', String(real))
+        localStorage.setItem(vKey, String(real))
       })
   }, [userId])
 
@@ -2935,7 +2942,7 @@ function RitualModal({ userId, onClose, onEnterApp }) {
     playProgressSound()
     const next = Math.min(vitality + 2, 100)
     setVitality(next)
-    localStorage.setItem('mji_vitality', String(next))
+    localStorage.setItem(vKey, String(next))
     setActiveNeed(null)
 
     // Étoiles au sommet du remplissage
