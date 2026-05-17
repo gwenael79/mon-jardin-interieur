@@ -6269,36 +6269,41 @@ function WelcomeVeil({ onDone, isReturn = false }) {
       background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     }}>
-      {/* Barrière plein écran — fond, fondu sortant quand vidéo prête */}
-      <img
-        src="/barriere.png"
-        alt=""
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover', objectPosition: 'center',
-          opacity: videoReady ? 0 : 1,
-          transition: 'opacity 1s ease',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Carte vidéo — fondu entrant */}
+      {/* Carte centrée — barrière puis vidéo */}
       <div style={{
         position: 'relative', zIndex: 1,
-        width: '100%', maxWidth: 420,
-        margin: '0 16px',
+        width: '100%', maxWidth: 360,
+        height: 'min(65vh, 480px)',
+        margin: '0 20px',
         borderRadius: 20, overflow: 'hidden',
         boxShadow: '0 24px 70px rgba(0,0,0,0.5)',
-        opacity: videoReady ? 1 : 0,
-        transition: 'opacity 1s ease',
       }}>
+        {/* Barrière — fondu sortant quand vidéo prête */}
+        <img
+          src="/barriere.png"
+          alt=""
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'contain', objectPosition: 'center',
+            opacity: videoReady ? 0 : 1,
+            transition: 'opacity 1s ease',
+          }}
+        />
+
+        {/* Vidéo — fondu entrant */}
         <video
           ref={videoRef}
           src="/video/cheminjours.mp4"
           autoPlay playsInline muted
           preload="auto"
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          style={{
+            position: 'absolute', inset: 0,
+            width: '100%', height: '100%',
+            objectFit: 'contain',
+            opacity: videoReady ? 1 : 0,
+            transition: 'opacity 1s ease',
+          }}
           onCanPlayThrough={() => setVideoReady(true)}
           onEnded={() => setCtaVisible(true)}
           onError={onDone}
