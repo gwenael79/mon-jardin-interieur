@@ -6286,19 +6286,19 @@ function WelcomeVeil({ onDone, isReturn = false }) {
 
       {/* Texte overlay — visible avec l'image */}
       <div style={{
-        position: 'absolute', bottom: '12%', left: 0, right: 0,
-        textAlign: 'center', padding: '0 32px',
+        position: 'absolute', bottom: '6%', left: 0, right: 0,
+        textAlign: 'center', padding: '0 24px',
         opacity: showVideo ? 0 : 1,
         transition: 'opacity 1.2s ease',
         pointerEvents: 'none',
       }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(18px, 5vw, 26px)',
+          fontSize: 'clamp(24px, 7vw, 38px)',
           fontStyle: 'italic', fontWeight: 300,
-          color: 'rgba(255,255,255,0.90)',
-          lineHeight: 1.5, margin: 0,
-          textShadow: '0 2px 12px rgba(0,0,0,0.6)',
+          color: 'rgba(255,255,255,0.92)',
+          lineHeight: 1.4, margin: 0,
+          textShadow: '0 2px 16px rgba(0,0,0,0.7)',
         }}>
           Ouvrons ensemble cette petite barrière
         </p>
