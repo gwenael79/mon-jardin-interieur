@@ -6266,7 +6266,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 250,
-      background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
+      background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '8px 16px',
     }}>
@@ -6276,21 +6276,30 @@ function WelcomeVeil({ onDone, isReturn = false }) {
         boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
         position: 'relative',
       }}>
-        {/* Barrière — visible pendant le chargement de la vidéo */}
-        {!videoReady && (
-          <img
-            src="/barriere.png"
-            alt=""
-            style={{ width: '100%', height: 'auto', display: 'block', minHeight: 260, objectFit: 'cover' }}
-          />
-        )}
+        {/* Barrière — fondu sortant quand la vidéo est prête */}
+        <img
+          src="/barriere.png"
+          alt=""
+          style={{
+            width: '100%', height: 'auto', display: 'block', minHeight: 260, objectFit: 'cover',
+            opacity: videoReady ? 0 : 1,
+            transition: 'opacity 0.8s ease',
+            position: videoReady ? 'absolute' : 'relative',
+            top: 0, left: 0,
+          }}
+        />
 
+        {/* Vidéo — fondu entrant quand prête */}
         <video
           ref={videoRef}
           src="/video/cheminjours.mp4"
           autoPlay playsInline muted
           preload="auto"
-          style={{ width: '100%', height: 'auto', display: videoReady ? 'block' : 'none' }}
+          style={{
+            width: '100%', height: 'auto', display: 'block',
+            opacity: videoReady ? 1 : 0,
+            transition: 'opacity 0.8s ease',
+          }}
           onCanPlayThrough={() => setVideoReady(true)}
           onEnded={() => setCtaVisible(true)}
           onError={onDone}

@@ -3254,16 +3254,10 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, fontFamily: "'Jost',sans-serif", overflow: 'hidden' }}>
       <style>{ONB_STYLES}</style>
 
-      {/* Image plein écran en fond permanent */}
-      <img
-        src="/chemin.png"
-        alt="Chemin"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-        onError={e => { e.target.onerror = null; e.target.src = '/champs2.png' }}
-      />
+      {/* Fond beige — même style que les autres étapes d'onboarding */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)' }} />
+      <NatureBg />
 
-      {/* Dégradé bas progressif */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,3,1,0.80) 0%, rgba(5,3,1,0.20) 50%, transparent 100%)', pointerEvents: 'none' }} />
 
       {/* Panneau qui monte après 3s — mobile : bottom sheet / desktop : centré */}
       {showPanel && !isMobile && (
@@ -3400,8 +3394,9 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
 export function OnboardingScreen({ userId, onComplete }) {
   useTheme()
   // phase : -2=voile -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=notifications 7=install 8=quizIntro 9=quiz
-  const introSeenKey = userId ? `mji_intro_seen_${userId}` : null
-  const [phase,        setPhase]        = useState(() => introSeenKey && localStorage.getItem(introSeenKey) ? 'chemin' : -2)
+  const introSeenKey  = userId ? `mji_intro_seen_${userId}` : null
+  const introAlready  = !!(introSeenKey && localStorage.getItem(introSeenKey))
+  const [phase,        setPhase]        = useState(-2)
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
   const [quizAlready,  setQuizAlready]  = useState(false)  // true si le quiz a déjà été complété
@@ -3470,13 +3465,19 @@ export function OnboardingScreen({ userId, onComplete }) {
 
   if (phase === -2 || phase === -1) return (
     <>
-      {/* IntroGwenael monte en arrière-plan pendant le voile — les timeouts démarrent immédiatement */}
-      <IntroGwenael onStart={() => {
-        if (introSeenKey) localStorage.setItem(introSeenKey, '1')
-        setPhase('chemin')
-      }} />
-      {/* Voile par-dessus — se dissout et laisse apparaître le MP4 avec boutons déjà prêts */}
-      {phase === -2 && <VeilScreen onDone={() => setPhase(-1)} />}
+      {/* Utilisateur de retour : VeilScreen → chemin directement, sans MP4 */}
+      {introAlready ? (
+        <VeilScreen onDone={() => setPhase('chemin')} />
+      ) : (
+        <>
+          {/* Première fois : IntroGwenael (MP4) + VeilScreen par-dessus */}
+          <IntroGwenael onStart={() => {
+            if (introSeenKey) localStorage.setItem(introSeenKey, '1')
+            setPhase('chemin')
+          }} />
+          {phase === -2 && <VeilScreen onDone={() => setPhase(-1)} />}
+        </>
+      )}
     </>
   )
   if (phase === 'chemin') return (
