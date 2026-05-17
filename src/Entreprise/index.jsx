@@ -7,6 +7,7 @@ import CommercialStudio from "./CommercialStudio";
 import SeoStudio        from "./SeoStudio";
 import FinanceStudio    from "./FinanceStudio";
 import AgentChat        from "./AgentChat";
+import MeetingRoom      from "./MeetingRoom";
 
 const TABS = [
   { id:"hub",        icon:"🌿", label:"Hub"        },
@@ -18,6 +19,7 @@ const TABS = [
   { id:"stratege",   icon:"🎯", label:"SAM"   },
   { id:"growth",     icon:"📈", label:"LÉO"   },
   { id:"contenu",    icon:"✍️",  label:"LUCIE" },
+  { id:"meeting",    icon:"🪑",  label:"Réunion" },
 ];
 
 const HUB_CARDS = [
@@ -29,6 +31,7 @@ const HUB_CARDS = [
   { id:"commercial", icon:"💌", label:"Commercial",  desc:"Emails B2C & B2B · 11 étapes de parcours",                   color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
   { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                                  color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
   { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",                 color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
+  { id:"meeting",    icon:"🪑", label:"Salle de Réunion", desc:"MAX · SAM · LÉO · LUCIE · dialogue croisé · vision à 360°", color:"#2a1f00", bg:"#FDF6E3", bd:"#D4B97A" },
 ];
 
 const BRAND = { dark:"#1c3818", text:"#c8e6b0", sub:"#7ab36a" };
@@ -121,7 +124,7 @@ export default function Entreprise() {
 
       {/* ── Content ── */}
       {(() => {
-        const isAgent = ["maestro","stratege","growth","contenu"].includes(active);
+        const isAgent = ["maestro","stratege","growth","contenu","meeting"].includes(active);
         const isStudio = ["hub","reseaux","commercial","seo","finance"].includes(active);
         return (
           <div style={{ padding: isAgent ? "20px 4%" : "16px",
@@ -138,6 +141,7 @@ export default function Entreprise() {
             {active==="stratege" && <AgentChat agentId="stratege" agentName="SAM"   agentFullName="SAM · STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes" agentColor="#0C447C" agentBg="#E6F1FB" />}
             {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · GROWTH"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" />}
             {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" />}
+            {active==="meeting"  && <MeetingRoom />}
           </div>
         );
       })()}
