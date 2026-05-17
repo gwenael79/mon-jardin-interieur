@@ -1,6 +1,7 @@
 // src/Entreprise/AgentChat.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
 import TodoPanel from "./TodoPanel";
+import { supabase } from "../core/supabaseClient";
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768);
@@ -95,6 +96,13 @@ function Markdown({ text }) {
 
 const AGENT_URL = "https://islnwrgghdjozbhvugan.supabase.co/functions/v1/entreprise-agent";
 
+const SAVE_PROMPTS = {
+  maestro:  "Analyse notre conversation et sauvegarde les informations clés via save_memory : décisions prises, actions identifiées, données importantes relevées. Utilise les catégories adaptées (strategie, produit, finance, preference). Confirme ce que tu as sauvegardé.",
+  stratege: "Analyse notre échange et sauvegarde via save_memory les orientations stratégiques, décisions commerciales et recommandations importantes que nous avons identifiées ensemble. Catégorie : strategie. Confirme ce que tu as sauvegardé.",
+  growth:   "Analyse notre conversation et sauvegarde via save_memory les métriques clés, insights data et leviers de croissance identifiés. Catégorie : finance ou strategie selon le contenu. Confirme ce que tu as sauvegardé.",
+  contenu:  "Analyse notre échange et sauvegarde via save_memory les orientations éditoriales, idées de contenu, décisions de tone of voice et stratégies de publication retenues. Catégorie : contenu. Confirme ce que tu as sauvegardé.",
+};
+
 const SUGGESTIONS = [
   "Donne-moi un état général de l'appli",
   "Combien d'abonnés premium actifs en ce moment ?",
@@ -105,9 +113,8 @@ const SUGGESTIONS = [
 // ── Persistance localStorage par agent ──────────────────────────────────────
 const storageKey  = (id) => `mji_chat_msgs_${id}`;
 const sessionKey  = (id) => `mji_chat_session_${id}`;
-
-const loadMsgs    = (id) => { try { return JSON.parse(localStorage.getItem(storageKey(id))) ?? []; } catch { return []; } };
-const saveMsgs    = (id, msgs) => { try { localStorage.setItem(storageKey(id), JSON.stringify(msgs)); } catch {} };
+const loadMsgs = (id) => { try { return JSON.parse(localStorage.getItem(storageKey(id))) ?? []; } catch { return []; } };
+const saveMsgs = (id, msgs) => { try { localStorage.setItem(storageKey(id), JSON.stringify(msgs)); } catch {} };
 const getSession  = (id) => {
   let s = localStorage.getItem(sessionKey(id));
   if (!s) { s = `${id}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`; localStorage.setItem(sessionKey(id), s); }
@@ -285,6 +292,11 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   const [loading,     setLoading]    = useState(false);
   const [showHelp,    setShowHelp]   = useState(false);
   const [showTodo,    setShowTodo]   = useState(false);
+  const [showSidebar, setShowSidebar]= useState(true);
+  const [isRecording, setIsRecording]= useState(false);
+  const [saving,      setSaving]     = useState(false);
+  const [saveMsg,     setSaveMsg]    = useState("");
+  const [history,     setHistory]    = useState([]);
   const [voiceMode,   setVoiceMode]  = useState(false);
   const [voiceState,  _setVoiceState]= useState("idle");
   const [sessionId]                  = useState(() => getSession(agentId));
@@ -299,10 +311,29 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   }, [agentId]);
 
   const clearHistory = useCallback(() => {
+    setMsgs(prev => {
+      if (prev.length > 0) {
+        const firstUser = prev.find(m => m.role === "user")?.content ?? "";
+        // Sauvegarde dans Supabase
+        supabase.from("mji_chat_history").insert({
+          agent_id:  agentId,
+          preview:   firstUser.slice(0, 120),
+          msg_count: prev.length,
+          msgs:      prev,
+        }).select("id, preview, msg_count, msgs, created_at").single()
+          .then(({ data }) => {
+            if (data) setHistory(h => [data, ...h].slice(0, 10));
+          });
+      }
+      return [];
+    });
     localStorage.removeItem(storageKey(agentId));
     localStorage.removeItem(sessionKey(agentId));
-    setMsgs([]);
   }, [agentId]);
+
+  const restoreSession = useCallback((entry) => {
+    setAndSaveMsgs(entry.msgs);
+  }, [setAndSaveMsgs]);
   const isMobile    = useIsMobile();
   const bottomRef   = useRef(null);
   const recRef      = useRef(null);
@@ -313,6 +344,17 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   const setVoiceState = (s) => { vsRef.current = s; _setVoiceState(s); };
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
+
+  // Charge l'historique depuis Supabase au montage
+  useEffect(() => {
+    supabase
+      .from("mji_chat_history")
+      .select("id, preview, msg_count, msgs, created_at")
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .then(({ data }) => { if (data) setHistory(data); });
+  }, [agentId]);
   useEffect(() => () => { window.speechSynthesis?.cancel(); stopRec(); }, []);
 
   // ── Arrêt micro ────────────────────────────────────────────────────────────
@@ -458,6 +500,47 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
     // en thinking/speaking : on ne coupe pas
   }, [startRec, stopRec]);
 
+  // Sauvegarde mémoire Supabase via l'agent
+  const saveMemory = useCallback(async () => {
+    if (saving || msgs.length === 0) return;
+    setSaving(true); setSaveMsg("");
+    const prompt = SAVE_PROMPTS[agentId] ?? SAVE_PROMPTS.maestro;
+    try {
+      const res = await fetch(AGENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...msgs, { role: "user", content: prompt }],
+          session_id: sessionId,
+          agent_id: agentId,
+        }),
+      });
+      const data = await res.json();
+      const reply = data.text ?? "";
+      setAndSaveMsgs(prev => [...prev, { role: "user", content: "💾 Sauvegarder en mémoire" }, { role: "assistant", content: reply }]);
+      setSaveMsg("✓");
+    } catch { setSaveMsg("⚠️"); }
+    setSaving(false);
+    setTimeout(() => setSaveMsg(""), 3000);
+  }, [saving, msgs, agentId, sessionId, setAndSaveMsgs]);
+
+  // Enregistrement one-shot → injecte le texte dans le champ (hook avant tout early return)
+  const recordOnce = useCallback(() => {
+    if (!SR) return;
+    if (isRecording) { try { recRef.current?.stop(); } catch {} recRef.current = null; setIsRecording(false); return; }
+    const rec = new SR();
+    rec.lang = "fr-FR"; rec.interimResults = false; rec.maxAlternatives = 1;
+    rec.onstart  = () => setIsRecording(true);
+    rec.onend    = () => { setIsRecording(false); recRef.current = null; };
+    rec.onerror  = () => { setIsRecording(false); recRef.current = null; };
+    rec.onresult = (e) => {
+      const text = e.results[0]?.[0]?.transcript?.trim();
+      if (text) setInput(prev => prev ? prev + " " + text : text);
+    };
+    recRef.current = rec;
+    try { rec.start(); } catch {}
+  }, [isRecording]);
+
   // ── Rendu mode vocal ───────────────────────────────────────────────────────
   if (voiceMode) {
     return (
@@ -576,54 +659,162 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
 
   const inputJSX = (
     <div style={{ borderTop:".5px solid #dde8d8", paddingTop:12 }}>
-      <div style={{ display:"flex", gap:8 }}>
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(input); } }}
-          placeholder="Écris ta question…"
-          rows={isMobile?2:3}
-          style={{ flex:1, padding:"10px 14px", borderRadius:10, border:".5px solid #dde8d8", background:"#fff", color:"#1a2e18", fontSize:isMobile?13:14, fontFamily:"inherit", resize:"none", outline:"none", lineHeight:1.55 }}
-        />
+      <div style={{ display:"flex", gap:8, alignItems:"stretch" }}>
+
+        {/* Bouton Sauvegarder — gauche */}
+        <button
+          onClick={saveMemory}
+          disabled={saving || msgs.length === 0}
+          title="Demander à l'agent de sauvegarder les infos clés en mémoire Supabase"
+          style={{
+            flexShrink: 0, width: isMobile ? 44 : 52,
+            borderRadius: 10, border: `.5px solid ${agentColor}30`,
+            background: saving ? "#f3f5f1" : agentBg,
+            color: saving ? "#b0bfae" : agentColor,
+            cursor: saving || msgs.length === 0 ? "not-allowed" : "pointer",
+            opacity: msgs.length === 0 ? .4 : 1,
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center", gap: 3,
+            fontSize: saveMsg ? 16 : 18,
+            fontWeight: 600, transition: "all .2s",
+          }}>
+          {saving ? <span style={{ fontSize:13, animation:"mji-dot 1s ease-in-out infinite" }}>…</span>
+            : saveMsg ? <span>{saveMsg}</span>
+            : <>
+                <span>💾</span>
+                {!isMobile && <span style={{ fontSize: 9, letterSpacing:".04em", lineHeight:1.2, textAlign:"center" }}>SAUVER</span>}
+              </>}
+        </button>
+
+        {/* Textarea avec bouton mic superposé */}
+        <div style={{ flex:1, position:"relative" }}>
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(input); } }}
+            placeholder="Écris ta question…"
+            rows={isMobile?2:3}
+            style={{ width:"100%", padding:"10px 14px", paddingBottom:"32px", borderRadius:10, border:`.5px solid ${isRecording?"#f0a090":"#dde8d8"}`, background:"#fff", color:"#1a2e18", fontSize:isMobile?13:14, fontFamily:"inherit", resize:"none", outline:"none", lineHeight:1.55, boxSizing:"border-box", transition:"border-color .2s" }}
+          />
+          {/* Bouton micro — bas droite du textarea */}
+          {SR && (
+            <button
+              onClick={recordOnce}
+              title={isRecording ? "Arrêter l'enregistrement" : "Dicter un message"}
+              style={{
+                position:"absolute", bottom:8, right:8,
+                width:26, height:26, borderRadius:"50%", border:"none",
+                background: isRecording ? "#fff0ee" : "#f3f5f1",
+                cursor:"pointer", fontSize:14, display:"flex",
+                alignItems:"center", justifyContent:"center",
+                animation: isRecording ? "mic-pulse 1s ease-in-out infinite" : "none",
+                boxShadow: isRecording ? "0 0 0 4px rgba(240,100,80,.15)" : "none",
+                transition:"background .2s, box-shadow .2s",
+              }}>
+              {isRecording ? "⏹" : "🎙"}
+            </button>
+          )}
+        </div>
         <button onClick={() => send(input)} disabled={!input.trim() || loading}
           style={{ padding:"10px 20px", borderRadius:10, border:"none", background:input.trim()&&!loading?"#2d5a27":"#c8d5c5", color:input.trim()&&!loading?"#c8e6b0":"#8a9e88", cursor:input.trim()&&!loading?"pointer":"not-allowed", fontSize:22, flexShrink:0 }}>↑</button>
       </div>
-      {!isMobile && <div style={{ fontSize:10, color:"#b0bfae", marginTop:5 }}>Entrée · envoyer · Shift+Entrée · nouvelle ligne</div>}
+      {!isMobile && <div style={{ fontSize:10, color:"#b0bfae", marginTop:5 }}>Entrée · envoyer · Shift+Entrée · nouvelle ligne · 🎙 dicter</div>}
     </div>
   );
 
   const modalJSX = showHelp && <AgentModal agentId={agentId} agentName={agentName} agentFullName={agentFullName} agentColor={agentColor} agentBg={agentBg} onClose={() => setShowHelp(false)} onAsk={q => send(q)} />;
-  const styleJSX = <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}`}</style>;
+  const styleJSX = <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,100,80,.25)}50%{box-shadow:0 0 0 6px rgba(240,100,80,0)}}`}</style>;
 
   // ── Rendu PC ────────────────────────────────────────────────────────────────
   if (!isMobile) return (
-    <div style={{ display:"flex", gap:20, height:"calc(100vh - 130px)" }}>
+    <div style={{ display:"flex", gap:16, height:"calc(100vh - 130px)" }}>
+
+      {/* ── Zone centrale ── */}
       <div style={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
         {headerJSX}
         {messagesJSX}
         {inputJSX}
       </div>
+
+      {/* ── ToDoListe ── */}
       {showTodo && <TodoPanel onClose={() => setShowTodo(false)} sessionId={sessionId} />}
-      <div style={{ width:260, flexShrink:0, display:"flex", flexDirection:"column", gap:12 }}>
-        <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"14px 16px" }}>
-          <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:agentColor, marginBottom:10 }}>AGENT</div>
-          {agentPhoto && (
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
-              <img src={agentPhoto} alt={agentName} style={{ width:56, height:56, borderRadius:"50%", objectFit:"cover", border:`2px solid ${agentColor}25`, flexShrink:0 }} />
-              <div style={{ fontSize:14, fontWeight:600, color:agentColor, fontFamily:"Georgia,serif" }}>{agentFullName}</div>
+
+      {/* ── Sidebar repliable ── */}
+      <div style={{
+        width: showSidebar ? 260 : 32,
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        transition: "width .22s ease",
+        overflow: "hidden",
+        position: "relative",
+      }}>
+        {/* Bouton toggle — toujours visible */}
+        <button
+          onClick={() => setShowSidebar(s => !s)}
+          title={showSidebar ? "Replier" : "Déplier"}
+          style={{
+            position: "absolute", top: 0, right: 0,
+            width: 28, height: 28, borderRadius: "50%",
+            border: ".5px solid #dde8d8", background: "#f3f5f1",
+            cursor: "pointer", fontSize: 13, color: "#8a9e88",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0, zIndex: 2,
+          }}>
+          {showSidebar ? "›" : "‹"}
+        </button>
+
+        {/* Contenu sidebar — masqué quand replié */}
+        {showSidebar && (
+          <>
+            <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"14px 16px", paddingRight:36 }}>
+              <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:agentColor, marginBottom:10 }}>AGENT</div>
+              {agentPhoto && (
+                <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
+                  <img src={agentPhoto} alt={agentName} style={{ width:56, height:56, borderRadius:"50%", objectFit:"cover", border:`2px solid ${agentColor}25`, flexShrink:0 }} />
+                  <div style={{ fontSize:14, fontWeight:600, color:agentColor, fontFamily:"Georgia,serif" }}>{agentFullName}</div>
+                </div>
+              )}
+              <div style={{ fontSize:11, color:agentColor, opacity:.7, lineHeight:1.6 }}>{AGENT_HELP[agentId]?.quand}</div>
+              <button onClick={() => setShowHelp(true)} style={{ marginTop:10, width:"100%", padding:"7px", borderRadius:8, border:`.5px solid ${agentColor}30`, background:"rgba(255,255,255,.5)", color:agentColor, cursor:"pointer", fontSize:11, fontWeight:500 }}>Voir les exemples →</button>
             </div>
-          )}
-          <div style={{ fontSize:11, color:agentColor, opacity:.7, lineHeight:1.6 }}>{AGENT_HELP[agentId]?.quand}</div>
-          <button onClick={() => setShowHelp(true)} style={{ marginTop:10, width:"100%", padding:"7px", borderRadius:8, border:`.5px solid ${agentColor}30`, background:"rgba(255,255,255,.5)", color:agentColor, cursor:"pointer", fontSize:11, fontWeight:500 }}>Voir les exemples →</button>
-        </div>
-        {SR && <button onClick={enterVoiceMode} style={{ padding:"10px", borderRadius:10, border:".5px solid #C0DD97", background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:12, fontWeight:500, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>🎙 Mode vocal · dialogue continu</button>}
-        <div style={{ background:"#fff", border:".5px solid #dde8d8", borderRadius:12, padding:"14px 16px", flex:1 }}>
-          <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:"#8a9e88", marginBottom:8 }}>ACCÈS RAPIDE</div>
-          <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
-            {SUGGESTIONS.map((s,i) => <button key={i} onClick={() => send(s)} style={{ textAlign:"left", padding:"8px 10px", borderRadius:8, border:".5px solid #eef1eb", background:"#f9faf8", color:"#3d4d3b", cursor:"pointer", fontSize:11, lineHeight:1.4, fontFamily:"inherit" }}>{s}</button>)}
-          </div>
-        </div>
+            {SR && <button onClick={enterVoiceMode} style={{ padding:"10px", borderRadius:10, border:".5px solid #C0DD97", background:"#EAF3DE", color:"#27500A", cursor:"pointer", fontSize:12, fontWeight:500, display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>🎙 Mode vocal · dialogue continu</button>}
+            <div style={{ background:"#fff", border:".5px solid #dde8d8", borderRadius:12, padding:"14px 16px", flex:1, overflowY:"auto", display:"flex", flexDirection:"column" }}>
+              <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:"#8a9e88", marginBottom:10 }}>HISTORIQUE</div>
+              {history.length === 0 ? (
+                <div style={{ fontSize:11, color:"#c8d5c5", fontStyle:"italic", textAlign:"center", marginTop:12 }}>
+                  Aucune conversation sauvegardée.<br />Clique sur ↺ Nouveau pour archiver.
+                </div>
+              ) : (
+                <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                  {history.map((entry) => (
+                    <button key={entry.id} onClick={() => restoreSession(entry)}
+                      style={{ textAlign:"left", padding:"9px 11px", borderRadius:10, border:".5px solid #eef1eb",
+                        background:"#f9faf8", cursor:"pointer", fontFamily:"inherit",
+                        transition:"background .15s" }}
+                      onMouseEnter={e => e.currentTarget.style.background="#EAF3DE"}
+                      onMouseLeave={e => e.currentTarget.style.background="#f9faf8"}>
+                      <div style={{ fontSize:12, color:"#1a2e18", lineHeight:1.4, marginBottom:3,
+                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:"100%" }}>
+                        {entry.preview || "Conversation"}
+                      </div>
+                      <div style={{ display:"flex", gap:6, alignItems:"center" }}>
+                        <span style={{ fontSize:10, color:"#8a9e88" }}>
+                          {new Date(entry.created_at).toLocaleDateString("fr-FR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}
+                        </span>
+                        <span style={{ fontSize:9, color:"#c8d5c5" }}>·</span>
+                        <span style={{ fontSize:10, color:"#b0bfae" }}>{entry.msg_count} msg</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
+
       {modalJSX}{styleJSX}
     </div>
   );
