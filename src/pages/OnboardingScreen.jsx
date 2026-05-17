@@ -3190,7 +3190,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
   const panel = (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12,
-      padding: isMobile ? '0 12px 20px' : '0 20px 24px',
+      padding: isMobile ? '0 10px 20px' : '0 10px 24px',
     }}>
       {/* RESSENTIR */}
       <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#1c3818,#2a5020)', boxShadow: '0 4px 16px rgba(28,56,24,0.30)' }}>
