@@ -6248,7 +6248,7 @@ const LUTIN_SLOTS = ['right', 'left']
 // ─────────────────────────────────────────────────────────────────────────────
 // Voile de transition avant le MP4 WeekOne
 // ─────────────────────────────────────────────────────────────────────────────
-function WelcomeVeil({ onDone }) {
+function WelcomeVeil({ onDone, isReturn = false }) {
   const videoRef = useRef(null)
   const [muted,      setMuted]      = useState(true)
   const [ctaVisible, setCtaVisible] = useState(false)
@@ -6320,7 +6320,7 @@ function WelcomeVeil({ onDone }) {
               border: 'none', borderRadius: 50, padding: '14px 24px', cursor: 'pointer',
               boxShadow: '0 8px 24px rgba(122,152,112,0.4)',
             }}>
-              Commencer mon premier jour →
+              {isReturn ? 'Continuer →' : 'Commencer mon premier jour →'}
             </button>
           </div>
         </div>
@@ -6913,7 +6913,7 @@ async function handleDayEvent(event) {
       <>
         <GlobalStyles />
         {/* Voile avec barriere.png — à la fin, passe directement au jour 1 */}
-        {showVeil && <WelcomeVeil onDone={() => { setShowVeil(false); setShowWelcome(false) }} />}
+        {showVeil && <WelcomeVeil onDone={() => { setShowVeil(false); setShowWelcome(false) }} isReturn={weekData.completedDays.length > 0} />}
       </>
     )
   }
