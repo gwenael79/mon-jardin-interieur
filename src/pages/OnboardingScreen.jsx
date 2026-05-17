@@ -3177,7 +3177,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
   const isMobile = window.innerWidth < 768
 
   useEffect(() => {
-    const t = setTimeout(() => setShowPanel(true), 1000)
+    const t = setTimeout(() => setShowPanel(true), isMobile ? 3000 : 1000)
     return () => clearTimeout(t)
   }, [])
 
