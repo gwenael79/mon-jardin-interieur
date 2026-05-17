@@ -256,8 +256,8 @@ const SR = typeof window !== "undefined"
 const STATES = {
   idle:     { label: "Toucher pour parler",  pulse: false, bg: "#f3f5f1", ring: "#dde8d8", icon: "🎙" },
   listening:{ label: "J'écoute…",            pulse: true,  bg: "#fff0ee", ring: "#f0a090", icon: "🎙" },
-  thinking: { label: "MAESTRO réfléchit…",   pulse: true,  bg: "#EAF3DE", ring: "#C0DD97", icon: "⏳" },
-  speaking: { label: "MAESTRO répond…",      pulse: true,  bg: "#EAF3DE", ring: "#3B6D11", icon: "🔊" },
+  thinking: { label: "Max réfléchit…",   pulse: true,  bg: "#EAF3DE", ring: "#C0DD97", icon: "⏳" },
+  speaking: { label: "Max répond…",      pulse: true,  bg: "#EAF3DE", ring: "#3B6D11", icon: "🔊" },
 };
 
 function VoiceOrb({ state, onClick }) {
@@ -278,7 +278,7 @@ function VoiceOrb({ state, onClick }) {
 }
 
 // ── Composant principal ──────────────────────────────────────────────────────
-export default function AgentChat({ agentId = "maestro", agentName = "MAX", agentFullName = "MAX · MAESTRO", agentDesc = "Orchestrateur IA · données temps réel · actions", agentColor = "#1c3818", agentBg = "#EAF3DE" }) {
+export default function AgentChat({ agentId = "maestro", agentName = "MAX", agentFullName = "MAX · MAESTRO", agentDesc = "Orchestrateur IA · données temps réel · actions", agentColor = "#1c3818", agentBg = "#EAF3DE", agentPhoto = "" }) {
   const [msgs,        setMsgs]       = useState(() => loadMsgs(agentId));
   const [input,       setInput]      = useState("");
   const [loading,     setLoading]    = useState(false);
@@ -496,9 +496,12 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   const headerJSX = (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
       paddingBottom:12, marginBottom:12, borderBottom:`.5px solid ${agentColor}20` }}>
-      <div>
-        <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?13:16, fontWeight:600, color:agentColor }}>{agentFullName}</div>
-        {!isMobile && <div style={{ fontSize:11, color:agentColor, opacity:.6, marginTop:2 }}>{agentDesc}</div>}
+      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        {agentPhoto && <img src={agentPhoto} alt={agentName} style={{ width:isMobile?36:44, height:isMobile?36:44, borderRadius:"50%", objectFit:"cover", border:`2px solid ${agentColor}30`, flexShrink:0 }} />}
+        <div>
+          <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?13:16, fontWeight:600, color:agentColor }}>{agentFullName}</div>
+          {!isMobile && <div style={{ fontSize:11, color:agentColor, opacity:.6, marginTop:2 }}>{agentDesc}</div>}
+        </div>
       </div>
       <div style={{ display:"flex", gap:6, alignItems:"center" }}>
         {SR && !isMobile && (
@@ -515,9 +518,12 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   const welcomeJSX = (
     <div>
       <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"16px 18px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-        <div>
-          <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?15:18, fontWeight:600, color:agentColor, marginBottom:4 }}>{agentFullName}</div>
-          <div style={{ fontSize:isMobile?12:13, color:agentColor, opacity:.75, lineHeight:1.6 }}>{agentDesc}</div>
+        <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+          {agentPhoto && <img src={agentPhoto} alt={agentName} style={{ width:isMobile?56:72, height:isMobile?56:72, borderRadius:"50%", objectFit:"cover", border:`2.5px solid ${agentColor}30`, flexShrink:0 }} />}
+          <div>
+            <div style={{ fontFamily:"Georgia,serif", fontSize:isMobile?15:18, fontWeight:600, color:agentColor, marginBottom:4 }}>{agentFullName}</div>
+            <div style={{ fontSize:isMobile?12:13, color:agentColor, opacity:.75, lineHeight:1.6 }}>{agentDesc}</div>
+          </div>
         </div>
         <button onClick={() => setShowHelp(true)} style={{ width:28, height:28, borderRadius:"50%", border:`.5px solid ${agentColor}40`, background:"rgba(255,255,255,.6)", color:agentColor, cursor:"pointer", fontSize:13, fontWeight:700, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
       </div>
@@ -591,8 +597,13 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
       </div>
       <div style={{ width:260, flexShrink:0, display:"flex", flexDirection:"column", gap:12 }}>
         <div style={{ background:agentBg, border:`.5px solid ${agentColor}30`, borderRadius:12, padding:"14px 16px" }}>
-          <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:agentColor, marginBottom:8 }}>AGENT</div>
-          <div style={{ fontSize:13, fontWeight:600, color:agentColor, fontFamily:"Georgia,serif", marginBottom:4 }}>{agentName}</div>
+          <div style={{ fontSize:10, fontWeight:600, letterSpacing:".1em", color:agentColor, marginBottom:10 }}>AGENT</div>
+          {agentPhoto && (
+            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:10 }}>
+              <img src={agentPhoto} alt={agentName} style={{ width:56, height:56, borderRadius:"50%", objectFit:"cover", border:`2px solid ${agentColor}25`, flexShrink:0 }} />
+              <div style={{ fontSize:14, fontWeight:600, color:agentColor, fontFamily:"Georgia,serif" }}>{agentFullName}</div>
+            </div>
+          )}
           <div style={{ fontSize:11, color:agentColor, opacity:.7, lineHeight:1.6 }}>{AGENT_HELP[agentId]?.quand}</div>
           <button onClick={() => setShowHelp(true)} style={{ marginTop:10, width:"100%", padding:"7px", borderRadius:8, border:`.5px solid ${agentColor}30`, background:"rgba(255,255,255,.5)", color:agentColor, cursor:"pointer", fontSize:11, fontWeight:500 }}>Voir les exemples →</button>
         </div>

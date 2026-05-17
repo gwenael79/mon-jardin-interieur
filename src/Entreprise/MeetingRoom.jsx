@@ -71,10 +71,10 @@ function Markdown({ text }) {
 
 // ── Config agents ─────────────────────────────────────────────────────────────
 const AGENTS = [
-  { id: "maestro",  name: "MAX",   fullName: "MAX · MAESTRO",   role: "Données temps réel",  color: "#1c4818", bg: "#EAF3DE", accent: "#3B6D11" },
-  { id: "stratege", name: "SAM",   fullName: "SAM · STRATÈGE",  role: "Stratégie business",  color: "#3d1870", bg: "#F0EAFA", accent: "#7C3AED" },
-  { id: "growth",   name: "LÉO",   fullName: "LÉO · GROWTH",    role: "Data & croissance",   color: "#1a3a70", bg: "#EAF1FA", accent: "#2563EB" },
-  { id: "contenu",  name: "LUCIE", fullName: "LUCIE · CONTENU", role: "Éditorial & social",  color: "#701838", bg: "#FAEAEE", accent: "#DB2777" },
+  { id: "maestro",  name: "Max", fullName: "Max · Pilotage", role: "Données temps réel",  color: "#1c4818", bg: "#EAF3DE", accent: "#3B6D11", photo: "https://randomuser.me/api/portraits/men/32.jpg"   },
+  { id: "stratege", name: "SAM",   fullName: "SAM · STRATÈGE",  role: "Stratégie business",  color: "#3d1870", bg: "#F0EAFA", accent: "#7C3AED", photo: "https://randomuser.me/api/portraits/men/75.jpg"   },
+  { id: "growth",   name: "LÉO",   fullName: "LÉO · Développement", role: "Data & croissance",   color: "#1a3a70", bg: "#EAF1FA", accent: "#2563EB", photo: "https://randomuser.me/api/portraits/men/22.jpg"   },
+  { id: "contenu",  name: "LUCIE", fullName: "LUCIE · CONTENU", role: "Éditorial & social",  color: "#701838", bg: "#FAEAEE", accent: "#DB2777", photo: "https://randomuser.me/api/portraits/women/44.jpg" },
 ];
 
 const AGENT_URL = "https://islnwrgghdjozbhvugan.supabase.co/functions/v1/entreprise-agent";
@@ -120,62 +120,112 @@ export default function MeetingRoom() {
     setInput("");
     setLoading(true);
 
-    // Snapshot avant la mise à jour d'état
     const snapshot = msgs;
     setMsgs(prev => [...prev, { role: "user", content: text }]);
 
-    // Historique API aplati (les réponses agents sont préfixées par leur nom)
-    const baseHistory = snapshot.map(m => ({
-      role: m.role,
-      content: m.agentName ? `[${m.agentName}] ${m.content}` : m.content,
-    }));
+    // Historique API (skip les messages de routing purement visuels)
+    const baseHistory = snapshot
+      .filter(m => m.role === "user" || m.role === "assistant")
+      .map(m => ({
+        role: m.role,
+        content: m.agentName ? `[${m.agentName}] ${m.content}` : m.content,
+      }));
 
-    const orderedAgents = AGENTS.filter(a => activeIds.has(a.id));
-    // Accumulateur du tour courant : chaque agent voit les réponses de ses prédécesseurs
-    const roundAcc = [];
+    // ── Étape 1 : MAX répond ET décide qui intervient ──────────────────────
+    setThinkingId("maestro");
+
+    const routingNote = `\n\n[INSTRUCTION CONFIDENTIELLE — ne pas afficher]\nTu orchestre cette réunion. À la toute fin de ta réponse, ajoute une ligne au format exact :\nAGENTS:stratege,growth\nou\nAGENTS:aucun\nN'invite un agent que si sa spécialité apporte une vraie valeur à cette question précise. Si ta réponse suffit, écris AGENTS:aucun.`;
+
+    let maxCleanText = "";
+    let agentsToCall = [];
+
+    try {
+      const maxRes = await fetch(AGENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...baseHistory, { role: "user", content: text + routingNote }],
+          session_id: sessionId,
+          agent_id: "maestro",
+        }),
+      });
+      if (!maxRes.ok) throw new Error(`HTTP ${maxRes.status}`);
+      const maxData = await maxRes.json();
+      if (maxData.error) throw new Error(maxData.error);
+
+      const raw = maxData.text;
+      const match = raw.match(/AGENTS:([^\n\r]+)/i);
+      if (match) {
+        const decision = match[1].trim().toLowerCase();
+        agentsToCall = decision === "aucun"
+          ? []
+          : decision.split(",").map(a => a.trim()).filter(a => ["stratege", "growth", "contenu"].includes(a));
+        maxCleanText = raw.replace(/\n*AGENTS:[^\n\r]*/gi, "").trim();
+      } else {
+        maxCleanText = raw.trim();
+        agentsToCall = [];
+      }
+
+      setMsgs(prev => [...prev, {
+        role: "assistant", agentId: "maestro",
+        agentName: "Max", agentFullName: "Max · Pilotage",
+        content: maxCleanText,
+      }]);
+
+      // Pastille de routing si MAX convoque d'autres agents
+      if (agentsToCall.length > 0) {
+        const names = agentsToCall
+          .map(id => AGENTS.find(a => a.id === id)?.name)
+          .filter(Boolean);
+        setMsgs(prev => [...prev, { type: "routing", agents: names }]);
+      }
+
+    } catch (e) {
+      setMsgs(prev => [...prev, {
+        role: "assistant", agentId: "maestro",
+        agentName: "Max", agentFullName: "Max · Pilotage",
+        content: `⚠️ ${e.message}`, err: true,
+      }]);
+      setThinkingId(null);
+      setLoading(false);
+      return;
+    }
+
+    // ── Étape 2 : agents sélectionnés par MAX ─────────────────────────────
+    const roundAcc = [`[Max · Pilotage]\n${maxCleanText}`];
+    const orderedAgents = AGENTS.filter(
+      a => a.id !== "maestro" && agentsToCall.includes(a.id)
+    );
 
     for (const agent of orderedAgents) {
       setThinkingId(agent.id);
       try {
+        const contextSuffix = `\n\n— Contexte : réponses des agents précédents —\n${roundAcc.join("\n\n")}\n— Fin du contexte —\n\nÀ ton tour.`;
         const res = await fetch(AGENT_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            messages: [
-              ...baseHistory,
-              { role: "user", content: text },
-              ...roundAcc,
-            ],
+            messages: [...baseHistory, { role: "user", content: text + contextSuffix }],
             session_id: sessionId,
-            agent_id:   agent.id,
+            agent_id: agent.id,
           }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
-        // Injecter dans l'accumulateur pour le prochain agent
-        roundAcc.push({
-          role:    "assistant",
-          content: `[${agent.name} — ${agent.fullName}] ${data.text}`,
-        });
-
+        roundAcc.push(`[${agent.name} — ${agent.fullName}]\n${data.text}`);
         setMsgs(prev => [...prev, {
-          role:          "assistant",
-          agentId:       agent.id,
-          agentName:     agent.name,
-          agentFullName: agent.fullName,
-          content:       data.text,
+          role: "assistant", agentId: agent.id,
+          agentName: agent.name, agentFullName: agent.fullName,
+          content: data.text,
         }]);
       } catch (e) {
-        roundAcc.push({ role: "assistant", content: `[${agent.name}] Erreur` });
+        roundAcc.push(`[${agent.name}] Erreur`);
         setMsgs(prev => [...prev, {
-          role:          "assistant",
-          agentId:       agent.id,
-          agentName:     agent.name,
-          agentFullName: agent.fullName,
-          content:       `⚠️ ${e.message}`,
-          err:           true,
+          role: "assistant", agentId: agent.id,
+          agentName: agent.name, agentFullName: agent.fullName,
+          content: `⚠️ ${e.message}`, err: true,
         }]);
       }
     }
@@ -234,14 +284,19 @@ export default function MeetingRoom() {
                   opacity:    active ? 1 : 0.55,
                 }}
               >
-                {/* Point de statut */}
-                <span style={{
-                  width: 7, height: 7, borderRadius: "50%",
-                  background:  active ? agent.accent : "#c8d5c5",
-                  flexShrink:  0,
-                  animation:   thinking ? "mr-pulse 1s ease-in-out infinite" : "none",
-                  transition:  "background .2s",
-                }} />
+                {/* Portrait */}
+                <img
+                  src={agent.photo}
+                  alt={agent.name}
+                  style={{
+                    width: 32, height: 32, borderRadius: "50%", objectFit: "cover",
+                    flexShrink: 0,
+                    border: `1.5px solid ${active ? agent.accent : "#c8d5c5"}`,
+                    opacity: active ? 1 : 0.5,
+                    animation: thinking ? "mr-pulse-img 1.4s ease-in-out infinite" : "none",
+                    transition: "opacity .2s",
+                  }}
+                />
                 {agent.name}
                 {thinking && <span style={{ fontSize: 10, fontWeight: 400, opacity: .8 }}>réfléchit…</span>}
                 {!isMobile && !thinking && (
@@ -288,6 +343,20 @@ export default function MeetingRoom() {
           </div>
         ) : (
           msgs.map((m, i) => {
+            // Pastille de routing MAX
+            if (m.type === "routing") {
+              return (
+                <div key={i} style={{ display: "flex", justifyContent: "center", margin: "2px 0 10px" }}>
+                  <div style={{ fontSize: 11, color: "#6b7c69", background: "#EAF3DE", padding: "4px 14px", borderRadius: 20, border: ".5px solid #C0DD97", display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 10, opacity: .7 }}>Max convoque</span>
+                    {m.agents.map((name, j) => (
+                      <span key={j} style={{ fontWeight: 600, color: "#3B6D11" }}>{name}</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
             if (m.role === "user") {
               return (
                 <div key={i}>
@@ -320,18 +389,17 @@ export default function MeetingRoom() {
             return (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start" }}>
                 {/* Avatar */}
-                <div style={{
-                  flexShrink: 0,
-                  width: isMobile ? 28 : 32, height: isMobile ? 28 : 32,
-                  borderRadius: "50%",
-                  background: agent.bg,
-                  border: `1.5px solid ${agent.accent}50`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: agent.color }}>
-                    {agent.name[0]}
-                  </span>
-                </div>
+                <img
+                  src={agent.photo}
+                  alt={agent.name}
+                  style={{
+                    flexShrink: 0,
+                    width: isMobile ? 44 : 56, height: isMobile ? 44 : 56,
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: `2px solid ${agent.accent}40`,
+                  }}
+                />
 
                 {/* Bulle */}
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -356,18 +424,18 @@ export default function MeetingRoom() {
         {/* Indicateur de réflexion */}
         {thinkingAgent && (
           <div style={{ display: "flex", gap: 8, marginBottom: 10, alignItems: "flex-start" }}>
-            <div style={{
-              flexShrink: 0,
-              width: isMobile ? 28 : 32, height: isMobile ? 28 : 32,
-              borderRadius: "50%",
-              background: thinkingAgent.bg,
-              border: `1.5px solid ${thinkingAgent.accent}50`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <span style={{ fontSize: isMobile ? 9 : 10, fontWeight: 700, color: thinkingAgent.color }}>
-                {thinkingAgent.name[0]}
-              </span>
-            </div>
+            <img
+              src={thinkingAgent.photo}
+              alt={thinkingAgent.name}
+              style={{
+                flexShrink: 0,
+                width: isMobile ? 44 : 56, height: isMobile ? 44 : 56,
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: `2px solid ${thinkingAgent.accent}40`,
+                animation: "mr-pulse-img 1.4s ease-in-out infinite",
+              }}
+            />
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, color: thinkingAgent.accent, marginBottom: 4 }}>
                 {thinkingAgent.fullName}
@@ -441,6 +509,10 @@ export default function MeetingRoom() {
         @keyframes mr-pulse {
           0%,100% { transform: scale(1);   opacity: .8; }
           50%      { transform: scale(1.6); opacity: 1;  }
+        }
+        @keyframes mr-pulse-img {
+          0%,100% { box-shadow: 0 0 0 0px transparent; }
+          50%      { box-shadow: 0 0 0 3px rgba(59,109,17,.35); }
         }
       `}</style>
     </div>

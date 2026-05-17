@@ -15,23 +15,23 @@ const TABS = [
   { id:"commercial", icon:"💌", label:"Commercial" },
   { id:"seo",        icon:"🔍", label:"SEO"        },
   { id:"finance",    icon:"📊", label:"Financier"  },
-  { id:"maestro",    icon:"🤖", label:"MAX"    },
-  { id:"stratege",   icon:"🎯", label:"SAM"   },
-  { id:"growth",     icon:"📈", label:"LÉO"   },
-  { id:"contenu",    icon:"✍️",  label:"LUCIE" },
+  { id:"maestro",    photo:"https://randomuser.me/api/portraits/men/32.jpg",   label:"MAX" },
+  { id:"stratege",   photo:"https://randomuser.me/api/portraits/men/75.jpg",   label:"SAM"     },
+  { id:"growth",     photo:"https://randomuser.me/api/portraits/men/22.jpg",   label:"LÉO"     },
+  { id:"contenu",    photo:"https://randomuser.me/api/portraits/women/44.jpg", label:"LUCIE"   },
   { id:"meeting",    icon:"🪑",  label:"Réunion" },
 ];
 
 const HUB_CARDS = [
-  { id:"maestro",  icon:"🤖", label:"MAESTRO",   desc:"Données temps réel · pilotage · actions",                        color:"#1c3818", bg:"#1c3818", bd:"#3B6D11", dark:true },
+  { id:"maestro",  icon:"🤖", label:"Pilotage",   desc:"Données temps réel · pilotage · actions",                        color:"#1c3818", bg:"#1c3818", bd:"#3B6D11", dark:true },
   { id:"stratege", icon:"🎯", label:"Stratège",  desc:"Acquisition · conversion · pricing · plateformes",               color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
-  { id:"growth",   icon:"📈", label:"Growth",    desc:"Analyse cohortes · métriques SaaS · recommandations",            color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
+  { id:"growth",   icon:"📈", label:"LÉO · Développement", desc:"Analyse cohortes · métriques SaaS · recommandations", color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
   { id:"contenu",  icon:"✍️",  label:"Contenu",   desc:"Planning éditorial · repurposing · stratégie cross-canal",      color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
   { id:"reseaux",    icon:"📱", label:"Réseaux",    desc:"Posts Instagram · TikTok · LinkedIn",                          color:"#27500A", bg:"#EAF3DE", bd:"#C0DD97" },
   { id:"commercial", icon:"💌", label:"Commercial",  desc:"Emails B2C & B2B · 11 étapes de parcours",                   color:"#0C447C", bg:"#E6F1FB", bd:"#B5D4F4" },
   { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                                  color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
   { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",                 color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
-  { id:"meeting",    icon:"🪑", label:"Salle de Réunion", desc:"MAX · SAM · LÉO · LUCIE · dialogue croisé · vision à 360°", color:"#2a1f00", bg:"#FDF6E3", bd:"#D4B97A" },
+  { id:"meeting",    icon:"🪑", label:"Salle de Réunion", desc:"Pilotage · SAM · LÉO · LUCIE · dialogue croisé · vision à 360°", color:"#2a1f00", bg:"#FDF6E3", bd:"#D4B97A" },
 ];
 
 const BRAND = { dark:"#1c3818", text:"#c8e6b0", sub:"#7ab36a" };
@@ -116,8 +116,12 @@ export default function Entreprise() {
               color:       active===t.id ? BRAND.text:BRAND.sub,
               fontSize:"12px", fontWeight: active===t.id ? "500":"400",
               outline: active===t.id ? "1px solid rgba(200,230,176,0.25)":"none",
-              display:"flex", alignItems:"center", gap:"5px" }}>
-            <span>{t.icon}</span><span>{t.label}</span>
+              display:"flex", alignItems:"center", gap:"6px" }}>
+            {t.photo
+              ? <img src={t.photo} alt={t.label} style={{ width:24, height:24, borderRadius:"50%", objectFit:"cover", border: active===t.id ? "1.5px solid rgba(200,230,176,0.6)" : "1.5px solid rgba(200,230,176,0.2)", flexShrink:0 }} />
+              : <span>{t.icon}</span>
+            }
+            <span>{t.label}</span>
           </button>
         ))}
       </div>
@@ -137,10 +141,10 @@ export default function Entreprise() {
             {active==="commercial" && <CommercialStudio />}
             {active==="seo"        && <SeoStudio />}
             {active==="finance"    && <FinanceStudio />}
-            {active==="maestro"  && <AgentChat agentId="maestro"  agentName="MAX"   agentFullName="MAX · MAESTRO"  agentDesc="Données temps réel · actions directes sur Supabase et n8n" agentColor="#1c3818" agentBg="#EAF3DE" />}
-            {active==="stratege" && <AgentChat agentId="stratege" agentName="SAM"   agentFullName="SAM · STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes" agentColor="#0C447C" agentBg="#E6F1FB" />}
-            {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · GROWTH"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" />}
-            {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" />}
+            {active==="maestro"  && <AgentChat agentId="maestro"  agentName="Max" agentFullName="Max · Pilotage" agentDesc="Données temps réel · actions directes sur Supabase et n8n" agentColor="#1c3818" agentBg="#EAF3DE" agentPhoto="https://randomuser.me/api/portraits/men/32.jpg" />}
+            {active==="stratege" && <AgentChat agentId="stratege" agentName="SAM"   agentFullName="SAM · STRATÈGE" agentDesc="Acquisition · conversion · pricing · plateformes" agentColor="#0C447C" agentBg="#E6F1FB" agentPhoto="https://randomuser.me/api/portraits/men/75.jpg" />}
+            {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · Développement"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" agentPhoto="https://randomuser.me/api/portraits/men/22.jpg" />}
+            {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" agentPhoto="https://randomuser.me/api/portraits/women/44.jpg" />}
             {active==="meeting"  && <MeetingRoom />}
           </div>
         );
