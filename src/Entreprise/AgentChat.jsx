@@ -297,6 +297,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   const [saving,      setSaving]     = useState(false);
   const [saveMsg,     setSaveMsg]    = useState("");
   const [history,     setHistory]    = useState([]);
+  const [todoAlert,   setTodoAlert]  = useState(false);
   const [voiceMode,   setVoiceMode]  = useState(false);
   const [voiceState,  _setVoiceState]= useState("idle");
   const [sessionId]                  = useState(() => getSession(agentId));
@@ -354,6 +355,19 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
       .order("created_at", { ascending: false })
       .limit(10)
       .then(({ data }) => { if (data) setHistory(data); });
+  }, [agentId]);
+
+  // Détecte les todos mis à jour par MAX depuis la dernière ouverture (maestro uniquement)
+  useEffect(() => {
+    if (agentId !== "maestro") return;
+    const lastSeen = localStorage.getItem("mji_todos_last_seen") ?? "1970-01-01";
+    supabase
+      .from("mji_todos")
+      .select("id", { count: "exact", head: true })
+      .eq("created_by", "max")
+      .or(`validated_max.eq.true,created_by.eq.max`)
+      .gt("updated_at", lastSeen)
+      .then(({ count }) => { if ((count ?? 0) > 0) setTodoAlert(true); });
   }, [agentId]);
   useEffect(() => () => { window.speechSynthesis?.cancel(); stopRec(); }, []);
 
@@ -595,10 +609,28 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
           </button>
         )}
         {agentId === "maestro" && (
-          <button onClick={() => setShowTodo(t => !t)}
-            style={{ padding:"4px 10px", borderRadius:20, border:`.5px solid ${showTodo ? "#3B6D11" : "#dde8d8"}`, background: showTodo ? "#EAF3DE" : "#f3f5f1", color: showTodo ? "#27500A" : "#8a9e88", cursor:"pointer", fontSize:11, fontWeight: showTodo ? 600 : 400 }}>
-            📋 ToDoListe
-          </button>
+          <div style={{ position:"relative", flexShrink:0 }}>
+            <button
+              onClick={() => { setShowTodo(t => !t); setTodoAlert(false); localStorage.setItem("mji_todos_last_seen", new Date().toISOString()); }}
+              style={{
+                padding:"4px 10px", borderRadius:20, cursor:"pointer", fontSize:11,
+                border: todoAlert ? "1.5px solid #e05050" : `.5px solid ${showTodo ? "#3B6D11" : "#dde8d8"}`,
+                background: todoAlert ? "#fff0ee" : showTodo ? "#EAF3DE" : "#f3f5f1",
+                color:      todoAlert ? "#c03030" : showTodo ? "#27500A" : "#8a9e88",
+                fontWeight: showTodo || todoAlert ? 600 : 400,
+                animation:  todoAlert ? "todo-alert-pulse 1.4s ease-in-out infinite" : "none",
+              }}>
+              📋 ToDoListe
+            </button>
+            {todoAlert && (
+              <span style={{
+                position:"absolute", top:-4, right:-4,
+                width:9, height:9, borderRadius:"50%",
+                background:"#e05050", border:"1.5px solid #fff",
+                animation:"todo-alert-pulse 1.4s ease-in-out infinite",
+              }} />
+            )}
+          </div>
         )}
         <button onClick={clearHistory} style={{ padding:"4px 10px", borderRadius:20, border:".5px solid #dde8d8", background:"#f3f5f1", color:"#8a9e88", cursor:"pointer", fontSize:11 }}>↺ Nouveau</button>
         <button onClick={() => setShowHelp(true)} style={{ width:26, height:26, borderRadius:"50%", border:`.5px solid ${agentColor}40`, background:agentBg, color:agentColor, cursor:"pointer", fontSize:12, fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center" }}>?</button>
@@ -723,7 +755,7 @@ export default function AgentChat({ agentId = "maestro", agentName = "MAX", agen
   );
 
   const modalJSX = showHelp && <AgentModal agentId={agentId} agentName={agentName} agentFullName={agentFullName} agentColor={agentColor} agentBg={agentBg} onClose={() => setShowHelp(false)} onAsk={q => send(q)} />;
-  const styleJSX = <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,100,80,.25)}50%{box-shadow:0 0 0 6px rgba(240,100,80,0)}}`}</style>;
+  const styleJSX = <style>{`@keyframes mji-dot{0%,100%{opacity:.25;transform:scale(.9)}50%{opacity:1;transform:scale(1.2)}}@keyframes orb-pulse{0%,100%{opacity:.8}50%{opacity:1}}@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,100,80,.25)}50%{box-shadow:0 0 0 6px rgba(240,100,80,0)}}@keyframes todo-alert-pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,80,80,.35)}50%{box-shadow:0 0 0 5px rgba(224,80,80,0)}}`}</style>;
 
   // ── Rendu PC ────────────────────────────────────────────────────────────────
   if (!isMobile) return (

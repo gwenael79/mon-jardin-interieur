@@ -99,9 +99,18 @@ export default function Entreprise() {
             </p>
           </div>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
-          <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#5DCAA5" }}/>
-          <span style={{ fontSize:"10px", color:BRAND.sub }}>Connecté</span>
+        <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:"6px" }}>
+            <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#5DCAA5" }}/>
+            <span style={{ fontSize:"10px", color:BRAND.sub }}>Connecté</span>
+          </div>
+          <button
+            onClick={() => { window.location.hash = "#admin"; }}
+            style={{ padding:"5px 12px", borderRadius:"20px", border:".5px solid rgba(200,230,176,0.25)",
+              background:"rgba(200,230,176,0.10)", color:BRAND.sub,
+              cursor:"pointer", fontSize:"11px", fontFamily:"system-ui" }}>
+            ← Admin
+          </button>
         </div>
       </div>
 
