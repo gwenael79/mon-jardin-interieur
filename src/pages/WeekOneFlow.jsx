@@ -6252,7 +6252,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   const videoRef = useRef(null)
   const [muted,      setMuted]      = useState(true)
   const [ctaVisible, setCtaVisible] = useState(false)
-  const [videoReady, setVideoReady] = useState(false)
+  const [showVideo,  setShowVideo]  = useState(false)
 
   function handleSound() {
     const v = videoRef.current
@@ -6263,87 +6263,101 @@ function WelcomeVeil({ onDone, isReturn = false }) {
     v.play()
   }
 
+  function handleVideoReady() {
+    // Délai de 2.5s après le chargement avant de passer à la vidéo
+    setTimeout(() => setShowVideo(true), 2500)
+  }
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 250,
-      background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    }}>
-      {/* Carte centrée — barrière puis vidéo */}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 250, background: '#0c1a0a' }}>
+
+      {/* Barrière — plein écran, objectFit contain */}
+      <img
+        src="/barriere.png"
+        alt=""
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'contain', objectPosition: 'center',
+          opacity: showVideo ? 0 : 1,
+          transition: 'opacity 1.2s ease',
+        }}
+      />
+
+      {/* Texte overlay — visible avec l'image */}
       <div style={{
-        position: 'relative', zIndex: 1,
-        width: '100%', maxWidth: 360,
-        height: 'min(65vh, 480px)',
-        margin: '0 20px',
-        borderRadius: 20, overflow: 'hidden',
-        boxShadow: '0 24px 70px rgba(0,0,0,0.5)',
+        position: 'absolute', bottom: '12%', left: 0, right: 0,
+        textAlign: 'center', padding: '0 32px',
+        opacity: showVideo ? 0 : 1,
+        transition: 'opacity 1.2s ease',
+        pointerEvents: 'none',
       }}>
-        {/* Barrière — fondu sortant quand vidéo prête */}
-        <img
-          src="/barriere.png"
-          alt=""
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'contain', objectPosition: 'center',
-            opacity: videoReady ? 0 : 1,
-            transition: 'opacity 1s ease',
-          }}
-        />
-
-        {/* Vidéo — fondu entrant */}
-        <video
-          ref={videoRef}
-          src="/video/cheminjours.mp4"
-          autoPlay playsInline muted
-          preload="auto"
-          style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            objectFit: 'contain',
-            opacity: videoReady ? 1 : 0,
-            transition: 'opacity 1s ease',
-          }}
-          onCanPlayThrough={() => setVideoReady(true)}
-          onEnded={() => setCtaVisible(true)}
-          onError={onDone}
-        />
-
-        {/* Overlay bas */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '48px 16px 16px',
-          background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
-          display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(18px, 5vw, 26px)',
+          fontStyle: 'italic', fontWeight: 300,
+          color: 'rgba(255,255,255,0.90)',
+          lineHeight: 1.5, margin: 0,
+          textShadow: '0 2px 12px rgba(0,0,0,0.6)',
         }}>
-          {!ctaVisible && (
-            <button onClick={handleSound} style={{
-              width: 52, height: 52, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.22)', border: '2px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(6px)', cursor: 'pointer', fontSize: 22, color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            }}>
-              {muted ? '🔇' : '🔊'}
-            </button>
-          )}
-          <div style={{
-            width: '100%',
-            opacity: ctaVisible ? 1 : 0,
-            transform: ctaVisible ? 'translateY(0)' : 'translateY(8px)',
-            transition: 'opacity 600ms ease, transform 600ms ease',
-            pointerEvents: ctaVisible ? 'auto' : 'none',
+          Ouvrons ensemble cette petite barrière
+        </p>
+      </div>
+
+      {/* Vidéo — plein écran, fondu entrant après délai */}
+      <video
+        ref={videoRef}
+        src="/video/cheminjours.mp4"
+        autoPlay playsInline muted
+        preload="auto"
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover',
+          opacity: showVideo ? 1 : 0,
+          transition: 'opacity 1.2s ease',
+        }}
+        onCanPlayThrough={handleVideoReady}
+        onEnded={() => setCtaVisible(true)}
+        onError={onDone}
+      />
+
+      {/* Overlay bas — son + bouton CTA */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1,
+        padding: '80px 24px 40px',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.60) 0%, transparent 100%)',
+        display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center',
+        opacity: showVideo ? 1 : 0,
+        transition: 'opacity 0.8s ease',
+      }}>
+        {!ctaVisible && (
+          <button onClick={handleSound} style={{
+            width: 52, height: 52, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.22)', border: '2px solid rgba(255,255,255,0.45)',
+            backdropFilter: 'blur(6px)', cursor: 'pointer', fontSize: 22, color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
           }}>
-            <button onClick={onDone} style={{
-              width: '100%', fontFamily: 'Jost, sans-serif',
-              fontSize: 15, fontWeight: 500, letterSpacing: '0.04em', color: '#fff',
-              background: 'linear-gradient(135deg, #a8c098, #7a9870)',
-              border: 'none', borderRadius: 50, padding: '14px 24px', cursor: 'pointer',
-              boxShadow: '0 8px 24px rgba(122,152,112,0.4)',
-            }}>
-              {isReturn ? 'Continuer →' : 'Commencer mon premier jour →'}
-            </button>
-          </div>
+            {muted ? '🔇' : '🔊'}
+          </button>
+        )}
+        <div style={{
+          width: '100%', maxWidth: 400,
+          opacity: ctaVisible ? 1 : 0,
+          transform: ctaVisible ? 'translateY(0)' : 'translateY(8px)',
+          transition: 'opacity 600ms ease, transform 600ms ease',
+          pointerEvents: ctaVisible ? 'auto' : 'none',
+        }}>
+          <button onClick={onDone} style={{
+            width: '100%', fontFamily: 'Jost, sans-serif',
+            fontSize: 15, fontWeight: 500, letterSpacing: '0.04em', color: '#fff',
+            background: 'linear-gradient(135deg, #a8c098, #7a9870)',
+            border: 'none', borderRadius: 50, padding: '14px 24px', cursor: 'pointer',
+            boxShadow: '0 8px 24px rgba(122,152,112,0.4)',
+          }}>
+            {isReturn ? 'Continuer →' : 'Commencer mon premier jour →'}
+          </button>
         </div>
       </div>
     </div>
