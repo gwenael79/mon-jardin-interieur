@@ -106,7 +106,7 @@ function FunnelUserDetail({ users }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Jost,sans-serif' }}>
             <thead>
               <tr>
-                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan'].map(h => (
+                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan', 'Vitalité 🌿'].map(h => (
                   <th key={h} style={{ textAlign: h === 'Utilisateur' ? 'left' : 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
@@ -166,6 +166,16 @@ function FunnelUserDetail({ users }) {
                       }}>
                         {u.plan ?? 'free'}
                       </span>
+                    </td>
+                    {/* Vitalité — uniquement pour le chemin rituels */}
+                    <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                      {u.path === 'rituals' && u.health != null
+                        ? (() => {
+                            const pct = Math.max(0, u.health - 5)
+                            const color = pct >= 40 ? '#78c85e' : pct >= 20 ? '#e8c060' : '#e08080'
+                            return <span style={{ fontSize: 11, fontWeight: 600, color }}>{pct}%</span>
+                          })()
+                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
                     </td>
                     {/* Quiz 22q — mois premium gratuit */}
                     <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.premium_trial_until ? `Mois gratuit jusqu'au ${new Date(u.premium_trial_until).toLocaleDateString('fr-FR')}` : 'Pas de mois gratuit questionnaire'}>
@@ -982,22 +992,27 @@ export function AdminClientsPage() {
       ;(profiles ?? []).forEach(p => { profileMap[p.id] = p })
       const pushUserIds = new Set((pushSubs ?? []).map(s => s.user_id))
 
-      const counts   = { inscrit: 0, onboarding: 0, jour: [0,0,0,0,0,0,0], dashboard: 0 }
+      const counts   = { inscrit: 0, onboarding: 0, jour: [0,0,0,0,0,0,0], dashboard: 0, rituels: 0, parcours: 0 }
       const userList = []
 
       ;(allUsers ?? []).forEach(u => {
         const completedDays = (profileMap[u.id]?.week_one_data?.completedDays ?? []).map(Number)
         const maxDay        = completedDays.length > 0 ? Math.max(...completedDays) : 0
 
-        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays, premium_trial_until: profileMap[u.id]?.premium_trial_until ?? null, health: plantHealthMap[u.id] ?? null })
+        const path = profileMap[u.id]?.week_one_data?.path ?? null
+        userList.push({ id: u.id, email: u.email, display_name: u.display_name, flower_name: u.flower_name ?? null, created_at: u.created_at, plan: u.plan, onboarding_completed: u.onboarding_completed, pwa_installed_at: u.pwa_installed_at ?? null, has_push: pushUserIds.has(u.id), completedDays, premium_trial_until: profileMap[u.id]?.premium_trial_until ?? null, health: plantHealthMap[u.id] ?? null, path })
 
         const daysSinceReg = Math.floor((Date.now() - new Date(u.created_at)) / 86400000)
 
         if (!u.onboarding_completed)    { counts.inscrit++;   return }
         if (completedDays.length === 0) { counts.onboarding++;return }
-        if (maxDay >= 7)                { counts.jour[6]++;   return } // Semaine complète → Jour 7
+        if (maxDay >= 7) {
+          if (path === 'rituals') counts.rituels++
+          else counts.parcours++
+          return
+        }
         if (maxDay >= 1 && maxDay <= 6) { counts.jour[maxDay - 1]++; return }
-        if (daysSinceReg >= 7)          { counts.dashboard++; return } // > 7 jours sans progresser
+        if (daysSinceReg >= 7)          { counts.dashboard++; return }
       })
 
       // Charge last_active pour tous les users du funnel via analytics_events
@@ -1026,8 +1041,9 @@ export function AdminClientsPage() {
         { label: 'Jour 4',          count: counts.jour[3]    },
         { label: 'Jour 5',          count: counts.jour[4]    },
         { label: 'Jour 6',          count: counts.jour[5]    },
-        { label: 'J7',    count: counts.jour[6]   },
-        { label: 'Fini',  count: counts.dashboard },
+        { label: 'J7 Parcours', count: counts.parcours, color: '#48b830' },
+        { label: 'J7 Rituels',  count: counts.rituels,  color: '#d4a870' },
+        { label: 'Fini',        count: counts.dashboard },
       ])
     } catch (e) {
       console.error('[funnel] exception:', e)
@@ -1168,8 +1184,9 @@ export function AdminClientsPage() {
                 { label: 'Jour 3',     short: 'J3',    key: 'j3',         count: get(4), color: '#78c85e' },
                 { label: 'Jour 4',     short: 'J4',    key: 'j4',         count: get(5), color: '#6cc450' },
                 { label: 'Jour 5',     short: 'J5',    key: 'j5',         count: get(6), color: '#60c044' },
-                { label: 'Jour 6',     short: 'J6',    key: 'j6',         count: get(7), color: '#54bc3a' },
-                { label: 'Jour 7',     short: 'J7',    key: null,          count: get(8), color: '#48b830' },
+                { label: 'Jour 6',       short: 'J6',      key: 'j6',  count: get(7), color: '#54bc3a' },
+                { label: 'J7 · Parcours', short: 'J7 🗓️', key: null, count: get(8), color: '#48b830' },
+                { label: 'J7 · Rituels',  short: 'J7 🌿', key: null, count: get(9), color: '#d4a870' },
               ]
               const max = Math.max(...steps.map(s => s.count), 1)
               return (

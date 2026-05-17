@@ -322,7 +322,7 @@ export default function App() {
           window.history.replaceState({}, '', window.location.pathname)
           if (plan === 'free') {
             await supabase.from('profiles').update({
-              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7] }
+              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' }
             }).eq('id', user.id)
             localStorage.setItem(`mji_orientation_${user.id}`, '1')
             setScreen('dashboard')
@@ -667,7 +667,7 @@ export default function App() {
           if (plan === 'free') {
             // Valide l'onboarding + les 7 jours du WeekOneFlow par défaut
             await supabase.from('profiles').update({
-              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7] }
+              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' }
             }).eq('id', user.id)
             localStorage.setItem(`mji_orientation_${user.id}`, '1')
             setScreen('dashboard')

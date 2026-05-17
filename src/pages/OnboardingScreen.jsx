@@ -3277,20 +3277,17 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
 
       {showPanel && isMobile && (
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2,
-          borderRadius: '20px 20px 0 0',
-          background: 'rgba(10,6,2,0.78)', backdropFilter: 'blur(16px)',
-          maxHeight: '82vh', overflowY: 'auto',
-          animation: 'onbIn .5s cubic-bezier(.22,1,.36,1) both',
-          boxShadow: '0 -8px 40px rgba(0,0,0,0.40)',
+          position: 'fixed', inset: 0, zIndex: 2,
+          background: 'rgba(10,6,2,0.95)', backdropFilter: 'blur(20px)',
+          overflowY: 'auto',
+          animation: 'onbIn .4s cubic-bezier(.22,1,.36,1) both',
+          display: 'flex', flexDirection: 'column',
         }}>
-          <div style={{ padding: '16px 0 2px', textAlign: 'center' }}>
-            {/* Poignée */}
-            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.25)', margin: '0 auto 14px' }} />
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 24, fontWeight: 400, color: '#fff', margin: '0 0 4px', lineHeight: 1.2 }}>
+          <div style={{ padding: '48px 0 8px', textAlign: 'center', flexShrink: 0 }}>
+            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 26, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.2 }}>
               Par où souhaites-tu<br/><em style={{ color: '#d4a870' }}>commencer ?</em>
             </h2>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.60)', margin: '0 0 14px' }}>Trois chemins, une seule fleur. Choisis celui qui t'appelle aujourd'hui.</p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: '0 0 8px' }}>Trois chemins, une seule fleur. Choisis celui qui t'appelle aujourd'hui.</p>
           </div>
           {panel}
         </div>
