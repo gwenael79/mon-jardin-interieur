@@ -6268,38 +6268,37 @@ function WelcomeVeil({ onDone, isReturn = false }) {
       position: 'fixed', inset: 0, zIndex: 250,
       background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '8px 16px',
     }}>
-      <div style={{
-        width: '100%', maxWidth: 480,
-        borderRadius: 24, overflow: 'hidden',
-        boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
-        position: 'relative',
-      }}>
-        {/* Barrière — fondu sortant quand la vidéo est prête */}
-        <img
-          src="/barriere.png"
-          alt=""
-          style={{
-            width: '100%', height: 'auto', display: 'block', minHeight: 260, objectFit: 'cover',
-            opacity: videoReady ? 0 : 1,
-            transition: 'opacity 0.8s ease',
-            position: videoReady ? 'absolute' : 'relative',
-            top: 0, left: 0,
-          }}
-        />
+      {/* Barrière plein écran — fond, fondu sortant quand vidéo prête */}
+      <img
+        src="/barriere.png"
+        alt=""
+        style={{
+          position: 'absolute', inset: 0,
+          width: '100%', height: '100%',
+          objectFit: 'cover', objectPosition: 'center',
+          opacity: videoReady ? 0 : 1,
+          transition: 'opacity 1s ease',
+          pointerEvents: 'none',
+        }}
+      />
 
-        {/* Vidéo — fondu entrant quand prête */}
+      {/* Carte vidéo — fondu entrant */}
+      <div style={{
+        position: 'relative', zIndex: 1,
+        width: '100%', maxWidth: 420,
+        margin: '0 16px',
+        borderRadius: 20, overflow: 'hidden',
+        boxShadow: '0 24px 70px rgba(0,0,0,0.5)',
+        opacity: videoReady ? 1 : 0,
+        transition: 'opacity 1s ease',
+      }}>
         <video
           ref={videoRef}
           src="/video/cheminjours.mp4"
           autoPlay playsInline muted
           preload="auto"
-          style={{
-            width: '100%', height: 'auto', display: 'block',
-            opacity: videoReady ? 1 : 0,
-            transition: 'opacity 0.8s ease',
-          }}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
           onCanPlayThrough={() => setVideoReady(true)}
           onEnded={() => setCtaVisible(true)}
           onError={onDone}
@@ -6309,23 +6308,20 @@ function WelcomeVeil({ onDone, isReturn = false }) {
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           padding: '48px 16px 16px',
-          background: 'linear-gradient(to top, rgba(0,0,0,0.50) 0%, transparent 100%)',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 100%)',
           display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
         }}>
-          {/* Bouton son — toujours visible */}
           {!ctaVisible && (
             <button onClick={handleSound} style={{
-              width: 56, height: 56, borderRadius: '50%',
-              background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.50)',
-              backdropFilter: 'blur(6px)', cursor: 'pointer', fontSize: 24, color: '#fff',
+              width: 52, height: 52, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.22)', border: '2px solid rgba(255,255,255,0.45)',
+              backdropFilter: 'blur(6px)', cursor: 'pointer', fontSize: 22, color: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
             }}>
               {muted ? '🔇' : '🔊'}
             </button>
           )}
-
-          {/* Bouton commencer — apparaît quand la vidéo est terminée */}
           <div style={{
             width: '100%',
             opacity: ctaVisible ? 1 : 0,
@@ -6334,8 +6330,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
             pointerEvents: ctaVisible ? 'auto' : 'none',
           }}>
             <button onClick={onDone} style={{
-              width: '100%',
-              fontFamily: 'Jost, sans-serif',
+              width: '100%', fontFamily: 'Jost, sans-serif',
               fontSize: 15, fontWeight: 500, letterSpacing: '0.04em', color: '#fff',
               background: 'linear-gradient(135deg, #a8c098, #7a9870)',
               border: 'none', borderRadius: 50, padding: '14px 24px', cursor: 'pointer',
@@ -6706,9 +6701,15 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
 
     if (!error && data?.week_one_data) {
       const saved = data.week_one_data
-      setWeekData(saved)
-      weekDataRef.current = saved
-      if (saved.completedDays?.length > 0) {
+      const normalized = {
+        ...INITIAL_WEEK_DATA,
+        ...saved,
+        currentDay: saved.currentDay ?? 1,
+        completedDays: (saved.completedDays ?? []).filter(d => typeof d === 'number' && !isNaN(d)),
+      }
+      setWeekData(normalized)
+      weekDataRef.current = normalized
+      if (normalized.completedDays.length > 0) {
         setView('garden')
         setShowWelcome(false)
       }

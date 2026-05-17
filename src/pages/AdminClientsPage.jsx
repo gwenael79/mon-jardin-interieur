@@ -106,12 +106,12 @@ function FunnelUserDetail({ users }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'Jost,sans-serif' }}>
             <thead>
               <tr>
-                {['Utilisateur', 'Inscrit le', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan', 'Vitalité 🌿'].map(h => (
-                  <th key={h} style={{ textAlign: h === 'Utilisateur' ? 'left' : 'center', padding: '6px 8px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
+                {['Utilisateur', 'Inscrit le', 'Vit. 🌿', 'Onb.', 'J1', 'J2', 'J3', 'J4', 'J5', 'J6', 'J7', 'Plan'].map(h => (
+                  <th key={h} style={{ textAlign: h === 'Utilisateur' ? 'left' : 'center', padding: '6px 4px', fontSize: 9, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
                 ))}
-                <th style={{ textAlign: 'center', padding: '6px 8px', fontSize: 11, color: 'var(--text3)', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
+                <th style={{ textAlign: 'center', padding: '6px 4px', fontSize: 11, color: 'var(--text3)', borderBottom: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap' }}>
                   🎁
                 </th>
                 {['🔔', '📲'].map(h => (
@@ -127,7 +127,7 @@ function FunnelUserDetail({ users }) {
                 return (
                   <tr key={u.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
                     {/* Nom + Fleur */}
-                    <td style={{ padding: '7px 8px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 11 }}>
+                    <td style={{ padding: '7px 4px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 11 }}>
                       {u.display_name || u.email || u.id.slice(0, 8)}
                       {u.flower_name && (
                         <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(200,160,180,0.7)' }}>
@@ -136,11 +136,21 @@ function FunnelUserDetail({ users }) {
                       )}
                     </td>
                     {/* Date inscription */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center', color: 'var(--text3)', whiteSpace: 'nowrap', fontSize: 10 }}>
+                    <td style={{ padding: '7px 4px', textAlign: 'center', color: 'var(--text3)', whiteSpace: 'nowrap', fontSize: 10 }}>
                       {new Date(u.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                     </td>
+                    {/* Vitalité — visible dès qu'un rituel a été fait (health > 5) */}
+                    <td style={{ padding: '7px 4px', textAlign: 'center' }}>
+                      {u.health != null && u.health > 5
+                        ? (() => {
+                            const pct = Math.max(0, u.health - 5)
+                            const color = pct >= 40 ? '#78c85e' : pct >= 20 ? '#e8c060' : '#e08080'
+                            return <span style={{ fontSize: 11, fontWeight: 600, color }}>{pct}%</span>
+                          })()
+                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
+                    </td>
                     {/* Onboarding */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                    <td style={{ padding: '7px 4px', textAlign: 'center' }}>
                       {u.onboarding_completed
                         ? u.path === 'rituals' && (u.completedDays ?? []).length === 0
                           ? <span style={{ fontSize: 12 }} title="Chemin rituels en cours">🌿</span>
@@ -151,7 +161,7 @@ function FunnelUserDetail({ users }) {
                     {[1,2,3,4,5,6,7].map(j => {
                       const done = completedDays.some(d => d >= j)
                       return (
-                        <td key={j} style={{ padding: '7px 8px', textAlign: 'center' }}>
+                        <td key={j} style={{ padding: '7px 4px', textAlign: 'center' }}>
                           {done
                             ? <span style={{ color: '#78c85e', fontSize: 14 }}>✓</span>
                             : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
@@ -159,7 +169,7 @@ function FunnelUserDetail({ users }) {
                       )
                     })}
                     {/* Plan */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center' }}>
+                    <td style={{ padding: '7px 4px', textAlign: 'center' }}>
                       <span style={{
                         fontSize: 9, padding: '2px 7px', borderRadius: 100,
                         background: u.plan === 'premium' ? 'rgba(246,196,83,0.12)' : 'rgba(255,255,255,0.06)',
@@ -169,30 +179,20 @@ function FunnelUserDetail({ users }) {
                         {u.plan ?? 'free'}
                       </span>
                     </td>
-                    {/* Vitalité — visible dès qu'un rituel a été fait (health > 5) */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center' }}>
-                      {u.health != null && u.health > 5
-                        ? (() => {
-                            const pct = Math.max(0, u.health - 5)
-                            const color = pct >= 40 ? '#78c85e' : pct >= 20 ? '#e8c060' : '#e08080'
-                            return <span style={{ fontSize: 11, fontWeight: 600, color }}>{pct}%</span>
-                          })()
-                        : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
-                    </td>
                     {/* Quiz 22q — mois premium gratuit */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.premium_trial_until ? `Mois gratuit jusqu'au ${new Date(u.premium_trial_until).toLocaleDateString('fr-FR')}` : 'Pas de mois gratuit questionnaire'}>
+                    <td style={{ padding: '7px 4px', textAlign: 'center' }} title={u.premium_trial_until ? `Mois gratuit jusqu'au ${new Date(u.premium_trial_until).toLocaleDateString('fr-FR')}` : 'Pas de mois gratuit questionnaire'}>
                       {u.premium_trial_until
                         ? <span style={{ color: '#78c85e', fontSize: 13 }}>✓</span>
                         : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
                     </td>
                     {/* Notifications push */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.has_push ? 'Notifications activées' : 'Pas de notifications'}>
+                    <td style={{ padding: '7px 4px', textAlign: 'center' }} title={u.has_push ? 'Notifications activées' : 'Pas de notifications'}>
                       {u.has_push
                         ? <span style={{ color: '#78c85e', fontSize: 13 }}>✓</span>
                         : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
                     </td>
                     {/* Installation PWA */}
-                    <td style={{ padding: '7px 8px', textAlign: 'center' }} title={u.pwa_installed_at ? `Installé le ${new Date(u.pwa_installed_at).toLocaleDateString('fr-FR')}` : 'Appli non installée'}>
+                    <td style={{ padding: '7px 4px', textAlign: 'center' }} title={u.pwa_installed_at ? `Installé le ${new Date(u.pwa_installed_at).toLocaleDateString('fr-FR')}` : 'Appli non installée'}>
                       {u.pwa_installed_at
                         ? <span style={{ color: '#78c85e', fontSize: 13 }}>✓</span>
                         : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
@@ -1019,8 +1019,7 @@ export function AdminClientsPage() {
           return
         }
         if (maxDay >= 7) {
-          if (path === 'rituals') counts.rituels++
-          else counts.parcours++
+          counts.parcours++
           return
         }
         if (maxDay >= 1 && maxDay <= 6) { counts.jour[maxDay - 1]++; return }
@@ -1054,7 +1053,6 @@ export function AdminClientsPage() {
         { label: 'Jour 5',          count: counts.jour[4]    },
         { label: 'Jour 6',          count: counts.jour[5]    },
         { label: 'J7 Parcours',      count: counts.parcours,       color: '#48b830' },
-        { label: 'J7 Rituels',       count: counts.rituels,        color: '#d4a870' },
         { label: 'Rituels en cours', count: counts.rituelsEnCours, color: '#c87840' },
         { label: 'Fini',             count: counts.dashboard },
       ])
@@ -1200,7 +1198,7 @@ export function AdminClientsPage() {
                 { label: 'Jour 5',     short: 'J5',    key: 'j5',         count: get(6),  color: '#60c044' },
                 { label: 'Jour 6',     short: 'J6',    key: 'j6',         count: get(7),  color: '#54bc3a' },
                 { label: 'J7 · Parcours', short: 'J7 🗓️',  key: null, count: get(8),  color: '#48b830' },
-                { label: 'Rituels',       short: 'Rituels', key: null, count: get(10), color: '#d4a870' },
+                { label: 'Rituels',       short: 'Rituels', key: null, count: get(9),  color: '#d4a870' },
               ]
               const max = Math.max(...steps.map(s => s.count), 1)
               return (
@@ -1264,7 +1262,7 @@ export function AdminClientsPage() {
                   </div>
 
                   {/* Accordéon détail utilisateurs */}
-                  <FunnelUserDetail users={funnelUsers} />
+                  <FunnelUserDetail users={funnelUsers.filter(u => !u.completedDays.some(d => d >= 7))} />
 
                   <div style={{ marginTop: 10, fontSize: 9, color: 'rgba(255,255,255,0.18)', fontFamily: 'Jost,sans-serif', textAlign: 'right' }}>
                     Chaque utilisateur compté une seule fois à son étape actuelle · plan ignoré · comptes admin exclus
@@ -1481,9 +1479,9 @@ export function AdminClientsPage() {
                       {daysSince !== null ? `${daysSince}j` : '—'}
                     </div>
                     {/* Vitalité */}
-                    <div title={p.health != null ? `Vitalité : ${p.health}%` : 'Inconnue'} style={{ textAlign: 'center' }}>
+                    <div title={p.health != null ? `Vitalité : ${Math.max(0, p.health - 5)}%` : 'Inconnue'} style={{ textAlign: 'center' }}>
                       {p.health != null
-                        ? <span style={{ fontSize: 12, fontWeight: 600, color: p.health >= 70 ? '#78c85e' : p.health >= 40 ? '#e8c060' : '#e05555' }}>{p.health}%</span>
+                        ? (() => { const pct = Math.max(0, p.health - 5); return <span style={{ fontSize: 12, fontWeight: 600, color: pct >= 40 ? '#78c85e' : pct >= 20 ? '#e8c060' : '#e05555' }}>{pct}%</span> })()
                         : <span style={{ color: 'rgba(255,255,255,0.18)', fontSize: 11 }}>—</span>}
                     </div>
                     {/* Actifs 30j */}
