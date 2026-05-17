@@ -54,6 +54,7 @@ html,body,#root{height:100%;width:100%}
 .adm-num-teal{color:#96d485!important}
 .adm-pal-name{font-size:20px!important;font-weight:400!important}
 .adm-pal-email{font-size:14px!important;color:rgba(255,255,255,0.22)!important}
+.adm-user-email{font-size:14px!important;color:rgba(255,255,255,0.18)!important}
 .adm-num-red{font-size:22px!important;font-weight:700!important;color:#e05555!important}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a!important;border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:18px;color:#ffffff;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -127,13 +128,22 @@ function FunnelUserDetail({ users }) {
                 return (
                   <tr key={u.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
                     {/* Nom + Fleur */}
-                    <td style={{ padding: '7px 4px', color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 11 }}>
-                      {u.display_name || u.email || u.id.slice(0, 8)}
-                      {u.flower_name && (
-                        <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(200,160,180,0.7)' }}>
-                          · {u.flower_name}
+                    <td style={{ padding: '7px 4px', maxWidth: 220, overflow: 'hidden', fontSize: 11 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <span style={{ color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {u.display_name || u.id.slice(0, 8)}
+                          {u.flower_name && (
+                            <span style={{ marginLeft: 6, fontSize: 10, color: 'rgba(200,160,180,0.7)' }}>
+                              · {u.flower_name}
+                            </span>
+                          )}
                         </span>
-                      )}
+                        {u.email && (
+                          <span className="adm-user-email" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {u.email}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     {/* Date inscription */}
                     <td style={{ padding: '7px 4px', textAlign: 'center', color: 'var(--text3)', whiteSpace: 'nowrap', fontSize: 10 }}>
