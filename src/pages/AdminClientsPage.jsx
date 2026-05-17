@@ -142,7 +142,9 @@ function FunnelUserDetail({ users }) {
                     {/* Onboarding */}
                     <td style={{ padding: '7px 8px', textAlign: 'center' }}>
                       {u.onboarding_completed
-                        ? <span style={{ color: '#a78bf5', fontSize: 14 }}>✓</span>
+                        ? u.path === 'rituals' && (u.completedDays ?? []).length === 0
+                          ? <span style={{ fontSize: 12 }} title="Chemin rituels en cours">🌿</span>
+                          : <span style={{ color: '#a78bf5', fontSize: 14 }}>✓</span>
                         : <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 11 }}>·</span>}
                     </td>
                     {/* J1 → J7 cumulatif : ✓ si ce jour OU un jour supérieur a été complété */}
@@ -167,9 +169,9 @@ function FunnelUserDetail({ users }) {
                         {u.plan ?? 'free'}
                       </span>
                     </td>
-                    {/* Vitalité — uniquement pour le chemin rituels */}
+                    {/* Vitalité — visible dès qu'un rituel a été fait (health > 5) */}
                     <td style={{ padding: '7px 8px', textAlign: 'center' }}>
-                      {u.path === 'rituals' && u.health != null
+                      {u.health != null && u.health > 5
                         ? (() => {
                             const pct = Math.max(0, u.health - 5)
                             const color = pct >= 40 ? '#78c85e' : pct >= 20 ? '#e8c060' : '#e08080'
@@ -992,7 +994,7 @@ export function AdminClientsPage() {
       ;(profiles ?? []).forEach(p => { profileMap[p.id] = p })
       const pushUserIds = new Set((pushSubs ?? []).map(s => s.user_id))
 
-      const counts   = { inscrit: 0, onboarding: 0, jour: [0,0,0,0,0,0,0], dashboard: 0, rituels: 0, parcours: 0 }
+      const counts   = { inscrit: 0, onboarding: 0, rituelsEnCours: 0, jour: [0,0,0,0,0,0,0], dashboard: 0, rituels: 0, parcours: 0 }
       const userList = []
 
       ;(allUsers ?? []).forEach(u => {
@@ -1004,8 +1006,18 @@ export function AdminClientsPage() {
 
         const daysSinceReg = Math.floor((Date.now() - new Date(u.created_at)) / 86400000)
 
-        if (!u.onboarding_completed)    { counts.inscrit++;   return }
-        if (completedDays.length === 0) { counts.onboarding++;return }
+        if (!u.onboarding_completed) {
+          // Détecte les utilisateurs en chemin rituels sans onboarding validé (cas legacy)
+          const h = plantHealthMap[u.id] ?? 0
+          if (h > 5) counts.rituelsEnCours++
+          else counts.inscrit++
+          return
+        }
+        if (completedDays.length === 0) {
+          if (path === 'rituals') counts.rituelsEnCours++
+          else counts.onboarding++
+          return
+        }
         if (maxDay >= 7) {
           if (path === 'rituals') counts.rituels++
           else counts.parcours++
@@ -1033,17 +1045,18 @@ export function AdminClientsPage() {
 
       setFunnelUsers(enrichedUserList)
       setFunnel([
-        { label: 'Inscrits',        count: counts.inscrit    },
-        { label: 'Onboarding',      count: counts.onboarding },
+        { label: 'Inscrits',    count: counts.inscrit,    rituelsEnCours: counts.rituelsEnCours },
+        { label: 'Onboarding',  count: counts.onboarding },
         { label: 'Jour 1',          count: counts.jour[0]    },
         { label: 'Jour 2',          count: counts.jour[1]    },
         { label: 'Jour 3',          count: counts.jour[2]    },
         { label: 'Jour 4',          count: counts.jour[3]    },
         { label: 'Jour 5',          count: counts.jour[4]    },
         { label: 'Jour 6',          count: counts.jour[5]    },
-        { label: 'J7 Parcours', count: counts.parcours, color: '#48b830' },
-        { label: 'J7 Rituels',  count: counts.rituels,  color: '#d4a870' },
-        { label: 'Fini',        count: counts.dashboard },
+        { label: 'J7 Parcours',      count: counts.parcours,       color: '#48b830' },
+        { label: 'J7 Rituels',       count: counts.rituels,        color: '#d4a870' },
+        { label: 'Rituels en cours', count: counts.rituelsEnCours, color: '#c87840' },
+        { label: 'Fini',             count: counts.dashboard },
       ])
     } catch (e) {
       console.error('[funnel] exception:', e)
@@ -1177,16 +1190,17 @@ export function AdminClientsPage() {
             ) : (() => {
               const get = (i) => funnel[i]?.count ?? 0
               const totalInscrits = funnel.reduce((s, f) => s + f.count, 0)
+              const rituelsEnCours = funnel[0]?.rituelsEnCours ?? 0
               const steps = [
                 { label: 'Onboarding', short: 'Onb.',  key: 'onboarding', count: get(1), color: '#a78bf5' },
-                { label: 'Jour 1',     short: 'J1',    key: 'j1',         count: get(2), color: '#90d07a' },
-                { label: 'Jour 2',     short: 'J2',    key: 'j2',         count: get(3), color: '#84cc6c' },
-                { label: 'Jour 3',     short: 'J3',    key: 'j3',         count: get(4), color: '#78c85e' },
-                { label: 'Jour 4',     short: 'J4',    key: 'j4',         count: get(5), color: '#6cc450' },
-                { label: 'Jour 5',     short: 'J5',    key: 'j5',         count: get(6), color: '#60c044' },
-                { label: 'Jour 6',       short: 'J6',      key: 'j6',  count: get(7), color: '#54bc3a' },
-                { label: 'J7 · Parcours', short: 'J7 🗓️', key: null, count: get(8), color: '#48b830' },
-                { label: 'J7 · Rituels',  short: 'J7 🌿', key: null, count: get(9), color: '#d4a870' },
+                { label: 'Jour 1',     short: 'J1',    key: 'j1',         count: get(2),  color: '#90d07a' },
+                { label: 'Jour 2',     short: 'J2',    key: 'j2',         count: get(3),  color: '#84cc6c' },
+                { label: 'Jour 3',     short: 'J3',    key: 'j3',         count: get(4),  color: '#78c85e' },
+                { label: 'Jour 4',     short: 'J4',    key: 'j4',         count: get(5),  color: '#6cc450' },
+                { label: 'Jour 5',     short: 'J5',    key: 'j5',         count: get(6),  color: '#60c044' },
+                { label: 'Jour 6',     short: 'J6',    key: 'j6',         count: get(7),  color: '#54bc3a' },
+                { label: 'J7 · Parcours', short: 'J7 🗓️',  key: null, count: get(8),  color: '#48b830' },
+                { label: 'Rituels',       short: 'Rituels', key: null, count: get(10), color: '#d4a870' },
               ]
               const max = Math.max(...steps.map(s => s.count), 1)
               return (

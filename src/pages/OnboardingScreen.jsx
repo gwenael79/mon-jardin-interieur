@@ -2883,7 +2883,7 @@ function CelebOverlay({ milestone, src, onClose }) {
   )
 }
 
-function RitualModal({ userId, onClose, onEnterApp }) {
+function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
   const vKey = userId ? `mji_vitality_${userId}` : 'mji_vitality'
   const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem(vKey) || '0', 10))
   const [celebVideo, setCelebVideo]   = useState(null)
@@ -2940,6 +2940,10 @@ function RitualModal({ userId, onClose, onEnterApp }) {
 
   const handleCompleteRitual = async () => {
     playProgressSound()
+    // Premier rituel → valide l'onboarding en arrière-plan pour identifier l'utilisateur
+    if (vitality === 0 && onValidateOnboarding) {
+      onValidateOnboarding()
+    }
     const next = Math.min(vitality + 2, 100)
     setVitality(next)
     localStorage.setItem(vKey, String(next))
@@ -3177,7 +3181,7 @@ En 3 phrases courtes et directes (tutoiement), explique pourquoi cette applicati
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLabel, initialShowRitual = false, onSignOut }) {
+function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLabel, initialShowRitual = false, onSignOut, showBg = false, onValidateOnboarding }) {
   const [showPanel,        setShowPanel]        = useState(false)
   const [showRitual,       setShowRitual]       = useState(initialShowRitual)
   const [showInitieConfirm, setShowInitieConfirm] = useState(false)
@@ -3254,9 +3258,12 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
     <div style={{ position: 'fixed', inset: 0, zIndex: 9999, fontFamily: "'Jost',sans-serif", overflow: 'hidden' }}>
       <style>{ONB_STYLES}</style>
 
-      {/* Fond beige — même style que les autres étapes d'onboarding */}
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)' }} />
-      <NatureBg />
+      {/* Fond — chemin.png à la première connexion, beige au retour */}
+      {showBg
+        ? <img src="/chemin.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.onerror = null; e.target.src = '/champs2.png' }} />
+        : <><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)' }} /><NatureBg /></>
+      }
+      {showBg && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,3,1,0.80) 0%, rgba(5,3,1,0.20) 50%, transparent 100%)', pointerEvents: 'none' }} />}
 
 
       {/* Panneau qui monte après 3s — mobile : bottom sheet / desktop : centré */}
@@ -3327,6 +3334,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           userId={userId}
           onClose={() => setShowRitual(false)}
           onEnterApp={onAgir}
+          onValidateOnboarding={onValidateOnboarding}
         />
       )}
 
@@ -3487,8 +3495,17 @@ export function OnboardingScreen({ userId, onComplete }) {
       onAgir={() => onComplete('free')}
       onInitie={onComplete}
       onSignOut={handleSignOut}
+      showBg
       comprendreLabel={hasCompris ? 'Relire à nouveau →' : undefined}
       initialShowRitual={openRitual}
+      onValidateOnboarding={async () => {
+        if (!userId) return
+        // Marque l'onboarding actif sans valider les 7 jours — la personne est en chemin rituels
+        await supabase.from('users').update({ onboarding_completed: true }).eq('id', userId)
+        await supabase.from('profiles').update({
+          week_one_data: { path: 'rituals', completedDays: [] }
+        }).eq('id', userId)
+      }}
     />
   )
   if (phase === 0)  return <SlidesEducatives onComplete={() => setPhase(1)} />
