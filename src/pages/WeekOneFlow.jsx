@@ -6249,89 +6249,80 @@ const LUTIN_SLOTS = ['right', 'left']
 // Voile de transition avant le MP4 WeekOne
 // ─────────────────────────────────────────────────────────────────────────────
 function WelcomeVeil({ onDone }) {
-  const [opacity, setOpacity] = useState(1)
+  const videoRef = useRef(null)
+  const [muted,      setMuted]      = useState(true)
+  const [ctaVisible, setCtaVisible] = useState(false)
 
-  useEffect(() => {
-    // Précharger le MP4 en parallèle
-    const video = document.createElement('video')
-    video.src = '/accueil2.mp4'
-    video.preload = 'auto'
-
-    const t1 = setTimeout(() => setOpacity(0), 4000)
-    const t2 = setTimeout(() => onDone(), 5200)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [])
+  function handleSound() {
+    const v = videoRef.current
+    if (!v) return
+    setMuted(false)
+    v.muted = false
+    v.currentTime = 0
+    v.play()
+  }
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 250,
-      background: 'linear-gradient(160deg, #0c1a0a, #1a2e10)',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      opacity, transition: 'opacity 1.2s ease',
-      padding: '32px 24px',
+      background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '8px 16px',
     }}>
-      <style>{`
-        @keyframes wvFloat {
-          0%   { opacity:0; transform:translateY(0) scale(0.8); }
-          30%  { opacity:0.6; }
-          70%  { opacity:0.3; }
-          100% { opacity:0; transform:translateY(-80px) scale(1.1); }
-        }
-        @keyframes wvPulse {
-          0%,100% { opacity:0.12; transform:scale(1); }
-          50%     { opacity:0.28; transform:scale(1.08); }
-        }
-        @keyframes wvTextIn {
-          from { opacity:0; transform:translateY(16px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-        .wv-spark { position:absolute; border-radius:50%; pointer-events:none; }
-      `}</style>
-
-      {/* Lueur centrale */}
       <div style={{
-        position:'absolute', width:320, height:320, borderRadius:'50%',
-        background:'radial-gradient(circle, rgba(168,224,64,0.10) 0%, transparent 70%)',
-        animation:'wvPulse 3s ease-in-out infinite',
-      }}/>
-
-      {/* Particules */}
-      {[
-        { left:'18%', top:'22%', size:5, delay:'0s',   dur:'3.2s' },
-        { left:'78%', top:'18%', size:4, delay:'.7s',  dur:'2.8s' },
-        { left:'55%', top:'72%', size:6, delay:'1.2s', dur:'3.5s' },
-        { left:'28%', top:'68%', size:3, delay:'.4s',  dur:'2.6s' },
-        { left:'82%', top:'52%', size:5, delay:'1.5s', dur:'4s'   },
-        { left:'12%', top:'48%', size:4, delay:'.9s',  dur:'3s'   },
-      ].map((p, i) => (
-        <div key={i} className="wv-spark" style={{
-          left:p.left, top:p.top,
-          width:p.size, height:p.size,
-          background:'rgba(168,224,64,0.50)',
-          animation:`wvFloat ${p.dur} ease-out ${p.delay} infinite`,
-        }}/>
-      ))}
-
-      {/* Image + Phrase */}
-      <div style={{
-        position:'relative', zIndex:1, textAlign:'center', maxWidth:340,
-        animation:'wvTextIn 1.2s cubic-bezier(.22,1,.36,1) .4s both',
-        display:'flex', flexDirection:'column', alignItems:'center', gap:20,
+        width: '100%', maxWidth: 480,
+        borderRadius: 24, overflow: 'hidden',
+        boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
+        position: 'relative',
       }}>
-        <img
-          src="/barriere.png"
-          alt=""
-          style={{ width:'clamp(180px, 55vw, 280px)', height:'auto', objectFit:'contain', filter:'drop-shadow(0 8px 24px rgba(0,0,0,0.35))' }}
+        <video
+          ref={videoRef}
+          src="/video/cheminjours.mp4"
+          autoPlay playsInline muted
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+          onEnded={() => setCtaVisible(true)}
+          onError={onDone}
         />
+
+        {/* Overlay bas */}
         <div style={{
-          fontFamily:"'Cormorant Garamond',serif",
-          fontSize: 'clamp(24px, 6vw, 32px)',
-          fontWeight:300, fontStyle:'italic',
-          color:'rgba(230,220,200,0.88)',
-          lineHeight:1.4,
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          padding: '48px 16px 16px',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.50) 0%, transparent 100%)',
+          display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center',
         }}>
-          Poussons ensemble la petite barrière de ce jardin…
+          {/* Bouton son — toujours visible */}
+          {!ctaVisible && (
+            <button onClick={handleSound} style={{
+              width: 56, height: 56, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.50)',
+              backdropFilter: 'blur(6px)', cursor: 'pointer', fontSize: 24, color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            }}>
+              {muted ? '🔇' : '🔊'}
+            </button>
+          )}
+
+          {/* Bouton commencer — apparaît quand la vidéo est terminée */}
+          <div style={{
+            width: '100%',
+            opacity: ctaVisible ? 1 : 0,
+            transform: ctaVisible ? 'translateY(0)' : 'translateY(8px)',
+            transition: 'opacity 600ms ease, transform 600ms ease',
+            pointerEvents: ctaVisible ? 'auto' : 'none',
+          }}>
+            <button onClick={onDone} style={{
+              width: '100%',
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 15, fontWeight: 500, letterSpacing: '0.04em', color: '#fff',
+              background: 'linear-gradient(135deg, #a8c098, #7a9870)',
+              border: 'none', borderRadius: 50, padding: '14px 24px', cursor: 'pointer',
+              boxShadow: '0 8px 24px rgba(122,152,112,0.4)',
+            }}>
+              Commencer mon premier jour →
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -6427,8 +6418,6 @@ function RitualVideoSlide({ src, onContinue }) {
 
 function WelcomeWeekOne({ onStart }) {
   const [phase, setPhase] = useState(0)
-  const [muted, setMuted] = useState(true)
-  const videoRef = useRef(null)
 
   useEffect(() => {
     const t = setTimeout(() => setPhase(1), 2200)
@@ -6456,14 +6445,11 @@ function WelcomeWeekOne({ onStart }) {
         boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
         position: 'relative',
       }}>
-        <video
-          ref={videoRef}
-          src="/accueil2.mp4"
-          autoPlay
-          playsInline
-          muted
-          loop
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+        <img
+          src="/barriere.png"
+          alt=""
+          style={{ width: '100%', height: 'auto', display: 'block', minHeight: 260, objectFit: 'cover' }}
+          onError={e => { e.target.onerror = null; e.target.style.minHeight = '320px'; e.target.style.background = '#0d2818' }}
         />
 
         {/* Bouton démarrer en overlay bas */}
@@ -6474,24 +6460,6 @@ function WelcomeWeekOne({ onStart }) {
           display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end',
           ...fade(phase >= 1),
         }}>
-          <button
-            onClick={() => {
-              setMuted(false)
-              if (videoRef.current) {
-                videoRef.current.muted = false
-                videoRef.current.currentTime = 0
-                videoRef.current.play()
-              }
-            }}
-            style={{
-              width: 72, height: 72, borderRadius: 50,
-              background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.5)',
-              backdropFilter: 'blur(6px)',
-              cursor: 'pointer', fontSize: 32, color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-            }}
-          >{muted ? '🔇' : '🔊'}</button>
           <button
             onClick={onStart}
             style={{
@@ -6944,10 +6912,8 @@ async function handleDayEvent(event) {
     return (
       <>
         <GlobalStyles />
-        {/* WelcomeWeekOne monte sous le voile — timers démarrent immédiatement */}
-        {showWelcome && <WelcomeWeekOne onStart={() => setShowWelcome(false)} />}
-        {/* Voile par-dessus — se dissout quand les boutons sont prêts */}
-        {showVeil && <WelcomeVeil onDone={() => setShowVeil(false)} />}
+        {/* Voile avec barriere.png — à la fin, passe directement au jour 1 */}
+        {showVeil && <WelcomeVeil onDone={() => { setShowVeil(false); setShowWelcome(false) }} />}
       </>
     )
   }

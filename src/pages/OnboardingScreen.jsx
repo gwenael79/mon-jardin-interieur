@@ -3,6 +3,9 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../core/supabaseClient'
 import { useTheme } from '../hooks/useTheme'
 import { usePushNotification } from '../hooks/usePushNotification'
+import { PLANT_ZONES, useRituels, RitualZoneModal } from './mafleur_rituels'
+import NeedSelectionModal from '../components/NeedSelectionModal'
+import RitualSuggestionModal from '../components/RitualSuggestionModal'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DONNÉES SLIDES
@@ -584,6 +587,7 @@ export function SlideBody({ slide, leaving }) {
 // ─────────────────────────────────────────────────────────────────────────────
 const ANIM_STEPS = `
   @keyframes stepIn    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes spin      { to{transform:rotate(360deg)} }
   @keyframes floatY    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
   @keyframes fleurFloat{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
   @keyframes dotPop    { from{opacity:0;transform:scale(0)} to{opacity:1;transform:scale(1)} }
@@ -682,11 +686,20 @@ function ModalShell({ children, onClick, wide = false, cardStyle = {} }) {
 //  ÉTAPE INTENTION
 // ─────────────────────────────────────────────────────────────────────────────
 function StepIntention({ onSelect }) {
-  const [selected, setSelected] = useState(null)
+  const [selected, setSelected] = useState(new Set())
 
-  function choose(i) {
-    setSelected(i)
-    setTimeout(() => onSelect(i), 380)
+  function toggle(i) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(i) ? next.delete(i) : next.add(i)
+      return next
+    })
+  }
+
+  function validate() {
+    // Passe le premier index sélectionné pour StepPersonalInsight (ou 0 par défaut)
+    const idx = selected.size > 0 ? [...selected][0] : null
+    onSelect(idx)
   }
 
   return (
@@ -700,35 +713,31 @@ function StepIntention({ onSelect }) {
       '--gold-warm': '#ffe0a0',
       color: '#fff',
     }}>
-      {/* Overlay dégradé pour lisibilité */}
       <div style={{ position:'absolute', inset:0, background:'linear-gradient(160deg, rgba(20,10,5,0.45) 0%, rgba(10,5,2,0.55) 100%)', pointerEvents:'none', borderRadius:'inherit' }}/>
 
       <div style={{ position:'relative', zIndex:1, padding:'40px 32px', display:'flex', flexDirection:'column', alignItems:'center', height:'100%' }}>
         <div style={{ maxWidth:400, width:'100%' }}>
 
-        <div className="s1" style={{ textAlign:'center', marginBottom:32 }}>
+        <div className="s1" style={{ textAlign:'center', marginBottom:28 }}>
           <h1 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(20px,3.5vw,28px)', fontWeight:400, lineHeight:1.2, color:'var(--text)', marginBottom:8 }}>
             Qu'est-ce qui vous<br/>
             <em style={{ color:'var(--gold-warm)', fontStyle:'italic' }}>amène ici aujourd'hui ?</em>
           </h1>
           <p style={{ fontSize:'var(--fs-h5,12px)', color:'var(--text3)', fontStyle:'italic' }}>
-            La réponse qui vous parle le plus — sans jugement
+            Plusieurs réponses possibles — sans jugement
           </p>
         </div>
 
         <div className="s2" style={{ display:'flex', flexDirection:'column', gap:8 }}>
-          {INTENTIONS.map((item,i) => {
-            const sel = selected === i
+          {INTENTIONS.map((item, i) => {
+            const sel = selected.has(i)
             return (
-              <button key={i} onClick={() => choose(i)} style={{
+              <button key={i} onClick={() => toggle(i)} style={{
                 display:'flex', alignItems:'center', gap:14,
                 padding:'15px 20px', borderRadius:14,
                 background: sel ? 'rgba(255,220,130,0.22)' : 'rgba(255,255,255,0.12)',
-                border: sel
-                  ? '2px solid rgba(255,210,100,0.80)'
-                  : '2px solid rgba(255,255,255,0.30)',
-                backdropFilter: 'blur(6px)',
-                cursor:'pointer', textAlign:'left',
+                border: sel ? '2px solid rgba(255,210,100,0.80)' : '2px solid rgba(255,255,255,0.30)',
+                backdropFilter: 'blur(6px)', cursor:'pointer', textAlign:'left',
                 boxShadow: sel ? '0 3px 18px rgba(220,170,60,0.30)' : 'none',
                 transform: sel ? 'translateX(4px)' : 'none',
                 transition:'all .2s ease', fontFamily:"'Jost',sans-serif",
@@ -737,20 +746,8 @@ function StepIntention({ onSelect }) {
                 onMouseLeave={e => { if (!sel) { e.currentTarget.style.background='rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor='rgba(255,255,255,0.30)' } }}
               >
                 <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}>{item.icon}</span>
-                <span style={{ fontSize:22, flexShrink:0, lineHeight:1 }}></span>
-                <span style={{
-                  fontSize:'var(--fs-h4,14px)', fontWeight: sel ? 600 : 400,
-                  color: sel ? '#ffe8a0' : 'rgba(255,255,255,0.92)',
-                  lineHeight:1.5, flex:1, transition:'color .2s',
-                }}>{item.label}</span>
-                <span style={{
-                  width:22, height:22, borderRadius:'50%', flexShrink:0,
-                  border: sel ? 'none' : '2px solid rgba(255,255,255,0.45)',
-                  background: sel ? 'rgba(255,200,80,0.90)' : 'transparent',
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  fontSize:12, color:'#2a1a00', fontWeight:700,
-                  transition:'all .2s',
-                }}>
+                <span style={{ fontSize:'var(--fs-h4,14px)', fontWeight: sel ? 600 : 400, color: sel ? '#ffe8a0' : 'rgba(255,255,255,0.92)', lineHeight:1.5, flex:1, transition:'color .2s' }}>{item.label}</span>
+                <span style={{ width:22, height:22, borderRadius:4, flexShrink:0, border: sel ? 'none' : '2px solid rgba(255,255,255,0.45)', background: sel ? 'rgba(255,200,80,0.90)' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#2a1a00', fontWeight:700, transition:'all .2s' }}>
                   {sel ? '✓' : ''}
                 </span>
               </button>
@@ -759,17 +756,20 @@ function StepIntention({ onSelect }) {
         </div>
 
         <div className="s5" style={{ textAlign:'center', marginTop:24 }}>
-          <button onClick={() => onSelect(null)} style={{
-            background:'none', border:'1px solid rgba(255,255,255,0.35)', borderRadius:50,
-            cursor:'pointer', fontSize:'var(--fs-h5,12px)', color:'rgba(255,255,255,0.75)',
-            fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
-            padding:'8px 20px',
-            transition:'border-color .2s, color .2s',
-          }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.70)'; e.currentTarget.style.color='#fff' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor='rgba(255,255,255,0.35)'; e.currentTarget.style.color='rgba(255,255,255,0.75)' }}
+          <button
+            onClick={validate}
+            disabled={selected.size === 0}
+            style={{
+              background: selected.size > 0 ? 'rgba(255,200,80,0.90)' : 'rgba(255,255,255,0.12)',
+              border: selected.size > 0 ? 'none' : '1px solid rgba(255,255,255,0.35)',
+              borderRadius:50, cursor: selected.size > 0 ? 'pointer' : 'default',
+              fontSize:'var(--fs-h4,14px)', fontWeight:600,
+              color: selected.size > 0 ? '#2a1a00' : 'rgba(255,255,255,0.45)',
+              fontFamily:"'Jost',sans-serif", letterSpacing:'.04em',
+              padding:'12px 32px', transition:'all .2s',
+            }}
           >
-            Passer cette étape
+            {selected.size > 0 ? `Valider (${selected.size}) →` : 'Sélectionne au moins une réponse'}
           </button>
         </div>
 
@@ -2737,18 +2737,18 @@ function VeilScreen({ onDone }) {
         <img
           src="/icons/icon-192.png"
           alt=""
-          style={{ width:72, height:72, borderRadius:'50%', boxShadow:'0 0 40px rgba(168,224,64,0.25)' }}
+          style={{ width:144, height:144, borderRadius:'50%', boxShadow:'0 0 60px rgba(168,224,64,0.30)' }}
         />
         <div style={{ textAlign:'center' }}>
           <div style={{
             fontFamily:"'Cormorant Garamond',serif",
-            fontSize:28, fontWeight:300, fontStyle:'italic',
+            fontSize:56, fontWeight:300, fontStyle:'italic',
             color:'rgba(230,220,200,0.90)', letterSpacing:'.02em', lineHeight:1.2,
           }}>
             Mon <em style={{ color:'rgba(168,224,64,0.80)', fontStyle:'normal' }}>Jardin</em>
           </div>
           <div style={{
-            fontSize:10, letterSpacing:'.22em', textTransform:'uppercase',
+            fontSize:20, letterSpacing:'.22em', textTransform:'uppercase',
             color:'rgba(230,220,200,0.35)', marginTop:6,
             fontFamily:"'Jost',sans-serif",
           }}>
@@ -2760,6 +2760,598 @@ function VeilScreen({ onDone }) {
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  MODAL VITALITÉ — zones de rituels + barre de progression + vidéos de paliers
+// ─────────────────────────────────────────────────────────────────────────────
+const ZONE_ICONS = { roots: '🌱', stem: '🌿', leaves: '🍃', flowers: '🌸', breath: '🌬️' }
+
+const VITALITY_MILESTONES = {
+   2: { label: 'Graine',             video: '/video/1v.mp4',
+        title: 'Ta graine est semée 🌱',
+        message: 'Un premier geste suffit pour tout changer. Tu viens de planter quelque chose de précieux — continue, et regarde ce qui va pousser.' },
+   8: { label: 'Premières feuilles', video: '/video/2v.mp4',
+        title: 'Les premières feuilles apparaissent 🍃',
+        message: 'Ta régularité commence à porter ses fruits. Chaque rituel est une racine de plus. Tu es sur le bon chemin.' },
+  14: { label: 'Tige courbée',       video: '/video/3v.mp4',
+        title: 'Ta tige se redresse ✨',
+        message: 'Ce que tu construis ici est réel. Même les petits jours comptent. Ta fleur grandit avec toi, à ton rythme.' },
+  20: { label: 'Bourgeon fermé',     video: '/video/4v.mp4',
+        title: 'Un bourgeon se forme 🌿',
+        message: 'Tu es à mi-chemin vers ta fleur. Ce que tu ressens en toi commence à se transformer. Reste fidèle à toi-même.' },
+  40: { label: 'Petite fleur',       video: '/video/5v.mp4',
+        title: 'Une fleur s\'ouvre 🌸',
+        message: 'Regarde ce que tu as accompli. Ta constance a fait éclore quelque chose de beau. Continue — l\'épanouissement est proche.' },
+  50: { label: 'Fleur épanouie',     video: '/video/6v.mp4',
+        title: 'Ta fleur est épanouie 🌺',
+        message: 'Tu as tenu ta promesse envers toi-même. Ton jardin intérieur t\'attend — entre et découvre ce que tu as fait pousser.' },
+}
+
+const SPARKLE_CSS = `
+  @keyframes vit_star_fly {
+    0%   { opacity:1; transform:translate(-50%,-50%) translate(0px,0px) scale(1); }
+    100% { opacity:0; transform:translate(-50%,-50%) translate(var(--tx),var(--ty)) scale(0.15); }
+  }
+  @keyframes vit_bar_glow {
+    0%,100% { box-shadow:none; }
+    45%     { box-shadow:0 0 20px 8px rgba(93,202,165,0.75), 0 0 6px 2px #ffe566; }
+  }
+  @keyframes vit_pct_pop {
+    0%   { transform:scale(1);   color:#3B6D11; }
+    45%  { transform:scale(1.5); color:#5dcaa5; }
+    100% { transform:scale(1);   color:#3B6D11; }
+  }
+  @keyframes vit_tip_pulse {
+    0%,100% { opacity:.8; transform:translate(-50%,-50%) scale(1); }
+    50%     { opacity:1;  transform:translate(-50%,-50%) scale(1.8); }
+  }
+  @keyframes vit_tip_fade {
+    0%,75% { opacity:1; }
+    100%   { opacity:0; }
+  }
+  .vit-glow    { animation: vit_bar_glow  0.9s ease forwards; }
+  .vit-pct-pop { animation: vit_pct_pop   0.5s ease forwards; }
+`
+
+function VitalitySparkle({ x, y }) {
+  const colors = ['#ffe566','#7ab36a','#5dcaa5','#ffffff','#c8e6b0','#ffd700','#aef7d0','#fff59d']
+  const shapes = ['★','✦','✧','✨','⭑','·','✦','★']
+  const stars  = Array.from({ length: 12 }, (_, i) => {
+    const angle = (i / 12) * 360
+    const dist  = 20 + (i % 3) * 14
+    const tx    = (Math.cos(angle * Math.PI / 180) * dist).toFixed(1)
+    const ty    = (Math.sin(angle * Math.PI / 180) * dist).toFixed(1)
+    const size  = 10 + (i % 4) * 4
+    const delay = ((i % 4) * 0.06).toFixed(2)
+    const dur   = (0.55 + (i % 3) * 0.12).toFixed(2)
+    const color = colors[i % colors.length]
+    return (
+      <div key={i} style={{
+        position: 'fixed',
+        left: x, top: y,
+        fontSize: size, lineHeight: 1,
+        color, textShadow: `0 0 8px ${color}, 0 0 16px ${color}`,
+        pointerEvents: 'none', zIndex: 10300,
+        ['--tx']: `${tx}px`, ['--ty']: `${ty}px`,
+        animation: `vit_star_fly ${dur}s ease-out ${delay}s forwards`,
+      }}>
+        {shapes[i % shapes.length]}
+      </div>
+    )
+  })
+  return <>{stars}</>
+}
+
+function RitualModal({ userId, onClose, onEnterApp }) {
+  const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem('mji_vitality') || '0', 10))
+  const [celebVideo, setCelebVideo]   = useState(null)
+  const [appUnlocked, setAppUnlocked] = useState(() => parseInt(localStorage.getItem('mji_vitality') || '0', 10) >= 50)
+  const [activeNeed, setActiveNeed]   = useState(null)
+  const [sparkle, setSparkle]         = useState(null)
+  const [glowing, setGlowing]         = useState(false)
+  const [pctPop, setPctPop]           = useState(false)
+  const [showTip, setShowTip]         = useState(false)
+  const barRef  = useRef(null)
+  const isMobile = window.innerWidth < 768
+  const markers = [50, 40, 20, 14, 8, 2]
+
+  // Sync vitalité depuis Supabase au montage
+  useEffect(() => {
+    if (!userId) return
+    const today = new Date().toISOString().split('T')[0]
+    supabase.from('plants').select('health').eq('user_id', userId).eq('date', today).maybeSingle()
+      .then(({ data }) => {
+        if (!data) return
+        const real = Math.max(0, (data.health ?? 5) - 5)
+        setVitality(real)
+        setAppUnlocked(real >= 50)
+        localStorage.setItem('mji_vitality', String(real))
+      })
+  }, [userId])
+
+  function playProgressSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      // Deux notes ascendantes douces (Mi → Sol#)
+      const notes = [659, 830]
+      notes.forEach((freq, i) => {
+        const osc  = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.18)
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.18)
+        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.18 + 0.04)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.7)
+        osc.start(ctx.currentTime + i * 0.18)
+        osc.stop(ctx.currentTime + i * 0.18 + 0.7)
+      })
+    } catch (_) {}
+  }
+
+  const handleCompleteRitual = async () => {
+    playProgressSound()
+    const next = Math.min(vitality + 2, 100)
+    setVitality(next)
+    localStorage.setItem('mji_vitality', String(next))
+    setActiveNeed(null)
+
+    // Étoiles au sommet du remplissage
+    if (barRef.current) {
+      const rect = barRef.current.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.bottom - rect.height * (next / 100)
+      setSparkle({ x: cx, y: cy, key: Date.now() })
+      setTimeout(() => setSparkle(null), 1000)
+    }
+    setGlowing(true)
+    setPctPop(true)
+    setShowTip(true)
+    setTimeout(() => setGlowing(false), 900)
+    setTimeout(() => setPctPop(false), 500)
+    setTimeout(() => setShowTip(false), 5000)
+
+    // Met à jour la santé de la plante en base (+2, plafonné à 100)
+    if (userId) {
+      const today = new Date().toISOString().split('T')[0]
+      const { data: plant } = await supabase
+        .from('plants')
+        .select('id, health')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle()
+
+      if (plant) {
+        const newHealth = Math.min(100, (plant.health ?? 0) + 2)
+        await supabase.from('plants').update({ health: newHealth }).eq('id', plant.id)
+      } else {
+        // Récupère le health du jour précédent pour assurer la continuité
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+        const { data: prev } = await supabase
+          .from('plants').select('health')
+          .eq('user_id', userId).eq('date', yesterday).maybeSingle()
+        const baseHealth = Math.min(95, Math.max(5, (prev?.health ?? 5)))
+        await supabase.from('plants').insert({
+          user_id: userId, date: today,
+          health: Math.min(100, baseHealth + 2),
+          zone_racines: 5, zone_tige: 5,
+          zone_feuilles: 5, zone_fleurs: 5, zone_souffle: 5,
+        })
+      }
+      window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
+    }
+
+    if (VITALITY_MILESTONES[next]) {
+      setCelebVideo(VITALITY_MILESTONES[next].video)
+      if (next >= 50) setAppUnlocked(true)
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10100 }}>
+      <style>{SPARKLE_CSS}</style>
+
+      {/* ── NeedSelectionModal — les 8 cartes ── */}
+      {!activeNeed && (
+        <NeedSelectionModal
+          onSelectNeed={need => setActiveNeed(need)}
+          onClose={onClose}
+          appUnlocked={appUnlocked}
+          onEnterApp={onEnterApp}
+          onboarding
+        />
+      )}
+
+      {/* ── RitualSuggestionModal — passe au-dessus de la barre de vitalité ── */}
+      {activeNeed && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10250 }}>
+          <RitualSuggestionModal
+            need={activeNeed}
+            onBack={() => setActiveNeed(null)}
+            onClose={onClose}
+            onCompleteRitual={handleCompleteRitual}
+            onSeeFlower={onEnterApp}
+          />
+        </div>
+      )}
+
+      {/* ── Étoiles volantes ── */}
+      {sparkle && <VitalitySparkle key={sparkle.key} x={sparkle.x} y={sparkle.y} />}
+
+      {/* ── Barre de vitalité verticale gauche ── */}
+      <div style={{
+        position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 10200,
+        width: isMobile ? 64 : 80,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        padding: '20px 0',
+        background: 'rgba(250,245,242,0.92)', backdropFilter: 'blur(10px)',
+        borderRight: '1px solid rgba(180,140,100,0.18)',
+        fontFamily: "'Jost',sans-serif", pointerEvents: 'none',
+      }}>
+        <div className={pctPop ? 'vit-pct-pop' : ''} style={{ fontSize: isMobile ? 13 : 15, fontWeight: 700, color: '#3B6D11', marginBottom: 10 }}>{vitality}%</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: 5, width: '100%', padding: '0 10px', boxSizing: 'border-box' }}>
+          <div ref={barRef} style={{ flex: 1, background: 'rgba(180,140,100,0.14)', borderRadius: 8, position: 'relative', overflow: 'visible' }}>
+            <div className={glowing ? 'vit-glow' : ''} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: `${vitality}%`, background: 'linear-gradient(to top, #1c3818, #3B6D11 50%, #7ab36a)', borderRadius: 8, transition: 'height 0.9s cubic-bezier(.22,1,.36,1)', overflow: 'visible' }}>
+              {/* Point doré au sommet — visible 5s après validation */}
+              {showTip && (
+                <div style={{
+                  position: 'absolute', top: 0, left: '50%',
+                  width: 12, height: 12, borderRadius: '50%',
+                  background: 'radial-gradient(circle, #fff8c0 0%, #ffd700 55%, transparent 100%)',
+                  boxShadow: '0 0 10px 4px rgba(255,215,0,0.85), 0 0 4px 1px #fff8c0',
+                  animation: 'vit_tip_pulse 1.2s ease-in-out infinite, vit_tip_fade 5s ease forwards',
+                }}/>
+              )}
+            </div>
+            {markers.map(m => (
+              <div key={m} style={{ position: 'absolute', left: 0, right: 0, bottom: `${m}%`, height: 1.5, background: vitality >= m ? 'rgba(58,109,17,0.55)' : 'rgba(180,140,100,0.22)' }} />
+            ))}
+          </div>
+        </div>
+        <div style={{ fontSize: 8, color: 'rgba(60,40,20,0.38)', marginTop: 8, textAlign: 'center', lineHeight: 1.5 }}>
+          Vitalité<br/>intérieure
+        </div>
+      </div>
+
+      {/* ── Overlay de félicitation palier ── */}
+      {celebVideo && (() => {
+        const milestone = Object.values(VITALITY_MILESTONES).find(m => m.video === celebVideo)
+        return (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 10300, background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
+            <video
+              src={celebVideo}
+              autoPlay playsInline
+              style={{ width: 'min(400px, 80vw)', height: 'min(400px, 80vw)', objectFit: 'cover', borderRadius: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.60)', animation: 'onbIn .35s ease both' }}
+              onError={() => setCelebVideo(null)}
+            />
+            <div onClick={e => e.stopPropagation()} style={{ textAlign: 'center', maxWidth: 360 }}>
+              <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 600, color: '#fff', margin: '0 0 8px', lineHeight: 1.3, textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
+                {milestone?.title}
+              </p>
+              <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(255,255,255,0.80)', margin: '0 0 20px', lineHeight: 1.7, textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>
+                {milestone?.message}
+              </p>
+              <button onClick={() => setCelebVideo(null)} style={{ padding: '13px 40px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#3B6D11,#1c3818)', color: '#c8e6b0', fontSize: 15, fontWeight: 600, fontFamily: "'Jost',sans-serif", letterSpacing: '.05em', boxShadow: '0 6px 24px rgba(28,56,24,0.55)' }}>
+                Continuer →
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  ÉTAPE CHEMIN — carrefour après l'intro Gwenaël
+// ─────────────────────────────────────────────────────────────────────────────
+//  ÉTAPE INSIGHT — slide personnalisé IA après StepIntention
+// ─────────────────────────────────────────────────────────────────────────────
+function StepPersonalInsight({ intentionIdx, onAgir, onCheminer }) {
+  const [text, setText]       = useState('')
+  const [loading, setLoading] = useState(true)
+  const isMobile = window.innerWidth < 768
+  const intentionLabel = INTENTIONS[intentionIdx]?.label ?? ''
+
+  useEffect(() => {
+    const prompt = `Tu es un guide bienveillant de l'application Mon Jardin Intérieur.
+L'utilisateur a choisi cette intention : "${intentionLabel}".
+En 3 phrases courtes et directes (tutoiement), explique pourquoi cette application peut être précieuse et utile pour lui à ce moment précis de sa vie. Sois concret, chaleureux, sans jargon. Ne mentionne pas le nom de l'app. Commence directement par le cœur du message.`
+
+    supabase.functions.invoke('entreprise-agent', {
+      body: {
+        messages: [{ role: 'user', content: prompt }],
+        session_id: `onboarding_insight_${Date.now()}`,
+        agent_id: 'maestro',
+      }
+    }).then(({ data, error }) => {
+      setText(
+        (!error && data?.text)
+          ? data.text
+          : 'Des rituels simples, répétés chaque jour, peuvent transformer en profondeur ce que tu vis. Ta fleur grandira avec toi, reflet vivant de ton chemin intérieur.'
+      )
+      setLoading(false)
+    }).catch(() => {
+      setText('Des rituels simples, répétés chaque jour, peuvent transformer en profondeur ce que tu vis. Ta fleur grandira avec toi, reflet vivant de ton chemin intérieur.')
+      setLoading(false)
+    })
+  }, [intentionIdx])
+
+  return (
+    <ModalShell>
+      <div style={{ padding: isMobile ? '24px 20px 32px' : '36px 32px 40px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+
+        {/* Icône intention */}
+        <div className="s0" style={{ textAlign: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 40 }}>{INTENTIONS[intentionIdx]?.icon}</span>
+        </div>
+
+        {/* Texte IA personnalisé */}
+        <div className="s1" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28 }}>
+          {loading ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(180,140,100,0.2)', borderTopColor: '#c8a870', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+              <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: 'rgba(60,40,20,0.45)', fontStyle: 'italic' }}>
+                Préparation de ton message…
+              </p>
+            </div>
+          ) : (
+            <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontWeight: 400, color: '#1a1208', lineHeight: 1.7, textAlign: 'center', margin: 0 }}>
+              {text}
+            </p>
+          )}
+        </div>
+
+        {/* 2 cartes d'action */}
+        {!loading && (
+          <div className="s2" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            {/* Card 1 : Agir */}
+            <button onClick={onAgir} style={{
+              padding: '18px 20px', borderRadius: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+              background: 'linear-gradient(135deg,#1c3818,#2a5020)',
+              boxShadow: '0 6px 20px rgba(28,56,24,0.28)',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', color: 'rgba(200,230,176,0.65)', marginBottom: 4 }}>RESSENTIR</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 21, color: '#fff', lineHeight: 1.2, marginBottom: 4 }}>
+                Commencer par les petites actions quotidiennes
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(200,230,176,0.70)' }}>Rituels · 2 min par jour · ta fleur grandit avec toi</div>
+              <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: '#c8e6b0' }}>Agissez simplement →</div>
+            </button>
+
+            {/* Card 3 : Cheminer */}
+            <button onClick={onCheminer} style={{
+              padding: '18px 20px', borderRadius: 16, border: 'none', cursor: 'pointer', textAlign: 'left',
+              background: 'linear-gradient(135deg,#c8a870,#a07840)',
+              boxShadow: '0 6px 20px rgba(160,120,60,0.24)',
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.12em', color: 'rgba(255,255,255,0.65)', marginBottom: 4 }}>CHEMINER</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 21, color: '#fff', lineHeight: 1.2, marginBottom: 4 }}>
+                Commencer le parcours initiatique des 7 jours
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.70)' }}>Une étape par jour · s'enraciner progressivement</div>
+              <div style={{ marginTop: 12, fontSize: 13, fontWeight: 600, color: '#fff' }}>Commencer à s'initier →</div>
+            </button>
+
+          </div>
+        )}
+      </div>
+    </ModalShell>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLabel, initialShowRitual = false }) {
+  const [showPanel,        setShowPanel]        = useState(false)
+  const [showRitual,       setShowRitual]       = useState(initialShowRitual)
+  const [showInitieConfirm, setShowInitieConfirm] = useState(false)
+  const isMobile = window.innerWidth < 768
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowPanel(true), 1000)
+    return () => clearTimeout(t)
+  }, [])
+
+  const CARD_PAD = isMobile ? '12px 14px 8px' : '16px 18px 10px'
+  const CARD_FS  = isMobile ? 17 : 20
+  const DESC_FS  = isMobile ? 12 : 13
+  const BTN_PAD  = isMobile ? '10px 14px' : '12px 18px'
+  const BTN_FS   = isMobile ? 13 : 14
+
+  const panel = (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: isMobile ? 8 : 12,
+      padding: isMobile ? '0 12px 20px' : '0 20px 24px',
+    }}>
+      {/* RESSENTIR */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#1c3818,#2a5020)', boxShadow: '0 4px 16px rgba(28,56,24,0.30)' }}>
+        <div style={{ padding: CARD_PAD }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(200,230,176,0.65)', marginBottom: 2 }}>RESSENTIR</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: CARD_FS, color: '#fff', lineHeight: 1.2, marginBottom: 2 }}>« Je veux ressentir »</div>
+          <div style={{ fontSize: 11, color: 'rgba(200,230,176,0.70)', marginBottom: 5 }}>2 minutes par jour pour faire pousser ma fleur</div>
+          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.88)', lineHeight: 1.5, margin: 0 }}>Un rituel court, tout de suite. Les bienfaits viennent avec la régularité, pas avec la durée.</p>
+        </div>
+        <button onClick={() => setShowRitual(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(200,230,176,0.15)', border:'none', borderTop:'1px solid rgba(200,230,176,0.15)', cursor:'pointer', color:'#fff', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(200,230,176,0.28)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(200,230,176,0.15)'}>
+          Agissez simplement →
+        </button>
+      </div>
+
+      {/* COMPRENDRE */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(180,140,100,0.20)', boxShadow: '0 3px 10px rgba(0,0,0,0.06)', opacity: comprendreLabel ? 0.45 : 1, transition: 'opacity 0.4s ease' }}>
+        <div style={{ padding: CARD_PAD }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: '#7a5a20', marginBottom: 2 }}>COMPRENDRE</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: CARD_FS, color: '#111', lineHeight: 1.2, marginBottom: 2 }}>« Je veux comprendre »</div>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 5 }}>5 minutes pour découvrir le pourquoi</div>
+          <p style={{ fontSize: DESC_FS, color: '#222', lineHeight: 1.5, margin: 0 }}>Sur quoi on agit, ce que dit la science, et pourquoi cette approche change tout. Tu choisiras ensuite ton rythme.</p>
+        </div>
+        <button onClick={onComprendre} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(180,140,80,0.08)', border:'none', borderTop:'1px solid rgba(180,140,100,0.15)', cursor:'pointer', color:'#5a3e10', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(180,140,80,0.18)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(180,140,80,0.08)'}>
+          {comprendreLabel || 'Pourquoi ?... c\'est par là. →'}
+        </button>
+      </div>
+
+      {/* CHEMINER */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#c8a870,#a07840)', boxShadow: '0 4px 16px rgba(160,120,60,0.28)' }}>
+        <div style={{ padding: CARD_PAD }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(255,255,255,0.65)', marginBottom: 2 }}>CHEMINER</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: CARD_FS, color: '#fff', lineHeight: 1.2, marginBottom: 2 }}>« Je veux cheminer »</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.70)', marginBottom: 5 }}>7 jours pour planter mes racines</div>
+          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.92)', lineHeight: 1.5, margin: 0 }}>Un parcours initiatique guidé, une étape par jour. Pour celles et ceux qui aiment prendre le temps de s'enraciner.</p>
+        </div>
+        <button onClick={() => setShowInitieConfirm(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(255,255,255,0.15)', border:'none', borderTop:'1px solid rgba(255,255,255,0.15)', cursor:'pointer', color:'#fff', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.28)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.15)'}>
+          Commencer à s'initier →
+        </button>
+      </div>
+
+      <p style={{ fontSize: isMobile ? 12 : 13, color: 'rgba(255,255,255,0.70)', textAlign: 'center', margin: '4px 0 0', lineHeight: 1.5 }}>
+        Choisis ton chemin en conscience. Chacun mène à ta fleur.
+      </p>
+    </div>
+  )
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 9999, fontFamily: "'Jost',sans-serif", overflow: 'hidden' }}>
+      <style>{ONB_STYLES}</style>
+
+      {/* Image plein écran en fond permanent */}
+      <img
+        src="/chemin.png"
+        alt="Chemin"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+        onError={e => { e.target.onerror = null; e.target.src = '/champs2.png' }}
+      />
+
+      {/* Dégradé bas progressif */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,3,1,0.80) 0%, rgba(5,3,1,0.20) 50%, transparent 100%)', pointerEvents: 'none' }} />
+
+      {/* Panneau qui monte après 3s — mobile : bottom sheet / desktop : centré */}
+      {showPanel && !isMobile && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 2,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          {/* Groupe lutin + modal centré comme une unité */}
+          <div style={{ display: 'flex', alignItems: 'center', position: 'relative', transform: 'translateX(-20%)' }}>
+          {/* Lutin à gauche */}
+          <img
+            src="/lutin-droit.png"
+            alt=""
+            style={{
+              height: 'min(480px, 65vh)', width: 'auto',
+              objectFit: 'contain',
+              alignSelf: 'center',
+              transform: 'translateY(15%)',
+              marginRight: -60,
+              flexShrink: 0,
+              position: 'relative', zIndex: 1,
+              filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.40))',
+              animation: 'modalIn .6s cubic-bezier(.22,1,.36,1) .1s both',
+            }}
+          />
+          {/* Modal */}
+          <div style={{
+            width: 480, maxHeight: '90vh', overflowY: 'auto',
+            borderRadius: 20,
+            background: 'rgba(10,6,2,0.70)', backdropFilter: 'blur(16px)',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
+            animation: 'modalIn .5s cubic-bezier(.22,1,.36,1) both',
+          }}>
+            <div style={{ padding: '22px 0 0', textAlign: 'center' }}>
+              <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 30, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.2 }}>
+                Par où souhaites-tu<br/><em style={{ color: '#d4a870' }}>commencer ?</em>
+              </h2>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: '0 0 18px' }}>Trois chemins, une seule fleur. Choisis celui qui t'appelle aujourd'hui.</p>
+            </div>
+            {panel}
+          </div>
+          </div>{/* fin groupe lutin+modal */}
+        </div>
+      )}
+
+      {showPanel && isMobile && (
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 2,
+          borderRadius: '20px 20px 0 0',
+          background: 'rgba(10,6,2,0.78)', backdropFilter: 'blur(16px)',
+          maxHeight: '82vh', overflowY: 'auto',
+          animation: 'onbIn .5s cubic-bezier(.22,1,.36,1) both',
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.40)',
+        }}>
+          <div style={{ padding: '16px 0 2px', textAlign: 'center' }}>
+            {/* Poignée */}
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.25)', margin: '0 auto 14px' }} />
+            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 24, fontWeight: 400, color: '#fff', margin: '0 0 4px', lineHeight: 1.2 }}>
+              Par où souhaites-tu<br/><em style={{ color: '#d4a870' }}>commencer ?</em>
+            </h2>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.60)', margin: '0 0 14px' }}>Trois chemins, une seule fleur. Choisis celui qui t'appelle aujourd'hui.</p>
+          </div>
+          {panel}
+        </div>
+      )}
+
+      {showRitual && (
+        <RitualModal
+          userId={userId}
+          onClose={() => setShowRitual(false)}
+          onEnterApp={onAgir}
+        />
+      )}
+
+      {showInitieConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10400,
+          background: 'rgba(10,20,5,0.55)', backdropFilter: 'blur(6px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          <div style={{
+            background: '#faf8f4', borderRadius: 20,
+            width: 'min(340px, 100%)', padding: '32px 28px 28px',
+            boxShadow: '0 20px 60px rgba(30,60,10,0.22)',
+            border: '1px solid rgba(180,210,140,0.30)',
+            position: 'relative', textAlign: 'center',
+          }}>
+            <button onClick={() => setShowInitieConfirm(false)} style={{
+              position: 'absolute', top: 14, right: 16,
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 22, color: 'rgba(30,20,8,0.35)', lineHeight: 1,
+            }}>×</button>
+            <div style={{ fontSize: 36, marginBottom: 14 }}>🌿</div>
+            <p style={{
+              fontFamily: "'Cormorant Garamond',serif",
+              fontSize: 26, fontWeight: 600,
+              color: '#1a1208', margin: '0 0 8px', lineHeight: 1.3,
+            }}>On y va ?</p>
+            <p style={{
+              fontFamily: "'Jost',sans-serif",
+              fontSize: 13, color: 'rgba(30,20,8,0.50)',
+              margin: '0 0 24px', lineHeight: 1.6,
+            }}>
+              Le parcours des 7 jours t'attend.<br/>Une étape par jour, à ton rythme.
+            </p>
+            <button onClick={onInitie} style={{
+              width: '100%', padding: '14px 20px',
+              borderRadius: 50, border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg,#c8a870,#a07840)',
+              color: '#fff', fontSize: 15, fontWeight: 600,
+              fontFamily: "'Jost',sans-serif",
+              boxShadow: '0 6px 20px rgba(160,120,60,0.30)',
+              letterSpacing: '.04em',
+            }}>Commencer</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function OnboardingScreen({ userId, onComplete }) {
   useTheme()
   // phase : -2=voile -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=notifications 7=install 8=quizIntro 9=quiz
@@ -2767,10 +3359,21 @@ export function OnboardingScreen({ userId, onComplete }) {
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
   const [quizAlready,  setQuizAlready]  = useState(false)  // true si le quiz a déjà été complété
+  const [showOverlay,  setShowOverlay]  = useState(false)  // true après 20s sur phase 6/7
+  const [hasCompris,        setHasCompris]        = useState(false)  // true après parcours COMPRENDRE
+  const [openRitual,        setOpenRitual]        = useState(false)  // ouvre RitualModal dès l'arrivée sur chemin
 
   async function handleSignOut() {
     await supabase.auth.signOut()
   }
+
+  // ── Overlay phase 6 — apparaît après 20s. Phase 7 gérée manuellement. ──
+  useEffect(() => {
+    if (phase !== 6) { if (phase !== 7) setShowOverlay(false); return }
+    setShowOverlay(false)
+    const t = setTimeout(() => setShowOverlay(true), 20000)
+    return () => clearTimeout(t)
+  }, [phase])
 
   // ── Vérifie si le quiz a déjà été fait lors du passage en phase 5→6 ──
   useEffect(() => {
@@ -2789,7 +3392,8 @@ export function OnboardingScreen({ userId, onComplete }) {
 
   async function handleIntention(idx) {
     setIntention(idx)
-    setPhase(2)
+    setHasCompris(true)
+    setPhase('insight')
   }
 
   async function handlePlant(colorIdx) {
@@ -2821,29 +3425,66 @@ export function OnboardingScreen({ userId, onComplete }) {
   if (phase === -2 || phase === -1) return (
     <>
       {/* IntroGwenael monte en arrière-plan pendant le voile — les timeouts démarrent immédiatement */}
-      <IntroGwenael onStart={() => setPhase(0)} />
+      <IntroGwenael onStart={() => setPhase('chemin')} />
       {/* Voile par-dessus — se dissout et laisse apparaître le MP4 avec boutons déjà prêts */}
       {phase === -2 && <VeilScreen onDone={() => setPhase(-1)} />}
     </>
   )
+  if (phase === 'chemin') return (
+    <StepCheminChoix
+      userId={userId}
+      onComprendre={() => setPhase(0)}
+      onAgir={() => onComplete('free')}
+      onInitie={onComplete}
+      comprendreLabel={hasCompris ? 'Relire à nouveau →' : undefined}
+      initialShowRitual={openRitual}
+    />
+  )
   if (phase === 0)  return <SlidesEducatives onComplete={() => setPhase(1)} />
   if (phase === 1)  return <StepIntention onSelect={handleIntention} />
+  if (phase === 'insight') return (
+    <StepPersonalInsight
+      intentionIdx={intention}
+      onAgir={() => { setOpenRitual(true); setPhase('chemin') }}
+      onCheminer={onComplete}
+    />
+  )
   if (phase === 2)  return <StepMetaphore onNext={() => setPhase(3)} />
   if (phase === 3)  return <StepGraine intention={intention} onPlant={handlePlant} />
   if (phase === 4)  return <StepCommunaute onComplete={() => setPhase(5)} />
   if (phase === 5)  return <StepEquipe onNext={handleEquipeNext} onSkip={onComplete} />
-  if (phase === 6)  return <StepInstall onNext={() => setPhase(7)} />
-  if (phase === 7)  return <StepNotifications userId={userId} onNext={() => {
-    if (quizAlready) { onComplete(); return }
-    setPhase(8)
-  }} />
-  if (phase === 8)  return <StepQuizIntro onStart={() => setPhase(9)} onSkip={onComplete} onGoWeekOne={onComplete} />
-  if (phase === 9)  return (
-    <StepQuestionnaire
-      userId={userId}
-      onComplete={onComplete}
-      onSkip={onComplete}
-    />
+  if (phase === 6 || phase === 7) return (
+    <>
+      <StepCheminChoix
+        userId={userId}
+        onComprendre={() => setPhase(0)}
+        onAgir={() => onComplete('free')}
+        onInitie={onComplete}
+        comprendreLabel="Relire à nouveau →"
+      />
+      {showOverlay && phase === 6 && (
+        <StepInstall onNext={() => {
+          const isPWA = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone
+          if (isPWA) {
+            setPhase(7)
+            setShowOverlay(true) // apparaît immédiatement
+          } else {
+            setShowOverlay(false) // PWA non installée → retour silencieux au modal
+          }
+        }} />
+      )}
+      {showOverlay && phase === 7 && (
+        <StepNotifications userId={userId} onNext={() => setShowOverlay(false)} />
+      )}
+    </>
   )
+  // if (phase === 8)  return <StepQuizIntro onStart={() => setPhase(9)} onSkip={onComplete} onGoWeekOne={onComplete} />
+  // if (phase === 9)  return (
+  //   <StepQuestionnaire
+  //     userId={userId}
+  //     onComplete={onComplete}
+  //     onSkip={onComplete}
+  //   />
+  // )
   return null
 }

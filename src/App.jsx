@@ -318,9 +318,17 @@ export default function App() {
     return (
       <OnboardingScreen
         userId={user.id}
-        onComplete={() => {
+        onComplete={async (plan) => {
           window.history.replaceState({}, '', window.location.pathname)
-          setScreen('weekone')
+          if (plan === 'free') {
+            await supabase.from('profiles').update({
+              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7] }
+            }).eq('id', user.id)
+            localStorage.setItem(`mji_orientation_${user.id}`, '1')
+            setScreen('dashboard')
+          } else {
+            setScreen('weekone')
+          }
         }}
       />
     )
@@ -654,9 +662,18 @@ export default function App() {
   if (screen === 'onboarding') {
     return (
       <>
-        <OnboardingScreen userId={user.id} onComplete={async () => {
+        <OnboardingScreen userId={user.id} onComplete={async (plan) => {
           await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
-          setScreen('weekone')
+          if (plan === 'free') {
+            // Valide l'onboarding + les 7 jours du WeekOneFlow par défaut
+            await supabase.from('profiles').update({
+              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7] }
+            }).eq('id', user.id)
+            localStorage.setItem(`mji_orientation_${user.id}`, '1')
+            setScreen('dashboard')
+          } else {
+            setScreen('weekone')
+          }
         }} />
       </>
     )

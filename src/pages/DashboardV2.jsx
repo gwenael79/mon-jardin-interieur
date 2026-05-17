@@ -1871,6 +1871,8 @@ export default function DashboardPage() {
           plantId={todayPlant?.id}
           plantHealth={todayPlant?.health}
           onHealthUpdate={() => reloadPlant()}
+          isPremium={isPremium}
+          onUpgrade={() => { setShowNeedModal(false); window.openAccessModal?.() }}
         />
       )}
       {showRitualSuggestion && selectedNeed && (

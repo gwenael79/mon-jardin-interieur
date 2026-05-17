@@ -153,7 +153,7 @@ function NeedCard({ need, index, onSelect, isMobile, isRecommended }) {
     setTimeout(() => onSelect(need), 240)
   }
 
-  const cardH   = isMobile ? 95 : 115
+  const cardH   = isMobile ? 82 : 115
   const iconSz  = isMobile ? 26  : 32
   const titleFz = isMobile ? 16  : 22
   const descFz  = isMobile ? 12  : 15
@@ -506,7 +506,7 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
 
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
-function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate }) {
+function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade }) {
   const [showByTime, setShowByTime] = useState(false)
   return (
     <>
@@ -545,78 +545,100 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
       <div style={{
         position:'relative', zIndex:1, flex:1, minHeight:0, overflowY:'auto',
         width:'100%', margin:'0 auto',
-        padding: isMobile ? '12px 16px 0' : '32px 32px 0',
+        padding: onboarding && isMobile ? '12px 12px 0 76px' : isMobile ? '16px 16px 0' : '32px 32px 0',
         boxSizing:'border-box', display:'flex', flexDirection:'column',
       }}>
         {/* Header */}
-        <div style={{textAlign:'center', marginBottom:'16px', animation:'nm_fadeUp .45s ease both', flexShrink:0}}>
+        <div style={{textAlign:'center', marginBottom: isMobile ? '10px' : '20px', animation:'nm_fadeUp .45s ease both', flexShrink:0}}>
           <h1 style={{
             fontFamily:"'Cormorant Garamond',serif",
-            fontSize: isMobile ? 28 : 38,
-            fontWeight:400, color:'#2A1F18', lineHeight:1.3,
-            margin:'0 0 6px', letterSpacing:'-.01em',
+            fontSize: isMobile ? 22 : 38,
+            fontWeight:400, color:'#2A1F18', lineHeight:1.2,
+            margin:'0 0 4px', letterSpacing:'-.01em',
           }}>
-            Quel est votre besoin<br/>
-            <em style={{fontStyle:'italic', fontWeight:300, color:'#4a3860'}}>en ce moment ?</em>
+            {isMobile ? <>Quel est ton besoin<br/><em style={{fontStyle:'italic', fontWeight:300, color:'#4a3860'}}>en ce moment ?</em></> : <>Quel est ton besoin <em style={{fontStyle:'italic', fontWeight:300, color:'#4a3860'}}>en ce moment ?</em></>}
           </h1>
           <p style={{
             fontFamily:"'Jost',sans-serif",
-            fontSize: isMobile ? 20 : 24,
-            fontWeight:600, color:'#1a1008',
-            margin:'0 0 10px', letterSpacing:'.01em',
-          }}>Suivez ce qui résonne en vous</p>
+            fontSize: isMobile ? 13 : 18,
+            fontWeight:500, color:'#1a1008',
+            margin:'0 0 2px', letterSpacing:'.01em',
+          }}>Suis ce qui résonne en toi</p>
           <p style={{
             fontFamily:"'Jost',sans-serif",
-            fontSize: isMobile ? 20 : 24,
-            fontWeight:600, color:'#1a1008',
+            fontSize: isMobile ? 12 : 16,
+            fontWeight:400, color:'rgba(30,20,8,0.55)',
             margin:0, letterSpacing:'.01em',
           }}>Un seul choix suffit pour commencer</p>
         </div>
         {/* Grille */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap: isMobile ? 12 : 18, flexShrink:0 }}>
+        <div style={{ display:'grid', gridTemplateColumns: onboarding && isMobile ? '1fr' : 'repeat(2,1fr)', gap: isMobile ? 8 : 18, flexShrink:0, paddingBottom: isMobile ? 24 : 40 }}>
           {NEEDS.map((need,i) => (
             <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile} isRecommended={recommendedIds.includes(need.id)}/>
           ))}
         </div>
-        {/* Footer — accès aux 120 rituels */}
-        <div style={{
-          textAlign:'center', padding: isMobile ? '20px 0 24px' : '24px 0 28px',
-          flexShrink:0, animation:'nm_fadeUp .5s ease .35s both',
-        }}>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 20 : 24, fontWeight:600, color:'#1a1008', margin:'0 0 12px', lineHeight:1.4, letterSpacing:'.01em' }}>
-            Vous désirez choisir votre propre rituel parmi 120 propositions ?
-          </p>
-          <div style={{ display:'flex', justifyContent:'center' }}>
-            <button onClick={() => setShowByTime(true)} style={{
-              width:'50%', minWidth:160,
-              background:'linear-gradient(135deg, #c87840 0%, #9070c8 35%, #2058B0 65%, #1A6645 100%)',
-              border:'none', borderRadius:20, padding:'18px 14px',
-              cursor:'pointer', textAlign:'center', color:'#fff',
-              boxShadow:'0 6px 24px rgba(100,80,160,0.35)',
-              transition:'transform 0.15s, box-shadow 0.15s',
-              position:'relative', overflow:'hidden',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.transform='scale(1.04)'; e.currentTarget.style.boxShadow='0 10px 32px rgba(100,80,160,0.45)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform='scale(1)'; e.currentTarget.style.boxShadow='0 6px 24px rgba(100,80,160,0.35)' }}
-            >
-              <div style={{ fontSize:24, marginBottom:8 }}>✨</div>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,5vw,22px)', fontWeight:700, fontStyle:'italic', lineHeight:1.25, width:'100%', wordBreak:'break-word' }}>
-                Je choisis mon rituel
-              </div>
+        {/* Bouton jardin — visible quand 50% de vitalité atteints */}
+        {appUnlocked && (
+          <div style={{ textAlign:'center', padding: isMobile ? '0 0 24px' : '0 0 28px', flexShrink:0, animation:'nm_fadeUp .5s ease both' }}>
+            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 17, fontWeight:600, color:'#111', lineHeight:1.4, margin:'0 0 14px', whiteSpace:'nowrap' }}>
+              Tu peux désormais retrouver ta fleur dans ton jardin intérieur
+            </p>
+            <button onClick={onEnterApp} style={{ padding:'13px 32px', borderRadius:50, background:'linear-gradient(135deg,#1c3818,#3B6D11)', border:'none', cursor:'pointer', color:'#c8e6b0', fontSize:14, fontWeight:600, fontFamily:"'Jost',sans-serif", boxShadow:'0 8px 28px rgba(28,56,24,0.35)' }}>
+              🌿 Entrer dans mon jardin →
             </button>
           </div>
-        </div>
+        )}
+
+        {/* Footer — accès aux 120 rituels (conditionné premium, caché en onboarding) */}
+        {!onboarding && (
+          <div style={{ textAlign:'center', padding:'8px 0 32px', flexShrink:0, animation:'nm_fadeUp .5s ease .35s both' }}>
+            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 16, fontWeight:500, color:'rgba(30,20,8,0.55)', margin:'0 0 14px', lineHeight:1.4 }}>
+              Tu veux choisir ton propre rituel parmi 120 propositions ?
+            </p>
+            <div style={{ display:'flex', justifyContent:'center' }}>
+              <button
+                onClick={() => isPremium ? setShowByTime(true) : onUpgrade?.()}
+                style={{
+                  width: isMobile ? '80%' : '50%', minWidth:160,
+                  background: isPremium
+                    ? 'linear-gradient(135deg, #c87840 0%, #9070c8 35%, #2058B0 65%, #1A6645 100%)'
+                    : 'linear-gradient(135deg,#9a9090,#7a7080)',
+                  border:'none', borderRadius:20, padding:'18px 14px',
+                  cursor:'pointer', textAlign:'center', color:'#fff',
+                  boxShadow: isPremium ? '0 6px 24px rgba(100,80,160,0.35)' : '0 4px 16px rgba(0,0,0,0.18)',
+                  transition:'transform 0.15s, box-shadow 0.15s',
+                  position:'relative', overflow:'hidden', opacity: isPremium ? 1 : 0.85,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform='scale(1.04)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform='scale(1)' }}
+              >
+                {!isPremium && (
+                  <div style={{ position:'absolute', top:10, right:12, fontSize:18 }}>🔒</div>
+                )}
+                <div style={{ fontSize:24, marginBottom:8 }}>{isPremium ? '✨' : '🌿'}</div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,5vw,22px)', fontWeight:700, fontStyle:'italic', lineHeight:1.25 }}>
+                  {isPremium ? 'Je choisis mon rituel' : 'Accès Premium'}
+                </div>
+                {!isPremium && (
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, marginTop:6, opacity:0.80, letterSpacing:'.04em' }}>
+                    Débloque les 120 rituels
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
       </div>
     </>
   )
 }
 
-export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate }) {
+export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade }) {
   const isMobile = useIsMobile()
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
   const recommendedIds = getRecommendedNeeds(bilanDegradation)
-  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate }
+  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade }
 
   if (!isMobile) return (
     <>
