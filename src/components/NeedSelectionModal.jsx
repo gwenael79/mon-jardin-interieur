@@ -118,6 +118,17 @@ const CSS = `
   .nm-card:active {
     animation: nm_breathe .38s ease forwards !important;
   }
+  @keyframes nm_jardin_aura {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(93,202,165,0.9), 0 0 0 0 rgba(93,202,165,0.5), 0 0 30px 4px rgba(93,202,165,0.4); filter: brightness(1); }
+    40%  { transform: scale(1.06); box-shadow: 0 0 0 14px rgba(93,202,165,0.3), 0 0 0 28px rgba(93,202,165,0.12), 0 0 50px 12px rgba(93,202,165,0.6); filter: brightness(1.25); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(93,202,165,0), 0 0 0 0 rgba(93,202,165,0), 0 0 30px 4px rgba(93,202,165,0.4); filter: brightness(1); }
+  }
+  .nm-jardin-aura {
+    animation: nm_jardin_aura 1.4s cubic-bezier(.4,0,.2,1) infinite;
+    background: linear-gradient(135deg, #1a6b2a, #3dbb6a, #1c7a38) !important;
+    color: #fff !important;
+    letter-spacing: .04em;
+  }
   @keyframes nm_badge_pulse {
     0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(255,255,255,0.8); opacity: 1; }
     50%       { transform: scale(1.12); box-shadow: 0 0 0 5px rgba(255,255,255,0); opacity: 0.85; }
@@ -583,7 +594,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 17, fontWeight:600, color:'#111', lineHeight:1.4, margin:'0 0 14px', whiteSpace:'nowrap' }}>
               Tu peux désormais retrouver ta fleur dans ton jardin intérieur
             </p>
-            <button onClick={onEnterApp} style={{ padding:'13px 32px', borderRadius:50, background:'linear-gradient(135deg,#1c3818,#3B6D11)', border:'none', cursor:'pointer', color:'#c8e6b0', fontSize:14, fontWeight:600, fontFamily:"'Jost',sans-serif", boxShadow:'0 8px 28px rgba(28,56,24,0.35)' }}>
+            <button onClick={onEnterApp} className={onboarding ? 'nm-jardin-aura' : ''} style={{ padding:'13px 32px', borderRadius:50, background:'linear-gradient(135deg,#1c3818,#3B6D11)', border:'none', cursor:'pointer', color:'#c8e6b0', fontSize:14, fontWeight:600, fontFamily:"'Jost',sans-serif", boxShadow:'0 8px 28px rgba(28,56,24,0.35)' }}>
               🌿 Entrer dans mon jardin →
             </button>
           </div>

@@ -2766,24 +2766,24 @@ function VeilScreen({ onDone }) {
 const ZONE_ICONS = { roots: '🌱', stem: '🌿', leaves: '🍃', flowers: '🌸', breath: '🌬️' }
 
 const VITALITY_MILESTONES = {
-   2: { label: 'Graine',             video: '/video/1v.mp4',
+   5: { label: 'Graine',             video: '/video/1v.mp4',
         title: 'Ta graine est semée 🌱',
         message: 'Un premier geste suffit pour tout changer. Tu viens de planter quelque chose de précieux — continue, et regarde ce qui va pousser.' },
-   8: { label: 'Premières feuilles', video: '/video/2v.mp4',
+  20: { label: 'Premières feuilles', video: '/video/2v.mp4',
         title: 'Les premières feuilles apparaissent 🍃',
         message: 'Ta régularité commence à porter ses fruits. Chaque rituel est une racine de plus. Tu es sur le bon chemin.' },
-  14: { label: 'Tige courbée',       video: '/video/3v.mp4',
+  30: { label: 'Tige courbée',       video: '/video/3v.mp4',
         title: 'Ta tige se redresse ✨',
         message: 'Ce que tu construis ici est réel. Même les petits jours comptent. Ta fleur grandit avec toi, à ton rythme.' },
-  20: { label: 'Bourgeon fermé',     video: '/video/4v.mp4',
+  40: { label: 'Bourgeon fermé',     video: '/video/4v.mp4',
         title: 'Un bourgeon se forme 🌿',
         message: 'Tu es à mi-chemin vers ta fleur. Ce que tu ressens en toi commence à se transformer. Reste fidèle à toi-même.' },
-  40: { label: 'Petite fleur',       video: '/video/5v.mp4',
+  50: { label: 'Petite fleur',       video: '/video/5v.mp4',
         title: 'Une fleur s\'ouvre 🌸',
-        message: 'Regarde ce que tu as accompli. Ta constance a fait éclore quelque chose de beau. Continue — l\'épanouissement est proche.' },
-  50: { label: 'Fleur épanouie',     video: '/video/6v.mp4',
+        message: 'Regarde ce que tu as accompli. Ta constance a fait éclore quelque chose de beau. Ton jardin t\'attend maintenant.' },
+  60: { label: 'Fleur épanouie',     video: '/video/6v.mp4',
         title: 'Ta fleur est épanouie 🌺',
-        message: 'Tu as tenu ta promesse envers toi-même. Ton jardin intérieur t\'attend — entre et découvre ce que tu as fait pousser.' },
+        message: 'Tu as tenu ta promesse envers toi-même. Continue — chaque rituel nourrit ce que tu as fait pousser.' },
 }
 
 const SPARKLE_CSS = `
@@ -2895,7 +2895,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
   const [showTip, setShowTip]         = useState(false)
   const barRef  = useRef(null)
   const isMobile = window.innerWidth < 768
-  const markers = [50, 40, 20, 14, 8, 2]
+  const markers = [60, 50, 40, 30, 20, 5]
 
   // Sync vitalité depuis Supabase au montage — cherche la plante la plus récente
   useEffect(() => {
@@ -2944,7 +2944,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
     if (vitality === 0 && onValidateOnboarding) {
       onValidateOnboarding()
     }
-    const next = Math.min(vitality + 2, 100)
+    const next = Math.min(vitality + 5, 100)
     setVitality(next)
     localStorage.setItem(vKey, String(next))
     setActiveNeed(null)
@@ -2975,7 +2975,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
         .maybeSingle()
 
       if (plant) {
-        const newHealth = Math.min(100, (plant.health ?? 0) + 2)
+        const newHealth = Math.min(100, (plant.health ?? 0) + 5)
         await supabase.from('plants').update({ health: newHealth }).eq('id', plant.id)
       } else {
         // Récupère le health du jour précédent pour assurer la continuité
@@ -2986,7 +2986,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
         const baseHealth = Math.min(95, Math.max(5, (prev?.health ?? 5)))
         await supabase.from('plants').insert({
           user_id: userId, date: today,
-          health: Math.min(100, baseHealth + 2),
+          health: Math.min(100, baseHealth + 5),
           zone_racines: 5, zone_tige: 5,
           zone_feuilles: 5, zone_fleurs: 5, zone_souffle: 5,
         })
@@ -3194,7 +3194,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
 
   const CARD_PAD = isMobile ? '12px 14px 8px' : '16px 18px 10px'
   const CARD_FS  = isMobile ? 17 : 20
-  const DESC_FS  = isMobile ? 12 : 13
+  const DESC_FS  = isMobile ? 14 : 15
   const BTN_PAD  = isMobile ? '10px 14px' : '12px 18px'
   const BTN_FS   = isMobile ? 13 : 14
 
@@ -3207,49 +3207,50 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
       <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#1c3818,#2a5020)', boxShadow: '0 4px 16px rgba(28,56,24,0.30)' }}>
         <div style={{ padding: CARD_PAD }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(200,230,176,0.65)', marginBottom: 2 }}>RESSENTIR</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: CARD_FS, color: '#fff', lineHeight: 1.2, marginBottom: 2 }}>« Je veux ressentir »</div>
-          <div style={{ fontSize: 11, color: 'rgba(200,230,176,0.70)', marginBottom: 5 }}>2 minutes par jour pour faire pousser ma fleur</div>
-          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.88)', lineHeight: 1.5, margin: 0 }}>Un rituel court, tout de suite. Les bienfaits viennent avec la régularité, pas avec la durée.</p>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, color: '#fff', lineHeight: 1.2, marginBottom: 4 }}>« Je veux ressentir »</div>
+          <div style={{ fontSize: isMobile ? 13 : 14, color: 'rgba(200,230,176,0.70)', marginBottom: 5 }}>2 minutes, et ça change ta journée.</div>
+          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.88)', lineHeight: 1.5, margin: 0 }}>Tes rituels t'attendent, en libre accès. Pas de parcours imposé : tu choisis celui qui te parle aujourd'hui. La régularité fera le reste.</p>
         </div>
         <button onClick={() => setShowRitual(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(200,230,176,0.15)', border:'none', borderTop:'1px solid rgba(200,230,176,0.15)', cursor:'pointer', color:'#fff', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(200,230,176,0.28)'}
           onMouseLeave={e => e.currentTarget.style.background='rgba(200,230,176,0.15)'}>
-          Agissez simplement →
-        </button>
-      </div>
-
-      {/* COMPRENDRE */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(180,140,100,0.20)', boxShadow: '0 3px 10px rgba(0,0,0,0.06)', opacity: comprendreLabel ? 0.45 : 1, transition: 'opacity 0.4s ease' }}>
-        <div style={{ padding: CARD_PAD }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: '#7a5a20', marginBottom: 2 }}>COMPRENDRE</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: CARD_FS, color: '#111', lineHeight: 1.2, marginBottom: 2 }}>« Je veux comprendre »</div>
-          <div style={{ fontSize: 11, color: '#666', marginBottom: 5 }}>5 minutes pour découvrir le pourquoi</div>
-          <p style={{ fontSize: DESC_FS, color: '#222', lineHeight: 1.5, margin: 0 }}>Sur quoi on agit, ce que dit la science, et pourquoi cette approche change tout. Tu choisiras ensuite ton rythme.</p>
-        </div>
-        <button onClick={onComprendre} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(180,140,80,0.08)', border:'none', borderTop:'1px solid rgba(180,140,100,0.15)', cursor:'pointer', color:'#5a3e10', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(180,140,80,0.18)'}
-          onMouseLeave={e => e.currentTarget.style.background='rgba(180,140,80,0.08)'}>
-          {comprendreLabel || 'Pourquoi ?... c\'est par là. →'}
+          Entrer dans mes rituels →
         </button>
       </div>
 
       {/* CHEMINER */}
       <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#c8a870,#a07840)', boxShadow: '0 4px 16px rgba(160,120,60,0.28)' }}>
         <div style={{ padding: CARD_PAD }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(255,255,255,0.65)', marginBottom: 2 }}>CHEMINER</div>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: CARD_FS, color: '#fff', lineHeight: 1.2, marginBottom: 2 }}>« Je veux cheminer »</div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.70)', marginBottom: 5 }}>7 jours pour planter mes racines</div>
-          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.92)', lineHeight: 1.5, margin: 0 }}>Un parcours initiatique guidé, une étape par jour. Pour celles et ceux qui aiment prendre le temps de s'enraciner.</p>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: '#333', marginBottom: 2 }}>CHEMINER</div>
+          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, color: '#111', lineHeight: 1.2, marginBottom: 4 }}>« Je veux cheminer »</div>
+          <div style={{ fontSize: isMobile ? 13 : 14, color: '#111', marginBottom: 5 }}>Un rendez-vous avec toi-même, sur 7 jours.</div>
+          <p style={{ fontSize: DESC_FS, color: '#222', lineHeight: 1.5, margin: 0 }}>Un parcours guidé, une étape par jour. On t'accompagne pas à pas, dans un ordre pensé pour t'enraciner en douceur. Pour celles et ceux qui choisissent la profondeur plutôt que la vitesse.</p>
         </div>
-        <button onClick={() => setShowInitieConfirm(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(255,255,255,0.15)', border:'none', borderTop:'1px solid rgba(255,255,255,0.15)', cursor:'pointer', color:'#fff', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.28)'}
-          onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.15)'}>
-          Commencer à s'initier →
+        <button onClick={() => setShowInitieConfirm(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(0,0,0,0.08)', border:'none', borderTop:'1px solid rgba(0,0,0,0.12)', cursor:'pointer', color:'#111', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(0,0,0,0.16)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(0,0,0,0.08)'}>
+          Commencer à cheminer →
+        </button>
+      </div>
+
+      {/* COMPRENDRE */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(180,140,100,0.20)', boxShadow: '0 3px 10px rgba(0,0,0,0.06)', opacity: comprendreLabel ? 0.45 : 1, transition: 'opacity 0.4s ease' }}>
+        <div style={{ padding: CARD_PAD, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <span style={{ fontSize: isMobile ? 26 : 30, lineHeight: 1, flexShrink: 0 }}>💭</span>
+          <div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 25, color: '#111', lineHeight: 1.2, marginBottom: 5 }}>Tu hésites ? Comprends d'abord.</div>
+            <p style={{ fontSize: DESC_FS, color: '#444', lineHeight: 1.5, margin: 0 }}>5 minutes pour voir ce qui se joue, puis tu choisiras ton chemin.</p>
+          </div>
+        </div>
+        <button onClick={onComprendre} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(180,140,80,0.08)', border:'none', borderTop:'1px solid rgba(180,140,100,0.15)', cursor:'pointer', color:'#5a3e10', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(180,140,80,0.18)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(180,140,80,0.08)'}>
+          {comprendreLabel || 'M\'éclairer d\'abord →'}
         </button>
       </div>
 
       <p style={{ fontSize: isMobile ? 12 : 13, color: 'rgba(255,255,255,0.70)', textAlign: 'center', margin: '4px 0 0', lineHeight: 1.5 }}>
-        Choisis ton chemin en conscience. Chacun mène à ta fleur.
+        Choisis en conscience. Chaque chemin mène à ta fleur, à sa façon.
       </p>
     </div>
   )
@@ -3301,9 +3302,9 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           }}>
             <div style={{ padding: '22px 0 0', textAlign: 'center' }}>
               <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 30, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.2 }}>
-                Par où souhaites-tu<br/><em style={{ color: '#d4a870' }}>commencer ?</em>
+                Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
               </h2>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', margin: '0 0 18px' }}>Trois chemins, une seule fleur. Choisis celui qui t'appelle aujourd'hui.</p>
+              <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', margin: '0 0 18px', lineHeight: 1.6 }}>Deux chemins s'offrent à toi : agir, ou cheminer.<br/>À toi de sentir lequel t'appelle aujourd'hui.</p>
             </div>
             {panel}
           </div>
@@ -3321,9 +3322,9 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
         }}>
           <div style={{ padding: '48px 0 8px', textAlign: 'center', flexShrink: 0 }}>
             <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 26, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.2 }}>
-              Par où souhaites-tu<br/><em style={{ color: '#d4a870' }}>commencer ?</em>
+              Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
             </h2>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: '0 0 8px' }}>Trois chemins, une seule fleur. Choisis celui qui t'appelle aujourd'hui.</p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', margin: '0 0 8px', lineHeight: 1.6 }}>Deux chemins s'offrent à toi : agir, ou cheminer.<br/>À toi de sentir lequel t'appelle aujourd'hui.</p>
           </div>
           {panel}
         </div>
