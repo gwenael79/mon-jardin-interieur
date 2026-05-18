@@ -24,6 +24,19 @@ function GlobalStyles() {
         to   { opacity: 1; transform: translateY(0);    }
       }
       .wof-soft { animation: softRise 900ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+      .wveil-video {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        object-fit: cover;
+      }
+      @media (min-width: 768px) {
+        .wveil-video {
+          position: relative; inset: auto;
+          width: auto; height: 100%;
+          max-width: 480px; max-height: 100vh;
+          object-fit: contain;
+        }
+      }
       @keyframes pulseCursor {
         0%, 100% { transform: scale(1);    opacity: 0.24; }
         50%       { transform: scale(1.55); opacity: 0.40; }
@@ -6304,23 +6317,24 @@ function WelcomeVeil({ onDone, isReturn = false }) {
         </p>
       </div>
 
-      {/* Vidéo — plein écran, fondu entrant après délai */}
-      <video
-        ref={videoRef}
-        src="/video/cheminjours.mp4"
-        autoPlay playsInline muted
-        preload="auto"
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover',
-          opacity: showVideo ? 1 : 0,
-          transition: 'opacity 1.2s ease',
-        }}
-        onCanPlayThrough={handleVideoReady}
-        onEnded={() => setCtaVisible(true)}
-        onError={onDone}
-      />
+      {/* Vidéo — plein écran mobile, centrée sur desktop */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        opacity: showVideo ? 1 : 0,
+        transition: 'opacity 1.2s ease',
+      }}>
+        <video
+          ref={videoRef}
+          src="/video/cheminjours.mp4"
+          autoPlay playsInline muted
+          preload="auto"
+          className="wveil-video"
+          onCanPlayThrough={handleVideoReady}
+          onEnded={() => setCtaVisible(true)}
+          onError={onDone}
+        />
+      </div>
 
       {/* Overlay bas — son + bouton CTA */}
       <div style={{
