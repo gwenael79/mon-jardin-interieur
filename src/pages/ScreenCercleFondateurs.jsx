@@ -157,17 +157,24 @@ const CERCLE_CSS = `
 // ─────────────────────────────────────────────────────────────────────────────
 //  DONNÉES
 // ─────────────────────────────────────────────────────────────────────────────
-const LEVEL_LABEL = { ami:'Ami du Jardin', compagnon:'Compagnon de route', fondateur:'Fondateur' }
-const LEVEL_ICON  = { ami:'🌱', compagnon:'🌿', fondateur:'🌳' }
-const LEVEL_COLOR = { ami:'#7ea870', compagnon:'#4a7c45', fondateur:'#2D5F3F' }
+const LEVEL_LABEL = { graine:'Un geste doux', ami:'Ami du Jardin', compagnon:'Compagnon de route', fondateur:'Fondateur' }
+const LEVEL_ICON  = { graine:'🌸', ami:'🌱', compagnon:'🌿', fondateur:'🌳' }
+const LEVEL_COLOR = { graine:'#c07898', ami:'#7ea870', compagnon:'#4a7c45', fondateur:'#2D5F3F' }
 
 const PETAL_PALETTE = {
+  graine:    ['#f4b4c8','#f0c0d8','#f8d0e0','#f4c0b0','#eeb8d0','#f0d0e8','#f8c8d8'],
   ami:       ['#f4b4c8','#a8d5b0','#f5e396','#c2def0','#dbb4f0','#f0d2a0','#f4c8a8'],
   compagnon: ['#7ea870','#a898b0','#c47a60','#6aa0b0','#a89a5a','#987898','#5a9890'],
   fondateur: ['#3a6c3f','#6a3a6c','#b08030','#484878','#8a3a30','#3a6870','#6a5830'],
 }
 
 const TIERS = [
+  {
+    niveau: 'graine', icon: '🌸', label: 'Un geste doux',
+    range: '10€ – 100€', min: 10, max: 100, step: 1, defaultMontant: 30,
+    avantages: ['Soutien au projet', 'Gratitude de Gwenaël'],
+    desc: 'Un geste doux pour soutenir le jardin',
+  },
   {
     niveau: 'ami', icon: '🌱', label: 'Ami du Jardin',
     range: '150€ – 249€', min: 150, max: 249, step: 1, defaultMontant: 180,
@@ -611,7 +618,7 @@ function NiveauxCTA({ onRejoindre }) {
   const isMobile = useIsMobile()
   const [flipped, setFlipped]   = useState(null)
   const [montants, setMontants] = useState({
-    ami: 180, compagnon: 350, fondateur: 800,
+    graine: 30, ami: 180, compagnon: 350, fondateur: 800,
   })
 
   const selectedTier   = TIERS.find(t => t.niveau === flipped)
@@ -636,7 +643,7 @@ function NiveauxCTA({ onRejoindre }) {
       </div>
 
       {/* Grille des 3 cartes */}
-      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 10 : 12, marginBottom:20 }}>
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 12, marginBottom:20 }}>
         {TIERS.map(t => (
           <TierCard
             key={t.niveau}
