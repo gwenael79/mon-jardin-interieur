@@ -29,6 +29,42 @@ async function sendTelegram(text: string) {
   else console.log('[cercle-telegram] envoyé ok')
 }
 
+// Crée le coupon 50% une seule fois, le récupère s'il existe déjà
+async function getOrCreateCoupon(): Promise<string> {
+  const COUPON_ID = 'mji-fondateurs-50off'
+  try {
+    await stripe.coupons.retrieve(COUPON_ID)
+    return COUPON_ID
+  } catch {
+    await stripe.coupons.create({
+      id: COUPON_ID,
+      percent_off: 50,
+      duration: 'once',
+      name: 'Fondateurs −50%',
+    })
+    return COUPON_ID
+  }
+}
+
+// Génère un code promo Stripe unique pour ce fondateur
+async function createPromoCode(niveau: string): Promise<string | null> {
+  try {
+    const couponId = await getOrCreateCoupon()
+    const prefix   = niveau === 'fondateur' ? 'FOND' : niveau === 'compagnon' ? 'COMP' : niveau === 'ami' ? 'AMI' : 'MJI'
+    const suffix   = Math.random().toString(36).slice(2, 8).toUpperCase()
+    const code     = `${prefix}-${suffix}`
+    const promo    = await stripe.promotionCodes.create({
+      coupon: couponId,
+      code,
+      max_redemptions: 1,
+    })
+    return promo.code
+  } catch (e) {
+    console.error('[cercle-webhook] promo code creation failed:', e)
+    return null
+  }
+}
+
 serve(async (req) => {
   const sig    = req.headers.get('stripe-signature') ?? ''
   const body   = await req.text()
@@ -49,7 +85,6 @@ serve(async (req) => {
   const session = event.data.object as Stripe.Checkout.Session
   const meta    = session.metadata ?? {}
 
-  // Ignore les sessions qui ne viennent pas du Cercle
   if (meta.source !== 'cercle_fondateurs') {
     return new Response(JSON.stringify({ received: true }), { status: 200 })
   }
@@ -64,20 +99,28 @@ serve(async (req) => {
     .maybeSingle()
 
   if (!existing) {
-    const niveau = (meta.niveau ?? 'graine') as 'graine' | 'ami' | 'compagnon' | 'fondateur'
-    const email  = meta.email || session.customer_email || null
+    const niveau    = (meta.niveau ?? 'graine') as 'graine' | 'ami' | 'compagnon' | 'fondateur'
+    const email     = meta.email || session.customer_email || null
     const isUpgrade = meta.upgrade === 'true'
 
     let error: any = null
 
+    // Génère le code promo Stripe
+    const discountCode = await createPromoCode(niveau)
+
     if (isUpgrade && email) {
       // ── Upgrade : met à jour le record existant ──────────────────────────
       const { error: upErr } = await supabase.from('fondateurs')
-        .update({ niveau, montant, paiement_ref: session.id, updated_at: new Date().toISOString() })
+        .update({
+          niveau,
+          montant,
+          paiement_ref: session.id,
+          discount_code: discountCode,
+          updated_at: new Date().toISOString(),
+        })
         .eq('email', email)
       error = upErr
 
-      // Met le plan premium si l'upgrade sort du niveau graine
       if (!upErr && niveau !== 'graine') {
         const { data: f } = await supabase.from('fondateurs').select('user_id').eq('email', email).maybeSingle()
         if (f?.user_id) {
@@ -98,6 +141,7 @@ serve(async (req) => {
         affichage_public: true,
         fleur_variant:   1,
         fleur_image:     meta.fleur_image || null,
+        discount_code:   discountCode,
       })
       error = insErr
     }
@@ -111,6 +155,13 @@ serve(async (req) => {
       fondateur: '🌳 Fondateur',
     }
 
+    const DISCOUNT_DESC: Record<string, string> = {
+      graine:    '−50% Premium',
+      ami:       '−50% Premium',
+      compagnon: '−50% Ateliers',
+      fondateur: '−50% Ateliers & Jardinthèque',
+    }
+
     const msg = [
       isUpgrade ? '⬆️ <b>Upgrade Fondateur !</b>' : '🌸 <b>Nouveau Fondateur !</b>',
       '',
@@ -121,6 +172,7 @@ serve(async (req) => {
       `📞 Tél : ${meta.telephone || '—'}`,
       `📅 ${new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}`,
       '',
+      `🎟 Code remise : <code>${discountCode ?? '—'}</code> (${DISCOUNT_DESC[niveau] ?? ''})`,
       `🔗 Stripe : <code>${session.id.slice(-12)}</code>`,
     ].join('\n')
 

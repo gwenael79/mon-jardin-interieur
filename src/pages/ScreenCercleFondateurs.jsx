@@ -454,8 +454,29 @@ function IntentionBlock() {
 // ─────────────────────────────────────────────────────────────────────────────
 //  CARTE FONDATEUR
 // ─────────────────────────────────────────────────────────────────────────────
-function CarteFondateur({ fondateur, animDelay = 0, small = false }) {
+function CarteFondateur({ fondateur, animDelay = 0, small = false, mini = false }) {
   const color = getPetalColor(fondateur), lvlColor = LEVEL_COLOR[fondateur.niveau] ?? '#4a7c45'
+
+  // ── Mode mini : carte horizontale compacte pour les niveaux "graine" ──
+  if (mini) {
+    return (
+      <div className="cf-card" style={{
+        display:'flex', alignItems:'center', gap:5,
+        borderRadius:40, overflow:'hidden',
+        boxShadow:'0 1px 6px rgba(0,0,0,.07)',
+        animationDelay:`${animDelay}ms`,
+        background:'#fff',
+        padding:'3px 10px 3px 4px',
+        border:`1px solid ${rgba(color,.18)}`,
+      }}>
+        <FleurSVG variant={fondateur.fleur_variant ?? 1} color={color} size={22}/>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:12, fontWeight:600, color:'#1a1208', whiteSpace:'nowrap' }}>
+          {fondateur.display_name}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="cf-card" style={{ borderRadius: small ? 14 : 20, overflow:'hidden', boxShadow:'0 3px 18px rgba(0,0,0,.07)', animationDelay:`${animDelay}ms`, background:'#fff' }}>
       <div style={{ height:3, background:`linear-gradient(90deg, ${color}, ${lighten(color, 0.30)})` }}/>
@@ -500,6 +521,9 @@ function GrilleFondateurs({ fondateurs }) {
     </div>
   )
 
+  // Fondateurs des niveaux supérieurs (ami, compagnon, fondateur)
+  const fondateursSupérieurs = fondateurs.filter(f => f.niveau !== 'graine')
+
   if (fondateurs.length === 0) {
     return (
       <div style={{ textAlign:'center', padding:'32px 16px 28px' }}>
@@ -510,11 +534,13 @@ function GrilleFondateurs({ fondateurs }) {
         <div style={{ fontSize:15, color:'rgba(30,20,8,.62)', lineHeight:1.85, fontFamily:"'Jost',sans-serif", maxWidth:320, margin:'0 auto 24px' }}>
           Dès qu'une première personne rejoint le Cercle, sa fleur s'affiche ici, avec son prénom, son nom et sa citation, pour toujours.
         </div>
-        <div style={{ display:'flex', justifyContent:'center', flexWrap:'wrap', gap:12 }}>
-          {FLEUR_IMAGES.map((src, i) => (
-            <img key={i} src={src} alt="" style={{ width: isMobile ? 90 : 130, height: isMobile ? 90 : 130, objectFit:'contain', display:'block' }}/>
-          ))}
-        </div>
+        {FLEUR_IMAGES.length > 0 && (
+          <div style={{ display:'flex', justifyContent:'center', flexWrap:'wrap', gap:12 }}>
+            {FLEUR_IMAGES.map((src, i) => (
+              <img key={i} src={src} alt="" style={{ width: isMobile ? 90 : 130, height: isMobile ? 90 : 130, objectFit:'contain', display:'block' }}/>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -522,15 +548,37 @@ function GrilleFondateurs({ fondateurs }) {
   return (
     <>
       {header}
-      <div style={{
-        display:'grid',
-        gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(148px, 1fr))',
-        gap: isMobile ? 8 : 12,
-      }}>
-        {fondateurs.map((f, i) => (
-          <CarteFondateur key={f.id} fondateur={f} animDelay={Math.min(i*65,450)} small={isMobile}/>
-        ))}
-      </div>
+
+      {/* Fondateurs niveaux supérieurs — cartes ou images placeholder */}
+      {fondateursSupérieurs.length > 0 ? (
+        <div style={{
+          display:'grid',
+          gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(148px, 1fr))',
+          gap: isMobile ? 8 : 12,
+        }}>
+          {fondateursSupérieurs.map((f, i) => (
+            <CarteFondateur key={f.id} fondateur={f} animDelay={Math.min(i*65,450)} small={isMobile}/>
+          ))}
+        </div>
+      ) : FLEUR_IMAGES.length > 0 && (
+        <div style={{ display:'flex', justifyContent:'center', flexWrap:'wrap', gap:12, marginTop:8 }}>
+          {FLEUR_IMAGES.map((src, i) => (
+            <img key={i} src={src} alt="" style={{ width: isMobile ? 90 : 130, height: isMobile ? 90 : 130, objectFit:'contain', display:'block', opacity:0.45 }}/>
+          ))}
+        </div>
+      )}
+
+      {/* Cartes des fondateurs niveau graine — format mini horizontal, en bas */}
+      {fondateurs.filter(f => f.niveau === 'graine').length > 0 && (
+        <div style={{
+          display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center',
+          marginTop: fondateursSupérieurs.length > 0 || FLEUR_IMAGES.length > 0 ? 20 : 0,
+        }}>
+          {fondateurs.filter(f => f.niveau === 'graine').map((f, i) => (
+            <CarteFondateur key={f.id} fondateur={f} animDelay={Math.min(i*65,450)} mini={true}/>
+          ))}
+        </div>
+      )}
     </>
   )
 }

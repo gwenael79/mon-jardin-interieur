@@ -1401,6 +1401,39 @@ const NIVEAU_VIP = {
   fondateur: { label:'Fondateur',          icon:'🌳', color:'#2D5F3F' },
 }
 
+const AVANTAGES_VIP = {
+  graine: [
+    'Accès à l\'appli (plan Free)',
+    '−50% de remise sur le Premium (12 mois)',
+    'Accès au Jardin collectif',
+    'Accès aux 120 rituels',
+    'Nom dans les remerciements',
+    'Badge "Soutien" dans le profil',
+  ],
+  ami: [
+    'Accès Premium offert',
+    'Nom dans le Cercle des Fondateurs',
+    'Badge "Ami du Jardin" dans le profil',
+  ],
+  compagnon: [
+    'Accès Premium offert',
+    'Nom dans le Cercle des Fondateurs',
+    'Citation gravée (message + nom)',
+    '−50% sur tous les ateliers',
+    'Accès anticipé aux nouvelles fonctionnalités',
+    'Badge "Compagnon" dans le profil',
+  ],
+  fondateur: [
+    'Accès Premium offert',
+    'Nom dans le Cercle des Fondateurs',
+    'Citation gravée (message + nom)',
+    '−50% sur tous les ateliers et la jardinothèque',
+    'Accès prioritaire au support',
+    'Badge "Fondateur" exclusif dans le profil',
+    'Participation exclusive aux évolutions à venir',
+  ],
+}
+
 // Scan fleurs exemple (même glob que ScreenCercleFondateurs)
 const _vipFleurGlob = import.meta.glob('/public/fondateurs/exemple/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' })
 const VIP_FLEUR_CHOIX = Object.entries(_vipFleurGlob)
@@ -1428,6 +1461,7 @@ function CompteVipModal({ fondateur, isFondateurGraine, onClose }) {
   const [upgradeTier, setUpgradeTier] = useState(null)
   const [upgradeMontant, setUpgradeMontant] = useState(0)
   const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [codeCopied, setCodeCopied] = useState(false)
   const [form, setForm] = useState({
     display_name: fondateur?.display_name ?? '',
     citation:     fondateur?.citation     ?? '',
@@ -1507,16 +1541,46 @@ function CompteVipModal({ fondateur, isFondateurGraine, onClose }) {
               </div>
             )}
             <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:20 }}>
-              {[
-                niveau === 'graine' && '🌿 Accès aux 120 rituels',
-                niveau === 'graine' && '🌼 Jardin collectif',
-                niveau !== 'graine' && '✦ Accès Premium offert',
-                niveau !== 'graine' && '🌸 Nom dans le Cercle des Fondateurs',
-                (niveau === 'compagnon' || niveau === 'fondateur') && '✦ Citation gravée dans l\'appli',
-              ].filter(Boolean).map((a, i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgba(30,20,8,.78)', fontFamily:"'Jost',sans-serif", padding:'7px 14px', borderRadius:10, background:'rgba(74,124,69,.04)', border:'1px solid rgba(74,124,69,.10)' }}>{a}</div>
+              {(AVANTAGES_VIP[niveau] ?? []).map((a, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgba(30,20,8,.78)', fontFamily:"'Jost',sans-serif", padding:'7px 14px', borderRadius:10, background:`${cfg.color}06`, border:`1px solid ${cfg.color}18` }}>
+                  <span style={{ color:cfg.color, fontSize:11, flexShrink:0 }}>✦</span>
+                  {a}
+                </div>
               ))}
             </div>
+            {/* ── Code remise fondateur ── */}
+            {fondateur?.discount_code && (() => {
+              const DISCOUNT_FOR = {
+                graine:    '−50% sur le Premium (12 mois)',
+                ami:       '−50% sur le Premium (12 mois)',
+                compagnon: '−50% sur les Ateliers',
+                fondateur: '−50% sur les Ateliers & la Jardinthèque',
+              }
+              const handleCopy = () => {
+                navigator.clipboard.writeText(fondateur.discount_code)
+                setCodeCopied(true)
+                setTimeout(() => setCodeCopied(false), 2000)
+              }
+              return (
+                <div style={{ marginBottom:16, padding:'14px 16px', borderRadius:14, background:`${cfg.color}08`, border:`1.5px solid ${cfg.color}30` }}>
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:700, letterSpacing:'.06em', textTransform:'uppercase', color:cfg.color, marginBottom:6 }}>
+                    🎟 Votre code remise
+                  </div>
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, color:'rgba(30,20,8,.55)', marginBottom:10 }}>
+                    {DISCOUNT_FOR[niveau] ?? ''}
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div style={{ flex:1, padding:'9px 14px', borderRadius:10, background:'#fff', border:`1px solid ${cfg.color}25`, fontFamily:"'Jost',sans-serif", fontSize:16, fontWeight:700, letterSpacing:'.08em', color:'#1a1208' }}>
+                      {fondateur.discount_code}
+                    </div>
+                    <button onClick={handleCopy} style={{ padding:'9px 14px', borderRadius:10, border:`1.5px solid ${cfg.color}40`, background: codeCopied ? cfg.color : 'transparent', color: codeCopied ? '#fff' : cfg.color, fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:600, cursor:'pointer', transition:'all .15s', whiteSpace:'nowrap' }}>
+                      {codeCopied ? '✓ Copié' : 'Copier'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })()}
+
             {dateStr && <div style={{ textAlign:'center', fontSize:11.5, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", marginBottom:18 }}>Membre depuis le {dateStr}</div>}
 
             {/* ── Section upgrade ── */}
@@ -1582,29 +1646,33 @@ function CompteVipModal({ fondateur, isFondateurGraine, onClose }) {
               <label style={labelStyle}>Nom affiché</label>
               <input style={inputStyle} type="text" value={form.display_name} onChange={e => set('display_name', e.target.value)} maxLength={80}/>
             </div>
-            <div>
-              <label style={labelStyle}>Citation florale <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>— 80 car. max</span></label>
-              <div style={{ position:'relative' }}>
-                <textarea style={{ ...inputStyle, resize:'none', fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontStyle: form.citation ? 'italic' : 'normal' }}
-                  rows={2} maxLength={80} placeholder='"Pour que la douceur ait sa place."'
-                  value={form.citation} onChange={e => set('citation', e.target.value)}/>
-                <span style={{ position:'absolute', bottom:8, right:10, fontSize:11, color:'rgba(30,20,8,.28)', fontFamily:"'Jost',sans-serif" }}>{form.citation.length}/80</span>
+            {niveau !== 'graine' && (
+              <div>
+                <label style={labelStyle}>Citation florale <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>— 80 car. max</span></label>
+                <div style={{ position:'relative' }}>
+                  <textarea style={{ ...inputStyle, resize:'none', fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontStyle: form.citation ? 'italic' : 'normal' }}
+                    rows={2} maxLength={80} placeholder='"Pour que la douceur ait sa place."'
+                    value={form.citation} onChange={e => set('citation', e.target.value)}/>
+                  <span style={{ position:'absolute', bottom:8, right:10, fontSize:11, color:'rgba(30,20,8,.28)', fontFamily:"'Jost',sans-serif" }}>{form.citation.length}/80</span>
+                </div>
               </div>
-            </div>
-            <div>
-              <label style={labelStyle}>Ma fleur</label>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:180, overflowY:'auto', padding:'4px 2px' }}>
-                {VIP_FLEUR_CHOIX.map((src, i) => {
-                  const sel = form.fleur_image === src
-                  return (
-                    <div key={i} onClick={() => set('fleur_image', sel ? '' : src)}
-                      style={{ width:72, height:72, borderRadius:10, overflow:'hidden', cursor:'pointer', border: sel ? `2.5px solid ${cfg.color}` : '2px solid rgba(200,178,148,.20)', boxShadow: sel ? `0 0 0 2px ${cfg.color}40` : 'none', background:'#faf8f4', transition:'all .14s', flexShrink:0 }}>
-                      <img src={src} alt="" style={{ width:'100%', height:'100%', objectFit:'contain' }}/>
-                    </div>
-                  )
-                })}
+            )}
+            {niveau !== 'graine' && (
+              <div>
+                <label style={labelStyle}>Ma fleur</label>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:180, overflowY:'auto', padding:'4px 2px' }}>
+                  {VIP_FLEUR_CHOIX.map((src, i) => {
+                    const sel = form.fleur_image === src
+                    return (
+                      <div key={i} onClick={() => set('fleur_image', sel ? '' : src)}
+                        style={{ width:72, height:72, borderRadius:10, overflow:'hidden', cursor:'pointer', border: sel ? `2.5px solid ${cfg.color}` : '2px solid rgba(200,178,148,.20)', boxShadow: sel ? `0 0 0 2px ${cfg.color}40` : 'none', background:'#faf8f4', transition:'all .14s', flexShrink:0 }}>
+                        <img src={src} alt="" style={{ width:'100%', height:'100%', objectFit:'contain' }}/>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
+            )}
             <div style={{ display:'flex', gap:10, marginTop:4 }}>
               <button onClick={() => setEditing(false)} style={{ flex:1, padding:'11px', borderRadius:50, border:'1.5px solid rgba(200,178,148,.40)', background:'transparent', color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontSize:14, cursor:'pointer' }}>
                 Annuler
@@ -1702,7 +1770,7 @@ export default function DashboardPage() {
     if (!showProfileModal || !user?.id) return
     supabase.from('activity').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
       .then(({ count }) => setUserActionCount(count ?? 0))
-    supabase.from('fondateurs').select('user_id, display_name, niveau, montant, citation, fleur_image, date_contribution')
+    supabase.from('fondateurs').select('user_id, display_name, email, niveau, montant, citation, fleur_image, date_contribution, discount_code')
       .eq('user_id', user.id).maybeSingle()
       .then(({ data }) => setFondateurData(data ?? null))
   }, [showProfileModal, user?.id])
@@ -1973,6 +2041,7 @@ export default function DashboardPage() {
     profile:        { ...profile, level: userLevel },
     userLevel,
     isPremium,
+    isFondateurGraine,
     todayPlant,
     stats:          plantStats,
     circleStats:    stats,
@@ -2005,7 +2074,7 @@ export default function DashboardPage() {
     onCloseRituals: () => setOpenRitualsModal(false),
     bilanDoneToday,
     track,
-  }), [user, profile, userLevel, isPremium, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, postRitualSlide, track])
+  }), [user, profile, userLevel, isPremium, isFondateurGraine, todayPlant, plantStats, stats, circleMembers, activeCircle, communityStats, lumens, awardLumens, refresh, gardenFlowerCount, defis, myDefis, joinedIds, achats, unreadCoeurs, pendingInvitations, bilanDoneToday, openRitualsModal, postRitualSlide, track])
 
   // ── Prefetch IA — tous les slides en parallèle dès que l'user est connu ──
   // Les résultats sont mis en cache sessionStorage (clé = userId + slideId + date).

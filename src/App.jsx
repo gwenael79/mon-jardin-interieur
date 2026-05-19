@@ -247,7 +247,7 @@ export default function App() {
               // Fondateur VIP : valide onboarding + weekone + crée la fleur à 50%
               const today = new Date().toISOString().split('T')[0]
               await Promise.all([
-                supabase.from('users').update({ onboarded: true, onboarding_completed: true }).eq('id', user.id),
+                supabase.from('users').update({ onboarded: true, onboarding_completed: true, plan: profileData.plan }).eq('id', user.id),
                 supabase.from('profiles').update({
                   onboarded: true,
                   week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' },
@@ -263,6 +263,7 @@ export default function App() {
                   zone_souffle:  50,
                 }, { onConflict: 'user_id,date' }),
               ])
+              try { localStorage.removeItem(`mji_profile_${user.id}`) } catch {}
               await refresh()
               setScreen('dashboard'); return
             }
@@ -276,6 +277,33 @@ export default function App() {
             setScreen('pro_welcome'); return
           }
           setScreen('flower'); return
+        }
+
+        // VIP check — avant les vérifications onboarding/weekone
+        {
+          const { data: vipProfile } = await supabase
+            .from('profiles').select('plan, week_one_data').eq('id', user.id).maybeSingle()
+          const isVip = vipProfile?.plan === 'fondateur_graine' || vipProfile?.plan === 'premium'
+          const weekDone = (vipProfile?.week_one_data?.completedDays?.length ?? 0) >= 7
+
+          if (isVip && (!userData?.onboarding_completed || !weekDone)) {
+            const today = new Date().toISOString().split('T')[0]
+            const vipPlan = vipProfile.plan
+            await Promise.all([
+              supabase.from('users').update({ onboarded: true, onboarding_completed: true, plan: vipPlan }).eq('id', user.id),
+              supabase.from('profiles').update({
+                onboarded: true,
+                week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' },
+              }).eq('id', user.id),
+              supabase.from('plants').upsert({
+                user_id: user.id, date: today, health: 50,
+                zone_racines: 50, zone_tige: 50, zone_feuilles: 50, zone_fleurs: 50, zone_souffle: 50,
+              }, { onConflict: 'user_id,date' }),
+            ])
+            // Vider le cache profil pour forcer le rechargement avec le bon plan
+            try { localStorage.removeItem(`mji_profile_${user.id}`) } catch {}
+            setScreen('dashboard'); return
+          }
         }
 
         // Si l'onboarding n'est pas terminé → retourner à l'onboarding

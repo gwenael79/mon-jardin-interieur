@@ -979,9 +979,9 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
 }
 
 
-function ScreenJardinCollectif({ userId, isPremium = false, userLevel = 1, onUpgrade, gardenFlowerCount, communityStats }) {
+function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = false, userLevel = 1, onUpgrade, gardenFlowerCount, communityStats }) {
   const isMobile = useIsMobile()
-  const canAccess = isPremium || userLevel >= 3
+  const canAccess = isPremium || isFondateurGraine || userLevel >= 3
   const flowerCount = gardenFlowerCount ?? 0
   const gardenContainerRef = useRef(null)
   const [containerH, setContainerH] = useState(null)
