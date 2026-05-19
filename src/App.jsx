@@ -285,15 +285,13 @@ export default function App() {
     setScreen('dashboard')
   }
 
-  // ── Test URL params ────────────────────────────────────────────────────────
+  // ── Page Cercle publique — retour immédiat avant tout le reste ───────────
   const params = new URLSearchParams(window.location.search)
-
-  // ── Rendu ─────────────────────────────────────────────────────────────────
-  // ── Page Cercle accessible publiquement sans connexion ────────────────────
-  const _urlParams = new URLSearchParams(window.location.search)
-  if (_urlParams.has('cercle') && _urlParams.get('cercle') !== 'success' && _urlParams.get('cercle') !== 'cancel') {
+  if (params.has('cercle') && params.get('cercle') !== 'success' && params.get('cercle') !== 'cancel') {
     return <CerclePublicPage />
   }
+
+  // ── Test URL params ────────────────────────────────────────────────────────
 
   if (screen === 'loading' || screen === 'activating' || authLoading) {
     return <div style={styles.loading}><span>🌱</span></div>

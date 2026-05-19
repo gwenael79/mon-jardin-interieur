@@ -4,8 +4,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../core/supabaseClient'
-import { useIsMobile } from './dashboardShared'
 import { useAuth } from '../hooks/useAuth'
+
+// Hook mobile autonome — pas de dépendance à dashboardShared
+function useIsMobile() {
+  const [mob, setMob] = useState(() => window.innerWidth <= 768)
+  useEffect(() => {
+    const fn = () => setMob(window.innerWidth <= 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mob
+}
 
 // Scan automatique de /public/fondateurs/ — images état vide
 const _fleurGlob = import.meta.glob('/public/fondateurs/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' })
@@ -1006,24 +1016,25 @@ export function CerclePublicPage() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#faf8f2',
+      background: 'radial-gradient(ellipse at 30% 20%, #1a2e1a 0%, #0e1a0e 60%, #080f08 100%)',
       fontFamily: "'Jost', sans-serif",
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: '24px 16px 48px',
     }}>
       <style>{CERCLE_CSS}</style>
 
-      {/* Barre de navigation minimale */}
+      {/* Barre de navigation */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        background: 'rgba(250,248,242,.92)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(200,178,148,.18)',
-        padding: '12px 20px',
+        width: '100%', maxWidth: 760,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: 16, padding: '0 4px',
       }}>
         {/* Logo */}
-        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 300, color: '#1a1208', letterSpacing: '0.01em' }}>
-          Mon <em style={{ fontStyle: 'italic', color: '#4a7c45' }}>Jardin</em>
-          <span style={{ fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(30,20,8,.45)', fontStyle: 'normal', marginLeft: 6 }}>Intérieur</span>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 17, fontWeight: 300, color: 'rgba(255,255,255,.70)', letterSpacing: '0.01em' }}>
+          Mon <em style={{ fontStyle: 'italic', color: '#7ab870' }}>Jardin</em>
+          <span style={{ fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.30)', fontStyle: 'normal', marginLeft: 6 }}>Intérieur</span>
         </div>
 
         {/* Bouton retour — visible uniquement si connecté */}
@@ -1031,25 +1042,31 @@ export function CerclePublicPage() {
           <button
             onClick={() => window.location.href = '/'}
             style={{
-              padding: '7px 16px', borderRadius: 100,
-              border: '1px solid rgba(74,124,69,.28)',
-              background: 'rgba(74,124,69,.07)',
-              color: '#4a7c45',
+              padding: '6px 16px', borderRadius: 100,
+              border: '1px solid rgba(122,184,112,.35)',
+              background: 'rgba(122,184,112,.12)',
+              color: '#7ab870',
               fontFamily: "'Jost', sans-serif",
-              fontSize: 13, fontWeight: 500,
+              fontSize: 12.5, fontWeight: 500,
               cursor: 'pointer', letterSpacing: '0.03em',
               transition: 'background .15s',
             }}
-            onMouseEnter={e => e.currentTarget.style.background = 'rgba(74,124,69,.14)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'rgba(74,124,69,.07)'}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(122,184,112,.22)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(122,184,112,.12)'}
           >
             ← Mon Jardin
           </button>
         )}
       </div>
 
-      {/* Contenu de la page */}
-      <div style={{ maxWidth: 700, margin: '0 auto', paddingBottom: 60 }}>
+      {/* Carte de contenu */}
+      <div style={{
+        width: '100%', maxWidth: 760,
+        background: '#faf8f2',
+        borderRadius: 28,
+        overflow: 'hidden',
+        boxShadow: '0 32px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06)',
+      }}>
         <ScreenCercleFondateurs userId={user?.id}/>
       </div>
     </div>
