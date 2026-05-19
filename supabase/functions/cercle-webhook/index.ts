@@ -12,7 +12,6 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 )
 
-// ── Telegram ─────────────────────────────────────────────────────────────────
 async function sendTelegram(text: string) {
   const token  = Deno.env.get('TELEGRAM_BOT_TOKEN')
   const chatId = Deno.env.get('TELEGRAM_CHAT_ID')
@@ -25,11 +24,10 @@ async function sendTelegram(text: string) {
   })
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
 serve(async (req) => {
-  const sig  = req.headers.get('stripe-signature') ?? ''
-  const body = await req.text()
-  const secret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? ''
+  const sig    = req.headers.get('stripe-signature') ?? ''
+  const body   = await req.text()
+  const secret = Deno.env.get('CERCLE_WEBHOOK_SECRET') ?? ''
 
   let event: Stripe.Event
   try {
@@ -43,11 +41,17 @@ serve(async (req) => {
     return new Response(JSON.stringify({ received: true }), { status: 200 })
   }
 
-  const session  = event.data.object as Stripe.Checkout.Session
-  const meta     = session.metadata ?? {}
-  const montant  = (session.amount_total ?? 0) / 100
+  const session = event.data.object as Stripe.Checkout.Session
+  const meta    = session.metadata ?? {}
 
-  // Évite les doublons (Stripe peut renvoyer l'event)
+  // Ignore les sessions qui ne viennent pas du Cercle
+  if (meta.source !== 'cercle_fondateurs') {
+    return new Response(JSON.stringify({ received: true }), { status: 200 })
+  }
+
+  const montant = (session.amount_total ?? 0) / 100
+
+  // Évite les doublons
   const { data: existing } = await supabase
     .from('fondateurs')
     .select('id')
@@ -55,30 +59,30 @@ serve(async (req) => {
     .maybeSingle()
 
   if (!existing) {
-    // ── Insère le fondateur ─────────────────────────────────────────────────
-    const niveau = (meta.niveau ?? 'ami') as 'ami' | 'compagnon' | 'fondateur'
+    const niveau = (meta.niveau ?? 'graine') as 'graine' | 'ami' | 'compagnon' | 'fondateur'
+    const email  = meta.email || session.customer_email || null
 
     const { error } = await supabase.from('fondateurs').insert({
-      display_name:     `${meta.prenom ?? ''} ${meta.nom ?? ''}`.trim(),
-      citation:         meta.citation || null,
+      display_name:    `${meta.prenom ?? ''} ${meta.nom ?? ''}`.trim(),
+      email,
+      citation:        meta.citation || null,
       niveau,
       montant,
-      devise:           session.currency?.toUpperCase() ?? 'EUR',
-      paiement_method:  'stripe',
-      paiement_ref:     session.id,
+      devise:          session.currency?.toUpperCase() ?? 'EUR',
+      paiement_method: 'stripe',
+      paiement_ref:    session.id,
       affichage_public: true,
-      fleur_variant:    1,
+      fleur_variant:   1,
+      fleur_image:     meta.fleur_image || null,
     })
 
-    if (error) {
-      console.error('[cercle-webhook] insert error:', error)
-    }
+    if (error) console.error('[cercle-webhook] insert error:', error)
 
-    // ── Notification Telegram ───────────────────────────────────────────────
     const NIVEAU_LABEL: Record<string, string> = {
-      ami:        '🌱 Ami du Jardin',
-      compagnon:  '🌿 Compagnon de route',
-      fondateur:  '🌳 Fondateur',
+      graine:    '🌸 Un geste doux',
+      ami:       '🌱 Ami du Jardin',
+      compagnon: '🌿 Compagnon de route',
+      fondateur: '🌳 Fondateur',
     }
 
     const msg = [
@@ -87,7 +91,7 @@ serve(async (req) => {
       `👤 <b>${meta.prenom ?? ''} ${meta.nom ?? ''}</b>`,
       `🏵 Niveau : ${NIVEAU_LABEL[niveau] ?? niveau}`,
       `💶 Contribution : <b>${montant}€</b>`,
-      `✉️ Email : ${meta.email ?? session.customer_email ?? '—'}`,
+      `✉️ Email : ${email ?? '—'}`,
       `📞 Tél : ${meta.telephone || '—'}`,
       `📅 ${new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}`,
       '',

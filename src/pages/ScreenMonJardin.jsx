@@ -3287,6 +3287,7 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
   async function handleSave() {
     if (!text.trim() || saving || savedToday) return
     setSaving(true)
+    const safetyTimer = setTimeout(() => setSaving(false), 10000)
     try {
       const { data, error } = await supabase
         .from('graines_estime')
@@ -3301,7 +3302,7 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
         setTags([])
       }
     } catch(e) { console.error(e) }
-    finally { setSaving(false) }
+    finally { clearTimeout(safetyTimer); setSaving(false) }
   }
 
   async function openModal() {
@@ -3461,6 +3462,7 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
                       display:'inline-flex', alignItems:'center', gap:7,
                       padding:'8px 20px', borderRadius:100,
                       cursor:'pointer', userSelect:'none', WebkitTapHighlightColor:'transparent',
+                      touchAction:'manipulation',
                       transition:'all .18s',
                       background: selected ? selBg : 'rgba(255,255,255,0.8)',
                       border: `1.5px solid ${selected ? selBorder : 'rgba(0,0,0,0.14)'}`,
@@ -3482,18 +3484,19 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
               </span>
               <button
                 onClick={handleSave}
-                disabled={!text.trim() || saving}
                 style={{
                   minHeight: isMobile ? 54 : 50,
                   padding: inline ? '0 36px' : '0 22px',
                   borderRadius: 12,
                   fontSize: isMobile ? (inline ? 18 : 14) : (inline ? 18 : 13),
-                  background: text.trim() ? 'rgba(40,100,40,0.85)' : 'rgba(0,0,0,0.07)',
-                  border: `1px solid ${text.trim() ? 'rgba(40,100,40,0.6)' : 'rgba(0,0,0,0.1)'}`,
-                  color: text.trim() ? '#fff' : '#aaa',
-                  cursor: text.trim() ? 'pointer' : 'default',
+                  background: (text.trim() && !saving) ? 'rgba(40,100,40,0.85)' : 'rgba(0,0,0,0.07)',
+                  border: `1px solid ${(text.trim() && !saving) ? 'rgba(40,100,40,0.6)' : 'rgba(0,0,0,0.1)'}`,
+                  color: (text.trim() && !saving) ? '#fff' : '#aaa',
+                  cursor: (text.trim() && !saving) ? 'pointer' : 'default',
+                  pointerEvents: (!text.trim() || saving) ? 'none' : 'auto',
                   fontFamily: "'Jost', sans-serif", fontWeight:600, transition: 'all .18s',
                   WebkitTapHighlightColor:'transparent',
+                  touchAction: 'manipulation',
                   width: isMobile ? '100%' : 'auto',
                   letterSpacing:'.04em',
                 }}
