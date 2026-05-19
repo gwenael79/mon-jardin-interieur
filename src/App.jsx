@@ -10,6 +10,8 @@ import { AdminActivitePage } from './pages/AdminActivitePage'
 import { AdminProsPage } from './pages/AdminProsPage'
 import { AdminMessagesPage } from './pages/AdminMessagesPage'
 import { AdminJardinothequePage } from './pages/AdminJardinothequePage'
+import { AdminFondateursPage } from './pages/AdminFondateursPage'
+import { CerclePublicPage } from './pages/ScreenCercleFondateurs'
 import { AppAvisModal } from './components/AppAvisModal'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
@@ -135,6 +137,7 @@ export default function App() {
     if (hash === '#jardinotheque') setScreen('admin-jardinotheque')
     if (hash === '#pros')          setScreen('admin-pros')
     if (hash === '#messages')      setScreen('admin-messages')
+    if (hash === '#fondateurs')    setScreen('admin-fondateurs')
     if (hash === '#entreprise')    setScreen('entreprise')
   }, [hash, user?.id])
 
@@ -154,6 +157,7 @@ export default function App() {
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#jardinotheque') { setScreen('admin-jardinotheque'); return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#pros')          { setScreen('admin-pros');          return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#messages')      { setScreen('admin-messages');      return }
+    if (ADMIN_IDS.includes(user.id) && window.location.hash === '#fondateurs')   { setScreen('admin-fondateurs');    return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#entreprise')    { setScreen('entreprise');          return }
 
     // Retour depuis Stripe — succès → vider le cache profil + attendre webhook
@@ -285,6 +289,12 @@ export default function App() {
   const params = new URLSearchParams(window.location.search)
 
   // ── Rendu ─────────────────────────────────────────────────────────────────
+  // ── Page Cercle accessible publiquement sans connexion ────────────────────
+  const _urlParams = new URLSearchParams(window.location.search)
+  if (_urlParams.has('cercle') && _urlParams.get('cercle') !== 'success' && _urlParams.get('cercle') !== 'cancel') {
+    return <CerclePublicPage />
+  }
+
   if (screen === 'loading' || screen === 'activating' || authLoading) {
     return <div style={styles.loading}><span>🌱</span></div>
   }
@@ -311,6 +321,7 @@ export default function App() {
   if (screen === 'admin-jardinotheque') return <AdminJardinothequePage />
   if (screen === 'admin-pros')          return <AdminProsPage />
   if (screen === 'admin-messages')      return <AdminMessagesPage />
+  if (screen === 'admin-fondateurs')   return <AdminFondateursPage />
 
   if (screen === 'entreprise') return <Entreprise />
 

@@ -3473,6 +3473,7 @@ export function AdminNav({ current }) {
     { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
     { hash: '#pros',        label: 'Pros',         icon: '💼' },
     { hash: '#messages',    label: 'Messages',     icon: '💬', badge: pending },
+    { hash: '#fondateurs',  label: 'Fondateurs',   icon: '🌸' },
     { hash: '#entreprise',  label: 'Back-office',  icon: '🤖' },
   ]
   return (

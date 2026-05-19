@@ -43,6 +43,7 @@ import { WelcomeScreen }             from './WelcomeScreen'
 import { VideoIntro, pickVideo }    from './VideoIntro'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
 import { ScreenClubJardiniers }      from './ScreenClubJardiniers'
+import { ScreenCercleFondateurs }    from './ScreenCercleFondateurs'
 import { ScreenAteliers }            from './ScreenAteliers'
 import { MaBibliotheque, useAchats } from './MaBibliotheque'
 import { ScreenJardinotheque }       from './ScreenJardinotheque'
@@ -121,6 +122,18 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #80aad0, #5070a0)',
     btnShadow: 'rgba(80,120,180,.34)',
     Component: ScreenClubJardiniers,
+  },
+  {
+    id:        'cercle',    illusKey: 'cercle',    image: '/club.png',
+    badge:     'Le Cercle',           icon: '🌸',
+    title:     'Le Cercle qui nous porte',
+    subtitle:  'Ceux qui ont choisi de soutenir le projet. Grâce à elles, ce jardin continue de pousser.',
+    guideDesc: 'Les fondateurs du jardin',
+    color:     '#8a6a9a',
+    btnLabel:  'Découvrir le Cercle',
+    btnGrad:   'linear-gradient(135deg, #a07ab0, #7a5a88)',
+    btnShadow: 'rgba(130,90,150,.34)',
+    Component: ScreenCercleFondateurs,
   },
   {
     id:        'ateliers',  illusKey: 'ateliers',  image: '/atelier.png',
@@ -2166,6 +2179,13 @@ export default function DashboardPage() {
                 <div>
                   <div style={{ fontSize:12, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>Paramètres du compte</div>
                   <div style={{ fontSize:10, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif" }}>Nom, notifications, confidentialité</div>
+                </div>
+              </div>
+              <div onClick={() => { setShowProfileModal(false); setOpenModalId('cercle') }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(138,106,154,.06)', borderRadius:12, border:'1px solid rgba(138,106,154,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(138,106,154,.14)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(138,106,154,.06)'}>
+                <span style={{ fontSize:16 }}>🌸</span>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:500, color:'#6a4a7a', fontFamily:"'Jost',sans-serif" }}>Le Cercle des Fondateurs</div>
+                  <div style={{ fontSize:10, color:'rgba(106,74,122,.48)', fontFamily:"'Jost',sans-serif" }}>Ceux qui nous portent</div>
                 </div>
               </div>
               {ADMIN_IDS.includes(user?.id) && (
