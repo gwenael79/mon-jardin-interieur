@@ -73,7 +73,7 @@ const CERCLE_CSS = `
   .cf-tier-outer {
     perspective: 900px;
     cursor: pointer;
-    height: 230px;
+    height: 270px;
   }
   .cf-tier-inner {
     position: relative;
@@ -168,31 +168,75 @@ const PETAL_PALETTE = {
   fondateur: ['#3a6c3f','#6a3a6c','#b08030','#484878','#8a3a30','#3a6870','#6a5830'],
 }
 
+const TIERS_DETAIL = [
+  {
+    niveau: 'graine', icon: '🌸', label: 'Un geste doux', range: '10€ à 100€',
+    avantages: [
+      'Accès à l\'appli (plan Free)',
+      '**−50% de remise sur le Premium (12 mois)',
+      'Accès au Jardin collectif',
+      'Accès aux 120 rituels',
+      'Nom dans les remerciements',
+      'Badge "Soutien" dans le profil',
+    ],
+  },
+  {
+    niveau: 'ami', icon: '🌱', label: 'Ami du Jardin', range: '150€ à 249€',
+    avantages: [
+      '**Accès Premium offert',
+      'Nom dans le Cercle des fondateurs',
+      'Badge "Ami du Jardin" dans le profil',
+    ],
+  },
+  {
+    niveau: 'compagnon', icon: '🍃', label: 'Compagnon de route', range: '250€ à 499€',
+    avantages: [
+      'Accès Premium offert',
+      'Nom dans le Cercle des fondateurs',
+      'Citation gravée (message + nom)',
+      '**−50% sur tous les ateliers',
+      'Accès anticipé aux nouvelles fonctionnalités (bêta)',
+      'Badge "Compagnon" dans le profil',
+    ],
+  },
+  {
+    niveau: 'fondateur', icon: '🌳', label: 'Fondateur', range: '500€ à 2000€',
+    avantages: [
+      'Accès Premium offert',
+      'Nom dans le Cercle des fondateurs',
+      '**−50% sur tous les ateliers et sur la jardinothèque',
+      'Accès prioritaire au support',
+      'Badge "Fondateur" exclusif dans le profil',
+      'Participation exclusive aux évolutions à venir',
+    ],
+  },
+]
+
 const TIERS = [
   {
     niveau: 'graine', icon: '🌸', label: 'Un geste doux',
     range: '10€ – 100€', min: 10, max: 100, step: 1, defaultMontant: 30,
-    avantages: ['Soutien au projet', 'Gratitude de Gwenaël'],
-    desc: 'Un geste doux pour soutenir le jardin',
+    avantages: ['−50% sur le Premium', 'Jardin collectif', '120 rituels'],
+    desc: '−50% Premium · Jardin collectif · 120 rituels',
   },
   {
     niveau: 'ami', icon: '🌱', label: 'Ami du Jardin',
     range: '150€ – 249€', min: 150, max: 249, step: 1, defaultMontant: 180,
-    avantages: ['Nom dans le Cercle', 'Premium à vie'],
-    desc: 'Votre nom dans le jardin · Premium à vie',
+    avantages: ['Premium offert', 'Nom dans le Cercle'],
+    desc: 'Premium offert · Nom dans le Cercle',
   },
   {
     niveau: 'compagnon', icon: '🌿', label: 'Compagnon de route',
     range: '250€ – 499€', min: 250, max: 499, step: 1, defaultMontant: 350,
-    avantages: ['Citation gravée', 'Atelier Coulisses'],
-    desc: 'Citation gravée sous votre fleur · Atelier Coulisses',
+    avantages: ['Premium offert', 'Citation gravée · −50% ateliers'],
+    desc: 'Premium · Citation gravée · −50% ateliers',
     highlighted: true,
   },
   {
     niveau: 'fondateur', icon: '🌳', label: 'Fondateur',
     range: '500€ – 2000€', min: 500, max: 2000, step: 50, defaultMontant: 800,
-    avantages: ['Visio annuelle', 'Vote roadmap'],
-    desc: 'Visio annuelle avec Gwenaël · Voix sur la roadmap',
+    avantages: ['Premium offert', 'Badge Fondateur exclusif'],
+    desc: 'Premium · Citation · Badge exclusif · Priorité support',
   },
 ]
 
@@ -614,9 +658,81 @@ function TierCard({ tier, isFlipped, onFlip, montant, onMontant }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SECTION CTA
 // ─────────────────────────────────────────────────────────────────────────────
+//  MODAL AVANTAGES DÉTAILLÉS
+// ─────────────────────────────────────────────────────────────────────────────
+function ModalAvantages({ onClose }) {
+  return createPortal(
+    <div
+      role="dialog" aria-modal="true" aria-label="Avantages du Cercle"
+      style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(10,22,8,.58)', backdropFilter:'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16, animation:'cfFadeUp .22s ease both' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ background:'#faf8f4', borderRadius:26, width:'min(640px,100%)', maxHeight:'88vh', overflowY:'auto', scrollbarWidth:'thin', padding:'36px 28px 32px', position:'relative', boxShadow:'0 24px 72px rgba(30,60,10,.28)', border:'1.5px solid rgba(180,210,140,.28)', animation:'cfFadeUp .30s cubic-bezier(.22,1,.36,1) both' }}>
+
+        <button onClick={onClose} aria-label="Fermer"
+          style={{ position:'absolute', top:14, right:14, width:30, height:30, borderRadius:'50%', border:'none', background:'rgba(200,160,150,.14)', cursor:'pointer', fontSize:13, color:'rgba(30,20,8,.45)', display:'flex', alignItems:'center', justifyContent:'center' }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(200,160,150,.28)'}
+          onMouseLeave={e => e.currentTarget.style.background='rgba(200,160,150,.14)'}
+        >✕</button>
+
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#1a1208', marginBottom:10, textAlign:'center' }}>
+          Les avantages du Cercle
+        </div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:15, color:'rgba(30,20,8,.52)', lineHeight:1.70, textAlign:'center', marginBottom:24, maxWidth:420, margin:'0 auto 24px' }}>
+          Aucune obligation d'adhésion à l'application — votre participation peut être tout simplement un encouragement financier.
+        </div>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          {TIERS_DETAIL.map((t, idx) => {
+            const c = LEVEL_COLOR[t.niveau] ?? '#4a7c45'
+            return (
+              <div key={t.niveau}>
+                {idx > 0 && <div style={{ height:1, background:'linear-gradient(90deg,transparent,rgba(200,178,148,.30),transparent)', marginBottom:16 }}/>}
+                <div style={{ display:'flex', alignItems:'flex-start', gap:14 }}>
+                  {/* Icône */}
+                  <div style={{ width:44, height:44, borderRadius:12, background:`${c}12`, border:`1px solid ${c}28`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0, marginTop:2 }}>
+                    {t.icon}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    {/* Titre + range */}
+                    <div style={{ display:'flex', alignItems:'baseline', gap:10, flexWrap:'wrap', marginBottom:8 }}>
+                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11.5, fontWeight:700, color:c, letterSpacing:'0.08em', textTransform:'uppercase' }}>
+                        {t.label}
+                      </span>
+                      <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#1a1208' }}>
+                        {t.range}
+                      </span>
+                    </div>
+                    {/* Avantages */}
+                    <ul style={{ listStyle:'none', margin:0, padding:0, display:'flex', flexDirection:'column', gap:5 }}>
+                      {t.avantages.map((a, i) => {
+                        const isBold = a.startsWith('**')
+                        const text = isBold ? a.slice(2) : a
+                        return (
+                          <li key={i} style={{ display:'flex', alignItems:'flex-start', gap:8, fontSize:14, color:'rgba(30,20,8,.78)', fontFamily:"'Jost',sans-serif", lineHeight:1.5, fontWeight: isBold ? 700 : 400 }}>
+                            <span style={{ color:c, fontSize:12, marginTop:2, flexShrink:0 }}>✦</span>
+                            {text}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function NiveauxCTA({ onRejoindre }) {
   const isMobile = useIsMobile()
-  const [flipped, setFlipped]   = useState(null)
+  const [flipped, setFlipped]       = useState(null)
+  const [showAvantages, setShowAvantages] = useState(false)
   const [montants, setMontants] = useState({
     graine: 30, ami: 180, compagnon: 350, fondateur: 800,
   })
@@ -637,13 +753,27 @@ function NiveauxCTA({ onRejoindre }) {
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,5vw,34px)', fontWeight:300, color:'#1a1208', lineHeight:1.25, marginBottom:10 }}>
           Et si vous inscriviez votre nom ?
         </div>
-        <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:18, color:'rgba(30,20,8,.88)', lineHeight:1.80, maxWidth:400, margin:'0 auto' }}>
-          Choisissez un niveau, ajustez votre contribution avec le curseur.
+        <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:18, color:'rgba(30,20,8,.88)', lineHeight:1.80, maxWidth:600, margin:'0 auto', whiteSpace:'nowrap' }}>
+          Choisissez un niveau · ajustez votre contribution avec le curseur.
         </p>
       </div>
 
-      {/* Grille des 3 cartes */}
-      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 12, marginBottom:20 }}>
+      {/* Bouton avantages */}
+      <div style={{ textAlign:'center', marginBottom:18 }}>
+        <button
+          onClick={() => setShowAvantages(true)}
+          style={{ padding:'8px 22px', borderRadius:100, border:'1.5px solid rgba(74,124,69,.30)', background:'rgba(74,124,69,.06)', color:'#4a7c45', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, cursor:'pointer', letterSpacing:'0.04em', transition:'background .15s, border-color .15s' }}
+          onMouseEnter={e => { e.currentTarget.style.background='rgba(74,124,69,.12)'; e.currentTarget.style.borderColor='rgba(74,124,69,.50)' }}
+          onMouseLeave={e => { e.currentTarget.style.background='rgba(74,124,69,.06)'; e.currentTarget.style.borderColor='rgba(74,124,69,.30)' }}
+        >
+          🌸 Voir les avantages de chaque niveau
+        </button>
+      </div>
+
+      {showAvantages && <ModalAvantages onClose={() => setShowAvantages(false)}/>}
+
+      {/* Grille des 4 cartes */}
+      <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom:20 }}>
         {TIERS.map(t => (
           <TierCard
             key={t.niveau}
@@ -690,13 +820,15 @@ function NiveauxCTA({ onRejoindre }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function FormulaireRejoindre({ tier, montant, onClose, onSuccess }) {
   const isMobile = useIsMobile()
-  const [form, setForm] = useState({ prenom:'', nom:'', email:'', telephone:'', citation:'', fleur_image:'' })
+  const [form, setForm] = useState({ prenom:'', nom:'', email:'', telephone:'', citation:'', fleur_image:'', voulezVip: null })
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const c = LEVEL_COLOR[tier.niveau]
 
   const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
-  const valid = form.prenom.trim() && form.nom.trim() && form.email.includes('@') && form.fleur_image
+  const citationEnabled = tier.niveau === 'compagnon' || tier.niveau === 'fondateur'
+  const fleurEnabled = tier.niveau !== 'graine'
+  const valid = form.prenom.trim() && form.nom.trim() && form.email.includes('@') && (fleurEnabled ? form.fleur_image : true)
 
   const handleSubmit = async () => {
     if (!valid || loading) return
@@ -718,6 +850,7 @@ function FormulaireRejoindre({ tier, montant, onClose, onSuccess }) {
       })
       if (fnErr) throw fnErr
       if (data?.url) {
+        sessionStorage.setItem('cercle_vip', JSON.stringify({ voulezVip: form.voulezVip, email: form.email.trim(), prenom: form.prenom.trim() }))
         window.location.href = data.url
       } else {
         throw new Error('Lien de paiement non reçu.')
@@ -779,14 +912,46 @@ function FormulaireRejoindre({ tier, montant, onClose, onSuccess }) {
               <input id="cf-email" className="cf-input" type="email" placeholder="marie@exemple.fr" autoComplete="email" value={form.email} onChange={e => set('email', e.target.value)}/>
             </div>
 
+            {/* Question accès VIP */}
+            <div style={{ padding:'14px 16px', borderRadius:14, background:'rgba(74,124,69,.05)', border:'1px solid rgba(74,124,69,.18)' }}>
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, color:'#1a1208', marginBottom:6 }}>
+                Souhaitez-vous votre accès VIP à l'application ?
+              </div>
+              <div style={{ fontSize:12, color:'rgba(30,20,8,.50)', fontFamily:"'Jost',sans-serif", lineHeight:1.5, marginBottom:12, fontStyle:'italic' }}>
+                Créez votre compte Mon Jardin Intérieur avec les avantages de votre niveau.
+              </div>
+              <div style={{ display:'flex', gap:10 }}>
+                {[{ val: true, label:'Oui, je veux mon accès' }, { val: false, label:'Non merci' }].map(({ val, label }) => (
+                  <button
+                    key={String(val)}
+                    type="button"
+                    onClick={() => set('voulezVip', val)}
+                    style={{
+                      flex:1, padding:'10px 8px', borderRadius:10, border: form.voulezVip === val ? `2px solid ${c}` : '1.5px solid rgba(200,190,175,.40)',
+                      background: form.voulezVip === val ? `${c}12` : '#fff',
+                      color: form.voulezVip === val ? c : 'rgba(30,20,8,.65)',
+                      fontFamily:"'Jost',sans-serif", fontSize:12.5, fontWeight: form.voulezVip === val ? 700 : 400,
+                      cursor:'pointer', transition:'all .15s',
+                    }}
+                  >
+                    {form.voulezVip === val ? '✓ ' : ''}{label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
               <label className="cf-label" htmlFor="cf-telephone">Téléphone</label>
               <input id="cf-telephone" className="cf-input" type="tel" placeholder="+33 6 00 00 00 00" autoComplete="tel" value={form.telephone} onChange={e => set('telephone', e.target.value)}/>
             </div>
 
-            <div>
+            <div style={{ opacity: citationEnabled ? 1 : 0.38, pointerEvents: citationEnabled ? 'auto' : 'none' }}>
               <label className="cf-label" htmlFor="cf-citation">
-                Citation florale <span style={{ color:'rgba(30,20,8,.35)', fontWeight:400, textTransform:'none', letterSpacing:0 }}>— optionnelle, 80 car. max</span>
+                Citation florale{' '}
+                {citationEnabled
+                  ? <span style={{ color:'rgba(30,20,8,.35)', fontWeight:400, textTransform:'none', letterSpacing:0 }}>— optionnelle, 80 car. max</span>
+                  : <span style={{ color:'rgba(30,20,8,.35)', fontWeight:400, textTransform:'none', letterSpacing:0 }}>— disponible dès Compagnon</span>
+                }
               </label>
               <div style={{ position:'relative' }}>
                 <textarea
@@ -797,11 +962,14 @@ function FormulaireRejoindre({ tier, montant, onClose, onSuccess }) {
                   rows={2}
                   value={form.citation}
                   onChange={e => set('citation', e.target.value)}
-                  style={{ resize:'none', fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontStyle: form.citation ? 'italic' : 'normal' }}
+                  disabled={!citationEnabled}
+                  style={{ resize:'none', fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontStyle: form.citation ? 'italic' : 'normal', background: citationEnabled ? '#fff' : 'rgba(200,190,180,.12)' }}
                 />
-                <span style={{ position:'absolute', bottom:8, right:10, fontSize:11, color:'rgba(30,20,8,.28)', fontFamily:"'Jost',sans-serif" }}>
-                  {form.citation.length}/80
-                </span>
+                {citationEnabled && (
+                  <span style={{ position:'absolute', bottom:8, right:10, fontSize:11, color:'rgba(30,20,8,.28)', fontFamily:"'Jost',sans-serif" }}>
+                    {form.citation.length}/80
+                  </span>
+                )}
               </div>
             </div>
 
@@ -841,6 +1009,8 @@ function FormulaireRejoindre({ tier, montant, onClose, onSuccess }) {
           overflow:'hidden', minHeight:0,
           flexShrink: isMobile ? 0 : undefined,
           height: isMobile ? 170 : undefined,
+          opacity: fleurEnabled ? 1 : 0.35,
+          pointerEvents: fleurEnabled ? 'auto' : 'none',
         }}>
           {/* Titre */}
           <div style={{ padding: isMobile ? '8px 14px 6px' : '14px 10px 10px', fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 14 : 15, fontStyle:'italic', fontWeight:400, color:'rgba(30,20,8,.70)', textAlign: isMobile ? 'left' : 'center', flexShrink:0, borderBottom:'1px solid rgba(200,178,148,.15)' }}>
@@ -924,20 +1094,129 @@ function SuccessModal({ onClose }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  MODAL INSCRIPTION VIP
+// ─────────────────────────────────────────────────────────────────────────────
+function InscriptionVipModal({ email: initialEmail, prenom, onClose }) {
+  const [email,    setEmail]    = useState(initialEmail ?? '')
+  const [password, setPassword] = useState('')
+  const [showPwd,  setShowPwd]  = useState(false)
+  const [loading,  setLoading]  = useState(false)
+  const [done,     setDone]     = useState(false)
+  const [error,    setError]    = useState(null)
+
+  const valid = email.includes('@') && password.length >= 8
+
+  const handleSignup = async () => {
+    if (!valid || loading) return
+    setLoading(true)
+    setError(null)
+    const { error: err } = await supabase.auth.signUp({ email, password, options: { data: { prenom, plan: 'vip' } } })
+    if (err) {
+      setError(err.message)
+      setLoading(false)
+    } else {
+      setDone(true)
+      setLoading(false)
+    }
+  }
+
+  return createPortal(
+    <div style={{ position:'fixed', inset:0, zIndex:10000, background:'rgba(10,22,8,.65)', backdropFilter:'blur(14px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16, animation:'cfFadeUp .3s ease both' }}>
+      <div style={{ background:'#faf8f4', borderRadius:26, width:'min(420px,100%)', padding:'40px 32px 36px', position:'relative', boxShadow:'0 24px 72px rgba(30,60,10,.30)', border:'1.5px solid rgba(180,210,140,.35)', animation:'cfFadeUp .35s cubic-bezier(.22,1,.36,1) both' }}>
+
+        <button onClick={onClose} aria-label="Fermer"
+          style={{ position:'absolute', top:14, right:14, width:30, height:30, borderRadius:'50%', border:'none', background:'rgba(200,160,150,.14)', cursor:'pointer', fontSize:13, color:'rgba(30,20,8,.45)', display:'flex', alignItems:'center', justifyContent:'center' }}
+        >✕</button>
+
+        {done ? (
+          <div style={{ textAlign:'center' }}>
+            <div style={{ fontSize:40, marginBottom:16 }}>🌿</div>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#1a1208', marginBottom:12 }}>
+              Votre compte est créé !
+            </div>
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontStyle:'italic', color:'rgba(30,20,8,.72)', lineHeight:1.75, marginBottom:24 }}>
+              Un email de confirmation vous a été envoyé. Connectez-vous ensuite pour accéder à votre espace VIP.
+            </p>
+            <button onClick={onClose} style={{ padding:'12px 32px', borderRadius:100, border:'none', background:'linear-gradient(135deg,#5a9a2e,#3a7a18)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600, cursor:'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        ) : (
+          <>
+            <div style={{ textAlign:'center', marginBottom:24 }}>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#1a1208', lineHeight:1.25, marginBottom:6 }}>
+                Créer votre accès VIP
+              </div>
+              <div style={{ fontSize:13, color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif" }}>
+                {prenom ? `Bienvenue ${prenom} ! ` : ''}Choisissez un mot de passe pour accéder à l'application.
+              </div>
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              <div>
+                <label className="cf-label" htmlFor="vip-email">Email</label>
+                <input id="vip-email" className="cf-input" type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email"/>
+              </div>
+
+              <div>
+                <label className="cf-label" htmlFor="vip-pwd">Mot de passe <span style={{ color:'#4a7c45' }}>*</span></label>
+                <div style={{ position:'relative' }}>
+                  <input id="vip-pwd" className="cf-input" type={showPwd ? 'text' : 'password'} placeholder="8 caractères minimum" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} style={{ paddingRight:44 }}/>
+                  <button type="button" onClick={() => setShowPwd(v => !v)} tabIndex={-1}
+                    style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', fontSize:16, color:'rgba(30,20,8,.38)', padding:0 }}>
+                    {showPwd ? '🙈' : '👁'}
+                  </button>
+                </div>
+                {password.length > 0 && password.length < 8 && (
+                  <div style={{ marginTop:5, fontSize:11.5, color:'rgba(180,60,60,.80)', fontFamily:"'Jost',sans-serif" }}>
+                    Minimum 8 caractères ({password.length}/8)
+                  </div>
+                )}
+              </div>
+
+              {error && (
+                <div style={{ padding:'10px 14px', borderRadius:10, background:'rgba(180,50,50,.06)', border:'1px solid rgba(180,50,50,.20)', fontSize:13, color:'rgba(160,40,40,.90)', fontFamily:"'Jost',sans-serif" }}>
+                  {error}
+                </div>
+              )}
+
+              <button onClick={handleSignup} disabled={!valid || loading}
+                style={{ width:'100%', padding:'14px', borderRadius:50, border:'none', background: valid ? 'linear-gradient(135deg,#5a9a2e,#3a7a18)' : 'rgba(200,190,180,.40)', color: valid ? '#fff' : 'rgba(30,20,8,.35)', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600, cursor: valid ? 'pointer' : 'not-allowed', letterSpacing:'0.04em', transition:'all .2s' }}>
+                {loading ? 'Création…' : 'Créer mon compte VIP'}
+              </button>
+
+              <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', fontSize:13, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", textAlign:'center' }}>
+                Ignorer pour l'instant
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
 export function ScreenCercleFondateurs({ userId }) {
-  const [fondateurs, setFondateurs] = useState([])
-  const [loading,    setLoading]    = useState(true)
-  const [formData,   setFormData]   = useState(null) // { tier, montant }
+  const [fondateurs,  setFondateurs]  = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [formData,    setFormData]    = useState(null) // { tier, montant }
   const [showSuccess, setShowSuccess] = useState(false)
+  const [vipData,     setVipData]     = useState(null) // { email, prenom }
 
   useEffect(() => {
-    // Détecter retour Stripe success
     const params = new URLSearchParams(window.location.search)
     if (params.get('cercle') === 'success') {
       window.history.replaceState({}, '', window.location.pathname)
       setShowSuccess(true)
+      try {
+        const saved = JSON.parse(sessionStorage.getItem('cercle_vip') ?? 'null')
+        if (saved?.voulezVip) setVipData({ email: saved.email, prenom: saved.prenom })
+        sessionStorage.removeItem('cercle_vip')
+      } catch {}
     }
   }, [])
 
@@ -991,7 +1270,7 @@ export function ScreenCercleFondateurs({ userId }) {
               <div style={{ flex:1, height:1, background:'linear-gradient(to left,transparent,rgba(74,124,69,.15))' }}/>
             </div>
 
-            <section aria-label="Rejoindre le Cercle" style={{ padding:'26px 22px', borderRadius:20, background:'rgba(255,255,255,.75)', border:'1px solid rgba(200,190,175,.22)', boxShadow:'0 2px 16px rgba(74,124,69,.05)' }}>
+            <section aria-label="Rejoindre le Cercle" style={{ padding:'28px 16px 32px', borderRadius:20, background:'rgba(255,255,255,.75)', border:'1px solid rgba(200,190,175,.22)', boxShadow:'0 2px 16px rgba(74,124,69,.05)', margin:'0 -16px' }}>
               <NiveauxCTA onRejoindre={(tier, montant) => setFormData({ tier, montant })}/>
             </section>
 
@@ -1010,6 +1289,7 @@ export function ScreenCercleFondateurs({ userId }) {
       )}
 
       {showSuccess && <SuccessModal onClose={() => setShowSuccess(false)}/>}
+      {!showSuccess && vipData && <InscriptionVipModal email={vipData.email} prenom={vipData.prenom} onClose={() => setVipData(null)}/>}
     </>
   )
 }
