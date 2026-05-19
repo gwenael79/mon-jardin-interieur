@@ -1200,7 +1200,7 @@ function InscriptionVipModal({ email: initialEmail, prenom, onClose }) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
-export function ScreenCercleFondateurs({ userId }) {
+export function ScreenCercleFondateurs({ userId, standalone = false }) {
   const [fondateurs,  setFondateurs]  = useState([])
   const [loading,     setLoading]     = useState(true)
   const [formData,    setFormData]    = useState(null) // { tier, montant }
@@ -1251,7 +1251,7 @@ export function ScreenCercleFondateurs({ userId }) {
     <>
       <style>{CERCLE_CSS}</style>
 
-      <div style={{ height:'100%', overflowY:'auto', overscrollBehavior:'contain', scrollbarWidth:'thin', scrollbarColor:'rgba(74,124,69,.20) transparent', background:'#faf8f2' }}>
+      <div style={{ ...(standalone ? {} : { height:'100%', overflowY:'auto', overscrollBehavior:'contain' }), scrollbarWidth:'thin', scrollbarColor:'rgba(74,124,69,.20) transparent', background:'#faf8f2' }}>
         <div style={{ maxWidth:700, margin:'0 auto', paddingBottom:40 }}>
 
           <HeroCercle count={fondateurs.length} firstDate={fondateurs[0]?.date_contribution}/>
@@ -1354,7 +1354,7 @@ export function CerclePublicPage() {
         overflow: 'hidden',
         boxShadow: '0 32px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06)',
       }}>
-        <ScreenCercleFondateurs userId={user?.id}/>
+        <ScreenCercleFondateurs userId={user?.id} standalone/>
       </div>
     </div>
   )
