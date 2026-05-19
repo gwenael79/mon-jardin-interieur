@@ -61,22 +61,43 @@ serve(async (req) => {
   if (!existing) {
     const niveau = (meta.niveau ?? 'graine') as 'graine' | 'ami' | 'compagnon' | 'fondateur'
     const email  = meta.email || session.customer_email || null
+    const isUpgrade = meta.upgrade === 'true'
 
-    const { error } = await supabase.from('fondateurs').insert({
-      display_name:    `${meta.prenom ?? ''} ${meta.nom ?? ''}`.trim(),
-      email,
-      citation:        meta.citation || null,
-      niveau,
-      montant,
-      devise:          session.currency?.toUpperCase() ?? 'EUR',
-      paiement_method: 'stripe',
-      paiement_ref:    session.id,
-      affichage_public: true,
-      fleur_variant:   1,
-      fleur_image:     meta.fleur_image || null,
-    })
+    let error: any = null
 
-    if (error) console.error('[cercle-webhook] insert error:', error)
+    if (isUpgrade && email) {
+      // ── Upgrade : met à jour le record existant ──────────────────────────
+      const { error: upErr } = await supabase.from('fondateurs')
+        .update({ niveau, montant, paiement_ref: session.id, updated_at: new Date().toISOString() })
+        .eq('email', email)
+      error = upErr
+
+      // Met le plan premium si l'upgrade sort du niveau graine
+      if (!upErr && niveau !== 'graine') {
+        const { data: f } = await supabase.from('fondateurs').select('user_id').eq('email', email).maybeSingle()
+        if (f?.user_id) {
+          await supabase.from('profiles').update({ plan: 'premium' }).eq('id', f.user_id)
+        }
+      }
+    } else {
+      // ── Nouveau fondateur : insertion normale ───────────────────────────
+      const { error: insErr } = await supabase.from('fondateurs').insert({
+        display_name:    `${meta.prenom ?? ''} ${meta.nom ?? ''}`.trim(),
+        email,
+        citation:        meta.citation || null,
+        niveau,
+        montant,
+        devise:          session.currency?.toUpperCase() ?? 'EUR',
+        paiement_method: 'stripe',
+        paiement_ref:    session.id,
+        affichage_public: true,
+        fleur_variant:   1,
+        fleur_image:     meta.fleur_image || null,
+      })
+      error = insErr
+    }
+
+    if (error) console.error('[cercle-webhook] error:', error)
 
     const NIVEAU_LABEL: Record<string, string> = {
       graine:    '🌸 Un geste doux',
@@ -86,7 +107,7 @@ serve(async (req) => {
     }
 
     const msg = [
-      '🌸 <b>Nouveau Fondateur !</b>',
+      isUpgrade ? '⬆️ <b>Upgrade Fondateur !</b>' : '🌸 <b>Nouveau Fondateur !</b>',
       '',
       `👤 <b>${meta.prenom ?? ''} ${meta.nom ?? ''}</b>`,
       `🏵 Niveau : ${NIVEAU_LABEL[niveau] ?? niveau}`,

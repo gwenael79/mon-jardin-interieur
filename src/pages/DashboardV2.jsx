@@ -1394,6 +1394,233 @@ function UpgradeToProModal({ user, onClose, onSuccess }) {
 // ═══════════════════════════════════════════════════════════
 //  AppAvisModal — laisser un avis sur l'application
 // ═══════════════════════════════════════════════════════════
+const NIVEAU_VIP = {
+  graine:    { label:'Un geste doux',      icon:'🌸', color:'#c07898' },
+  ami:       { label:'Ami du Jardin',      icon:'🌱', color:'#7ea870' },
+  compagnon: { label:'Compagnon de route', icon:'🌿', color:'#4a7c45' },
+  fondateur: { label:'Fondateur',          icon:'🌳', color:'#2D5F3F' },
+}
+
+// Scan fleurs exemple (même glob que ScreenCercleFondateurs)
+const _vipFleurGlob = import.meta.glob('/public/fondateurs/exemple/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' })
+const VIP_FLEUR_CHOIX = Object.entries(_vipFleurGlob)
+  .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
+  .map(([, url]) => (typeof url === 'string' && url.startsWith('/public') ? url.replace('/public', '') : url))
+
+const UPGRADE_TIERS = [
+  { niveau:'ami',       label:'Ami du Jardin',      icon:'🌱', color:'#7ea870', min:150, max:249, step:1, default:180 },
+  { niveau:'compagnon', label:'Compagnon de route',  icon:'🌿', color:'#4a7c45', min:250, max:499, step:1, default:350 },
+  { niveau:'fondateur', label:'Fondateur',            icon:'🌳', color:'#2D5F3F', min:500, max:2000, step:50, default:800 },
+]
+const NIVEAU_ORDER = ['graine','ami','compagnon','fondateur']
+
+function CompteVipModal({ fondateur, isFondateurGraine, onClose }) {
+  const niveau  = fondateur?.niveau ?? (isFondateurGraine ? 'graine' : 'ami')
+  const cfg     = NIVEAU_VIP[niveau] ?? NIVEAU_VIP.ami
+  const dateStr = fondateur?.date_contribution
+    ? new Date(fondateur.date_contribution).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })
+    : null
+
+  const [editing,   setEditing]   = useState(false)
+  const [saving,    setSaving]    = useState(false)
+  const [saved,     setSaved]     = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
+  const [upgradeTier, setUpgradeTier] = useState(null)
+  const [upgradeMontant, setUpgradeMontant] = useState(0)
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [form, setForm] = useState({
+    display_name: fondateur?.display_name ?? '',
+    citation:     fondateur?.citation     ?? '',
+    fleur_image:  fondateur?.fleur_image  ?? '',
+  })
+
+  const set = (k, v) => setForm(prev => ({ ...prev, [k]: v }))
+
+  const availableUpgrades = UPGRADE_TIERS.filter(t => NIVEAU_ORDER.indexOf(t.niveau) > NIVEAU_ORDER.indexOf(niveau))
+
+  const handleUpgrade = async () => {
+    if (!upgradeTier || upgradeLoading || !fondateur?.email) return
+    setUpgradeLoading(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('cercle-checkout', {
+        body: {
+          prenom:    fondateur.display_name?.split(' ')[0] ?? '',
+          nom:       fondateur.display_name?.split(' ').slice(1).join(' ') ?? '',
+          email:     fondateur.email ?? '',
+          montant:   upgradeMontant,
+          niveau:    upgradeTier.niveau,
+          label:     upgradeTier.label,
+          upgrade:   true,
+        },
+      })
+      if (error) throw error
+      if (data?.url) window.location.href = data.url
+    } catch (e) {
+      console.error('[upgrade]', e)
+    }
+    setUpgradeLoading(false)
+  }
+
+  const handleSave = async () => {
+    if (!fondateur || saving) return
+    setSaving(true)
+    const { error } = await supabase.from('fondateurs').update({
+      display_name: form.display_name.trim() || fondateur.display_name,
+      citation:     form.citation.trim()     || null,
+      fleur_image:  form.fleur_image         || null,
+    }).eq('user_id', fondateur.user_id ?? '')
+    if (!error) { setSaved(true); setTimeout(() => { setSaved(false); setEditing(false) }, 1400) }
+    setSaving(false)
+  }
+
+  const inputStyle = { width:'100%', padding:'10px 14px', borderRadius:10, border:'1.5px solid rgba(200,178,168,.35)', background:'#fff', fontFamily:"'Jost',sans-serif", fontSize:15, color:'#1a1208', outline:'none', boxSizing:'border-box' }
+  const labelStyle = { display:'block', fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:600, letterSpacing:'.05em', textTransform:'uppercase', color:'rgba(30,20,8,.50)', marginBottom:5 }
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(10,22,8,.60)', backdropFilter:'blur(14px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ background:'#faf8f4', borderRadius:26, width:'min(480px,100%)', maxHeight:'90vh', overflowY:'auto', padding:'36px 28px 32px', position:'relative', boxShadow:'0 24px 72px rgba(30,60,10,.30)', border:'1.5px solid rgba(180,210,140,.35)' }}>
+
+        <button onClick={onClose} aria-label="Fermer"
+          style={{ position:'absolute', top:14, right:14, width:30, height:30, borderRadius:'50%', border:'none', background:'rgba(200,160,150,.14)', cursor:'pointer', fontSize:13, color:'rgba(30,20,8,.45)', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+
+        <div style={{ textAlign:'center', marginBottom:20 }}>
+          {(editing ? form.fleur_image : fondateur?.fleur_image)
+            ? <img src={editing ? form.fleur_image : fondateur.fleur_image} alt="" style={{ width:90, height:90, objectFit:'contain', display:'block', margin:'0 auto 12px', borderRadius:12 }}/>
+            : <div style={{ fontSize:48, marginBottom:12 }}>{cfg.icon}</div>
+          }
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#1a1208', marginBottom:6 }}>
+            Mon compte VIP
+          </div>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'5px 16px', borderRadius:100, background:`${cfg.color}12`, border:`1px solid ${cfg.color}30` }}>
+            <span>{cfg.icon}</span>
+            <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12.5, fontWeight:600, color:cfg.color }}>{cfg.label}</span>
+            {fondateur?.montant && <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:700, color:'#1a1208' }}>{fondateur.montant}€</span>}
+          </div>
+        </div>
+
+        {!editing ? (
+          <>
+            {fondateur?.citation && (
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:16, color:'rgba(30,20,8,.75)', lineHeight:1.75, marginBottom:16, padding:'12px 16px', borderRadius:12, background:'rgba(74,124,69,.05)', border:'1px solid rgba(74,124,69,.12)', textAlign:'center' }}>
+                "{fondateur.citation}"
+              </div>
+            )}
+            <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:20 }}>
+              {[
+                niveau === 'graine' && '🌿 Accès aux 120 rituels',
+                niveau === 'graine' && '🌼 Jardin collectif',
+                niveau !== 'graine' && '✦ Accès Premium offert',
+                niveau !== 'graine' && '🌸 Nom dans le Cercle des Fondateurs',
+                (niveau === 'compagnon' || niveau === 'fondateur') && '✦ Citation gravée dans l\'appli',
+              ].filter(Boolean).map((a, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'rgba(30,20,8,.78)', fontFamily:"'Jost',sans-serif", padding:'7px 14px', borderRadius:10, background:'rgba(74,124,69,.04)', border:'1px solid rgba(74,124,69,.10)' }}>{a}</div>
+              ))}
+            </div>
+            {dateStr && <div style={{ textAlign:'center', fontSize:11.5, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", marginBottom:18 }}>Membre depuis le {dateStr}</div>}
+
+            {/* ── Section upgrade ── */}
+            {availableUpgrades.length > 0 && (
+              <div style={{ marginBottom:16 }}>
+                <button onClick={() => setUpgrading(v => !v)}
+                  style={{ width:'100%', padding:'10px', borderRadius:12, border:'1.5px dashed rgba(74,124,69,.30)', background:'transparent', color:'#4a7c45', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, cursor:'pointer', letterSpacing:'.03em' }}>
+                  {upgrading ? '▲ Fermer' : '⬆ Monter de niveau'}
+                </button>
+                {upgrading && (
+                  <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:10 }}>
+                    {availableUpgrades.map(t => {
+                      const selected = upgradeTier?.niveau === t.niveau
+                      const montant  = selected ? upgradeMontant : t.default
+                      const pct      = ((montant - t.min) / (t.max - t.min)) * 100
+                      const trackBg  = `linear-gradient(to right,${t.color} 0%,${t.color} ${pct}%,#e0d8d0 ${pct}%,#e0d8d0 100%)`
+                      return (
+                        <div key={t.niveau} onClick={() => { setUpgradeTier(t); setUpgradeMontant(t.default) }}
+                          style={{ padding:'12px 14px', borderRadius:14, border: selected ? `2px solid ${t.color}` : '1.5px solid rgba(200,190,175,.30)', background: selected ? `${t.color}08` : '#fff', cursor:'pointer', transition:'all .15s' }}>
+                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom: selected ? 10 : 0 }}>
+                            <span style={{ fontSize:20 }}>{t.icon}</span>
+                            <div style={{ flex:1 }}>
+                              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:700, color:t.color, letterSpacing:'.06em', textTransform:'uppercase' }}>{t.label}</div>
+                              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontWeight:600, color:'#1a1208' }}>{t.min}€ – {t.max}€</div>
+                            </div>
+                            {selected && <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:700, color:'#1a1208' }}>{upgradeMontant}€</span>}
+                          </div>
+                          {selected && (
+                            <input type="range" min={t.min} max={t.max} step={t.step} value={upgradeMontant}
+                              onChange={e => setUpgradeMontant(Number(e.target.value))}
+                              onClick={e => e.stopPropagation()}
+                              style={{ width:'100%', accentColor:t.color, cursor:'pointer' }}
+                            />
+                          )}
+                        </div>
+                      )
+                    })}
+                    {upgradeTier && (
+                      <button onClick={handleUpgrade} disabled={upgradeLoading}
+                        style={{ width:'100%', padding:'12px', borderRadius:50, border:'none', background:`linear-gradient(135deg,${upgradeTier.color},${upgradeTier.color}cc)`, color:'#fff', fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, cursor:'pointer', boxShadow:`0 6px 20px ${upgradeTier.color}40` }}>
+                        {upgradeLoading ? 'Redirection…' : `Passer ${upgradeTier.label} · ${upgradeMontant}€`}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display:'flex', gap:10 }}>
+              {fondateur && (
+                <button onClick={() => setEditing(true)} style={{ flex:1, padding:'11px', borderRadius:50, border:'1.5px solid rgba(74,124,69,.35)', background:'rgba(74,124,69,.06)', color:'#4a7c45', fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                  ✎ Modifier
+                </button>
+              )}
+              <button onClick={onClose} style={{ flex:1, padding:'11px', borderRadius:50, border:'none', background:'linear-gradient(135deg,#5a9a2e,#3a7a18)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                Fermer
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <div>
+              <label style={labelStyle}>Nom affiché</label>
+              <input style={inputStyle} type="text" value={form.display_name} onChange={e => set('display_name', e.target.value)} maxLength={80}/>
+            </div>
+            <div>
+              <label style={labelStyle}>Citation florale <span style={{ fontWeight:400, textTransform:'none', letterSpacing:0 }}>— 80 car. max</span></label>
+              <div style={{ position:'relative' }}>
+                <textarea style={{ ...inputStyle, resize:'none', fontFamily:"'Cormorant Garamond',serif", fontSize:16, fontStyle: form.citation ? 'italic' : 'normal' }}
+                  rows={2} maxLength={80} placeholder='"Pour que la douceur ait sa place."'
+                  value={form.citation} onChange={e => set('citation', e.target.value)}/>
+                <span style={{ position:'absolute', bottom:8, right:10, fontSize:11, color:'rgba(30,20,8,.28)', fontFamily:"'Jost',sans-serif" }}>{form.citation.length}/80</span>
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Ma fleur</label>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8, maxHeight:180, overflowY:'auto', padding:'4px 2px' }}>
+                {VIP_FLEUR_CHOIX.map((src, i) => {
+                  const sel = form.fleur_image === src
+                  return (
+                    <div key={i} onClick={() => set('fleur_image', sel ? '' : src)}
+                      style={{ width:72, height:72, borderRadius:10, overflow:'hidden', cursor:'pointer', border: sel ? `2.5px solid ${cfg.color}` : '2px solid rgba(200,178,148,.20)', boxShadow: sel ? `0 0 0 2px ${cfg.color}40` : 'none', background:'#faf8f4', transition:'all .14s', flexShrink:0 }}>
+                      <img src={src} alt="" style={{ width:'100%', height:'100%', objectFit:'contain' }}/>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:10, marginTop:4 }}>
+              <button onClick={() => setEditing(false)} style={{ flex:1, padding:'11px', borderRadius:50, border:'1.5px solid rgba(200,178,148,.40)', background:'transparent', color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontSize:14, cursor:'pointer' }}>
+                Annuler
+              </button>
+              <button onClick={handleSave} disabled={saving}
+                style={{ flex:1, padding:'11px', borderRadius:50, border:'none', background: saved ? 'rgba(90,154,40,.85)' : 'linear-gradient(135deg,#5a9a2e,#3a7a18)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                {saved ? '✓ Sauvegardé' : saving ? '…' : 'Sauvegarder'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const isMobile = useIsMobile()
   useTheme()
@@ -1427,8 +1654,9 @@ export default function DashboardPage() {
     (profile?.plan === 'premium' || !!profile?.premium_until)
     && profile?.premium_until && new Date(profile.premium_until) > new Date()
   )
-  const isTrialActive  = !!premiumTrialUntil && premiumTrialUntil > new Date()
-  const isPremium      = isPaidPremium || isTrialActive
+  const isTrialActive      = !!premiumTrialUntil && premiumTrialUntil > new Date()
+  const isPremium          = isPaidPremium || isTrialActive
+  const isFondateurGraine  = profile?.plan === 'fondateur_graine'
   const trialDaysLeft  = isTrialActive
     ? Math.ceil((premiumTrialUntil - new Date()) / (1000 * 60 * 60 * 24))
     : 0
@@ -1474,8 +1702,13 @@ export default function DashboardPage() {
     if (!showProfileModal || !user?.id) return
     supabase.from('activity').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
       .then(({ count }) => setUserActionCount(count ?? 0))
+    supabase.from('fondateurs').select('user_id, display_name, niveau, montant, citation, fleur_image, date_contribution')
+      .eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => setFondateurData(data ?? null))
   }, [showProfileModal, user?.id])
   const [showProProfileModal, setShowProProfileModal] = useState(false)
+  const [showVipModal,        setShowVipModal]        = useState(false)
+  const [fondateurData,       setFondateurData]       = useState(null)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
   const [showTrialInfoModal,  setShowTrialInfoModal]  = useState(false)
   const [trialCardSeen,       setTrialCardSeen]       = useState(() => !!localStorage.getItem(`trial_card_seen_${user?.id}`))
@@ -1884,7 +2117,7 @@ export default function DashboardPage() {
           plantId={todayPlant?.id}
           plantHealth={todayPlant?.health}
           onHealthUpdate={() => reloadPlant()}
-          isPremium={isPremium}
+          isPremium={isPremium || isFondateurGraine}
           onUpgrade={() => { setShowNeedModal(false); window.openAccessModal?.() }}
         />
       )}
@@ -2165,6 +2398,15 @@ export default function DashboardPage() {
 
             {/* Actions */}
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:4 }}>
+              {(isFondateurGraine || fondateurData) && (
+                <div onClick={() => { setShowProfileModal(false); setShowVipModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'linear-gradient(135deg,rgba(74,124,69,.10),rgba(45,95,63,.07))', borderRadius:12, border:'1px solid rgba(74,124,69,.30)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(74,124,69,.18)'} onMouseLeave={e=>e.currentTarget.style.background='linear-gradient(135deg,rgba(74,124,69,.10),rgba(45,95,63,.07))'}>
+                  <span style={{ fontSize:16 }}>🌸</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:600, color:'#2D5F3F', fontFamily:"'Jost',sans-serif" }}>Mon compte VIP</div>
+                    <div style={{ fontSize:10, color:'rgba(45,95,63,.55)', fontFamily:"'Jost',sans-serif" }}>Cercle des Fondateurs · avantages actifs</div>
+                  </div>
+                </div>
+              )}
               {isPro && (
                 <div onClick={() => { setShowProfileModal(false); setShowProProfileModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))', borderRadius:12, border:'1px solid rgba(122,64,16,.25)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(122,64,16,.14)'} onMouseLeave={e=>e.currentTarget.style.background='linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))'}>
                   <span style={{ fontSize:16 }}>✦</span>
@@ -2245,6 +2487,13 @@ export default function DashboardPage() {
             <ProProfile onBack={() => setShowProProfileModal(false)} />
           </div>
         </div>
+      )}
+      {showVipModal && (
+        <CompteVipModal
+          fondateur={fondateurData}
+          isFondateurGraine={isFondateurGraine}
+          onClose={() => setShowVipModal(false)}
+        />
       )}
       {showUpgradeToProModal && (
         <UpgradeToProModal
