@@ -239,6 +239,34 @@ export default function App() {
         if (!isOnboarded) {
           setScreen('activating')
           try {
+            const { data: profileData } = await supabase
+              .from('profiles').select('plan').eq('id', user.id).maybeSingle()
+            const isVip = profileData?.plan === 'fondateur_graine' || profileData?.plan === 'premium'
+
+            if (isVip) {
+              // Fondateur VIP : valide onboarding + weekone + crée la fleur à 50%
+              const today = new Date().toISOString().split('T')[0]
+              await Promise.all([
+                supabase.from('users').update({ onboarded: true, onboarding_completed: true }).eq('id', user.id),
+                supabase.from('profiles').update({
+                  onboarded: true,
+                  week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' },
+                }).eq('id', user.id),
+                supabase.from('plants').upsert({
+                  user_id:       user.id,
+                  date:          today,
+                  health:        50,
+                  zone_racines:  50,
+                  zone_tige:     50,
+                  zone_feuilles: 50,
+                  zone_fleurs:   50,
+                  zone_souffle:  50,
+                }, { onConflict: 'user_id,date' }),
+              ])
+              await refresh()
+              setScreen('dashboard'); return
+            }
+
             await activateFree()
             await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
             await refresh()

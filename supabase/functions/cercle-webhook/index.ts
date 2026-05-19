@@ -15,13 +15,18 @@ const supabase = createClient(
 async function sendTelegram(text: string) {
   const token  = Deno.env.get('TELEGRAM_BOT_TOKEN')
   const chatId = Deno.env.get('TELEGRAM_CHAT_ID')
-  if (!token || !chatId) return
-
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  if (!token || !chatId) {
+    console.error('[cercle-telegram] secrets manquants token:', !!token, 'chatId:', !!chatId)
+    return
+  }
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
   })
+  const data = await res.json()
+  if (!data.ok) console.error('[cercle-telegram] erreur:', JSON.stringify(data))
+  else console.log('[cercle-telegram] envoyé ok')
 }
 
 serve(async (req) => {
