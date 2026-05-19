@@ -15,7 +15,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: CORS })
 
   try {
-    const { prenom, nom, email, telephone, password, montant, niveau, label, citation, fleur_image } = await req.json()
+    const { prenom, nom, email, telephone, montant, niveau, label, citation, fleur_image } = await req.json()
 
     if (!email || !prenom || !nom || !montant || montant < 10) {
       return new Response(JSON.stringify({ error: 'Données manquantes ou invalides.' }), {
@@ -40,7 +40,7 @@ serve(async (req) => {
         },
         quantity: 1,
       }],
-      metadata: { prenom, nom, email, telephone: telephone ?? '', password: password ?? '', niveau, citation: citation ?? '', fleur_image: fleur_image ?? '', source: 'cercle_fondateurs' },
+      metadata: { prenom, nom, email, telephone: telephone ?? '', niveau, citation: citation ?? '', fleur_image: fleur_image ?? '', source: 'cercle_fondateurs' },
       success_url: `${appUrl}?cercle=success`,
       cancel_url:  `${appUrl}?cercle=cancel`,
     })
