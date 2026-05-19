@@ -435,7 +435,7 @@ function GrilleFondateurs({ fondateurs }) {
   // ── En-tête commun (image + titre) ──────────────────────────────────────────
   const header = (
     <div style={{ textAlign:'center', marginBottom:20 }}>
-      <img src="/fondateurs/Gwenaël.png" alt="Gwenaël" style={{
+      <img src="/fondateurs/profil/Gwenaël.png" alt="Gwenaël" style={{
         width: isMobile ? 130 : 180, height: isMobile ? 130 : 180,
         objectFit:'contain',
         display:'block', margin:'0 auto 12px',
