@@ -1739,7 +1739,8 @@ export default function DashboardPage() {
   const [showVideoIntro,      setShowVideoIntro]      = useState(false)
   const [introVideo,          setIntroVideo]          = useState(null)
   const [introSoundUnlocked,  setIntroSoundUnlocked]  = useState(false)
-  const preloadVideoRef = useRef(null)
+  const preloadVideoRef   = useRef(null)
+  const videoRetryRef     = useRef(0)
   const [prefetchDone,        setPrefetchDone]        = useState(false)
   const [isNewUser,           setIsNewUser]           = useState(false)
   const [welcomeReady,        setWelcomeReady]        = useState(false)
@@ -2246,7 +2247,23 @@ export default function DashboardPage() {
       {introVideo && !showVideoIntro && (
         <video ref={preloadVideoRef} src={introVideo.src} preload="auto" muted style={{ display: 'none' }} />
       )}
-      {showVideoIntro && introVideo && <VideoIntro video={introVideo} withSound={introSoundUnlocked} onDone={() => setShowVideoIntro(false)} />}
+      {showVideoIntro && introVideo && (
+        <VideoIntro
+          key={introVideo.src}
+          video={introVideo}
+          withSound={introSoundUnlocked}
+          onDone={() => { videoRetryRef.current = 0; setShowVideoIntro(false) }}
+          onError={() => {
+            if (videoRetryRef.current < 3) {
+              videoRetryRef.current++
+              setIntroVideo(pickVideo(user?.id))
+            } else {
+              videoRetryRef.current = 0
+              setShowVideoIntro(false)
+            }
+          }}
+        />
+      )}
       {showWelcome && <WelcomeScreen profile={profile} isNewUser={isNewUser} prefetchDone={prefetchDone} onDone={() => {
         // Déverrouille l'audio page pendant le user gesture du bouton
         const pv = preloadVideoRef.current

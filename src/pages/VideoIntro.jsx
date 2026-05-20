@@ -54,7 +54,7 @@ export function pickVideo(userId) {
 }
 
 // video : objet { src, delay } pré-sélectionné par DashboardV2 (déjà chargé)
-export function VideoIntro({ video, withSound = false, onDone }) {
+export function VideoIntro({ video, withSound = false, onDone, onError }) {
   const videoRef   = useRef(null)
   const [muted,    setMuted]    = useState(!withSound)
   const [visible,  setVisible]  = useState(false)
@@ -159,7 +159,7 @@ export function VideoIntro({ video, withSound = false, onDone }) {
           transition: 'opacity 0.6s ease',
         }}
         onCanPlay={() => setReady(true)}
-        onError={() => onDone()}
+        onError={() => (onError ?? onDone)()}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
       />
