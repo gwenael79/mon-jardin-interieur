@@ -124,18 +124,6 @@ const SLIDES_CONFIG = [
     Component: ScreenClubJardiniers,
   },
   {
-    id:        'cercle',    illusKey: 'cercle',    image: '/bienfaiteurs.png',
-    badge:     'Le Cercle',           icon: '🌸',
-    title:     'Le Cercle qui nous porte',
-    subtitle:  'Ceux qui ont choisi de soutenir le projet. Grâce à elles, ce jardin continue de pousser.',
-    guideDesc: 'Les fondateurs du jardin',
-    color:     '#8a6a9a',
-    btnLabel:  'Découvrir le Cercle',
-    btnGrad:   'linear-gradient(135deg, #a07ab0, #7a5a88)',
-    btnShadow: 'rgba(130,90,150,.34)',
-    Component: ScreenCercleFondateurs,
-  },
-  {
     id:        'ateliers',  illusKey: 'ateliers',  image: '/atelier.png',
     badge:     'Ateliers',           icon: '📘',
     title:     'Les ateliers guidés',
