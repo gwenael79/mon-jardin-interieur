@@ -1338,6 +1338,10 @@ function UpgradeToProModal({ user, onClose, onSuccess }) {
         }
       } catch(e) { console.warn('[upgrade-pro] systemeio:', e) }
 
+      try {
+        await supabase.functions.invoke('send-one-email', { body: { to: user.email } })
+      } catch(e) { console.warn('[upgrade-pro] welcome email:', e) }
+
       setSuccess(true)
     } catch(err) { setError(err.message) }
     finally { setLoading(false) }

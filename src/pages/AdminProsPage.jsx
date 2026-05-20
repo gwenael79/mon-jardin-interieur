@@ -129,9 +129,25 @@ function AfficheModalAdmin({ onClose }) {
   )
 }
 
-function FichePro({ pro, onClose }) {
+function FichePro({ pro, onClose, onEmailSent }) {
   const fmt = (v) => v || <span style={{ color: 'rgba(255,255,255,0.25)', fontStyle: 'italic' }}>—</span>
-  const [showAffiche, setShowAffiche] = useState(false)
+  const [showAffiche,  setShowAffiche]  = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailDone,    setEmailDone]    = useState(false)
+
+  async function sendWelcomeEmail() {
+    if (!pro.email || emailLoading) return
+    setEmailLoading(true)
+    try {
+      await supabase.functions.invoke('send-one-email', { body: { to: pro.email } })
+      setEmailDone(true)
+      onEmailSent?.(`Email envoyé à ${pro.email}`)
+    } catch(e) {
+      onEmailSent?.('Erreur lors de l\'envoi')
+    } finally {
+      setEmailLoading(false)
+    }
+  }
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
@@ -164,11 +180,19 @@ function FichePro({ pro, onClose }) {
         <div className="fiche-row"><span className="fiche-lbl">Inscrit le</span><span className="fiche-val">{new Date(pro.created_at).toLocaleDateString('fr-FR')}</span></div>
 
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <button
-            onClick={() => setShowAffiche(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 20, background: 'rgba(232,212,168,0.12)', border: '1px solid rgba(232,212,168,0.3)', color: '#e8d4a8', fontSize: 12, letterSpacing: '.08em', fontFamily: "'Jost',sans-serif", cursor: 'pointer', fontWeight: 600 }}>
-            📄 Affiches Pub
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setShowAffiche(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 20, background: 'rgba(232,212,168,0.12)', border: '1px solid rgba(232,212,168,0.3)', color: '#e8d4a8', fontSize: 12, letterSpacing: '.08em', fontFamily: "'Jost',sans-serif", cursor: 'pointer', fontWeight: 600 }}>
+              📄 Affiches Pub
+            </button>
+            <button
+              onClick={sendWelcomeEmail}
+              disabled={emailLoading || emailDone || !pro.email}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 16px', borderRadius: 20, background: emailDone ? 'rgba(150,212,133,0.15)' : 'rgba(74,124,69,0.15)', border: `1px solid ${emailDone ? 'rgba(150,212,133,0.4)' : 'rgba(74,124,69,0.35)'}`, color: emailDone ? '#c8f0b8' : '#a8c5b5', fontSize: 12, letterSpacing: '.08em', fontFamily: "'Jost',sans-serif", cursor: emailLoading || emailDone ? 'default' : 'pointer', fontWeight: 600, opacity: !pro.email ? 0.4 : 1 }}>
+              {emailDone ? '✓ Email envoyé' : emailLoading ? '…' : '✉ Email de bienvenue'}
+            </button>
+          </div>
           <button className="adm-btn ghost" onClick={onClose}>Fermer</button>
         </div>
       </div>
@@ -358,7 +382,7 @@ export function AdminProsPage() {
 
       </div>
 
-      {fiche && <FichePro pro={fiche} onClose={() => setFiche(null)} />}
+      {fiche && <FichePro pro={fiche} onClose={() => setFiche(null)} onEmailSent={showToast} />}
       {toast && <div className="adm-toast">{toast}</div>}
     </div>
   )
