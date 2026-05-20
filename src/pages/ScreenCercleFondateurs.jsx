@@ -570,14 +570,24 @@ function GrilleFondateurs({ fondateurs }) {
 
       {/* Cartes des fondateurs niveau graine — format mini horizontal, en bas */}
       {fondateurs.filter(f => f.niveau === 'graine').length > 0 && (
-        <div style={{
-          display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center',
-          marginTop: fondateursSupérieurs.length > 0 || FLEUR_IMAGES.length > 0 ? 20 : 0,
-        }}>
-          {fondateurs.filter(f => f.niveau === 'graine').map((f, i) => (
-            <CarteFondateur key={f.id} fondateur={f} animDelay={Math.min(i*65,450)} mini={true}/>
-          ))}
-        </div>
+        <>
+          <div style={{
+            display:'flex', alignItems:'center', gap:12,
+            marginTop: fondateursSupérieurs.length > 0 || FLEUR_IMAGES.length > 0 ? 28 : 8,
+            marginBottom: 14,
+          }}>
+            <div style={{ flex:1, height:1, background:'linear-gradient(90deg, transparent, rgba(192,120,152,.30))' }}/>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:15, fontStyle:'italic', fontWeight:400, color:'#c07898', whiteSpace:'nowrap', letterSpacing:'.02em' }}>
+              Mes remerciements à&nbsp;:
+            </span>
+            <div style={{ flex:1, height:1, background:'linear-gradient(90deg, rgba(192,120,152,.30), transparent)' }}/>
+          </div>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center' }}>
+            {fondateurs.filter(f => f.niveau === 'graine').map((f, i) => (
+              <CarteFondateur key={f.id} fondateur={f} animDelay={Math.min(i*65,450)} mini={true}/>
+            ))}
+          </div>
+        </>
       )}
     </>
   )
