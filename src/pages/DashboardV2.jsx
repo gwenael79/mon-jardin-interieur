@@ -1879,8 +1879,7 @@ export default function DashboardPage() {
     // Pré-sélectionne la vidéo dès l'affichage du WelcomeScreen pour démarrer le buffering
     const today = new Date().toISOString().split('T')[0]
     const key   = `video_intro_last_seen__${user.id}`
-    const isDev = import.meta.env.DEV
-    if (isDev || localStorage.getItem(key) !== today) {
+    if (localStorage.getItem(key) !== today) {
       setIntroVideo(pickVideo(user.id))
     }
   }, [user?.id])
@@ -1903,9 +1902,10 @@ export default function DashboardPage() {
 
   // Restaurer le tab après retour depuis Stripe
   useEffect(() => {
-    const tab = sessionStorage.getItem('stripe_return_tab')
+    const tab = sessionStorage.getItem('stripe_return_tab') ?? sessionStorage.getItem('pending_open_tab')
     if (!tab || !visibleSlides.length) return
     sessionStorage.removeItem('stripe_return_tab')
+    sessionStorage.removeItem('pending_open_tab')
     const idx = visibleSlides.findIndex(s => s.id === tab)
     if (idx >= 0) { setSlideIdx(idx); setActive(tab) }
   }, [visibleSlides])
@@ -2254,9 +2254,8 @@ export default function DashboardPage() {
         setShowWelcome(false)
         const today = new Date().toISOString().split('T')[0]
         const key   = `video_intro_last_seen__${user?.id}`
-        const isDev = import.meta.env.DEV
-        if (isDev || localStorage.getItem(key) !== today) {
-          if (!isDev) localStorage.setItem(key, today)
+        if (localStorage.getItem(key) !== today) {
+          localStorage.setItem(key, today)
           setShowVideoIntro(true)
         }
         // introVideo est déjà pré-sélectionné et buffurisé depuis le WelcomeScreen

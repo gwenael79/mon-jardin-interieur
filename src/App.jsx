@@ -11,7 +11,6 @@ import { AdminProsPage } from './pages/AdminProsPage'
 import { AdminMessagesPage } from './pages/AdminMessagesPage'
 import { AdminJardinothequePage } from './pages/AdminJardinothequePage'
 import { AdminFondateursPage } from './pages/AdminFondateursPage'
-import { CerclePublicPage } from './pages/ScreenCercleFondateurs'
 import { AppAvisModal } from './components/AppAvisModal'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
@@ -341,10 +340,15 @@ export default function App() {
     setScreen('dashboard')
   }
 
-  // ── Page Cercle publique — retour immédiat avant tout le reste ───────────
+  // ── Lien d'invitation Cercle des Fondateurs (?cercle=invite ou ?cercle) ──
+  // Accessible uniquement après connexion — stocke l'intention dans sessionStorage
   const params = new URLSearchParams(window.location.search)
   if (params.has('cercle') && params.get('cercle') !== 'success' && params.get('cercle') !== 'cancel') {
-    return <CerclePublicPage />
+    if (authLoading) return <div style={styles.loading}><span>🌱</span></div>
+    sessionStorage.setItem('pending_open_tab', 'cercle')
+    window.history.replaceState({}, '', window.location.pathname)
+    // Non connecté : tombe sur AuthPage ci-dessous
+    // Connecté : tombe sur le dashboard qui lit pending_open_tab
   }
 
   // ── Test URL params ────────────────────────────────────────────────────────

@@ -29,8 +29,6 @@ const MIN_GAP = 5  // jours minimum avant de revoir la même vidéo
 const HISTORY_KEY  = uid => `video_intro_history__${uid}`
 
 export function pickVideo(userId) {
-  if (import.meta.env.DEV) return VIDEOS[0]
-
   let history = []
   try { history = JSON.parse(localStorage.getItem(HISTORY_KEY(userId)) || '[]') } catch { /* */ }
 
