@@ -1129,9 +1129,9 @@ function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, onBilan, bi
 
         {/* Carte des espaces */}
         <div style={{ padding:'16px 16px 28px', flexShrink:0 }}>
-          <div style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontWeight:600, marginBottom:10 }}>Les 9 espaces</div>
+          <div style={{ fontSize:10, letterSpacing:'.12em', textTransform:'uppercase', color:'rgba(30,20,8,.55)', fontFamily:"'Jost',sans-serif", fontWeight:600, marginBottom:10 }}>Les espaces</div>
           <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
-            {slides.map((s, i) => (
+            {slides.map((s, i) => s.id === 'cercle' ? null : (
               <div
                 key={s.id}
                 onClick={() => { onNavigate(i); onClose() }}
