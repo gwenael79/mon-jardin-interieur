@@ -15,7 +15,7 @@
 //  • Desktop → Layout sidebar identique à DashboardPage (aucun changement)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, memo, startTransition } from 'react'
 import { AppAvisModal } from '../components/AppAvisModal'
 import { ADMIN_IDS }    from './AdminPage'
 import { useAuth }      from '../hooks/useAuth'
@@ -227,7 +227,7 @@ function useSwipe(onSwipeLeft, onSwipeRight) {
 // ─────────────────────────────────────────────────────────────────────────────
 //  SLIDE INSIGHTS AI — bloc IA seul (sans cards de données)
 // ─────────────────────────────────────────────────────────────────────────────
-function SlideInsightsAI({ slideId, screenProps, color }) {
+const SlideInsightsAI = memo(function SlideInsightsAI({ slideId, screenProps, color }) {
   const { user, stats, circleMembers, activeCircle, communityStats, myDefis, joinedIds, gardenFlowerCount, achats } = screenProps ?? {}
 
   const insightPayload = useMemo(() => ({
@@ -266,7 +266,7 @@ function SlideInsightsAI({ slideId, screenProps, color }) {
       <p style={{ margin:0, fontSize:24, color:'rgba(30,20,8,.75)', fontFamily:"'Cormorant Garamond',serif", fontWeight:700, lineHeight:1.65, fontStyle:'italic' }}>{aiMessage}</p>
     </div>
   )
-}
+})
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  COMPOSANT MOBILE — slides preview plein écran, swipeable
@@ -429,7 +429,7 @@ function moodFromDeg(deg) {
   return MOOD.find(m => wellbeing < m.max) ?? MOOD[MOOD.length - 1]
 }
 
-function BilanHistory7Days({ history, maxDays = 7 }) {
+const BilanHistory7Days = memo(function BilanHistory7Days({ history, maxDays = 7 }) {
   const DAY_LABELS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam']
   const today = new Date().toISOString().split('T')[0]
 
@@ -495,7 +495,7 @@ function BilanHistory7Days({ history, maxDays = 7 }) {
     </div>
     </div>
   )
-}
+})
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  SCREEN MODAL — overlay plein écran qui ouvre un slide sur ses hooks
@@ -762,8 +762,11 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
 
   useEffect(() => {
     if (!userId || !isSubscribed) return
-    supabase.from('push_subscriptions').select('horaires').eq('user_id', userId).limit(1).maybeSingle()
-      .then(({ data }) => { if (data?.horaires?.length) setHoraires(data.horaires) })
+    const t = setTimeout(() => {
+      supabase.from('push_subscriptions').select('horaires').eq('user_id', userId).limit(1).maybeSingle()
+        .then(({ data }) => { if (data?.horaires?.length) setHoraires(data.horaires) })
+    }, 100)
+    return () => clearTimeout(t)
   }, [userId, isSubscribed])
 
   function toggleHoraire(id) {
@@ -789,8 +792,11 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
 
   useEffect(() => {
     if (!userId) return
-    supabase.from('users').select('pwa_installed_at').eq('id', userId).single()
-      .then(({ data }) => { if (data?.pwa_installed_at) setPwaInstalledAt(data.pwa_installed_at) })
+    const t = setTimeout(() => {
+      supabase.from('users').select('pwa_installed_at').eq('id', userId).single()
+        .then(({ data }) => { if (data?.pwa_installed_at) setPwaInstalledAt(data.pwa_installed_at) })
+    }, 150)
+    return () => clearTimeout(t)
   }, [userId])
 
   useEffect(() => {
@@ -818,8 +824,11 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
 
   useEffect(() => {
     if (!userId) return
-    supabase.from('users').select('flower_name').eq('id', userId).single()
-      .then(({ data }) => { if (data?.flower_name) setCurrentFlower(data.flower_name) })
+    const t = setTimeout(() => {
+      supabase.from('users').select('flower_name').eq('id', userId).single()
+        .then(({ data }) => { if (data?.flower_name) setCurrentFlower(data.flower_name) })
+    }, 200)
+    return () => clearTimeout(t)
   }, [userId])
 
   async function handleSaveName() {
@@ -1082,7 +1091,7 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
 // ─────────────────────────────────────────────────────────────────────────────
 //  GUIDE PANEL — index des slides + checklist débutant
 // ─────────────────────────────────────────────────────────────────────────────
-function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, onBilan, bilanDoneToday, stats, joinedIds, achats }) {
+const GuidePanel = memo(function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, onBilan, bilanDoneToday, stats, joinedIds, achats }) {
   const isEvening = new Date().getHours() >= 18
   const steps = isEvening
     ? [
@@ -1153,7 +1162,7 @@ function GuidePanel({ slides, curIdx, onNavigate, onClose, onRitual, onBilan, bi
       </div>
     </>
   )
-}
+})
 
 function OrientationModal({ visibleSlides, onNavigate, onBilan, onRituel, onClose }) {
   const CARDS = [
@@ -2245,7 +2254,7 @@ export default function DashboardPage() {
       {showAccessModal && (<div style={{ position:'fixed', inset:0, zIndex:400 }}><AccessPage onActivateFree={() => setShowAccessModal(false)} onSuccess={() => { setShowAccessModal(false); clearProfileCache(user?.id) }} onBack={() => setShowAccessModal(false)} /></div>)}
       {/* Buffering anticipé pendant le WelcomeScreen */}
       {introVideo && !showVideoIntro && (
-        <video ref={preloadVideoRef} src={introVideo.src} preload="auto" muted style={{ display: 'none' }} />
+        <video ref={preloadVideoRef} src={introVideo.src} preload="auto" muted style={{ position:'absolute', width:1, height:1, opacity:0, pointerEvents:'none', top:-9999, left:-9999 }} />
       )}
       {showVideoIntro && introVideo && (
         <VideoIntro
@@ -2497,7 +2506,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
-              <div onClick={() => setProfileView('settings')} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
+              <div onClick={() => startTransition(() => setProfileView('settings'))} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
                 <span style={{ fontSize:16 }}>⚙️</span>
                 <div>
                   <div style={{ fontSize:12, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>Paramètres du compte</div>
