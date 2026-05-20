@@ -811,7 +811,7 @@ function NiveauxCTA({ onRejoindre }) {
         <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(26px,5vw,34px)', fontWeight:300, color:'#1a1208', lineHeight:1.25, marginBottom:10 }}>
           Et si vous inscriviez votre nom ?
         </div>
-        <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:18, color:'rgba(30,20,8,.88)', lineHeight:1.80, maxWidth:600, margin:'0 auto', whiteSpace:'nowrap' }}>
+        <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:18, color:'rgba(30,20,8,.88)', lineHeight:1.80, maxWidth:600, margin:'0 auto' }}>
           Choisissez un niveau · ajustez votre contribution avec le curseur.
         </p>
       </div>
