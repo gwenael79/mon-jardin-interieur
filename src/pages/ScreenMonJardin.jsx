@@ -4697,7 +4697,7 @@ function FleurShareModal({ imageUrl, onClose }) {
   )
 }
 
-function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal, isPostRitual = false }) {
+function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal, isPostRitual = false, userLevel }) {
   // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
   const { rituals: _rituals, loading: ritualsLoading } = useRituels()
   useEffect(() => {
@@ -4709,7 +4709,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const { track } = useAnalytics(userId)
   const isMobile = useIsMobile()
   const { todayPlant, history, weekGrid, stats, todayRituals, isLoading, error, completeRitual } = usePlant(userId)
-  const profile = useProfile(userId)
+  const _profile = useProfile(userId)
+  // userLevel vient du parent (DashboardV2) qui lit depuis profiles.level — plus fiable que useProfile qui lit users sans level
+  const profile = userLevel != null ? { ..._profile, level: userLevel } : _profile
 
   // Optimistic override : mis à jour immédiatement quand un rituel est coché
   const [plantOverride, setPlantOverride] = useState(null)
