@@ -2387,8 +2387,13 @@ export default function DashboardPage() {
       {showProfileModal && (
         <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.25)', backdropFilter:'blur(6px)' }} onClick={() => setShowProfileModal(false)} />
-          <div style={{ position:'relative', background:'linear-gradient(170deg,#f4ece6,#ede5de)', borderRadius:24, padding:'24px', width:'100%', maxWidth:420, border:'1px solid rgba(200,160,150,.25)', boxShadow:'0 24px 60px rgba(180,120,100,.2)' }}>
-            <button onClick={() => { setShowProfileModal(false); setProfileView('main') }} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.3)', borderRadius:'50%', width:28, height:28, padding:0, cursor:'pointer', color:'rgba(30,20,8,.5)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, lineHeight:1 }}>✕</button>
+          <div style={{ position:'relative', background:'linear-gradient(170deg,#f4ece6,#ede5de)', borderRadius:24, width:'100%', maxWidth:420, maxHeight:'90vh', display:'flex', flexDirection:'column', border:'1px solid rgba(200,160,150,.25)', boxShadow:'0 24px 60px rgba(180,120,100,.2)', overflow:'hidden' }}>
+            {/* Header fixe avec ✕ — toujours visible */}
+            <div style={{ flexShrink:0, display:'flex', justifyContent:'flex-end', padding:'12px 14px 0', background:'linear-gradient(170deg,#f4ece6,#ede5de)' }}>
+              <button onClick={() => { setShowProfileModal(false); setProfileView('main') }} style={{ background:'rgba(255,255,255,.6)', border:'1px solid rgba(200,160,150,.3)', borderRadius:'50%', width:28, height:28, padding:0, cursor:'pointer', color:'rgba(30,20,8,.5)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, lineHeight:1 }}>✕</button>
+            </div>
+            {/* Zone scrollable */}
+            <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'4px 24px 24px' }}>
             {profileView === 'main' ? (<>
             {/* Titre */}
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:'#1a1208', marginBottom:20 }}>Mon profil</div>
@@ -2570,6 +2575,7 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+      </div>
       )}
       {showProProfileModal && (
         <div style={{ position:'fixed', inset:0, zIndex:400, background:'rgba(0,0,0,.45)', backdropFilter:'blur(8px)', display:'flex', alignItems:'center', justifyContent:'center', padding:16 }}>
