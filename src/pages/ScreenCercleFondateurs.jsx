@@ -499,6 +499,65 @@ function CarteFondateur({ fondateur, animDelay = 0, small = false, mini = false 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  CARTE IMAGE MANUELLE — affiche l'image Canva ou un placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+function CarteImageManuelle({ fondateur, canvaPath, isMobile, animDelay }) {
+  const [loaded, setLoaded] = useState(false)
+  const [error,  setError]  = useState(false)
+
+  if (!canvaPath || error) {
+    // Pas encore de fichier déposé dans /fondateurs/
+    return (
+      <div className="cf-card" style={{
+        borderRadius: isMobile ? 12 : 18,
+        boxShadow:'0 2px 10px rgba(0,0,0,.06)',
+        animationDelay:`${animDelay}ms`,
+        background:'rgba(248,244,240,.90)',
+        border:'1.5px dashed rgba(200,185,168,.45)',
+        display:'flex', flexDirection:'column',
+        alignItems:'center', justifyContent:'center',
+        padding: isMobile ? '18px 10px' : '28px 14px',
+        textAlign:'center', minHeight: isMobile ? 120 : 160,
+        gap:8,
+      }}>
+        <span style={{ fontSize: isMobile ? 26 : 34 }}>{LEVEL_ICON[fondateur.niveau]}</span>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 13 : 16, fontWeight:600, color:'#1a1208', lineHeight:1.25 }}>
+          {fondateur.display_name}
+        </div>
+        <div style={{ fontSize:10, color:'rgba(30,20,8,.38)', fontFamily:"'Jost',sans-serif", fontStyle:'italic', letterSpacing:'.03em' }}>
+          Image en préparation
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="cf-card" style={{
+      borderRadius: isMobile ? 12 : 18,
+      overflow:'hidden',
+      boxShadow:'0 3px 18px rgba(0,0,0,.09)',
+      animationDelay:`${animDelay}ms`,
+      background:'#fff',
+      // Masque le conteneur tant que l'image n'est pas chargée
+      minHeight: loaded ? 0 : (isMobile ? 120 : 160),
+    }}>
+      {!loaded && (
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height: isMobile ? 120 : 160 }}>
+          <span style={{ fontSize:24, opacity:.3 }}>{LEVEL_ICON[fondateur.niveau]}</span>
+        </div>
+      )}
+      <img
+        src={canvaPath}
+        alt={fondateur.display_name}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        style={{ width:'100%', height:'auto', display: loaded ? 'block' : 'none' }}
+      />
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  GRILLE
 // ─────────────────────────────────────────────────────────────────────────────
 function GrilleFondateurs({ fondateurs }) {
@@ -553,17 +612,32 @@ function GrilleFondateurs({ fondateurs }) {
       {fondateursSupérieurs.length > 0 ? (
         <div style={{
           display:'grid',
-          gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fill, minmax(148px, 1fr))',
-          gap: isMobile ? 8 : 12,
+          gridTemplateColumns: isMobile
+            ? `repeat(${Math.min(fondateursSupérieurs.length, 3)}, 1fr)`
+            : 'repeat(auto-fill, minmax(148px, 1fr))',
+          gap: isMobile ? 10 : 14,
         }}>
-          {fondateursSupérieurs.map((f, i) => (
-            <CarteFondateur key={f.id} fondateur={f} animDelay={Math.min(i*65,450)} small={isMobile}/>
-          ))}
+          {fondateursSupérieurs.map((f, i) => {
+            // Chemin Canva : /fondateurs/exemple/fleur3.png → /fondateurs/fleur3.png
+            const canvaPath = f.fleur_image
+              ? f.fleur_image.replace('/fondateurs/exemple/', '/fondateurs/')
+              : null
+
+            return (
+              <CarteImageManuelle
+                key={f.id}
+                fondateur={f}
+                canvaPath={canvaPath}
+                isMobile={isMobile}
+                animDelay={Math.min(i*65,450)}
+              />
+            )
+          })}
         </div>
       ) : FLEUR_IMAGES.length > 0 && (
         <div style={{ display:'flex', justifyContent:'center', flexWrap:'wrap', gap:12, marginTop:8 }}>
           {FLEUR_IMAGES.map((src, i) => (
-            <img key={i} src={src} alt="" style={{ width: isMobile ? 90 : 130, height: isMobile ? 90 : 130, objectFit:'contain', display:'block', opacity:0.45 }}/>
+            <img key={i} src={src} alt="" style={{ width: isMobile ? 90 : 130, height: isMobile ? 90 : 130, objectFit:'contain', display:'block', opacity:0.72 }}/>
           ))}
         </div>
       )}
@@ -1283,7 +1357,7 @@ export function ScreenCercleFondateurs({ userId, standalone = false }) {
       try {
         const { data, error } = await supabase
           .from('fondateurs')
-          .select('id, display_name, citation, niveau, date_contribution, fleur_variant, couleur_petale')
+          .select('id, display_name, citation, niveau, date_contribution, fleur_variant, couleur_petale, fleur_image')
           .eq('affichage_public', true)
           .order('date_contribution', { ascending: true })
         if (!error && data) setFondateurs(data)
