@@ -451,6 +451,8 @@ function AtelierCard({ atelier, onInscrit, onPayEuros, onDesinscrit, isInscrit, 
   const lumensAvailable = lumens?.available ?? 0
   const [hasReminder, setHasReminder] = useState(false)
   const [reminderLoading, setReminderLoading] = useState(false)
+  const [showPromo, setShowPromo] = useState(false)
+  const [promoCode, setPromoCode] = useState('')
 
   useEffect(() => {
     if (!userId || isPast) return
@@ -548,9 +550,23 @@ function AtelierCard({ atelier, onInscrit, onPayEuros, onDesinscrit, isInscrit, 
                 )}
                 {/* Bouton euros → Stripe */}
                 {atelier.price > 0 && (
-                  <button onClick={() => onPayEuros?.(atelier.id)} style={{ padding:'8px 20px', fontSize:'var(--fs-h5, 12px)', fontWeight:700, borderRadius:9, background:'linear-gradient(135deg,#1c3a18,#2a5422)', border:'none', color:'#fff', cursor:'pointer', fontFamily:'Jost,sans-serif', letterSpacing:'.03em' }}>
-                    ✓ S&apos;inscrire · {atelier.price} €
-                  </button>
+                  <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                    <button onClick={() => onPayEuros?.(atelier.id, promoCode.trim())} style={{ padding:'8px 20px', fontSize:'var(--fs-h5, 12px)', fontWeight:700, borderRadius:9, background:'linear-gradient(135deg,#1c3a18,#2a5422)', border:'none', color:'#fff', cursor:'pointer', fontFamily:'Jost,sans-serif', letterSpacing:'.03em' }}>
+                      ✓ S&apos;inscrire · {promoCode.trim() ? '−50%' : `${atelier.price} €`}
+                    </button>
+                    {showPromo
+                      ? <input
+                          autoFocus
+                          value={promoCode}
+                          onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                          placeholder="Code remise…"
+                          style={{ padding:'5px 10px', borderRadius:7, border:'1px solid rgba(60,120,40,0.35)', background:'rgba(255,255,255,0.08)', color:'var(--text)', fontSize:'var(--fs-h5, 11px)', fontFamily:'Jost,sans-serif', outline:'none', width:130 }}
+                        />
+                      : <button onClick={() => setShowPromo(true)} style={{ background:'none', border:'none', color:'rgba(var(--text3-rgb, 180,180,150),0.8)', fontSize:'var(--fs-h5, 10px)', cursor:'pointer', fontFamily:'Jost,sans-serif', padding:0, textDecoration:'underline', textAlign:'left' }}>
+                          🎟 J&apos;ai un code remise
+                        </button>
+                    }
+                  </div>
                 )}
                 {/* Bouton inscription gratuite */}
                 {!(atelier.price > 0) && !(atelier.lumen_price > 0) && (
@@ -968,7 +984,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
     awardLumens?.(3, 'inscription_atelier', { atelier_id: atelierIdVal })
   }
 
-  async function handlePayEuros(atelierIdVal) {
+  async function handlePayEuros(atelierIdVal, promoCode = '') {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { showToastLocal('Vous devez être connecté'); return }
@@ -980,6 +996,7 @@ function ScreenAteliers({ userId, awardLumens, lumens, isPremium = false, onUpgr
           atelierId: atelierIdVal,
           successUrl: `${window.location.origin}/?atelier_success=1`,
           cancelUrl:  `${window.location.origin}/?atelier_cancel=1`,
+          ...(promoCode ? { promoCode } : {}),
         },
       })
       if (fnErr || !data?.url) { sessionStorage.removeItem('stripe_return_tab'); showToastLocal('Erreur lors du paiement — réessayez'); return }

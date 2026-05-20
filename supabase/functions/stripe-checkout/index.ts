@@ -92,6 +92,7 @@ Deno.serve(async (req: Request) => {
           atelier_id: atelierId, animator_user_id: atelier.animator_id ?? '',
         }},
       }
+      if (discounts) sessionBody.discounts = discounts
       const session = await stripePost('checkout/sessions', sessionBody)
       console.log(`[stripe-checkout] Atelier session créée — ${atelierId} pour ${user.id}`)
       return json({ url: session.url, sessionId: session.id })

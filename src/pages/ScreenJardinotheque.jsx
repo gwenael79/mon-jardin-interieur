@@ -593,6 +593,8 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
   const [paying,      setPaying]      = useState(false)
   const [payingLumens, setPayingLumens] = useState(false)
   const [payErr,       setPayErr]       = useState('')
+  const [promoCode,    setPromoCode]    = useState('')
+  const [showPromo,    setShowPromo]    = useState(false)
 
   const CHECKOUT_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '') + '/functions/v1/stripe-checkout'
 
@@ -622,6 +624,7 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
           produitId:  p.id,
           successUrl: `${origin}/?achat=success`,
           cancelUrl:  `${origin}/?achat=cancel`,
+          ...(promoCode.trim() ? { promoCode: promoCode.trim() } : {}),
         }),
       })
       console.log('[checkout] produitId envoyé:', p.id, '— status:', res.status)
@@ -769,10 +772,24 @@ function ProductModal({ produit: p, tc, onClose, hasBought, userId, onAchatLumen
                 🔗 Accéder — paiement externe
               </button>
               ) : p.prix != null && Number(p.prix) > 0 && (
-              <button className="jt-modal-btn" onClick={isPremium ? handleAction : onUpgrade} disabled={paying}
-                style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
-                {paying ? '⏳ Redirection…' : !isPremium ? '🔒 Premium requis — Découvrir' : isDigital ? '💳 Acheter — paiement sécurisé' : '🛍 Voir chez le partenaire'}
-              </button>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                <button className="jt-modal-btn" onClick={isPremium ? handleAction : onUpgrade} disabled={paying}
+                  style={{ background: tc.bg, border:`1px solid ${tc.color}50`, color: tc.color, opacity: paying ? 0.7 : 1 }}>
+                  {paying ? '⏳ Redirection…' : !isPremium ? '🔒 Premium requis — Découvrir' : isDigital ? `💳 Acheter${promoCode.trim() ? ' − 50%' : ` — ${Number(p.prix).toFixed(2).replace('.', ',')} €`}` : '🛍 Voir chez le partenaire'}
+                </button>
+                {isPremium && (showPromo
+                  ? <input
+                      autoFocus
+                      value={promoCode}
+                      onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="Code remise…"
+                      style={{ padding:'7px 12px', borderRadius:8, border:'1px solid rgba(var(--green-rgb),0.30)', background:'rgba(var(--green-rgb),0.04)', color:'var(--text)', fontSize:'var(--fs-h5, 12px)', fontFamily:'Jost,sans-serif', outline:'none' }}
+                    />
+                  : <button onClick={() => setShowPromo(true)} style={{ background:'none', border:'none', color:'var(--text3)', fontSize:'var(--fs-h5, 10px)', cursor:'pointer', fontFamily:'Jost,sans-serif', padding:0, textDecoration:'underline', textAlign:'center' }}>
+                      🎟 J&apos;ai un code remise
+                    </button>
+                )}
+              </div>
               )}
               {!!(p.accepte_lumens && p.prix_lumens) && !p.paiement_externe && (
                 <button className="jt-modal-btn" onClick={handlePayLumens} disabled={payingLumens}
