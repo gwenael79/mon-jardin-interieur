@@ -124,7 +124,7 @@ const SLIDES_CONFIG = [
     Component: ScreenClubJardiniers,
   },
   {
-    id:        'cercle',    illusKey: 'cercle',    image: '/club.png',
+    id:        'cercle',    illusKey: 'cercle',    image: '/bienfaiteurs.png',
     badge:     'Le Cercle',           icon: '🌸',
     title:     'Le Cercle qui nous porte',
     subtitle:  'Ceux qui ont choisi de soutenir le projet. Grâce à elles, ce jardin continue de pousser.',
