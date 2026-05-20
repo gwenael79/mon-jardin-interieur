@@ -1876,10 +1876,11 @@ export default function DashboardPage() {
     setIsNewUser(!!isJustCreated)
     setWelcomeReady(true)
     setShowWelcome(true)
-    // Pré-sélectionne la vidéo dès l'affichage du WelcomeScreen pour démarrer le buffering
+    // Pré-sélectionne la vidéo et marque immédiatement comme vue (évite les répétitions si l'utilisateur recharge avant de cliquer)
     const today = new Date().toISOString().split('T')[0]
     const key   = `video_intro_last_seen__${user.id}`
     if (localStorage.getItem(key) !== today) {
+      localStorage.setItem(key, today)
       setIntroVideo(pickVideo(user.id))
     }
   }, [user?.id])
@@ -2252,13 +2253,8 @@ export default function DashboardPage() {
         if (pv) { pv.muted = false; pv.play().catch(() => {}) }
         setIntroSoundUnlocked(true)
         setShowWelcome(false)
-        const today = new Date().toISOString().split('T')[0]
-        const key   = `video_intro_last_seen__${user?.id}`
-        if (localStorage.getItem(key) !== today) {
-          localStorage.setItem(key, today)
-          setShowVideoIntro(true)
-        }
-        // introVideo est déjà pré-sélectionné et buffurisé depuis le WelcomeScreen
+        // introVideo est défini seulement si la vidéo n'a pas encore été vue aujourd'hui
+        if (introVideo) setShowVideoIntro(true)
       }} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
