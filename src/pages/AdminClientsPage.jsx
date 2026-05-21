@@ -64,6 +64,13 @@ html,body,#root{height:100%;width:100%}
   .funnel-mail-btn{font-size:20px!important}
   .funnel-mail-count{font-size:9px!important}
 }
+.pal-header{display:grid;grid-template-columns:44px 1fr 110px 70px 60px 90px 90px 44px 44px 44px;gap:0;padding:10px 20px;border-bottom:1px solid rgba(255,255,255,0.06);align-items:center}
+.pal-row{display:grid;grid-template-columns:44px 1fr 110px 70px 60px 90px 90px 44px 44px 44px;gap:0;align-items:center}
+@media(max-width:700px){
+  .pal-header,.pal-row{grid-template-columns:36px minmax(0,1fr) 58px 52px;padding:8px 10px}
+  .pal-hide-mob{display:none!important}
+  .adm-pal-name{font-size:14px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
 @media(max-width:700px){
   .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
   .adm-logo{font-size:16px;flex:1}
@@ -1438,17 +1445,17 @@ export function AdminClientsPage() {
                 </div>
               ))}
               {/* En-tête */}
-              <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 60px 90px 90px 44px 44px 44px', gap: 0, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', alignItems: 'center' }}>
+              <div className="pal-header">
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>🏆</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Utilisateur</div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Dernière ouv.</div>
+                <div className="pal-hide-mob" style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Dernière ouv.</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Inactif</div>
                 <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'center' }}>Vit.</div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>/ 30j</div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>Total</div>
-                <div style={{ fontSize: 10, color: '#78c85e', textAlign: 'center' }} title="Rappel doux · inactif 1–5j">📩</div>
-                <div style={{ fontSize: 10, color: '#e8c060', textAlign: 'center' }} title="Jardin manque d'attention · inactif 6–14j">🌿</div>
-                <div style={{ fontSize: 10, color: '#e08080', textAlign: 'center' }} title="Tu m'as oublié · inactif 15j+">💔</div>
+                <div className="pal-hide-mob" style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>/ 30j</div>
+                <div className="pal-hide-mob" style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase', textAlign: 'right' }}>Total</div>
+                <div className="pal-hide-mob" style={{ fontSize: 10, color: '#78c85e', textAlign: 'center' }} title="Rappel doux · inactif 1–5j">📩</div>
+                <div className="pal-hide-mob" style={{ fontSize: 10, color: '#e8c060', textAlign: 'center' }} title="Jardin manque d'attention · inactif 6–14j">🌿</div>
+                <div className="pal-hide-mob" style={{ fontSize: 10, color: '#e08080', textAlign: 'center' }} title="Tu m'as oublié · inactif 15j+">💔</div>
               </div>
               {loading ? <div className="adm-empty">Chargement…</div> : palmares.length === 0 ? <div className="adm-empty">Aucune donnée disponible</div> : (
                 palmares.map((p, i) => {
@@ -1468,14 +1475,14 @@ export function AdminClientsPage() {
                   const toggle = (setFn, has) => e => { e.stopPropagation(); if (!p.email) return; setFn(prev => { const n = new Set(prev); has ? n.delete(p.email) : n.add(p.email); return n }) }
                   const anySelected = isSel1 || isSel2 || isSel3
                   return (
-                  <div key={p.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr 110px 70px 60px 90px 90px 44px 44px 44px', gap: 0, padding: '11px 20px', alignItems: 'center', borderBottom: i < palmares.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: anySelected ? 'rgba(150,212,133,0.04)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', transition: 'background .15s' }}>
+                  <div key={p.id} className="pal-row" style={{ borderBottom: i < palmares.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none', background: anySelected ? 'rgba(150,212,133,0.04)' : i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)', transition: 'background .15s' }}>
                     {/* Rang */}
                     <div style={{ fontSize: i < 3 ? 18 : 13, color: i === 0 ? '#e8c060' : i === 1 ? 'rgba(192,192,192,0.7)' : i === 2 ? 'rgba(205,127,50,0.7)' : 'rgba(255,255,255,0.25)', textAlign: 'center', fontFamily: i >= 3 ? "'Cormorant Garamond',serif" : 'inherit' }}>
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                     </div>
                     {/* Nom + email */}
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, overflow: 'hidden', paddingRight: 12 }}>
-                      <div className="adm-pal-name" style={{ color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, overflow: 'hidden', minWidth: 0, paddingRight: 12 }}>
+                      <div className="adm-pal-name" style={{ color: 'rgba(255,255,255,0.85)', minWidth: 0 }}>
                         {p.display_name ?? p.email ?? p.id?.slice(0, 8)}
                       </div>
                       {!isMobile && p.email && p.display_name && (
@@ -1485,7 +1492,7 @@ export function AdminClientsPage() {
                       )}
                     </div>
                     {/* Dernière ouverture */}
-                    <div style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
+                    <div className="pal-hide-mob" style={{ fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
                       {p.last_active ? new Date(p.last_active).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—'}
                     </div>
                     {/* Jours d'inactivité */}
@@ -1499,15 +1506,15 @@ export function AdminClientsPage() {
                         : <span style={{ color: 'rgba(255,255,255,0.18)', fontSize: 11 }}>—</span>}
                     </div>
                     {/* Actifs 30j */}
-                    <div className={`adm-num-xl ${p.actifs30j >= 15 ? 'adm-num-gold' : p.actifs30j >= 5 ? 'adm-num-green' : 'adm-num-dim'}`} style={{ textAlign: 'right' }}>
+                    <div className={`pal-hide-mob adm-num-xl ${p.actifs30j >= 15 ? 'adm-num-gold' : p.actifs30j >= 5 ? 'adm-num-green' : 'adm-num-dim'}`} style={{ textAlign: 'right' }}>
                       {p.actifs30j > 0 ? p.actifs30j : '—'}
                     </div>
                     {/* Total */}
-                    <div className="adm-num-xl adm-num-teal" style={{ textAlign: 'right' }}>
+                    <div className="pal-hide-mob adm-num-xl adm-num-teal" style={{ textAlign: 'right' }}>
                       {p.connexions > 0 ? p.connexions : '—'}
                     </div>
                     {/* 📩 Rappel 1–5j */}
-                    <div style={{ textAlign: 'center' }} title={cooled1 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_rappel`)}j` : ''}>
+                    <div className="pal-hide-mob" style={{ textAlign: 'center' }} title={cooled1 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_rappel`)}j` : ''}>
                       {cooled1
                         ? <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.20)' }}>{daysLeft(`email_sent_${p.id}_rappel`)}j</span>
                         : inRange1
@@ -1515,7 +1522,7 @@ export function AdminClientsPage() {
                           : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
                     </div>
                     {/* 🌿 Inquiet 6–14j */}
-                    <div style={{ textAlign: 'center' }} title={cooled2 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_inquiet`)}j` : ''}>
+                    <div className="pal-hide-mob" style={{ textAlign: 'center' }} title={cooled2 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_inquiet`)}j` : ''}>
                       {cooled2
                         ? <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.20)' }}>{daysLeft(`email_sent_${p.id}_inquiet`)}j</span>
                         : inRange2
@@ -1523,7 +1530,7 @@ export function AdminClientsPage() {
                           : <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 10 }}>·</span>}
                     </div>
                     {/* 💔 Oublié 15j+ */}
-                    <div style={{ textAlign: 'center' }} title={cooled3 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_oubli`)}j` : ''}>
+                    <div className="pal-hide-mob" style={{ textAlign: 'center' }} title={cooled3 ? `Envoyé — disponible dans ${daysLeft(`email_sent_${p.id}_oubli`)}j` : ''}>
                       {cooled3
                         ? <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.20)' }}>{daysLeft(`email_sent_${p.id}_oubli`)}j</span>
                         : inRange3

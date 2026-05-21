@@ -129,20 +129,20 @@ function FondateurCard({ f, onEdit, onToggle, onDelete }) {
       {/* Barre colorée top */}
       <div style={{ height:3, background:`linear-gradient(90deg, ${c}, ${c}88)` }}/>
 
-      <div style={{ padding:'18px 20px', display:'flex', gap:16, alignItems:'flex-start' }}>
+      <div className="adm-fond-card-body">
 
         {/* Fleur / image */}
-        <div style={{ width:80, height:80, borderRadius:12, overflow:'hidden', flexShrink:0, background:'#454b52', display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div className="adm-fond-card-img">
           {f.fleur_image
             ? <img src={f.fleur_image} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
-            : <span style={{ fontSize:32, opacity:.5 }}>🌸</span>
+            : <span style={{ fontSize:28, opacity:.5 }}>🌸</span>
           }
         </div>
 
         {/* Infos */}
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:6 }}>
-            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:20, fontWeight:600, color:'#fff' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap', marginBottom:5 }}>
+            <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:600, color:'#fff' }}>
               {f.display_name}
             </span>
             <NiveauBadge niveau={f.niveau}/>
@@ -154,35 +154,35 @@ function FondateurCard({ f, onEdit, onToggle, onDelete }) {
           </div>
 
           {f.citation && (
-            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:14, color:'rgba(255,255,255,.55)', marginBottom:6, lineHeight:1.5 }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:13, color:'rgba(255,255,255,.55)', marginBottom:5, lineHeight:1.5 }}>
               "{f.citation}"
             </div>
           )}
 
-          <div style={{ display:'flex', gap:16, flexWrap:'wrap', fontSize:12, color:'rgba(255,255,255,.45)' }}>
-            {f.email && <span>✉ {f.email}</span>}
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', fontSize:11, color:'rgba(255,255,255,.40)' }}>
+            {f.email && <span style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:180 }}>✉ {f.email}</span>}
             {f.telephone && <span>📞 {f.telephone}</span>}
             <span>📅 {fmtDate(f.date_contribution)}</span>
-            {f.paiement_ref && <span style={{ fontFamily:'monospace', fontSize:11, background:'rgba(255,255,255,.06)', padding:'1px 6px', borderRadius:4 }}>#{f.paiement_ref.slice(-8)}</span>}
           </div>
+          {f.paiement_ref && <div style={{ marginTop:4, fontFamily:'monospace', fontSize:10, background:'rgba(255,255,255,.06)', padding:'1px 6px', borderRadius:4, display:'inline-block', color:'rgba(255,255,255,.35)' }}>#{f.paiement_ref.slice(-8)}</div>}
         </div>
 
         {/* Montant */}
         <div style={{ textAlign:'right', flexShrink:0 }}>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:600, color:c, lineHeight:1 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:600, color:c, lineHeight:1 }}>
             {fmt(f.montant)}
           </div>
-          <div style={{ fontSize:11, color:'rgba(255,255,255,.30)', marginTop:2 }}>{f.devise ?? 'EUR'}</div>
+          <div style={{ fontSize:10, color:'rgba(255,255,255,.30)', marginTop:2 }}>{f.devise ?? 'EUR'}</div>
         </div>
       </div>
 
       {/* Actions */}
-      <div style={{ borderTop:'1px solid rgba(255,255,255,.06)', padding:'10px 20px', display:'flex', gap:8, justifyContent:'flex-end' }}>
-        <button className="adm-btn ghost" onClick={() => onToggle(f)} style={{ fontSize:11 }}>
+      <div className="adm-fond-card-actions">
+        <button className="adm-btn ghost" onClick={() => onToggle(f)}>
           {f.affichage_public ? '👁 Masquer' : '👁 Afficher'}
         </button>
-        <button className="adm-btn ghost" onClick={() => onEdit(f)} style={{ fontSize:11 }}>✏️ Modifier</button>
-        <button className="adm-btn danger" onClick={() => onDelete(f)} style={{ fontSize:11 }}>🗑 Supprimer</button>
+        <button className="adm-btn ghost" onClick={() => onEdit(f)}>✏️ Modifier</button>
+        <button className="adm-btn danger" onClick={() => onDelete(f)}>🗑 Supprimer</button>
       </div>
     </div>
   )
@@ -258,35 +258,69 @@ export function AdminFondateursPage() {
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         :root{--bg:#2b2f33;--bg2:#353a3f;--bg3:#3e444a;--border:rgba(255,255,255,0.18);--border2:rgba(255,255,255,0.10);--text:#ffffff;--text2:rgba(255,255,255,0.85);--text3:rgba(255,255,255,0.50);--green:#96d485;--green2:rgba(150,212,133,0.25);--green3:rgba(150,212,133,0.12);--greenT:rgba(150,212,133,0.50);--gold:#e8d4a8;--red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35)}
         .adm-root{font-family:'Jost',sans-serif;background:#2b2f33;min-height:100vh;width:100vw;color:#fff;display:flex;flex-direction:column}
-        .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid rgba(255,255,255,.10);background:#353a3f;position:sticky;top:0;z-index:10}
-        .adm-btn{padding:7px 16px;border-radius:8px;font-size:12px;letter-spacing:.06em;cursor:pointer;border:none;font-family:'Jost',sans-serif;transition:all .2s;white-space:nowrap;color:#fff}
+        .adm-root *{color:#fff!important;font-size:clamp(13px,3vw,18px)!important}
+        .adm-topbar{display:flex;flex-direction:column;border-bottom:1px solid rgba(255,255,255,.10);background:#353a3f;position:sticky;top:0;z-index:10}
+        .adm-topbar-row1{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 40px}
+        .adm-topbar-nav{padding:0 40px 10px;overflow:hidden}
+        .adm-fond-body{flex:1;padding:32px 40px;max-width:1100px;width:100%;margin:0 auto}
+        .adm-btn{padding:7px 16px;border-radius:8px;font-size:12px!important;letter-spacing:.06em;cursor:pointer;border:none;font-family:'Jost',sans-serif;transition:all .2s;white-space:nowrap;color:#fff}
         .adm-btn.ghost{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
         .adm-btn.ghost:hover{background:rgba(255,255,255,.14)}
-        .adm-btn.success{background:rgba(150,212,133,.15);border:1px solid rgba(150,212,133,.40);color:#c8f0b8}
+        .adm-btn.success{background:rgba(150,212,133,.15);border:1px solid rgba(150,212,133,.40);color:#c8f0b8!important}
         .adm-btn.success:hover{background:rgba(150,212,133,.25)}
-        .adm-btn.danger{background:rgba(210,80,80,.10);border:1px solid rgba(210,80,80,.30);color:rgba(255,160,160,.85)}
+        .adm-btn.danger{background:rgba(210,80,80,.10);border:1px solid rgba(210,80,80,.30);color:rgba(255,160,160,.85)!important}
         .adm-btn.danger:hover{background:rgba(210,80,80,.20)}
-        .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a;border:1px solid rgba(150,212,133,.50);border-radius:10px;padding:12px 20px;font-size:14px;color:#fff;z-index:9999;animation:fadeInUp .3s ease;max-width:380px}
+        .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a;border:1px solid rgba(150,212,133,.50);border-radius:10px;padding:12px 20px;font-size:14px!important;color:#fff;z-index:9999;animation:fadeInUp .3s ease;max-width:380px}
         @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .adm-fond-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+        .adm-fond-stat{background:#3d4248;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px}
+        .adm-fond-stat-val{font-family:'Cormorant Garamond',serif;font-size:30px!important;font-weight:300;line-height:1;margin-bottom:4px}
+        .adm-fond-stat-lbl{font-size:11px!important;color:rgba(255,255,255,.40);letter-spacing:.08em;text-transform:uppercase}
+        .adm-fond-body{flex:1;padding:32px 40px;max-width:1100px;width:100%;margin:0 auto}
+        .adm-fond-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+        .adm-fond-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:14px}
+        .adm-fond-card-body{padding:18px 20px;display:flex;gap:16px;align-items:flex-start}
+        .adm-fond-card-img{width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0;background:#454b52;display:flex;align-items:center;justify-content:center}
+        .adm-fond-card-actions{border-top:1px solid rgba(255,255,255,.06);padding:10px 20px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+        @media(max-width:700px){
+          .adm-topbar-row1{padding:10px 12px}
+          .adm-topbar-nav{padding:4px 12px 8px;border-top:1px solid rgba(255,255,255,.06)}
+          .adm-fond-body{padding:10px 10px!important;max-width:100%!important}
+          .adm-btn{padding:6px 10px;font-size:11px!important}
+          .adm-fond-stats{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;margin-bottom:16px!important}
+          .adm-fond-stat{padding:12px 14px!important}
+          .adm-fond-stat-val{font-size:22px!important}
+          .adm-fond-cards{grid-template-columns:1fr!important;gap:10px!important}
+          .adm-fond-filters{gap:6px!important}
+          .adm-fond-search{width:100%!important;margin-left:0!important}
+          .adm-fond-card-body{padding:12px 14px!important;gap:10px!important}
+          .adm-fond-card-img{width:56px!important;height:56px!important}
+          .adm-fond-card-actions{padding:8px 12px!important;gap:6px!important;justify-content:flex-start!important}
+        }
+        @media(max-width:400px){
+          .adm-fond-stats{grid-template-columns:1fr!important}
+        }
       `}</style>
 
-      {/* Topbar */}
+      {/* Topbar : ligne 1 logo+déco, ligne 2 nav */}
       <div className="adm-topbar">
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300, color:'#fff' }}>
-          Mon <em style={{ fontStyle:'italic', color:'#96d485' }}>Jardin</em>
-          <span style={{ fontFamily:'Jost', fontSize:12, color:'rgba(255,255,255,.40)', letterSpacing:'.2em', marginLeft:8 }}>ADMIN</span>
-        </div>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <AdminNav current="#fondateurs"/>
+        <div className="adm-topbar-row1">
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:18, fontWeight:300 }}>
+            Mon <em style={{ fontStyle:'italic', color:'#96d485' }}>Jardin</em>
+            <span style={{ fontFamily:'Jost', fontSize:12, color:'rgba(255,255,255,.40)', letterSpacing:'.2em', marginLeft:8 }}>FONDATEURS</span>
+          </div>
           <button className="adm-btn ghost" onClick={() => { signOut(); window.location.href = '/' }}>Déconnexion</button>
+        </div>
+        <div className="adm-topbar-nav">
+          <AdminNav current="#fondateurs"/>
         </div>
       </div>
 
-      <div style={{ flex:1, padding:'32px 40px', maxWidth:1100, width:'100%', margin:'0 auto' }}>
+      <div className="adm-fond-body">
 
         {/* Titre */}
-        <div style={{ marginBottom:28 }}>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, color:'#fff', marginBottom:4 }}>
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:28, fontWeight:300, color:'#fff', marginBottom:4 }}>
             Le Cercle des Fondateurs
           </div>
           <div style={{ fontSize:13, color:'rgba(255,255,255,.40)' }}>
@@ -295,23 +329,23 @@ export function AdminFondateursPage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:12, marginBottom:28 }}>
+        <div className="adm-fond-stats">
           {[
             { label:'Total collecté', val:fmt(total), color:'#c8f0b8' },
-            { label:'Fondateurs', val:fondateurs.length, color:'#fff' },
-            { label:'🌱 Amis', val:byNiveau.ami, color:LEVEL_COLOR.ami },
-            { label:'🌿 Compagnons', val:byNiveau.compagnon, color:LEVEL_COLOR.compagnon },
-            { label:'🌳 Fondateurs', val:byNiveau.fondateur, color:LEVEL_COLOR.fondateur },
+            { label:'Fondateurs',     val:fondateurs.length, color:'#fff' },
+            { label:'🌱 Amis',        val:byNiveau.ami, color:LEVEL_COLOR.ami },
+            { label:'🌿 Compagnons',  val:byNiveau.compagnon, color:LEVEL_COLOR.compagnon },
+            { label:'🌳 Fondateurs',  val:byNiveau.fondateur, color:LEVEL_COLOR.fondateur },
           ].map(({ label, val, color }) => (
-            <div key={label} style={{ background:'#3d4248', border:'1px solid rgba(255,255,255,.08)', borderRadius:14, padding:'18px 20px' }}>
-              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:30, fontWeight:300, color, lineHeight:1, marginBottom:4 }}>{val}</div>
-              <div style={{ fontSize:11, color:'rgba(255,255,255,.40)', letterSpacing:'.08em', textTransform:'uppercase' }}>{label}</div>
+            <div key={label} className="adm-fond-stat">
+              <div className="adm-fond-stat-val" style={{ color }}>{val}</div>
+              <div className="adm-fond-stat-lbl">{label}</div>
             </div>
           ))}
         </div>
 
         {/* Filtres */}
-        <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:20, alignItems:'center' }}>
+        <div className="adm-fond-filters">
           {['tous','ami','compagnon','fondateur'].map(n => (
             <button key={n} className="adm-btn ghost" onClick={() => setFilter(n)}
               style={{ background: filter===n ? 'rgba(150,212,133,.18)' : undefined, borderColor: filter===n ? 'rgba(150,212,133,.50)' : undefined, color: filter===n ? '#c8f0b8' : undefined }}>
@@ -319,6 +353,7 @@ export function AdminFondateursPage() {
             </button>
           ))}
           <input
+            className="adm-fond-search"
             placeholder="Rechercher…"
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -328,13 +363,13 @@ export function AdminFondateursPage() {
 
         {/* Liste */}
         {loading ? (
-          <div style={{ textAlign:'center', padding:60, color:'rgba(255,255,255,.35)', fontSize:14 }}>Chargement…</div>
+          <div style={{ textAlign:'center', padding:40, color:'rgba(255,255,255,.35)', fontSize:14 }}>Chargement…</div>
         ) : visible.length === 0 ? (
-          <div style={{ textAlign:'center', padding:60, color:'rgba(255,255,255,.35)', fontSize:14, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif" }}>
+          <div style={{ textAlign:'center', padding:40, color:'rgba(255,255,255,.35)', fontSize:14, fontStyle:'italic', fontFamily:"'Cormorant Garamond',serif" }}>
             Aucun fondateur {filter !== 'tous' ? `de niveau ${LEVEL_LABEL[filter]}` : ''} pour le moment.
           </div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(440px, 1fr))', gap:14 }}>
+          <div className="adm-fond-cards">
             {visible.map(f => (
               <FondateurCard
                 key={f.id}

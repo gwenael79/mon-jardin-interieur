@@ -18,7 +18,9 @@ html,body,#root{height:100%;width:100%}
   --red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
 }
 .adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *{color:#ffffff!important;font-size:clamp(13px,3vw,18px)!important}
-.adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:#353a3f!important;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.adm-topbar{display:flex;flex-direction:column;border-bottom:1px solid var(--border2);background:#353a3f!important;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.adm-topbar-row1{display:flex;align-items:center;justify-content:space-between;padding:12px 40px;gap:8px}
+.adm-topbar-nav{padding:0 40px 10px;overflow:hidden}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em;color:#ffffff}
 .adm-logo em{font-style:italic;color:var(--green)}
 .adm-body{flex:1;padding:32px 40px;width:100%}
@@ -32,14 +34,23 @@ html,body,#root{height:100%;width:100%}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a!important;border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:18px;color:#ffffff;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes accordionOpen{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.prd-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px}
+.prd-item-row1{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.prd-item-main{flex:1;min-width:0}
+.prd-item-title{font-size:13px;color:rgba(242,237,224,0.88);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prd-item-meta{display:flex;gap:8px;margin-top:3px;align-items:center;flex-wrap:wrap}
+.prd-item-actions{display:flex;gap:4px;flex-shrink:0;align-items:center}
 @media(max-width:700px){
-  .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
-  .adm-logo{font-size:15px;flex:1}
-  .adm-body{padding:12px 10px}
+  .adm-topbar-row1{padding:10px 12px}
+  .adm-topbar-nav{padding:4px 12px 8px;border-top:1px solid rgba(255,255,255,0.06)}
+  .adm-body{padding:10px 10px}
   .adm-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;scrollbar-width:none}
   .adm-tabs::-webkit-scrollbar{display:none}
   .adm-tab{padding:8px 14px;white-space:nowrap;flex-shrink:0}
   .adm-btn{padding:5px 10px;font-size:11px!important}
+  .prd-item{flex-direction:column;align-items:stretch;gap:7px;padding:10px 12px}
+  .prd-item-row1{gap:8px}
+  .prd-item-actions{flex-wrap:wrap;gap:5px;justify-content:flex-start}
 }
 `
 
@@ -179,20 +190,28 @@ function TabDigital({ showToast }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {produits.map(p => (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, border: `1px solid ${p.statut === 'actif' ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)'}`, background: p.statut === 'actif' ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.01)', opacity: p.statut === 'actif' ? 1 : 0.5 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#b4a0f0', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: 'rgba(242,237,224,0.88)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.titre}</div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 3, alignItems: 'center' }}>
-                  <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 10, background: 'rgba(180,160,240,0.12)', border: '1px solid rgba(180,160,240,0.20)', color: '#b4a0f0' }}>{p.categorie}</span>
-                  {p.prix != null && <span style={{ fontSize: 10, color: 'rgba(242,237,224,0.50)' }}>{Number(p.prix).toFixed(2)} €</span>}
-                  {p.storage_path && <span style={{ fontSize: 9, color: 'rgba(130,200,160,0.70)' }}>🎧 audio</span>}
-                  {p.stripe_price_id && <span style={{ fontSize: 9, color: 'rgba(150,212,133,0.55)' }}>⚡ Stripe</span>}
-                  <span style={{ fontSize: 9, color: 'rgba(242,237,224,0.22)' }}>{fmtDate(p.created_at)}</span>
+            <div key={p.id} className="prd-item" style={{
+              border: `1px solid ${p.statut === 'actif' ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)'}`,
+              background: p.statut === 'actif' ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.01)',
+              opacity: p.statut === 'actif' ? 1 : 0.5,
+            }}>
+              {/* Ligne info : point + titre + badge statut */}
+              <div className="prd-item-row1">
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#b4a0f0', flexShrink: 0 }} />
+                <div className="prd-item-main">
+                  <div className="prd-item-title">{p.titre}</div>
+                  <div className="prd-item-meta">
+                    <span style={{ fontSize: 9, padding: '1px 7px', borderRadius: 10, background: 'rgba(180,160,240,0.12)', border: '1px solid rgba(180,160,240,0.20)', color: '#b4a0f0' }}>{p.categorie}</span>
+                    {p.prix != null && <span style={{ fontSize: 10, color: 'rgba(242,237,224,0.50)' }}>{Number(p.prix).toFixed(2)} €</span>}
+                    {p.storage_path && <span style={{ fontSize: 9, color: 'rgba(130,200,160,0.70)' }}>🎧 audio</span>}
+                    {p.stripe_price_id && <span style={{ fontSize: 9, color: 'rgba(150,212,133,0.55)' }}>⚡ Stripe</span>}
+                    <span style={{ fontSize: 9, color: 'rgba(242,237,224,0.22)' }}>{fmtDate(p.created_at)}</span>
+                  </div>
                 </div>
+                <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, flexShrink: 0, background: p.statut === 'actif' ? 'rgba(150,212,133,0.10)' : 'rgba(255,255,255,0.05)', border: p.statut === 'actif' ? '1px solid rgba(150,212,133,0.25)' : '1px solid rgba(255,255,255,0.07)', color: p.statut === 'actif' ? '#96d485' : 'rgba(242,237,224,0.30)' }}>{p.statut}</span>
               </div>
-              <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, flexShrink: 0, background: p.statut === 'actif' ? 'rgba(150,212,133,0.10)' : 'rgba(255,255,255,0.05)', border: p.statut === 'actif' ? '1px solid rgba(150,212,133,0.25)' : '1px solid rgba(255,255,255,0.07)', color: p.statut === 'actif' ? '#96d485' : 'rgba(242,237,224,0.30)' }}>{p.statut}</span>
-              <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+              {/* Ligne actions */}
+              <div className="prd-item-actions">
                 <button onClick={() => toggleStatut(p)} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(242,237,224,0.45)' }}>{p.statut === 'actif' ? 'Désactiver' : 'Activer'}</button>
                 {p.storage_path && <button onClick={() => { setAttribuerProduit(p); loadUsers() }} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(180,160,240,0.10)', border: '1px solid rgba(180,160,240,0.30)', color: '#b4a0f0' }}>🎁 Attribuer</button>}
                 <button onClick={() => openEdit(p)} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(180,160,240,0.10)', border: '1px solid rgba(180,160,240,0.35)', color: '#b4a0f0' }}>✏ Modifier</button>
@@ -515,13 +534,16 @@ export function AdminJardinothequePage() {
       <style>{css}</style>
 
       <div className="adm-topbar">
-        <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/icons/icon-192.png" alt="logo" style={{ width: 28, height: 28, borderRadius: '50%' }} />
-          Mon <em>Jardin</em> — <span style={{ fontFamily: 'Jost', fontSize: 12, color: 'var(--text3)', letterSpacing: '.2em' }}>JARDINOTHÈQUE</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <AdminNav current="#jardinotheque" />
+        <div className="adm-topbar-row1">
+          <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/icons/icon-192.png" alt="logo" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+            Mon <em>Jardin</em>
+            <span style={{ fontFamily: 'Jost', fontSize: 12, color: 'var(--text3)', letterSpacing: '.2em' }}>JARDINOTHÈQUE</span>
+          </div>
           <div className="adm-btn ghost" onClick={() => { signOut(); window.location.href = "/"; }}>Déconnexion</div>
+        </div>
+        <div className="adm-topbar-nav">
+          <AdminNav current="#jardinotheque" />
         </div>
       </div>
 

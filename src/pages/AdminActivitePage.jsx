@@ -47,12 +47,22 @@ html,body,#root{height:100%;width:100%}
 .adm-btn.success{background:var(--green3);border:1px solid var(--greenT);color:var(--cream)}
 .adm-btn.success:hover{background:var(--green2)}
 .adm-btn.danger{background:var(--red2);border:1px solid var(--redT);color:rgba(255,160,160,0.9)}
+.adm-topbar{display:flex;flex-direction:column;border-bottom:1px solid var(--border2);background:#353a3f!important;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
+.adm-topbar-row1{display:flex;align-items:center;justify-content:space-between;padding:12px 40px;gap:8px}
+.adm-topbar-nav{padding:0 40px 10px;overflow:hidden}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a!important;border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:18px;color:#ffffff;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.lumen-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(246,196,83,0.04);border:1px solid rgba(246,196,83,0.10);border-radius:8px}
+.lumen-item-info{flex:1;min-width:0}
+.lumen-item-name{font-size:12px;color:#f2ede0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lumen-item-email{font-size:10px;color:rgba(242,237,224,0.28);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.lumen-item-level{font-size:9px;color:rgba(242,237,224,0.30);letter-spacing:.04em;flex-shrink:0}
+.lumen-item-nums{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0}
 @media(max-width:700px){
-  .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
-  .adm-logo{font-size:15px;flex:1}
-  .adm-body{padding:12px 10px}
+  .adm-topbar-row1{padding:10px 12px}
+  .adm-topbar-nav{padding:4px 12px 8px;border-top:1px solid rgba(255,255,255,0.06)}
+  .adm-body{padding:10px 10px}
+  .lumen-item-level{display:none}
   .adm-stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
   .adm-stat{padding:12px 14px}
   .adm-stat-val{font-size:clamp(22px,7vw,38px)!important}
@@ -1164,13 +1174,16 @@ export function AdminActivitePage() {
 
       {/* TOPBAR */}
       <div className="adm-topbar">
-        <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/icons/icon-192.png" alt="logo" style={{ width: 28, height: 28, borderRadius: '50%' }} />
-          Mon <em>Jardin</em> — <span style={{ fontFamily: 'Jost', fontSize: 12, color: 'var(--text3)', letterSpacing: '.2em' }}>ACTIVITÉ</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <AdminNav current="#activite" />
+        <div className="adm-topbar-row1">
+          <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/icons/icon-192.png" alt="logo" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+            Mon <em>Jardin</em>
+            <span style={{ fontFamily: 'Jost', fontSize: 12, color: 'var(--text3)', letterSpacing: '.2em' }}>ACTIVITÉ</span>
+          </div>
           <div className="adm-btn ghost" onClick={() => { signOut(); window.location.href = "/"; }}>Déconnexion</div>
+        </div>
+        <div className="adm-topbar-nav">
+          <AdminNav current="#activite" />
         </div>
       </div>
 
@@ -1237,17 +1250,19 @@ export function AdminActivitePage() {
             ) : (
               <div style={{ maxHeight: 420, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, paddingRight: 4 }}>
                 {lumensData.map((l, i) => (
-                  <div key={l.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'rgba(246,196,83,0.04)', border: '1px solid rgba(246,196,83,0.10)', borderRadius: 8 }}>
+                  <div key={l.id} className="lumen-item">
                     <div style={{ fontSize: 12, color: 'rgba(246,196,83,0.35)', width: 20, textAlign: 'center', flexShrink: 0 }}>{i + 1}</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 12, color: '#f2ede0' }}>{l.users?.display_name ?? l.users?.email ?? l.user_id?.slice(0, 8)}</span>
+                    <div className="lumen-item-info">
+                      <div className="lumen-item-name">{l.users?.display_name ?? l.users?.email ?? l.user_id?.slice(0, 8)}</div>
                       {l.users?.display_name && l.users?.email && (
-                        <span style={{ fontSize: 11, color: 'rgba(242,237,224,0.28)', marginLeft: 8 }}>{l.users.email}</span>
+                        <div className="lumen-item-email">{l.users.email}</div>
                       )}
                     </div>
-                    <div style={{ fontSize: 9, color: 'rgba(242,237,224,0.30)', letterSpacing: '.04em', flexShrink: 0 }}>{l.level === 'faible' ? 'Faible' : l.level === 'halo' ? 'Halo' : l.level === 'aura' ? 'Aura' : 'Rayonnement'}</div>
-                    <div style={{ fontSize: 13, color: '#F6C453', fontWeight: 500, flexShrink: 0, minWidth: 60, textAlign: 'right' }}>{l.total} ✦</div>
-                    <div style={{ fontSize: 10, color: 'rgba(242,237,224,0.30)', flexShrink: 0, minWidth: 70, textAlign: 'right' }}>{l.available} dispo</div>
+                    <span className="lumen-item-level">{l.level === 'faible' ? 'Faible' : l.level === 'halo' ? 'Halo' : l.level === 'aura' ? 'Aura' : 'Rayonnement'}</span>
+                    <div className="lumen-item-nums">
+                      <span style={{ fontSize: 13, color: '#F6C453', fontWeight: 500 }}>{l.total} ✦</span>
+                      <span style={{ fontSize: 10, color: 'rgba(242,237,224,0.30)' }}>{l.available} dispo</span>
+                    </div>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#F6C453', flexShrink: 0, boxShadow: `0 0 ${l.total >= 200 ? 10 : l.total >= 80 ? 6 : l.total >= 20 ? 3 : 1}px rgba(246,196,83,0.6)` }} />
                   </div>
                 ))}
