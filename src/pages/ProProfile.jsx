@@ -818,12 +818,6 @@ export function ProProfile({ onBack }) {
               style={{padding:'8px 20px',borderRadius:8,border:'none',background:'linear-gradient(135deg,#5a9a28,#3a7a18)',color:'#fff',fontSize:12,fontWeight:600,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
               Pro Premium — 50 €/an
             </button>
-            {import.meta.env.DEV && (
-              <button onClick={() => handleUpgradePro('price_1TTpRBCIpPVJTaopB8sYV25I')}
-                style={{padding:'8px 14px',borderRadius:8,border:'1px dashed rgba(90,154,40,.50)',background:'transparent',color:'rgba(90,154,40,.80)',fontSize:11,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
-                ◎ Test 1€
-              </button>
-            )}
           </div>
         </div>
       )}
