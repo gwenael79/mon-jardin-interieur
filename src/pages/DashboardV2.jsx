@@ -124,6 +124,19 @@ const SLIDES_CONFIG = [
     Component: ScreenClubJardiniers,
   },
   {
+    id:        'cercle',    illusKey: 'cercle',    image: '/club.png',
+    badge:     'Cercle des Fondateurs', icon: '🌸',
+    title:     'Le Cercle des Fondateurs',
+    subtitle:  'Ceux qui nous portent — contributeurs qui permettent à Mon Jardin Intérieur d\'exister librement.',
+    guideDesc: 'Rejoindre le cercle',
+    color:     '#8a6a9a',
+    btnLabel:  'Découvrir le Cercle',
+    btnGrad:   'linear-gradient(135deg, #a07ab0, #6a4a7a)',
+    btnShadow: 'rgba(138,106,154,.34)',
+    Component: ScreenCercleFondateurs,
+    hiddenFromCarousel: true,
+  },
+  {
     id:        'ateliers',  illusKey: 'ateliers',  image: '/atelier.png',
     badge:     'Ateliers',           icon: '📘',
     title:     'Les ateliers guidés',
@@ -1810,9 +1823,10 @@ export default function DashboardPage() {
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
+    const visible = SLIDES_CONFIG.filter(s => !s.hiddenFromCarousel)
     const slot = getTimeSlot()
-    if (slot === 'morning') return SLIDES_CONFIG
-    const withoutBilan = SLIDES_CONFIG.filter(s => s.id !== 'bilan')
+    if (slot === 'morning') return visible
+    const withoutBilan = visible.filter(s => s.id !== 'bilan')
     if (slot === 'afternoon') return withoutBilan
     // soir : boite_graine en tête
     const boite = withoutBilan.find(s => s.id === 'boite_graine')
@@ -2637,7 +2651,7 @@ export default function DashboardPage() {
       {openModalId && (
         <ScreenModal
           slideId={openModalId}
-          slides={visibleSlides}
+          slides={openModalId === 'cercle' ? SLIDES_CONFIG : visibleSlides}
           screenProps={screenProps}
           bilanDoneToday={bilanDoneToday}
           bilanHistory={bilanHistory}
@@ -2647,6 +2661,8 @@ export default function DashboardPage() {
           onOpenSlide={(id) => setOpenModalId(id)}
         />
       )}
+
+
     </>
   )
 
