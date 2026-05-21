@@ -16,9 +16,11 @@ html,body,#root{height:100%;width:100%}
 }
 .adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#fff!important;display:flex;flex-direction:column}
 .adm-root *{color:#fff!important;font-size:clamp(13px,3vw,18px)!important}
-.adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:#353a3f!important;position:sticky;top:0;z-index:10}
+.adm-topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 40px;gap:8px;border-bottom:1px solid var(--border2);background:#353a3f!important;position:sticky;top:0;z-index:10}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em}
 .adm-logo em{font-style:italic;color:var(--green)}
+.adm-page-tag{font-family:'Jost',sans-serif;font-size:12px;color:rgba(255,255,255,0.40);letter-spacing:.2em;margin-left:4px}
+.adm-topbar-nav{display:flex;align-items:center;overflow:hidden;flex:1;min-width:0}
 .adm-body{flex:1;padding:32px 40px;max-width:760px;width:100%}
 .adm-btn{padding:7px 16px;border-radius:8px;font-size:12px;letter-spacing:.06em;cursor:pointer;border:none;font-family:'Jost',sans-serif;transition:all .2s;white-space:nowrap}
 .adm-btn.ghost{background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.20)}
@@ -80,12 +82,14 @@ html,body,#root{height:100%;width:100%}
 .reply-actions{display:flex;gap:8px;justify-content:flex-end}
 
 @media(max-width:700px){
-  .adm-topbar{padding:10px 12px;gap:6px;flex-wrap:nowrap}
+  .adm-topbar{padding:0;gap:0;flex-direction:column;align-items:stretch}
+  .adm-topbar-row1{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;gap:8px}
+  .adm-topbar-nav{padding:5px 12px 8px;border-top:1px solid rgba(255,255,255,0.06);overflow:hidden}
   .adm-logo span{display:none}
   .adm-body{padding:10px 10px;max-width:100%}
   .adm-btn{padding:6px 12px;font-size:11px!important}
 
-  /* Nav : icônes uniquement */
+  /* Nav : icônes uniquement (géré par ADM_NAV_CSS dans AdminNav) */
   .nav-label{display:none}
   .nav-icon{display:inline!important}
 
@@ -225,15 +229,20 @@ export function AdminMessagesPage() {
       <style>{css}</style>
 
       <div className="adm-topbar">
-        <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src="/icons/icon-192.png" alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
-          Mon <em>Jardin</em> — <span style={{ fontFamily: 'Jost', fontSize: 12, color: 'rgba(255,255,255,0.45)', letterSpacing: '.2em' }}>MESSAGES</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <AdminNav current="#messages" pendingMessages={pendingCount} />
+        {/* Ligne 1 : logo + déconnexion */}
+        <div className="adm-topbar-row1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '12px 40px', width: '100%' }}>
+          <div className="adm-logo" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img src="/icons/icon-192.png" alt="" style={{ width: 28, height: 28, borderRadius: '50%' }} />
+            Mon <em>Jardin</em>
+            <span className="adm-page-tag">MESSAGES</span>
+          </div>
           <button className="adm-btn ghost" onClick={() => { signOut(); window.location.href = '/' }}>
             <span className="nav-label">Déconnexion</span><span style={{ display:'none' }} className="nav-icon">✕</span>
           </button>
+        </div>
+        {/* Ligne 2 : navigation (scrollable sur mobile) */}
+        <div className="adm-topbar-nav" style={{ padding: '4px 40px 10px' }}>
+          <AdminNav current="#messages" pendingMessages={pendingCount} />
         </div>
       </div>
 

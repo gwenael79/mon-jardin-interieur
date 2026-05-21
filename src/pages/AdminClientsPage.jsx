@@ -58,8 +58,12 @@ html,body,#root{height:100%;width:100%}
 .adm-num-red{font-size:22px!important;font-weight:700!important;color:#e05555!important}
 .adm-toast{position:fixed;bottom:24px;right:24px;background:#3e444a!important;border:1px solid var(--greenT);border-radius:10px;padding:10px 20px;font-size:18px;color:#ffffff;z-index:999;animation:fadeInUp .3s ease}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.funnel-mail-btn{font-size:66px!important;display:flex;flex-direction:column;align-items:center;gap:2px}
-.funnel-mail-count{font-size:13px!important;line-height:1;color:rgba(255,255,255,0.55)!important}
+.funnel-mail-btn{font-size:28px!important;display:flex;flex-direction:column;align-items:center;gap:2px}
+.funnel-mail-count{font-size:10px!important;line-height:1;color:rgba(255,255,255,0.55)!important}
+@media(max-width:700px){
+  .funnel-mail-btn{font-size:20px!important}
+  .funnel-mail-count{font-size:9px!important}
+}
 @media(max-width:700px){
   .adm-topbar{padding:10px 16px;gap:8px;flex-wrap:wrap}
   .adm-logo{font-size:16px;flex:1}

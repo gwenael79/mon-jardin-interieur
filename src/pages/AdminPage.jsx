@@ -3460,6 +3460,19 @@ function MigrationGardenColors({ showToast }) {
 }
 
 // ── Navigation partagée ────────────────────────────────────────────────────
+const ADM_NAV_CSS = `
+.adm-nav-wrap{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.adm-nav-item{position:relative;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:11px;letter-spacing:.06em;text-decoration:none;font-family:'Jost',sans-serif;transition:all .2s;white-space:nowrap;line-height:1}
+.adm-nav-dot{position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:#e05a2b;pointer-events:none}
+@media(max-width:700px){
+  .adm-nav-wrap{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:3px;min-width:0}
+  .adm-nav-wrap::-webkit-scrollbar{display:none}
+  .adm-nav-item{padding:7px 10px;flex-shrink:0;letter-spacing:0}
+  .adm-nav-icon{font-size:17px!important;line-height:1}
+  .adm-nav-label{display:none}
+}
+`
+
 export function AdminNav({ current }) {
   const [pending, setPending] = useState(0)
   useEffect(() => {
@@ -3467,27 +3480,36 @@ export function AdminNav({ current }) {
       .then(({ count }) => setPending(count ?? 0))
   }, [])
   const navItems = [
-    { hash: '#admin',       label: 'Admin',        icon: '🛡' },
-    { hash: '#clients',     label: 'Clients',      icon: '👥' },
-    { hash: '#activite',    label: 'Activité',     icon: '🌿' },
-    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '🌿' },
-    { hash: '#pros',        label: 'Pros',         icon: '💼' },
-    { hash: '#messages',    label: 'Messages',     icon: '💬', badge: pending },
-    { hash: '#fondateurs',  label: 'Fondateurs',   icon: '🌸' },
-    { hash: '#entreprise',  label: 'Back-office',  icon: '🤖' },
+    { hash: '#admin',         label: 'Admin',         icon: '🛡' },
+    { hash: '#clients',       label: 'Clients',       icon: '👥' },
+    { hash: '#activite',      label: 'Activité',      icon: '🌿' },
+    { hash: '#jardinotheque', label: 'Jardinothèque', icon: '📚' },
+    { hash: '#pros',          label: 'Pros',          icon: '💼' },
+    { hash: '#messages',      label: 'Messages',      icon: '💬', badge: pending },
+    { hash: '#fondateurs',    label: 'Fondateurs',    icon: '🌸' },
+    { hash: '#entreprise',    label: 'Back-office',   icon: '🤖' },
   ]
   return (
-    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-      {navItems.map(({ hash, label, icon, badge }) => {
-        const active = current === hash
-        return (
-          <a key={hash} href={hash} style={{ position: 'relative', padding: '6px 14px', borderRadius: 8, fontSize: 11, letterSpacing: '.06em', textDecoration: 'none', fontFamily: "'Jost',sans-serif", transition: 'all .2s', background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)', border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`, color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)' }}>
-            {icon} {label}
-            {badge > 0 && <span style={{ position: 'absolute', top: 3, right: 3, width: 7, height: 7, borderRadius: '50%', background: '#e05a2b' }} />}
-          </a>
-        )
-      })}
-    </div>
+    <>
+      <style>{ADM_NAV_CSS}</style>
+      <div className="adm-nav-wrap">
+        {navItems.map(({ hash, label, icon, badge }) => {
+          const active = current === hash
+          return (
+            <a key={hash} href={hash} className="adm-nav-item"
+              style={{
+                background: active ? 'rgba(150,212,133,0.15)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${active ? 'rgba(150,212,133,0.4)' : 'rgba(255,255,255,0.10)'}`,
+                color: active ? '#c8f0b8' : 'rgba(242,237,224,0.55)',
+              }}>
+              <span className="adm-nav-icon">{icon}</span>
+              <span className="adm-nav-label">{label}</span>
+              {badge > 0 && <span className="adm-nav-dot" />}
+            </a>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
