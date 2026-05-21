@@ -80,37 +80,58 @@ html,body,#root{height:100%;width:100%}
 .reply-actions{display:flex;gap:8px;justify-content:flex-end}
 
 @media(max-width:700px){
-  .adm-topbar{padding:10px 12px;gap:8px;flex-wrap:wrap}
+  .adm-topbar{padding:10px 12px;gap:6px;flex-wrap:nowrap}
   .adm-logo span{display:none}
-  .adm-body{padding:12px 12px;max-width:100%}
-  .adm-btn{padding:6px 12px;font-size:11px}
+  .adm-body{padding:10px 10px;max-width:100%}
+  .adm-btn{padding:6px 12px;font-size:11px!important}
 
   /* Nav : icônes uniquement */
   .nav-label{display:none}
   .nav-icon{display:inline!important}
 
+  /* Filtres : scroll horizontal sans wrap */
+  .filter-row{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px!important;padding-bottom:2px;margin-bottom:14px!important}
+  .filter-row::-webkit-scrollbar{display:none}
+  .filter-chip{font-size:11px!important;padding:5px 12px!important;white-space:nowrap;flex-shrink:0}
+
   /* Threads */
-  .thread-head{padding:12px 14px}
-  .thread-name{font-size:13px}
-  .thread-meta{font-size:10px}
-  .thread-badge{font-size:9px;padding:2px 7px}
+  .thread-card{border-radius:10px}
+  .thread-head{padding:12px 12px;gap:8px}
+  .thread-head-left{flex:1;min-width:0}
+  .thread-name{font-size:13px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .thread-meta{font-size:10px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .thread-head-right{flex-shrink:0;gap:6px!important}
+  .thread-badge{font-size:9px!important;padding:2px 7px!important;white-space:nowrap}
+  .thread-chevron{flex-shrink:0}
 
   /* Messages */
-  .msg-pro-block{padding:12px 14px 8px}
-  .msg-admin-block{padding:10px 14px 12px}
-  .msg-pro-text,.msg-admin-text{font-size:15px}
-  .msg-admin-header{flex-wrap:wrap;gap:5px}
-  .msg-pending-block{padding:8px 14px;flex-wrap:wrap;gap:8px}
-  .msg-reply-btn{width:100%}
+  .msg-pro-block{padding:12px 12px 8px}
+  .msg-pro-label{font-size:10px!important;flex-wrap:wrap;row-gap:2px}
+  .msg-pro-initial{flex-shrink:0}
+  .msg-pro-text{font-size:14px!important;line-height:1.65}
+  .msg-admin-block{padding:10px 12px 12px}
+  .msg-admin-header{flex-wrap:wrap;gap:4px}
+  .msg-admin-label{font-size:10px!important}
+  .msg-admin-date-line{font-size:10px!important;opacity:.7}
+  .msg-admin-text{font-size:14px!important;line-height:1.65}
+  .msg-pending-block{padding:8px 12px;flex-wrap:wrap;gap:8px}
+  .msg-pending-label{font-size:11px!important}
+  .msg-reply-btn{width:100%;justify-content:center;font-size:12px!important}
 
   /* Formulaire */
-  .reply-form{padding:12px 14px 14px}
-  .reply-textarea{font-size:16px}
-  .reply-actions{flex-direction:column-reverse}
-  .reply-actions .adm-btn{width:100%;text-align:center;padding:10px}
-
-  /* Filtres */
-  .filter-chip{font-size:11px;padding:5px 10px}
+  .reply-form{padding:10px 12px 12px}
+  .reply-textarea{font-size:16px!important;padding:10px 12px}
+  .reply-actions{flex-direction:column-reverse;gap:6px}
+  .reply-actions .adm-btn{width:100%;text-align:center;padding:10px;font-size:12px!important}
+}
+@media(max-width:390px){
+  .adm-topbar{padding:8px 10px}
+  .adm-body{padding:8px 8px}
+  .thread-head{padding:10px 10px}
+  .msg-pro-block{padding:10px 10px 7px}
+  .msg-admin-block{padding:8px 10px 10px}
+  .msg-pending-block{padding:7px 10px}
+  .reply-form{padding:8px 10px 10px}
 }
 `
 
@@ -218,18 +239,21 @@ export function AdminMessagesPage() {
 
       <div className="adm-body">
 
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 28, fontWeight: 300, marginBottom: 6 }}>
-            💬 Messagerie pros
+        <div style={{ marginBottom: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 24, fontWeight: 300, marginBottom: 4, lineHeight: 1.2 }}>
+              💬 Messagerie pros
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+              {threads.length} conversation{threads.length !== 1 ? 's' : ''}
+              {pendingCount > 0 && <span style={{ marginLeft: 8, color: '#f0d878', fontWeight: 500 }}>· {pendingCount} sans réponse</span>}
+            </div>
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
-            {threads.length} conversation{threads.length !== 1 ? 's' : ''}
-            {pendingCount > 0 && <span style={{ marginLeft: 10, color: '#f0d878', fontWeight: 500 }}>· {pendingCount} sans réponse</span>}
-          </div>
+          <button className="adm-btn ghost" onClick={loadMessages} style={{ flexShrink: 0, fontSize: 11, marginTop: 2 }}>↺ Actualiser</button>
         </div>
 
         {/* Filtres */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div className="filter-row" style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             { key: 'all',     label: 'Toutes' },
             { key: 'pending', label: `En attente${pendingCount ? ` (${pendingCount})` : ''}` },
@@ -239,7 +263,6 @@ export function AdminMessagesPage() {
               {f.label}
             </button>
           ))}
-          <button className="adm-btn ghost" onClick={loadMessages} style={{ marginLeft: 'auto', fontSize: 11 }}>↺ Actualiser</button>
         </div>
 
         {/* Threads */}
