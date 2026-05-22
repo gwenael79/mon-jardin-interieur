@@ -760,6 +760,7 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
   const [horaires,      setHoraires]      = useState(['soir'])
   const [savingHoraires,setSavingHoraires]= useState(false)
   const [savedHoraires, setSavedHoraires] = useState(false)
+  const [notifOpen,     setNotifOpen]     = useState(true)
 
   useEffect(() => {
     if (!userId || !isSubscribed) return
@@ -859,18 +860,18 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
         {/* Nom affiché — éditable */}
         <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
           <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Nom affiché</div>
-          <div style={{ display:'flex', gap:8 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
             <input
               value={editName}
               onChange={e => { setEditName(e.target.value); setSaved(false) }}
               onKeyDown={e => e.key === 'Enter' && handleSaveName()}
-              style={{ flex:1, padding:'10px 14px', borderRadius:8, border:'1px solid rgba(200,160,150,.30)', background:'rgba(255,255,255,.8)', fontSize:15, fontFamily:"'Jost',sans-serif", color:'#1a1208', outline:'none' }}
+              style={{ width:'100%', boxSizing:'border-box', padding:'10px 14px', borderRadius:8, border:'1px solid rgba(200,160,150,.30)', background:'rgba(255,255,255,.8)', fontSize:15, fontFamily:"'Jost',sans-serif", color:'#1a1208', outline:'none' }}
               placeholder="Votre nom…"
             />
             <button
               onClick={handleSaveName}
               disabled={saving || !editName.trim() || editName.trim() === name}
-              style={{ padding:'10px 16px', borderRadius:8, border:'none', background: saved ? 'rgba(122,170,80,.85)' : 'rgba(200,160,150,.35)', color: saved ? '#fff' : 'rgba(30,20,8,.65)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', transition:'all .2s', whiteSpace:'nowrap' }}
+              style={{ width:'100%', padding:'10px 16px', borderRadius:8, border:'none', background: saved ? 'rgba(122,170,80,.85)' : 'rgba(200,160,150,.35)', color: saved ? '#fff' : 'rgba(30,20,8,.65)', fontSize:13, fontFamily:"'Jost',sans-serif", cursor:'pointer', transition:'all .2s' }}
             >
               {saved ? '✓ Sauvé' : saving ? '…' : 'Sauvegarder'}
             </button>
@@ -943,30 +944,39 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
         )}
 
         {/* ── Notifications ── */}
-        <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom: isSubscribed ? 12 : 0 }}>
+        <div style={{ background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', overflow:'hidden' }}>
+          {/* Header cliquable */}
+          <div
+            onClick={() => setNotifOpen(v => !v)}
+            style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', cursor:'pointer' }}
+          >
             <div>
               <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:3 }}>Notifications</div>
               <div style={{ fontSize:14, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>
                 {isSubscribed ? '🔔 Activées' : '🔕 Désactivées'}
               </div>
             </div>
-            {pushSupported && (
-              <button
-                onClick={isSubscribed ? unsubscribe : subscribe}
-                disabled={pushLoading}
-                style={{ padding:'7px 14px', borderRadius:20, border:'none', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: pushLoading ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: pushLoading ? 0.6 : 1, transition:'all .2s',
-                  background: isSubscribed ? 'rgba(200,80,80,.10)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
-                  color: isSubscribed ? '#c85050' : '#fff',
-                }}>
-                {pushLoading ? '…' : isSubscribed ? 'Désactiver' : 'Activer'}
-              </button>
-            )}
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              {pushSupported && (
+                <button
+                  onClick={e => { e.stopPropagation(); isSubscribed ? unsubscribe() : subscribe() }}
+                  disabled={pushLoading}
+                  style={{ padding:'7px 14px', borderRadius:20, border:'none', fontSize:12, fontFamily:"'Jost',sans-serif", cursor: pushLoading ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: pushLoading ? 0.6 : 1, transition:'all .2s',
+                    background: isSubscribed ? 'rgba(200,80,80,.10)' : 'linear-gradient(135deg,#c8a0b0,#a07888)',
+                    color: isSubscribed ? '#c85050' : '#fff',
+                  }}>
+                  {pushLoading ? '…' : isSubscribed ? 'Désactiver' : 'Activer'}
+                </button>
+              )}
+              <div style={{ width:24, height:24, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(30,20,8,.35)', transition:'transform .2s', transform: notifOpen ? 'rotate(0deg)' : 'rotate(-90deg)', flexShrink:0 }}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 5l5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+            </div>
           </div>
-          {/* Horaires — visible seulement si abonné */}
-          {isSubscribed && (
-            <div>
-              <div style={{ fontSize:11, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Rappels à quel moment ?</div>
+          {/* Contenu repliable — horaires */}
+          {notifOpen && isSubscribed && (
+            <div style={{ padding:'0 16px 14px', borderTop:'1px solid rgba(200,160,150,.12)' }}>
+              <div style={{ fontSize:11, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif", margin:'12px 0 8px' }}>Rappels à quel moment ?</div>
               <div style={{ display:'flex', gap:8, marginBottom:10 }}>
                 {HORAIRES_SETTINGS.map(h => {
                   const sel = horaires.includes(h.id)

@@ -4563,8 +4563,20 @@ function AllRitualsModal({ completedRituals, onToggle, onClose }) {
 
 /* ── Modal de partage de fleur ── */
 
-function FleurShareModal({ imageUrl, onClose }) {
-  const shareText = "Je vous présente ma fleur, que je cultive dans mon jardin intérieur. J'apprends à prendre soin de moi par de petites actions quotidiennes. Ma fleur devient un peu mon reflet. Tu souhaites prendre soin de toi ? Rejoins-moi sur monjardininterieur.com"
+function FleurShareModal({ imageUrl, firstName = '', onClose }) {
+  const n = firstName || 'je'
+  const VARIANTS = firstName ? [
+    `Chaque jour, ${firstName} cultive sa fleur intérieure 🌸 Une attention, un rituel simple pour apprendre à prendre soin de soi par de petites actions quotidiennes. Tu veux essayer ? Viens faire pousser ta propre fleur sur monjardininterieur.com`,
+    `${firstName} prend soin de soi, une action à la fois 🌿 Chaque rituel fait grandir sa fleur intérieure. Et la tienne, elle ressemble à quoi ? Rejoins-nous sur monjardininterieur.com`,
+    `La fleur de ${firstName} grandit chaque jour ✨ Un rituel, une attention, un pas vers soi. Parce que prendre soin de soi, ça s'apprend 🌸 → monjardininterieur.com`,
+    `Dans notre jardin collectif, ${firstName} cultive sa fleur intérieure 🌿 De petits rituels quotidiens pour apprendre à prendre soin de soi. Tu veux planter la tienne ? → monjardininterieur.com`,
+  ] : [
+    `Chaque jour, notre communauté cultive sa fleur intérieure 🌸 Une attention, un rituel simple pour apprendre à prendre soin de soi. Tu veux essayer ? Viens faire pousser ta propre fleur sur monjardininterieur.com`,
+    `Dans notre jardin collectif, chaque fleur raconte une histoire 🌿 De petits rituels quotidiens pour apprendre à prendre soin de soi. Et ta fleur, elle ressemble à quoi ? monjardininterieur.com`,
+    `Une fleur qui grandit chaque jour ✨ Un rituel, une attention, un pas vers soi. Parce que prendre soin de soi, ça s'apprend 🌸 → monjardininterieur.com`,
+    `Ici, on cultive son jardin intérieur 🌿 De petites actions quotidiennes pour se reconnecter à soi. Tu veux planter ta propre fleur ? → monjardininterieur.com`,
+  ]
+  const [selectedIdx, setSelectedIdx] = useState(0)
   const [toast,   setToast]   = useState(null)
   const [posting, setPosting] = useState(false)
 
@@ -4603,7 +4615,7 @@ function FleurShareModal({ imageUrl, onClose }) {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ photoUrl, caption: shareText }),
+          body: JSON.stringify({ photoUrl, caption: VARIANTS[selectedIdx] }),
         }
       )
       if (!bufRes.ok) {
@@ -4633,8 +4645,42 @@ function FleurShareModal({ imageUrl, onClose }) {
           <button onClick={onClose} style={{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,.55)', border:'1px solid rgba(255,255,255,.18)', borderRadius:20, color:'rgba(255,255,255,.85)', fontSize:12, padding:'4px 12px', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✕</button>
         </div>
 
+        {/* Sélecteur de légende */}
+        <div style={{ padding:'14px 16px 0', display:'flex', flexDirection:'column', gap:8 }}>
+          <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', fontFamily:"'Jost',sans-serif", letterSpacing:'.08em', textTransform:'uppercase' }}>
+            Choisis ta légende
+          </div>
+          {VARIANTS.map((text, i) => (
+            <div
+              key={i}
+              onClick={() => setSelectedIdx(i)}
+              style={{
+                padding:'10px 12px', borderRadius:11, cursor:'pointer', transition:'all .15s',
+                background: '#ffffff',
+                border: `2px solid ${selectedIdx === i ? 'rgba(93,200,122,0.80)' : 'rgba(0,0,0,0.10)'}`,
+                display:'flex', gap:10, alignItems:'flex-start',
+              }}
+            >
+              <span style={{
+                flexShrink:0, width:16, height:16, borderRadius:'50%', marginTop:1,
+                border:`2px solid ${selectedIdx === i ? 'rgba(93,200,122,0.9)' : 'rgba(255,255,255,0.25)'}`,
+                background: selectedIdx === i ? 'rgba(93,200,122,0.9)' : 'transparent',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                {selectedIdx === i && <span style={{ width:6, height:6, borderRadius:'50%', background:'#12121e', display:'block' }}/>}
+              </span>
+              <span style={{
+                fontSize:14, lineHeight:1.55, fontFamily:"'Jost',sans-serif", fontWeight:500,
+                color: '#000000',
+              }}>
+                {text}
+              </span>
+            </div>
+          ))}
+        </div>
+
         {/* Boutons */}
-        <div style={{ padding:'18px 16px 20px', display:'flex', flexDirection:'column', gap:10 }}>
+        <div style={{ padding:'14px 16px 20px', display:'flex', flexDirection:'column', gap:10 }}>
 
           {/* Partager sur les réseaux de Féline */}
           <button
@@ -5247,14 +5293,22 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       const firstName = (profile?.display_name ?? '').split(' ')[0] || ''
       ctx.fillStyle = 'rgba(255,252,238,0.82)'
       ctx.font = "300 46px 'Cormorant Garamond', Georgia, serif"
-      const msgLines = [
-        'Je vous présente ma fleur,',
-        'que je cultive dans mon jardin intérieur.',
+      const msgLines = firstName ? [
+        `Voici la fleur de ${firstName},`,
+        `cultivée chaque jour dans son jardin intérieur.`,
         '',
-        "J'apprends à prendre soin de moi",
+        `${firstName} apprend à prendre soin de soi`,
         'par de petites actions quotidiennes.',
         '',
-        'Ma fleur devient un peu mon reflet.',
+        'Sa fleur devient un peu son reflet.',
+      ] : [
+        'Une fleur cultivée chaque jour,',
+        'dans un jardin intérieur.',
+        '',
+        'Apprendre à prendre soin de soi',
+        'par de petites actions quotidiennes.',
+        '',
+        "Ta fleur t'attend.",
       ]
       let ly = sepY + 70
       for (const line of msgLines) {
@@ -5371,6 +5425,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     {shareImageUrl && (
       <FleurShareModal
         imageUrl={shareImageUrl}
+        firstName={(profile?.display_name ?? '').split(' ')[0] || ''}
         onClose={() => { URL.revokeObjectURL(shareImageUrl); setShareImageUrl(null) }}
       />
     )}
