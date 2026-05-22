@@ -4637,7 +4637,7 @@ function FleurShareModal({ imageUrl, firstName = '', onClose }) {
       style={{ position:'fixed', inset:0, zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20, background:'rgba(0,0,0,0.78)', backdropFilter:'blur(10px)' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div style={{ background:'#12121e', borderRadius:20, overflow:'hidden', maxWidth:400, width:'100%', border:'1px solid rgba(255,255,255,.12)', boxShadow:'0 20px 80px rgba(0,0,0,.7)' }}>
+      <div style={{ background:'#12121e', borderRadius:20, overflow:'hidden', maxWidth:400, width:'100%', maxHeight:'90vh', display:'flex', flexDirection:'column', border:'1px solid rgba(255,255,255,.12)', boxShadow:'0 20px 80px rgba(0,0,0,.7)' }}>
 
         {/* Preview */}
         <div style={{ position:'relative' }}>
@@ -4645,7 +4645,8 @@ function FleurShareModal({ imageUrl, firstName = '', onClose }) {
           <button onClick={onClose} style={{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,.55)', border:'1px solid rgba(255,255,255,.18)', borderRadius:20, color:'rgba(255,255,255,.85)', fontSize:12, padding:'4px 12px', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>✕</button>
         </div>
 
-        {/* Sélecteur de légende */}
+        {/* Sélecteur de légende + boutons — scrollable sur mobile */}
+        <div style={{ overflowY:'auto', WebkitOverflowScrolling:'touch', flex:1 }}>
         <div style={{ padding:'14px 16px 0', display:'flex', flexDirection:'column', gap:8 }}>
           <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', fontFamily:"'Jost',sans-serif", letterSpacing:'.08em', textTransform:'uppercase' }}>
             Choisis ta légende
@@ -4730,6 +4731,7 @@ function FleurShareModal({ imageUrl, firstName = '', onClose }) {
             Instagram · TikTok · Facebook
           </div>
         </div>
+        </div>{/* fin zone scrollable */}
 
         {/* Toast */}
         {toast && (
