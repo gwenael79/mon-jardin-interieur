@@ -1084,14 +1084,31 @@ function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = 
                   </span>
                 )
                 return (
-                  <button
-                    onClick={e => { e.stopPropagation(); trial.activate() }}
-                    style={{ padding:'6px 18px', borderRadius:100, border:'1px solid rgba(200,235,200,.22)', background:'rgba(200,235,200,.08)', fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:400, color:'rgba(200,235,200,.62)', cursor:'pointer', letterSpacing:'.04em', transition:'all .18s' }}
-                    onMouseEnter={e => { e.currentTarget.style.background='rgba(200,235,200,.16)'; e.currentTarget.style.color='rgba(200,235,200,.88)'; e.currentTarget.style.borderColor='rgba(200,235,200,.40)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background='rgba(200,235,200,.08)'; e.currentTarget.style.color='rgba(200,235,200,.62)'; e.currentTarget.style.borderColor='rgba(200,235,200,.22)' }}
-                  >
-                    Aperçu gratuit 24h
-                  </button>
+                  <>
+                    <style>{`
+                      @keyframes trialPulse {
+                        0%,100% { box-shadow: 0 0 0 0 rgba(240,192,74,.55), 0 2px 12px rgba(240,192,74,.20); }
+                        55%     { box-shadow: 0 0 0 7px rgba(240,192,74,.0),  0 2px 18px rgba(240,192,74,.35); }
+                      }
+                    `}</style>
+                    <button
+                      onClick={e => { e.stopPropagation(); trial.activate() }}
+                      style={{
+                        padding:'9px 24px', borderRadius:100,
+                        border:'1.5px solid rgba(240,192,74,.70)',
+                        background:'linear-gradient(135deg, rgba(240,192,74,.22), rgba(240,160,40,.14))',
+                        fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600,
+                        color:'rgba(255,220,100,.95)', cursor:'pointer',
+                        letterSpacing:'.05em',
+                        animation:'trialPulse 2s ease-in-out infinite',
+                        transition:'transform .15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform='scale(1.04)'; e.currentTarget.style.background='linear-gradient(135deg, rgba(240,192,74,.32), rgba(240,160,40,.22))' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform='scale(1)';    e.currentTarget.style.background='linear-gradient(135deg, rgba(240,192,74,.22), rgba(240,160,40,.14))' }}
+                    >
+                      ✦ Aperçu gratuit 24h
+                    </button>
+                  </>
                 )
               })()}
             </div>
