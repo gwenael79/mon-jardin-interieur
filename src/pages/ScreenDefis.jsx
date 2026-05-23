@@ -979,9 +979,52 @@ function ScreenDefis({ userId, awardLumens, isPremium = false, onUpgrade }) {
 }
 
 
+const TRIAL_DURATION = 24 * 60 * 60 * 1000 // 24h en ms
+
+function useGardenTrial(userId) {
+  const key = userId ? `mji_garden_trial_${userId}` : null
+
+  const getStart = () => {
+    if (!key) return null
+    const v = localStorage.getItem(key)
+    return v ? parseInt(v, 10) : null
+  }
+
+  const [trialStart, setTrialStart] = useState(getStart)
+  const [now, setNow] = useState(Date.now)
+
+  // Tick chaque minute pour le décompte
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const activate = () => {
+    if (!key || trialStart) return
+    const ts = Date.now()
+    localStorage.setItem(key, String(ts))
+    setTrialStart(ts)
+  }
+
+  const elapsed   = trialStart ? now - trialStart : 0
+  const expired   = trialStart ? elapsed >= TRIAL_DURATION : false
+  const active    = trialStart ? !expired : false
+  const remaining = active ? TRIAL_DURATION - elapsed : 0
+
+  const formatRemaining = () => {
+    const h = Math.floor(remaining / 3_600_000)
+    const m = Math.floor((remaining % 3_600_000) / 60_000)
+    if (h > 0) return `${h}h ${m > 0 ? m + 'min' : ''}`
+    return `${m} min`
+  }
+
+  return { active, expired, used: !!trialStart, activate, formatRemaining }
+}
+
 function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = false, userLevel = 1, onUpgrade, gardenFlowerCount, communityStats }) {
   const isMobile = useIsMobile()
-  const canAccess = isPremium || isFondateurGraine || userLevel >= 3
+  const trial     = useGardenTrial(userId)
+  const canAccess = isPremium || isFondateurGraine || userLevel >= 3 || trial.active
   const flowerCount = gardenFlowerCount ?? 0
   const gardenContainerRef = useRef(null)
   const [containerH, setContainerH] = useState(null)
@@ -993,6 +1036,8 @@ function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = 
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  const showTrial = !isPremium && !isFondateurGraine && userLevel < 3
 
   return (
     <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', position:'relative' }}>
@@ -1008,7 +1053,7 @@ function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = 
         {/* Carte d'invitation */}
         {!canAccess && (
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>
-            <div onClick={onUpgrade} style={{ cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:12, padding: isMobile ? '24px 28px' : '32px 44px', borderRadius:20, background:'rgba(6,14,7,.55)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.10)', boxShadow:'0 8px 40px rgba(0,0,0,.35)' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, padding: isMobile ? '24px 28px' : '32px 44px', borderRadius:20, background:'rgba(6,14,7,.55)', backdropFilter:'blur(12px)', border:'1px solid rgba(255,255,255,.10)', boxShadow:'0 8px 40px rgba(0,0,0,.35)' }}>
               <span style={{ fontSize: isMobile ? 32 : 40 }}>🌿</span>
               <div style={{ textAlign:'center' }}>
                 <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 26, fontWeight:600, color:'rgba(240,235,220,.92)', marginBottom:6 }}>
@@ -1018,17 +1063,54 @@ function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = 
                   {userLevel >= 2 ? 'Atteignez le Niveau 3 ou passez Premium pour accéder au jardin collectif' : 'Découvrez les fleurs de la communauté et cultivez ensemble'}
                 </div>
               </div>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'8px 20px', borderRadius:100, background:'rgba(var(--green-rgb),.15)', border:'1px solid rgba(var(--green-rgb),.30)' }}>
+
+              {/* CTA principal — Passer Premium */}
+              <div onClick={onUpgrade} style={{ cursor:'pointer', display:'inline-flex', alignItems:'center', gap:8, padding:'8px 20px', borderRadius:100, background:'rgba(var(--green-rgb),.15)', border:'1px solid rgba(var(--green-rgb),.30)' }}>
                 <span style={{ fontSize:12, color:'var(--green)', fontFamily:"'Jost',sans-serif", fontWeight:500, letterSpacing:'.04em' }}>Passer Premium</span>
                 <span style={{ fontSize:11, color:'rgba(var(--green-rgb),.6)' }}>→</span>
               </div>
+
+              {/* CTA secondaire — Aperçu 24h */}
+              {showTrial && (() => {
+                if (trial.active) return (
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", color:'rgba(200,235,200,.55)' }}>Aperçu en cours —</span>
+                    <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(200,235,200,.80)' }}>encore {trial.formatRemaining()}</span>
+                  </div>
+                )
+                if (trial.expired) return (
+                  <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", color:'rgba(200,220,200,.35)', letterSpacing:'.03em' }}>
+                    Aperçu expiré
+                  </span>
+                )
+                return (
+                  <button
+                    onClick={e => { e.stopPropagation(); trial.activate() }}
+                    style={{ padding:'6px 18px', borderRadius:100, border:'1px solid rgba(200,235,200,.22)', background:'rgba(200,235,200,.08)', fontFamily:"'Jost',sans-serif", fontSize:11, fontWeight:400, color:'rgba(200,235,200,.62)', cursor:'pointer', letterSpacing:'.04em', transition:'all .18s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='rgba(200,235,200,.16)'; e.currentTarget.style.color='rgba(200,235,200,.88)'; e.currentTarget.style.borderColor='rgba(200,235,200,.40)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background='rgba(200,235,200,.08)'; e.currentTarget.style.color='rgba(200,235,200,.62)'; e.currentTarget.style.borderColor='rgba(200,235,200,.22)' }}
+                  >
+                    Aperçu gratuit 24h
+                  </button>
+                )
+              })()}
+            </div>
+          </div>
+        )}
+
+        {/* Décompte en overlay quand le trial est actif */}
+        {trial.active && (
+          <div style={{ position:'absolute', bottom:16, left:'50%', transform:'translateX(-50%)', zIndex:20, pointerEvents:'none' }}>
+            <div style={{ padding:'5px 14px', borderRadius:100, background:'rgba(6,14,7,.65)', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.10)' }}>
+              <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", color:'rgba(200,235,200,.70)' }}>Aperçu — encore </span>
+              <span style={{ fontSize:11, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(200,235,200,.90)' }}>{trial.formatRemaining()}</span>
             </div>
           </div>
         )}
       </div>
 
       {/* ── Barre d'info en bas ── */}
-      <div style={{ flexShrink:0, padding: isMobile ? '16px 24px' : '20px 40px', background:'rgba(180,220,180,.35)', borderTop:'1px solid rgba(80,140,80,.25)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ flexShrink:0, padding: isMobile ? '12px 20px' : '16px 40px', background:'rgba(180,220,180,.35)', borderTop:'1px solid rgba(80,140,80,.25)', display:'flex', flexDirection:'column', alignItems:'center', gap:6 }}>
         <p style={{ margin:0, textAlign:'center', fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 18, fontWeight:400, color:'rgba(20,30,15,.80)', lineHeight:1.5 }}>
           En ce moment,{' '}
           <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 26 : 32, fontWeight:700, color:'rgba(20,60,20,.9)' }}>
@@ -1036,6 +1118,11 @@ function ScreenJardinCollectif({ userId, isPremium = false, isFondateurGraine = 
           </span>
           {' '}s'épanouissent dans le jardin collectif
         </p>
+        {showTrial && trial.active && (
+          <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 13, color:'rgba(20,80,20,.65)', letterSpacing:'.02em' }}>
+            Aperçu en cours — encore <strong style={{ color:'rgba(20,80,20,.85)' }}>{trial.formatRemaining()}</strong>
+          </p>
+        )}
       </div>
 
     </div>
