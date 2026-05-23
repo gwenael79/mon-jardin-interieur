@@ -10,22 +10,16 @@ async function loadCommunityPlants() {
   const since = new Date()
   since.setDate(since.getDate() - 30)
 
-  const [usersRes, plantsRes, privacyRes, settingsRes] = await Promise.all([
-    // Tous les membres de la communauté
+  const [usersRes, plantsRes, privacyRes, settingsRes, decorRes] = await Promise.all([
     supabase.from('users').select('id'),
-    // Dernière plante connue par user (30 jours)
     supabase
       .from('plants')
       .select('user_id, health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle, date')
       .gte('date', since.toISOString().split('T')[0])
       .order('date', { ascending: false }),
-    supabase
-      .from('privacy_settings')
-      .select('user_id')
-      .eq('show_health', false),
-    supabase
-      .from('garden_settings')
-      .select('user_id, petal_color1, petal_color2, petal_shape, sunrise_h, sunrise_m, sunset_h, sunset_m'),
+    supabase.from('privacy_settings').select('user_id').eq('show_health', false),
+    supabase.from('garden_settings').select('user_id, petal_color1, petal_color2, petal_shape, sunrise_h, sunrise_m, sunset_h, sunset_m'),
+    supabase.from('garden_decor_flowers').select('id, health, petal_color1, petal_color2, petal_shape').eq('is_active', true),
   ])
 
   if (plantsRes.error) throw new Error(plantsRes.error.message)
@@ -36,21 +30,16 @@ async function loadCommunityPlants() {
 
   const ZONE_KEYS = ['zone_racines', 'zone_tige', 'zone_feuilles', 'zone_fleurs', 'zone_souffle']
 
-  // Plante non encore développée : ancienne valeur par défaut (50) OU nouvelle valeur initiale (≤5)
   const isDefault = (p) =>
     (p.health === 50 && ZONE_KEYS.every(k => (p[k] ?? 50) === 50)) ||
     (p.health <= 5  && ZONE_KEYS.every(k => (p[k] ?? 5)  <= 5))
 
-  // Toutes les plantes par user (déjà triées date desc) — gardées pour le carry-over
   const allPlantsByUser = {}
   for (const row of (plantsRes.data || [])) {
     if (!allPlantsByUser[row.user_id]) allPlantsByUser[row.user_id] = []
     allPlantsByUser[row.user_id].push(row)
   }
 
-  // Sélectionne la plante effective par user :
-  // si la plus récente est à la valeur par défaut (pas encore chargée aujourd'hui),
-  // on prend la dernière plante développée (carry-over côté jardin collectif)
   const plantsByUser = {}
   for (const [uid, plants] of Object.entries(allPlantsByUser)) {
     const latest = plants[0]
@@ -67,6 +56,20 @@ async function loadCommunityPlants() {
     if (hidden.has(u.id)) continue
     const plant = plantsByUser[u.id] || { user_id: u.id, health: 0, date: null }
     result.push({ ...plant, gardenSettings: settings[u.id] || null })
+  }
+
+  // Fleurs décoratives : insérées aléatoirement dans le tableau pour un mélange naturel
+  for (const d of (decorRes?.data || [])) {
+    const fakeId = 'decor_' + d.id
+    result.splice(
+      Math.floor(Math.random() * (result.length + 1)),
+      0,
+      {
+        user_id: fakeId,
+        health: d.health,
+        gardenSettings: { petal_color1: d.petal_color1, petal_color2: d.petal_color2, petal_shape: d.petal_shape },
+      }
+    )
   }
 
   return result

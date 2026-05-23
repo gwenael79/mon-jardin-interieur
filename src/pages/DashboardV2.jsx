@@ -1916,12 +1916,15 @@ export default function DashboardPage() {
     Promise.all([
       supabase.from('plants').select('user_id, health, date').gte('date', since.toISOString().split('T')[0]).order('date', { ascending: false }),
       supabase.from('privacy_settings').select('user_id').eq('show_health', false),
-    ]).then(([plantsRes, privacyRes]) => {
+      supabase.from('garden_decor_flowers').select('id', { count: 'exact', head: true }).eq('is_active', true),
+    ]).then(([plantsRes, privacyRes, decorRes]) => {
       if (plantsRes.error) return
       const hidden = new Set((privacyRes.data || []).map(p => p.user_id))
       const byUser = {}
       for (const row of (plantsRes.data || [])) { if (!byUser[row.user_id]) byUser[row.user_id] = row }
-      setGardenFlowerCount(Object.values(byUser).filter(p => !hidden.has(p.user_id) && p.health > 0).length)
+      const realCount  = Object.values(byUser).filter(p => !hidden.has(p.user_id) && p.health > 0).length
+      const decorCount = decorRes?.count ?? 0
+      setGardenFlowerCount(realCount + decorCount)
     })
   }, [])
 
