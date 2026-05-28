@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
 // ─── NEEDS (reprise pour les alternatives) ───────────────────────────────────
-const NEEDS = [
+export const NEEDS = [
   { id:'sleep',       label:'Mieux dormir',           g1:'#5B3FA0', g2:'#8B6FD0', glow:'rgba(107,75,200,0.32)' },
   { id:'stress',      label:'Apaiser le stress',       g1:'#2058B0', g2:'#5090E0', glow:'rgba(48,112,200,0.28)' },
   { id:'emotions',    label:'Apaiser mes émotions',    g1:'#B83070', g2:'#E870A8', glow:'rgba(200,60,120,0.28)' },
@@ -14,7 +14,7 @@ const NEEDS = [
 ]
 
 // ─── Alternatives par besoin ─────────────────────────────────────────────────
-const ALTERNATIVES = {
+export const ALTERNATIVES = {
   sleep:       'softness',
   stress:      'grounding',
   emotions:    'softness',
@@ -26,7 +26,7 @@ const ALTERNATIVES = {
 }
 
 // ─── Rituels ─────────────────────────────────────────────────────────────────
-const RITUALS = {
+export const RITUALS = {
   sleep: {
     title:    'Respiration 4-7-8',
     subtitle: 'Le rituel du sommeil apaisé',
@@ -152,7 +152,7 @@ const RITUALS = {
 }
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
-const CSS = `
+export const CSS = `
   @keyframes rs_in     { from{opacity:0;transform:translateY(20px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
   @keyframes rs_stepIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
   @keyframes rs_pulse  { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.12);opacity:1} }
@@ -172,11 +172,13 @@ const CSS = `
   @keyframes bub_exhale   { from{transform:scale(1.0)} to{transform:scale(0.60)} }
   @keyframes bub_ring     { 0%{transform:scale(1);opacity:0.55} 100%{transform:scale(2.9);opacity:0} }
   @keyframes countdown_pop { 0%{transform:scale(1.9);opacity:0} 55%{transform:scale(0.88)} 100%{transform:scale(1);opacity:1} }
+  @keyframes rs_audio_pulse { 0%,100%{box-shadow:0 8px 28px var(--glow),0 0 0 8px var(--ring)} 50%{box-shadow:0 12px 40px var(--glow),0 0 0 14px var(--ring)} }
 `
 
 // ─── Phase : vue du rituel ────────────────────────────────────────────────────
-function PhaseView({ ritual, need, isMobile, onStart, onBack, onClose }) {
+function PhaseView({ ritual, need, isMobile, startMode, onStart, onBack, onClose }) {
   const { g1, g2, glow } = need
+  const buttonLabel = startMode === 'audio' ? '🔊 Écouter le rituel guidé' : 'Commencer le rituel'
   return (
     <>
       <div style={{ flexShrink:0, padding: isMobile ? '18px 18px 0' : '28px 32px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -220,13 +222,13 @@ function PhaseView({ ritual, need, isMobile, onStart, onBack, onClose }) {
             <p style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(50,35,20,0.65)', margin:0, lineHeight:1.6 }}>{ritual.tip}</p>
           </div>
         </div>
-        <div style={{ textAlign:'center', animation:'rs_in .4s ease .5s both' }}>
+        <div style={{ textAlign:'center', animation:'rs_in .4s ease .5s both', display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
           <button onClick={onStart}
-            style={{ padding: isMobile ? '17px 0' : '17px 60px', width: isMobile ? '100%' : 'auto', borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:18, fontWeight:700, color:'#fff', letterSpacing:'.04em', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 10px 30px ${glow}`, transition:'transform .18s ease' }}
-            onMouseEnter={e => e.currentTarget.style.transform='translateY(-3px)'}
+            style={{ padding:'18px 0', width:'100%', maxWidth:340, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 8px 32px ${glow}`, transition:'transform .18s ease' }}
+            onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
             onMouseLeave={e => e.currentTarget.style.transform='none'}
           >
-            Commencer ce rituel
+            {buttonLabel}
           </button>
         </div>
       </div>
@@ -236,13 +238,13 @@ function PhaseView({ ritual, need, isMobile, onStart, onBack, onClose }) {
 
 // ─── Phase : bulle de respiration ────────────────────────────────────────────
 // Palette par phase
-const PHASE_PALETTE = {
+export const PHASE_PALETTE = {
   inhale: { from:'#a78bfa', to:'#6d28d9', glow:'rgba(139,92,246,0.55)', label:'Inspirez', sub:'par le nez' },
   hold:   { from:'#818cf8', to:'#3730a3', glow:'rgba(99,102,241,0.50)',  label:'Retenez',  sub:'doucement' },
   exhale: { from:'#34d399', to:'#065f46', glow:'rgba(52,211,153,0.50)',  label:'Expirez',  sub:'par la bouche' },
 }
 
-function PhaseBreathing({ ritual, need, isMobile, onDone, onClose }) {
+export function PhaseBreathing({ ritual, need, isMobile, onDone, onClose }) {
   const { inhale, hold, exhale, cycles } = ritual.breathing
   const PHASES = [
     ...(inhale > 0 ? [{ key:'inhale', duration:inhale }] : []),
@@ -587,25 +589,194 @@ function PhaseResult({ need, isMobile, onSeeFlower, onClose, healthBefore, healt
     </div>
   )
 }
+// ─── Phase : expérience audio guidée ─────────────────────────────────────────
+export function PhaseAudio({ ritual, need, isMobile, onValidate, onClose }) {
+  const [state, setState] = useState('ready') // ready | playing | ended
+  const audioRef = useRef(null)
+  const { g1, g2, glow } = need
+
+  function stopAll() {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+  }
+
+  function startGuide() {
+    const audio = new Audio(`/audio/${need.id}.mp3`)
+    audio.onended = () => setState('ended')
+    audioRef.current = audio
+    audio.play().then(() => {
+      setState('playing')
+    }).catch(() => {
+      audioRef.current = null
+      setState('ended')
+    })
+  }
+
+  function handleSkip() { stopAll(); setState('ended') }
+
+  useEffect(() => () => stopAll(), [])
+
+  // ── Orbe de respiration — synchronisé en simultané avec l'audio ──
+  const hasBreathing = !!ritual.breathing
+  const _BP = hasBreathing ? [
+    ...(ritual.breathing.inhale > 0 ? [{ key:'inhale', duration:ritual.breathing.inhale }] : []),
+    ...(ritual.breathing.hold   > 0 ? [{ key:'hold',   duration:ritual.breathing.hold   }] : []),
+    ...(ritual.breathing.exhale > 0 ? [{ key:'exhale', duration:ritual.breathing.exhale  }] : []),
+  ] : [{ key:'inhale', duration:4 }]
+
+  const [bPhaseIdx, setBPhaseIdx] = useState(0)
+  const [bTimeLeft, setBTimeLeft] = useState(_BP[0].duration)
+  const [bCycleNum, setBCycleNum] = useState(1)
+  const [bPhaseKey, setBPhaseKey] = useState(0)
+  const bRef = useRef({ phaseIdx:0, timeLeft:_BP[0].duration, cycleNum:1, phaseKey:0 })
+
+  useEffect(() => {
+    if (state !== 'playing' || !hasBreathing) return
+    const BP = _BP
+    bRef.current = { phaseIdx:0, timeLeft:BP[0].duration, cycleNum:1, phaseKey:0 }
+    setBPhaseIdx(0); setBTimeLeft(BP[0].duration); setBCycleNum(1); setBPhaseKey(0)
+    const id = setInterval(() => {
+      const cur = bRef.current
+      if (cur.timeLeft > 1) {
+        bRef.current.timeLeft = cur.timeLeft - 1
+        setBTimeLeft(cur.timeLeft - 1)
+        return
+      }
+      const nextPi = cur.phaseIdx + 1
+      if (nextPi < BP.length) {
+        const pk = cur.phaseKey + 1
+        bRef.current = { ...cur, phaseIdx:nextPi, timeLeft:BP[nextPi].duration, phaseKey:pk }
+        setBPhaseIdx(nextPi); setBTimeLeft(BP[nextPi].duration); setBPhaseKey(pk)
+        return
+      }
+      // Boucle infinie — l'audio est le guide de durée
+      const pk = cur.phaseKey + 1
+      bRef.current = { phaseIdx:0, timeLeft:BP[0].duration, cycleNum:cur.cycleNum+1, phaseKey:pk }
+      setBPhaseIdx(0); setBTimeLeft(BP[0].duration); setBCycleNum(c => c+1); setBPhaseKey(pk)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [state]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const bg = 'linear-gradient(180deg, #15102a 0%, #231540 45%, #18102c 100%)'
+  const closeBtn = (
+    <button onClick={() => { stopAll(); onClose() }} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', cursor:'pointer', color:'rgba(255,255,255,0.45)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+  )
+
+  if (state === 'ready') return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:bg, padding:'40px 28px', textAlign:'center', position:'relative' }}>
+      {closeBtn}
+      <div style={{ fontSize:12, fontFamily:"'Jost',sans-serif", letterSpacing:'.20em', textTransform:'uppercase', color:'rgba(255,255,255,0.35)', marginBottom:48 }}>
+        {ritual.title}
+      </div>
+      <button onClick={startGuide}
+        style={{ width:96, height:96, borderRadius:'50%', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:36, background:`radial-gradient(circle at 38% 32%, rgba(255,255,255,0.18), ${g1}cc, ${g2})`, boxShadow:`0 0 0 14px ${g1}18, 0 0 0 28px ${g1}08, 0 16px 48px ${glow}`, marginBottom:36, transition:'transform .2s ease' }}
+        onMouseEnter={e => e.currentTarget.style.transform='scale(1.07)'}
+        onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}
+      >🔊</button>
+      <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 20 : 24, fontStyle:'italic', color:'rgba(255,255,255,0.72)', margin:0, lineHeight:1.55, maxWidth:300 }}>
+        Installez-vous confortablement et appuyez pour commencer
+      </p>
+    </div>
+  )
+
+  if (state === 'playing') {
+    // ── Rituel avec respiration : orbe en simultané avec l'audio ──
+    if (hasBreathing) {
+      const curPhase = _BP[bPhaseIdx] ?? _BP[0]
+      const palette  = PHASE_PALETTE[curPhase.key] ?? PHASE_PALETTE.inhale
+      const bubSize  = isMobile ? 168 : 200
+      return (
+        <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding: isMobile ? '20px 16px' : '32px 48px', textAlign:'center', position:'relative', background:'linear-gradient(180deg,#d8d0f0 0%,#c8bfe8 100%)', overflow:'hidden' }}>
+          {closeBtn}
+          <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(40,20,80,0.75)', marginBottom:28, fontWeight:500 }}>{ritual.title}</div>
+          <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, width:bubSize+90, height:bubSize+90 }}>
+            <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:`radial-gradient(circle, ${palette.glow} 0%, transparent 68%)`, transition:'background 1.4s ease', pointerEvents:'none' }}/>
+            {(curPhase.key === 'inhale' || curPhase.key === 'exhale') && [0,1].map(i => (
+              <div key={`ring-${bPhaseKey}-${i}`} style={{ position:'absolute', width:bubSize, height:bubSize, borderRadius:'50%', border: curPhase.key === 'inhale' ? '2px solid rgba(255,255,255,0.85)' : '2px solid rgba(10,5,30,0.65)', animation:`bub_ring ${curPhase.duration * 0.95}s ease-out ${i * 1.6}s both`, pointerEvents:'none' }}/>
+            ))}
+            <div key={`bubble-${bPhaseKey}`} style={{ position:'relative', width:bubSize, height:bubSize, borderRadius:'50%', background:`radial-gradient(circle at 38% 32%, rgba(255,255,255,0.35) 0%, ${palette.from}ee 40%, ${palette.to} 100%)`, boxShadow:`0 0 55px ${palette.glow}, 0 0 110px ${palette.glow}66, inset 0 2px 10px rgba(255,255,255,0.25)`, animation:`bub_${curPhase.key} ${curPhase.duration}s ${curPhase.key === 'hold' ? 'ease-in-out infinite' : 'cubic-bezier(0.37,0,0.63,1) forwards'}`, display:'flex', alignItems:'center', justifyContent:'center', transition:'box-shadow 1.2s ease', zIndex:1 }}>
+              <div style={{ position:'absolute', width:30, height:30, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.55) 40%, rgba(255,255,255,0.08) 75%, transparent 100%)', filter:'blur(2.5px)', zIndex:2, pointerEvents:'none' }}/>
+              <span key={`tl-${bTimeLeft}`} style={{ position:'relative', zIndex:3, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 52 : 64, fontWeight:300, color:'rgba(255,255,255,1)', lineHeight:1, letterSpacing:'-.02em', animation:'rs_label_in .35s ease both', textShadow:'0 2px 12px rgba(30,10,70,0.50)' }}>
+                {curPhase.key === 'inhale' ? curPhase.duration - bTimeLeft + 1 : bTimeLeft}
+              </span>
+            </div>
+          </div>
+          <div key={`label-${bPhaseKey}`} style={{ animation:'rs_label_in .5s ease both', flexShrink:0 }}>
+            <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 42 : 50, fontWeight:400, color:'rgba(25,10,60,0.92)', letterSpacing:'.02em', lineHeight:1.1 }}>{palette.label}</div>
+            <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(50,30,100,0.70)', letterSpacing:'.14em', textTransform:'uppercase', marginTop:10 }}>{palette.sub}</div>
+          </div>
+          <button onClick={handleSkip} style={{ marginTop:22, padding:'11px 32px', borderRadius:100, border:'1px solid rgba(50,30,100,0.35)', background:'rgba(50,30,100,0.10)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:500, color:'rgba(30,10,70,0.65)', letterSpacing:'.06em' }}>
+            Passer
+          </button>
+        </div>
+      )
+    }
+    // ── Rituel sans respiration : animation audio simple ──
+    return (
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:bg, padding:'40px 28px', textAlign:'center', position:'relative' }}>
+        {closeBtn}
+        <div style={{ position:'relative', width:120, height:120, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:40 }}>
+          <div style={{ position:'absolute', inset:0, borderRadius:'50%', background:`radial-gradient(circle, ${g1}30 0%, transparent 70%)`, animation:'rs_pulse 2s ease-in-out infinite' }}/>
+          <div style={{ position:'absolute', inset:8, borderRadius:'50%', border:`1.5px solid ${g1}45`, animation:'bub_ring 3.5s ease-out infinite' }}/>
+          <div style={{ position:'absolute', inset:20, borderRadius:'50%', border:`1.5px solid ${g1}30`, animation:'bub_ring 3.5s ease-out 1.75s infinite' }}/>
+          <span style={{ fontSize:26, position:'relative', zIndex:1 }}>🎵</span>
+        </div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 36, fontWeight:400, color:'rgba(255,255,255,0.85)', marginBottom:8, lineHeight:1.2 }}>{ritual.title}</div>
+        <div style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(255,255,255,0.30)', letterSpacing:'.14em', textTransform:'uppercase', marginBottom:52 }}>En cours…</div>
+        <button onClick={handleSkip} style={{ padding:'11px 32px', borderRadius:100, border:'1px solid rgba(255,255,255,0.18)', background:'rgba(255,255,255,0.07)', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(255,255,255,0.40)', letterSpacing:'.08em' }}>Passer</button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:bg, padding:'40px 28px', textAlign:'center', position:'relative', animation:'rs_in .4s ease both' }}>
+      {closeBtn}
+      <div style={{ width:72, height:72, borderRadius:'50%', background:`radial-gradient(circle at 38% 32%, rgba(255,255,255,0.28), ${g1}cc, ${g2})`, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:28, boxShadow:`0 0 48px ${glow}`, animation:'rs_pop .5s cubic-bezier(.34,1.56,.64,1) both' }}>
+        <span style={{ fontSize:26, color:'#fff' }}>✓</span>
+      </div>
+      <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 28, fontStyle:'italic', fontWeight:400, color:'rgba(255,255,255,0.85)', margin:'0 0 36px', lineHeight:1.5, maxWidth:320 }}>
+        Prenez un instant pour remarquer comment vous vous sentez maintenant.
+      </p>
+      <button onClick={onValidate}
+        style={{ padding: isMobile ? '18px 0' : '18px 64px', width: isMobile ? '88%' : 'auto', maxWidth:340, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 8px 32px ${glow}`, transition:'transform .18s ease' }}
+        onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+        onMouseLeave={e => e.currentTarget.style.transform='none'}
+      >
+        J'ai fait ce rituel ✓
+      </button>
+    </div>
+  )
+}
+
 // ─── Guard anti-double eval (survit aux remounts StrictMode) ─────────────────
 let _evalInProgress = false
 export function resetEvalGuard() { _evalInProgress = false }
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlower, onCompleteRitual, plantHealth, plantId }) {
   const isMobile = useIsMobile()
-  const [phase,            setPhase]            = useState('view')
-  const [liked,            setLiked]            = useState(null)
-  const [activeNeed,       setActiveNeed]       = useState(need)
-  const [activeRitual,     setActiveRitual]     = useState(RITUALS[need.id])
-  const [healthSnapshot,   setHealthSnapshot]   = useState(null)
+  const [phase,          setPhase]          = useState('view')
+  const [liked,          setLiked]          = useState(null)
+  const [activeNeed,     setActiveNeed]     = useState(need)
+  const [activeRitual,   setActiveRitual]   = useState(RITUALS[need.id])
+  const [healthSnapshot, setHealthSnapshot] = useState(null)
+  const [audioAvailable, setAudioAvailable] = useState(false)
 
-// Reset du guard à chaque ouverture du modal
+  useEffect(() => { _evalInProgress = false }, [])
+
   useEffect(() => {
-    _evalInProgress = false
-  }, [])
-
+    if (!activeNeed?.id) return
+    const audio = new Audio()
+    const ok  = () => setAudioAvailable(true)
+    const err = () => setAudioAvailable(false)
+    audio.addEventListener('loadedmetadata', ok,  { once: true })
+    audio.addEventListener('error',          err, { once: true })
+    audio.src  = `/audio/${activeNeed.id}.mp3`
+    audio.load()
+    return () => { audio.removeEventListener('loadedmetadata', ok); audio.removeEventListener('error', err) }
+  }, [activeNeed?.id])
 
   if (!activeRitual) return null
+
+  const startMode = audioAvailable ? 'audio' : activeRitual.breathing ? 'breathing' : 'doing'
 
   const { g1, g2 } = activeNeed
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
@@ -639,8 +810,16 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
 
       {phase === 'view' && (
         <PhaseView ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onStart={() => setPhase(activeRitual.breathing ? 'breathing' : 'doing')}
+          startMode={startMode}
+          onStart={() => {
+            if (startMode === 'audio') setPhase('audio')
+            else setPhase(activeRitual.breathing ? 'breathing' : 'doing')
+          }}
           onBack={onBack} onClose={onClose}/>
+      )}
+      {phase === 'audio' && (
+        <PhaseAudio ritual={activeRitual} need={activeNeed} isMobile={isMobile}
+          onValidate={() => setPhase('evaluate')} onClose={onClose}/>
       )}
       {phase === 'breathing' && (
         <PhaseBreathing ritual={activeRitual} need={activeNeed} isMobile={isMobile}

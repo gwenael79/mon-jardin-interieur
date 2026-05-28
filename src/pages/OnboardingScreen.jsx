@@ -5,7 +5,7 @@ import { useTheme } from '../hooks/useTheme'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { PLANT_ZONES, useRituels, RitualZoneModal } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
-import RitualSuggestionModal from '../components/RitualSuggestionModal'
+import RitualSuggestionModalOnboarding from '../components/RitualSuggestionModalOnboarding'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DONNÉES SLIDES
@@ -2886,7 +2886,8 @@ function CelebOverlay({ milestone, src, onClose }) {
 function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
   const vKey = userId ? `mji_vitality_${userId}` : 'mji_vitality'
   const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem(vKey) || '0', 10))
-  const [celebVideo, setCelebVideo]   = useState(null)
+  const [celebVideo, setCelebVideo]         = useState(null)
+  const [pendingCelebVideo, setPendingCelebVideo] = useState(null)
   const [appUnlocked, setAppUnlocked] = useState(() => parseInt(localStorage.getItem(vKey) || '0', 10) >= 50)
   const [activeNeed, setActiveNeed]   = useState(null)
   const [sparkle, setSparkle]         = useState(null)
@@ -2917,29 +2918,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
       })
   }, [userId])
 
-  function playProgressSound() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)()
-      // Deux notes ascendantes douces (Mi → Sol#)
-      const notes = [659, 830]
-      notes.forEach((freq, i) => {
-        const osc  = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.18)
-        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.18)
-        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.18 + 0.04)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.7)
-        osc.start(ctx.currentTime + i * 0.18)
-        osc.stop(ctx.currentTime + i * 0.18 + 0.7)
-      })
-    } catch (_) {}
-  }
-
   const handleCompleteRitual = async () => {
-    playProgressSound()
     // Premier rituel → valide l'onboarding en arrière-plan pour identifier l'utilisateur
     if (vitality === 0 && onValidateOnboarding) {
       onValidateOnboarding()
@@ -2947,7 +2926,6 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
     const next = Math.min(vitality + 5, 100)
     setVitality(next)
     localStorage.setItem(vKey, String(next))
-    setActiveNeed(null)
 
     // Étoiles au sommet du remplissage
     if (barRef.current) {
@@ -2994,9 +2972,10 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
       window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
     }
 
+    if (next >= 50) setAppUnlocked(true)
+
     if (VITALITY_MILESTONES[next]) {
-      setCelebVideo(VITALITY_MILESTONES[next].video)
-      if (next >= 50) setAppUnlocked(true)
+      setPendingCelebVideo(VITALITY_MILESTONES[next].video)
     }
   }
 
@@ -3018,12 +2997,20 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
       {/* ── RitualSuggestionModal — passe au-dessus de la barre de vitalité ── */}
       {activeNeed && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10250 }}>
-          <RitualSuggestionModal
+          <RitualSuggestionModalOnboarding
             need={activeNeed}
             onBack={() => setActiveNeed(null)}
             onClose={onClose}
             onCompleteRitual={handleCompleteRitual}
-            onSeeFlower={onEnterApp}
+            onSeeFlower={() => {
+              setActiveNeed(null)
+              if (pendingCelebVideo) {
+                setCelebVideo(pendingCelebVideo)
+                setPendingCelebVideo(null)
+              }
+            }}
+            vitalityTotal={vitality + 5}
+            vitalityGain={5}
           />
         </div>
       )}

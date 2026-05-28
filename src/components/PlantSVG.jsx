@@ -1,5 +1,6 @@
 // PlantSVG.jsx — Composant partagé entre ScreenMonJardin et CommunityGarden
 // Extrait de ScreenMonJardin.jsx pour éviter la duplication de logique visuelle
+import { useState, useEffect } from 'react'
 
 export const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -10,11 +11,67 @@ export const DEFAULT_GARDEN_SETTINGS = {
 }
 
 let _svgN = 0
-function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', clearSky = false }) {
+function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumensLevel = 'faible', clearSky = false, celebrate = false }) {
   const r   = Math.max(0, Math.min(1, (health ?? 5) / 100))
   const gs  = gardenSettings || DEFAULT_GARDEN_SETTINGS
   const W = 400, H = 260, cx = 200, gY = 188   // gY = groundY
-  const id  = 'g' + (++_svgN)   // unique prefix per instance, no hooks needed
+  const id  = 'g' + (++_svgN)
+
+  // ── Celebrate : scintillements + harpe ───────────────────────────────────
+  const [sparkleOpacity, setSparkleOpacity] = useState(celebrate ? 1 : 0)
+  useEffect(() => {
+    if (!celebrate) return
+    const fadeStart = setTimeout(() => {
+      const start    = Date.now()
+      const duration = 2000
+      const raf = () => {
+        const p = Math.max(0, 1 - (Date.now() - start) / duration)
+        setSparkleOpacity(p)
+        if (p > 0) requestAnimationFrame(raf)
+      }
+      requestAnimationFrame(raf)
+    }, 18000)
+    return () => clearTimeout(fadeStart)
+  }, [celebrate])
+  useEffect(() => {
+    if (!celebrate) return
+    const audio = new Audio('/harpe.mp3')
+    audio.volume = 0.7
+    audio.play().catch(() => {})
+    const fade = setTimeout(() => {
+      const step = setInterval(() => {
+        audio.volume = Math.max(0, audio.volume - 0.02)
+        if (audio.volume === 0) { clearInterval(step); audio.pause() }
+      }, 100)
+    }, 20000)
+    return () => { clearTimeout(fade); audio.pause() }
+  }, [celebrate])
+
+  const sparkleAt = (px, py, count, col, spreadX, spreadY, baseDelay = 0) => {
+    const pts = Array.from({ length: count }, (_, i) => {
+      const ang = (i / count) * Math.PI * 2 + i * 1.37
+      const dx  = Math.cos(ang) * spreadX * (0.35 + (((i * 7919) % 100) / 100) * 0.65)
+      const dy  = Math.sin(ang) * spreadY * (0.35 + (((i * 6271) % 100) / 100) * 0.65)
+      const dur = (1.6 + (i % 4) * 0.55).toFixed(2)
+      const del = (baseDelay + (i * 0.38) % 2.2).toFixed(2)
+      const sz  = 1.8 + (i % 3) * 0.9
+      return { x: px + dx, y: py + dy, dur, del, sz }
+    })
+    return (
+      <g pointerEvents="none">
+        {pts.map((p, i) => (
+          <g key={i} style={{ transformOrigin: `${p.x}px ${p.y}px`, animation: `svgSpk ${p.dur}s ease-in-out infinite ${p.del}s` }}>
+            <line x1={p.x - p.sz} y1={p.y} x2={p.x + p.sz} y2={p.y} stroke={col} strokeWidth={0.9} strokeLinecap="round" opacity={0.85}/>
+            <line x1={p.x} y1={p.y - p.sz} x2={p.x} y2={p.y + p.sz} stroke={col} strokeWidth={0.9} strokeLinecap="round" opacity={0.85}/>
+            <line x1={p.x - p.sz * 0.6} y1={p.y - p.sz * 0.6} x2={p.x + p.sz * 0.6} y2={p.y + p.sz * 0.6} stroke={col} strokeWidth={0.6} strokeLinecap="round" opacity={0.6}/>
+            <line x1={p.x + p.sz * 0.6} y1={p.y - p.sz * 0.6} x2={p.x - p.sz * 0.6} y2={p.y + p.sz * 0.6} stroke={col} strokeWidth={0.6} strokeLinecap="round" opacity={0.6}/>
+            <circle cx={p.x} cy={p.y} r={p.sz * 0.55} fill={col} opacity={0.35}
+              style={{ transformOrigin: `${p.x}px ${p.y}px`, animation: `svgSpkR ${p.dur}s ease-out infinite ${p.del}s` }}/>
+          </g>
+        ))}
+      </g>
+    )
+  }
 
   /* ── Soleil ── */
   const now   = new Date()
@@ -367,6 +424,9 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
   ── */
   const stage = r < 0.08 ? 'seed' : r < 0.25 ? 'sprout' : r < 0.45 ? 'young' : r < 0.65 ? 'bud' : 'flower'
 
+  /* Densité végétale : quasi nulle avant 20%, pleine à 100% */
+  const vegScale = r < 0.20 ? Math.max(0.04, (r / 0.20) * 0.25) : 0.25 + ((r - 0.20) / 0.80) * 0.75
+
   /* Hauteur de tige : démarre à 10px, croît sur une courbe douce */
   const sH   = 10 + 122 * Math.pow(r, 0.55)
   const sTY  = gY - sH
@@ -402,7 +462,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
     x:    (i / 130) * W + ((hsvg('gx'+i,1) % 24) - 12),
     h:    5 + (hsvg('gh'+i,2) % 20),
     lean: ((hsvg('gl'+i,3) % 18) - 9) * 0.55,
-    a:    0.18 + (hsvg('ga'+i,4) % 58) / 100,
+    a:    (0.18 + (hsvg('ga'+i,4) % 58) / 100) * vegScale,
     gr:   82 + (hsvg('gg'+i,5) % 42),
   }))
 
@@ -413,7 +473,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
     lean:  ((hsvg('tl'+i,3) % 20) - 10) * 0.7,
     thick: 0.7 + (hsvg('tt'+i,4) % 12) / 10,
     green: 62 + (hsvg('tg'+i,5) % 28),
-    alpha: 0.14 + (hsvg('ta'+i,6) % 20) / 100,
+    alpha: (0.14 + (hsvg('ta'+i,6) % 20) / 100) * vegScale,
   }))
 
   /* ── Petites fleurs — déco dense au sol ── */
@@ -442,6 +502,8 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           @keyframes svgRay    { 0%,100%{ opacity:0.7 } 50%{ opacity:0.3 } }
           @keyframes svgWind   { 0%{ transform:translateX(-8px); opacity:0 } 40%{ opacity:0.22 } 100%{ transform:translateX(28px); opacity:0 } }
           @keyframes lumenGlow  { 0%,100%{ opacity:0.25 } 50%{ opacity:0.55 } }
+          @keyframes svgSpk  { 0%{ opacity:0; transform:scale(0.3) rotate(0deg) } 35%{ opacity:1; transform:scale(1.15) rotate(20deg) } 65%{ opacity:0.6; transform:scale(0.9) rotate(35deg) } 100%{ opacity:0; transform:scale(0.3) rotate(60deg) } }
+          @keyframes svgSpkR { 0%{ opacity:0; transform:scale(0) } 30%{ opacity:0.5 } 70%{ opacity:0.1 } 100%{ opacity:0; transform:scale(1.8) } }
         `}</style>
         <linearGradient id={id+'sk'} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor={skyA}/>
@@ -606,19 +668,19 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                       cx={b.x + Math.cos(rad) * b.rs * 1.5}
                       cy={gY - b.yoff + Math.sin(rad) * b.rs * 1.5}
                       rx={b.rs * 0.82} ry={b.rs * 1.42}
-                      fill={`hsla(${b.hue},62%,70%,0.56)`}
+                      fill={`hsla(${b.hue},62%,70%,${(0.56 * vegScale).toFixed(2)})`}
                       transform={`rotate(${a+90},${b.x+Math.cos(rad)*b.rs*1.5},${gY-b.yoff+Math.sin(rad)*b.rs*1.5})`}
                     />
                   )
                 })}
-                <circle cx={b.x} cy={gY - b.yoff} r={b.rs * 0.72} fill={`hsla(${(b.hue+45)%360},78%,80%,0.70)`}/>
+                <circle cx={b.x} cy={gY - b.yoff} r={b.rs * 0.72} fill={`hsla(${(b.hue+45)%360},78%,80%,${(0.70 * vegScale).toFixed(2)})`}/>
               </g>
             )
           })}
         </g>
 
         {/* ── RACINES : fixes, hors plantSway, organiques ── */}
-        {r > 0.10 && (() => {
+        {r >= 0.08 && (() => {
           // Hash déterministe pour asymétrie stable
           const rh = (a, b = 0) => {
             let h = (2166136261 ^ b) >>> 0
@@ -639,35 +701,35 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                        : r < 0.85 ? 68 : 74
 
           // Couleurs selon profondeur — plus sombre et transparent en profondeur
-          const cRoot0 = `rgba(${138+20*r},${88+18*r},${48+10*r},${0.22+0.28*r})`  // surface
-          const cRoot1 = `rgba(${118+15*r},${72+14*r},${36+8*r},${0.16+0.22*r})`   // intermédiaire
-          const cRoot2 = `rgba(${98+10*r},${58+10*r},${28+6*r},${0.10+0.16*r})`    // profond
+          const cRoot0 = `rgba(${138+20*r},${88+18*r},${48+10*r},${0.52+0.38*r})`  // surface
+          const cRoot1 = `rgba(${118+15*r},${72+14*r},${36+8*r},${0.40+0.30*r})`   // intermédiaire
+          const cRoot2 = `rgba(${98+10*r},${58+10*r},${28+6*r},${0.28+0.22*r})`    // profond
 
           // Branches : angles de départ asymétriques
           const branches = [
-            { ang:-105, len: pivotD*0.82, sw:1.6+0.7*r, col:cRoot0, seed:'aL' },
-            { ang:-130, len: pivotD*0.65, sw:1.2+0.5*r, col:cRoot1, seed:'bL' },
-            { ang: -80, len: pivotD*0.52, sw:0.9+0.4*r, col:cRoot1, seed:'cL' },
-            { ang: 112, len: pivotD*0.78, sw:1.5+0.6*r, col:cRoot0, seed:'aR' },
-            { ang: 145, len: pivotD*0.60, sw:1.1+0.4*r, col:cRoot1, seed:'bR' },
-            { ang:  95, len: pivotD*0.48, sw:0.8+0.35*r, col:cRoot1, seed:'cR' },
+            { ang:-105, len: pivotD*0.82, sw:2.2+1.0*r, col:cRoot0, seed:'aL' },
+            { ang:-130, len: pivotD*0.65, sw:1.7+0.8*r, col:cRoot1, seed:'bL' },
+            { ang: -80, len: pivotD*0.52, sw:1.4+0.6*r, col:cRoot1, seed:'cL' },
+            { ang: 112, len: pivotD*0.78, sw:2.0+0.9*r, col:cRoot0, seed:'aR' },
+            { ang: 145, len: pivotD*0.60, sw:1.6+0.7*r, col:cRoot1, seed:'bR' },
+            { ang:  95, len: pivotD*0.48, sw:1.3+0.6*r, col:cRoot1, seed:'cR' },
           ]
 
           // Filtre blur pour diffusion
           const fid = id + 'rf'
 
           return (
-            <g clipPath={`url(#${id+'rc'})`} opacity={0.30+0.42*r}>
+            <g clipPath={`url(#${id+'rc'})`} opacity={0.62+0.35*r}>
               <defs>
-                <filter id={fid}><feGaussianBlur stdDeviation="1.2"/></filter>
+                <filter id={fid}><feGaussianBlur stdDeviation="0.5"/></filter>
                 <clipPath id={id+'rc'}><rect x={0} y={gY+2} width={W} height={H}/></clipPath>
               </defs>
 
               {/* Pivot central — légèrement courbé */}
-              {r > 0.10 && (
+              {r >= 0.08 && (
                 <path
                   d={`M${cx},${gY+8} C${cx+rn('pv1',-3,3)},${gY+pivotD*0.4} ${cx+rn('pv2',-2,2)},${gY+pivotD*0.7} ${cx+rn('pv3',-2,3)},${gY+pivotD}`}
-                  stroke={cRoot0} strokeWidth={2.0+1.2*r} strokeLinecap="round" fill="none"
+                  stroke={cRoot0} strokeWidth={2.8+1.8*r} strokeLinecap="round" fill="none"
                   filter={`url(#${fid})`}
                 />
               )}
@@ -741,47 +803,87 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
         <g style={plantSway}>
 
           {/* ── STADE 1 : GRAINE 0–8% ─────────────────────────────
-              Une graine dans la terre avec 1 minuscule germe courbé */}
-          {stage === 'seed' && (
-            <g>
-              {/* graine dans le sol */}
-              <ellipse cx={cx} cy={gY+3} rx={5} ry={3.5} fill="rgba(118,72,28,0.75)" />
-              <ellipse cx={cx-1} cy={gY+2} rx={3} ry={2} fill="rgba(155,100,50,0.35)" />
-              {/* germe minuscule qui sort */}
-              <path d={`M${cx},${gY+1} Q${cx+4},${gY-6} ${cx+2},${gY-12}`}
-                stroke={`rgba(68,148,48,${0.5+r*3})`} strokeWidth={1.6} strokeLinecap="round" fill="none"/>
-              {/* petite courbe de feuille embryonnaire */}
-              {r > 0.03 && (
-                <path d={`M${cx+2},${gY-12} C${cx+8},${gY-16} ${cx+6},${gY-22} ${cx+1},${gY-18}`}
-                  stroke={`rgba(78,158,52,${0.4+r*4})`} strokeWidth={1.3} strokeLinecap="round" fill="none"/>
-              )}
-            </g>
-          )}
+              Graine 3D dans le sol + hypocotyle en arc (germination naturelle) */}
+          {stage === 'seed' && (() => {
+            const ts = r / 0.08                              // 0→1 dans ce stade
+            const sRx = 5.2 + ts * 1.4                      // graine qui gonfle
+            const sRy = 3.8 + ts * 0.9
+            const germH = ts * 22
+            // Arc de l'hypocotyle : se déporte puis se redresse (sinus sur 88% de π)
+            const hookOff = Math.sin(ts * Math.PI * 0.88) * 7
+            const gTipX = cx + hookOff * 0.35
+            const gTipY = gY - germH
+            return (
+              <g>
+                {/* Radicelle qui descend */}
+                {ts > 0.08 && (
+                  <path d={`M${cx},${gY+sRy*0.8} Q${cx+1.5},${gY+sRy+4} ${cx+0.5},${gY+sRy+11*ts}`}
+                    stroke={`rgba(145,90,38,${0.22+ts*0.28})`} strokeWidth={0.75} strokeLinecap="round" fill="none"/>
+                )}
+                {/* Ombre portée */}
+                <ellipse cx={cx+1.8} cy={gY+3.2} rx={sRx*0.82} ry={sRy*0.5} fill="rgba(25,10,3,0.22)"/>
+                {/* Corps — brun-roux chaud */}
+                <ellipse cx={cx} cy={gY+2} rx={sRx} ry={sRy} fill={`rgba(${124+ts*10},${72+ts*8},${24+ts*6},0.90)`}/>
+                {/* Reflet lumineux haut-gauche */}
+                <ellipse cx={cx-2} cy={gY+0.8} rx={sRx*0.50} ry={sRy*0.42} fill={`rgba(${174+ts*6},${128+ts*5},${62+ts*4},0.28)`}/>
+                {/* Suture longitudinale (hilum) */}
+                <path d={`M${cx+sRx*0.1},${gY+2-sRy*0.82} Q${cx-sRx*0.28},${gY+2} ${cx+sRx*0.1},${gY+2+sRy*0.82}`}
+                  stroke="rgba(65,32,8,0.28)" strokeWidth={0.85} strokeLinecap="round" fill="none"/>
+                {/* Hypocotyle — arc organique */}
+                {ts > 0.06 && (
+                  <path d={`M${cx},${gY+1} C${cx+hookOff*0.85},${gY-germH*0.2} ${cx+hookOff},${gY-germH*0.6} ${gTipX},${gTipY}`}
+                    stroke={`rgba(52,122,32,${0.42+ts*0.46})`} strokeWidth={1.2+ts*0.55} strokeLinecap="round" fill="none"/>
+                )}
+                {/* Plumule — deux feuilles embryonnaires repliées */}
+                {ts > 0.35 && (
+                  <>
+                    <path d={`M${gTipX},${gTipY} C${gTipX+5},${gTipY-2} ${gTipX+4},${gTipY-8} ${gTipX+1},${gTipY-6}`}
+                      stroke={`rgba(62,140,38,${ts*0.70})`} strokeWidth={1.1} strokeLinecap="round" fill="none"/>
+                    <path d={`M${gTipX},${gTipY} C${gTipX-4},${gTipY-2} ${gTipX-3},${gTipY-7} ${gTipX+0.5},${gTipY-5}`}
+                      stroke={`rgba(68,148,42,${ts*0.58})`} strokeWidth={1.0} strokeLinecap="round" fill="none"/>
+                  </>
+                )}
+              </g>
+            )
+          })()}
 
           {/* ── STADE 2 : POUSSE 8–25% ────────────────────────────
-              Petite tige + 2 cotylédons (feuilles embryonnaires rondes) */}
+              Tige + cotylédons en forme de feuille avec nervures */}
           {stage === 'sprout' && (() => {
             const t = (r - 0.08) / 0.17   // 0→1 dans ce stade
             const sy = gY - sH
             const my = gY - sH * 0.55
-            const cR = 3 + t * 5           // rayon des cotylédons grandit avec t
+            const spread = 5 + t * 9       // les cotylédons s'écartent
+            const cW = 4 + t * 7           // largeur
+            const cH = 3.8 + t * 6         // hauteur
+            const bLx = cx - 2, bRx = cx + 2, bY = my + 3
+            const tLx = cx - spread, tRx = cx + spread
+            const tipY = my - cH * 0.85
             return (
               <g>
-                {/* tige fine et courte */}
-                <path d={`M${cx},${gY} Q${cx+3*t},${my} ${cx},${sy}`}
-                  stroke={stemC} strokeWidth={1.6+0.8*t} strokeLinecap="round" fill="none"/>
-                {/* cotylédon gauche */}
-                <ellipse cx={cx - 5 - t*4} cy={my+4} rx={cR} ry={cR*0.65}
-                  fill={`rgba(${72+20*t},${168+40*t},${48+18*t},${0.65+0.2*t})`}
-                  transform={`rotate(-30,${cx-5-t*4},${my+4})`}/>
-                {/* cotylédon droit */}
-                <ellipse cx={cx + 5 + t*4} cy={my+4} rx={cR} ry={cR*0.65}
-                  fill={`rgba(${68+22*t},${162+42*t},${44+20*t},${0.60+0.22*t})`}
-                  transform={`rotate(30,${cx+5+t*4},${my+4})`}/>
-                {/* germe minuscule au sommet */}
-                {t > 0.4 && (
-                  <ellipse cx={cx} cy={sy-2} rx={2+t*2} ry={3+t*3}
-                    fill={`rgba(${r1},${g1},${b1},${0.2+t*0.3})`}/>
+                {/* Tige fine — légère courbe organique */}
+                <path d={`M${cx},${gY} Q${cx + 2 - t*5},${my+6} ${cx+(1-t)*2},${sy}`}
+                  stroke={stemC} strokeWidth={1.5+t*0.9} strokeLinecap="round" fill="none"/>
+                {/* Reflet sur la tige */}
+                <path d={`M${cx-0.5},${gY} Q${cx+1-t*3},${my+6} ${cx+(1-t)},${sy}`}
+                  stroke={`rgba(125,205,78,${0.18+t*0.12})`} strokeWidth={0.6} strokeLinecap="round" fill="none"/>
+
+                {/* Cotylédon gauche — forme feuille organique */}
+                <path d={`M${bLx},${bY} C${bLx-cW*0.4},${bY-cH*0.5} ${tLx-1},${tipY+cH*0.3} ${tLx},${tipY} C${tLx+1},${tipY+cH*0.28} ${bLx-cW*0.12},${bY+1.5} ${bLx},${bY} Z`}
+                  fill={`rgba(${65+27*t},${145+55*t},${38+24*t},${0.62+0.22*t})`}/>
+                <path d={`M${bLx},${bY} Q${bLx-spread*0.5},${(bY+tipY)/2} ${tLx},${tipY}`}
+                  stroke="rgba(50,162,32,0.38)" strokeWidth={0.62} strokeLinecap="round" fill="none"/>
+
+                {/* Cotylédon droit */}
+                <path d={`M${bRx},${bY} C${bRx+cW*0.4},${bY-cH*0.5} ${tRx+1},${tipY+cH*0.3} ${tRx},${tipY} C${tRx-1},${tipY+cH*0.28} ${bRx+cW*0.12},${bY+1.5} ${bRx},${bY} Z`}
+                  fill={`rgba(${60+30*t},${140+57*t},${34+26*t},${0.58+0.24*t})`}/>
+                <path d={`M${bRx},${bY} Q${bRx+spread*0.5},${(bY+tipY)/2} ${tRx},${tipY}`}
+                  stroke="rgba(46,155,28,0.38)" strokeWidth={0.62} strokeLinecap="round" fill="none"/>
+
+                {/* Bourgeon de la première vraie feuille */}
+                {t > 0.45 && (
+                  <ellipse cx={cx} cy={sy-2} rx={1.8+t*2.2} ry={2.5+t*3.8}
+                    fill={`rgba(${r1},${g1},${b1},${(t-0.45)*0.55})`}/>
                 )}
               </g>
             )
@@ -798,7 +900,7 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                 stroke={stemH2} strokeWidth={1.1} strokeLinecap="round" fill="none"/>}
 
               {/* Feuilles — système dynamique identique à FieldFlower */}
-              {r > 0.25 && (() => {
+              {r > 0.08 && (() => {
                 // Fonction hash locale (identique à CommunityGarden)
                 const hsh = (str, seed = 0) => {
                   let h = (2166136261 ^ seed) >>> 0
@@ -869,16 +971,74 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
                 return leaves
               })()}
 
-              {/* BOURGEON — stade 'young' à 'bud' (25–65%) */}
-              {stage !== 'flower' && (
-                <g>
-                  {[-24,0,24].map((a,i) => (
-                    <path key={i} d={`M${cx},${Math.round(flwY+6+8*r)} Q${cx+Math.round(Math.sin(a*Math.PI/180)*8)},${Math.round(flwY+8*r)} ${cx},${Math.round(flwY+7*r)}`} fill={lC2} opacity={0.7}/>
-                  ))}
-                  <ellipse cx={cx} cy={flwY} rx={4+6*r} ry={8+9*r} fill={`rgba(${r1},${g1},${b1},${0.30+0.36*r})`}/>
-                  <ellipse cx={cx-1} cy={flwY-1} rx={2.5+4*r} ry={5+7*r} fill={`rgba(${r2},${g2},${b2},0.32)`}/>
-                </g>
-              )}
+              {/* BOURGEON — stade 'young' (25–45%) et 'bud' (45–65%) */}
+              {stage !== 'flower' && (() => {
+                const isBud = stage === 'bud'
+                const tp    = isBud
+                  ? Math.min(1, (r - 0.45) / 0.20)
+                  : Math.min(1, (r - 0.25) / 0.20)
+                const bRx   = isBud ? 5.5 + 5.5 * tp : 3   + 3.5 * tp
+                const bRy   = isBud ? 11   + 9   * tp : 6.5 + 5.5 * tp
+                const nSep  = isBud ? 5 : 3
+                const sGrn  = `rgba(${48+18*r},${122+58*r},${34+16*r},0.82)`
+
+                return (
+                  <g>
+                    {/* Calice — coupe verte à la base du bouton */}
+                    <ellipse cx={cx} cy={flwY + bRy * 0.58}
+                      rx={bRx * 1.22} ry={bRy * 0.26}
+                      fill={`rgba(${42+20*r},${108+60*r},${28+16*r},0.72)`}/>
+
+                    {/* Sépales — lancéolées pointant radialement vers l'extérieur */}
+                    {Array.from({length: nSep}, (_, i) => {
+                      const a   = (i / nSep) * 360 - 90
+                      const rad = a * Math.PI / 180
+                      const scx = cx + Math.cos(rad) * bRx * 0.92
+                      const scy = flwY + bRy * 0.1 + Math.sin(rad) * bRy * 0.38
+                      return (
+                        <ellipse key={i} cx={scx} cy={scy}
+                          rx={bRx * 0.28} ry={bRy * (0.52 + tp * 0.08)}
+                          fill={sGrn}
+                          transform={`rotate(${a + 90},${scx},${scy})`}/>
+                      )
+                    })}
+
+                    {/* Corps du bouton */}
+                    <ellipse cx={cx} cy={flwY} rx={bRx} ry={bRy}
+                      fill={`rgba(${r1},${g1},${b1},${isBud ? 0.82 + 0.15 * tp : 0.55 + 0.30 * tp})`}/>
+
+                    {/* Ombrage latéral pour donner du volume */}
+                    <ellipse cx={cx + bRx * 0.28} cy={flwY + bRy * 0.08}
+                      rx={bRx * 0.55} ry={bRy * 0.72}
+                      fill={`rgba(${Math.round(r1*0.6)},${Math.round(g1*0.6)},${Math.round(b1*0.6)},${isBud ? 0.22 + 0.10 * tp : 0.12})`}/>
+
+                    {/* Stries longitudinales — texture et volume */}
+                    {[-bRx * 0.4, 0, bRx * 0.4].map((dx, i) => (
+                      <path key={i}
+                        d={`M${cx+dx},${flwY+bRy*0.75} Q${cx+dx*0.6},${flwY} ${cx+dx*0.4},${flwY-bRy*0.75}`}
+                        stroke={`rgba(${r2},${g2},${b2},${isBud ? 0.42 : 0.25})`} strokeWidth={0.85} fill="none"/>
+                    ))}
+
+                    {/* Reflet lumineux haut-gauche */}
+                    <ellipse cx={cx - bRx * 0.22} cy={flwY - bRy * 0.30}
+                      rx={bRx * 0.36} ry={bRy * 0.28}
+                      fill={`rgba(255,255,255,${isBud ? 0.28 + 0.10 * tp : 0.16})`}/>
+
+                    {/* Pointes de pétales dépassant — stade 4 uniquement */}
+                    {isBud && tp > 0.08 && [0, 72, 144, 216, 288].map((a, i) => {
+                      const rad = (a + 36) * Math.PI / 180
+                      const px  = cx + Math.cos(rad) * bRx * (0.52 + tp * 0.48)
+                      const py  = flwY - bRy + tp * 10 + Math.abs(Math.sin(rad)) * bRx * 0.25
+                      return (
+                        <ellipse key={i} cx={px} cy={py}
+                          rx={1.5 + tp * 3.5} ry={1.2 + tp * 3.0}
+                          fill={`rgba(${r1},${g1},${b1},${0.52 + tp * 0.30})`}
+                          transform={`rotate(${a + 126},${px},${py})`}/>
+                      )
+                    })}
+                  </g>
+                )
+              })()}
               {/* GRANDE FLEUR — à partir de 65% */}
               {stage === 'flower' && (
                 <g>
@@ -912,6 +1072,20 @@ function PlantSVG({ health = 5, gardenSettings = DEFAULT_GARDEN_SETTINGS, lumens
           )}
 
         </g>
+
+        {/* ── Scintillements celebrate ── */}
+        {celebrate && sparkleOpacity > 0 && <g pointerEvents="none" style={{ opacity: sparkleOpacity, transition: 'opacity 0.1s linear' }}>
+          {r > 0.10 && r < 0.55 && sparkleAt(cx + 18, gY + 6,  3, 'rgba(255,222,60,0.90)', 18, 8,         0)}
+          {r > 0.12 && sparkleAt(cx + 4,  gY - sH * 0.45, r < 0.45 ? 3 : 2, 'rgba(255,222,60,0.90)', 10, sH * 0.08, 0.3)}
+          {r > 0.30 && sparkleAt(cx - 5,  gY - sH * 0.72, 2, 'rgba(255,222,60,0.90)', 8,  sH * 0.06, 0.9)}
+          {r > 0.25 && sparkleAt(cx - 20 - 12 * r, gY - sH * 0.55, 3, 'rgba(255,222,60,0.90)', 12, 7,     0.5)}
+          {r > 0.35 && sparkleAt(cx + 22 + 10 * r, gY - sH * 0.38, 3, 'rgba(255,222,60,0.90)', 12, 7,     1.1)}
+          {r >= 0.45 && r < 0.65 && sparkleAt(cx, flwY, 5, 'rgba(255,222,60,0.90)', fS * 1.6, fS * 1.2,   0)}
+          {r >= 0.65 && sparkleAt(cx, flwY, 6, 'rgba(255,222,60,0.90)', fS * 2.2, fS * 1.8,               0)}
+          {r >= 0.65 && sparkleAt(cx, flwY, 4, 'rgba(255,222,60,0.90)', fS * 1.1, fS * 0.9,               1.0)}
+          {r >= 0.85 && sparkleAt(cx, flwY, 5, 'rgba(255,222,60,0.90)', fS * 0.6, fS * 0.5,               0.4)}
+        </g>}
+
       </g>
     </svg>
   )
