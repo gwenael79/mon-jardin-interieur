@@ -582,12 +582,6 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             margin:0, letterSpacing:'.01em',
           }}>Un seul choix suffit pour commencer</p>
         </div>
-        {/* Grille */}
-        <div style={{ display:'grid', gridTemplateColumns: onboarding && isMobile ? '1fr' : 'repeat(2,1fr)', gap: isMobile ? 8 : 18, flexShrink:0, paddingBottom: isMobile ? 24 : 40 }}>
-          {NEEDS.map((need,i) => (
-            <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile} isRecommended={recommendedIds.includes(need.id)}/>
-          ))}
-        </div>
         {/* Bouton jardin — visible quand 50% de vitalité atteints */}
         {appUnlocked && (
           <div style={{ flexShrink:0, padding: isMobile ? '4px 0 calc(env(safe-area-inset-bottom,0px) + 20px)' : '8px 0 28px', animation:'nm_fadeUp .5s ease both' }}>
@@ -630,6 +624,13 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             </div>
           </div>
         )}
+
+        {/* Grille */}
+        <div style={{ display:'grid', gridTemplateColumns: onboarding && isMobile ? '1fr' : 'repeat(2,1fr)', gap: isMobile ? 8 : 18, flexShrink:0, paddingBottom: isMobile ? 24 : 40 }}>
+          {NEEDS.map((need,i) => (
+            <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile} isRecommended={recommendedIds.includes(need.id)}/>
+          ))}
+        </div>
 
         {/* Footer — accès aux 120 rituels (conditionné premium, caché en onboarding) */}
         {!onboarding && (
