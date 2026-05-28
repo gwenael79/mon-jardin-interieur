@@ -181,11 +181,12 @@ export default function RitualCompletion({
   const currentStage = getStage(animHealth)
 
   const inner = (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', overflow:'hidden' }}>
 
       {/* ── Moitié haute : PlantSVG ── */}
       <div style={{
-        flex:'0 0 52%', position:'relative', overflow:'hidden', minHeight:0,
+        flex: isMobile ? '0 0 42%' : '0 0 52%',
+        position:'relative', overflow:'hidden', minHeight:0,
         transition: glowing ? 'none' : undefined,
       }}>
         <div style={{
@@ -230,9 +231,12 @@ export default function RitualCompletion({
 
       {/* ── Moitié basse : texte + vitalité + bouton ── */}
       <div style={{
-        flex:1,
+        flex:1, minHeight:0,
+        overflowY:'auto', WebkitOverflowScrolling:'touch',
         background:'radial-gradient(circle at 50% 0%, #f5efe6, #e8dfd2 70%, #e0d4c0)',
-        padding: isMobile ? '22px 22px 32px' : '24px 30px 28px',
+        padding: isMobile
+          ? `18px 20px calc(env(safe-area-inset-bottom, 0px) + 24px)`
+          : '24px 30px 28px',
         display:'flex', flexDirection:'column', alignItems:'center',
         textAlign:'center',
         opacity: cardVisible ? 1 : 0,
@@ -242,16 +246,16 @@ export default function RitualCompletion({
         <p style={{
           fontFamily:"'Cormorant Garamond',Georgia,serif",
           fontStyle:'italic', fontWeight:600,
-          fontSize: isMobile ? 22 : 26,
-          color:'#000', margin:'0 0 10px', lineHeight:1.25,
+          fontSize: isMobile ? 19 : 26,
+          color:'#000', margin:'0 0 8px', lineHeight:1.25,
         }}>
           {texts.title}
         </p>
 
         <p style={{
           fontFamily:"'Jost',sans-serif", fontWeight:300,
-          fontSize: isMobile ? 14 : 15,
-          color:'#000', margin:'0 0 20px', lineHeight:1.65,
+          fontSize: isMobile ? 13 : 15,
+          color:'#000', margin: isMobile ? '0 0 14px' : '0 0 20px', lineHeight:1.6,
           maxWidth:360,
         }}>
           {texts.body}
@@ -259,18 +263,18 @@ export default function RitualCompletion({
 
         {/* Bulle de vitalité */}
         {(() => {
-          const sz = 106
+          const sz = isMobile ? 88 : 106
           const pct = Math.min(100, vitalityTotal)
           const filled = pct / 100 * 270
           const c = d => Math.min(filled, d)
           const arc = `conic-gradient(from -135deg, #5eae78 0deg, #90c83e ${c(120)}deg, #d4aa22 ${c(200)}deg, #c87840 ${filled}deg, rgba(255,255,255,0.06) ${filled}deg, rgba(255,255,255,0.06) 270deg, transparent 270deg)`
           return (
-            <div style={{ width:sz, height:sz, borderRadius:'50%', background:arc, padding:8, boxSizing:'border-box', margin:'0 auto 22px' }}>
+            <div style={{ width:sz, height:sz, borderRadius:'50%', background:arc, padding:isMobile?6:8, boxSizing:'border-box', margin: isMobile ? '0 auto 16px' : '0 auto 22px' }}>
               <div style={{ width:'100%', height:'100%', borderRadius:'50%', background:'rgba(16,11,7,0.92)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:1 }}>
-                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:8, fontWeight:600, letterSpacing:'0.15em', color:'rgba(255,255,255,0.42)', textTransform:'uppercase' }}>Vitalité</span>
-                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:26, fontWeight:700, color:'#fff', lineHeight:1.05 }}>{pct}%</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:7, fontWeight:600, letterSpacing:'0.15em', color:'rgba(255,255,255,0.42)', textTransform:'uppercase' }}>Vitalité</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 22 : 26, fontWeight:700, color:'#fff', lineHeight:1.05 }}>{pct}%</span>
                 {vitalityGain > 0 && (
-                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, fontWeight:500, color:'rgba(144,200,62,0.78)', marginTop:1 }}>+{vitalityGain}%</span>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:8, fontWeight:500, color:'rgba(144,200,62,0.78)', marginTop:1 }}>+{vitalityGain}%</span>
                 )}
               </div>
             </div>
