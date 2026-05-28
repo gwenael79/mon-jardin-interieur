@@ -590,13 +590,44 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         </div>
         {/* Bouton jardin — visible quand 50% de vitalité atteints */}
         {appUnlocked && (
-          <div style={{ textAlign:'center', padding: isMobile ? '0 0 24px' : '0 0 28px', flexShrink:0, animation:'nm_fadeUp .5s ease both' }}>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 17, fontWeight:600, color:'#111', lineHeight:1.4, margin:'0 0 14px', whiteSpace:'nowrap' }}>
-              Tu peux désormais retrouver ta fleur dans ton jardin intérieur
-            </p>
-            <button onClick={onEnterApp} className={onboarding ? 'nm-jardin-aura' : ''} style={{ padding:'13px 32px', borderRadius:50, background:'linear-gradient(135deg,#1c3818,#3B6D11)', border:'none', cursor:'pointer', color:'#c8e6b0', fontSize:14, fontWeight:600, fontFamily:"'Jost',sans-serif", boxShadow:'0 8px 28px rgba(28,56,24,0.35)' }}>
-              🌿 Entrer dans mon jardin →
-            </button>
+          <div style={{ flexShrink:0, padding: isMobile ? '4px 0 calc(env(safe-area-inset-bottom,0px) + 20px)' : '8px 0 28px', animation:'nm_fadeUp .5s ease both' }}>
+            <div style={{
+              background:'linear-gradient(135deg,rgba(28,56,24,0.07),rgba(59,109,17,0.05))',
+              border:'1px solid rgba(59,109,17,0.18)',
+              borderRadius:18,
+              padding: isMobile ? '18px 16px 20px' : '22px 24px 24px',
+              textAlign:'center',
+            }}>
+              <div style={{ fontSize: isMobile ? 28 : 32, marginBottom:10 }}>🌿</div>
+              <p style={{
+                fontFamily:"'Cormorant Garamond',serif",
+                fontSize: isMobile ? 17 : 20,
+                fontWeight:400, fontStyle:'italic',
+                color:'#1c3818', lineHeight:1.45,
+                margin:'0 0 16px',
+              }}>
+                Ta fleur t'attend dans ton jardin intérieur
+              </p>
+              <button
+                onClick={onEnterApp}
+                className={onboarding ? 'nm-jardin-aura' : ''}
+                style={{
+                  display:'block', width:'100%',
+                  padding: isMobile ? '15px 24px' : '13px 32px',
+                  borderRadius:50,
+                  background:'linear-gradient(135deg,#1c3818,#3B6D11)',
+                  border:'none', cursor:'pointer',
+                  color:'#c8e6b0',
+                  fontSize: isMobile ? 15 : 14,
+                  fontWeight:600,
+                  fontFamily:"'Jost',sans-serif",
+                  letterSpacing:'.04em',
+                  boxShadow:'0 8px 28px rgba(28,56,24,0.35)',
+                }}
+              >
+                Entrer dans mon jardin →
+              </button>
+            </div>
           </div>
         )}
 
