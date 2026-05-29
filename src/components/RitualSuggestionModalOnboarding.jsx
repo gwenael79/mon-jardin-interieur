@@ -132,8 +132,8 @@ export default function RitualSuggestionModalOnboarding({
   function handleDone() {
     if (_evalInProgress) return
     _evalInProgress = true
-    const beforeHealth  = vitalityToHealth(Math.max(0, (vitalityTotal ?? 0) - (vitalityGain ?? 5)))
-    const displayHealth = vitalityToHealth(Math.min(50, vitalityTotal ?? 0))
+    const beforeHealth  = vitalityToHealth(Math.max(0, vitalityTotal ?? 0))
+    const displayHealth = vitalityToHealth(Math.min(50, (vitalityTotal ?? 0) + (vitalityGain ?? 5)))
     setHealthSnapshot({ beforeHealth, displayHealth })
     onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2)
     setPhase('completion')

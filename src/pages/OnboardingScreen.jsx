@@ -3009,7 +3009,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
                 setPendingCelebVideo(null)
               }
             }}
-            vitalityTotal={vitality + 5}
+            vitalityTotal={vitality}
             vitalityGain={5}
           />
         </div>
