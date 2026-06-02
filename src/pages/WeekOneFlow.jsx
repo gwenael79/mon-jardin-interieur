@@ -3719,33 +3719,66 @@ function RacinesGuidedRituel({ onNext, onBack, onAudio }) {
         }} />
       </div>
 
-      {block(1, <p style={S}>Tu peux simplement <B>rester là</B>… quelques instants.</p>)}
-      {block(2, <p style={S}><B>Sens</B> tes pieds. Leur <B>contact</B> avec le sol.</p>)}
-      {block(3, <p style={S}>Sans chercher à changer quoi que ce soit.</p>)}
-      {block(4, <>
-        <p style={S}><B>Inspire</B> doucement… et laisse l'air <B>sortir</B>.</p>
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
-          <span style={{
-            display: 'inline-block',
-            fontSize: 'clamp(11px, 2.8vw, 13px)',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#1a1010',
-            background: 'rgba(180,130,100,0.12)',
-            border: '1px solid rgba(180,130,100,0.30)',
-            borderRadius: 100,
-            padding: '5px 14px',
-          }}>
-            2 cycles suffisent
-          </span>
-        </div>
+      {block(1, <>
+        <p style={S}><B>Bonjour.</B></p>
+        <p style={S}>Aujourd'hui, je vous invite à prendre quelques instants pour revenir à l'essentiel.</p>
       </>)}
-      {block(5, <p style={S}><B>Imagine</B> maintenant… quelque chose qui <B>descend</B> doucement sous toi.</p>)}
-      {block(6, <p style={S}>Comme des <B>racines</B>. Elles <B>s'enfoncent</B>… tranquillement.</p>)}
-      {block(7, <p style={S}>Et à chaque <B>expiration</B>… tu peux laisser ton <B>poids descendre</B> un peu plus.</p>)}
-      {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}><B>Rien à faire</B> de plus. <B>Juste resentir.</B></p>)}
+      {block(2, <>
+        <p style={S}>Installez-vous confortablement…</p>
+        <p style={S}>Puis prenez une <B>profonde inspiration</B>…</p>
+        <p style={S}>Et soufflez lentement.</p>
+        <p style={S}>Encore une fois…</p>
+        <p style={S}><B>Inspirez</B>…</p>
+        <p style={S}>Et <B>expirez</B> doucement.</p>
+        <p style={S}>Très bien.</p>
+      </>)}
+      {block(3, <>
+        <p style={S}>Maintenant, portez votre attention sur <B>vos pieds</B>.</p>
+        <p style={S}>Ressentez leur contact avec le sol.</p>
+        <p style={S}>Imaginez que sous chacun d'eux apparaissent de fines <B>racines</B>.</p>
+        <p style={S}>Des racines souples et vivantes qui <B>s'enfoncent lentement</B> dans la terre.</p>
+      </>)}
+      {block(4, <>
+        <p style={S}>À chaque respiration…</p>
+        <p style={S}>Elles descendent un peu plus profondément.</p>
+        <p style={S}>Elles trouvent un sol <B>stable</B>.</p>
+        <p style={S}><B>Solide.</B></p>
+        <p style={S}><B>Sécurisant.</B></p>
+      </>)}
+      {block(5, <>
+        <p style={S}>Et tandis que ces racines s'enfoncent dans la terre…</p>
+        <p style={S}>Vous pouvez ressentir votre corps devenir plus <B>présent</B>.</p>
+        <p style={S}>Plus <B>calme</B>.</p>
+        <p style={S}>Plus <B>stable</B>.</p>
+        <p style={S}>Comme un arbre qui reste debout malgré le vent.</p>
+      </>)}
+      {block(6, <>
+        <p style={S}>Prenez un instant pour accueillir cette sensation.</p>
+        <p style={S}>Puis répétez intérieurement :</p>
+        <p style={{ ...S, fontStyle: 'normal', fontWeight: 600, fontSize: 'clamp(20px,5vw,26px)', margin: '0 0 8px' }}>Je suis ici.</p>
+        <p style={{ ...S, fontSize: 'clamp(14px,3.5vw,17px)', opacity: 0.4, margin: '0 0 24px' }}>…</p>
+        <p style={{ ...S, fontStyle: 'normal', fontWeight: 600, fontSize: 'clamp(20px,5vw,26px)', margin: '0 0 8px' }}>Je suis en sécurité.</p>
+        <p style={{ ...S, fontSize: 'clamp(14px,3.5vw,17px)', opacity: 0.4, margin: '0 0 24px' }}>…</p>
+        <p style={{ ...S, fontStyle: 'normal', fontWeight: 600, fontSize: 'clamp(20px,5vw,26px)', margin: '0 0 8px' }}>Je peux prendre ma place.</p>
+        <p style={{ ...S, fontSize: 'clamp(14px,3.5vw,17px)', opacity: 0.4, margin: '0 0 24px' }}>…</p>
+        <p style={{ ...S, fontStyle: 'normal', fontWeight: 600, fontSize: 'clamp(20px,5vw,26px)', margin: '0 0 32px' }}>Je suis profondément enraciné(e).</p>
+      </>)}
+      {block(7, <>
+        <p style={S}>Et maintenant, imaginez que la terre vous transmet une <B>énergie douce et apaisante</B>.</p>
+        <p style={S}>Une énergie qui remonte à travers vos racines.</p>
+        <p style={S}>Qui nourrit votre corps.</p>
+        <p style={S}>Qui renforce votre <B>stabilité intérieure</B>.</p>
+        <p style={S}>Qui vous rappelle que vous n'avez pas besoin d'aller vite.</p>
+        <p style={S}>Pas besoin d'être parfait.</p>
+        <p style={S}>Seulement d'avancer, <B>un pas après l'autre</B>.</p>
+      </>)}
+      {block(8, <>
+        <p style={S}>Prenez une dernière <B>inspiration profonde</B>…</p>
+        <p style={S}>Puis expirez lentement.</p>
+        <p style={S}>Et gardez avec vous cette <B>sensation d'ancrage</B> tout au long de votre journée.</p>
+        <p style={S}>Comme une racine invisible qui vous accompagne à chaque instant.</p>
+        <p style={{ ...S, fontStyle: 'normal', fontSize: 'clamp(17px,4.5vw,21px)', margin: '0 0 40px', opacity: 0.75 }}>🌱 Prenez soin de vos racines, et votre fleur saura naturellement s'épanouir.</p>
+      </>)}
 
       {/* CTA */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
