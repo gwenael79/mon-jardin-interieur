@@ -12,8 +12,7 @@ import { useState, useRef } from "react";
 // ====================================================================
 
 // ---------- Réglages du rituel (modifiables) ----------
-const TITRE = "Votre rituel mieux-être vous attend";
-const DESCRIPTION = "C'est l'heure de prendre soin de vous. 🌿";
+const TITRE = "🌿 Votre rituel mieux-être vous attend";
 const DUREE_MINUTES = 15;
 
 // ---------- Helpers ICS ----------
@@ -44,6 +43,12 @@ const regleRecurrence = (frequence) =>
 function blocVEVENT(heureStr, frequence) {
   const debut = prochaineOccurrence(heureStr, frequence);
   const fin = new Date(debut.getTime() + DUREE_MINUTES * 60000);
+  const appUrl = window.location.origin;
+  const description =
+    "C'est l'heure de prendre soin de vous ✨\\n\\n" +
+    "🌸 Votre jardin intérieur vous attend.\\n" +
+    "Prenez 15 minutes pour vous recentrer.\\n\\n" +
+    "👉 Ouvrir l'application :\\n" + appUrl;
   return [
     "BEGIN:VEVENT",
     "UID:rituel-" + heureStr.replace(":", "") + "-" + Date.now()
@@ -53,7 +58,8 @@ function blocVEVENT(heureStr, frequence) {
     "DTEND:" + formatLocal(fin),
     regleRecurrence(frequence),
     "SUMMARY:" + TITRE,
-    "DESCRIPTION:" + DESCRIPTION,
+    "DESCRIPTION:" + description,
+    "URL:" + appUrl,
     "TRANSP:TRANSPARENT",
     "BEGIN:VALARM",
     "TRIGGER:-PT0M",
