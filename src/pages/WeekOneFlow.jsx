@@ -1,9 +1,13 @@
 ﻿// src/pages/WeekOneFlow.jsx
 import { useState, useEffect, useRef, useCallback } from 'react'
+
+// Cache module-level pour la personnalisation fraîche (survit aux remounts)
+let _freshGardenSettings = null
 import { supabase } from '../core/supabaseClient'
-import { RitualZoneModal, useRituels } from './mafleur_rituels'
+import { RitualZoneModal, useRituels, useRitualsState } from './mafleur_rituels'
 import { useAuth } from '../hooks/useAuth'
 import { PlantSVG, DEFAULT_GARDEN_SETTINGS } from '../components/PlantSVG'
+import { GardenSettingsModal } from './ScreenMonJardin'
 import { LutinCompagnon, LUTIN_MESSAGES_WEEK_ONE } from '../components/LutinCompagnon'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -196,6 +200,28 @@ function GlobalStyles() {
         animation: stepIn 0.3s ease both !important;
         flex-shrink: 0 !important;
       }
+      @keyframes growDown {
+        from { transform: scaleY(0); opacity: 0; }
+        to   { transform: scaleY(1); opacity: 1;  }
+      }
+      @keyframes seedPulse {
+        0%, 100% { opacity: 0.18; }
+        50%       { opacity: 0.40; }
+      }
+      @keyframes wofSlideUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0);    }
+      }
+      @keyframes radioWave {
+        0%   { transform: scale(1);   opacity: 0.55; }
+        100% { transform: scale(3.2); opacity: 0;    }
+      }
+      @keyframes wofSpkFade {
+        0%   { opacity: 0; }
+        15%  { opacity: 1; }
+        70%  { opacity: 0.8; }
+        100% { opacity: 0; }
+      }
     `}</style>
   )
 }
@@ -269,7 +295,7 @@ export const WEEK_ONE_DATA = [
     color: '#c8a0b0',
     accueil: {
       layout: 'slide1',
-      timeBadge: '⏱ 3 à 5 min · à ton rythme',
+      timeBadge: '⏱ 6 à 10 min · à ton rythme',
       pauseSeconds: 1,
     },
     introspection: {
@@ -344,7 +370,7 @@ export const WEEK_ONE_DATA = [
       conditioning: true,
       skipBarometer: true,
       headline: "Tu es revenu·e. Ton jardin s'en souvient.",
-      timeBadge: '⏱ 2 à 3 min · à ton rythme',
+      timeBadge: '⏱ 10 à 15 min · à ton rythme',
       subtitle: 'La continuité est une forme de soin.',
       pauseSeconds: 1,
       getPreviousNote: (ans) => {
@@ -422,8 +448,9 @@ export const WEEK_ONE_DATA = [
     color: '#7aaa88',
     accueil: {
       conditioning: true,
+      skipBarometer: true,
       headline: 'Quelque chose commence à se dessiner.',
-      timeBadge: '⏱ 2 à 3 min · à ton rythme',
+      timeBadge: '⏱ 10 à 15 min · à ton rythme',
       tagLine: 'Et tu es en train de le voir apparaître.',
       subtitle: "Regarder sans juger — c'est déjà beaucoup.",
       subtitleExtra: "Même si ce n'est pas toujours simple.",
@@ -558,7 +585,8 @@ export const WEEK_ONE_DATA = [
     color: '#d4a0b0',
     accueil: {
       conditioning: true,
-      timeBadge: '⏱ 2 à 3 min · à ton rythme',
+      skipBarometer: true,
+      timeBadge: '⏱ 10 à 15 min · à ton rythme',
       headline: 'Tu peux ralentir ici.',
       tagLine: 'Ici, tu peux vraiment te déposer.',
       subtitle: "Ce moment t'appartient entièrement.",
@@ -710,7 +738,8 @@ export const WEEK_ONE_DATA = [
     color: '#c8a870',
     accueil: {
       conditioning: true,
-      timeBadge: '⏱ 2 à 3 min · à ton rythme',
+      skipBarometer: true,
+      timeBadge: '⏱ 10 à 15 min · à ton rythme',
       headline: "Tu n'es pas seul·e aujourd'hui.",
       tagLine: "Même quand ça peut en donner l'impression.",
       subtitle: 'Le lien commence souvent par un seul geste silencieux.',
@@ -912,9 +941,9 @@ export const WEEK_ONE_DATA = [
     traceSlides: [
       "Aujourd'hui, tu as rencontré ta fleur. Elle est là maintenant.",
       "Et elle évolue avec toi.",
-      "« Mais, si tu m'apprivoises, nous aurons besoin l'un de l'autre.",
-      "Tu seras pour moi unique au monde.",
-      "Je serai pour toi unique au monde… »",
+      "**« Mais, si tu m'apprivoises, nous aurons besoin l'un de l'autre.",
+      "**Tu seras pour moi unique au monde.",
+      "**Je serai pour toi unique au monde… »",
       "— Antoine de Saint-Exupéry",
     ],
     ouvertureSlides: [
@@ -942,7 +971,7 @@ export const WEEK_ONE_DATA = [
     accueil: {
       conditioning: true,
       skipBarometer: true,
-      timeBadge: '⏱ 6 à 8 min · à ton rythme',
+      timeBadge: '⏱ 2 à 3 min · à ton rythme',
       headline: 'Ton jardin existe.',
       tagLine: "Et tu as commencé à le faire vivre.",
       subtitle: 'Mais un jardin ne pousse pas seul.',
@@ -1987,7 +2016,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
   useEffect(() => {
     if (!orbDone) return
-    const t = setTimeout(() => setSubSlide(3), 4000)
+    const t = setTimeout(() => onAnswer(answerKey, 'neutre'), 3500)
     return () => clearTimeout(t)
   }, [orbDone])
 
@@ -2041,11 +2070,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(24px, 6.5vw, 34px)',
+          fontSize: 'clamp(20px, 5.2vw, 26px)',
           fontWeight: 500,
           color: '#0f0808',
           lineHeight: 1.35,
-          margin: '0 0 32px',
+          margin: '0 0 24px',
           letterSpacing: '-0.01em',
           ...fadeStyle(true),
         }}>
@@ -2054,11 +2083,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(20px, 5.2vw, 26px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
           lineHeight: 1.6,
-          margin: '0 0 28px',
+          margin: '0 0 20px',
           ...fadeStyle(phase >= 1),
         }}>
           Quelque chose en toi sait qu'il est temps de ralentir.
@@ -2066,11 +2095,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(20px, 5.2vw, 26px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
           lineHeight: 1.6,
-          margin: '0 0 28px',
+          margin: '0 0 20px',
           ...fadeStyle(phase >= 2),
         }}>
           Pas pour faire plus. Mais pour faire autrement.
@@ -2078,18 +2107,18 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(20px, 5.2vw, 26px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
           lineHeight: 1.6,
-          margin: '0 0 44px',
+          margin: '0 0 32px',
           ...fadeStyle(phase >= 3),
         }}>
           Ce que tu vas commencer ici… se construit un jour à la fois.
         </p>
 
         <div style={{ ...fadeStyle(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
-          <PrimaryButton onClick={() => setSubSlide(1)}>
+          <PrimaryButton onClick={() => onAnswer(answerKey, 'neutre')}>
             Commencer
           </PrimaryButton>
         </div>
@@ -2169,7 +2198,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
         </div>
 
         {orbDone && (
-          <div className="wof-soft">
+          <div className="wof-soft" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
             <p style={{
               fontFamily: 'Cormorant Garamond, Georgia, serif',
               fontSize: 'clamp(20px, 5.5vw, 26px)',
@@ -2177,9 +2206,13 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
               color: '#0f0808',
               lineHeight: 1.65,
               margin: 0,
+              textAlign: 'center',
             }}>
               C'est déjà suffisant. Ton corps commence à ralentir.
             </p>
+            <PrimaryButton onClick={() => onAnswer(answerKey, 'neutre')}>
+              Continuer →
+            </PrimaryButton>
           </div>
         )}
       </div>
@@ -2306,8 +2339,8 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
 
         {ctaReady && (
           <div className="wof-soft">
-            <PrimaryButton onClick={() => setSubSlide(1)}>
-              Prendre un instant
+            <PrimaryButton onClick={() => data.skipBarometer ? onConditioningComplete(null) : setSubSlide(2)}>
+              Commencer
             </PrimaryButton>
           </div>
         )}
@@ -2679,36 +2712,33 @@ function MaFleurLiveModal({ onClose }) {
       const completed = profile0?.week_one_data?.completedDays ?? []
       if (completed.length > 0) {
         const DAY_ZONE = { 1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles', 4: 'zone_fleurs', 5: 'zone_souffle' }
-        const expectedMin = Math.round(completed.filter(d => d <= 5).length * 35 / 5)
-        const currentHealth = plant?.health ?? 0
-
-        if (currentHealth < expectedMin) {
-          const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
-          const zones = {
-            zone_racines:  base.zone_racines  ?? 0,
-            zone_tige:     base.zone_tige     ?? 0,
-            zone_feuilles: base.zone_feuilles ?? 0,
-            zone_fleurs:   base.zone_fleurs   ?? 0,
-            zone_souffle:  base.zone_souffle  ?? 0,
-          }
-          // Math.max : garantit 35% par jour sans écraser les rituels (+5%) déjà accumulés
-          completed.forEach(d => {
-            const key = DAY_ZONE[d]
-            if (key) zones[key] = Math.min(100, Math.max(zones[key], 35))
-            if (d === 6) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 35)) })
-            if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 35)) })
-          })
-          // Applique les rituels de la semaine depuis la table rituals
-          const RITUAL_ZONE_MAP = { racines: 'zone_racines', tige: 'zone_tige', feuilles: 'zone_feuilles', fleurs: 'zone_fleurs', souffle: 'zone_souffle' }
-          rituals.forEach(r => {
-            const key = RITUAL_ZONE_MAP[r.zone]
-            if (key && r.health_delta > 0) zones[key] = Math.min(100, zones[key] + r.health_delta)
-          })
-          const health = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
-          plant = { ...zones, health, date: plant?.date ?? null, _fromWeekData: !plant }
+        const DAY_MIN  = { 1: 40, 2: 48, 3: 55, 4: 60, 5: 65 }
+        const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
+        const zones = {
+          zone_racines:  base.zone_racines  ?? 0,
+          zone_tige:     base.zone_tige     ?? 0,
+          zone_feuilles: base.zone_feuilles ?? 0,
+          zone_fleurs:   base.zone_fleurs   ?? 0,
+          zone_souffle:  base.zone_souffle  ?? 0,
+        }
+        completed.forEach(d => {
+          const key = DAY_ZONE[d]
+          const min = DAY_MIN[d] ?? 35
+          if (key) zones[key] = Math.min(100, Math.max(zones[key], min))
+          if (d === 6) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 65)) })
+          if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 75)) })
+        })
+        const RITUAL_ZONE_MAP = { racines: 'zone_racines', tige: 'zone_tige', feuilles: 'zone_feuilles', fleurs: 'zone_fleurs', souffle: 'zone_souffle' }
+        rituals.forEach(r => {
+          const key = RITUAL_ZONE_MAP[r.zone]
+          if (key && r.health_delta > 0) zones[key] = Math.min(100, zones[key] + r.health_delta)
+        })
+        const newHealth = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
+        if (newHealth > (plant?.health ?? 0)) {
+          plant = { ...zones, health: newHealth, date: plant?.date ?? null, _fromWeekData: !plant }
           const today = new Date().toISOString().split('T')[0]
-          supabase.from('plants')
-            .upsert({ user_id: userId, date: today, ...zones, health }, { onConflict: 'user_id,date' })
+          Promise.resolve(supabase.from('plants')
+            .upsert({ user_id: userId, date: today, ...zones, health: newHealth }, { onConflict: 'user_id,date' }))
             .catch(() => {})
         }
       }
@@ -2725,7 +2755,7 @@ function MaFleurLiveModal({ onClose }) {
 
   useEffect(() => { fetchData() }, [userId])
 
-  const health = plantData?.health ?? 0
+  const health = plantData?.health ?? 65
 
   const gardenSettings = settings ? {
     petalColor1: settings.petal_color1 || DEFAULT_GARDEN_SETTINGS.petalColor1,
@@ -3108,6 +3138,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
   const [plantData, setPlantData] = useState(null)
   const [settings,  setSettings]  = useState(null)
   const [phase,     setPhase]     = useState(0)
+  const [showPerso, setShowPerso] = useState(false)
 
   useEffect(() => {
     if (!userId) return
@@ -3128,16 +3159,11 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
       const settings0 = settingsRes.status === 'fulfilled' ? (settingsRes.value.data ?? null) : null
       const profile0  = profileRes.status  === 'fulfilled' ? (profileRes.value.data  ?? null) : null
 
-      // Garantit que chaque zone complétée vaut au moins 35%
-      // (corrige le cas où les jours ont été faits sur des dates différentes
-      //  et que la table plants ne cumule qu'une zone par jour)
       const DAY_ZONE = { 1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles', 4: 'zone_fleurs', 5: 'zone_souffle' }
+      const DAY_MIN  = { 1: 40, 2: 48, 3: 55, 4: 60, 5: 65 }
       const completed = profile0?.week_one_data?.completedDays ?? []
-      const daysCount = completed.filter(d => d <= 5).length
-      const expectedMin = Math.round(daysCount * 35 / 5)
-      const currentHealth = plant?.health ?? 0
 
-      if (daysCount > 0 && currentHealth < expectedMin) {
+      if (completed.length > 0) {
         const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
         const zones = {
           zone_racines:  base.zone_racines  ?? 0,
@@ -3148,14 +3174,22 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
         }
         completed.forEach(d => {
           const key = DAY_ZONE[d]
-          if (key) zones[key] = Math.min(100, Math.max(zones[key], 35))
+          const min = DAY_MIN[d] ?? 35
+          if (key) zones[key] = Math.min(100, Math.max(zones[key], min))
+          if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 75)) })
         })
-        const health = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
-        plant = { ...zones, health }
-        const today = new Date().toISOString().split('T')[0]
-        supabase.from('plants')
-          .upsert({ user_id: userId, date: today, ...zones, health }, { onConflict: 'user_id,date' })
-          .catch(() => {})
+        // MaFleurDiscovery s'affiche pendant J6 — J6 pas encore dans completedDays → forcer 65% min
+        if (!completed.includes(7)) {
+          Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 65)) })
+        }
+        const newHealth = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
+        if (newHealth > (plant?.health ?? 0)) {
+          plant = { ...zones, health: newHealth }
+          const today = new Date().toISOString().split('T')[0]
+          Promise.resolve(supabase.from('plants')
+            .upsert({ user_id: userId, date: today, ...zones, health: newHealth }, { onConflict: 'user_id,date' }))
+            .catch(() => {})
+        }
       }
 
       setPlantData(plant)
@@ -3174,13 +3208,35 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  const health = Math.max(plantData?.health ?? 35, 35)
-  const gardenSettings = settings ? {
-    ...DEFAULT_GARDEN_SETTINGS,
-    petalColor1: settings.petal_color1 ?? DEFAULT_GARDEN_SETTINGS.petalColor1,
-    petalColor2: settings.petal_color2 ?? DEFAULT_GARDEN_SETTINGS.petalColor2,
-    petalShape:  settings.petal_shape  ?? DEFAULT_GARDEN_SETTINGS.petalShape,
-  } : DEFAULT_GARDEN_SETTINGS
+  const health = plantData?.health ?? 65
+  const [gardenSettings, setGardenSettings] = useState(DEFAULT_GARDEN_SETTINGS)
+
+  useEffect(() => {
+    if (!settings) return
+    setGardenSettings({
+      ...DEFAULT_GARDEN_SETTINGS,
+      petalColor1: settings.petal_color1 ?? DEFAULT_GARDEN_SETTINGS.petalColor1,
+      petalColor2: settings.petal_color2 ?? DEFAULT_GARDEN_SETTINGS.petalColor2,
+      petalShape:  settings.petal_shape  ?? DEFAULT_GARDEN_SETTINGS.petalShape,
+    })
+  }, [settings])
+
+  async function saveGardenSettings(s) {
+    setGardenSettings(s)
+    setShowPerso(false)
+    _freshGardenSettings = { petal_color1: s.petalColor1, petal_color2: s.petalColor2, petal_shape: s.petalShape }
+    window.dispatchEvent(new CustomEvent('garden:settings:updated', {
+      detail: { petalColor1: s.petalColor1, petalColor2: s.petalColor2, petalShape: s.petalShape }
+    }))
+    if (!userId) return
+    const { error } = await supabase.from('garden_settings').upsert({
+      user_id:      userId,
+      petal_color1: s.petalColor1,
+      petal_color2: s.petalColor2,
+      petal_shape:  s.petalShape,
+    }, { onConflict: 'user_id' })
+    if (error) console.warn('[saveGardenSettings]', error.message)
+  }
 
   const S = {
     fontFamily: 'Cormorant Garamond, Georgia, serif',
@@ -3312,17 +3368,49 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
         </p>
       </div>
 
+      {/* Bouton personnalisation — entre titre et texte */}
+      <div style={{ ...fadeIn(phase >= 3), margin: '0 0 20px', display: 'flex', justifyContent: 'center', pointerEvents: phase >= 3 ? 'auto' : 'none' }}>
+        <button
+          onClick={() => setShowPerso(true)}
+          style={{
+            padding: '10px 28px',
+            borderRadius: 100,
+            border: '1.5px solid rgba(200,160,176,0.35)',
+            background: 'rgba(200,160,176,0.10)',
+            color: '#c8a0b0',
+            fontFamily: "'Jost',sans-serif",
+            fontSize: 13,
+            fontWeight: 600,
+            letterSpacing: '.10em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+          }}
+        >
+          🌸 Personnaliser ma fleur
+        </button>
+      </div>
+
       {/* Phase 4 — contemplation */}
       <div style={{ ...fadeIn(phase >= 4), margin: '0 0 48px' }}>
         <p style={{ ...S }}>Elle reflète ce qui a commencé à se développer en toi par ces attentions quotidiennes.</p>
       </div>
 
-      {/* Phase 5 — bouton */}
-      <div style={{ ...fadeIn(phase >= 5), pointerEvents: phase >= 5 ? 'auto' : 'none' }}>
+      {/* Phase 5 — bouton continuer */}
+      <div style={{ ...fadeIn(phase >= 5), pointerEvents: phase >= 5 ? 'auto' : 'none', display: 'flex', justifyContent: 'center' }}>
         <PrimaryButton onClick={() => onAnswer(answerKey, 'vu')}>
           Continuer
         </PrimaryButton>
       </div>
+
+      {showPerso && (
+        <GardenSettingsModal
+          settings={gardenSettings}
+          onSave={saveGardenSettings}
+          onClose={() => setShowPerso(false)}
+          level={1}
+          tier={1}
+        />
+      )}
     </div>
   )
 }
@@ -3563,7 +3651,7 @@ function RituelTransition({ introData, dayColor, onStart, onBack }) {
 
 // ── Rituel guidé — Racines ─────────────────────────────────────────────────
 
-function RacinesGuidedRituel({ onNext, onBack }) {
+function RacinesGuidedRituel({ onNext, onBack, onAudio }) {
   const [phase, setPhase] = useState(0)
   const phaseRefs = useRef({})
 
@@ -3660,8 +3748,13 @@ function RacinesGuidedRituel({ onNext, onBack }) {
       {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 500, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}><B>Rien à faire</B> de plus. <B>Juste resentir.</B></p>)}
 
       {/* CTA */}
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
         <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
+        {onAudio && (
+          <button onClick={onAudio} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.45)', textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}>
+            🔊 écouter l'audio à la place
+          </button>
+        )}
       </div>
     </div>
   )
@@ -3669,104 +3762,238 @@ function RacinesGuidedRituel({ onNext, onBack }) {
 
 // ── Rituel guidé — Tige ────────────────────────────────────────────────────
 
-function TigeGuidedRituel({ onNext, onBack }) {
-  const [phase, setPhase] = useState(0)
-  const phaseRefs = useRef({})
-
-  useEffect(() => {
-    const T = [0, 150, 300, 450, 600, 750, 900, 1050]
-    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
-    return () => timers.forEach(clearTimeout)
-  }, [])
-
+function TigeGuidedRituel({ onNext, onBack, onAudio }) {
   const S = {
     fontFamily: 'Cormorant Garamond, Georgia, serif',
-    fontStyle:  'italic',
-    fontSize:   'clamp(19px, 4.8vw, 23px)',
-    color:      '#0f0808',
-    textAlign:  'center',
-    lineHeight: 1.85,
-    margin:     '0 0 32px',
+    fontStyle: 'italic',
+    fontSize: 'clamp(17px, 4.4vw, 21px)',
+    color: '#1a1010',
+    textAlign: 'center',
+    lineHeight: 1.9,
+    margin: '0 0 8px',
   }
-
-  function B({ children }) {
-    return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong>
-  }
-
-  function block(n, content) {
-    return (
-      <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
-        {content}
-      </div>
-    )
-  }
+  const Pause = () => (
+    <div style={{ textAlign: 'center', margin: '24px 0 20px', color: '#9ab8c8', letterSpacing: 8, fontSize: 14 }}>· · ·</div>
+  )
+  const Affirmation = ({ children }) => (
+    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(19px, 4.8vw, 23px)', color: '#3a5a6a', textAlign: 'center', lineHeight: 1.75, margin: '0 0 14px' }}>
+      {children}
+    </p>
+  )
 
   return (
-    <div style={{ padding: '16px 20px 80px' }}>
+    <div style={{ background: 'radial-gradient(circle at 50% 18%, #eef4f7, #deeaf0 58%, #d4e2ea)', minHeight: '100%', padding: '16px 20px 80px', boxSizing: 'border-box' }}>
       <BackButton onClick={onBack} />
 
-      {/* Titre */}
-      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(11px, 2.8vw, 13px)',
-          fontWeight: 500,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#1a1010',
-          margin: '0 0 8px',
-        }}>
-          Ton deuxième rituel
-        </p>
-        <h2 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(30px, 7.5vw, 40px)',
-          fontWeight: 700,
-          fontStyle: 'italic',
-          color: '#1a1a2a',
-          lineHeight: 1.15,
-          margin: '0 0 10px',
-        }}>
-          ta tige
-        </h2>
-        <div style={{
-          width: 48,
-          height: 2,
-          background: 'linear-gradient(to right, transparent, #7a9ab0, transparent)',
-          margin: '0 auto',
-        }} />
+      <div style={{ textAlign: 'center', margin: '16px 0 36px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 16px', borderRadius: 100, background: 'linear-gradient(135deg,#9ab8c8,#7a98a8)', boxShadow: '0 4px 16px rgba(154,184,200,0.40)', marginBottom: 14 }}>
+          <span style={{ fontSize: 16 }}>🌿</span>
+          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.95)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Tige · Le texte du rituel</span>
+        </div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 400, fontStyle: 'italic', color: '#1a2a3a', lineHeight: 1.2, margin: '0 0 6px' }}>Me tenir debout</h2>
+        <div style={{ width: 48, height: 1, background: 'linear-gradient(to right, transparent, #9ab8c8, transparent)', margin: '0 auto' }} />
       </div>
 
-      {block(1, <p style={S}>Tiens-toi <B>debout</B>, ou assis·e, le dos naturellement <B>droit</B>. Sans forcer.</p>)}
-      {block(2, <>
-        <p style={S}>Imagine une <B>ligne</B> qui part de ton bassin jusqu'au sommet de ta <B>tête</B>.</p>
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
-          <span style={{
-            display: 'inline-block',
-            fontSize: 'clamp(11px, 2.8vw, 13px)',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#1a1010',
-            background: 'rgba(100,150,180,0.10)',
-            border: '1px solid rgba(100,150,180,0.28)',
-            borderRadius: 100,
-            padding: '5px 14px',
-          }}>
-            comme une tige
-          </span>
-        </div>
-      </>)}
-      {block(3, <p style={S}>À chaque <B>inspiration</B>, laisse cette ligne s'étirer <B>légèrement</B>.</p>)}
-      {block(4, <p style={S}>À chaque <B>expiration</B>, relâche toute <B>tension inutile</B>.</p>)}
-      {block(5, <p style={S}>Balance doucement ton corps de quelques millimètres, <B>d'avant en arrière</B>…</p>)}
-      {block(6, <p style={S}>puis trouve ton <B>point d'équilibre</B>.</p>)}
-      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Ton corps retrouve son axe.</p>)}
+      <p style={S}>Aujourd'hui, je vous invite à prendre un moment<br/>pour vous reconnecter à votre tige.</p>
+      <p style={{ ...S, margin: '0 0 20px' }}>Après avoir pris soin de vos racines, il est temps de porter votre attention à cette partie de la plante qui lui permet de grandir.</p>
 
-      {/* CTA */}
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 8), pointerEvents: phase >= 8 ? 'auto' : 'none' }}>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 8px' }}>La tige.</p>
+      <p style={S}>Celle qui relie les profondeurs de la terre à la lumière du ciel.</p>
+      <p style={S}>Celle qui soutient.</p>
+      <p style={S}>Celle qui porte.</p>
+      <p style={{ ...S, margin: '0 0 20px' }}>Celle qui avance.</p>
+
+      <p style={S}>Alors prenez une profonde inspiration...</p>
+      <p style={S}>Et soufflez doucement.</p>
+      <p style={S}>Puis une seconde fois...</p>
+      <p style={S}>Inspirez...</p>
+      <p style={S}>Et expirez lentement.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Très bien.</p>
+      <p style={S}>Laissez maintenant votre respiration trouver son propre rythme.</p>
+      <p style={S}>Naturellement.</p>
+      <p style={S}>Sans effort.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez devant vous une magnifique plante.</p>
+      <p style={S}>Votre plante.</p>
+      <p style={S}>Votre jardin intérieur.</p>
+      <p style={S}>Sous la terre, ses racines sont présentes.</p>
+      <p style={S}>Solides.</p>
+      <p style={S}>Profondes.</p>
+      <p style={{ ...S, fontWeight: 700, margin: '0 0 20px' }}>Elles sont là.</p>
+
+      <p style={S}>Et maintenant, votre attention se porte sur la tige.</p>
+      <p style={S}>Cette tige qui s'élève depuis la terre.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Cette tige qui relie tout.</p>
+
+      <p style={S}>Prenez quelques instants pour l'observer.</p>
+      <p style={S}>Quelle est sa forme ?</p>
+      <p style={S}>Quelle est sa couleur ?</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Comment vous semble-t-elle aujourd'hui ?</p>
+
+      <p style={S}>Peut-être droite.</p>
+      <p style={S}>Peut-être légèrement courbée.</p>
+      <p style={S}>Peut-être fine.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Peut-être robuste.</p>
+
+      <p style={S}>Et peu importe ce que vous observez.</p>
+      <p style={S}>Car il n'y a rien à juger.</p>
+      <p style={S}>Simplement quelque chose à découvrir.</p>
+
+      <Pause />
+
+      <p style={S}>La tige n'a jamais besoin d'être parfaite.</p>
+      <p style={S}>Elle a seulement besoin d'être vivante.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Comme vous.</p>
+
+      <Pause />
+
+      <p style={S}>Et tandis que vous l'observez...</p>
+      <p style={S}>Imaginez qu'une douce énergie monte depuis les racines.</p>
+      <p style={S}>Une énergie calme.</p>
+      <p style={S}>Stable.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Bienveillante.</p>
+
+      <p style={S}>Cette énergie remonte lentement à travers la tige.</p>
+      <p style={S}>Comme une sève nourricière.</p>
+      <p style={S}>Elle circule librement.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Elle apporte force et souplesse.</p>
+
+      <p style={S}>Solidité et mouvement.</p>
+      <p style={S}>Car une belle tige n'est pas celle qui résiste à tout.</p>
+      <p style={S}>C'est celle qui sait s'adapter au vent.</p>
+
+      <Pause />
+
+      <p style={S}>Et peut-être qu'en ce moment même, vous pouvez penser à certaines situations de votre vie.</p>
+      <p style={S}>Des projets.</p>
+      <p style={S}>Des décisions.</p>
+      <p style={S}>Des changements.</p>
+      <p style={S}>Des défis.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Ou simplement les nombreuses choses qui occupent votre esprit.</p>
+
+      <p style={S}>Et parfois...</p>
+      <p style={S}>Lorsque l'on regarde tout ce qu'il reste à parcourir...</p>
+      <p style={S}>On peut avoir l'impression que le chemin est immense.</p>
+      <p style={S}>Que l'on n'avance pas assez vite.</p>
+      <p style={S}>Que l'on devrait déjà être ailleurs.</p>
+      <p style={S}>Plus loin.</p>
+      <p style={S}>Plus fort.</p>
+      <p style={S}>Plus serein.</p>
+
+      <Pause />
+
+      <p style={{ ...S, fontWeight: 700 }}>Pourtant...</p>
+      <p style={S}>Aucune plante ne pousse en tirant sur sa tige.</p>
+      <p style={S}>Aucune fleur ne s'ouvre parce qu'on l'oblige à grandir.</p>
+      <p style={S}>Tout dans la nature évolue à son rythme.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Et vous aussi.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez un instant pour accueillir cette idée.</p>
+      <p style={S}>Vous avez le droit d'avancer à votre rythme.</p>
+      <p style={S}>Vous avez le droit d'apprendre à votre rythme.</p>
+      <p style={S}>Vous avez le droit de construire à votre rythme.</p>
+      <p style={{ ...S, fontWeight: 700, margin: '0 0 20px' }}>Vous avez le droit d'être exactement là où vous êtes aujourd'hui.</p>
+
+      <Pause />
+
+      <p style={S}>Et tandis que cette idée s'installe doucement en vous...</p>
+      <p style={S}>Imaginez maintenant que votre tige s'oriente naturellement vers la lumière.</p>
+      <p style={S}>Elle ne sait pas exactement où elle va.</p>
+      <p style={S}>Elle ne connaît pas tout le chemin.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Mais elle avance malgré tout.</p>
+
+      <p style={S}>Simplement parce qu'elle est attirée par ce qui lui fait du bien.</p>
+      <p style={S}>Par ce qui la nourrit.</p>
+      <p style={S}>Par ce qui lui permet de grandir.</p>
+
+      <Pause />
+
+      <p style={{ ...S, margin: '0 0 16px' }}>Et vous pouvez vous demander intérieurement :</p>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(19px, 4.8vw, 23px)', margin: '0 0 16px' }}>Quelle est la lumière que je souhaite suivre aujourd'hui ?</p>
+      <p style={S}>Pas demain.</p>
+      <p style={S}>Pas dans un an.</p>
+      <p style={{ ...S, fontWeight: 700, margin: '0 0 16px' }}>Aujourd'hui.</p>
+
+      <p style={S}>Quel est ce petit pas qui pourrait nourrir ma croissance ?</p>
+      <p style={S}>Un appel ?</p>
+      <p style={S}>Une décision ?</p>
+      <p style={S}>Un moment de repos ?</p>
+      <p style={S}>Un projet à commencer ?</p>
+      <p style={S}>Une promenade ?</p>
+      <p style={S}>Une respiration ?</p>
+
+      <Pause />
+
+      <p style={S}>Peut-être qu'une réponse apparaît.</p>
+      <p style={S}>Peut-être pas encore.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Et c'est très bien ainsi.</p>
+      <p style={S}>Car parfois, il suffit simplement de rester tourné vers la lumière pour que les réponses apparaissent naturellement.</p>
+
+      <Pause />
+
+      <p style={S}>Maintenant, imaginez que votre tige devient un peu plus solide.</p>
+      <p style={S}>Un peu plus souple aussi.</p>
+      <p style={S}>Comme si elle comprenait qu'elle n'a pas besoin d'être rigide pour être forte.</p>
+      <p style={S}>Qu'elle peut rester stable tout en restant vivante.</p>
+
+      <Pause />
+
+      <div style={{ background: 'rgba(154,184,200,0.12)', border: '1px solid rgba(154,184,200,0.30)', borderRadius: 16, padding: '24px 20px 16px', margin: '4px 0 24px' }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#7a98a8', textAlign: 'center', margin: '0 0 18px' }}>Répétez intérieurement</p>
+        <Affirmation>Je peux avancer à mon rythme.</Affirmation>
+        <Affirmation>Je fais confiance à mon chemin.</Affirmation>
+        <Affirmation>Je possède déjà les ressources dont j'ai besoin.</Affirmation>
+        <Affirmation>Chaque petit pas compte.</Affirmation>
+        <Affirmation>Je grandis jour après jour.</Affirmation>
+      </div>
+
+      <p style={S}>Laissez ces mots descendre doucement à l'intérieur de vous.</p>
+      <p style={S}>Comme des gouttes d'eau qui nourrissent votre jardin.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez maintenant une profonde inspiration.</p>
+      <p style={S}>Et ressentez cette énergie qui circule librement dans toute votre plante.</p>
+      <p style={S}>Depuis les racines.</p>
+      <p style={S}>Jusqu'à la tige.</p>
+      <p style={S}>Et bientôt jusqu'aux feuilles et à la fleur.</p>
+
+      <Pause />
+
+      <p style={S}>Car tout est déjà en mouvement.</p>
+      <p style={S}>Même lorsque cela ne se voit pas encore.</p>
+      <p style={S}>Même lorsque les résultats ne sont pas encore visibles.</p>
+      <p style={S}>La croissance continue.</p>
+      <p style={S}>Silencieusement.</p>
+      <p style={S}>Naturellement.</p>
+      <p style={S}>Jour après jour.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez une dernière respiration profonde.</p>
+      <p style={S}>Et gardez avec vous cette image de votre tige.</p>
+      <p style={S}>Stable.</p>
+      <p style={S}>Vivante.</p>
+      <p style={{ ...S, margin: '0 0 20px' }}>Tournée vers la lumière.</p>
+
+      <p style={S}>Et rappelez-vous aujourd'hui :</p>
+      <p style={S}>Vous n'avez pas besoin de tout accomplir.</p>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 48px' }}>Vous avez simplement besoin de continuer à grandir.<br/>Un pas après l'autre.</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
+        {onAudio && (
+          <button
+            onClick={onAudio}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.45)', textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}
+          >
+            🔊 écouter l'audio à la place
+          </button>
+        )}
       </div>
     </div>
   )
@@ -3774,102 +4001,260 @@ function TigeGuidedRituel({ onNext, onBack }) {
 
 // ── Rituel guidé — Feuilles ────────────────────────────────────────────────
 
-function FeuillesGuidedRituel({ onNext, onBack }) {
-  const [phase, setPhase] = useState(0)
-  const phaseRefs = useRef({})
-
-  useEffect(() => {
-    const T = [0, 150, 300, 450, 600, 750, 900, 1050, 1200]
-    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
-    return () => timers.forEach(clearTimeout)
-  }, [])
-
+function FeuillesGuidedRituel({ onNext, onBack, onAudio }) {
   const S = {
     fontFamily: 'Cormorant Garamond, Georgia, serif',
-    fontStyle:  'italic',
-    fontSize:   'clamp(19px, 4.8vw, 23px)',
-    color:      '#0f0808',
-    textAlign:  'center',
-    lineHeight: 1.85,
-    margin:     '0 0 32px',
+    fontStyle: 'italic',
+    fontSize: 'clamp(17px, 4.4vw, 21px)',
+    color: '#1a1010',
+    textAlign: 'center',
+    lineHeight: 1.9,
+    margin: '0 0 8px',
   }
-
-  function B({ children }) {
-    return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong>
-  }
-
-  function block(n, content) {
-    return (
-      <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
-        {content}
-      </div>
-    )
-  }
+  const Pause = () => (
+    <div style={{ textAlign: 'center', margin: '24px 0 20px', color: '#7aaa88', letterSpacing: 8, fontSize: 14 }}>· · ·</div>
+  )
+  const Affirmation = ({ children }) => (
+    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(19px, 4.8vw, 23px)', color: '#3a6a4a', textAlign: 'center', lineHeight: 1.75, margin: '0 0 14px' }}>
+      {children}
+    </p>
+  )
 
   return (
-    <div style={{ padding: '16px 20px 80px' }}>
+    <div style={{ background: 'radial-gradient(circle at 50% 18%, #eef6ee, #deeedd 58%, #d4ead4)', minHeight: '100%', padding: '16px 20px 80px', boxSizing: 'border-box' }}>
       <BackButton onClick={onBack} />
 
-      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(11px, 2.8vw, 13px)',
-          fontWeight: 500,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#1a1010',
-          margin: '0 0 8px',
-        }}>
-          Ton troisième rituel
-        </p>
-        <h2 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(30px, 7.5vw, 40px)',
-          fontWeight: 700,
-          fontStyle: 'italic',
-          color: '#1a2a1a',
-          lineHeight: 1.15,
-          margin: '0 0 10px',
-        }}>
-          tes feuilles
-        </h2>
-        <div style={{
-          width: 48, height: 2,
-          background: 'linear-gradient(to right, transparent, #7aaa88, transparent)',
-          margin: '0 auto',
-        }} />
+      <div style={{ textAlign: 'center', margin: '16px 0 36px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 16px', borderRadius: 100, background: 'linear-gradient(135deg,#7aaa88,#5e8456)', boxShadow: '0 4px 16px rgba(122,170,136,0.40)', marginBottom: 14 }}>
+          <span style={{ fontSize: 16 }}>🍃</span>
+          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.95)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Feuilles · Le texte du rituel</span>
+        </div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 400, fontStyle: 'italic', color: '#1a2a1a', lineHeight: 1.2, margin: '0 0 6px' }}>Observer ce qui traverse</h2>
+        <div style={{ width: 48, height: 1, background: 'linear-gradient(to right, transparent, #7aaa88, transparent)', margin: '0 auto' }} />
       </div>
 
-      {block(1, <p style={S}>Prends un instant. <B>Qu'est-ce qui est là</B>, en ce moment ?</p>)}
-      {block(2, <p style={S}>Une émotion. Une sensation. Une pensée qui tourne.</p>)}
-      {block(3, <>
-        <p style={S}><B>Nomme-la</B> intérieurement. Sans la juger.</p>
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '-16px 0 32px' }}>
-          <span style={{
-            display: 'inline-block',
-            fontSize: 'clamp(11px, 2.8vw, 13px)',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 500,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: '#1a1010',
-            background: 'rgba(90,160,110,0.10)',
-            border: '1px solid rgba(90,160,110,0.28)',
-            borderRadius: 100,
-            padding: '5px 14px',
-          }}>
-            juste un mot suffit
-          </span>
-        </div>
-      </>)}
-      {block(4, <p style={S}>Maintenant, <B>observe-la</B>.</p>)}
-      {block(5, <p style={S}>Comme un <B>nuage qui passe</B> dans le ciel.</p>)}
-      {block(6, <p style={S}>Ne cherche pas à la changer. Ne la retiens pas. <B>Laisse-la traverser.</B></p>)}
-      {block(7, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 20px' }}>Ce que tu ressens peut passer.</p>)}
-      {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Tu n'as rien à retenir.</p>)}
+      <p style={S}>Aujourd'hui, je vous invite à prendre quelques instants<br/>pour vous connecter à vos feuilles.</p>
+      <p style={S}>Après les racines qui vous nourrissent...</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Après la tige qui vous permet d'avancer...</p>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 16px' }}>Viennent les feuilles.</p>
+      <p style={S}>Les feuilles sont les grandes capteuses de lumière.</p>
+      <p style={S}>Elles s'ouvrent au soleil.</p>
+      <p style={S}>À l'air.</p>
+      <p style={S}>À la pluie.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Au monde qui les entoure.</p>
+      <p style={S}>Elles représentent cette partie de vous qui ressent.</p>
+      <p style={S}>Qui échange.</p>
+      <p style={{ ...S, margin: '0 0 20px' }}>Qui entre en relation avec la vie.</p>
 
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
+      <p style={S}>Alors prenez une profonde inspiration...</p>
+      <p style={S}>Puis expirez lentement.</p>
+      <p style={S}>Encore une fois...</p>
+      <p style={S}>Inspirez profondément...</p>
+      <p style={S}>Et soufflez doucement.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Très bien.</p>
+      <p style={S}>Laissez maintenant votre respiration devenir naturelle.</p>
+      <p style={S}>Simple.</p>
+      <p style={S}>Paisible.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez votre plante.</p>
+      <p style={S}>Votre jardin intérieur.</p>
+      <p style={S}>Vous voyez ses racines profondément ancrées dans la terre.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Sa tige solide qui s'élève vers le ciel.</p>
+      <p style={S}>Et maintenant...</p>
+      <p style={{ ...S, fontWeight: 700 }}>Vous remarquez ses feuilles.</p>
+      <p style={S}>De nombreuses feuilles.</p>
+      <p style={S}>Toutes différentes.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Toutes vivantes.</p>
+      <p style={S}>Certaines grandes.</p>
+      <p style={S}>Certaines plus petites.</p>
+      <p style={S}>Certaines tournées vers la lumière.</p>
+      <p style={S}>D'autres encore en train de se déployer.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez quelques instants pour les observer.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Comment sont-elles aujourd'hui ?</p>
+      <p style={S}>Peut-être lumineuses.</p>
+      <p style={S}>Peut-être un peu ternes.</p>
+      <p style={S}>Peut-être agitées par le vent.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Peut-être paisibles.</p>
+      <p style={S}>Et quelle que soit leur apparence...</p>
+      <p style={{ ...S, fontWeight: 700 }}>Tout est parfaitement acceptable.</p>
+
+      <Pause />
+
+      <p style={S}>Car les feuilles vivent au rythme des saisons.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Comme les émotions vivent au rythme de nos journées.</p>
+      <p style={S}>Parfois nous nous sentons légers.</p>
+      <p style={S}>Parfois joyeux.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Parfois enthousiastes.</p>
+      <p style={S}>Et parfois nous nous sentons fatigués.</p>
+      <p style={S}>Préoccupés.</p>
+      <p style={S}>Tristes.</p>
+      <p style={S}>Ou simplement un peu perdus.</p>
+
+      <Pause />
+
+      <p style={S}>Comme les feuilles d'un arbre qui bougent sous le vent.</p>
+      <p style={S}>Les émotions viennent.</p>
+      <p style={S}>Puis elles repartent.</p>
+      <p style={S}>Elles circulent.</p>
+      <p style={S}>Elles évoluent.</p>
+      <p style={S}>Elles ne sont jamais figées.</p>
+
+      <Pause />
+
+      <p style={S}>Et aujourd'hui...</p>
+      <p style={S}>Je vous invite à ne rien changer.</p>
+      <p style={S}>À ne rien corriger.</p>
+      <p style={S}>Simplement à observer ce qui est présent.</p>
+
+      <Pause />
+
+      <p style={S}>Peut-être qu'une émotion attire votre attention.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Une émotion que vous avez ressentie récemment.</p>
+      <p style={S}>Sans chercher à l'analyser.</p>
+      <p style={S}>Sans chercher à la comprendre.</p>
+      <p style={S}>Simplement la reconnaître.</p>
+      <p style={S}>Comme un jardinier qui remarque une feuille particulière dans son jardin.</p>
+
+      <Pause />
+
+      <p style={S}>Et imaginez maintenant que cette émotion prend doucement la forme d'une feuille.</p>
+      <p style={S}>Une feuille unique.</p>
+      <p style={S}>Avec sa couleur.</p>
+      <p style={S}>Sa texture.</p>
+      <p style={S}>Sa forme.</p>
+
+      <Pause />
+
+      <p style={S}>Puis imaginez que vous la regardez avec curiosité.</p>
+      <p style={S}>Sans jugement.</p>
+      <p style={S}>Avec bienveillance.</p>
+
+      <Pause />
+
+      <p style={S}>Car chaque émotion porte un message.</p>
+      <p style={S}>Même celles que nous n'aimons pas.</p>
+      <p style={S}>Même celles qui nous dérangent.</p>
+      <p style={S}>Même celles que nous préférerions éviter.</p>
+
+      <Pause />
+
+      <p style={S}>La tristesse peut nous parler d'un besoin de réconfort.</p>
+      <p style={S}>La colère peut nous montrer qu'une limite a été dépassée.</p>
+      <p style={S}>La peur peut chercher à nous protéger.</p>
+      <p style={S}>La joie peut nous indiquer ce qui nourrit notre cœur.</p>
+
+      <Pause />
+
+      <p style={S}>Chaque émotion est une feuille sur l'arbre de notre vie.</p>
+      <p style={S}>Aucune n'est inutile.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Aucune n'est mauvaise.</p>
+
+      <Pause />
+
+      <p style={S}>Et tandis que vous observez cette feuille particulière...</p>
+      <p style={S}>Imaginez qu'un souffle léger traverse votre jardin.</p>
+      <p style={S}>Une brise douce.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Apaisante.</p>
+      <p style={S}>Cette brise passe entre les feuilles.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Les fait danser doucement.</p>
+      <p style={S}>Puis emporte ce qui n'a plus besoin de rester.</p>
+      <p style={S}>Les tensions.</p>
+      <p style={S}>Les préoccupations.</p>
+      <p style={S}>Les pensées qui tournent en boucle.</p>
+
+      <Pause />
+
+      <p style={S}>Comme dans la nature.</p>
+      <p style={S}>Les feuilles savent naturellement lâcher ce qui doit partir.</p>
+
+      <Pause />
+
+      <p style={S}>Et vous pouvez peut-être vous autoriser à faire la même chose.</p>
+      <p style={S}>Juste pour quelques instants.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez maintenant que le soleil éclaire votre plante.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Une lumière douce et chaleureuse.</p>
+      <p style={S}>Cette lumière touche chacune de vos feuilles.</p>
+      <p style={S}>Même celles qui semblaient fragiles.</p>
+      <p style={S}>Même celles qui semblaient fatiguées.</p>
+
+      <Pause />
+
+      <p style={S}>Et peu à peu...</p>
+      <p style={S}>Les feuilles absorbent cette lumière.</p>
+      <p style={S}>Comme elles savent si bien le faire.</p>
+      <p style={S}>Elles se nourrissent.</p>
+      <p style={S}>Elles respirent.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Elles se renforcent.</p>
+
+      <Pause />
+
+      <p style={S}>Et vous pouvez ressentir que vous aussi...</p>
+      <p style={S}>Vous avez le droit de recevoir.</p>
+      <p style={S}>Recevoir de l'attention.</p>
+      <p style={S}>Recevoir du soutien.</p>
+      <p style={S}>Recevoir de la douceur.</p>
+      <p style={S}>Recevoir de la lumière.</p>
+
+      <Pause />
+
+      <div style={{ background: 'rgba(122,170,136,0.12)', border: '1px solid rgba(122,170,136,0.30)', borderRadius: 16, padding: '24px 20px 16px', margin: '4px 0 24px' }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#5e8456', textAlign: 'center', margin: '0 0 18px' }}>Répétez intérieurement</p>
+        <Affirmation>J'accueille ce que je ressens.</Affirmation>
+        <Affirmation>Mes émotions ont le droit d'exister.</Affirmation>
+        <Affirmation>Je peux écouter ce qui se passe en moi avec bienveillance.</Affirmation>
+        <Affirmation>Je reste ouvert à la vie.</Affirmation>
+        <Affirmation>Je me relie au monde avec confiance.</Affirmation>
+      </div>
+
+      <p style={S}>Prenez maintenant quelques instants pour ressentir votre jardin dans son ensemble.</p>
+      <p style={S}>Les racines.</p>
+      <p style={S}>La tige.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Les feuilles.</p>
+      <p style={S}>Tout fonctionne ensemble.</p>
+      <p style={S}>Tout participe à votre équilibre.</p>
+
+      <Pause />
+
+      <p style={S}>Et même lorsque certaines feuilles traversent une période plus difficile...</p>
+      <p style={S}>L'ensemble de la plante continue de vivre.</p>
+      <p style={S}>De grandir.</p>
+      <p style={S}>D'évoluer.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez une dernière inspiration profonde.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Et lorsque vous expirez...</p>
+      <p style={S}>Imaginez que toutes vos feuilles frémissent doucement sous une brise légère.</p>
+      <p style={S}>Comme un signe de vie.</p>
+      <p style={S}>Comme un signe de mouvement.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Comme un rappel que vous êtes vivant.</p>
+      <p style={S}>Connecté.</p>
+      <p style={S}>En relation avec vous-même.</p>
+      <p style={{ ...S, margin: '0 0 20px' }}>Et avec le monde qui vous entoure.</p>
+
+      <Pause />
+
+      <p style={S}>Aujourd'hui, prenez simplement le temps d'observer ce que vous ressentez.</p>
+      <p style={S}>Comme on observe les feuilles d'un jardin.</p>
+      <p style={S}>Avec curiosité.</p>
+      <p style={S}>Avec douceur.</p>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 48px' }}>Avec respect.</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
+        {onAudio && (
+          <button onClick={onAudio} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.45)', textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}>
+            🔊 écouter l'audio à la place
+          </button>
+        )}
       </div>
     </div>
   )
@@ -3959,83 +4344,264 @@ function FleursGuidedRituel({ onNext, onBack }) {
 
 // ── Rituel guidé — Souffle ─────────────────────────────────────────────────
 
-function SouffleGuidedRituel({ onNext, onBack }) {
-  const [phase, setPhase] = useState(0)
-  const phaseRefs = useRef({})
-
-  useEffect(() => {
-    const T = [0, 2000, 4000, 6000, 8000, 10000, 12000, 15000, 15500]
-    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
-    return () => timers.forEach(clearTimeout)
-  }, [])
-
+function SouffleGuidedRituel({ onNext, onBack, onAudio }) {
   const S = {
     fontFamily: 'Cormorant Garamond, Georgia, serif',
-    fontStyle:  'italic',
-    fontSize:   'clamp(19px, 4.8vw, 23px)',
-    color:      '#0f0808',
-    textAlign:  'center',
-    lineHeight: 1.85,
-    margin:     '0 0 32px',
+    fontStyle: 'italic',
+    fontSize: 'clamp(17px, 4.4vw, 21px)',
+    color: '#1a1010',
+    textAlign: 'center',
+    lineHeight: 1.9,
+    margin: '0 0 8px',
   }
-
-  function B({ children }) {
-    return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong>
-  }
-
-  function block(n, content) {
-    return (
-      <div ref={el => { phaseRefs.current[n] = el }} style={{ scrollMarginTop: '72px', ...fadeIn(phase >= n) }}>
-        {content}
-      </div>
-    )
-  }
+  const Pause = () => (
+    <div style={{ textAlign: 'center', margin: '24px 0 20px', color: '#c8a870', letterSpacing: 8, fontSize: 14 }}>· · ·</div>
+  )
+  const Affirmation = ({ children }) => (
+    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(19px, 4.8vw, 23px)', color: '#7a6030', textAlign: 'center', lineHeight: 1.75, margin: '0 0 14px' }}>
+      {children}
+    </p>
+  )
 
   return (
-    <div style={{ padding: '16px 20px 80px' }}>
+    <div style={{ background: 'radial-gradient(circle at 50% 18%, #fdf8ee, #f5ead8 58%, #ede0c8)', minHeight: '100%', padding: '16px 20px 80px', boxSizing: 'border-box' }}>
       <BackButton onClick={onBack} />
 
-      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
-        <p style={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: 'clamp(11px, 2.8vw, 13px)',
-          fontWeight: 500,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: '#1a1010',
-          margin: '0 0 8px',
-        }}>
-          Ton cinquième rituel
-        </p>
-        <h2 style={{
-          fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(30px, 7.5vw, 40px)',
-          fontWeight: 700,
-          fontStyle: 'italic',
-          color: '#2a1a08',
-          lineHeight: 1.15,
-          margin: '0 0 10px',
-        }}>
-          ton souffle
-        </h2>
-        <div style={{
-          width: 48, height: 2,
-          background: 'linear-gradient(to right, transparent, #c8a870, transparent)',
-          margin: '0 auto',
-        }} />
+      <div style={{ textAlign: 'center', margin: '16px 0 36px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 16px', borderRadius: 100, background: 'linear-gradient(135deg,#c8a870,#a08040)', boxShadow: '0 4px 16px rgba(200,168,112,0.40)', marginBottom: 14 }}>
+          <span style={{ fontSize: 16 }}>🌬️</span>
+          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.95)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Souffle · Le texte du rituel</span>
+        </div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 400, fontStyle: 'italic', color: '#2a1a08', lineHeight: 1.2, margin: '0 0 6px' }}>Le souffle qui relie</h2>
+        <div style={{ width: 48, height: 1, background: 'linear-gradient(to right, transparent, #c8a870, transparent)', margin: '0 auto' }} />
       </div>
 
-      {block(1, <p style={S}>Pense à <B>quelqu'un</B>.<br />Proche… ou plus lointain.</p>)}
-      {block(2, <p style={S}>Quelqu'un à qui tu pourrais envoyer <B>quelque chose de doux</B>.</p>)}
-      {block(3, <p style={S}>Garde cette personne <B>en tête</B>.</p>)}
-      {block(4, <p style={S}>Inspire <B>doucement</B>.</p>)}
-      {block(5, <p style={S}>Et à l'expiration…<br />laisse ton attention <B>aller vers elle</B>.</p>)}
-      {block(6, <p style={S}>Sans mots.<br />Juste une <B>intention</B>.</p>)}
-      {block(7, <p style={S}>Ce <B>geste invisible</B> est réel.</p>)}
-      {block(8, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 25px)', margin: '0 0 40px' }}>Ton souffle <B>relie</B>. Toujours.</p>)}
+      <p style={S}>Aujourd'hui, je vous invite à prendre un moment pour découvrir le souffle.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Le souffle est discret.</p>
+      <p style={S}>Invisible.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>On ne le voit pas.</p>
+      <p style={S}>Et pourtant, il est partout.</p>
+      <p style={S}>Il traverse les racines.</p>
+      <p style={S}>Il accompagne la tige.</p>
+      <p style={S}>Il caresse les feuilles.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Il entoure la fleur.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Il relie toutes les parties du jardin.</p>
+      <p style={S}>Comme dans la nature, le souffle représente cette présence silencieuse qui circule en vous à chaque instant.</p>
+      <p style={S}>Votre respiration.</p>
+      <p style={S}>Votre capacité à être ici.</p>
+      <p style={S}>Maintenant.</p>
 
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 9), pointerEvents: phase >= 9 ? 'auto' : 'none' }}>
+      <p style={{ ...S, margin: '16px 0 8px' }}>Alors prenez une profonde inspiration...</p>
+      <p style={S}>Puis laissez l'air ressortir lentement.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Sans effort.</p>
+      <p style={S}>Encore une fois.</p>
+      <p style={S}>Inspirez profondément...</p>
+      <p style={{ ...S, fontWeight: 700 }}>Et expirez doucement.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Très bien.</p>
+      <p style={S}>Et maintenant...</p>
+      <p style={S}>Pendant quelques instants, il n'y a rien à faire.</p>
+      <p style={S}>Rien à comprendre.</p>
+      <p style={S}>Rien à réussir.</p>
+      <p style={S}>Simplement être là.</p>
+
+      <Pause />
+
+      <p style={S}>Observez votre respiration.</p>
+      <p style={S}>L'air qui entre.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>L'air qui ressort.</p>
+      <p style={S}>Naturellement.</p>
+      <p style={S}>Comme il le fait depuis toujours.</p>
+      <p style={S}>Sans que vous ayez besoin d'y penser.</p>
+
+      <Pause />
+
+      <p style={S}>Peut-être remarquez-vous que lorsque vous portez votre attention sur votre souffle...</p>
+      <p style={S}>Quelque chose ralentit déjà à l'intérieur de vous.</p>
+      <p style={S}>Comme si votre esprit comprenait qu'il peut se reposer quelques instants.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez maintenant votre jardin intérieur.</p>
+      <p style={S}>Vous voyez les racines profondément ancrées dans la terre.</p>
+      <p style={S}>La tige qui s'élève avec confiance.</p>
+      <p style={S}>Les feuilles qui s'ouvrent à la lumière.</p>
+      <p style={S}>La fleur qui rayonne doucement.</p>
+
+      <Pause />
+
+      <p style={S}>Et soudain...</p>
+      <p style={{ ...S, fontWeight: 700 }}>Une légère brise apparaît.</p>
+      <p style={S}>Un souffle doux.</p>
+      <p style={S}>Paisible.</p>
+      <p style={S}>Bienveillant.</p>
+
+      <Pause />
+
+      <p style={S}>Cette brise traverse lentement votre jardin.</p>
+      <p style={S}>Elle fait doucement danser les feuilles.</p>
+      <p style={S}>Elle effleure les pétales.</p>
+      <p style={S}>Elle accompagne chaque mouvement de la plante.</p>
+
+      <Pause />
+
+      <p style={S}>Et vous comprenez que cette brise représente votre respiration.</p>
+      <p style={S}>Toujours présente.</p>
+      <p style={S}>Toujours disponible.</p>
+      <p style={S}>Toujours capable de vous ramener à l'essentiel.</p>
+
+      <Pause />
+
+      <p style={S}>Car parfois...</p>
+      <p style={S}>Nous passons beaucoup de temps dans nos pensées.</p>
+      <p style={S}>Nous pensons à demain.</p>
+      <p style={S}>À ce qu'il faut faire.</p>
+      <p style={S}>À ce qui pourrait arriver.</p>
+      <p style={S}>À ce qui aurait dû se passer autrement.</p>
+
+      <Pause />
+
+      <p style={S}>Et sans nous en rendre compte...</p>
+      <p style={S}>Nous quittons le moment présent.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Nous quittons le jardin.</p>
+
+      <Pause />
+
+      <p style={{ ...S, fontWeight: 700 }}>Pourtant...</p>
+      <p style={S}>La vie se déroule ici.</p>
+      <p style={S}>Maintenant.</p>
+      <p style={S}>Dans cet instant précis.</p>
+      <p style={S}>Dans cette respiration.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez un moment pour ressentir cela.</p>
+      <p style={S}>Cette respiration qui entre.</p>
+      <p style={S}>Cette respiration qui ressort.</p>
+
+      <Pause />
+
+      <p style={{ ...S, fontWeight: 700 }}>Rien d'autre n'est nécessaire.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez maintenant que chaque inspiration apporte de la lumière dans votre jardin.</p>
+      <p style={S}>Une lumière douce.</p>
+      <p style={S}>Paisible.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Réconfortante.</p>
+      <p style={S}>Et qu'à chaque expiration...</p>
+      <p style={S}>Vous relâchez ce qui n'a plus besoin d'être porté.</p>
+      <p style={S}>Les tensions.</p>
+      <p style={S}>Les inquiétudes.</p>
+      <p style={S}>Les pensées répétitives.</p>
+
+      <Pause />
+
+      <p style={S}>Comme le vent qui emporte quelques feuilles devenues inutiles.</p>
+
+      <Pause />
+
+      <p style={S}>À chaque respiration...</p>
+      <p style={S}>Vous créez davantage d'espace.</p>
+      <p style={S}>Davantage de calme.</p>
+      <p style={S}>Davantage de présence.</p>
+
+      <Pause />
+
+      <p style={S}>Et tandis que ce calme s'installe...</p>
+      <p style={S}>Imaginez que le temps ralentit.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Quelques instants seulement.</p>
+      <p style={S}>Comme si votre jardin entier respirait avec vous.</p>
+
+      <Pause />
+
+      <p style={S}>Les racines respirent.</p>
+      <p style={S}>La tige respire.</p>
+      <p style={S}>Les feuilles respirent.</p>
+      <p style={S}>La fleur respire.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Et vous respirez avec elles.</p>
+
+      <Pause />
+
+      <p style={S}>Peut-être pouvez-vous ressentir une profonde connexion.</p>
+      <p style={S}>Une sensation d'unité.</p>
+      <p style={S}>Comme si tout était déjà là.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Comme si rien ne manquait.</p>
+
+      <Pause />
+
+      <div style={{ background: 'rgba(200,168,112,0.12)', border: '1px solid rgba(200,168,112,0.30)', borderRadius: 16, padding: '24px 20px 16px', margin: '4px 0 24px' }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a08040', textAlign: 'center', margin: '0 0 18px' }}>Répétez intérieurement</p>
+        <Affirmation>Je suis ici.</Affirmation>
+        <Affirmation>Je suis présent à cet instant.</Affirmation>
+        <Affirmation>Je peux revenir à mon souffle quand j'en ai besoin.</Affirmation>
+        <Affirmation>Je laisse circuler la vie en moi.</Affirmation>
+        <Affirmation>Je m'accorde le droit de ralentir.</Affirmation>
+      </div>
+
+      <p style={S}>Laissez ces mots résonner doucement.</p>
+      <p style={S}>Comme un écho dans votre jardin intérieur.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez maintenant que la brise devient légèrement plus lumineuse.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Comme si elle transportait de petites particules dorées.</p>
+      <p style={S}>Chaque inspiration les fait entrer en vous.</p>
+      <p style={S}>Chaque expiration les diffuse dans tout votre jardin.</p>
+
+      <Pause />
+
+      <p style={S}>Peu à peu...</p>
+      <p style={S}>Les racines s'illuminent.</p>
+      <p style={S}>La tige s'illumine.</p>
+      <p style={S}>Les feuilles s'illuminent.</p>
+      <p style={{ ...S, fontWeight: 700, margin: '0 0 16px' }}>La fleur s'illumine.</p>
+
+      <Pause />
+
+      <p style={S}>Et vous comprenez peut-être quelque chose de simple.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Le souffle n'est pas seulement ce qui circule dans le jardin.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Le souffle est ce qui relie tout.</p>
+      <p style={S}>Il relie votre corps à votre esprit.</p>
+      <p style={S}>Votre intérieur au monde extérieur.</p>
+      <p style={S}>Le passé au présent.</p>
+      <p style={S}>Le mouvement au calme.</p>
+
+      <Pause />
+
+      <p style={S}>Et chaque fois que vous aurez besoin de retrouver votre équilibre...</p>
+      <p style={S}>Vous pourrez revenir ici.</p>
+      <p style={S}>À votre souffle.</p>
+      <p style={S}>À cette respiration.</p>
+      <p style={S}>À ce jardin.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez maintenant une dernière inspiration profonde.</p>
+      <p style={S}>Laissez l'air remplir doucement votre poitrine.</p>
+      <p style={S}>Puis expirez lentement.</p>
+      <p style={S}>Très lentement.</p>
+
+      <Pause />
+
+      <p style={S}>Et observez le calme qui est là.</p>
+      <p style={S}>Peut-être discret.</p>
+      <p style={S}>Peut-être plus présent qu'au début.</p>
+
+      <Pause />
+
+      <p style={S}>Gardez avec vous cette sensation tout au long de votre journée.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Et souvenez-vous :</p>
+      <p style={S}>Vous n'avez pas besoin de contrôler le vent.</p>
+      <p style={{ ...S, fontWeight: 700, margin: '0 0 16px' }}>Vous avez simplement besoin de respirer avec lui.</p>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 48px' }}>Car parfois, prendre soin de soi commence simplement par une respiration consciente.</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
+        {onAudio && (
+          <button onClick={onAudio} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.45)', textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}>
+            🔊 écouter l'audio à la place
+          </button>
+        )}
       </div>
     </div>
   )
@@ -4088,7 +4654,7 @@ function JardinFleurTransition({ onStart, onBack }) {
     setTimeout(() => onStart(), 750)
   }
 
-  const health = plantData?.health ?? 35
+  const health = plantData?.health ?? 65
   const gardenSettings = settings ? {
     ...DEFAULT_GARDEN_SETTINGS,
     petalColor1: settings.petal_color1 ?? DEFAULT_GARDEN_SETTINGS.petalColor1,
@@ -5016,7 +5582,8 @@ function TypewriterSlides({ slides, typewriterFrom = 0, ctaLabel, onNext, onScre
   const [pausing,  setPausing]  = useState(false)
   const [done,     setDone]     = useState(false)
 
-  const currentTwText = twSlides[twIdx] ?? ''
+  const stripBold = (s) => s.startsWith('**') ? s.slice(2) : s
+  const currentTwText = stripBold(twSlides[twIdx] ?? '')
 
   useEffect(() => {
     if (!twStarted || done) return
@@ -5064,7 +5631,9 @@ function TypewriterSlides({ slides, typewriterFrom = 0, ctaLabel, onNext, onScre
 
       {/* Slides machine à écrire */}
       {twStarted && twSlides.slice(0, twIdx + 1).map((slide, i) => {
-        const text          = i < twIdx ? slide : slide.slice(0, charIdx)
+        const isBold        = slide.startsWith('**')
+        const actual        = isBold ? slide.slice(2) : slide
+        const text          = i < twIdx ? actual : actual.slice(0, charIdx)
         const isAttribution = slide.startsWith('—')
         const isTyping      = i === twIdx && !done && !pausing
         return (
@@ -5072,7 +5641,7 @@ function TypewriterSlides({ slides, typewriterFrom = 0, ctaLabel, onNext, onScre
             ...PS,
             fontStyle:     isAttribution ? 'normal' : 'italic',
             fontSize:      isAttribution ? 'clamp(11px, 2.8vw, 13px)' : PS.fontSize,
-            fontWeight:    isAttribution ? 500 : 400,
+            fontWeight:    isBold ? 700 : isAttribution ? 500 : 400,
             letterSpacing: isAttribution ? '0.14em' : 'normal',
             textTransform: isAttribution ? 'uppercase' : 'none',
             color:         isAttribution ? 'rgba(30,20,8,0.4)' : '#0f0808',
@@ -5147,10 +5716,143 @@ function DayOuverture({ text, isFinal, ctaLabel, onNext, onBack, onScreenChange 
 
 // ── VALIDATION GUIDÉE JOUR 1 ───────────────────────────────────────────────
 
+// ── Modal bonus rituel — centré, couleurs de la zone du jour ─────────────────
+function BonusRitualModal({ zoneId, color = '#c8a0b0', onClose }) {
+  const { user }                                    = useAuth()
+  const { rituals: plantRituals }                   = useRituels()
+  const { completedRituals, handleToggleRitual }    = useRitualsState(user?.id)
+
+  const STORAGE_KEY = 'mafleur-rituels-v1'
+  const todayKey    = new Date().toISOString().slice(0, 10)
+
+  // Handler enrichi : fixe la date + sauvegarde Supabase
+  async function handleBonusToggle(ritualId) {
+    handleToggleRitual(ritualId)  // localStorage + event dispatch
+
+    // Fixe la date pour que le rechargement retrouve les données
+    try {
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+      if (!existing.date) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...existing, date: todayKey }))
+      }
+    } catch (_) {}
+
+    // Sauvegarde Supabase
+    if (!user?.id) return
+    const wasCompleted = !!completedRituals[ritualId]
+    if (!wasCompleted) {
+      // Cherche le rituel pour avoir son nom et sa zone
+      const ritualObj = Object.values(plantRituals || {}).flat().find(r => r?.id === ritualId)
+      const ZONE_MAP = { roots: 'racines', stem: 'tige', leaves: 'feuilles', flowers: 'fleurs', breath: 'souffle' }
+      await Promise.resolve(supabase.from('rituals').upsert({
+        user_id:      user.id,
+        name:         ritualObj?.text ?? ritualId,
+        zone:         ZONE_MAP[zoneId] ?? zoneId,
+        health_delta: 0.5,
+        ritual_id:    ritualId,
+      }, { onConflict: 'user_id,ritual_id' })).catch(() => {})
+    }
+  }
+  // Hex → RGB pour les variables CSS
+  const h2r = h => { const v = parseInt((h || '#c8a0b0').replace('#',''), 16); return `${(v>>16)&255},${(v>>8)&255},${v&255}` }
+  const rgb = h2r(color)
+  return (
+    <div style={{
+      /* Fond */
+      '--ritual-modal-bg-start':  '#fffaf7',
+      '--ritual-modal-bg-end':    '#faf5f2',
+      /* Texte noir + RGB pour les rgba() */
+      '--ritual-modal-text':      '#0f0808',
+      '--ritual-modal-text-rgb':  '15,8,8',
+      /* Surfaces claires (boutons internes, bordures) */
+      '--surface-1':              '#ffffff',
+      '--surface-2':              '#f5ede8',
+      '--surface-3':              'rgba(180,150,130,0.28)',
+      '--track':                  '#ede5e0',
+      /* Polices — tailles uniformes */
+      '--fs-h1':  '26px',
+      '--fs-h2':  '22px',
+      '--fs-h3':  '20px',
+      '--fs-h4':  '16px',
+      '--fs-h5':  '13px',
+      '--fs-emoji-md': '24px',
+      '--fs-emoji-sm': '18px',
+      /* Accent zone */
+      '--ritual-modal-accent':    color,
+      '--gold':                   color,
+      '--zone-breath':            color,
+    }}>
+      <style>{`
+        .ritual-modal-backdrop {
+          align-items: center !important;
+          background: rgba(${rgb},0.20) !important;
+          backdrop-filter: blur(10px) !important;
+        }
+        .ritual-modal-sheet {
+          box-shadow: 0 24px 60px rgba(${rgb},0.26) !important;
+          border-radius: 22px !important;
+          border: 1px solid rgba(${rgb},0.20) !important;
+        }
+        .ritual-item-text {
+          font-size: 16px !important;
+          color: #0f0808 !important;
+          font-weight: 400 !important;
+          line-height: 1.45 !important;
+        }
+        .ritual-item-hint {
+          font-size: 13px !important;
+          color: rgba(15,8,8,0.50) !important;
+        }
+        .ritual-modal-title { color: #0f0808 !important; }
+        .ritual-modal-pct-count { color: #0f0808 !important; }
+      `}</style>
+      <RitualZoneModal
+        zoneId={zoneId}
+        completed={completedRituals}
+        onToggle={handleBonusToggle}
+        onClose={onClose}
+        plantRituals={plantRituals}
+      />
+    </div>
+  )
+}
+
+function BonusButton({ color = '#c8a0b0', zoneName = 'racines', onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%',
+        maxWidth: 340,
+        marginTop: 20,
+        padding: '16px 24px',
+        borderRadius: 18,
+        border: `1.5px solid ${color}55`,
+        background: `linear-gradient(135deg, ${color}22, ${color}12)`,
+        cursor: 'pointer',
+        textAlign: 'center',
+        transition: 'all 0.22s ease',
+        boxShadow: `0 4px 18px ${color}28`,
+        border: `1.5px solid ${color}70`,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}35, ${color}22)`; e.currentTarget.style.boxShadow = `0 6px 24px ${color}40` }}
+      onMouseLeave={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}22, ${color}12)`; e.currentTarget.style.boxShadow = `0 4px 18px ${color}28` }}
+    >
+      <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(17px,4.5vw,20px)', fontStyle: 'italic', fontWeight: 500, color: '#2a1010', lineHeight: 1.3, margin: '0 0 5px' }}>
+        Découvre d'autres rituels
+      </p>
+      <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase', color, margin: 0 }}>
+        spéciale {zoneName} →
+      </p>
+    </button>
+  )
+}
+
 function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
-  const [subSlide, setSubSlide] = useState(0)
-  const [phase,    setPhase]    = useState(0)
+  const [subSlide,   setSubSlide]   = useState(0)
+  const [phase,      setPhase]      = useState(0)
+  const [showBonus,  setShowBonus]  = useState(false)
   const phaseRefs  = useRef({})
   const hasBarometer = !!answers?.j1?.feel
 
@@ -5167,14 +5869,14 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
     }
   }, [subSlide, hasBarometer])
 
-  const S = {
+  const S = { /* RacinesValidation */
     fontFamily: 'Cormorant Garamond, Georgia, serif',
     fontStyle: 'italic',
     fontSize: 'clamp(19px, 4.8vw, 23px)',
     color: '#0f0808',
     textAlign: 'center',
-    lineHeight: 1.85,
-    margin: '0 0 32px',
+    lineHeight: 1.45,
+    margin: '0 0 16px',
   }
 
   function B({ children }) {
@@ -5252,7 +5954,7 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
   }
 
   /* ── Slide 8 ── */
-  const S8 = { ...S, fontSize: 'clamp(20px, 5.5vw, 28px)', lineHeight: 1.6, margin: '0 0 10px' }
+  const S8 = { ...S, fontSize: 'clamp(20px, 5.5vw, 28px)', lineHeight: 1.4, margin: '0 0 8px' }
   return (
     <div style={{ padding: '24px 20px 60px', textAlign: 'center' }}>
 
@@ -5262,9 +5964,745 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
         Demain, tu vas activer une autre partie de toi.<br /><B>Et c'est là que quelque chose évolue.</B>
       </p>)}
 
+      {showBonus && <BonusRitualModal zoneId="roots" color="#c8a0b0" onClose={() => setShowBonus(false)} />}
       <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
-        <PrimaryButton onClick={onNext}>Continuer demain</PrimaryButton>
+        <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
+      {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#c8a0b0" zoneName="racines" onClick={() => setShowBonus(true)} /></div>}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TigeValidation — équivalent J2 de RacinesValidation
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FeuillesValidation({ onNext, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('validation') }, [])
+  const [subSlide,  setSubSlide]  = useState(0)
+  const [phase,     setPhase]     = useState(0)
+  const [showBonus, setShowBonus] = useState(false)
+
+  useEffect(() => {
+    setPhase(0)
+    const T = subSlide === 0 ? [0, 150, 350, 600, 900, 1600] : [0, 400, 1800, 3400]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
+    return () => timers.forEach(clearTimeout)
+  }, [subSlide])
+
+  const S = { fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(19px, 4.8vw, 23px)', color: '#0f0808', textAlign: 'center', lineHeight: 1.45, margin: '0 0 16px' }
+  function B({ children }) { return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong> }
+  function block(n, content) { return <div style={{ ...fadeIn(phase >= n) }}>{content}</div> }
+
+  if (subSlide === 0) return (
+    <div style={{ padding: '16px 20px 80px' }}>
+      <BackButton onClick={onBack} />
+      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1010', margin: '0 0 8px' }}>
+          Ce qui vient de se passer
+        </p>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(30px, 7.5vw, 40px)', fontWeight: 700, fontStyle: 'italic', color: '#2a1010', lineHeight: 1.15, margin: '0 0 10px' }}>
+          Tes feuilles s'ouvrent
+        </h2>
+        <div style={{ width: 48, height: 2, background: 'linear-gradient(to right, transparent, #5e8456, transparent)', margin: '0 auto' }} />
+      </div>
+      {block(1, <p style={S}>Tu viens de laisser quelque chose <B>traverser</B>. Sans le retenir.</p>)}
+      {block(2, <p style={S}>Les feuilles ne gardent pas la lumière. Elles la <B>transforment</B>.</p>)}
+      {block(3, <p style={S}>Ce que tu as observé aujourd'hui <B>change déjà de forme</B>.</p>)}
+      {block(4, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(21px, 5.2vw, 26px)', margin: '0 0 48px' }}>
+        Ce qui circule en toi devient de la lumière.
+      </p>)}
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 6), pointerEvents: phase >= 6 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+      </div>
+    </div>
+  )
+
+  const S2 = { ...S, fontSize: 'clamp(20px, 5.5vw, 28px)', lineHeight: 1.6, margin: '0 0 10px' }
+  return (
+    <div style={{ padding: '24px 20px 60px', textAlign: 'center' }}>
+      {block(1, <p style={S2}>Trois jours. Tu <B>observes</B>. Tu <B>nommes</B>.</p>)}
+      {block(2, <p style={S2}>Demain, une nouvelle invitation :</p>)}
+      {block(3, <p style={{ ...S2, margin: '0 0 24px' }}><B>t'accorder ce qui manquait.</B></p>)}
+      {showBonus && <BonusRitualModal zoneId="leaves" color="#7aaa88" onClose={() => setShowBonus(false)} />}
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+      </div>
+      {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#7aaa88" zoneName="feuilles" onClick={() => setShowBonus(true)} /></div>}
+    </div>
+  )
+}
+
+function J3TeaserScreen({ onNext }) {
+  return <DayTeaserScreen videoSrc="/video/fleur.mp4" label="Demain," teaser="ça s'épanouit." accentColor="#d4a0b0" onNext={onNext} />
+}
+
+// ── J4 — Les Fleurs ───────────────────────────────────────────────────────────
+const J4_G1   = '#d4a0b0'
+const J4_G2   = '#a07888'
+const J4_GLOW = 'rgba(212,160,176,0.40)'
+const J4_BG   = 'radial-gradient(circle at 50% 18%, #fdf5f7, #f5e8ec 58%, #ede0e4)'
+
+const J4_RITUAL_DATA = {
+  badge:    { icon: '🌸', label: 'FLEURS · OUVERTURE' },
+  title:    "M'accorder de l'espace",
+  subtitle: "Le rituel de l'ouverture intérieure",
+  duration: '3 à 5 min',
+  intro:    "Les fleurs s'ouvrent quand elles sont prêtes. Pas avant.",
+  steps: [
+    { num: '1', label: 'Accueille ce qui est là',  text: "Sans chercher à le changer. Juste recevoir ce qui se présente." },
+    { num: '2', label: 'Scanne ton corps',         text: "De la tête aux pieds. Un regard intérieur, lent et bienveillant." },
+    { num: '3', label: 'Offre-toi de l\'espace',   text: "Là où tu sens de la tension, inspire et laisse de la place." },
+    { num: '4', label: 'La fleur s\'ouvre',        text: "Imagine une fleur qui s'ouvre doucement en toi. Sans forcer." },
+  ],
+  tip: "Une fleur ne s'ouvre pas sur commande. Elle attend la lumière.",
+}
+
+function j4InvitationText(answers) {
+  const need = answers?.j4?.need   // clé sauvegardée par DayIntrospection
+  if (!need) return "Les fleurs s'ouvrent quand elles sont prêtes. Ce rituel crée cet espace pour toi."
+  if (need === 'silence')   return "Tu as besoin de silence. Les fleurs s'ouvrent dans le calme. Ce rituel va créer cet espace pour toi."
+  if (need === 'mouvement') return "Tu as besoin de mouvement. Ce scan t'invite à parcourir ton corps — une façon douce de bouger de l'intérieur."
+  if (need === 'douceur')   return "Tu as besoin de douceur. Les fleurs ne s'ouvrent jamais dans la contrainte. Ce moment est entièrement pour toi."
+  if (need === 'clarte')    return "Tu cherches de la clarté. Elle vient souvent quand on s'arrête de chercher. Ce rituel va te ramener dans le corps."
+  if (need === 'connexion') return "Tu aspires à de la connexion. Ce rituel va t'offrir l'espace pour accueillir ce qui est là."
+  return "Les fleurs s'ouvrent quand elles sont prêtes. Ce rituel crée cet espace pour toi."
+}
+
+// ── WOFFleursSVG — J4 : feuilles J3 statiques → zoom + fleur qui s'ouvre ────
+function WOFFleursSVG() {
+  const [zoom,         setZoom]         = useState(false)
+  const [health,       setHealth]       = useState(56)   // fin J3 exacte
+  const [sparkVisible, setSparkVisible] = useState(false)
+  const audioRef = useRef(null)
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setZoom(true), 2000)
+    const t2 = setTimeout(() => {
+      const audio = new Audio('/harpe.mp3')
+      audio.volume = 0.65
+      audioRef.current = audio
+      audio.play().catch(() => {})
+      setSparkVisible(true)
+      setTimeout(() => setSparkVisible(false), 3000)
+      const start = Date.now()
+      let raf
+      const tick = () => {
+        const p = Math.min(1, (Date.now() - start) / 7000)
+        setHealth(56 + 14 * p)   // 56% → 70% (bouton → fleur qui s'ouvre)
+        if (p < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+      return () => cancelAnimationFrame(raf)
+    }, 3000)
+    return () => { clearTimeout(t1); clearTimeout(t2); audioRef.current?.pause() }
+  }, [])
+
+  const gs = { sunriseH: 7, sunriseM: 0, sunsetH: 20, sunsetM: 0, petalColor1: '#d4a0b0', petalColor2: '#e0b8c5', petalShape: 'round' }
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        transform: zoom ? 'scale(1.9)' : 'scale(1)',
+        transformOrigin: '50% 35%',   // zone fleur (haut de la tige)
+        transition: zoom ? 'transform 4.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+      }}>
+        <PlantSVG health={health} gardenSettings={gs} clearSky={true} lumensLevel="faible" celebrate={health >= 68} />
+        {sparkVisible && (
+          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+            viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" fill="none">
+            <defs><style>{`@keyframes svgSpk{0%{opacity:0;transform:scale(0.3) rotate(0deg)}35%{opacity:1;transform:scale(1.15) rotate(20deg)}65%{opacity:0.6;transform:scale(0.9) rotate(35deg)}100%{opacity:0;transform:scale(0.3) rotate(60deg)}}@keyframes svgSpkR{0%{opacity:0;transform:scale(0)}30%{opacity:0.5}70%{opacity:0.1}100%{opacity:0;transform:scale(1.8)}}`}</style></defs>
+            {sparkleAt(200, 105, 4, 'rgba(255,222,60,0.90)', 14, 10, 0.0)}
+            {sparkleAt(185, 120, 3, 'rgba(255,222,60,0.90)', 10,  7, 0.3)}
+            {sparkleAt(215, 120, 3, 'rgba(255,222,60,0.90)', 10,  7, 0.6)}
+            {sparkleAt(200, 135, 3, 'rgba(255,222,60,0.90)',  8,  6, 0.9)}
+          </svg>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function DayFourRituelView({ onComplete, onBack, dayNumber = 4, answers }) {
+  return (
+    <DayWOFRituelView
+      ritualData={J4_RITUAL_DATA} audioSrc="/audio/fleur.mp3" audioTitle="M'accorder de l'espace"
+      g1={J4_G1} g2={J4_G2} glow={J4_GLOW} bg={J4_BG}
+      GuidedFallback={FleursScanGuidedRituel}
+      dayNumber={dayNumber} invitationText={j4InvitationText(answers)} darkAt={120}
+      onComplete={onComplete} onBack={onBack}
+    />
+  )
+}
+
+function FleursScanGuidedRituel({ onNext, onBack, onAudio }) {
+  const S = {
+    fontFamily: 'Cormorant Garamond, Georgia, serif',
+    fontStyle: 'italic',
+    fontSize: 'clamp(17px, 4.4vw, 21px)',
+    color: '#1a1010',
+    textAlign: 'center',
+    lineHeight: 1.9,
+    margin: '0 0 8px',
+  }
+  const Pause = () => (
+    <div style={{ textAlign: 'center', margin: '24px 0 20px', color: '#d4a0b0', letterSpacing: 8, fontSize: 14 }}>· · ·</div>
+  )
+  const Affirmation = ({ children }) => (
+    <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 700, fontSize: 'clamp(19px, 4.8vw, 23px)', color: '#8a5868', textAlign: 'center', lineHeight: 1.75, margin: '0 0 14px' }}>
+      {children}
+    </p>
+  )
+
+  return (
+    <div style={{ background: 'radial-gradient(circle at 50% 18%, #fdf5f7, #f5e8ec 58%, #ede0e4)', minHeight: '100%', padding: '16px 20px 80px', boxSizing: 'border-box' }}>
+      <BackButton onClick={onBack} />
+
+      <div style={{ textAlign: 'center', margin: '16px 0 36px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 16px', borderRadius: 100, background: 'linear-gradient(135deg,#d4a0b0,#a07888)', boxShadow: '0 4px 16px rgba(212,160,176,0.40)', marginBottom: 14 }}>
+          <span style={{ fontSize: 16 }}>🌸</span>
+          <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.95)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Fleur · Le texte du rituel</span>
+        </div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 400, fontStyle: 'italic', color: '#2a1a20', lineHeight: 1.2, margin: '0 0 6px' }}>M'accorder de l'espace</h2>
+        <div style={{ width: 48, height: 1, background: 'linear-gradient(to right, transparent, #d4a0b0, transparent)', margin: '0 auto' }} />
+      </div>
+
+      <p style={S}>Aujourd'hui, je vous invite à porter votre attention sur la fleur.</p>
+      <p style={S}>La fleur est la partie la plus visible de la plante.</p>
+      <p style={S}>Celle que l'on remarque immédiatement.</p>
+      <p style={S}>Celle qui attire la lumière.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Celle qui révèle toute la beauté du chemin parcouru.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Pourtant...</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>La fleur n'existe jamais seule.</p>
+      <p style={S}>Elle est le résultat des racines qui ont nourri.</p>
+      <p style={S}>De la tige qui a porté.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Des feuilles qui ont capté la lumière.</p>
+      <p style={S}>Et aujourd'hui, je vous invite à prendre quelques instants pour vous reconnecter à cette partie de vous qui aspire naturellement à s'épanouir.</p>
+
+      <p style={{ ...S, margin: '16px 0 8px' }}>Prenez une profonde inspiration...</p>
+      <p style={S}>Puis soufflez lentement.</p>
+      <p style={S}>Encore une fois...</p>
+      <p style={S}>Inspirez profondément...</p>
+      <p style={S}>Et relâchez.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Très bien.</p>
+      <p style={S}>Laissez maintenant votre respiration devenir calme et naturelle.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez votre jardin intérieur.</p>
+      <p style={S}>Vous apercevez les racines profondément ancrées dans la terre.</p>
+      <p style={S}>La tige qui s'élève avec confiance.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Les feuilles qui dansent doucement sous une légère brise.</p>
+      <p style={S}>Et tout en haut...</p>
+      <p style={{ ...S, fontWeight: 700 }}>Vous découvrez une magnifique fleur.</p>
+      <p style={S}>Votre fleur.</p>
+      <p style={S}>Unique.</p>
+      <p style={S}>Différente de toutes les autres.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez quelques instants pour l'observer.</p>
+      <p style={S}>Sa couleur.</p>
+      <p style={S}>Ses pétales.</p>
+      <p style={S}>Sa lumière.</p>
+      <p style={S}>Sa présence.</p>
+
+      <Pause />
+
+      <p style={S}>Et peut-être remarquez-vous qu'elle reflète quelque chose de vous.</p>
+      <p style={S}>Quelque chose de votre histoire.</p>
+      <p style={S}>De votre sensibilité.</p>
+      <p style={S}>De votre personnalité.</p>
+      <p style={S}>De ce que vous êtes profondément.</p>
+
+      <Pause />
+
+      <p style={S}>Car chaque fleur possède sa propre manière de s'épanouir.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Aucune ne ressemble à une autre.</p>
+      <p style={S}>Et pourtant...</p>
+      <p style={{ ...S, fontWeight: 700 }}>Elles sont toutes magnifiques lorsqu'elles osent devenir pleinement elles-mêmes.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez maintenant que vous vous approchez doucement de cette fleur.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Et que vous observez chacun de ses pétales.</p>
+      <p style={S}>Certains sont déjà largement ouverts.</p>
+      <p style={S}>D'autres sont encore en train de s'ouvrir.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Et cela est parfaitement normal.</p>
+
+      <Pause />
+
+      <p style={S}>Dans la nature, aucune fleur n'ouvre tous ses pétales le même jour.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Certaines parties de nous sont déjà prêtes à rayonner.</p>
+      <p style={S}>D'autres ont encore besoin de temps.</p>
+      <p style={S}>De confiance.</p>
+      <p style={S}>De douceur.</p>
+
+      <Pause />
+
+      <p style={S}>Et aujourd'hui, vous pouvez simplement accueillir cela.</p>
+      <p style={S}>Sans pression.</p>
+      <p style={S}>Sans comparaison.</p>
+      <p style={S}>Sans exigence.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez un instant pour réfléchir à tout ce que vous avez déjà traversé.</p>
+      <p style={S}>Les difficultés.</p>
+      <p style={S}>Les défis.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Les périodes de doute.</p>
+      <p style={S}>Les moments où vous avez continué malgré la fatigue.</p>
+      <p style={S}>Malgré les peurs.</p>
+      <p style={S}>Malgré les incertitudes.</p>
+
+      <Pause />
+
+      <p style={S}>Comme votre fleur.</p>
+      <p style={S}>Vous avez grandi.</p>
+      <p style={S}>Peut-être plus lentement que vous l'auriez souhaité.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Mais vous avez grandi.</p>
+
+      <Pause />
+
+      <p style={S}>Et parfois, nous oublions de reconnaître le chemin parcouru.</p>
+      <p style={S}>Nous regardons ce qui manque encore.</p>
+      <p style={S}>Nous regardons ce qui reste à accomplir.</p>
+      <p style={S}>Sans voir tout ce qui a déjà été construit.</p>
+
+      <Pause />
+
+      <p style={S}>Aujourd'hui, je vous invite à porter un regard différent sur vous-même.</p>
+      <p style={S}>Un regard plus doux.</p>
+      <p style={S}>Plus juste.</p>
+      <p style={S}>Plus bienveillant.</p>
+
+      <Pause />
+
+      <p style={S}>Imaginez maintenant qu'une lumière chaude et lumineuse descend doucement du ciel.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Une lumière douce comme un soleil de printemps.</p>
+      <p style={S}>Cette lumière vient se poser sur votre fleur.</p>
+      <p style={S}>Elle réchauffe chacun de ses pétales.</p>
+      <p style={S}>Elle révèle ses couleurs.</p>
+      <p style={S}>Sa beauté.</p>
+      <p style={S}>Sa singularité.</p>
+
+      <Pause />
+
+      <p style={S}>Et à mesure que cette lumière la touche...</p>
+      <p style={S}>La fleur commence à s'ouvrir davantage.</p>
+      <p style={S}>Naturellement.</p>
+      <p style={S}>Sans effort.</p>
+
+      <Pause />
+
+      <p style={S}>Comme si elle se souvenait qu'elle avait le droit d'exister pleinement.</p>
+      <p style={S}>Le droit de prendre sa place.</p>
+      <p style={S}>Le droit d'être vue.</p>
+      <p style={S}>Le droit de rayonner.</p>
+
+      <Pause />
+
+      <p style={S}>Et peut-être que vous aussi...</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Vous pouvez vous autoriser cela.</p>
+      <p style={S}>Vous autoriser à être fier de certaines choses.</p>
+      <p style={S}>Vous autoriser à apprécier vos qualités.</p>
+      <p style={S}>Vous autoriser à reconnaître votre valeur.</p>
+      <p style={S}>Sans arrogance.</p>
+      <p style={S}>Sans culpabilité.</p>
+      <p style={S}>Simplement parce qu'elle existe déjà.</p>
+
+      <Pause />
+
+      <div style={{ background: 'rgba(212,160,176,0.12)', border: '1px solid rgba(212,160,176,0.30)', borderRadius: 16, padding: '24px 20px 16px', margin: '4px 0 24px' }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#a07888', textAlign: 'center', margin: '0 0 18px' }}>Répétez intérieurement</p>
+        <Affirmation>J'ai le droit de m'épanouir.</Affirmation>
+        <Affirmation>Je peux prendre ma place avec confiance.</Affirmation>
+        <Affirmation>Je reconnais mes forces et mes qualités.</Affirmation>
+        <Affirmation>Je mérite de recevoir la lumière.</Affirmation>
+        <Affirmation>Je m'autorise à fleurir à mon rythme.</Affirmation>
+      </div>
+
+      <p style={S}>Laissez ces mots descendre doucement à l'intérieur de vous.</p>
+      <p style={S}>Comme des rayons de soleil qui nourrissent votre jardin.</p>
+
+      <Pause />
+
+      <p style={S}>Et imaginez maintenant que votre fleur diffuse autour d'elle une douce lumière.</p>
+      <p style={S}>Une lumière qui ne cherche pas à impressionner.</p>
+      <p style={S}>Une lumière qui ne cherche pas à prouver quoi que ce soit.</p>
+      <p style={S}>Une lumière qui existe simplement parce qu'elle est là.</p>
+
+      <Pause />
+
+      <p style={S}>Comme une fleur dans un jardin.</p>
+      <p style={S}>Elle ne se compare pas aux autres fleurs.</p>
+      <p style={S}>Elle ne se demande pas si elle est suffisamment belle.</p>
+      <p style={{ ...S, fontWeight: 700 }}>Elle fleurit simplement.</p>
+
+      <Pause />
+
+      <p style={{ ...S, fontWeight: 700 }}>Et c'est précisément cela qui la rend magnifique.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez maintenant quelques instants pour ressentir votre jardin dans son ensemble.</p>
+      <p style={S}>Les racines.</p>
+      <p style={S}>La tige.</p>
+      <p style={S}>Les feuilles.</p>
+      <p style={{ ...S, fontWeight: 700, margin: '0 0 16px' }}>La fleur.</p>
+      <p style={S}>Tout est relié.</p>
+      <p style={S}>Tout travaille ensemble.</p>
+      <p style={S}>Tout participe à votre épanouissement.</p>
+
+      <Pause />
+
+      <p style={S}>Prenez une dernière inspiration profonde.</p>
+      <p style={{ ...S, margin: '0 0 16px' }}>Et lorsque vous expirez...</p>
+      <p style={S}>Imaginez votre fleur pleinement ouverte sous la lumière.</p>
+      <p style={S}>Vivante.</p>
+      <p style={S}>Rayonnante.</p>
+      <p style={S}>Paisible.</p>
+
+      <Pause />
+
+      <p style={S}>Et gardez avec vous cette idée tout au long de votre journée :</p>
+      <p style={S}>Vous n'avez pas besoin de devenir quelqu'un d'autre.</p>
+      <p style={S}>Vous n'avez pas besoin d'être parfait.</p>
+      <p style={{ ...S, fontWeight: 700, fontSize: 'clamp(20px, 5vw, 24px)', margin: '0 0 48px' }}>Vous avez simplement le droit de vous ouvrir à ce que vous êtes déjà.<br/>Et de laisser votre propre fleur s'épanouir, un pétale après l'autre.</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <PrimaryButton onClick={onNext}>Je continue</PrimaryButton>
+        {onAudio && (
+          <button onClick={onAudio} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.45)', textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}>
+            🔊 écouter l'audio à la place
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function FleurValidation({ onNext, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('validation') }, [])
+  const [subSlide,  setSubSlide]  = useState(0)
+  const [phase,     setPhase]     = useState(0)
+  const [showBonus, setShowBonus] = useState(false)
+  useEffect(() => {
+    setPhase(0)
+    const T = subSlide === 0 ? [0,150,350,600,900,1600] : [0,400,1800,3400]
+    const timers = T.map((ms,i) => setTimeout(() => setPhase(i+1), ms))
+    return () => timers.forEach(clearTimeout)
+  }, [subSlide])
+  const S = {fontFamily:'Cormorant Garamond, Georgia, serif',fontStyle:'italic',fontSize:'clamp(19px,4.8vw,23px)',color:'#0f0808',textAlign:'center',lineHeight:1.45,margin:'0 0 16px'}
+  function B({children}) { return <strong style={{fontWeight:600,fontStyle:'inherit'}}>{children}</strong> }
+  function block(n,c) { return <div style={{...fadeIn(phase>=n)}}>{c}</div> }
+  if (subSlide === 0) return (
+    <div style={{padding:'16px 20px 80px'}}>
+      <BackButton onClick={onBack}/>
+      <div style={{textAlign:'center',margin:'12px 0 40px'}}>
+        <p style={{fontFamily:'Jost,sans-serif',fontSize:'clamp(11px,2.8vw,13px)',fontWeight:500,letterSpacing:'0.18em',textTransform:'uppercase',color:'#1a1010',margin:'0 0 8px'}}>Ce qui vient de se passer</p>
+        <h2 style={{fontFamily:'Cormorant Garamond,Georgia,serif',fontSize:'clamp(30px,7.5vw,40px)',fontWeight:700,fontStyle:'italic',color:'#2a1010',lineHeight:1.15,margin:'0 0 10px'}}>Ta fleur s'entrouvre</h2>
+        <div style={{width:48,height:2,background:'linear-gradient(to right,transparent,#d4a0b0,transparent)',margin:'0 auto'}}/>
+      </div>
+      {block(1,<p style={S}>Tu viens de t'accorder quelque chose de <B>rare</B> : de l'espace.</p>)}
+      {block(2,<p style={S}>Les fleurs ne s'ouvrent pas sur commande. Elles attendent <B>les conditions</B>.</p>)}
+      {block(3,<p style={S}>Tu viens de les <B>créer</B>.</p>)}
+      {block(4,<p style={{...S,fontStyle:'normal',fontWeight:700,fontSize:'clamp(21px,5.2vw,26px)',margin:'0 0 48px'}}>Et quelque chose en toi s'est ouvert.</p>)}
+      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=6),pointerEvents:phase>=6?'auto':'none'}}>
+        <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+      </div>
+    </div>
+  )
+  const S2 = {...S,fontSize:'clamp(20px,5.5vw,28px)',lineHeight:1.6,margin:'0 0 10px'}
+  return (
+    <div style={{padding:'24px 20px 60px',textAlign:'center'}}>
+      {block(1,<p style={S2}>Quatre jours. Tes fleurs <B>commencent à s'ouvrir</B>.</p>)}
+      {block(2,<p style={S2}>Demain, une nouvelle dimension entre dans ton jardin :</p>)}
+      {block(3,<p style={{...S2,margin:'0 0 24px'}}><B>la dimension du lien.</B></p>)}
+      {showBonus && <BonusRitualModal zoneId="flowers" color="#d4a0b0" onClose={() => setShowBonus(false)} />}
+      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=4),pointerEvents:phase>=4?'auto':'none'}}>
+        <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+      </div>
+      {phase >= 4 && <div style={{display:'flex',justifyContent:'center'}}><BonusButton color="#d4a0b0" zoneName="fleurs" onClick={() => setShowBonus(true)} /></div>}
+    </div>
+  )
+}
+
+function J4TeaserScreen({ onNext }) {
+  return <DayTeaserScreen videoSrc="/video/vent.mp4" label="Demain," teaser="ça relie." accentColor="#c8a870" onNext={onNext} />
+}
+
+// ── J5 — Le Souffle ───────────────────────────────────────────────────────────
+const J5_G1   = '#c8a870'
+const J5_G2   = '#a08040'
+const J5_GLOW = 'rgba(200,168,112,0.40)'
+const J5_BG   = 'radial-gradient(circle at 50% 18%, #fdf8ee, #f5ead8 58%, #ede0c8)'
+
+const J5_RITUAL_DATA = {
+  badge:    { icon: '🌬️', label: 'SOUFFLE · CONNEXION' },
+  title:    'Le souffle qui relie',
+  subtitle: 'Le rituel du lien',
+  duration: '3 à 5 min',
+  intro:    "Le souffle relie l'intérieur à l'extérieur. Il traverse tout.",
+  steps: [
+    { num: '1', label: 'Inspire',              text: "Imagine que tu respires la lumière de ce qui t'entoure." },
+    { num: '2', label: 'Expire et envoie',     text: "À chaque expiration, envoie une pensée douce à quelqu'un que tu aimes." },
+    { num: '3', label: 'Reste dans le lien',   text: "Ton souffle est le fil invisible. Il part de toi… et va quelque part." },
+    { num: '4', label: 'Accueille le retour',  text: "Ce que tu envoies revient toujours, transformé. Reste ouvert·e." },
+  ],
+  tip: "Le lien n'a pas besoin d'être visible pour exister.",
+}
+
+function j5InvitationText(answers) {
+  const connection = answers?.j5?.connection   // clé sauvegardée par DayIntrospection
+  if (!connection) return "Le souffle relie. Ce rituel va créer ce fil invisible entre toi et les autres."
+  if (connection === 'pas_vraiment') return "Le lien peut sembler loin. Le souffle ne juge pas — il part de toi et va quelque part."
+  if (connection === 'un_peu')       return "Tu as ressenti un peu de lien. C'est souvent là que tout commence. Ce rituel va l'amplifier."
+  if (connection === 'avec_quelquun') return "Tu as ressenti du lien avec quelqu'un. Ce rituel va prolonger ce geste — une pensée envoyée en silence arrive toujours quelque part."
+  if (connection === 'avec_moi')     return "Tu as ressenti du lien avec toi-même. C'est la meilleure base. Ce rituel va maintenant envoyer ça vers l'extérieur."
+  if (connection === 'profondement') return "Tu as ressenti du lien profondément. Le souffle relie l'intérieur à l'extérieur. Laisse-le faire."
+  return "Le souffle relie. Ce rituel va créer ce fil invisible entre toi et les autres."
+}
+
+function WOFSouffleSVG() {
+  const [panY,            setPanY]            = useState(-38)   // fleur au-dessus → descend dans le cadre
+  const [health,          setHealth]          = useState(70)
+  const [sparkVisible,    setSparkVisible]    = useState(false)
+  const [companionsShown, setCompanionsShown] = useState(false)
+  const audioRef = useRef(null)
+
+  useEffect(() => {
+    // Scroll de bas vers le haut pour révéler la fleur
+    const panStart = Date.now()
+    const panDur   = 2500
+    let rafPan
+    const tickPan = () => {
+      const p    = Math.min(1, (Date.now() - panStart) / panDur)
+      const ease = 1 - Math.pow(1 - p, 3)   // ease-out cubic
+      setPanY(-38 * (1 - ease))   // -38 → 0 : la fleur descend dans le cadre
+      if (p < 1) rafPan = requestAnimationFrame(tickPan)
+    }
+    rafPan = requestAnimationFrame(tickPan)
+
+    const t1 = setTimeout(() => {}, 0)  // placeholder pour cohérence
+    const t2 = setTimeout(() => {
+      const audio = new Audio('/harpe.mp3')
+      audio.volume = 0.65
+      audioRef.current = audio
+      audio.play().catch(() => {})
+      setSparkVisible(true)
+      setCompanionsShown(true)            // fleurs compagnes — restent visibles
+      setTimeout(() => setSparkVisible(false), 3000)
+      const start = Date.now()
+      let raf
+      const tick = () => {
+        const p = Math.min(1, (Date.now() - start) / 7000)
+        setHealth(70 + 25 * p)   // 70% (fin J4) → 95% (épanouissement plein + pollen)
+        if (p < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+      return () => cancelAnimationFrame(raf)
+    }, 3000)
+    return () => { clearTimeout(t1); clearTimeout(t2); audioRef.current?.pause() }
+  }, [])
+
+  const gs = { sunriseH: 7, sunriseM: 0, sunsetH: 20, sunsetM: 0, petalColor1: '#d4a0b0', petalColor2: '#e0b8c5', petalShape: 'round' }
+
+  // Fleur compagne simple — dessinée dans l'overlay SVG (viewBox 0 0 400 260, gY=188)
+  function simpleFlower(cx, topY, col, colDark, sz, stemW, del = '0s') {
+    const gY = 188
+    const petals = [0,60,120,180,240,300].map((deg,i) => {
+      const r = deg * Math.PI / 180
+      const px = cx + Math.cos(r) * sz * 1.1
+      const py = topY + Math.sin(r) * sz * 1.1
+      return (
+        <ellipse key={deg} cx={px} cy={py} rx={sz} ry={sz*0.48} fill={col} opacity={0.82}
+          style={{ transformBox:'fill-box', transformOrigin:'center', transform:`rotate(${deg}deg)`,
+            animation:`petalIn 0.7s ${del} ease-out both` }} />
+      )
+    })
+    return (
+      <g>
+        <line x1={cx} y1={gY} x2={cx} y2={topY} stroke="#5e8456" strokeWidth={stemW} strokeLinecap="round"
+          style={{ animation:`flowerGrow 1.2s ${del} ease-out both`, transformOrigin:`${cx}px ${gY}px`, transformBox:'fill-box' }}/>
+        {petals}
+        <circle cx={cx} cy={topY} r={sz*0.55} fill="#f0c070"
+          style={{ animation:`petalIn 0.5s ${parseFloat(del)+0.3}s ease-out both` }}/>
+      </g>
+    )
+  }
+
+  const companionOpacity = companionsShown ? 1 : 0
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      {/* Fleur principale — pan vertical bas→haut */}
+      <div style={{ position: 'absolute', inset: 0, transform: `translateY(${panY}%)`, transition: 'none' }}>
+        <PlantSVG health={health} gardenSettings={gs} clearSky={true} lumensLevel="faible" celebrate={health >= 88} />
+      </div>
+
+      {/* Fleurs compagnes + scintillements — même viewBox */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" fill="none">
+        <defs>
+          <style>{`
+            @keyframes svgSpk{0%{opacity:0;transform:scale(0.3) rotate(0deg)}35%{opacity:1;transform:scale(1.15) rotate(20deg)}65%{opacity:0.6;transform:scale(0.9) rotate(35deg)}100%{opacity:0;transform:scale(0.3) rotate(60deg)}}
+            @keyframes svgSpkR{0%{opacity:0;transform:scale(0)}30%{opacity:0.5}70%{opacity:0.1}100%{opacity:0;transform:scale(1.8)}}
+          `}</style>
+        </defs>
+
+        {/* Fleurs compagnes — apparaissent avec les scintillements */}
+        <g opacity={companionOpacity} style={{ transition: 'opacity 1.5s ease' }}>
+          {simpleFlower(80,  112, '#c8a0b0', '#a07888', 11, 2.5, '0.2s')}
+          {simpleFlower(135, 130, '#d4b0a0', '#b08868', 9,  2,   '0.5s')}
+          {simpleFlower(265, 125, '#b8c8a0', '#90a878', 10, 2,   '0.7s')}
+          {simpleFlower(320, 108, '#c8a0b0', '#a07888', 12, 2.5, '0.9s')}
+        </g>
+
+        {/* Scintillements sur la fleur centrale */}
+        {sparkVisible && (
+          <g>
+            {sparkleAt(200,  88, 5, 'rgba(255,222,60,0.90)', 18, 13, 0.0)}
+            {sparkleAt(178, 100, 3, 'rgba(255,222,60,0.90)', 12,  8, 0.3)}
+            {sparkleAt(222, 100, 3, 'rgba(255,222,60,0.90)', 12,  8, 0.6)}
+            {sparkleAt(200, 112, 3, 'rgba(255,222,60,0.90)', 10,  7, 0.9)}
+          </g>
+        )}
+      </svg>
+    </div>
+  )
+}
+
+function DayFiveRituelView({ onComplete, onBack, dayNumber = 5, answers }) {
+  return (
+    <DayWOFRituelView
+      ritualData={J5_RITUAL_DATA} audioSrc="/audio/souffle.mp3" audioTitle="Le souffle qui relie"
+      g1={J5_G1} g2={J5_G2} glow={J5_GLOW} bg={J5_BG}
+      GuidedFallback={SouffleGuidedRituel}
+      dayNumber={dayNumber} invitationText={j5InvitationText(answers)} darkAt={120}
+      onComplete={onComplete} onBack={onBack}
+    />
+  )
+}
+
+function SouffleValidation({ onNext, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('validation') }, [])
+  const [subSlide,  setSubSlide]  = useState(0)
+  const [phase,     setPhase]     = useState(0)
+  const [showBonus, setShowBonus] = useState(false)
+  useEffect(() => {
+    setPhase(0)
+    const T = subSlide === 0 ? [0,150,350,600,900,1600] : [0,400,1800,3400]
+    const timers = T.map((ms,i) => setTimeout(() => setPhase(i+1), ms))
+    return () => timers.forEach(clearTimeout)
+  }, [subSlide])
+  const S = {fontFamily:'Cormorant Garamond, Georgia, serif',fontStyle:'italic',fontSize:'clamp(19px,4.8vw,23px)',color:'#0f0808',textAlign:'center',lineHeight:1.45,margin:'0 0 16px'}
+  function B({children}) { return <strong style={{fontWeight:600,fontStyle:'inherit'}}>{children}</strong> }
+  function block(n,c) { return <div style={{...fadeIn(phase>=n)}}>{c}</div> }
+  if (subSlide === 0) return (
+    <div style={{padding:'16px 20px 80px'}}>
+      <BackButton onClick={onBack}/>
+      <div style={{textAlign:'center',margin:'12px 0 40px'}}>
+        <p style={{fontFamily:'Jost,sans-serif',fontSize:'clamp(11px,2.8vw,13px)',fontWeight:500,letterSpacing:'0.18em',textTransform:'uppercase',color:'#1a1010',margin:'0 0 8px'}}>Ce qui vient de se passer</p>
+        <h2 style={{fontFamily:'Cormorant Garamond,Georgia,serif',fontSize:'clamp(30px,7.5vw,40px)',fontWeight:700,fontStyle:'italic',color:'#2a1010',lineHeight:1.15,margin:'0 0 10px'}}>Ton souffle a créé du lien</h2>
+        <div style={{width:48,height:2,background:'linear-gradient(to right,transparent,#c8a870,transparent)',margin:'0 auto'}}/>
+      </div>
+      {block(1,<p style={S}>Même quand le lien semblait loin… tu as <B>relié quelque chose</B>.</p>)}
+      {block(2,<p style={S}>Le souffle tisse un fil invisible entre toi et le reste du <B>vivant</B>.</p>)}
+      {block(3,<p style={S}>Ce geste vers l'autre a résonné <B>dans ton jardin</B>.</p>)}
+      {block(4,<p style={{...S,fontStyle:'normal',fontWeight:700,fontSize:'clamp(21px,5.2vw,26px)',margin:'0 0 48px'}}>Et ça existe.</p>)}
+      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=6),pointerEvents:phase>=6?'auto':'none'}}>
+        <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+      </div>
+    </div>
+  )
+  const S2 = {...S,fontSize:'clamp(20px,5.5vw,28px)',lineHeight:1.6,margin:'0 0 10px'}
+  return (
+    <div style={{padding:'24px 20px 60px',textAlign:'center'}}>
+      {block(1,<p style={S2}>Cinq zones éveillées. Ta fleur <B>prend sa place</B>.</p>)}
+      {block(2,<p style={S2}>Demain, pour la première fois,</p>)}
+      {block(3,<p style={{...S2,margin:'0 0 24px'}}><B>tu vas à sa rencontre.</B></p>)}
+      {showBonus && <BonusRitualModal zoneId="breath" color="#c8a870" onClose={() => setShowBonus(false)} />}
+      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=4),pointerEvents:phase>=4?'auto':'none'}}>
+        <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+      </div>
+      {phase >= 4 && <div style={{display:'flex',justifyContent:'center'}}><BonusButton color="#c8a870" zoneName="souffle" onClick={() => setShowBonus(true)} /></div>}
+    </div>
+  )
+}
+
+function J5TeaserScreen({ onNext }) {
+  return <DayTeaserScreen videoSrc="/video/fleur2.mp4" label="Demain," teaser="ta fleur t'attend." accentColor="#1a6a2a" onNext={onNext} />
+}
+
+function TigeValidation({ onNext, onBack, onScreenChange }) {
+  useEffect(() => { onScreenChange?.('validation') }, [])
+  const [subSlide,  setSubSlide]  = useState(0)
+  const [showBonus, setShowBonus] = useState(false)
+  const [phase,    setPhase]    = useState(0)
+
+  useEffect(() => {
+    setPhase(0)
+    const T = subSlide === 0
+      ? [0, 150, 350, 600, 1600]
+      : [0, 400, 1800, 3400]
+    const timers = T.map((ms, i) => setTimeout(() => setPhase(i + 1), ms))
+    return () => timers.forEach(clearTimeout)
+  }, [subSlide])
+
+  const S = {
+    fontFamily: 'Cormorant Garamond, Georgia, serif',
+    fontStyle: 'italic',
+    fontSize: 'clamp(19px, 4.8vw, 23px)',
+    color: '#0f0808',
+    textAlign: 'center',
+    lineHeight: 1.45,
+    margin: '0 0 16px',
+  }
+  function B({ children }) { return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong> }
+  function block(n, content) {
+    return <div style={{ ...fadeIn(phase >= n) }}>{content}</div>
+  }
+
+  if (subSlide === 0) return (
+    <div style={{ padding: '16px 20px 80px' }}>
+      <BackButton onClick={onBack} />
+      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+        <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1010', margin: '0 0 8px' }}>
+          Ce qui vient de se passer
+        </p>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(30px, 7.5vw, 40px)', fontWeight: 700, fontStyle: 'italic', color: '#2a1010', lineHeight: 1.15, margin: '0 0 10px' }}>
+          Ta tige se redresse
+        </h2>
+        <div style={{ width: 48, height: 2, background: 'linear-gradient(to right, transparent, #7a9ab0, transparent)', margin: '0 auto' }} />
+      </div>
+
+      {block(1, <p style={S}>Tu viens de prendre soin de ton <B>axe intérieur</B>.</p>)}
+      {block(2, <p style={S}>La tige porte sans plier. Elle <B>oscille</B>, revient, <B>tient bon</B>.</p>)}
+      {block(3, <p style={S}>C'est ce que tu viens de <B>nourrir</B>.</p>)}
+      {block(4, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(21px, 5.2vw, 26px)', margin: '0 0 48px' }}>
+        Et ce qui tient en toi s'affermit.
+      </p>)}
+
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 5), pointerEvents: phase >= 5 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+      </div>
+    </div>
+  )
+
+  // Slide 2 — ouverture vers J3
+  const S2 = { ...S, fontSize: 'clamp(20px, 5.5vw, 28px)', lineHeight: 1.6, margin: '0 0 10px' }
+  return (
+    <div style={{ padding: '24px 20px 60px', textAlign: 'center' }}>
+      {block(1, <p style={S2}>Deux jours. Ta tige commence à se <B>dresser</B>.</p>)}
+      {block(2, <p style={S2}>Demain, quelque chose de plus délicat t'attend :</p>)}
+      {block(3, <p style={{ ...S2, margin: '0 0 24px' }}><B>les feuilles s'épanouissent.</B></p>)}
+      {showBonus && <BonusRitualModal zoneId="stem" color="#9ab8c8" onClose={() => setShowBonus(false)} />}
+      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+        <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+      </div>
+      {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#9ab8c8" zoneName="tige" onClick={() => setShowBonus(true)} /></div>}
     </div>
   )
 }
@@ -5473,6 +6911,1727 @@ function HelpBandeau({ helpText }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 4b. DayOneRituelView — Jour 1 slide 2 : présentation + rituel Racines
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WOFAudioPlayer — lecteur audio indépendant pour le WeekOneFlow
+// Fond chaud (doré-rosé), 3 états : ready / playing / ended
+// ─────────────────────────────────────────────────────────────────────────────
+
+function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow = 'rgba(200,160,176,0.45)', darkAt = 50, onDone, onClose }) {
+  const [state,    setState]    = useState('ready')
+  const audioRef = useRef(null)
+
+  const BG   = 'linear-gradient(160deg, #fdf0e6 0%, #f5e6d8 45%, #ede0d0 100%)'
+  const TEXT = '#0f0808'
+  const TXTS = 'rgba(15,8,8,0.50)'
+
+  function stopAll() {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+  }
+
+  function startAudio() {
+    const audio = new Audio(audioSrc)
+    audio.onended = () => { setState('ended'); setTimeout(onDone, 800) }
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration || brighteningRef.current) return
+      if (audio.duration - audio.currentTime <= 3) {
+        brighteningRef.current = true
+        cancelAnimationFrame(darkRafRef.current)
+        setBrightening(true)
+      }
+    })
+    audioRef.current = audio
+    audio.play()
+      .then(() => setState('playing'))
+      .catch(() => { setState('ended'); setTimeout(onDone, 400) })
+  }
+
+  const [paused,      setPaused]      = useState(false)
+  const [elapsed,     setElapsed]     = useState(0)
+  const [darkMode,    setDarkMode]    = useState(false)
+  const [darkOpacity, setDarkOpacity] = useState(0)
+  const [brightening, setBrightening] = useState(false)
+  const pausedRef       = useRef(false)
+  const darkRafRef      = useRef(null)
+  const brightRafRef    = useRef(null)
+  const brighteningRef  = useRef(false)
+  const darkOpacityRef  = useRef(0)
+  const [muted, setMuted] = useState(false)
+
+  function toggleMute() {
+    if (!audioRef.current) return
+    audioRef.current.muted = !muted
+    setMuted(m => !m)
+  }
+
+  function restartAudio() {
+    if (!audioRef.current) return
+    audioRef.current.currentTime = 0
+    if (paused) { audioRef.current.play(); setPaused(false) }
+    // Reset dark mode
+    cancelAnimationFrame(darkRafRef.current)
+    cancelAnimationFrame(brightRafRef.current)
+    brighteningRef.current = false
+    darkOpacityRef.current = 0
+    setElapsed(0)
+    setDarkMode(false)
+    setDarkOpacity(0)
+    setBrightening(false)
+  }
+
+  // Sync ref pour l'interval
+  useEffect(() => { pausedRef.current = paused }, [paused])
+
+  // Timer elapsed (pause respectée)
+  useEffect(() => {
+    if (state !== 'playing') return
+    const id = setInterval(() => {
+      if (!pausedRef.current) setElapsed(e => e + 1)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [state])
+
+  // Déclenche le mode sombre au seuil darkAt
+  useEffect(() => {
+    if (elapsed >= darkAt && !darkMode) setDarkMode(true)
+  }, [elapsed, darkMode, darkAt])
+
+  // Animation fondu sombre (6s)
+  useEffect(() => {
+    if (!darkMode) return
+    const start = Date.now()
+    const tick = () => {
+      if (brighteningRef.current) return
+      const p = Math.min(1, (Date.now() - start) / 6000)
+      darkOpacityRef.current = p
+      setDarkOpacity(p)
+      if (p < 1) darkRafRef.current = requestAnimationFrame(tick)
+    }
+    darkRafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(darkRafRef.current)
+  }, [darkMode])
+
+  // Éclaircissement progressif sur 3s (à 3s de la fin du MP3)
+  useEffect(() => {
+    if (!brightening) return
+    const startOpacity = darkOpacityRef.current
+    const start = Date.now()
+    const tick = () => {
+      const p = Math.min(1, (Date.now() - start) / 3000)
+      const next = startOpacity * (1 - p)
+      darkOpacityRef.current = next
+      setDarkOpacity(next)
+      if (p < 1) brightRafRef.current = requestAnimationFrame(tick)
+      else { setDarkMode(false); setBrightening(false) }
+    }
+    brightRafRef.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(brightRafRef.current)
+  }, [brightening])
+
+  useEffect(() => () => stopAll(), [])
+
+  function togglePause() {
+    if (!audioRef.current) return
+    if (paused) { audioRef.current.play(); setPaused(false) }
+    else        { audioRef.current.pause(); setPaused(true)  }
+  }
+
+  // ✕ discret — quitter uniquement
+  const quitBtn = (
+    <button
+      onClick={() => { stopAll(); onClose?.() }}
+      style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.35)', border: `1px solid ${g1}22`, cursor: 'pointer', color: TXTS, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.65 }}
+    >✕</button>
+  )
+
+  const BASE = { minHeight: 'calc(64dvh)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: BG, padding: '40px 28px', textAlign: 'center', position: 'relative' }
+
+  if (state === 'ready') return (
+    <div style={BASE}>
+      {quitBtn}
+      <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, letterSpacing: '.20em', textTransform: 'uppercase', color: TXTS, marginBottom: 52 }}>
+        {title}
+      </p>
+      <button
+        onClick={startAudio}
+        style={{ width: 160, height: 160, borderRadius: '50%', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 62, background: `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.55), ${g1}bb, ${g2}aa)`, boxShadow: `0 0 0 22px ${g1}20, 0 0 0 44px ${g1}0a, 0 20px 60px ${glow}`, marginBottom: 48, animation: 'breathe 10s ease-in-out infinite' }}
+        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
+        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+      >🔊</button>
+      <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: TEXT, margin: 0, lineHeight: 1.65, maxWidth: 320 }}>
+        Installe-toi confortablement, dans un endroit calme, assure-toi d'avoir du son ou d'utiliser un casque, et appuie pour commencer
+      </p>
+    </div>
+  )
+
+  if (state === 'playing') return (
+    <div style={{ ...BASE, cursor: 'pointer', overflow: 'hidden', justifyContent: darkMode ? 'center' : 'flex-end', paddingBottom: darkMode ? 0 : '14%' }} onClick={togglePause}>
+      {quitBtn}
+
+
+      {/* Orbe + ondes radio */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: darkMode ? 0 : 100, zIndex: 10, width: 130, height: 130 }}>
+        {/* 4 ondes concentriques décalées */}
+        {!paused && [0, 2.5, 5, 7.5].map((delay, i) => (
+          <div key={i} style={{
+            position: 'absolute',
+            width: 130, height: 130, borderRadius: '50%',
+            border: `1.5px solid ${g1}`,
+            animation: `radioWave 10s ${delay}s ease-out infinite`,
+            pointerEvents: 'none',
+          }} />
+        ))}
+        {/* Orbe */}
+        <div style={{
+          width: 130, height: 130, borderRadius: '50%',
+          background: `radial-gradient(circle at 38% 32%, rgba(255,255,255,0.45), ${g1}aa, ${g2}88)`,
+          boxShadow: `0 0 0 20px ${g1}18, 0 0 0 40px ${g1}08`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 32,
+          animation: paused ? 'none' : 'breathe 10s ease-in-out infinite',
+          opacity: paused ? 0.55 : 1,
+          transition: 'opacity 0.4s ease',
+          position: 'relative', flexShrink: 0,
+        }}>
+          {paused ? '▶' : ''}
+        </div>
+      </div>
+
+      {/* Texte — phases 1 et 2 (disparaît en mode sombre) */}
+      {!darkMode && (
+        <>
+          <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: '#0f0808', margin: '0 0 28px', lineHeight: 1.65, maxWidth: 320, transition: 'opacity 1s ease', position: 'relative', zIndex: 10 }}>
+            {paused
+              ? 'Touche pour reprendre'
+              : elapsed >= 30
+                ? "Maintenant respire profondément et laisse le mouvement porter ton souffle."
+                : 'Concentre-toi sur ce mouvement lent, et respire à son rythme par le ventre.'}
+          </p>
+
+          {/* Boutons son + recommencer côte à côte */}
+          <div style={{ display: 'flex', gap: 16, position: 'relative', zIndex: 10 }}>
+            <button
+              onClick={e => { e.stopPropagation(); toggleMute() }}
+              style={{
+                width: 52, height: 52, borderRadius: '50%',
+                background: muted ? 'rgba(200,100,80,0.18)' : 'rgba(255,255,255,0.50)',
+                border: `2px solid ${muted ? 'rgba(200,100,80,0.55)' : `${g1}50`}`,
+                cursor: 'pointer', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.2s ease, border-color 0.2s ease',
+                boxShadow: `0 4px 12px rgba(0,0,0,0.08)`,
+              }}
+              title={muted ? 'Réactiver le son' : 'Couper le son'}
+            >
+              {muted ? '🔇' : '🔊'}
+            </button>
+            <button
+              onClick={e => { e.stopPropagation(); restartAudio() }}
+              style={{
+                width: 52, height: 52, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.40)',
+                border: `2px solid ${g1}40`,
+                cursor: 'pointer', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.2s ease',
+                boxShadow: `0 4px 12px rgba(0,0,0,0.08)`,
+              }}
+              title="Recommencer depuis le début"
+            >
+              ↺
+            </button>
+
+            {/* Bouton Passé — dev uniquement */}
+            {import.meta.env.DEV && (
+              <button
+                onClick={e => { e.stopPropagation(); stopAll(); setState('ended'); setTimeout(onDone, 200) }}
+                style={{
+                  width: 52, height: 52, borderRadius: '50%',
+                  background: 'rgba(255,160,60,0.18)',
+                  border: '2px solid rgba(255,160,60,0.45)',
+                  cursor: 'pointer', fontSize: 11, fontFamily: "'Jost',sans-serif",
+                  fontWeight: 600, color: 'rgba(180,90,20,0.80)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  letterSpacing: '.04em',
+                }}
+                title="Passer (dev)"
+              >
+                Passé
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Phase 3 — voile sombre de l'extérieur vers l'intérieur */}
+      {darkMode && (
+        <>
+          {/* Paupières qui se ferment — le trou se rétrécit progressivement */}
+          {(() => {
+            // Le rayon transparent passe de 350px (tout visible) à 70px (juste l'orbe)
+            const eased   = darkOpacity < 0.5
+              ? 2 * darkOpacity * darkOpacity
+              : 1 - Math.pow(-2 * darkOpacity + 2, 2) / 2   // ease-in-out
+            const hole    = Math.round(350 * (1 - eased))
+            const soft    = Math.round(hole * 1.25)
+            const edge    = Math.round(hole * 2.2)
+            return (
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: `radial-gradient(circle at 50% 42%, transparent 0px, transparent ${hole}px, rgba(0,0,0,0.96) ${soft}px, black ${edge}px)`,
+                opacity: darkOpacity,
+                pointerEvents: 'none',
+                zIndex: 5,
+              }} />
+            )
+          })()}
+          {/* Texte final — dans le flux, 100px sous l'orbe */}
+          <p style={{
+            fontFamily: "'Cormorant Garamond',serif",
+            fontSize: 'clamp(20px,5.2vw,26px)',
+            fontStyle: 'italic',
+            color: `rgba(255,255,255,${Math.min(1, Math.max(0, (darkOpacity - 0.4) / 0.6))})`,
+            lineHeight: 1.65,
+            margin: '100px 0 0',
+            padding: '0 28px',
+            textAlign: 'center',
+            position: 'relative', zIndex: 12,
+            pointerEvents: 'none',
+          }}>
+            Maintenant, ferme les yeux.
+          </p>
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <div style={{ ...BASE, position: 'relative' }}>
+      <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg,${g1},${g2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, marginBottom: 32, boxShadow: `0 8px 24px ${glow}` }}>✓</div>
+      <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(19px,5vw,23px)', fontStyle: 'italic', color: TEXT, margin: 0, lineHeight: 1.65, maxWidth: 300 }}>
+        Prends un instant pour remarquer comment tu te sens maintenant.
+      </p>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WOFDayProgressionScreen — écran de clôture : fleur par jour (J1→J7)
+// Indépendant du module onboarding — basé sur le numéro de jour, pas les rituels
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WOF_DAY_META = [
+  { day: 1, zone: 'Racines',  badge: 'JOUR 1 · RACINES',  text: "Tu as pris soin de toi.\nTes racines, elles, le savent." },
+  { day: 2, zone: 'Tige',     badge: 'JOUR 2 · TIGE',     text: "Tu es revenu·e.\nQuelque chose commence à se tenir debout." },
+  { day: 3, zone: 'Feuilles', badge: 'JOUR 3 · FEUILLES', text: "Ce qui circule en toi\ncommence à trouver son chemin." },
+  { day: 4, zone: 'Fleurs',   badge: 'JOUR 4 · FLEURS',   text: "Tu t'es accordé de l'espace.\nTon jardin l'a ressenti." },
+  { day: 5, zone: 'Souffle',  badge: 'JOUR 5 · SOUFFLE',  text: "Le lien, même discret,\nest là. Tu l'as créé." },
+  { day: 6, zone: 'Ta fleur', badge: 'JOUR 6 · TA FLEUR', text: "Ta fleur commence à s'ouvrir.\nElle attendait ce moment." },
+  { day: 7, zone: 'Ensemble', badge: 'JOUR 7 · ENSEMBLE', text: "Ton jardin est vivant.\nEt toi avec lui." },
+]
+
+// ── Table santé + palette par jour — alimente PlantSVG ──────────────────────
+// from → to : plage de health animée pour chaque jour (PlantSVG : seed<8%, sprout 8-25%, young 25-45%, bud 45-65%, flower 65-100%)
+const WOF_DAY_PLANT = [
+  { from:  5, to:  8, petalColor1: '#c8a0b0', petalColor2: '#d4b5c3', petalShape: 'round'  }, // J1 — WOFRacinesSVG remplace PlantSVG
+  { from:  9, to: 23, petalColor1: '#8abb96', petalColor2: '#7aaa88', petalShape: 'round'  }, // J2 — tige + petites feuilles
+  { from: 32, to: 56, petalColor1: '#6fa87a', petalColor2: '#8abb96', petalShape: 'round'  }, // J3 — feuilles × 3 paires
+  { from: 43, to: 60, petalColor1: '#cc6860', petalColor2: '#dd9080', petalShape: 'tulip'  }, // J4 — bouton floral, rougit
+  { from: 63, to: 76, petalColor1: '#c87898', petalColor2: '#d890b0', petalShape: 'round'  }, // J5 — fleur s'épanouit
+  { from: 87, to: 97, petalColor1: '#d06888', petalColor2: '#e090b0', petalShape: 'round'  }, // J6 — fleur épanouie dès le départ
+  { from: 88, to: 100,petalColor1: '#e0709a', petalColor2: '#f090b8', petalShape: 'round'  }, // J7
+]
+
+// dead code kept only for reference — replaced by PlantSVG below
+function WOFPlantSVG_UNUSED({ day = 1, color = '#c8a0b0', animate = false }) {
+  const W = 220, H = 260, cx = 110, gY = 148
+
+  const springIn = (delay = '0s') => animate
+    ? { animation: `flowerGrow 1.4s ${delay} cubic-bezier(0.25,0.46,0.45,0.94) both` }
+    : {}
+
+  const SH   = [0, 0, 36, 64, 90, 108, 118, 120]
+  const sh   = SH[Math.min(day, 7)]
+  const topY = gY - sh
+
+  const s    = n => day >= n
+  const only = (mn, mx) => day >= mn && day <= mx
+
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} fill="none" style={{ display: 'block', overflow: 'visible' }}>
+
+      {/* Ciel */}
+      <rect x={0} y={0} width={W} height={gY} fill="url(#skyGrad)" rx={0} />
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e8f4f8" />
+          <stop offset="100%" stopColor="#f5efe6" />
+        </linearGradient>
+        <linearGradient id="soilGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6b3d1e" />
+          <stop offset="100%" stopColor="#3a1e0a" />
+        </linearGradient>
+      </defs>
+
+      {/* Sol */}
+      <rect x={0} y={gY} width={W} height={H - gY} fill="url(#soilGrad)" />
+      {/* Ligne sol */}
+      <rect x={0} y={gY - 1} width={W} height={3} fill="#8b5a2b" opacity={0.6} />
+
+      {/* ── Jour 1 : graine + RACINES qui descendent ── */}
+      {only(1, 1) && <>
+        {/* Graine au-dessus du sol */}
+        <ellipse cx={cx} cy={gY - 6} rx={13} ry={8} fill="#8a6520" opacity={0.9} />
+        <ellipse cx={cx} cy={gY - 6} rx={22} ry={14} fill={color} opacity={0.2} style={{ animation: 'seedGlow 3s ease-in-out infinite' }} />
+
+        {/* Racine centrale */}
+        <line x1={cx} y1={gY} x2={cx} y2={gY + 64} stroke="#c8a06a" strokeWidth={3} strokeLinecap="round"
+          style={animate ? { animation: 'flowerGrow 1.2s 0.2s ease-out both', transformOrigin: `${cx}px ${gY}px` } : {}} />
+        {/* Racines latérales */}
+        {[[-28, 28, 40], [28, 28, 40], [-44, 48, 28], [44, 48, 28]].map(([dx, dy, len], i) => (
+          <line key={i}
+            x1={cx + dx * 0.1} y1={gY + dy * 0.4}
+            x2={cx + dx} y2={gY + dy}
+            stroke="#c8a06a" strokeWidth={2} strokeLinecap="round" opacity={0.75}
+            style={animate ? { animation: `flowerGrow 1s ${0.4 + i * 0.15}s ease-out both`, transformOrigin: `${cx}px ${gY + dy * 0.3}px` } : {}}
+          />
+        ))}
+        {/* Radicelles */}
+        {[[-14, 72], [14, 72], [-28, 58], [28, 58]].map(([dx, dy], i) => (
+          <line key={i}
+            x1={cx + dx * 0.5} y1={gY + dy - 10}
+            x2={cx + dx} y2={gY + dy}
+            stroke="#c8a06a" strokeWidth={1.2} strokeLinecap="round" opacity={0.5}
+            style={animate ? { animation: `flowerGrow 0.8s ${0.7 + i * 0.1}s ease-out both`, transformOrigin: `${cx + dx * 0.5}px ${gY + dy - 10}px` } : {}}
+          />
+        ))}
+      </>}
+
+      {/* ── Jours 2+ : tige ── */}
+      {s(2) && (
+        <path d={`M ${cx} ${gY} Q ${cx + 6} ${topY + sh * 0.52} ${cx} ${topY}`}
+          stroke="#5e8456" strokeWidth={3.5} strokeLinecap="round"
+          style={springIn('0s')} />
+      )}
+
+      {/* Feuille gauche (jours 2+) */}
+      {s(2) && (
+        <ellipse cx={cx - 22} cy={topY + 18} rx={20} ry={9} fill="#7aaa88"
+          style={{ transformBox: 'fill-box', transformOrigin: 'right center', transform: 'rotate(-36deg)', ...(animate ? { animation: 'leafIn 0.9s 0.4s ease-out both' } : {}) }} />
+      )}
+
+      {/* Feuille droite (jours 4+) */}
+      {s(4) && (
+        <ellipse cx={cx + 22} cy={topY + 34} rx={20} ry={9} fill="#7aaa88"
+          style={{ transformBox: 'fill-box', transformOrigin: 'left center', transform: 'rotate(36deg)', ...(animate ? { animation: 'leafIn 0.9s 0.7s ease-out both' } : {}) }} />
+      )}
+
+      {/* Bouton (jour 5) */}
+      {only(5, 5) && (
+        <ellipse cx={cx} cy={topY} rx={11} ry={15} fill={color}
+          style={animate ? { animation: 'budIn 0.9s ease-out both' } : {}} />
+      )}
+
+      {/* Pétales (jours 6-7) */}
+      {s(6) && [0, 60, 120, 180, 240, 300].map((deg, i) => {
+        const rad = deg * Math.PI / 180
+        const dist = day >= 7 ? 18 : 12
+        const rx   = day >= 7 ? 21 : 14
+        return (
+          <ellipse key={deg}
+            cx={cx + Math.cos(rad) * dist} cy={topY + Math.sin(rad) * dist}
+            rx={rx} ry={rx * 0.52} fill={color} opacity={0.88}
+            style={{ transformBox: 'fill-box', transformOrigin: 'center', transform: `rotate(${deg}deg)`, ...(animate ? { animation: `petalIn 0.7s ${0.08 * i}s ease-out both` } : {}) }}
+          />
+        )
+      })}
+
+      {/* Cœur fleur (jours 6-7) */}
+      {s(6) && <circle cx={cx} cy={topY} r={9} fill="#f0c070"
+        style={animate ? { animation: 'petalIn 0.6s 0.5s ease-out both' } : {}} />}
+
+      {/* Racines visibles sous sol (jours 2+, discret) */}
+      {s(2) && (
+        <g opacity={0.35}>
+          <line x1={cx} y1={gY + 2} x2={cx} y2={gY + 40} stroke="#c8a06a" strokeWidth={2} strokeLinecap="round" />
+          <line x1={cx} y1={gY + 14} x2={cx - 22} y2={gY + 36} stroke="#c8a06a" strokeWidth={1.5} strokeLinecap="round" />
+          <line x1={cx} y1={gY + 14} x2={cx + 22} y2={gY + 36} stroke="#c8a06a" strokeWidth={1.5} strokeLinecap="round" />
+        </g>
+      )}
+    </svg>
+  )
+}
+
+const WOF_DAY_COLORS = ['#c8a0b0','#9ab8c8','#7aaa88','#d4a0b0','#c8a870','#b8a090','#a09080']
+
+// ── sparkleAt — partagé entre WOFRacinesSVG et WOFTigeSVG ──────────────────
+function sparkleAt(px, py, count, col, spreadX, spreadY, baseDelay = 0) {
+  const pts = Array.from({ length: count }, (_, i) => {
+    const ang = (i / count) * Math.PI * 2 + i * 1.37
+    const dx  = Math.cos(ang) * spreadX * (0.35 + (((i * 7919) % 100) / 100) * 0.65)
+    const dy  = Math.sin(ang) * spreadY * (0.35 + (((i * 6271) % 100) / 100) * 0.65)
+    const dur = (1.6 + (i % 4) * 0.55).toFixed(2)
+    const del = (baseDelay + (i * 0.38) % 2.2).toFixed(2)
+    const sz  = 1.8 + (i % 3) * 0.9
+    return { x: px + dx, y: py + dy, dur, del, sz }
+  })
+  return (
+    <g pointerEvents="none">
+      {pts.map((p, i) => (
+        <g key={i} style={{ transformOrigin: `${p.x}px ${p.y}px`, animation: `svgSpk ${p.dur}s ease-in-out infinite ${p.del}s` }}>
+          <line x1={p.x-p.sz} y1={p.y} x2={p.x+p.sz} y2={p.y} stroke={col} strokeWidth={0.9} strokeLinecap="round" opacity={0.85}/>
+          <line x1={p.x} y1={p.y-p.sz} x2={p.x} y2={p.y+p.sz} stroke={col} strokeWidth={0.9} strokeLinecap="round" opacity={0.85}/>
+          <line x1={p.x-p.sz*.6} y1={p.y-p.sz*.6} x2={p.x+p.sz*.6} y2={p.y+p.sz*.6} stroke={col} strokeWidth={0.6} strokeLinecap="round" opacity={0.6}/>
+          <line x1={p.x+p.sz*.6} y1={p.y-p.sz*.6} x2={p.x-p.sz*.6} y2={p.y+p.sz*.6} stroke={col} strokeWidth={0.6} strokeLinecap="round" opacity={0.6}/>
+          <circle cx={p.x} cy={p.y} r={p.sz*.55} fill={col} opacity={0.35}
+            style={{ transformOrigin: `${p.x}px ${p.y}px`, animation: `svgSpkR ${p.dur}s ease-out infinite ${p.del}s` }}/>
+        </g>
+      ))}
+    </g>
+  )
+}
+
+// ── WOFRacinesSVG — PlantSVG seed stage + overlay racines fractal récursif ───
+function WOFRacinesSVG({ animate = false }) {
+  const [health,    setHealth]    = useState(animate ? 5 : 7.8)
+  const [rootPhase, setRootPhase] = useState(animate ? 0 : 1)  // 0→1 ; 1 = racines déjà déployées
+
+  useEffect(() => {
+    if (!animate) return
+    const start    = Date.now()
+    const hDur     = 3000
+    const rDur     = 12000  // 12s : évolution lente, bien lisible
+
+    let raf
+    const tick = () => {
+      const now = Date.now()
+      setHealth(5 + 2.8 * Math.min(1, (now - start) / hDur))
+      setRootPhase(Math.min(1, (now - start) / rDur))
+      if (now - start < rDur) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [animate])
+
+  // Génère récursivement les segments racinaires (algorithme fractal)
+  const rootPathsRef = useRef(null)
+  if (!rootPathsRef.current) {
+    const MAX_DEPTH = 9
+    const paths = []
+
+    // Stockage en coordonnées pour permettre le mirroring
+    function createRoot(x, y, angle, length, depth) {
+      if (depth <= 0 || length < 1.5) return
+      const x2 = x + Math.cos(angle) * length
+      const y2 = y + Math.sin(angle) * length
+      if (y2 < 190 || y2 > 258 || x2 < 20 || x2 > 380) return
+      const cpx = (x + x2) / 2 + (Math.random() - 0.5) * 8
+      const cpy = (y + y2) / 2 + (Math.random() - 0.5) * 5
+      paths.push({ x1: x, y1: y, cpx, cpy, x2, y2, sw: Math.max(0.25, depth * 0.18), depth })
+      const branches = 2 + Math.floor(Math.random() * 2)
+      for (let i = 0; i < branches; i++) {
+        createRoot(
+          x2, y2,
+          angle + (Math.random() - 0.5) * 1.2,
+          length * (0.65 + Math.random() * 0.15),
+          depth - 1
+        )
+      }
+    }
+
+    // Pivot central
+    createRoot(200, 196, Math.PI / 2, 36, MAX_DEPTH)
+    // Latérales côté GAUCHE seulement (PI/2 + offset > PI/2 → va vers la gauche)
+    for (let i = 0; i < 5; i++) {
+      const offset = 0.15 + Math.random() * 1.15  // 0.15 à 1.30 rad
+      createRoot(200, 196, Math.PI / 2 + offset, 42, MAX_DEPTH - 1)
+    }
+    // Fines racines centrales côté gauche (depth=1, pas de branchement)
+    for (let i = 0; i < 7; i++) {
+      createRoot(200, 196, Math.PI / 2 + Math.random() * 0.20, 18, 1)
+    }
+
+    // Miroir parfait autour de x=200 — symétrie garantie
+    const mirrored = paths.map(p => ({
+      ...p,
+      x1:  400 - p.x1,
+      cpx: 400 - p.cpx,
+      x2:  400 - p.x2,
+    }))
+
+    rootPathsRef.current = [...paths, ...mirrored]
+  }
+
+  const rootPaths = rootPathsRef.current
+  const MAX_DEPTH = 9
+
+  // Positions des scintillements — calculées une fois, delay CSS = synchronisation
+  const sparklePointsRef = useRef(null)
+  if (!sparklePointsRef.current) {
+    const pts = []
+    const depthConfig = [
+      { depth: 8, count: 3, spread: 14, skip: 4, max: 5  },
+      { depth: 7, count: 2, spread: 10, skip: 5, max: 6  },
+      { depth: 6, count: 2, spread: 8,  skip: 5, max: 6  },
+      { depth: 4, count: 2, spread: 6,  skip: 6, max: 8  },
+      { depth: 2, count: 2, spread: 5,  skip: 6, max: 8  },
+    ]
+    depthConfig.forEach(({ depth, count, spread, skip, max }) => {
+      const level  = MAX_DEPTH - depth
+      const delay  = (level / MAX_DEPTH) * 0.85 * 12  // délai en secondes
+      rootPaths
+        .filter(p => p.depth === depth)
+        .filter((_, i) => i % skip === 0)
+        .slice(0, max)
+        .forEach(p => pts.push({ x: p.x2, y: p.y2, count, spread, delay }))
+    })
+    sparklePointsRef.current = pts
+  }
+
+  // Son harpe — ref stable pour survivre au StrictMode double-mount
+  const audioRef = useRef(null)
+  useEffect(() => {
+    if (audioRef.current) return   // déjà lancé (StrictMode)
+    const audio = new Audio('/harpe.mp3')
+    audio.volume = 0.7
+    audioRef.current = audio
+    audio.play().catch(() => {})
+    const fade = setTimeout(() => {
+      const step = setInterval(() => {
+        if (!audioRef.current) { clearInterval(step); return }
+        audioRef.current.volume = Math.max(0, audioRef.current.volume - 0.02)
+        if (audioRef.current.volume === 0) { clearInterval(step); audioRef.current.pause() }
+      }, 100)
+    }, 18000)
+    return () => { clearTimeout(fade) }
+  }, [])
+
+  function pathProgress(depth) {
+    const level = MAX_DEPTH - depth
+    const start = (level / MAX_DEPTH) * 0.85
+    return Math.max(0, Math.min(1, (rootPhase - start) / 0.15))
+  }
+
+  // Génère les points de scintillement SVG (identique à PlantSVG.sparkleAt)
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+
+      {/* PlantSVG — seed stage (health 5→7.8%) */}
+      <PlantSVG
+        health={health}
+        gardenSettings={{
+          sunriseH: 7, sunriseM: 0, sunsetH: 20, sunsetM: 0,
+          petalColor1: '#c8a0b0',
+          petalColor2: '#d4b5c3',
+          petalShape:  'round',
+        }}
+        clearSky={true}
+        lumensLevel="faible"
+        celebrate={false}
+      />
+
+      {/* Overlay racines fractales — même viewBox que PlantSVG */}
+      <svg
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        viewBox="0 0 400 260"
+        preserveAspectRatio="xMidYMid slice"
+        fill="none"
+      >
+        <defs>
+          <style>{`
+            @keyframes svgSpk  { 0%{opacity:0;transform:scale(0.3) rotate(0deg)} 35%{opacity:1;transform:scale(1.15) rotate(20deg)} 65%{opacity:0.6;transform:scale(0.9) rotate(35deg)} 100%{opacity:0;transform:scale(0.3) rotate(60deg)} }
+            @keyframes svgSpkR { 0%{opacity:0;transform:scale(0)} 30%{opacity:0.5} 70%{opacity:0.1} 100%{opacity:0;transform:scale(1.8)} }
+          `}</style>
+          <clipPath id="wrf_clip">
+            <rect x={0} y={189} width={400} height={71} />
+          </clipPath>
+        </defs>
+        <g clipPath="url(#wrf_clip)">
+          {rootPaths.map((p, i) => {
+            const prog = pathProgress(p.depth)
+            if (prog <= 0) return null
+            return (
+              <path
+                key={i}
+                d={`M${p.x1.toFixed(1)},${p.y1.toFixed(1)} Q${p.cpx.toFixed(1)},${p.cpy.toFixed(1)} ${p.x2.toFixed(1)},${p.y2.toFixed(1)}`}
+                fill="none"
+                stroke="#c49a6c"
+                strokeWidth={p.sw * prog}
+                strokeLinecap="round"
+                opacity={0.75 + 0.25 * (p.depth / MAX_DEPTH)}
+              />
+            )
+          })}
+        </g>
+
+        {/* Scintillements — positions pré-calculées, animations CSS pures */}
+        <g clipPath="url(#wrf_clip)">
+          {sparklePointsRef.current.map((s, i) => (
+            <g key={i}
+              style={{
+                opacity: 0,
+                animation: `wofSpkFade 3s ${s.delay}s ease-out forwards`,
+              }}
+            >
+              {sparkleAt(s.x, s.y, s.count, 'rgba(255,222,60,0.90)', s.spread, s.spread * 0.65, i * 0.18)}
+            </g>
+          ))}
+        </g>
+      </svg>
+    </div>
+  )
+}
+
+// ── WOFTigeSVG — J2 : racines J1 statiques + zoom sur tige qui grandit ────────
+function WOFTigeSVG() {
+  const [zoom,         setZoom]         = useState(false)
+  const [health,       setHealth]       = useState(7.8)
+  const [sparkVisible, setSparkVisible] = useState(false)  // scintillements 3s
+  const audioRef = useRef(null)
+
+  // Chemins racinaires statiques — rootPhase = 1 (déjà déployés)
+  const rootPathsRef = useRef(null)
+  if (!rootPathsRef.current) {
+    const paths = []
+    function cr(x, y, angle, length, depth) {
+      if (depth <= 0 || length < 1.5) return
+      const x2 = x + Math.cos(angle) * length
+      const y2 = y + Math.sin(angle) * length
+      if (y2 < 190 || y2 > 258 || x2 < 20 || x2 > 380) return
+      const cpx = (x + x2) / 2 + (Math.random() - 0.5) * 8
+      const cpy = (y + y2) / 2 + (Math.random() - 0.5) * 5
+      paths.push({ x1: x, y1: y, cpx, cpy, x2, y2, sw: Math.max(0.25, depth * 0.18), depth })
+      const b = 2 + Math.floor(Math.random() * 2)
+      for (let i = 0; i < b; i++) cr(x2, y2, angle + (Math.random() - 0.5) * 1.2, length * (0.65 + Math.random() * 0.15), depth - 1)
+    }
+    cr(200, 196, Math.PI / 2, 36, 9)
+    for (let i = 0; i < 5; i++) { const o = 0.15 + Math.random() * 1.15; cr(200, 196, Math.PI / 2 + o, 42, 8) }
+    for (let i = 0; i < 7; i++) cr(200, 196, Math.PI / 2 + Math.random() * 0.20, 18, 1)
+    const m = paths.map(p => ({ ...p, x1: 400 - p.x1, cpx: 400 - p.cpx, x2: 400 - p.x2 }))
+    rootPathsRef.current = [...paths, ...m]
+  }
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setZoom(true), 2000)
+    const t2 = setTimeout(() => {
+      // Harpe + scintillements au démarrage de la tige
+      const audio = new Audio('/harpe.mp3')
+      audio.volume = 0.65
+      audioRef.current = audio
+      audio.play().catch(() => {})
+      setSparkVisible(true)
+      setTimeout(() => setSparkVisible(false), 3000)  // scintillements 3s
+
+      // Tige grandit
+      const start = Date.now()
+      let raf
+      const tick = () => {
+        const p = Math.min(1, (Date.now() - start) / 5500)
+        setHealth(7.8 + 24.2 * p)
+        if (p < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+      return () => cancelAnimationFrame(raf)
+    }, 3000)
+    return () => { clearTimeout(t1); clearTimeout(t2); audioRef.current?.pause() }
+  }, [])
+
+  const gs = { sunriseH: 7, sunriseM: 0, sunsetH: 20, sunsetM: 0, petalColor1: '#9ab8c8', petalColor2: '#b0ccd8', petalShape: 'round' }
+  const MAX_DEPTH = 9
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        transform: zoom ? 'scale(2.2)' : 'scale(1)',
+        transformOrigin: '50% 52%',   // sol (72%) apparaît à ~5% du bas après zoom
+        transition: zoom ? 'transform 4.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+      }}>
+        {/* PlantSVG — health croît de 7.8% (graine) à 32% (tige + 3 feuilles) */}
+        <PlantSVG health={health} gardenSettings={gs} clearSky={true} lumensLevel="faible" celebrate={false} />
+
+        {/* Racines J1 + scintillements tige — même overlay SVG */}
+        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" fill="none">
+          <defs>
+            <clipPath id="j2_rclip"><rect x={0} y={189} width={400} height={71} /></clipPath>
+            <filter id="j2_rf"><feGaussianBlur stdDeviation="0.45"/></filter>
+            <style>{`
+              @keyframes svgSpk{0%{opacity:0;transform:scale(0.3) rotate(0deg)}35%{opacity:1;transform:scale(1.15) rotate(20deg)}65%{opacity:0.6;transform:scale(0.9) rotate(35deg)}100%{opacity:0;transform:scale(0.3) rotate(60deg)}}
+              @keyframes svgSpkR{0%{opacity:0;transform:scale(0)}30%{opacity:0.5}70%{opacity:0.1}100%{opacity:0;transform:scale(1.8)}}
+            `}</style>
+          </defs>
+
+          {/* Racines */}
+          <g clipPath="url(#j2_rclip)" filter="url(#j2_rf)">
+            {rootPathsRef.current.map((p, i) => (
+              <path key={i}
+                d={`M${p.x1.toFixed(1)},${p.y1.toFixed(1)} Q${p.cpx.toFixed(1)},${p.cpy.toFixed(1)} ${p.x2.toFixed(1)},${p.y2.toFixed(1)}`}
+                fill="none" stroke="#c49a6c" strokeWidth={p.sw} strokeLinecap="round"
+                opacity={0.75 + 0.25 * (p.depth / MAX_DEPTH)}
+              />
+            ))}
+          </g>
+
+          {/* Scintillements le long de la tige (3s) */}
+          {sparkVisible && (
+            <g opacity={1} style={{ transition: 'opacity 0.5s ease' }}>
+              {sparkleAt(200, 183, 3, 'rgba(255,222,60,0.90)', 10, 7,  0.0)}
+              {sparkleAt(200, 168, 3, 'rgba(255,222,60,0.90)',  8, 6,  0.3)}
+              {sparkleAt(200, 153, 3, 'rgba(255,222,60,0.90)',  7, 5,  0.6)}
+              {sparkleAt(200, 140, 2, 'rgba(255,222,60,0.90)',  6, 4,  0.9)}
+              {sparkleAt(195, 175, 2, 'rgba(255,222,60,0.90)',  5, 4,  0.4)}
+              {sparkleAt(205, 175, 2, 'rgba(255,222,60,0.90)',  5, 4,  0.7)}
+            </g>
+          )}
+        </svg>
+      </div>
+    </div>
+  )
+}
+
+// ── Texte en arc avec effet machine à écrire ─────────────────────────────────
+function ArcTypewriterText({ text, startDelay = 3500, charDelay = 75 }) {
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    const t0 = setTimeout(() => {
+      let i = 0
+      const interval = setInterval(() => {
+        i++
+        setCount(i)
+        if (i >= text.length) clearInterval(interval)
+      }, charDelay)
+      return () => clearInterval(interval)
+    }, startDelay)
+    return () => clearTimeout(t0)
+  }, [])
+
+  if (count === 0) return null
+
+  return (
+    <svg
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10, overflow: 'visible' }}
+      viewBox="0 0 300 340"
+      preserveAspectRatio="xMidYMid meet"
+      overflow="visible"
+    >
+      <defs>
+        <path id="arcPath" d="M -30,185 Q 150,148 330,185" fill="none" />
+        <filter id="arcShadow" x="-10%" y="-40%" width="120%" height="180%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" floodColor="rgba(0,0,0,0.55)" />
+        </filter>
+      </defs>
+      <text
+        fontFamily="Cormorant Garamond, Georgia, serif"
+        fontSize="30"
+        fontStyle="italic"
+        fontWeight="500"
+        fill="rgba(255,255,255,0.95)"
+        filter="url(#arcShadow)"
+        letterSpacing="0.5"
+      >
+        <textPath href="#arcPath" startOffset="50%" textAnchor="middle">
+          {text.slice(0, count)}
+        </textPath>
+      </text>
+    </svg>
+  )
+}
+
+function WOFDayProgressionScreen({ dayNumber = 1, onContinue }) {
+  const idx      = Math.min(dayNumber - 1, 6)
+  const meta     = WOF_DAY_META[idx]
+  const color    = WOF_DAY_COLORS[idx]
+  const dayPlant = WOF_DAY_PLANT[idx]
+
+  const [health,     setHealth]     = useState(dayPlant.from)
+  const [textVisible, setTextVisible] = useState(false)
+  const [ctaVisible,  setCtaVisible]  = useState(false)
+
+  useEffect(() => {
+    const start = Date.now()
+    const dur   = 3500
+    let raf
+    const tick = () => {
+      const p = Math.min(1, (Date.now() - start) / dur)
+      setHealth(dayPlant.from + (dayPlant.to - dayPlant.from) * p)
+      if (p < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    const t1 = setTimeout(() => setTextVisible(true), 1600)
+    const t2 = setTimeout(() => setCtaVisible(true),  3200)
+    return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2) }
+  }, [])
+
+  const gardenSettings = {
+    sunriseH: 7, sunriseM: 0, sunsetH: 20, sunsetM: 0,
+    petalColor1: dayPlant.petalColor1,
+    petalColor2: dayPlant.petalColor2,
+    petalShape:  dayPlant.petalShape,
+  }
+
+  return (
+    <div style={{ minHeight: 'calc(64dvh)', display: 'flex', flexDirection: 'column', background: '#faf5f2', textAlign: 'center' }}>
+
+      {/* Badge — au-dessus de l'image */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, opacity: textVisible ? 1 : 0, transition: 'opacity 0.8s ease' }}>
+        <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color, padding: '5px 16px', borderRadius: 100, background: `${color}20`, border: `1px solid ${color}50` }}>
+          {meta.badge}
+        </span>
+      </div>
+
+      {/* Zone plante plein largeur avec fondus */}
+      <div style={{ position: 'relative', width: 'calc(100% - 48px)', margin: '0 auto', flexShrink: 0 }}>
+        <div style={{ position: 'relative', borderRadius: 20, height: dayNumber <= 5 ? 340 : 260, overflow: 'hidden' }}>
+        {dayNumber === 1 ? (
+          <WOFRacinesSVG animate={true} />
+        ) : dayNumber === 2 ? (
+          <WOFTigeSVG />
+        ) : dayNumber === 3 ? (
+          <WOFFeuillesSVG />
+        ) : dayNumber === 4 ? (
+          <WOFFleursSVG />
+        ) : dayNumber === 5 ? (
+          <WOFSouffleSVG />
+        ) : (
+          <PlantSVG
+            health={health}
+            gardenSettings={gardenSettings}
+            clearSky={true}
+            lumensLevel="faible"
+            celebrate={dayNumber >= 5}
+          />
+        )}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 48, background: 'linear-gradient(to bottom, #faf5f2, transparent)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 72, background: 'linear-gradient(to top, #faf5f2, transparent)', pointerEvents: 'none' }} />
+        </div>
+        {dayNumber === 1 && (
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 10 }}>
+            <ArcTypewriterText text="chaque jour ta fleur grandit" startDelay={3500} charDelay={75} />
+          </div>
+        )}
+      </div>
+
+      {/* Badge + texte + CTA */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 24px 40px' }}>
+
+        {/* Texte de clôture */}
+        <p style={{
+          fontFamily: "'Cormorant Garamond',serif",
+          fontSize: 'clamp(20px,5.2vw,26px)',
+          fontStyle: 'italic',
+          fontWeight: 500,
+          color: '#2a1010',
+          lineHeight: 1.65,
+          margin: '0 0 36px',
+          whiteSpace: 'pre-line',
+          maxWidth: 340,
+          opacity: textVisible ? 1 : 0,
+          transform: textVisible ? 'translateY(0)' : 'translateY(12px)',
+          transition: 'opacity 1.2s ease, transform 1.2s ease',
+        }}>
+          {meta.text}
+        </p>
+
+        {/* CTA */}
+        <button
+          onClick={onContinue}
+          style={{
+            padding: '14px 44px',
+            borderRadius: 100,
+            border: 'none',
+            background: `linear-gradient(135deg, ${color}, ${WOF_DAY_COLORS[Math.min(dayNumber, 6)]})`,
+            color: '#fff',
+            fontFamily: "'Jost',sans-serif",
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: `0 8px 28px ${color}40`,
+            opacity: ctaVisible ? 1 : 0,
+            transform: ctaVisible ? 'translateY(0)' : 'translateY(10px)',
+            transition: 'opacity 0.9s ease, transform 0.9s ease',
+            pointerEvents: ctaVisible ? 'auto' : 'none',
+          }}
+        >
+          Continuer
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ressenti avant / après — J1
+// ─────────────────────────────────────────────────────────────────────────────
+
+const J1_FEELINGS = [
+  { key: 'epuise',  label: 'Épuisé·e',  color: '#c98a86', v: 0 },
+  { key: 'fatigue', label: 'Fatigué·e', color: '#d6a98f', v: 1 },
+  { key: 'neutre',  label: 'Neutre',    color: '#e3cba0', v: 2 },
+  { key: 'apaise',  label: 'Apaisé·e',  color: '#bcc79a', v: 3 },
+  { key: 'bien',    label: 'Bien',      color: '#9fbf86', v: 4 },
+]
+
+// 9 positions — du plus éprouvé (bas, v=0) au plus épanoui (haut, v=4)
+const J1_FEELINGS_FULL = [
+  { key: 'abouts',   emoji: '🥵', label: 'À bout de souffle', color: '#b96866', v: 0,   main: true },
+  { key: 'eprouve',  emoji: '😔', label: 'Éprouvé·e',         color: '#c98a86', v: 0.5, main: true },
+  { key: 'tendu',    emoji: '😣', label: 'Tendu·e',            color: '#cc9080', v: 1,   main: true },
+  { key: 'preoc',    emoji: '😟', label: 'Préoccupé·e',        color: '#d6a98f', v: 1.5, main: true },
+  { key: 'mitige',   emoji: '🤔', label: 'Mitigé·e',           color: '#e0b890', v: 2,   main: true },
+  { key: 'stable',   emoji: '😐', label: 'Stable',             color: '#e3cba0', v: 2.5, main: true },
+  { key: 'plutser',  emoji: '🙂', label: 'Plutôt serein·e',    color: '#bcc79a', v: 3,   main: true },
+  { key: 'serein',   emoji: '😊', label: 'Serein·e',           color: '#9fbf86', v: 3.5, main: true },
+  { key: 'epanoui',  emoji: '☀️', label: 'Épanoui·e',          color: '#8bc34a', v: 4,   main: true },
+]
+
+function RessentiScreen({ phase, onAnswer, onBack, dayLabel = 'Jour 1 · Racines' }) {
+  const [pos, setPos]     = useState(null)   // 0.0 (bas=Épuisé) → 1.0 (haut=Bien)
+  const trackRef          = useRef(null)
+  const dragging          = useRef(false)
+  const isBefore          = phase === 'before'
+  const C                 = '#c8a0b0'
+  const TRACK_H           = 260
+
+  const STAGES = J1_FEELINGS_FULL  // 9 positions
+
+  function getNearestFeel(p) {
+    const v = p * 4
+    return STAGES.reduce((a, b) => Math.abs(b.v - v) < Math.abs(a.v - v) ? b : a)
+  }
+
+  function posFromPointer(e) {
+    const rect = trackRef.current.getBoundingClientRect()
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    return Math.max(0, Math.min(1, 1 - (clientY - rect.top) / rect.height))
+  }
+
+  function handlePointerDown(e) {
+    dragging.current = true
+    trackRef.current.setPointerCapture?.(e.pointerId)
+    setPos(posFromPointer(e))
+  }
+  function handlePointerMove(e) {
+    if (!dragging.current) return
+    setPos(posFromPointer(e))
+  }
+  function handlePointerUp() { dragging.current = false }
+
+  const feel     = pos !== null ? getNearestFeel(pos) : null
+  const thumbTop = pos !== null ? `${(1 - pos) * 100}%` : null
+
+  return (
+    <div className="wof-in" style={{ padding: '12px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <BackButton onClick={onBack} />
+
+      <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '.22em', textTransform: 'uppercase', color: '#a87f90', margin: '4px 0 10px' }}>
+        {isBefore ? dayLabel : 'Un instant pour toi'}
+      </p>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(18px,4.8vw,24px)', fontWeight: 300, fontStyle: 'italic', color: '#2a1c1c', lineHeight: 1.3, marginBottom: 5 }}>
+        {isBefore ? 'Comment te sens-tu, là, maintenant ?' : 'Et maintenant ?'}
+      </h2>
+      <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 12.5, fontWeight: 300, color: '#6e5852', lineHeight: 1.5, marginBottom: 18 }}>
+        {isBefore ? "Glisse le curseur jusqu'à ce qui te correspond." : 'Remarque simplement ce qui a bougé.'}
+      </p>
+
+      {/* Slider : track + labels */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, height: TRACK_H, marginBottom: 22, width: '100%', maxWidth: 300 }}>
+
+        {/* Track draggable */}
+        <div
+          ref={trackRef}
+          style={{ position: 'relative', width: 40, height: '100%', borderRadius: 20, flexShrink: 0, cursor: 'pointer',
+            background: 'linear-gradient(to bottom, #8bc34a, #9fbf86, #bcc79a, #e3cba0, #e0b890, #d6a98f, #cc9080, #c98a86, #b96866)',
+            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.12)', userSelect: 'none',
+          }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+        >
+          {/* Thumb */}
+          {thumbTop && (
+            <div style={{
+              position: 'absolute', left: '50%', top: thumbTop,
+              transform: 'translate(-50%, -50%)',
+              width: 34, height: 34, borderRadius: '50%',
+              background: feel?.color || '#c8a0b0',
+              border: '3px solid #fff',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.22)',
+              transition: 'background 0.2s ease',
+              pointerEvents: 'none',
+            }} />
+          )}
+          {/* Ligne guide si pas encore touché */}
+          {thumbTop === null && (
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontFamily: 'Jost', fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '.05em', whiteSpace: 'nowrap' }}>
+              ↕
+            </div>
+          )}
+        </div>
+
+        {/* Labels — du haut (Bien) vers le bas (Épuisé), 9 positions */}
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', flex: 1 }}>
+          {[...STAGES].reverse().map(f => {
+            const isActive = feel?.key === f.key
+            const isMain   = f.main
+            return (
+              <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: isActive ? 1 : isMain ? 0.60 : 0.38, transition: 'opacity 0.2s ease' }}>
+                <span style={{
+                  width: isActive ? (isMain ? 13 : 10) : (isMain ? 10 : 7),
+                  height: isActive ? (isMain ? 13 : 10) : (isMain ? 10 : 7),
+                  borderRadius: '50%', background: f.color, flexShrink: 0,
+                  transition: 'all 0.2s ease',
+                  boxShadow: isActive ? `0 2px 8px ${f.color}88` : 'none',
+                }} />
+                <span style={{ fontSize: isActive ? 16 : 13, lineHeight: 1, transition: 'all 0.2s ease', flexShrink: 0 }}>
+                  {f.emoji}
+                </span>
+                <span style={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: isActive ? 13.5 : 11.5,
+                  fontWeight: isActive ? 500 : 300,
+                  color: isActive ? '#2a1c1c' : '#6e5852',
+                  transition: 'all 0.2s ease',
+                }}>
+                  {f.label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={() => { if (feel) onAnswer(feel) }}
+        disabled={!feel}
+        style={{
+          fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 500, letterSpacing: '.04em',
+          color: '#fff', border: 'none', cursor: feel ? 'pointer' : 'default',
+          padding: '0 32px', height: 48, borderRadius: 100,
+          background: `linear-gradient(135deg, ${C}, #a87f90)`,
+          boxShadow: feel ? '0 8px 22px rgba(200,160,176,0.45)' : 'none',
+          opacity: feel ? 1 : 0.40, transition: 'opacity 0.3s ease',
+        }}
+      >
+        {isBefore ? 'Commencer le rituel' : 'Voir ce qui a bougé'}
+      </button>
+    </div>
+  )
+}
+
+// Teaser générique — reçoit video, texte et couleur accent
+function DayTeaserScreen({ videoSrc, label, teaser, accentColor = '#9ab8c8', onNext }) {
+  const [ended,      setEnded]      = useState(false)
+  const [ctaVisible, setCtaVisible] = useState(false)
+
+  function handleEnded() { setEnded(true); setTimeout(() => setCtaVisible(true), 800) }
+
+  const style = window.innerWidth > 600
+    ? { position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', width: 'calc(100% - 32px)', maxWidth: 560, height: 'calc(100dvh - 48px)', zIndex: 300, background: '#000', overflow: 'hidden', borderRadius: 24 }
+    : { position: 'fixed', inset: 0, zIndex: 300, background: '#000', overflow: 'hidden' }
+
+  return (
+    <div style={style}>
+      <video src={videoSrc} autoPlay playsInline muted={false}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        onEnded={handleEnded}
+      />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '48px 28px 48px',
+        background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.40) 60%, transparent 100%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        opacity: ended ? 1 : 0, transition: 'opacity 1.4s ease',
+      }}>
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,7vw,40px)', fontWeight: 400, fontStyle: 'italic', color: '#fff', marginBottom: 4, textShadow: '0 2px 12px rgba(0,0,0,0.35)' }}>{label}</p>
+        <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(44px,12vw,64px)', fontWeight: 400, fontStyle: 'italic', color: '#fff', lineHeight: 1.05, margin: '0 0 36px', textShadow: '0 2px 16px rgba(0,0,0,0.40)' }}>{teaser}</h2>
+        <button onClick={onNext} style={{ fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 500, color: '#fff', border: '1.5px solid rgba(255,255,255,0.55)', cursor: 'pointer', padding: '0 40px', height: 50, borderRadius: 100, background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)', opacity: ctaVisible ? 1 : 0, transition: 'opacity 0.9s ease', pointerEvents: ctaVisible ? 'auto' : 'none' }}>
+          À demain
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function J1TeaserScreen({ onNext }) {
+  return <DayTeaserScreen videoSrc="/video/tige.mp4" label="Demain," teaser="ça grandit." accentColor="#9ab8c8" onNext={onNext} />
+}
+
+function J2TeaserScreen({ onNext }) {
+  return <DayTeaserScreen videoSrc="/video/tige2.mp4" label="Demain," teaser="ça s'étoffe." accentColor="#7aaa88" onNext={onNext} />
+}
+
+
+function DeltaScreen({ answers, onNext }) {
+  const before = J1_FEELINGS_FULL.find(f => f.key === answers?.j1?.feelBefore)
+  const after  = J1_FEELINGS_FULL.find(f => f.key === answers?.j1?.feelAfter)
+
+  useEffect(() => { if (!before || !after) onNext() }, [])
+  if (!before || !after) return null
+
+  const d = after.v - before.v
+  const text = d > 0
+    ? `Tu arrivais plutôt ${before.label.toLowerCase()}… et quelque chose s'est apaisé.`
+    : d === 0
+      ? `Tu es resté·e dans le même état. Et c'est très bien aussi — être là, simplement.`
+      : `Quelque chose a remué. Ce n'est pas un échec : tu as accueilli ce qui était là.`
+
+  const C = '#c8a0b0'
+
+  const Pill = ({ f, label }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <span style={{ width: 44, height: 44, borderRadius: '50%', background: f.color, display: 'block', boxShadow: 'inset 0 0 0 5px rgba(255,255,255,0.50), 0 4px 12px rgba(0,0,0,0.10)' }} />
+      <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 12, color: '#6e5852', letterSpacing: '.03em' }}>{f.label}</span>
+    </div>
+  )
+
+  return (
+    <div className="wof-in" style={{ padding: '40px 28px 56px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '.22em', textTransform: 'uppercase', color: '#a87f90', marginBottom: 32 }}>
+        Ce qui a bougé
+      </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, margin: '0 0 32px' }}>
+        <Pill f={before} />
+        <span style={{ color: '#a87f90', fontSize: 24 }}>→</span>
+        <Pill f={after} />
+      </div>
+
+      <p style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: '#2a1c1c', lineHeight: 1.65, maxWidth: 320, marginBottom: 40 }}>
+        {text}
+      </p>
+
+      <button
+        onClick={onNext}
+        style={{
+          fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 500, color: '#fff',
+          border: 'none', cursor: 'pointer', padding: '0 36px', height: 52, borderRadius: 100,
+          background: `linear-gradient(135deg, ${C}, #a87f90)`,
+          boxShadow: '0 10px 26px rgba(200,160,176,0.45)',
+        }}
+      >
+        Continuer
+      </button>
+    </div>
+  )
+}
+
+const J1_RITUAL_DATA = {
+  badge:    { icon: '🌱', label: 'RACINES · ANCRAGE' },
+  title:    'Revenir à mes racines',
+  subtitle: "Le rituel de l'ancrage profond",
+  duration: '3 à 5 min',
+  intro:    "Sous chaque agitation, tes racines sont là — silencieuses, solides, toujours disponibles.",
+  steps: [
+    { num: '1', label: 'Installe-toi',        text: "Pieds bien à plat sur le sol, dos naturellement droit. Laisse ton corps trouver sa place." },
+    { num: '2', label: 'Sens le contact',     text: "Remarque tes pieds, leur poids, leur chaleur. Ce contact est réel — il est là maintenant." },
+    { num: '3', label: 'Inspire et descends', text: "À chaque expiration, laisse quelque chose descendre doucement en toi. Pas d'effort." },
+    { num: '4', label: 'Les racines s\'enfoncent', text: "Comme une plante qui trouve son ancrage. Tranquillement. Sans forcer." },
+  ],
+  tip: "Il n'y a rien à faire. Juste sentir. Juste être là.",
+}
+
+const J1_G1   = '#c8a0b0'
+const J1_G2   = '#9a7890'
+const J1_GLOW = 'rgba(200,160,176,0.40)'
+const J1_BG   = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
+
+// ── J2 — La Tige ─────────────────────────────────────────────────────────────
+const J2_G1   = '#9ab8c8'
+const J2_G2   = '#7a98a8'
+const J2_GLOW = 'rgba(154,184,200,0.40)'
+const J2_BG   = 'radial-gradient(circle at 50% 18%, #eef4f7, #deeaf0 58%, #d4e2ea)'
+
+const J2_RITUAL_DATA = {
+  badge:    { icon: '🌿', label: 'TIGE · ANCRAGE VERTICAL' },
+  title:    'Me tenir debout',
+  subtitle: "Le rituel de la tige",
+  duration: '10 à 15 min',
+  intro:    "Une tige ne pousse pas malgré la pesanteur. Elle pousse grâce à elle.",
+  steps: [
+    { num: '1', label: 'Tiens-toi debout',   text: "Assis·e ou debout, dos naturellement droit. Sens la ligne qui te tient." },
+    { num: '2', label: 'Imagine une tige',   text: "Une ligne fine qui monte du bassin jusqu'au sommet de la tête. Légère, souple." },
+    { num: '3', label: 'Inspire et grandit', text: "À chaque inspiration, laisse cette ligne s'étirer doucement vers le haut." },
+    { num: '4', label: 'Ton axe tient',      text: "Même sous tension, une tige revient à son axe. Sens le tien." },
+  ],
+  tip: "Tu n'as pas besoin de te forcer. La tige pousse simplement.",
+}
+
+function j2InvitationText(answers, dayKey = 'j2') {
+  const feel = J1_FEELINGS_FULL.find(f => f.key === answers?.[dayKey]?.feelBefore)
+  if (!feel) return "Ton axe est là. Ce rituel t'invite à le sentir."
+  if (feel.v <= 0.5) return "Tu portes quelque chose de très lourd. Ce rituel va t'aider à trouver ton axe."
+  if (feel.v <= 1)   return "Il y a de la tension en toi. La tige se redresse même sous le vent."
+  if (feel.v <= 1.5) return "Quelque chose t'alourdit. Ce rituel va t'inviter à te redresser doucement."
+  if (feel.v <= 2)   return "Tu cherches ton équilibre. Ce rituel va te montrer ton axe intérieur."
+  if (feel.v <= 2.5) return "Tu tiens. Ce rituel va t'aider à tenir encore mieux."
+  if (feel.v <= 3)   return "Il y a de la stabilité en toi. Ce rituel va l'approfondir."
+  if (feel.v <= 3.5) return "Tu te sens assez bien. Ce rituel va solidifier cet élan."
+  return "Tu rayonnes. Laisse cette énergie monter le long de ta tige."
+}
+
+// ── Composant générique — réutilisé par J1 et J2 ─────────────────────────────
+function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, GuidedFallback, dayNumber, invitationText, darkAt, onComplete, onBack }) {
+  const [phase,          setPhase]          = useState('view')
+  const [audioAvailable, setAudioAvailable] = useState(false)
+  const r = ritualData
+
+  useEffect(() => {
+    const audio = new Audio()
+    audio.addEventListener('loadedmetadata', () => setAudioAvailable(true), { once: true })
+    audio.addEventListener('error',          () => setAudioAvailable(false), { once: true })
+    audio.src  = audioSrc
+    audio.load()
+  }, [audioSrc])
+
+  if (phase === 'audio') return (
+    <WOFAudioPlayer audioSrc={audioSrc} title={audioTitle || r.title} g1={g1} g2={g2} glow={glow}
+      darkAt={darkAt} onDone={() => setPhase('flower')} onClose={() => setPhase('view')} />
+  )
+  if (phase === 'guided') return (
+    <GuidedFallback onNext={() => setPhase('flower')} onBack={() => setPhase('view')} onAudio={audioAvailable ? () => setPhase('audio') : null} />
+  )
+  if (phase === 'flower') return (
+    <WOFDayProgressionScreen dayNumber={dayNumber} onContinue={onComplete} />
+  )
+
+  return (
+    <div style={{ position: 'relative', background: bg, minHeight: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-10%', left: '-8%', width: 380, height: 380, borderRadius: '50%', background: `radial-gradient(circle,${g1}18 0%,transparent 65%)` }} />
+        <div style={{ position: 'absolute', bottom: '-8%', right: '-8%', width: 300, height: 300, borderRadius: '50%', background: `radial-gradient(circle,${g2}14 0%,transparent 65%)` }} />
+      </div>
+      <div style={{ flexShrink: 0, padding: '18px 18px 0', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(180,160,140,0.25)', borderRadius: 100, padding: '7px 16px', cursor: 'pointer', color: 'rgba(50,35,20,0.65)', fontSize: 13, fontFamily: "'Jost',sans-serif" }}>‹ Retour</button>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 28px 48px', boxSizing: 'border-box', position: 'relative', zIndex: 1, textAlign: 'center' }}>
+        <div style={{ animation: 'stepIn .35s ease both', marginBottom: 18 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 100, background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 4px 16px ${glow}` }}>
+            <span style={{ fontSize: 18 }}>{r.badge.icon}</span>
+            <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.95)', letterSpacing: '.08em', textTransform: 'uppercase' }}>{r.badge.label}</span>
+          </div>
+        </div>
+        <div style={{ animation: 'stepIn .38s ease .05s both', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,7vw,38px)', fontWeight: 400, color: '#2A1F18', margin: '0 0 6px', lineHeight: 1.15 }}>{r.title}</h2>
+          <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.50)', margin: '0 0 6px' }}>{r.subtitle}</p>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: `linear-gradient(135deg,${g1},${g2})`, animation: 'timeBadgePulse 2s ease-in-out infinite' }} />
+            <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.45)' }}>{r.duration}</span>
+          </div>
+        </div>
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: '#1a0f0a', lineHeight: 1.6, margin: '0 0 52px', maxWidth: 340, animation: 'stepIn .4s ease .15s both' }}>
+          {invitationText}
+        </p>
+        <div style={{ animation: 'stepIn .4s ease .35s both', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <button
+            onClick={() => setPhase(audioAvailable ? 'audio' : 'guided')}
+            style={{ padding: '18px 32px', width: '100%', maxWidth: 340, borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, whiteSpace: 'nowrap', boxSizing: 'border-box' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: 24, flexShrink: 0 }}>🔊</span> Commencer le rituel
+          </button>
+          <button
+            onClick={() => setPhase('guided')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: `rgba(50,35,20,0.45)`, textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}
+          >
+            tu préfères lire ?
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DayOneRituelView({ onComplete, onBack, dayNumber = 1, answers }) {
+  const feel = J1_FEELINGS_FULL.find(f => f.key === answers?.j1?.feelBefore)
+  const invText = (() => {
+    if (!feel) return "Tes racines sont là. Ce rituel te guide — ferme les yeux et laisse venir."
+    if (feel.v <= 0.5) return "Tu portes quelque chose de très lourd. Les racines absorbent ça — sans effort, sans jugement."
+    if (feel.v <= 1)   return "Il y a de la tension en toi. Les racines descendent même sous la tempête."
+    if (feel.v <= 1.5) return "Quelque chose occupe ton espace intérieur. Ce rituel va créer de l'espace."
+    if (feel.v <= 2)   return "Tu es dans un entre-deux. Ce rituel va t'inviter à descendre plus loin."
+    if (feel.v <= 2.5) return "Tu es stable. Ce rituel va t'aider à approfondir encore."
+    if (feel.v <= 3)   return "Tu portes quelque chose de plutôt calme. Ce rituel va l'ancrer plus profondément."
+    if (feel.v <= 3.5) return "Tu te sens serein·e. Ce rituel est le moment d'approfondir cette tranquillité."
+    return "Tu rayonnes. Ce rituel va laisser cette énergie descendre jusqu'aux racines."
+  })()
+  return (
+    <DayWOFRituelView
+      ritualData={J1_RITUAL_DATA} audioSrc="/audio/ancrage.mp3" audioTitle="Revenir à mes racines"
+      g1={J1_G1} g2={J1_G2} glow={J1_GLOW} bg={J1_BG}
+      GuidedFallback={RacinesGuidedRituel}
+      dayNumber={dayNumber} invitationText={invText}
+      onComplete={onComplete} onBack={onBack}
+    />
+  )
+}
+
+function DayTwoRituelView({ onComplete, onBack, dayNumber = 2, answers }) {
+  return (
+    <DayWOFRituelView
+      ritualData={J2_RITUAL_DATA} audioSrc="/audio/tige.mp3" audioTitle="Me tenir debout"
+      g1={J2_G1} g2={J2_G2} glow={J2_GLOW} bg={J2_BG}
+      GuidedFallback={TigeGuidedRituel}
+      dayNumber={dayNumber} invitationText={j2InvitationText(answers, 'j2')} darkAt={100}
+      onComplete={onComplete} onBack={onBack}
+    />
+  )
+}
+
+// ── J3 — Les Feuilles ────────────────────────────────────────────────────────
+const J3_G1   = '#7aaa88'
+const J3_G2   = '#5e8456'
+const J3_GLOW = 'rgba(122,170,136,0.40)'
+const J3_BG   = 'radial-gradient(circle at 50% 18%, #eef6ee, #deeedd 58%, #d4ead4)'
+
+const J3_RITUAL_DATA = {
+  badge:    { icon: '🍃', label: 'FEUILLES · CIRCULATION' },
+  title:    'Observer ce qui traverse',
+  subtitle: 'Le rituel du regard sans retenir',
+  duration: '3 à 5 min',
+  intro:    "Les feuilles captent la lumière. Elles reçoivent sans retenir.",
+  steps: [
+    { num: '1', label: 'Ferme les yeux',         text: "Laisse ce qui est là, être là. Pas besoin de changer quoi que ce soit." },
+    { num: '2', label: 'Observe ce qui traverse', text: "Pensées, sensations, images… Regarde-les comme des feuilles dans le vent." },
+    { num: '3', label: 'Ne retiens rien',         text: "À chaque expiration, laisse partir ce qui veut partir. Rien à retenir." },
+    { num: '4', label: 'Reçois la lumière',       text: "Chaque inspiration t'apporte un peu plus de clarté." },
+  ],
+  tip: "Les feuilles ne jugent pas ce qui les traverse. Toi non plus.",
+}
+
+function j3InvitationText(answers) {
+  const feel = J1_FEELINGS_FULL.find(f => f.key === answers?.j3?.feelBefore)
+  if (!feel) return "Tes feuilles s'ouvrent. Ce rituel t'invite à observer ce qui traverse."
+  if (feel.v <= 0.5) return "Tu portes quelque chose de lourd. Les feuilles ne retiennent pas. Ce rituel non plus."
+  if (feel.v <= 1)   return "Il y a de la tension. Les feuilles la laissent passer. Ce rituel aussi."
+  if (feel.v <= 1.5) return "Quelque chose t'occupe. Ce rituel t'aide à l'observer sans te perdre."
+  if (feel.v <= 2)   return "Tu es dans un entre-deux. Les feuilles accueillent tout. Ce rituel aussi."
+  if (feel.v <= 2.5) return "Tu es stable. C'est un bon moment pour observer ce qui circule."
+  if (feel.v <= 3)   return "Il y a du calme. Ce rituel va l'approfondir en observant ce qui traverse."
+  if (feel.v <= 3.5) return "Tu te sens plutôt serein·e. Ce rituel va laisser la lumière circuler."
+  return "Tu rayonnes. Les feuilles transforment la lumière. Ce rituel aussi."
+}
+
+// ── WOFFeuillesSVG — J3 : tige J2 statique + zoom + feuilles qui poussent ───
+function WOFFeuillesSVG() {
+  const [zoom,         setZoom]         = useState(false)
+  const [health,       setHealth]       = useState(32)   // exactement fin J2 — continuité
+  const [sparkVisible, setSparkVisible] = useState(false)
+  const audioRef = useRef(null)
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setZoom(true), 2000)
+    const t2 = setTimeout(() => {
+      const audio = new Audio('/harpe.mp3')
+      audio.volume = 0.65
+      audioRef.current = audio
+      audio.play().catch(() => {})
+      setSparkVisible(true)
+      setTimeout(() => setSparkVisible(false), 3000)
+      const start = Date.now()
+      let raf
+      const tick = () => {
+        const p = Math.min(1, (Date.now() - start) / 8000)  // 8s — croissance lente et visible
+        setHealth(32 + 24 * p)   // 32% → 56% — 3 paires de feuilles + début bouton
+        if (p < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+      return () => cancelAnimationFrame(raf)
+    }, 3000)
+    return () => { clearTimeout(t1); clearTimeout(t2); audioRef.current?.pause() }
+  }, [])
+
+  const gs = { sunriseH: 7, sunriseM: 0, sunsetH: 20, sunsetM: 0, petalColor1: '#7aaa88', petalColor2: '#8abb96', petalShape: 'round' }
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        transform: zoom ? 'scale(1.8)' : 'scale(1)',
+        transformOrigin: '50% 45%',
+        transition: zoom ? 'transform 4.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+      }}>
+        <PlantSVG health={health} gardenSettings={gs} clearSky={true} lumensLevel="faible" celebrate={false} />
+
+        {/* Scintillements sur les feuilles émergentes */}
+        {sparkVisible && (
+          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+            viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" fill="none">
+            <defs><style>{`@keyframes svgSpk{0%{opacity:0;transform:scale(0.3) rotate(0deg)}35%{opacity:1;transform:scale(1.15) rotate(20deg)}65%{opacity:0.6;transform:scale(0.9) rotate(35deg)}100%{opacity:0;transform:scale(0.3) rotate(60deg)}}@keyframes svgSpkR{0%{opacity:0;transform:scale(0)}30%{opacity:0.5}70%{opacity:0.1}100%{opacity:0;transform:scale(1.8)}}`}</style></defs>
+            {sparkleAt(175, 148, 3, 'rgba(255,222,60,0.90)', 10, 7, 0.0)}
+            {sparkleAt(225, 148, 3, 'rgba(255,222,60,0.90)',  9, 6, 0.3)}
+            {sparkleAt(165, 135, 2, 'rgba(255,222,60,0.90)',  7, 5, 0.6)}
+            {sparkleAt(235, 135, 2, 'rgba(255,222,60,0.90)',  7, 5, 0.9)}
+            {sparkleAt(200, 125, 3, 'rgba(255,222,60,0.90)',  8, 6, 0.4)}
+          </svg>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function DayThreeRituelView({ onComplete, onBack, dayNumber = 3, answers }) {
+  return (
+    <DayWOFRituelView
+      ritualData={J3_RITUAL_DATA} audioSrc="/audio/feuille.mp3" audioTitle="Observer ce qui traverse"
+      g1={J3_G1} g2={J3_G2} glow={J3_GLOW} bg={J3_BG}
+      GuidedFallback={FeuillesGuidedRituel}
+      dayNumber={dayNumber} invitationText={j3InvitationText(answers)} darkAt={88}
+      onComplete={onComplete} onBack={onBack}
+    />
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4c. DayOneContentMenu — Jour 1 slide 3 : 6 portes d'exploration + terminer
+// ─────────────────────────────────────────────────────────────────────────────
+
+const J1_MENU_ITEMS = [
+  { n: 1, label: 'Pourquoi les racines ?'              },
+  { n: 2, label: 'Mes racines · mon ancrage'           },
+  { n: 3, label: 'Mon rituel · ma fleur'               },
+  { n: 4, label: 'Mon mantra racines'                  },
+  { n: 5, label: 'Mon mandala · racines'               },
+  { n: 6, label: "MP3 d'ancrage"                       },
+]
+
+function J1ItemModal({ item, dayColor, onClose }) {
+  const C = dayColor || '#c8a0b0'
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(20,8,4,0.45)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        zIndex: 200,
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        padding: '0 0 0 0',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#faf5f2',
+          borderRadius: '24px 24px 0 0',
+          width: '100%',
+          maxWidth: 560,
+          maxHeight: '85dvh',
+          overflowY: 'auto',
+          padding: '28px 24px 48px',
+          animation: 'stepIn 0.3s ease both',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Poignée */}
+        <div style={{
+          width: 36, height: 4, borderRadius: 2,
+          background: 'rgba(180,130,100,0.25)',
+          margin: '0 auto 24px',
+        }} />
+
+        {/* En-tête */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: 30, height: 30, borderRadius: '50%',
+            background: C, color: '#fff',
+            fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600,
+            flexShrink: 0,
+          }}>
+            {item.n}
+          </span>
+          <h2 style={{
+            fontFamily: 'Cormorant Garamond, Georgia, serif',
+            fontSize: 'clamp(20px, 5vw, 24px)',
+            fontWeight: 600,
+            color: '#1a0808',
+            margin: 0,
+            lineHeight: 1.25,
+          }}>
+            {item.label}
+          </h2>
+        </div>
+
+        {/* Séparateur */}
+        <div style={{ height: 1, background: `rgba(200,160,176,0.25)`, marginBottom: 24 }} />
+
+        {/* Contenu — à personnaliser par item */}
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(17px, 4.5vw, 20px)',
+          fontStyle: 'italic',
+          color: '#5a3838',
+          lineHeight: 1.75,
+          margin: '0 0 32px',
+        }}>
+          {item.content || 'Contenu à venir…'}
+        </p>
+
+        {/* Bouton fermer */}
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%',
+            background: C,
+            border: 'none',
+            borderRadius: 100,
+            padding: '14px 24px',
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 14,
+            fontWeight: 500,
+            color: '#fff',
+            cursor: 'pointer',
+            letterSpacing: '0.05em',
+          }}
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function DayOneContentMenu({ onComplete, onBack, dayColor }) {
+  const C = dayColor || '#c8a0b0'
+  const [openItem, setOpenItem] = useState(null)
+
+  return (
+    <div className="wof-in" style={{ padding: '12px 16px 40px' }}>
+      <BackButton onClick={onBack} />
+
+      {/* En-tête */}
+      <div style={{ textAlign: 'center', margin: '4px 0 24px' }}>
+        <p style={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: C,
+          margin: '0 0 8px',
+        }}>
+          Jour 1 · Racines
+        </p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 'clamp(20px, 5vw, 26px)',
+          fontWeight: 500,
+          fontStyle: 'italic',
+          color: '#1a0808',
+          lineHeight: 1.3,
+          margin: 0,
+        }}>
+          Explore ton espace du jour
+        </h2>
+      </div>
+
+      {/* Grille responsive : 1 col mobile, 2 col desktop */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+        gap: 9,
+        marginBottom: 20,
+      }}>
+        {openItem && (
+          <J1ItemModal
+            item={openItem}
+            dayColor={C}
+            onClose={() => setOpenItem(null)}
+          />
+        )}
+
+        {J1_MENU_ITEMS.map(({ n, label }) => (
+          <button
+            key={n}
+            onClick={() => setOpenItem(J1_MENU_ITEMS.find(i => i.n === n))}
+            style={{
+              background: '#fff',
+              border: `1px solid rgba(200,160,176,0.28)`,
+              borderRadius: 13,
+              padding: '11px 14px',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              boxShadow: '0 1px 6px rgba(180,120,110,0.07)',
+              transition: 'box-shadow 0.18s ease, border-color 0.18s ease',
+              width: '100%',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.boxShadow   = `0 4px 14px rgba(200,160,176,0.20)`
+              e.currentTarget.style.borderColor = C
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.boxShadow   = '0 1px 6px rgba(180,120,110,0.07)'
+              e.currentTarget.style.borderColor = 'rgba(200,160,176,0.28)'
+            }}
+          >
+            {/* Badge numéro */}
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+              background: C,
+              color: '#fff',
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 11,
+              fontWeight: 600,
+              flexShrink: 0,
+            }}>
+              {n}
+            </span>
+
+            {/* Titre sur une ligne */}
+            <span style={{
+              fontFamily: 'Cormorant Garamond, Georgia, serif',
+              fontSize: 'clamp(15px, 4vw, 17px)',
+              fontWeight: 500,
+              color: '#2a1010',
+              flex: 1,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}>
+              {label}
+            </span>
+
+            {/* Flèche */}
+            <span style={{ color: C, fontSize: 16, opacity: 0.55, flexShrink: 0 }}>›</span>
+          </button>
+        ))}
+      </div>
+
+      {/* CTA Terminer */}
+      <button
+        onClick={onComplete}
+        style={{
+          width: '100%',
+          background: C,
+          border: 'none',
+          borderRadius: 100,
+          padding: '16px 24px',
+          fontFamily: 'Jost, sans-serif',
+          fontSize: 15,
+          fontWeight: 500,
+          color: '#fff',
+          cursor: 'pointer',
+          letterSpacing: '0.05em',
+          boxShadow: `0 8px 24px rgba(200,160,176,0.30)`,
+        }}
+      >
+        Terminer pour aujourd'hui
+      </button>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 5. DayShell — orchestre les 5 étapes d'un jour
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -5514,7 +8673,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
   }
 
   function goBack() {
-    const skip = dayConfig.accueil?.layout === 'slide1' && step === 2
+    const skip = dayIndex !== 0 && dayConfig.accueil?.layout === 'slide1' && step === 2
     const prev = skip ? 0 : Math.max(0, step - 1)
     setStep(prev)
     setAnimKey((k) => k + 1)
@@ -5532,9 +8691,15 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
 
   function handleAnswerFromAccueil(answerKey, value) {
     onDayComplete({ type: 'answer', dayKey: `j${dayConfig.day}`, answerKey, value })
-    setStep(2)
-    setAnimKey((k) => k + 1)
-    notifyScreen('rituel_transition')
+    if (dayIndex === 0) {
+      setStep(1)
+      setAnimKey((k) => k + 1)
+      notifyScreen('contenu')
+    } else {
+      setStep(2)
+      setAnimKey((k) => k + 1)
+      notifyScreen('rituel_transition')
+    }
   }
 
   function handleDayDone() {
@@ -5561,7 +8726,134 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 1 && !dayConfig.rituelFirst && (
+      {/* ── Jour 1 : accueil → ressenti avant → rituel → ressenti après → delta ── */}
+      {step === 1 && dayIndex === 0 && (
+        <RessentiScreen
+          phase="before"
+          onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j1', answerKey: 'feelBefore', value: f.key }); advance() }}
+          onBack={goBack}
+        />
+      )}
+      {step === 2 && dayIndex === 0 && (
+        <DayOneRituelView
+          onComplete={advance}
+          onBack={goBack}
+          dayNumber={dayConfig.day}
+          answers={answers}
+        />
+      )}
+      {step === 3 && dayIndex === 0 && (
+        <RessentiScreen
+          phase="after"
+          onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j1', answerKey: 'feelAfter', value: f.key }); advance() }}
+          onBack={goBack}
+        />
+      )}
+      {step === 4 && dayIndex === 0 && (
+        <DeltaScreen
+          answers={answers}
+          onNext={advance}
+        />
+      )}
+      {step === 5 && dayIndex === 0 && (
+        <RacinesValidation
+          answers={answers}
+          onNext={advance}
+          onBack={goBack}
+          onScreenChange={notifyScreen}
+        />
+      )}
+      {step === 6 && dayIndex === 0 && (
+        <J1TeaserScreen onNext={handleDayDone} />
+      )}
+
+      {/* ── Jour 2 : même trame que J1, thème Tige ── */}
+      {step === 1 && dayIndex === 1 && (
+        <RessentiScreen phase="before" dayLabel="Jour 2 · La Tige"
+          onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j2', answerKey: 'feelBefore', value: f.key }); advance() }}
+          onBack={goBack} />
+      )}
+      {step === 2 && dayIndex === 1 && (
+        <DayTwoRituelView onComplete={advance} onBack={goBack} dayNumber={dayConfig.day} answers={answers} />
+      )}
+      {step === 3 && dayIndex === 1 && (
+        <RessentiScreen phase="after"
+          onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j2', answerKey: 'feelAfter', value: f.key }); advance() }}
+          onBack={goBack} />
+      )}
+      {step === 4 && dayIndex === 1 && (
+        <DeltaScreen answers={{ ...answers, j1: answers?.j2 }} onNext={advance} />
+      )}
+      {step === 5 && dayIndex === 1 && (
+        <TigeValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+      )}
+      {step === 6 && dayIndex === 1 && (
+        <J2TeaserScreen onNext={handleDayDone} />
+      )}
+
+      {/* ── Jour 3 : même trame — Les Feuilles ── */}
+      {step === 1 && dayIndex === 2 && (
+        <RessentiScreen phase="before" dayLabel="Jour 3 · Les Feuilles"
+          onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j3', answerKey: 'feelBefore', value: f.key }); advance() }}
+          onBack={goBack} />
+      )}
+      {step === 2 && dayIndex === 2 && (
+        <DayThreeRituelView onComplete={advance} onBack={goBack} dayNumber={dayConfig.day} answers={answers} />
+      )}
+      {step === 3 && dayIndex === 2 && (
+        <RessentiScreen phase="after"
+          onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j3', answerKey: 'feelAfter', value: f.key }); advance() }}
+          onBack={goBack} />
+      )}
+      {step === 4 && dayIndex === 2 && (
+        <DeltaScreen answers={{ ...answers, j1: answers?.j3 }} onNext={advance} />
+      )}
+      {step === 5 && dayIndex === 2 && (
+        <FeuillesValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+      )}
+      {step === 6 && dayIndex === 2 && (
+        <J3TeaserScreen onNext={handleDayDone} />
+      )}
+
+      {/* ── Jour 4 : Les Fleurs ── */}
+      {step === 1 && dayIndex === 3 && (
+        <DayIntrospection
+          data={{ ...dayConfig.introspection, autoAdvance: true }}
+          onAnswer={(key, val) => { onDayComplete({ type: 'answer', dayKey: 'j4', answerKey: key, value: val }); advance() }}
+          onBack={goBack}
+          onScreenChange={notifyScreen}
+        />
+      )}
+      {step === 2 && dayIndex === 3 && (
+        <DayFourRituelView onComplete={advance} onBack={goBack} dayNumber={dayConfig.day} answers={answers} />
+      )}
+      {step === 3 && dayIndex === 3 && (
+        <FleurValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+      )}
+      {step === 4 && dayIndex === 3 && (
+        <J4TeaserScreen onNext={handleDayDone} />
+      )}
+
+      {/* ── Jour 5 : Le Souffle ── */}
+      {step === 1 && dayIndex === 4 && (
+        <DayIntrospection
+          data={{ ...dayConfig.introspection, autoAdvance: true }}
+          onAnswer={(key, val) => { onDayComplete({ type: 'answer', dayKey: 'j5', answerKey: key, value: val }); advance() }}
+          onBack={goBack}
+          onScreenChange={notifyScreen}
+        />
+      )}
+      {step === 2 && dayIndex === 4 && (
+        <DayFiveRituelView onComplete={advance} onBack={goBack} dayNumber={dayConfig.day} answers={answers} />
+      )}
+      {step === 3 && dayIndex === 4 && (
+        <SouffleValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+      )}
+      {step === 4 && dayIndex === 4 && (
+        <J5TeaserScreen onNext={handleDayDone} />
+      )}
+
+      {step === 1 && dayIndex > 4 && !dayConfig.rituelFirst && (
         <DayIntrospection
           data={dayConfig.introspection}
           onAnswer={handleAnswer}
@@ -5569,7 +8861,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 1 && dayConfig.rituelFirst && (
+      {step === 1 && dayIndex > 4 && dayConfig.rituelFirst && (
         <DayRituel
           data={dayConfig.rituel}
           answers={answers}
@@ -5579,7 +8871,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 2 && dayConfig.rituelFirst && (
+      {step === 2 && dayIndex > 4 && dayConfig.rituelFirst && (
         <DayIntrospection
           data={dayConfig.introspection}
           onAnswer={(key, val) => {
@@ -5591,13 +8883,13 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 2 && !dayConfig.rituelFirst && showRitualVideo && (
+      {step === 2 && dayIndex > 4 && !dayConfig.rituelFirst && showRitualVideo && (
         <RitualVideoSlide
           src={dayConfig.videoAfterRitual}
           onContinue={advance}
         />
       )}
-      {step === 2 && !dayConfig.rituelFirst && !showRitualVideo && (
+      {step === 2 && dayIndex > 4 && !dayConfig.rituelFirst && !showRitualVideo && (
         <DayRituel
           data={dayConfig.rituel}
           answers={answers}
@@ -5615,7 +8907,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 3 && dayConfig.guidedValidation && (
+      {step === 3 && dayIndex > 4 && dayConfig.guidedValidation && (
         <RacinesValidation
           answers={answers}
           onNext={handleDayDone}
@@ -5623,7 +8915,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 3 && !dayConfig.guidedValidation && dayConfig.traceSlides && dayConfig.typewriterTrace && (
+      {step === 3 && dayIndex > 4 && !dayConfig.guidedValidation && dayConfig.traceSlides && dayConfig.typewriterTrace && (
         <TypewriterSlides
           slides={typeof dayConfig.traceSlides === 'function' ? dayConfig.traceSlides(answers) : dayConfig.traceSlides}
           typewriterFrom={dayConfig.traceTypewriterFrom ?? 0}
@@ -5633,7 +8925,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           screenName={dayConfig.traceName ?? 'trace'}
         />
       )}
-      {step === 3 && !dayConfig.guidedValidation && dayConfig.traceSlides && !dayConfig.typewriterTrace && (
+      {step === 3 && dayIndex > 4 && !dayConfig.guidedValidation && dayConfig.traceSlides && !dayConfig.typewriterTrace && (
         <MultiPhaseOuverture
           slides={typeof dayConfig.traceSlides === 'function' ? dayConfig.traceSlides(answers) : dayConfig.traceSlides}
           ctaLabel="Continuer"
@@ -5642,7 +8934,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           screenName={dayConfig.traceName ?? 'trace'}
         />
       )}
-      {step === 3 && !dayConfig.guidedValidation && !dayConfig.traceSlides && (
+      {step === 3 && dayIndex > 4 && !dayConfig.guidedValidation && !dayConfig.traceSlides && (
         <DayTrace
           text={traceText}
           onNext={advance}
@@ -5651,7 +8943,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 4 && dayConfig.ouvertureSlides && (
+      {step === 4 && dayIndex > 4 && dayConfig.ouvertureSlides && (
         <MultiPhaseOuverture
           slides={dayConfig.ouvertureSlides}
           ctaLabel={dayConfig.finalCTA}
@@ -5659,7 +8951,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onScreenChange={notifyScreen}
         />
       )}
-      {step === 4 && !dayConfig.ouvertureSlides && (
+      {step === 4 && dayIndex > 4 && !dayConfig.ouvertureSlides && (
         <DayOuverture
           text={dayConfig.ouverture}
           isFinal={!!dayConfig.isFinal}
@@ -5688,7 +8980,7 @@ const ZONE_DAYS = [
 ]
 
 // ── FleurDiscoveryModal — présentation fleur jour 6 ──────────────────────────
-function FleurDiscoveryModal({ onClose }) {
+function FleurDiscoveryModal({ onClose, initialPetalColor1, initialPetalColor2, initialPetalShape }) {
   const { user } = useAuth()
   const userId   = user?.id
   const [plantData, setPlantData] = useState(null)
@@ -5716,27 +9008,60 @@ function FleurDiscoveryModal({ onClose }) {
     if (!userId) return
     ;(async () => {
       try {
-        const [plantRes, settingsRes] = await Promise.allSettled([
+        const [plantRes, settingsRes, profileRes] = await Promise.allSettled([
           supabase.from('plants')
             .select('health, zone_racines, zone_tige, zone_feuilles, zone_fleurs, zone_souffle')
             .eq('user_id', userId).order('date', { ascending: false }).limit(1).maybeSingle(),
           supabase.from('garden_settings')
             .select('petal_color1, petal_color2, petal_shape')
             .eq('user_id', userId).maybeSingle(),
+          supabase.from('profiles')
+            .select('week_one_data')
+            .eq('id', userId).maybeSingle(),
         ])
-        setPlantData(plantRes.status === 'fulfilled' ? (plantRes.value.data ?? null) : null)
+        let plant      = plantRes.status    === 'fulfilled' ? (plantRes.value.data    ?? null) : null
+        const profile0 = profileRes.status  === 'fulfilled' ? (profileRes.value.data  ?? null) : null
+        const completed = profile0?.week_one_data?.completedDays ?? []
+        if (completed.length > 0) {
+          const DAY_ZONE = { 1: 'zone_racines', 2: 'zone_tige', 3: 'zone_feuilles', 4: 'zone_fleurs', 5: 'zone_souffle' }
+          const DAY_MIN  = { 1: 40, 2: 48, 3: 55, 4: 60, 5: 65 }
+          const base = plant ?? { zone_racines: 0, zone_tige: 0, zone_feuilles: 0, zone_fleurs: 0, zone_souffle: 0 }
+          const zones = {
+            zone_racines:  base.zone_racines  ?? 0,
+            zone_tige:     base.zone_tige     ?? 0,
+            zone_feuilles: base.zone_feuilles ?? 0,
+            zone_fleurs:   base.zone_fleurs   ?? 0,
+            zone_souffle:  base.zone_souffle  ?? 0,
+          }
+          completed.forEach(d => {
+            const key = DAY_ZONE[d]
+            const min = DAY_MIN[d] ?? 35
+            if (key) zones[key] = Math.min(100, Math.max(zones[key], min))
+            if (d === 7) Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 75)) })
+          })
+          // FleurDiscoveryModal accessible depuis J6+ → garantir 65% min sur toutes les zones
+          if (!completed.includes(7)) {
+            Object.keys(zones).forEach(k => { zones[k] = Math.min(100, Math.max(zones[k], 65)) })
+          }
+          const newHealth = Math.round(Object.values(zones).reduce((a, b) => a + b, 0) / 5)
+          if (newHealth > (plant?.health ?? 0)) {
+            plant = { ...zones, health: newHealth }
+          }
+        }
+        setPlantData(plant)
         setSettings(settingsRes.status === 'fulfilled' ? (settingsRes.value.data ?? null) : null)
       } catch (_) {}
     })()
   }, [userId])
 
-  const health = plantData?.health ?? 35
-  const gardenSettings = settings ? {
+  const health = plantData?.health ?? 65
+  const fresh  = _freshGardenSettings
+  const gardenSettings = {
     ...DEFAULT_GARDEN_SETTINGS,
-    petalColor1: settings.petal_color1 ?? DEFAULT_GARDEN_SETTINGS.petalColor1,
-    petalColor2: settings.petal_color2 ?? DEFAULT_GARDEN_SETTINGS.petalColor2,
-    petalShape:  settings.petal_shape  ?? DEFAULT_GARDEN_SETTINGS.petalShape,
-  } : DEFAULT_GARDEN_SETTINGS
+    petalColor1: settings?.petal_color1 ?? fresh?.petal_color1 ?? initialPetalColor1 ?? DEFAULT_GARDEN_SETTINGS.petalColor1,
+    petalColor2: settings?.petal_color2 ?? fresh?.petal_color2 ?? initialPetalColor2 ?? DEFAULT_GARDEN_SETTINGS.petalColor2,
+    petalShape:  settings?.petal_shape  ?? fresh?.petal_shape  ?? initialPetalShape  ?? DEFAULT_GARDEN_SETTINGS.petalShape,
+  }
 
   return (
     <div style={{
@@ -5785,43 +9110,12 @@ function FleurDiscoveryModal({ onClose }) {
         </div>
 
         {/* Phrase */}
-        <p style={{ ...fadeIn(phase >= 2), fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: '#1a1208', lineHeight: 1.6, textAlign: 'center', margin: '0 0 16px' }}>
-          Chaque rituel nourrit une zone — et change la forme de ta fleur.
+        <p style={{ ...fadeIn(phase >= 2), fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: '#1a1208', lineHeight: 1.6, textAlign: 'center', margin: '0 0 24px' }}>
+          Chaque rituel nourrit une partie de toi — et fait évoluer ta fleur.
         </p>
 
-        {/* Barres de zones */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24, ...fadeIn(phase >= 3) }}>
-          {ZONE_KEYS_DISC.map((z, i) => {
-            const pct = plantData?.[z.key] ?? 35
-            return (
-              <div key={z.key} style={{
-                opacity: phase >= 3 ? 1 : 0,
-                transform: phase >= 3 ? 'translateY(0)' : 'translateY(6px)',
-                transition: `opacity 400ms ease ${i * 80}ms, transform 400ms ease ${i * 80}ms`,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13 }}>{z.emoji}</span>
-                    <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 700, color: '#000', letterSpacing: '0.03em' }}>{z.label}</span>
-                  </div>
-                  <span style={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 800, color: z.color, textShadow: 'none' }}>{Math.round(pct)}%</span>
-                </div>
-                <div style={{ height: 9, borderRadius: 6, background: 'rgba(0,0,0,0.10)', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', borderRadius: 6,
-                    background: `linear-gradient(90deg, ${z.color}bb, ${z.color})`,
-                    width: `${pct}%`,
-                    transition: `width 800ms cubic-bezier(0.34,1.2,0.64,1) ${400 + i * 100}ms`,
-                    boxShadow: `0 0 8px ${z.color}55`,
-                  }} />
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
         {/* Bouton fermer */}
-        <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 3) }}>
+        <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 2) }}>
           <button
             onClick={onClose}
             style={{
@@ -5992,7 +9286,7 @@ function GardenDashboard({ completedDays: completedDaysProp, completionDates = {
         .garden-card-pulse { animation: hintPulse 1.6s ease-in-out infinite; }
       `}</style>
 
-      {showFleurModal && <FleurDiscoveryModal onClose={() => setShowFleurModal(false)} />}
+      {showFleurModal && <FleurDiscoveryModal onClose={() => setShowFleurModal(false)} initialPetalColor1={petalColor1} initialPetalColor2={petalColor2} />}
 
       {/* Titre */}
       <div style={{ textAlign: 'center', marginBottom: 40, background: 'rgba(0,0,0,0.22)', borderRadius: 16, padding: '20px 16px 12px', backdropFilter: 'blur(2px)' }}>
@@ -6789,6 +10083,16 @@ export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceD
       })
   }, [userId])
 
+  // Mise à jour temps réel après personnalisation (MaFleurDiscovery → GardenDashboard)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.detail?.petalColor1) setPetalColor1(e.detail.petalColor1)
+      if (e.detail?.petalColor2) setPetalColor2(e.detail.petalColor2)
+    }
+    window.addEventListener('garden:settings:updated', handler)
+    return () => window.removeEventListener('garden:settings:updated', handler)
+  }, [])
+
   // Sauvegarde dans Supabase
 const saveWeekData = useCallback(async (updated) => {
   weekDataRef.current = updated
@@ -7048,9 +10352,9 @@ async function handleDayEvent(event) {
             visibility: view === 'garden' ? 'hidden' : 'visible',
           }}>
             <img
-              src="/champs.png"
+              src={dayIndex === 0 ? '/racines.png' : dayIndex === 1 ? '/tige.png' : dayIndex === 2 ? '/feuilles.png' : dayIndex === 3 ? '/fleur2.png' : dayIndex === 4 ? '/souffle.png' : '/champs.png'}
               alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: isMobile ? 'center center' : 'center 30%', display: 'block' }}
             />
 
             {/* Fondu bas */}
@@ -7115,21 +10419,7 @@ async function handleDayEvent(event) {
                 }}>
                   {currentConfig.accueil.timeBadge}
                 </span>
-              ) : (() => {
-                const slideKeys = Object.keys(currentConfig.helpTexts || {})
-                const slideIdx  = slideKeys.indexOf(currentScreen)
-                const slideNum  = slideIdx >= 0 ? slideIdx + 1 : 1
-                const total     = slideKeys.length || 1
-                return (
-                  <span style={{
-                    fontSize: 11, color: 'rgba(60,50,40,0.55)', letterSpacing: '.08em',
-                    background: 'rgba(255,255,255,0.70)', padding: '3px 10px', borderRadius: 100,
-                    backdropFilter: 'blur(4px)', fontFamily: 'Jost, sans-serif',
-                  }}>
-                    {String(slideNum).padStart(2,'0')} / {String(total).padStart(2,'0')}
-                  </span>
-                )
-              })()}
+              ) : null}
             </div>
           </div>
 
@@ -7169,11 +10459,7 @@ async function handleDayEvent(event) {
             )}
           </div>
 
-          {/* ── HelpBandeau — dernier enfant flex du modal, collé en bas ── */}
-          {view !== 'garden' && (() => {
-            const helpText = currentConfig.helpTexts?.[currentScreen]
-            return <HelpBandeau key={`${currentConfig.day}-${currentScreen}`} helpText={helpText} />
-          })()}
+          {/* HelpBandeau retiré */}
 
         </div>
       </div>

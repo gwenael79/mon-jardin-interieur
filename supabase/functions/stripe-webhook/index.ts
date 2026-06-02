@@ -12,8 +12,8 @@ const LUMEN_PACKS: Record<string, number> = {
 }
 
 const PRICE_MAP: Record<string, { product_name: string; product_icon: string; price: number }> = {
-  'price_1TMpO0CIpPVJTaopHfQrzF8z': { product_name: '1 mois', product_icon: '🌱', price: 13  },
-  'price_1TMpO0CIpPVJTaopzrpNDw8r': { product_name: '1 an',  product_icon: '✨', price: 108 },
+  'price_1Tds0cCIpPVJTaop0wnhmzZM': { product_name: '1 mois', product_icon: '🌱', price: 7.99 },
+  'price_1Tds0tCIpPVJTaop8vbMJ7Na': { product_name: '1 an',  product_icon: '✨', price: 59   },
 }
 
 Deno.serve(async (req: Request) => {

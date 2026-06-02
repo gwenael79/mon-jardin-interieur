@@ -1,73 +1,63 @@
 # Mon Jardin Intérieur — contexte projet
 
-> Fichier de passation. Résume les décisions prises lors d'une session de réflexion stratégique.
-> À placer à la racine du dépôt : Claude Code le lit automatiquement à chaque session.
+> Fichier de passation. À placer à la racine du dépôt : Claude Code le lit
+> automatiquement à chaque session. Éditable librement.
+> Dernière mise à jour : refonte du Jour 1 du parcours d'initiation.
 
 ## Le projet
 
-Application de bien-être **front-end uniquement** (HTML / JavaScript, pas de backend).
-Une **fleur** est le reflet de l'état émotionnel de la personne : elle grandit quand on prend soin de soi (rituels), se fane sans entretien.
+Application de bien-être **front-end uniquement** (React, HTML/JS, pas de backend serveur ; Supabase pour l'auth/données).
+Une **fleur** reflète l'état émotionnel : elle grandit quand on prend soin de soi (rituels), se fane sans entretien.
 
-- **Univers visuel** : Cormorant Garamond (serif léger, italique), fond crème (`#fffcf8`), verts (`#5e8456` / `#6f9560`), terracotta d'accent (`#c07840`). Doux, lent, contemplatif. La légèreté est une valeur centrale : pas de stats, pas de barres, pas de gamification visible.
-- **Deux chemins de progression** :
-  - **Agir** — la personne fait des rituels librement ; au bout de **10 rituels**, elle passe sur l'app complète. Chemin libre, sans calendrier.
-  - **Parcours d'initiation** — **7 jours, un rituel par jour**. Chemin structuré.
-- **Modèle premium** : abonnement ~13 €/mois (« Club des Jardiniers »).
+- **Univers visuel — IMPORTANT :** lumineux, plein jour, **chaud**. Crème `#faf5f2`, rose poudré `#c8a0b0` (couleur du Jour 1), lumière dorée, prairie ensoleillée, cadre mauve. Police : Cormorant Garamond (titres + italique) et Jost (petits libellés UI). Un petit lutin/compagnon fait partie de l'univers.
+  - ⚠️ **Ne jamais partir sur du sombre / nocturne.** Une première tentative de rituel en fond vert-nuit a été rejetée : « ça ne ressemble pas à mon univers ». Le monde est diurne et doux.
+- **Deux chemins :** *Agir* (rituels libres, ~10 rituels → bascule sur l'app) et *Parcours d'initiation* (7 jours, un rituel/jour, thèmes anatomiques : racines → tige → feuilles → fleurs → souffle → rencontre avec ma fleur → jardin ensemble).
+- **Premium :** abonnement ~7,99 €/mois (ou 59 €/an).
 
-## Diagnostic (le problème central)
+## Diagnostic (rappel)
 
-Base de ~70 inscrits (réseau perso, salon, Facebook, clientèle du cabinet d'hypnose), ~60 % inactifs, **0 achat**, **~50 % de départ dès le 1er jour**.
+~70 inscrits, ~60 % inactifs, **0 achat**, **~50 % de départ au jour 1**. Cause racine : **les rituels sont plats** — livrés en texte + petite animation, on lit/regarde, rien n'est vécu dans le corps. Le problème n'est ni l'acquisition, ni le prix, ni les e-mails (20 % d'ouverture). Ce sont **les premiers jours vides** qui font fuir.
 
-La chaîne de causes, du symptôme à la racine :
+## Décisions produit (stables)
 
-1. Ce n'est pas un problème d'acquisition (ne pas chercher plus de prospects tant que ça fuit).
-2. Les gens « n'y pensent plus » → problème de déclencheur. Les e-mails de rappel (20 % d'ouverture) ne déclenchent pas un geste quotidien : mauvais canal.
-3. Plus profond : **l'app ne produit pas d'effet ressenti**. Valeur reproductible seule et gratuitement → « pourquoi payer / pourquoi revenir ».
-4. Cause du départ jour 1 + du non-paiement = la même : **les rituels sont plats**. Ils sont livrés en **texte + petite animation de respiration** → on lit, on regarde, rien ne se passe dans le corps.
+1. **Profondeur avant personnalisation.** Le frein n'est pas la simplicité de l'acte ni le manque de perso — c'est le manque d'immersion. Lever n°1 : transformer le rituel en **audio guidé par la voix de la créatrice** (hypnothérapeute). Non-DIY-able, donc payable, et ça n'alourdit pas l'UI.
+2. **Progression visible dès le jour 1.** Ne plus cacher la fleur jusqu'au J6. Montrer la graine/les racines qui poussent dès la première séance. La floraison reste un cap, pas la première apparition.
+3. **Rythme du parcours :** un rituel par jour, pas de « tout enchaîner ». On peut aller **plus loin** (rester dans le thème du jour) mais pas **plus vite** (sauter au lendemain). Limite formulée comme un soin (« à demain »), jamais comme une serrure.
 
-## Décisions / direction produit
+## Jour 1 « Racines » — structure VERROUILLÉE (chantier en cours)
 
-### 1. Profondeur avant personnalisation
-Le frein n'est pas la simplicité de l'acte ni le manque de personnalisation — c'est le **manque d'immersion**. Un texte plat personnalisé reste plat.
-- **Lever n°1 (profondeur)** : transformer le rituel en **expérience guidée par la voix** (idéalement la voix de la créatrice, hypnothérapeute), avec rythme, son, silence. C'est ce qui tue la platitude. **N'alourdit pas l'interface** (un bouton, une voix).
-- **Lever n°2 (personnalisation)** : vient ensuite. Sert à proposer **le bon** rituel guidé selon le bilan du matin / les zones — pas à créer la profondeur. Utilise les données déjà présentes (bilan matin → stress par zone).
+Flux retenu (remplace les ~8 écrans de lecture actuels) :
 
-### 2. Présentation d'un rituel — arc en 5 temps
-Le téléphone guide puis **s'efface**. Mots entendus, pas lus. Le jardin est témoin.
-1. **Le seuil** — écran calme, une ligne, un son qui démarre, un geste pour entrer.
-2. **La descente** — la voix ralentit le corps ; l'animation de respiration devient le rythme porteur (pas un objet à regarder).
-3. **Le geste** — cœur du rituel, porté par la voix ; **l'écran s'assombrit**, invite à fermer les yeux.
-4. **L'intégration** — un silence, puis « remarquez comment vous vous sentez maintenant » (nommer le petit changement le rend réel).
-5. **La réponse du jardin** — la plante répond visiblement (feuille, lueur) : geste → effet → trace visible.
+**accueil court → rituel guidé (audio) → la graine/les racines qui poussent à vue d'œil → « ton espace du jour » (hub, optionnel) → terminer pour aujourd'hui**
 
-### 3. Progression visible dès le jour 1 (parcours)
-**Problème actuel** : la fleur n'apparaît qu'au 6e jour (« quelque chose se prépare » avant). Or la moitié des gens partent avant. Le mécanisme censé donner envie de revenir est placé après le gouffre.
-**Décision** : rendre le processus **visible dès la 1re minute** (graine → pousse → feuille → bouton → floraison). Pas de whaou, mais un micro-progrès visible chaque jour. La floraison reste un cap, pas la première apparition.
-*Principe* : montrer ce qui se passe déjà sous le capot ≠ ajouter une fonctionnalité. C'est plus léger, pas plus lourd, que le panneau « patientez ».
+Détails :
+- **Accueil :** garder le texte existant (« Tu n'es pas ici par hasard… ») mais court. Une seule marche.
+- **Ressenti :** garder *une* question de ressenti (slider/boutons), avant l'audio.
+- **Rituel = audio.** L'expérience par défaut. Le téléphone guide puis s'efface. Le « retrait » de l'écran se fait dans une **lumière chaude** (doré-rosé, yeux fermés face au soleil), PAS dans le noir. Pas de barre de progression, pas d'avance rapide. Toucher l'écran = pause. Lancement par un geste (obligatoire navigateur : pas d'autoplay) avec un fondu d'entrée de ~2,4 s avant la voix.
+- **Fin du rituel :** la graine se plante et **les racines descendent à vue d'œil** (thème ancrage = vers le bas). Texte de clôture chaleureux : « Tu as pris soin de toi. Tes racines, elles, le savent. » — PAS « ton équilibre ne peut pas encore apparaître » (ancien écran, à supprimer).
+- **Hub « Explore ton espace du jour » :** placé **APRÈS** le rituel, pas avant. Raison : le hub à 6 entrées (Pourquoi les racines / Mes racines · mon ancrage / Mon rituel · ma fleur / Mon mantra / Mon mandala / MP3 d'ancrage) est parfait pour quelqu'un d'engagé, mais écrase un inconnu au jour 1 (vertige du choix). Après le rituel, la personne est touchée et curieuse : c'est là que l'exploration optionnelle prend sa force. Le jour 1 doit *porter*, pas tendre un buffet.
+- **Bonus :** ce même hub pourra devenir le **premier** écran aux jours 3-7, quand la personne connaît déjà l'univers.
 
-### 4. Rythme du parcours 7 jours
-Garder **un rituel par jour** — ne PAS ajouter de « tout enchaîner ». L'espacement EST la pratique ; enchaîner optimise la complétion au prix de l'habitude (le retour quotidien est le comportement qu'on veut installer).
-- Formuler la limite comme un **soin**, pas comme une serrure : « votre jardin vous attendra demain ».
-- Le chemin **Agir** (10 rituels), lui, reste **libre et auto-rythmé** (pas de gate ; « je m'arrête / je continue » y a toute sa place).
-- Distinction de fond : Agir = liberté/exploration ; Parcours = installation d'une habitude. Les deux chemins n'ont pas la même règle parce qu'ils n'ont pas le même rôle.
+Principe directeur : **le jour 1 a un autre métier que les autres jours** — activation. Son seul but : qu'un inconnu ressente *une* chose vraie et ait envie de revenir. Donc le porter sur des rails jusqu'au moment ressenti, friction minimale.
 
-## Maquettes produites (hors dépôt, dans les téléchargements)
+## Code — points d'ancrage (fichier `WeekOneFlow.jsx`)
 
-Démos autonomes, à intégrer / adapter — formes volontairement simples pour juger le principe :
+- `WEEK_ONE_DATA` (~l.264) : config par jour (Jour 1 ~l.266). Le rituel a déjà `isGuided: true`, `zone: 'Racines'`.
+- `DayShell` (~l.5566) : orchestrateur des étapes (step 0→4 : accueil / introspection / rituel / validation / ouverture). C'est ici que se fera l'allègement du flux et l'ajout du hub après rituel.
+- `DayRituel` (~l.4855) : gère phases `view`/`audio`/`guided`. Convention audio déjà en place.
+- `DayAudioPlayer` (~l.4780) : **le lecteur à refondre** dans l'univers chaud (cf. ci-dessus). Une refonte existe en brouillon hors dépôt (`DayAudioPlayer.refonte.jsx`) — à reprendre en l'adaptant à la lumière diurne, pas la version sombre.
+- **Audio attendu :** `/public/audio/racines.mp3`. Tant qu'absent, prévoir un mode « script minuté » (sous-titres rythmés) pour tester le flux.
+- Script du rituel Racines : écrit, dans `jour1-racines-script-audio.md` (hors dépôt).
 
-- `jardin-progression.html` — progression graine→floraison sur 6 jours + bascule « ancienne vs nouvelle approche » pour comparer.
-- `jardin-progression-v2.html` — idem, mais avec choix d'un chemin qui colore la fleur, les mots et la palette (à recaler sur les vrais chemins Agir / Parcours).
-- `jardin-rituel.html` — un rituel guidé complet (arc en 5 temps). Voix via Web Speech API (placeholder — imaginer la vraie voix), ambiance via Web Audio, bulle de respiration, écran qui s'assombrit, plante qui répond. Bouton pour couper la voix de démo.
+## Prochains chantiers (ordre)
 
-Techniques réutilisables : SVG plante animée (CSS transforms + `transform-box: fill-box`), thématisation par variables CSS (`--accent`, `--petalBot`, etc.), `SpeechSynthesisUtterance` (fr-FR, rate ~0.84), oscillateurs Web Audio pour un pad d'ambiance.
+1. **Enregistrer le MP3 « racines »** avec la vraie voix (= la vraie valeur du produit).
+2. Refondre `DayAudioPlayer` en lumière chaude (seuil → écoute → racines qui poussent).
+3. Alléger `DayShell` pour le jour 1 (accueil court, 1 question, audio, fleur) et placer le hub APRÈS.
+4. Plus tard : décliner sur les jours 2-7 ; envisager le hub en écran d'entrée pour J3-J7.
 
-## Questions ouvertes / à décider
+## Questions encore ouvertes
 
-- La fleur finale doit-elle vraiment différer par chemin, ou rester la fleur signature avec juste une teinte ?
-- Intitulés et nombre exacts de « chemins » (les thèmes des maquettes v2 ne sont qu'une hypothèse).
-- Curseur philosophique sur le parcours : rythme doux mais ferme (« à demain », point) vs confiance + nudge avec porte discrète.
-- Production de la voix : qui enregistre, dans quelles conditions (c'est là qu'est toute la valeur).
-
-## Note de fond
-
-La priorité n'est ni l'acquisition, ni le prix, ni les e-mails : c'est que **les premiers jours sont vides**. Rendre les rituels vivants (voix) + la progression visible dès le jour 1 dénoue en même temps la platitude, le départ au 1er jour et le « pourquoi payer ».
+- La fleur finale diffère-t-elle par chemin/jour, ou reste-t-elle la fleur signature avec une teinte ?
+- Clôture du jour 1 : finir sur l'image qui pousse seule, ou ajouter un « à demain » textuel ?
+- Devenir des données du hub (mantra, mandala, checklist) : exploitées plus tard, ou simples moments de présence ?

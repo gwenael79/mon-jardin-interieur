@@ -517,9 +517,9 @@ const LEGAL_DOCS = {
         <h3>2. Prix et modalités de paiement</h3>
         <p>L'abonnement Premium est proposé en trois formules :</p>
         <ul>
-          <li><strong>Mensuel :</strong> 13,00 € TTC / mois — résiliable à tout moment</li>
-          <li><strong>Annuel :</strong> 108,00 € TTC / an (soit 9,00 € / mois, −30 %) — engagement 12 mois</li>
-          <li><strong>Tarif soutien :</strong> prix libre, minimum 108 € pour 12 mois</li>
+          <li><strong>Mensuel :</strong> 7,99 € TTC / mois — résiliable à tout moment</li>
+          <li><strong>Annuel :</strong> 59,00 € TTC / an (soit 4,92 € / mois, −38 %) — engagement 12 mois</li>
+          <li><strong>Tarif soutien :</strong> prix libre, minimum 59 € pour 12 mois</li>
         </ul>
         <p>Le paiement est effectué par carte bancaire via <strong>Stripe</strong>, plateforme sécurisée. Les données de paiement ne sont pas stockées par l'Éditeur.</p>
         <h3>3. Droit de rétractation</h3>

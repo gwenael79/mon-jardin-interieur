@@ -320,7 +320,8 @@ export default function App() {
           .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
         const completedDays = profileData?.week_one_data?.completedDays ?? []
         setWeekOneCompletedDays(completedDays)
-        if (completedDays.length < 7) { setScreen('weekone'); return }
+        // week_one_completed = filet de sécurité si la sauvegarde du j7 a foiré
+        if (completedDays.length < 7 && !userData?.week_one_completed) { setScreen('weekone'); return }
 
         setScreen('dashboard')
       } catch (e) {

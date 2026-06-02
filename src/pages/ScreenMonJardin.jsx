@@ -19,8 +19,8 @@ import RitualSuggestionModal from '../components/RitualSuggestionModal'
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
   sunsetH: 20, sunsetM: 0,
-  petalColor1: 'var(--zone-flowers)',
-  petalColor2: 'var(--zone-flowers)',
+  petalColor1: '#d4779a',
+  petalColor2: '#d4779a',
   petalShape: 'round',
 }
 
@@ -85,9 +85,9 @@ function LevelBadge({ lv, label, badge, unlockInfo, colorU, bgU, bdU, unlocked, 
 /* ── Données de tous les niveaux ── */
 const ALL_COLORS = [
   // Niveau 1 — teintes douces et classiques (4 couleurs)
-  { c1:'var(--zone-flowers)', c2:'var(--zone-flowers)', name:'Rose',      lvl:1 },
-  { c1:'var(--lumens)', c2:'var(--lumens)', name:'Lilas',     lvl:1 },
-  { c1:'#e89038', c2:'var(--gold)', name:'Soleil',    lvl:1 },
+  { c1:'#d4779a', c2:'#d4779a', name:'Rose',      lvl:1 },
+  { c1:'#b4a0f0', c2:'#b4a0f0', name:'Lilas',     lvl:1 },
+  { c1:'#e89038', c2:'#c8a870', name:'Soleil',    lvl:1 },
   { c1:'#48c878', c2:'#88e8a8', name:'Émeraude',  lvl:1 },
   // Niveau 2 — teintes vives et saturées (4 nouvelles couleurs)
   { c1:'#e83030', c2:'#f87060', name:'Écarlate',  lvl:2 },
@@ -95,7 +95,7 @@ const ALL_COLORS = [
   { c1:'#c020a0', c2:'#e060d0', name:'Magenta',   lvl:2 },
   { c1:'#208850', c2:'#40c880', name:'Jungle',    lvl:2 },
   // Niveau 3 — teintes rares et précieuses (7 nouvelles couleurs)
-  { c1:'#b89010', c2:'var(--gold)', name:'Or',        lvl:3 },
+  { c1:'#b89010', c2:'#c8a870', name:'Or',        lvl:3 },
   { c1:'#101888', c2:'#3848d8', name:'Saphir',    lvl:3 },
   { c1:'#601060', c2:'#a040a0', name:'Améthyste', lvl:3 },
   { c1:'#108088', c2:'#30c0c8', name:'Turquoise', lvl:3 },
@@ -5960,4 +5960,4 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   )
 }
 
-export { ScreenMonJardin, DailyQuizModal, BoiteAGraines }
+export { ScreenMonJardin, DailyQuizModal, BoiteAGraines, GardenSettingsModal }

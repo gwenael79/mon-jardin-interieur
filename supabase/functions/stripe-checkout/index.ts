@@ -7,8 +7,9 @@ const SUPABASE_SERVICE  = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const SUPABASE_ANON     = Deno.env.get('SUPABASE_ANON_KEY')!
 
 const PLAN_MONTHS: Record<string, number> = {
-  'price_1TMpO0CIpPVJTaopHfQrzF8z': 1,
-  'price_1TMpO0CIpPVJTaopzrpNDw8r': 12,
+  'price_1Tds0cCIpPVJTaop0wnhmzZM': 1,
+  'price_1Tds0tCIpPVJTaop8vbMJ7Na': 12,
+  'price_1TNcwlCIpPVJTaopCFVl7xou': 1,  // plan test 1€/mois (localhost dev)
 }
 
 const PRO_PREMIUM_PRICE_ID      = 'price_1TTjumCIpPVJTaopIY2O2o5K'
@@ -20,7 +21,7 @@ const ONE_TIME_PACKS: Record<string, { lumens?: number; months?: number }> = {
   'price_1TMpObCIpPVJTaopdCLedWAg': { lumens: 150 },
 }
 
-const SOLIDARITY_MIN_CENTS = 10800
+const SOLIDARITY_MIN_CENTS = 5900
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
