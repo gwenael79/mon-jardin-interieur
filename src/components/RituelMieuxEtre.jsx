@@ -264,8 +264,9 @@ const rmiStyles = `
   --ink:#2c3a33; --sage:#7d9b86; --sage-deep:#5e7e69;
   --gold:#c89b5a; --cream:#f6f2e9; --card:#fffefb; --muted:#8a958d; --line:#e6e1d4;
   font-family:'Nunito Sans',sans-serif; color:var(--ink); line-height:1.55;
+  position:fixed; inset:0; z-index:9900;
   display:flex; align-items:center; justify-content:center;
-  padding:24px; min-height:100%;
+  padding:24px; overflow-y:auto;
   background:
     radial-gradient(circle at 78% 12%, #eef3ec 0%, transparent 55%),
     radial-gradient(circle at 15% 85%, #f3ecdd 0%, transparent 50%),
