@@ -9,6 +9,7 @@ import { useAuth } from '../hooks/useAuth'
 import { PlantSVG, DEFAULT_GARDEN_SETTINGS } from '../components/PlantSVG'
 import { GardenSettingsModal } from './ScreenMonJardin'
 import { LutinCompagnon, LUTIN_MESSAGES_WEEK_ONE } from '../components/LutinCompagnon'
+import RituelMieuxEtre from '../components/RituelMieuxEtre'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Styles globaux — keyframes + responsive modal
@@ -5854,6 +5855,37 @@ function BonusRitualModal({ zoneId, color = '#c8a0b0', onClose }) {
   )
 }
 
+function CalendrierButton({ onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: '100%', maxWidth: 340, marginTop: 12,
+        padding: '13px 24px', borderRadius: 18,
+        border: '1.5px solid rgba(125,155,134,.45)',
+        background: 'linear-gradient(135deg,rgba(125,155,134,.14),rgba(94,126,105,.08))',
+        cursor: 'pointer', textAlign: 'center', transition: 'all .22s ease',
+        boxShadow: '0 4px 14px rgba(125,155,134,.18)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(125,155,134,.22)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(125,155,134,.30)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg,rgba(125,155,134,.14),rgba(94,126,105,.08))'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(125,155,134,.18)' }}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="#5e7e69" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 17, height: 17, flexShrink: 0 }}>
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span>
+        <span style={{ display: 'block', fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(16px,4.2vw,19px)', fontStyle: 'italic', fontWeight: 500, color: '#2a1010', lineHeight: 1.2 }}>
+          Programmer mon rappel quotidien
+        </span>
+        <span style={{ display: 'block', fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '.10em', textTransform: 'uppercase', color: '#7d9b86', marginTop: 3 }}>
+          Ajouter au calendrier →
+        </span>
+      </span>
+    </button>
+  )
+}
+
 function BonusButton({ color = '#c8a0b0', zoneName = 'racines', onClick }) {
   return (
     <button
@@ -5885,7 +5917,7 @@ function BonusButton({ color = '#c8a0b0', zoneName = 'racines', onClick }) {
   )
 }
 
-function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
+function RacinesValidation({ answers, onNext, onBack, onScreenChange, onCalendrier }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
   const [subSlide,   setSubSlide]   = useState(0)
   const [phase,      setPhase]      = useState(0)
@@ -6006,6 +6038,7 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
       {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#c8a0b0" zoneName="racines" onClick={() => setShowBonus(true)} /></div>}
+      {phase >= 4 && onCalendrier && <div style={{ display: 'flex', justifyContent: 'center' }}><CalendrierButton onClick={onCalendrier} /></div>}
     </div>
   )
 }
@@ -6014,7 +6047,7 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange }) {
 // TigeValidation — équivalent J2 de RacinesValidation
 // ─────────────────────────────────────────────────────────────────────────────
 
-function FeuillesValidation({ onNext, onBack, onScreenChange }) {
+function FeuillesValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
   const [subSlide,  setSubSlide]  = useState(0)
   const [phase,     setPhase]     = useState(0)
@@ -6066,6 +6099,7 @@ function FeuillesValidation({ onNext, onBack, onScreenChange }) {
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
       {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#7aaa88" zoneName="feuilles" onClick={() => setShowBonus(true)} /></div>}
+      {phase >= 4 && onCalendrier && <div style={{ display: 'flex', justifyContent: 'center' }}><CalendrierButton onClick={onCalendrier} /></div>}
     </div>
   )
 }
@@ -6420,7 +6454,7 @@ function FleursScanGuidedRituel({ onNext, onBack, onAudio }) {
   )
 }
 
-function FleurValidation({ onNext, onBack, onScreenChange }) {
+function FleurValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
   const [subSlide,  setSubSlide]  = useState(0)
   const [phase,     setPhase]     = useState(0)
@@ -6462,6 +6496,7 @@ function FleurValidation({ onNext, onBack, onScreenChange }) {
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
       {phase >= 4 && <div style={{display:'flex',justifyContent:'center'}}><BonusButton color="#d4a0b0" zoneName="fleurs" onClick={() => setShowBonus(true)} /></div>}
+      {phase >= 4 && onCalendrier && <div style={{display:'flex',justifyContent:'center'}}><CalendrierButton onClick={onCalendrier} /></div>}
     </div>
   )
 }
@@ -6623,7 +6658,7 @@ function DayFiveRituelView({ onComplete, onBack, dayNumber = 5, answers }) {
   )
 }
 
-function SouffleValidation({ onNext, onBack, onScreenChange }) {
+function SouffleValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
   const [subSlide,  setSubSlide]  = useState(0)
   const [phase,     setPhase]     = useState(0)
@@ -6665,6 +6700,7 @@ function SouffleValidation({ onNext, onBack, onScreenChange }) {
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
       {phase >= 4 && <div style={{display:'flex',justifyContent:'center'}}><BonusButton color="#c8a870" zoneName="souffle" onClick={() => setShowBonus(true)} /></div>}
+      {phase >= 4 && onCalendrier && <div style={{display:'flex',justifyContent:'center'}}><CalendrierButton onClick={onCalendrier} /></div>}
     </div>
   )
 }
@@ -6673,7 +6709,7 @@ function J5TeaserScreen({ onNext }) {
   return <DayTeaserScreen videoSrc="/video/fleur2.mp4" label="Demain," teaser="ta fleur t'attend." accentColor="#1a6a2a" onNext={onNext} />
 }
 
-function TigeValidation({ onNext, onBack, onScreenChange }) {
+function TigeValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
   useEffect(() => { onScreenChange?.('validation') }, [])
   const [subSlide,  setSubSlide]  = useState(0)
   const [showBonus, setShowBonus] = useState(false)
@@ -6740,6 +6776,7 @@ function TigeValidation({ onNext, onBack, onScreenChange }) {
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
       </div>
       {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#9ab8c8" zoneName="tige" onClick={() => setShowBonus(true)} /></div>}
+      {phase >= 4 && onCalendrier && <div style={{ display: 'flex', justifyContent: 'center' }}><CalendrierButton onClick={onCalendrier} /></div>}
     </div>
   )
 }
@@ -8686,6 +8723,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
   const [showFleurModal, setShowFleurModal] = useState(false)
   const [showRitualVideo, setShowRitualVideo] = useState(false)
   const [screen, setScreen] = useState('accueil_intro')
+  const [calendrierOnClose, setCalendrierOnClose] = useState(null)
 
   const dayConfig = WEEK_ONE_DATA[dayIndex]
 
@@ -8795,11 +8833,21 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
       {step === 5 && dayIndex === 0 && (
         <RacinesValidation
           answers={answers}
-          onNext={advance}
+          onNext={() => {
+            if (!localStorage.getItem('mji_calendrier_rituel_shown')) {
+              setCalendrierOnClose(() => () => {
+                localStorage.setItem('mji_calendrier_rituel_shown', '1')
+                setCalendrierOnClose(null)
+                advance()
+              })
+            } else { advance() }
+          }}
           onBack={goBack}
           onScreenChange={notifyScreen}
+          onCalendrier={() => setCalendrierOnClose(() => () => setCalendrierOnClose(null))}
         />
       )}
+      {calendrierOnClose && <RituelMieuxEtre onClose={calendrierOnClose} />}
       {step === 6 && dayIndex === 0 && (
         <J1TeaserScreen onNext={handleDayDone} />
       )}
@@ -8822,7 +8870,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
         <DeltaScreen answers={{ ...answers, j1: answers?.j2 }} onNext={advance} />
       )}
       {step === 5 && dayIndex === 1 && (
-        <TigeValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+        <TigeValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} onCalendrier={() => setCalendrierOnClose(() => () => setCalendrierOnClose(null))} />
       )}
       {step === 6 && dayIndex === 1 && (
         <J2TeaserScreen onNext={handleDayDone} />
@@ -8846,7 +8894,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
         <DeltaScreen answers={{ ...answers, j1: answers?.j3 }} onNext={advance} />
       )}
       {step === 5 && dayIndex === 2 && (
-        <FeuillesValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+        <FeuillesValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} onCalendrier={() => setCalendrierOnClose(() => () => setCalendrierOnClose(null))} />
       )}
       {step === 6 && dayIndex === 2 && (
         <J3TeaserScreen onNext={handleDayDone} />
@@ -8865,7 +8913,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
         <DayFourRituelView onComplete={advance} onBack={goBack} dayNumber={dayConfig.day} answers={answers} />
       )}
       {step === 3 && dayIndex === 3 && (
-        <FleurValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+        <FleurValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} onCalendrier={() => setCalendrierOnClose(() => () => setCalendrierOnClose(null))} />
       )}
       {step === 4 && dayIndex === 3 && (
         <J4TeaserScreen onNext={handleDayDone} />
@@ -8884,7 +8932,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
         <DayFiveRituelView onComplete={advance} onBack={goBack} dayNumber={dayConfig.day} answers={answers} />
       )}
       {step === 3 && dayIndex === 4 && (
-        <SouffleValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} />
+        <SouffleValidation onNext={advance} onBack={goBack} onScreenChange={notifyScreen} onCalendrier={() => setCalendrierOnClose(() => () => setCalendrierOnClose(null))} />
       )}
       {step === 4 && dayIndex === 4 && (
         <J5TeaserScreen onNext={handleDayDone} />

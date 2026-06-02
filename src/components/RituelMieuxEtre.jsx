@@ -197,6 +197,7 @@ export default function RituelMieuxEtre({ onClose }) {
         </div>
         <div className="rmi-kicker">Votre moment</div>
         <h1 className="rmi-title">Votre rituel mieux-être vous attend</h1>
+        <p className="rmi-intro">Choisissez l'heure à laquelle vous souhaitez prendre soin de vous chaque jour. Un rappel s'ajoutera à votre calendrier pour vous inviter doucement à revenir.</p>
 
         <label className="rmi-label">Vos heures de rappel</label>
         <div className="rmi-times">
@@ -296,6 +297,9 @@ const rmiStyles = `
 .rmi-title {
   font-family:'Cormorant Garamond',serif; font-size:33px; font-weight:600;
   line-height:1.1; letter-spacing:.2px; margin:0 0 22px;
+}
+.rmi-intro {
+  font-size:13.5px; color:var(--muted); line-height:1.65; margin:0 0 22px;
 }
 .rmi-label {
   display:block; font-size:12px; font-weight:700; letter-spacing:.05em;
