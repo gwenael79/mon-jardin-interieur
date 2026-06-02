@@ -80,10 +80,6 @@ const estIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-const estMobile = () =>
-  /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-  || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
-  || window.matchMedia("(max-width:639px)").matches;
 
 // ---------- Audio : carillon zen (version douce) ----------
 function frapper(ctx, dest, freq, when) {
@@ -181,8 +177,6 @@ export default function RituelMieuxEtre({ onClose }) {
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-
-  if (!estMobile()) return null;
 
   return (
     <div className="rmi-wrap">
