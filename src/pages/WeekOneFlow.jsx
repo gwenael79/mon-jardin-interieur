@@ -1046,7 +1046,8 @@ function PrimaryButton({ onClick, disabled, children, style }) {
           : 'linear-gradient(135deg, #c8a0b0, #a07888)',
         border: 'none',
         borderRadius: 50,
-        padding: '14px 40px',
+        padding: '16px 40px',
+        minHeight: 44,
         cursor: disabled ? 'default' : 'pointer',
         transition: 'transform 0.15s ease, opacity 0.2s',
         ...style,
@@ -1072,7 +1073,10 @@ function BackButton({ onClick }) {
         background: 'none',
         border: 'none',
         cursor: 'pointer',
-        padding: '4px 0 12px',
+        padding: '12px 4px',
+        minHeight: 44,
+        display: 'flex',
+        alignItems: 'center',
         letterSpacing: '0.02em',
       }}
     >
@@ -6080,7 +6084,7 @@ const J4_RITUAL_DATA = {
   badge:    { icon: '🌸', label: 'FLEURS · OUVERTURE' },
   title:    "M'accorder de l'espace",
   subtitle: "Le rituel de l'ouverture intérieure",
-  duration: '3 à 5 min',
+  duration: '10 à 15 min',
   intro:    "Les fleurs s'ouvrent quand elles sont prêtes. Pas avant.",
   steps: [
     { num: '1', label: 'Accueille ce qui est là',  text: "Sans chercher à le changer. Juste recevoir ce qui se présente." },
@@ -6476,7 +6480,7 @@ const J5_RITUAL_DATA = {
   badge:    { icon: '🌬️', label: 'SOUFFLE · CONNEXION' },
   title:    'Le souffle qui relie',
   subtitle: 'Le rituel du lien',
-  duration: '3 à 5 min',
+  duration: '10 à 15 min',
   intro:    "Le souffle relie l'intérieur à l'extérieur. Il traverse tout.",
   steps: [
     { num: '1', label: 'Inspire',              text: "Imagine que tu respires la lumière de ce qui t'entoure." },
@@ -8152,7 +8156,7 @@ const J1_RITUAL_DATA = {
   badge:    { icon: '🌱', label: 'RACINES · ANCRAGE' },
   title:    'Revenir à mes racines',
   subtitle: "Le rituel de l'ancrage profond",
-  duration: '3 à 5 min',
+  duration: '6 à 10 min',
   intro:    "Sous chaque agitation, tes racines sont là — silencieuses, solides, toujours disponibles.",
   steps: [
     { num: '1', label: 'Installe-toi',        text: "Pieds bien à plat sur le sol, dos naturellement droit. Laisse ton corps trouver sa place." },
@@ -8321,7 +8325,7 @@ const J3_RITUAL_DATA = {
   badge:    { icon: '🍃', label: 'FEUILLES · CIRCULATION' },
   title:    'Observer ce qui traverse',
   subtitle: 'Le rituel du regard sans retenir',
-  duration: '3 à 5 min',
+  duration: '10 à 15 min',
   intro:    "Les feuilles captent la lumière. Elles reçoivent sans retenir.",
   steps: [
     { num: '1', label: 'Ferme les yeux',         text: "Laisse ce qui est là, être là. Pas besoin de changer quoi que ce soit." },
