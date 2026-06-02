@@ -360,7 +360,7 @@ export default function App() {
 
   // ── Test URL params ────────────────────────────────────────────────────────
 
-  if (screen === 'loading' || screen === 'activating' || authLoading) {
+if (screen === 'loading' || screen === 'activating' || authLoading) {
     return <div style={styles.loading}><span>🌱</span></div>
   }
 

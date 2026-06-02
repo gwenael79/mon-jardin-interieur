@@ -37,6 +37,7 @@ import {
 } from './dashboardShared'
 
 import PushNotificationButton        from '../components/PushNotificationButton'
+import RituelMieuxEtre              from '../components/RituelMieuxEtre'
 import { usePushNotification }       from '../hooks/usePushNotification'
 import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
@@ -1799,8 +1800,9 @@ export default function DashboardPage() {
       .eq('user_id', user.id).maybeSingle()
       .then(({ data }) => setFondateurData(data ?? null))
   }, [showProfileModal, user?.id])
-  const [showProProfileModal, setShowProProfileModal] = useState(false)
-  const [showVipModal,        setShowVipModal]        = useState(false)
+  const [showProProfileModal,    setShowProProfileModal]    = useState(false)
+  const [showVipModal,           setShowVipModal]           = useState(false)
+  const [showRituelCalendrier,   setShowRituelCalendrier]   = useState(false)
   const [fondateurData,       setFondateurData]       = useState(null)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
   const [showTrialInfoModal,  setShowTrialInfoModal]  = useState(false)
@@ -2553,6 +2555,15 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
+              {ADMIN_IDS.includes(user?.id) && (
+                <div onClick={() => { setShowProfileModal(false); setShowRituelCalendrier(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(125,155,134,.08)', borderRadius:12, border:'1px solid rgba(125,155,134,.25)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(125,155,134,.16)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(125,155,134,.08)'}>
+                  <span style={{ fontSize:16 }}>📅</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:500, color:'#5e7e69', fontFamily:"'Jost',sans-serif" }}>Rituel · rappel calendrier</div>
+                    <div style={{ fontSize:10, color:'rgba(94,126,105,.55)', fontFamily:"'Jost',sans-serif" }}>Test composant mobile</div>
+                  </div>
+                </div>
+              )}
               <div onClick={() => { setShowProfileModal(false); setShowAvisModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
                 <span style={{ fontSize:16 }}>⭐</span>
                 <div>
@@ -2602,6 +2613,9 @@ export default function DashboardPage() {
             <ProProfile onBack={() => setShowProProfileModal(false)} />
           </div>
         </div>
+      )}
+      {showRituelCalendrier && (
+        <RituelMieuxEtre onClose={() => setShowRituelCalendrier(false)} />
       )}
       {showVipModal && (
         <CompteVipModal
