@@ -2220,6 +2220,7 @@ export default function DashboardPage() {
           onHealthUpdate={() => reloadPlant()}
           isPremium={isPremium || isFondateurGraine}
           onUpgrade={() => { setShowNeedModal(false); window.openAccessModal?.() }}
+          onSeeFlower={() => { setShowNeedModal(false); setPostRitualSlide(true); setOpenModalId('jardin') }}
         />
       )}
       {showRitualSuggestion && selectedNeed && (

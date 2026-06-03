@@ -6993,11 +6993,11 @@ function HelpBandeau({ helpText }) {
 // Fond chaud (doré-rosé), 3 états : ready / playing / ended
 // ─────────────────────────────────────────────────────────────────────────────
 
-function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow = 'rgba(200,160,176,0.45)', darkAt = 50, onDone, onClose }) {
+export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow = 'rgba(200,160,176,0.45)', darkAt = 50, onDone, onClose, bg: bgProp }) {
   const [state,    setState]    = useState('ready')
   const audioRef = useRef(null)
 
-  const BG   = 'linear-gradient(160deg, #fdf0e6 0%, #f5e6d8 45%, #ede0d0 100%)'
+  const BG   = bgProp ?? 'linear-gradient(160deg, #fdf0e6 0%, #f5e6d8 45%, #ede0d0 100%)'
   const TEXT = '#0f0808'
   const TXTS = 'rgba(15,8,8,0.50)'
 
@@ -7116,11 +7116,11 @@ function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow 
   const quitBtn = (
     <button
       onClick={() => { stopAll(); onClose?.() }}
-      style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.35)', border: `1px solid ${g1}22`, cursor: 'pointer', color: TXTS, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.65 }}
+      style={{ position: 'absolute', top: 16, right: 16, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.35)', border: `1px solid ${g1}22`, cursor: 'pointer', color: TXTS, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.65, zIndex: 20 }}
     >✕</button>
   )
 
-  const BASE = { minHeight: 'calc(64dvh)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: BG, padding: '40px 28px', textAlign: 'center', position: 'relative' }
+  const BASE = { minHeight: 'max(100%, calc(64dvh))', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: BG, padding: '40px 28px', textAlign: 'center', position: 'relative' }
 
   if (state === 'ready') return (
     <div style={BASE}>
@@ -7141,12 +7141,12 @@ function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow 
   )
 
   if (state === 'playing') return (
-    <div style={{ ...BASE, cursor: 'pointer', overflow: 'hidden', justifyContent: darkMode ? 'center' : 'flex-end', paddingBottom: darkMode ? 0 : '14%' }} onClick={togglePause}>
+    <div style={{ ...BASE, cursor: 'pointer', overflow: 'hidden', justifyContent: 'center', paddingTop: darkMode ? 0 : '12%', paddingBottom: darkMode ? 0 : '4%' }} onClick={togglePause}>
       {quitBtn}
 
 
       {/* Orbe + ondes radio */}
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: darkMode ? 0 : 100, zIndex: 10, width: 130, height: 130 }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: darkMode ? 0 : 64, zIndex: 10, width: 130, height: 130 }}>
         {/* 4 ondes concentriques décalées */}
         {!paused && [0, 2.5, 5, 7.5].map((delay, i) => (
           <div key={i} style={{

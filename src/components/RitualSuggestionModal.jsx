@@ -543,7 +543,7 @@ function PhaseAlternative({ originalNeed, isMobile, onStart, onSkip, onClose }) 
 }
 
 // ─── Phase : résultat + Ma Fleur ─────────────────────────────────────────────
-function PhaseResult({ need, isMobile, onSeeFlower, onClose, healthBefore, healthAfter }) {
+export function PhaseResult({ need, isMobile, onSeeFlower, onClose, healthBefore, healthAfter }) {
   const { g1, g2, glow } = need
 
   return (

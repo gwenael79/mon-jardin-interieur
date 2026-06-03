@@ -154,6 +154,15 @@ export default function App() {
     if (isRecovery) { setScreen('recovery'); return }
 
     const params = new URLSearchParams(window.location.search)
+    if (params.has('reset-cache')) {
+      try {
+        Object.keys(localStorage)
+          .filter(k => k.startsWith('mji_'))
+          .forEach(k => localStorage.removeItem(k))
+      } catch {}
+      window.history.replaceState({}, '', window.location.pathname)
+      setScreen('dashboard'); return
+    }
     if (params.has('test-onboarding')) { setScreen('onboarding'); return }
     if (params.has('test-weekone') || params.has('test-garden') || params.get('test-day')) { setScreen('weekone'); return }
     if (ADMIN_IDS.includes(user.id) && window.location.hash === '#admin')    { setScreen('admin');          return }

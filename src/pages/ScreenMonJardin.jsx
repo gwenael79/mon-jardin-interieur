@@ -4879,6 +4879,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     return () => window.removeEventListener('plantHealthPatched', handler)
   }, [todayPlant])
 
+  useEffect(() => {
+    const celebrate = () => setCelebrateKey(k => k + 1)
+    window.addEventListener('plantCelebrate', celebrate)
+    return () => window.removeEventListener('plantCelebrate', celebrate)
+  }, [])
+
   const handleToggleRitual = useCallback(async (ritualId) => {
     track('ritual_complete', { ritual_id: ritualId }, 'jardin', 'engagement')
     const alreadyDone = !!completedRituals[ritualId]
@@ -5395,6 +5401,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         plantId={plant?.id ?? todayPlant?.id}
         plantHealth={plant?.health ?? todayPlant?.health ?? 5}
         onHealthUpdate={h => setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: h }))}
+        onSeeFlower={() => setShowNeedModal(false)}
       />
     )}
     {showRitualSuggestion && selectedNeed && (

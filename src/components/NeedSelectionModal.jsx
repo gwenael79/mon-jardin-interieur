@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
 import { supabase } from '../core/supabaseClient'
+import AudioRitualsModal from './AudioRitualsModal'
 
 // ─── Données ────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ function Icon({ id, size = 28 }) {
     energy:      <path {...s} d="M13 2L4.09 12.96A1 1 0 0 0 5 14.5h6.5L10 22l9.5-11.5A1 1 0 0 0 18.5 9H12L13 2z"/>,
     selfconnect: <><circle {...s} cx="12" cy="8" r="4"/><path {...s} d="M4 20c0-3.5 3.6-6.5 8-6.5s8 3 8 6.5"/></>,
     softness:    <><circle {...s} cx="12" cy="12" r="2.5"/><path {...s} d="M12 2a3.5 3.5 0 0 1 0 7"/><path {...s} d="M12 22a3.5 3.5 0 0 1 0-7"/><path {...s} d="M2 12a3.5 3.5 0 0 1 7 0"/><path {...s} d="M22 12a3.5 3.5 0 0 1-7 0"/></>,
+    audio:       <><path {...s} d="M3 18v-6a9 9 0 0 1 18 0v6"/><path {...s} d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></>,
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={{display:'block',filter:'drop-shadow(0 1px 4px rgba(0,0,0,0.2))'}}>
@@ -517,8 +519,9 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
 
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
-function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade }) {
-  const [showByTime, setShowByTime] = useState(false)
+function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower }) {
+  const [showByTime,  setShowByTime]  = useState(false)
+  const [showAudio,   setShowAudio]   = useState(false)
   return (
     <>
       {/* Grain subtil */}
@@ -632,6 +635,39 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           ))}
         </div>
 
+        {/* Card rituels audios */}
+        {!onboarding && (
+          <div style={{ flexShrink:0, paddingBottom: isMobile ? 12 : 16, animation:'nm_fadeUp .45s ease .3s both' }}>
+            <button
+              onClick={() => setShowAudio(true)}
+              style={{
+                width:'100%', display:'flex', alignItems:'center', gap: isMobile ? 14 : 18,
+                padding: isMobile ? '16px 20px' : '20px 28px',
+                borderRadius:20, border:'1px solid rgba(255,255,255,0.22)',
+                background:'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.22), transparent 55%), linear-gradient(135deg, #7B4FA8, #C87040 60%, #E89030)',
+                boxShadow:'0 10px 28px rgba(160,90,40,0.30), inset 0 1px 2px rgba(255,255,255,0.28)',
+                cursor:'pointer', textAlign:'left', position:'relative', overflow:'hidden',
+                transition:'transform 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px) scale(1.012)'; e.currentTarget.style.boxShadow='0 18px 36px rgba(160,90,40,0.40), inset 0 1px 2px rgba(255,255,255,0.32)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,90,40,0.30), inset 0 1px 2px rgba(255,255,255,0.28)' }}
+            >
+              <div style={{ flexShrink:0, filter:'drop-shadow(0 1px 4px rgba(0,0,0,0.2))' }}>
+                <Icon id="audio" size={isMobile ? 28 : 34} />
+              </div>
+              <div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:700, fontStyle:'italic', color:'#fff', lineHeight:1.2, textShadow:'0 1px 6px rgba(0,0,0,0.18)' }}>
+                  Rituels guidés en audio
+                </div>
+                <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 14, color:'rgba(255,255,255,0.82)', marginTop:4, letterSpacing:'.02em' }}>
+                  La voix te porte, tu fermes les yeux
+                </div>
+              </div>
+              <div style={{ marginLeft:'auto', fontSize: isMobile ? 18 : 22, opacity:0.80 }}>▶</div>
+            </button>
+          </div>
+        )}
+
         {/* Footer — accès aux 120 rituels (conditionné premium, caché en onboarding) */}
         {!onboarding && (
           <div style={{ textAlign:'center', padding:'8px 0 32px', flexShrink:0, animation:'nm_fadeUp .5s ease .35s both' }}>
@@ -672,16 +708,17 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           </div>
         )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
+        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} />}
       </div>
     </>
   )
 }
 
-export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade }) {
+export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower }) {
   const isMobile = useIsMobile()
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
   const recommendedIds = getRecommendedNeeds(bilanDegradation)
-  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade }
+  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower }
 
   if (!isMobile) return (
     <>
