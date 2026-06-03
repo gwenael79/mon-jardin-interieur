@@ -4885,6 +4885,13 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     return () => window.removeEventListener('plantCelebrate', celebrate)
   }, [])
 
+  const [ritualSnapshot, setRitualSnapshot] = useState(null) // { before, after }
+  useEffect(() => {
+    const handler = (e) => setRitualSnapshot(e.detail ?? null)
+    window.addEventListener('ritualCompleteSnapshot', handler)
+    return () => window.removeEventListener('ritualCompleteSnapshot', handler)
+  }, [])
+
   const handleToggleRitual = useCallback(async (ritualId) => {
     track('ritual_complete', { ritual_id: ritualId }, 'jardin', 'engagement')
     const alreadyDone = !!completedRituals[ritualId]
@@ -5128,7 +5135,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const streak   = stats?.streak ?? 0
 
   const yesterdayHealth = history?.[0]?.health ?? null
-  const healthDelta = yesterdayHealth != null ? (plant?.health ?? 5) - yesterdayHealth : null
+  const displayBefore   = (isPostRitual && ritualSnapshot?.before != null) ? ritualSnapshot.before : yesterdayHealth
+  const healthDelta     = displayBefore != null ? (plant?.health ?? 5) - displayBefore : null
 
   const NARRATIVES = {
     matin: {
@@ -5210,7 +5218,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       return
     }
     const endVal   = plant.health
-    const startVal = Math.max(0, yesterdayHealth ?? Math.max(0, endVal - (healthDelta ?? 8)))
+    const startVal = Math.max(0, displayBefore ?? Math.max(0, endVal - (healthDelta ?? 8)))
 
     setAnimHealth(startVal)
     setBarPct(startVal)
@@ -5548,15 +5556,15 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
                 <div style={{ flex:1, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
 
-                  {/* Hier */}
-                  {yesterdayHealth != null && (
+                  {/* Hier (ou avant rituel si post-ritual) */}
+                  {displayBefore != null && (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
                       <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Précédemment</span>
-                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 34 : 40, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1 }}>{yesterdayHealth}%</span>
+                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 34 : 40, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1 }}>{displayBefore}%</span>
                     </div>
                   )}
 
-                  {yesterdayHealth != null && (
+                  {displayBefore != null && (
                     <span style={{ fontSize:20, color:'rgba(255,255,255,.80)', alignSelf:'center', marginTop:6 }}>→</span>
                   )}
 

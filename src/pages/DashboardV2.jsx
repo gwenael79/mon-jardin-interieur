@@ -2260,6 +2260,7 @@ export default function DashboardPage() {
   const updatedPlant = { ...snapshot, ...update }
   usePlantStore.getState().setTodayPlant(updatedPlant)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
+  window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: snapshot.health ?? 5, after: newHealth } }))
   try { await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' }) } catch(e) {}
   window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId: user?.id } }))
 }}

@@ -519,7 +519,7 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
 
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
-function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower }) {
+function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }) {
   const [showByTime,  setShowByTime]  = useState(false)
   const [showAudio,   setShowAudio]   = useState(false)
   return (
@@ -636,7 +636,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         </div>
 
         {/* Card rituels audios */}
-        {!onboarding && (
+        {(
           <div style={{ flexShrink:0, paddingBottom: isMobile ? 12 : 16, animation:'nm_fadeUp .45s ease .3s both' }}>
             <button
               onClick={() => setShowAudio(true)}
@@ -708,17 +708,17 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           </div>
         )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
-        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} />}
+        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} onboarding={onboarding} onCompleteRitual={onCompleteRitual} vitalityTotal={vitalityTotal} vitalityGain={vitalityGain} />}
       </div>
     </>
   )
 }
 
-export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower }) {
+export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }) {
   const isMobile = useIsMobile()
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
   const recommendedIds = getRecommendedNeeds(bilanDegradation)
-  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower }
+  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }
 
   if (!isMobile) return (
     <>

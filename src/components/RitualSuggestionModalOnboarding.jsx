@@ -153,7 +153,10 @@ export default function RitualSuggestionModalOnboarding({
           vitalityGain={vitalityGain}
           vitalityTotal={vitalityTotal}
           isMobile={isMobile}
-          onContinue={onSeeFlower ?? onClose}
+          onContinue={() => {
+            if (healthSnapshot) window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthSnapshot.beforeHealth, after: healthSnapshot.displayHealth } }))
+            ;(onSeeFlower ?? onClose)()
+          }}
         />
       </>
     )

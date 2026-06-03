@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { PlantSVG, DEFAULT_GARDEN_SETTINGS } from './PlantSVG'
+import RituelMieuxEtre from './RituelMieuxEtre'
 
 function getStage(health) {
   const r = Math.max(0, Math.min(1, health / 100))
@@ -101,6 +103,7 @@ export default function RitualCompletion({
   need, beforeHealth, displayHealth, vitalityGain = 5, vitalityTotal = 10,
   isMobile = false, onContinue, gardenSettings,
 }) {
+  const [showRappel, setShowRappel] = useState(false)
   const from   = beforeHealth ?? displayHealth
   const to     = displayHealth ?? from
 
@@ -298,6 +301,36 @@ export default function RitualCompletion({
         >
           Continuer
         </button>
+
+        <p style={{
+          fontFamily:"'Cormorant Garamond',serif",
+          fontStyle:'italic', fontSize: isMobile ? 18 : 21,
+          color:'#1a0f0a', textAlign:'center',
+          margin:'14px 0 6px', lineHeight:1.4, maxWidth:320,
+        }}>
+          Reviens demain. Ta fleur se souvient de chaque geste.
+        </p>
+
+        <button
+          onClick={() => setShowRappel(true)}
+          style={{
+            display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+            width:'100%', maxWidth:340,
+            padding:'12px 24px', marginTop:4,
+            background:'transparent',
+            color:'rgba(50,35,20,0.55)',
+            border:'1px solid rgba(50,35,20,0.18)',
+            borderRadius:50,
+            fontFamily:"'Jost',sans-serif", fontWeight:500,
+            fontSize:14, cursor:'pointer',
+            transition:'background .15s ease, color .15s ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background='rgba(50,35,20,0.06)'; e.currentTarget.style.color='rgba(50,35,20,0.75)' }}
+          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(50,35,20,0.55)' }}
+        >
+          📅 Me rappeler demain
+        </button>
+        {showRappel && createPortal(<RituelMieuxEtre onClose={() => setShowRappel(false)} />, document.body)}
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { WOFAudioPlayer } from '../pages/WeekOneFlow'
 import { PhaseResult } from './RitualSuggestionModal'
+import RitualCompletion from './RitualCompletion'
 import { supabase } from '../core/supabaseClient'
 
 const AUDIO_DAYS = [
@@ -33,7 +34,7 @@ const CSS = `
 `
 
 // phase: 'list' | 'audio' | 'evaluate' | 'result'
-export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHealthUpdate, onSeeFlower }) {
+export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHealthUpdate, onSeeFlower, onboarding, onCompleteRitual, vitalityTotal, vitalityGain = 5 }) {
   const [phase,        setPhase]        = useState('list')
   const [activeDay,    setActiveDay]    = useState(null)
   const [healthData,   setHealthData]   = useState(null) // { before, after }
@@ -44,17 +45,30 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
   }
 
   async function handleAudioDone() {
-    const before = plantHealth ?? 5
-    const after  = Math.min(100, before + 2)
-    setHealthData({ before, after })
-    if (plantId) {
-      onHealthUpdate?.(after)
-      try {
-        await supabase.from('plants').update({ health: after }).eq('id', plantId)
-        window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: after, plantId } }))
-      } catch (e) { console.error('[audioRitual] health update failed:', e) }
+    if (onboarding) {
+      // ── Capturer AVANT l'await (vitalityTotal peut changer pendant l'async) ──
+      const v      = vitalityTotal ?? 0
+      const g      = vitalityGain  ?? 5
+      const before = Math.min(100, v + 5)   // health_DB avant ritual = vitality + 5
+      const after  = Math.min(100, before + g)
+      await onCompleteRitual?.()
+      // Appeler setHealthData APRÈS l'await avec les variables figées
+      setHealthData({ before, after })
+      setPhase('result')
+    } else {
+      // ── Mode dashboard : santé plante +2, PhaseResult ──
+      const before = plantHealth ?? 5
+      const after  = Math.min(100, before + 2)
+      setHealthData({ before, after })
+      if (plantId) {
+        onHealthUpdate?.(after)
+        try {
+          await supabase.from('plants').update({ health: after }).eq('id', plantId)
+          window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: after, plantId } }))
+        } catch (e) { console.error('[audioRitual] health update failed:', e) }
+      }
+      setPhase('result')
     }
-    setPhase('result')
   }
 
   // need + ritual synthétiques pour PhaseEvaluate / PhaseResult
@@ -100,16 +114,28 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
             />
           )}
 
-          {/* ── Résultat Bravo ── */}
+          {/* ── Résultat : RitualCompletion (onboarding) ou PhaseResult (dashboard) ── */}
           {phase === 'result' && syntheticNeed && healthData && (
-            <PhaseResult
-              need={syntheticNeed}
-              isMobile={true}
-              healthBefore={healthData.before}
-              healthAfter={healthData.after}
-              onSeeFlower={() => { window.dispatchEvent(new CustomEvent('plantCelebrate')); (onSeeFlower ?? onClose)() }}
-              onClose={() => { window.dispatchEvent(new CustomEvent('plantCelebrate')); onClose() }}
-            />
+            onboarding ? (
+              <RitualCompletion
+                need={syntheticNeed}
+                beforeHealth={healthData.before}
+                displayHealth={healthData.after}
+                vitalityGain={vitalityGain ?? 5}
+                vitalityTotal={healthData.after}
+                isMobile={false}
+                onContinue={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); onSeeFlower?.(); onClose() }}
+              />
+            ) : (
+              <PhaseResult
+                need={syntheticNeed}
+                isMobile={true}
+                healthBefore={healthData.before}
+                healthAfter={healthData.after}
+                onSeeFlower={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); window.dispatchEvent(new CustomEvent('plantCelebrate')); (onSeeFlower ?? onClose)() }}
+                onClose={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); window.dispatchEvent(new CustomEvent('plantCelebrate')); onClose() }}
+              />
+            )
           )}
 
           {/* ── Liste des 5 cards ── */}

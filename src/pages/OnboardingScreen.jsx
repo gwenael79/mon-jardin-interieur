@@ -2991,6 +2991,12 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
           appUnlocked={appUnlocked}
           onEnterApp={onEnterApp}
           onboarding
+          onCompleteRitual={handleCompleteRitual}
+          vitalityTotal={vitality}
+          vitalityGain={5}
+          onSeeFlower={() => {
+            if (pendingCelebVideo) { setCelebVideo(pendingCelebVideo); setPendingCelebVideo(null) }
+          }}
         />
       )}
 
