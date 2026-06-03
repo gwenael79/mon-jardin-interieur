@@ -86,6 +86,30 @@ const estIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
+const estAndroid = () => /Android/i.test(navigator.userAgent);
+
+function googleCalendarUrl(heureStr, frequence) {
+  const debut = prochaineOccurrence(heureStr, frequence);
+  const fin = new Date(debut.getTime() + DUREE_MINUTES * 60000);
+  const fmt = (d) =>
+    d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "T"
+    + pad(d.getHours()) + pad(d.getMinutes()) + "00";
+  const rrule = frequence === "weekdays"
+    ? "RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+    : "RRULE:FREQ=DAILY";
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: TITRE,
+    dates: fmt(debut) + "/" + fmt(fin),
+    recur: rrule,
+    details:
+      "C'est l'heure de prendre soin de vous ✨\n\n" +
+      "🌸 Votre jardin intérieur vous attend.\n" +
+      "Ouvrir l'application : " + window.location.origin,
+  });
+  return "https://calendar.google.com/calendar/render?" + params.toString();
+}
+
 
 // ---------- Audio : carillon zen (version douce) ----------
 function frapper(ctx, dest, freq, when) {
@@ -166,13 +190,20 @@ export default function RituelMieuxEtre({ onClose }) {
     }
     if (audioCtxRef.current) jouerCarillonZen(audioCtxRef.current);
 
-    const contenu = genererICS(propres, frequence);
-
     if (estIOS()) {
+      const contenu = genererICS(propres, frequence);
       window.location.href =
         "data:text/calendar;charset=utf-8," + encodeURIComponent(contenu);
       return;
     }
+
+    if (estAndroid()) {
+      propres.forEach((h) => window.open(googleCalendarUrl(h, frequence), "_blank", "noopener"));
+      return;
+    }
+
+    // Desktop — téléchargement .ics
+    const contenu = genererICS(propres, frequence);
     const blob = new Blob([contenu], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -239,19 +270,36 @@ export default function RituelMieuxEtre({ onClose }) {
 
         <div className="rmi-preview">{preview}</div>
 
-        <button type="button" className="rmi-cta" onClick={programmer}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-            <line x1="12" y1="14" x2="12" y2="18"/>
-            <line x1="10" y1="16" x2="14" y2="16"/>
-          </svg>
-          Programmer mon rappel
-        </button>
-        <p className="rmi-hint">Le calendrier de votre téléphone s'ouvrira pour confirmer.</p>
+        {estAndroid() ? (<>
+          <button type="button" className="rmi-cta" onClick={programmer}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>
+            </svg>
+            Ajouter à Google Agenda
+          </button>
+          <button type="button" className="rmi-cta-alt" onClick={() => {
+            if (audioCtxRef.current) jouerCarillonZen(audioCtxRef.current);
+            const contenu = genererICS(propres, frequence);
+            const blob = new Blob([contenu], { type: "text/calendar;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = "rituel-mieux-etre.ics";
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }}>
+            Autre agenda (.ics)
+          </button>
+          <p className="rmi-hint">Google Agenda s'ouvrira — ou ouvrez le fichier .ics avec votre application Agenda.</p>
+        </>) : (<>
+          <button type="button" className="rmi-cta" onClick={programmer}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>
+            </svg>
+            Programmer mon rappel
+          </button>
+          <p className="rmi-hint">Le calendrier de votre téléphone s'ouvrira pour confirmer.</p>
+        </>)}
       </div>
     </div>
   );
@@ -349,6 +397,13 @@ const rmiStyles = `
 .rmi-cta:active { transform:scale(.985); }
 .rmi-cta svg { width:18px; height:18px; }
 .rmi-hint { font-size:12px; color:var(--muted); text-align:center; margin-top:14px; }
+.rmi-cta-alt {
+  width:100%; border:1.5px solid var(--line); background:#fdfcf8; color:var(--muted);
+  font-family:inherit; font-size:13px; font-weight:600; letter-spacing:.02em;
+  padding:12px; border-radius:14px; cursor:pointer; margin-top:10px;
+  transition:background .18s ease;
+}
+.rmi-cta-alt:hover { background:#f1f5ef; color:var(--sage-deep); border-color:var(--sage); }
 .rmi-close {
   position:absolute; top:14px; right:14px;
   width:34px; height:34px; border-radius:50%;
