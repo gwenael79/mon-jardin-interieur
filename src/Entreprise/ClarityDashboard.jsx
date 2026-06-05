@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../core/supabaseClient";
 
+const SB = "https://islnwrgghdjozbhvugan.supabase.co";
+
 // --- Palette Mon Jardin Intérieur ---
 const C = {
   cream: "#f5f1e8",
@@ -55,14 +57,22 @@ export default function ClarityDashboard() {
     setAnalysis("");
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("clarity-proxy", {
-        body: { numOfDays: numDays, dimensions: selectedDims },
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Session expirée — reconnecte-toi.");
+
+      const res = await fetch(`${SB}/functions/v1/clarity-proxy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ numOfDays: numDays, dimensions: selectedDims }),
       });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setCurrent(data);
-      // Enchaîne sur l'analyse IA
-      await analyze(data);
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload?.error || `Erreur clarity-proxy ${res.status}`);
+
+      setCurrent(payload);
+      await analyze(payload);
       loadHistory();
     } catch (e) {
       setError(e.message || String(e));
@@ -90,7 +100,7 @@ Réponds en texte simple, sans Markdown.`;
       // claude-proxy n'exige pas d'Authorization — on appelle via fetch nu
       // pour ne pas déclencher de preflight CORS sur un header qu'il n'autorise pas.
       const proxyRes = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claude-proxy`,
+        `${SB}/functions/v1/claude-proxy`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
