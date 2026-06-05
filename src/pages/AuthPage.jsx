@@ -982,7 +982,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
             {/* Logo — toujours dans le flux, taille différente selon mobile/PC */}
             <div className="auth-logo-block">
               <div className="auth-logo-circle" style={{ width: isMobile ? 72 : 90, height: isMobile ? 72 : 90 }}>
-                <img src="/icons/icon-192.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
+                <img src="/icons/icon-512.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
               </div>
               <div className="auth-logo-name" style={{ fontSize: isMobile ? 18 : 22 }}>Mon <em style={{ fontStyle:'normal', color:'#2e7010' }}>Jardin</em> Intérieur</div>
             </div>
