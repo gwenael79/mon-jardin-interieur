@@ -26,10 +26,11 @@ export default function ClarityDashboard() {
   const [analysis, setAnalysis] = useState("");
   const [history, setHistory] = useState([]);
   const [error, setError] = useState("");
+  const [reqCount, setReqCount] = useState(null); // nombre de requêtes Clarity aujourd'hui
 
-  // Charge l'historique des rapports
   useEffect(() => {
     loadHistory();
+    loadReqCount();
   }, []);
 
   async function loadHistory() {
@@ -39,6 +40,15 @@ export default function ClarityDashboard() {
       .order("created_at", { ascending: false })
       .limit(10);
     if (!error && data) setHistory(data);
+  }
+
+  async function loadReqCount() {
+    const today = new Date().toISOString().split("T")[0];
+    const { count } = await supabase
+      .from("mji_clarity_reports")
+      .select("*", { count: "exact", head: true })
+      .eq("report_date", today);
+    if (count !== null) setReqCount(count);
   }
 
   function toggleDim(dim) {
@@ -74,6 +84,7 @@ export default function ClarityDashboard() {
       setCurrent(payload);
       await analyze(payload);
       loadHistory();
+      loadReqCount();
     } catch (e) {
       setError(e.message || String(e));
     } finally {
@@ -171,20 +182,28 @@ Réponds en texte simple, sans Markdown.`;
           ))}
         </div>
 
-        <button
-          onClick={fetchTraffic}
-          disabled={loading || analyzing}
-          style={{
-            background: C.forest, color: "#fff", border: "none", borderRadius: 12,
-            padding: "12px 22px", fontSize: 16, cursor: loading ? "wait" : "pointer",
-            opacity: loading || analyzing ? 0.6 : 1,
-          }}
-        >
-          {loading ? "Récolte des données…" : analyzing ? "Analyse en cours…" : "Analyser mon trafic"}
-        </button>
-        <p style={{ color: C.muted, fontSize: 12, marginBottom: 0 }}>
-          ⚠️ L'API Clarity est limitée à 10 requêtes par jour — chaque clic en consomme une.
-        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <button
+            onClick={fetchTraffic}
+            disabled={loading || analyzing || reqCount >= 10}
+            style={{
+              background: reqCount >= 10 ? C.muted : C.forest,
+              color: "#fff", border: "none", borderRadius: 12,
+              padding: "12px 22px", fontSize: 16,
+              cursor: loading || analyzing || reqCount >= 10 ? "not-allowed" : "pointer",
+              opacity: loading || analyzing ? 0.6 : 1,
+            }}
+          >
+            {loading ? "Récolte des données…" : analyzing ? "Analyse en cours…" : "Analyser mon trafic"}
+          </button>
+
+          <QuotaBadge count={reqCount} />
+        </div>
+        {reqCount >= 10 && (
+          <p style={{ color: "#8a3a3a", fontSize: 13, margin: "8px 0 0" }}>
+            Quota journalier atteint — reviens demain.
+          </p>
+        )}
       </div>
 
       {error && (
@@ -227,6 +246,37 @@ Réponds en texte simple, sans Markdown.`;
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function QuotaBadge({ count }) {
+  if (count === null) return null;
+  const pct = count / 10;
+  const color = pct < 0.6 ? "#27500A" : pct < 0.9 ? "#7a4a00" : "#8a3a3a";
+  const bg    = pct < 0.6 ? "#EAF3DE" : pct < 0.9 ? "#FAEEDA" : "#f8e0e0";
+  const bd    = pct < 0.6 ? "#C0DD97" : pct < 0.9 ? "#EF9F27" : "#f09595";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{
+        background: bg, border: `1px solid ${bd}`, borderRadius: 10,
+        padding: "6px 14px", display: "flex", alignItems: "center", gap: 8,
+      }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color, fontFamily: "system-ui" }}>
+          {count}/10
+        </span>
+        <span style={{ fontSize: 12, color, opacity: 0.8, fontFamily: "system-ui" }}>
+          requêtes aujourd'hui
+        </span>
+      </div>
+      <div style={{ height: 4, borderRadius: 99, background: "#e0dbd0", overflow: "hidden" }}>
+        <div style={{
+          height: "100%", borderRadius: 99,
+          width: `${pct * 100}%`,
+          background: bd,
+          transition: "width 0.4s ease",
+        }} />
+      </div>
     </div>
   );
 }
