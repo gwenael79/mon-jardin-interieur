@@ -87,21 +87,28 @@ Rédige une analyse claire et bienveillante en français (200 mots max) :
 - 2 à 3 actions concrètes et prioritaires.
 Réponds en texte simple, sans Markdown.`;
 
-      const { data: res, error } = await supabase.functions.invoke("claude-proxy", {
-        body: {
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1500,
-          messages: [{ role: "user", content: prompt }],
-        },
-      });
-      if (error) throw error;
+      // claude-proxy n'exige pas d'Authorization — on appelle via fetch nu
+      // pour ne pas déclencher de preflight CORS sur un header qu'il n'autorise pas.
+      const proxyRes = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claude-proxy`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 1500,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        }
+      );
+      if (!proxyRes.ok) throw new Error(`claude-proxy ${proxyRes.status}`);
+      const raw = await proxyRes.json();
 
-      // Extraction défensive du texte selon la forme de la réponse
       const text =
-        res?.content?.filter?.((b) => b.type === "text").map((b) => b.text).join("\n") ||
-        res?.completion ||
-        res?.text ||
-        (typeof res === "string" ? res : JSON.stringify(res));
+        raw?.content?.find?.((b) => b.type === "text")?.text ||
+        raw?.completion ||
+        raw?.text ||
+        (typeof raw === "string" ? raw : JSON.stringify(raw));
 
       setAnalysis(text);
 
