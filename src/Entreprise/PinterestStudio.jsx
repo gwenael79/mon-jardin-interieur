@@ -4,6 +4,18 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 const W = 1000, H = 1500;
 
+// ── Edge Function (tokens lus côté serveur depuis les secrets Supabase) ──
+const EDGE_URL = "https://islnwrgghdjozbhvugan.supabase.co/functions/v1/buffer-publish";
+const SB_ANON  = "sb_publishable_JIcs9BSYEl7Mf6y9-tDEAw_0wsf-vyQ";
+
+const BOARDS = [
+  { id:"1125266725586251975", label:"Apaiser l'anxiété naturellement"  },
+  { id:"1125266725586251980", label:"Charge mentale & lâcher-prise"    },
+  { id:"1125266725586251976", label:"Citations douceur & bienveillance" },
+  { id:"1125266725586251978", label:"Comprendre ses émotions"           },
+  { id:"1125266725586251969", label:"Rituels du matin & du soir"        },
+];
+
 const THEMES = [
   { id:"rituel",    label:"Rituel du jour",    hex:"#27500A", bg:"#EAF3DE", bd:"#C0DD97", tx:"#27500A", eyebrow:"Rituel du jour"    },
   { id:"neuro",     label:"Neuro & science",   hex:"#26215C", bg:"#EEEDFE", bd:"#AFA9EC", tx:"#26215C", eyebrow:"Neuro & science"   },
@@ -45,17 +57,21 @@ function drawWrapped(ctx, text, cx, startY, maxW, lineH) {
 export default function PinterestStudio() {
   const canvasRef  = useRef(null);
   const bgRef      = useRef(null);  // Image de fond
-  const logoRef    = useRef(null);  // Image logo
+  const logoRef    = useRef(null);  // Image logo (branding bas)
+  const felineRef  = useRef(null);  // Logo feline (haut)
 
-  const [themeId,   setThemeId]   = useState(null);
-  const [eyebrow,   setEyebrow]   = useState("Rituel du matin");
-  const [title,     setTitle]     = useState("Le rituel du matin en 3 minutes pour un esprit apaisé");
-  const [subtitle,  setSubtitle]  = useState("Respirer, s'ancrer, commencer en douceur");
-  const [logoRound, setLogoRound] = useState(true);
-  const [logoSrc,   setLogoSrc]   = useState(null);   // null = utilise icon-512.png par défaut
-  const [bgReady,   setBgReady]   = useState(false);
-  const [logoTick,  setLogoTick]  = useState(0);       // force redraw quand logo change
-  const [fontsOk,   setFontsOk]   = useState(false);
+  const [themeId,    setThemeId]   = useState(null);
+  const [eyebrow,    setEyebrow]   = useState("Rituel du matin");
+  const [title,      setTitle]     = useState("Le rituel du matin en 3 minutes pour un esprit apaisé");
+  const [subtitle,   setSubtitle]  = useState("Respirer, s'ancrer, commencer en douceur");
+  const [logoRound,  setLogoRound] = useState(true);
+  const [logoSrc,    setLogoSrc]   = useState(null);
+  const [bgReady,    setBgReady]   = useState(false);
+  const [logoTick,   setLogoTick]  = useState(0);
+  const [fontsOk,    setFontsOk]   = useState(false);
+  const [boardId,    setBoardId]   = useState(BOARDS[0].id);
+  const [publishing, setPublishing]= useState(false);
+  const [pubMsg,     setPubMsg]    = useState(null);  // null | "ok" | "error:…"
 
   // ── Chargement des polices Google ──
   useEffect(() => {
@@ -79,7 +95,7 @@ export default function PinterestStudio() {
     img.src      = "/pinterest.png";
   }, []);
 
-  // ── Logo (défaut : icon-512.png, remplacé si l'utilisateur uploade) ──
+  // ── Logo branding bas (défaut : icon-512.png, remplacé si l'utilisateur uploade) ──
   useEffect(() => {
     const src    = logoSrc ?? "/icons/icon-512.png";
     const img    = new Image();
@@ -87,6 +103,14 @@ export default function PinterestStudio() {
     img.onerror  = () => { logoRef.current = null; setLogoTick(n => n + 1); };
     img.src      = src;
   }, [logoSrc]);
+
+  // ── Logo feline (haut de l'image, fixe) ──
+  useEffect(() => {
+    const img    = new Image();
+    img.onload   = () => { felineRef.current = img; setLogoTick(n => n + 1); };
+    img.onerror  = () => { felineRef.current = null; setLogoTick(n => n + 1); };
+    img.src      = "/icons/feline.png";
+  }, []);
 
   // ── Rendu canvas ──
   const draw = useCallback(() => {
@@ -114,15 +138,33 @@ export default function PinterestStudio() {
     ctx.textAlign    = "center";
     ctx.textBaseline = "top";
 
-    // ── Pré-calcul des hauteurs de texte pour dimensionner la pill ──
-    const TEXT_MAX_W = 730;
+    // 2 — Logo feline en haut au centre
+    const feline = felineRef.current;
+    if (feline) {
+      const FR = 100;         // rayon
+      const FCX = W / 2, FCY = FR + 50;
+      // halo blanc
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(FCX, FCY, FR + 7, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,252,244,0.75)";
+      ctx.fill();
+      ctx.restore();
+      // logo clipé en cercle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(FCX, FCY, FR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(feline, FCX - FR, FCY - FR, FR * 2, FR * 2);
+      ctx.restore();
+    }
+
+    // ── Pré-calcul des hauteurs pour centrer la pill ──
+    const TEXT_MAX_W     = 730;
     const SUBTITLE_MAX_W = 640;
+    const pillPadX = 60, pillPadTop = 55, pillPadBot = 52;
 
-    const eyebrowY = 290;
-    const dec1Y    = eyebrowY + 52;
-    const titleY   = dec1Y + 36;
-
-    // Compte les lignes du titre sans dessiner
+    // Mesure lignes titre
     ctx.font = `600 66px ${serif}`;
     const tWords = (title || "").split(/\s+/);
     let tLine = "", tCount = [];
@@ -133,12 +175,8 @@ export default function PinterestStudio() {
     }
     if (tLine) tCount.push(tLine);
     const titleLinesN = tCount.length || 1;
-    const titleEndY   = titleY + titleLinesN * 84;
 
-    const dec2Y     = titleEndY + 30;
-    const subtitleY = dec2Y + 28;
-
-    // Compte les lignes du sous-titre
+    // Mesure lignes sous-titre
     ctx.font = `italic 400 33px ${serif}`;
     let sLine = "", sCount = [];
     if (subtitle) {
@@ -149,23 +187,26 @@ export default function PinterestStudio() {
       }
       if (sLine) sCount.push(sLine);
     }
-    const subtitleEndY = subtitle ? subtitleY + sCount.length * 50 : subtitleY;
 
-    // 2 — Pill derrière le texte uniquement
-    const pillPadX = 60, pillPadTop = 55, pillPadBot = 52;
-    const pillX = W / 2 - TEXT_MAX_W / 2 - pillPadX;
-    const pillY = eyebrowY - pillPadTop;
-    const pillW = TEXT_MAX_W + pillPadX * 2;
-    const pillH = subtitleEndY + pillPadBot - pillY;
+    // Hauteur du contenu (relatif au top de l'eyebrow)
+    // eyebrow(~30) + gap→dec1(22) + dec1 + gap→title(36) + titre + gap→dec2(30) + dec2 + gap→sub(28) + sous-titre
+    const contentH = 52 + 36 + titleLinesN * 84 + 30 + 28 + (subtitle ? sCount.length * 50 : 0);
+    const pillH    = pillPadTop + contentH + pillPadBot;
 
-    ctx.save();
-    ctx.shadowColor   = "rgba(20,30,10,.18)";
-    ctx.shadowBlur    = 32;
-    ctx.shadowOffsetY = 8;
-    rrPath(ctx, pillX, pillY, pillW, pillH, 28);
+    // Centrage vertical — pleine largeur
+    const pillY    = Math.round((H - pillH) / 2);
+
+    // Positions dérivées du centre
+    const eyebrowY  = pillY + pillPadTop;
+    const dec1Y     = eyebrowY + 52;
+    const titleY    = dec1Y + 36;
+    const titleEndY = titleY + titleLinesN * 84;
+    const dec2Y     = titleEndY + 30;
+    const subtitleY = dec2Y + 28;
+
+    // Bande pleine largeur
     ctx.fillStyle = "rgba(255,252,244,0.88)";
-    ctx.fill();
-    ctx.restore();
+    ctx.fillRect(0, pillY, W, pillH);
 
     // 3 — Eyebrow
     ctx.font = `700 25px ${sans}`;
@@ -261,6 +302,41 @@ export default function PinterestStudio() {
     a.click();
   };
 
+  const publishToBuffer = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setPublishing(true);
+    setPubMsg(null);
+    try {
+      // Canvas → blob PNG
+      const blob = await new Promise((resolve, reject) =>
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error("Canvas vide")), "image/png")
+      );
+
+      // Envoi à l'Edge Function (stockage + Buffer côté serveur, tokens sécurisés)
+      const fd = new FormData();
+      fd.append("image",    blob, `pin-mji-${Date.now()}.png`);
+      fd.append("eyebrow",  eyebrow  || "");
+      fd.append("title",    title    || "");
+      fd.append("subtitle", subtitle || "");
+      fd.append("boardId",  boardId  || "");
+
+      const res = await fetch(EDGE_URL, {
+        method:  "POST",
+        headers: { "Authorization": `Bearer ${SB_ANON}` },
+        body:    fd,
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.ok === false) throw new Error(json.error || `HTTP ${res.status}`);
+      setPubMsg("ok");
+    } catch(e) {
+      setPubMsg("error:" + e.message);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   // ── Styles (identiques au HTML d'origine) ──
   const V = {
     cream:"#fbf6ee", ink:"#3d4a3a", green:"#4a6741", greenSoft:"#6f8a64", line:"#e7ded0", card:"#fffdf9",
@@ -300,6 +376,11 @@ export default function PinterestStudio() {
       marginTop:24, width:"100%", border:"none", borderRadius:13, cursor:"pointer",
       background:V.green, color:"#fff", fontFamily:"inherit", fontWeight:700,
       fontSize:15, letterSpacing:".02em", padding:15, transition:".15s",
+    },
+    btnBuffer: {
+      marginTop:10, width:"100%", border:`1px solid #e0001a`, borderRadius:13, cursor:"pointer",
+      background:"#fff", color:"#e0001a", fontFamily:"inherit", fontWeight:700,
+      fontSize:15, padding:15, transition:".15s",
     },
     stage: {
       background:"repeating-conic-gradient(#f3ede2 0% 25%,#efe7d8 0% 50%) 0/26px 26px",
@@ -379,6 +460,15 @@ export default function PinterestStudio() {
           <input type="text" id="pinSubtitle" value={subtitle} maxLength={70}
             onChange={e => setSubtitle(e.target.value)} style={S.input} />
 
+          {/* Tableau Pinterest */}
+          <label htmlFor="pinBoard" style={S.lbl}>Tableau Pinterest</label>
+          <select id="pinBoard" value={boardId} onChange={e => setBoardId(e.target.value)}
+            style={{ ...S.input, cursor:"pointer" }}>
+            {BOARDS.map(b => (
+              <option key={b.id} value={b.id}>{b.label}</option>
+            ))}
+          </select>
+
           <p style={S.hint}>
             Cliquer sur un thème change la couleur et remplit le sur-titre — tu peux ensuite le modifier à la main.
             Le titre et le sous-titre, eux, restent ce que tu tapes.
@@ -389,6 +479,28 @@ export default function PinterestStudio() {
             onMouseLeave={e => e.currentTarget.style.background = V.green}>
             ⤓ Télécharger l'épingle (PNG 1000×1500)
           </button>
+
+          <button
+            style={{ ...S.btnBuffer, opacity: publishing ? .6 : 1, cursor: publishing ? "not-allowed":"pointer" }}
+            onClick={publishToBuffer}
+            disabled={publishing}
+            onMouseEnter={e => { if (!publishing) e.currentTarget.style.background = "#fff5f5"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}>
+            {publishing ? "⏳ Publication en cours…" : "📌 Publier sur Pinterest via Buffer"}
+          </button>
+
+          {pubMsg === "ok" && (
+            <div style={{ marginTop:10, background:"#E1F5EE", border:".5px solid #5DCAA5",
+              borderRadius:10, padding:"10px 14px", fontSize:13, color:"#04342C" }}>
+              ✓ Épingle envoyée à Buffer · elle sera publiée selon ton planning.
+            </div>
+          )}
+          {pubMsg?.startsWith("error:") && (
+            <div style={{ marginTop:10, background:"#fff0ee", border:".5px solid #f0a090",
+              borderRadius:10, padding:"10px 14px", fontSize:13, color:"#993c1d" }}>
+              ✗ {pubMsg.slice(6)}
+            </div>
+          )}
         </div>
 
         {/* ── Prévisualisation ── */}
