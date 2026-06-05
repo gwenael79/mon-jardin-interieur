@@ -982,7 +982,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
             {/* Logo — toujours dans le flux, taille différente selon mobile/PC */}
             <div className="auth-logo-block">
               <div className="auth-logo-circle" style={{ width: isMobile ? 72 : 90, height: isMobile ? 72 : 90 }}>
-                <img src="/icons/logo.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
+                <img src="/icons/icon-192.png" alt="" style={{ width: isMobile ? 54 : 68, height: isMobile ? 54 : 68, borderRadius:'50%' }}/>
               </div>
               <div className="auth-logo-name" style={{ fontSize: isMobile ? 18 : 22 }}>Mon <em style={{ fontStyle:'normal', color:'#2e7010' }}>Jardin</em> Intérieur</div>
             </div>
@@ -1005,8 +1005,8 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               <button className="auth-btn-primary" onClick={() => goTo('register')}>
                 Commencer mon jardin →
               </button>
-              <button className="auth-btn-ghost" onClick={() => goTo('login')}>
-                Retrouver mon jardin
+              <button onClick={() => goTo('login')} style={{background:'none',border:'none',padding:'6px 0',cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:14,fontWeight:400,color:'rgba(15,42,8,.70)',textAlign:'center',width:'100%',marginBottom:14,transition:'color .2s'}} onMouseOver={e=>e.currentTarget.style.color='rgba(15,42,8,1)'} onMouseOut={e=>e.currentTarget.style.color='rgba(15,42,8,.70)'}>
+                Déjà un jardin ? Le retrouver
               </button>
               {reviewStats ? (
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginTop:10, ...(isMobile ? { background:'rgba(255,255,255,0.88)', borderRadius:50, padding:'6px 14px', boxShadow:'0 2px 10px rgba(0,0,0,0.10)', backdropFilter:'blur(6px)', alignSelf:'center', width:'fit-content', margin:'10px auto 0' } : {}) }}>
@@ -1023,15 +1023,14 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               )}
 
               {/* Entrée pro — séparée visuellement */}
-              <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid rgba(42,104,8,.15)',textAlign:'center'}}>
-                <div style={{fontSize:18,color:'rgba(15,42,8,.65)',marginBottom:10}}>Vous exercez une activité de bien-être ?</div>
+              <div style={{marginTop:16,paddingTop:14,borderTop:'1px solid rgba(42,104,8,.10)',textAlign:'center'}}>
                 <button
                   onClick={() => setShowProModal(true)}
-                  style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:18,fontWeight:600,color:'rgba(90,60,10,.80)',textDecoration:'underline',textUnderlineOffset:3,transition:'color .15s'}}
-                  onMouseOver={e=>e.target.style.color='rgba(90,60,10,1)'}
-                  onMouseOut={e=>e.target.style.color='rgba(90,60,10,.80)'}
+                  style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:13,fontWeight:400,color:'rgba(15,42,8,.55)',textDecoration:'underline',textUnderlineOffset:3,transition:'color .15s',letterSpacing:'.01em'}}
+                  onMouseOver={e=>e.target.style.color='rgba(15,42,8,.85)'}
+                  onMouseOut={e=>e.target.style.color='rgba(15,42,8,.55)'}
                 >
-                  Créer un espace professionnel →
+                  Vous êtes professionnel·le du bien-être ? Créer un espace pro
                 </button>
               </div>
 
