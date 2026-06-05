@@ -1,21 +1,5 @@
-// ============================================================
-//  ClarityDashboard.jsx
-//  Module de suivi de fréquentation pour le back-office
-//  (à placer dans src/Entreprise/ et brancher sur /#entreprise)
-//
-//  Flux :
-//   1. "Analyser mon trafic" -> appelle l'Edge Function clarity-proxy
-//   2. Les données brutes sont envoyées à claude-proxy pour analyse FR
-//   3. L'analyse est affichée et sauvegardée dans mji_clarity_reports
-//
-//  >>> DEUX POINTS À VÉRIFIER selon ton projet :
-//   (A) l'import du client supabase (chemin ci-dessous)
-//   (B) l'appel à claude-proxy (adapte au format de TON Edge Function)
-// ============================================================
-
 import { useState, useEffect } from "react";
-// (A) Adapte ce chemin à l'emplacement de ton client Supabase :
-import { supabase } from "../supabaseClient";
+import { supabase } from "../core/supabaseClient";
 
 // --- Palette Mon Jardin Intérieur ---
 const C = {
@@ -103,9 +87,10 @@ Rédige une analyse claire et bienveillante en français (200 mots max) :
 - 2 à 3 actions concrètes et prioritaires.
 Réponds en texte simple, sans Markdown.`;
 
-      // (B) Adapte cet appel au format exact de TON claude-proxy.
       const { data: res, error } = await supabase.functions.invoke("claude-proxy", {
         body: {
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1500,
           messages: [{ role: "user", content: prompt }],
         },
       });

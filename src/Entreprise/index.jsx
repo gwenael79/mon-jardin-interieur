@@ -8,6 +8,7 @@ import SeoStudio        from "./SeoStudio";
 import FinanceStudio    from "./FinanceStudio";
 import AgentChat        from "./AgentChat";
 import MeetingRoom      from "./MeetingRoom";
+import ClarityDashboard from "./ClarityDashboard";
 
 const TABS = [
   { id:"hub",        icon:"🌿", label:"Hub"        },
@@ -20,6 +21,7 @@ const TABS = [
   { id:"growth",     photo:"https://randomuser.me/api/portraits/men/22.jpg",   label:"LÉO"     },
   { id:"contenu",    photo:"https://randomuser.me/api/portraits/women/44.jpg", label:"LUCIE"   },
   { id:"meeting",    icon:"🪑",  label:"Réunion" },
+  { id:"clarity",    icon:"📡", label:"Trafic"  },
 ];
 
 const HUB_CARDS = [
@@ -32,6 +34,7 @@ const HUB_CARDS = [
   { id:"seo",        icon:"🔍", label:"SEO",         desc:"Briefs TOFU · MOFU · BOFU",                                  color:"#412402", bg:"#FAEEDA", bd:"#EF9F27" },
   { id:"finance",    icon:"📊", label:"Financier",   desc:"MRR · Churn · LTV/CAC · rapport IA mensuel",                 color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
   { id:"meeting",    icon:"🪑", label:"Salle de Réunion", desc:"Pilotage · SAM · LÉO · LUCIE · dialogue croisé · vision à 360°", color:"#2a1f00", bg:"#FDF6E3", bd:"#D4B97A" },
+  { id:"clarity",    icon:"📡", label:"Trafic Clarity",  desc:"Fréquentation · appareils · sources · analyse IA en français",   color:"#04342C", bg:"#E1F5EE", bd:"#5DCAA5" },
 ];
 
 const BRAND = { dark:"#1c3818", text:"#c8e6b0", sub:"#7ab36a" };
@@ -138,7 +141,7 @@ export default function Entreprise() {
       {/* ── Content ── */}
       {(() => {
         const isAgent = ["maestro","stratege","growth","contenu","meeting"].includes(active);
-        const isStudio = ["hub","reseaux","commercial","seo","finance"].includes(active);
+        const isStudio = ["hub","reseaux","commercial","seo","finance","clarity"].includes(active);
         return (
           <div style={{ padding: isAgent ? "20px 4%" : "16px",
             maxWidth: isAgent ? "none" : "600px",
@@ -155,6 +158,7 @@ export default function Entreprise() {
             {active==="growth"   && <AgentChat agentId="growth"   agentName="LÉO"   agentFullName="LÉO · Développement"   agentDesc="Métriques SaaS · cohortes · leviers cachés" agentColor="#412402" agentBg="#FAEEDA" agentPhoto="https://randomuser.me/api/portraits/men/22.jpg" />}
             {active==="contenu"  && <AgentChat agentId="contenu"  agentName="LUCIE" agentFullName="LUCIE · CONTENU" agentDesc="Planning éditorial · repurposing · stratégie cross-canal" agentColor="#04342C" agentBg="#E1F5EE" agentPhoto="https://randomuser.me/api/portraits/women/44.jpg" />}
             {active==="meeting"  && <MeetingRoom />}
+            {active==="clarity"  && <ClarityDashboard />}
           </div>
         );
       })()}
