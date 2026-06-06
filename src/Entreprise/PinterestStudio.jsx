@@ -5,8 +5,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 const W = 1000, H = 1500;
 
 // ── Edge Function (tokens lus côté serveur depuis les secrets Supabase) ──
-const EDGE_URL = "https://islnwrgghdjozbhvugan.supabase.co/functions/v1/buffer-publish";
-const SB_ANON  = "sb_publishable_JIcs9BSYEl7Mf6y9-tDEAw_0wsf-vyQ";
+const EDGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/buffer-publish`;
+const SB_ANON  = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const BOARDS = [
   { id:"1125266725586251975", label:"Apaiser l'anxiété naturellement"  },

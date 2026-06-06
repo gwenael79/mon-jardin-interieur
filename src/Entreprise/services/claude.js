@@ -2,8 +2,8 @@
 // src/Entreprise/services/claude.js
 // Appel Claude API via Supabase Edge Function (proxy CORS)
 
-const SB_URL = "https://islnwrgghdjozbhvugan.supabase.co";
-const SB_KEY = "sb_publishable_JIcs9BSYEl7Mf6y9-tDEAw_0wsf-vyQ";
+const SB_URL = import.meta.env.VITE_SUPABASE_URL;
+const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const PROXY  = `${SB_URL}/functions/v1/claude-proxy`;
 
 export const callClaude = async (system, prompt) => {

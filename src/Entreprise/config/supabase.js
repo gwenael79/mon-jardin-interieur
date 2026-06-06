@@ -3,8 +3,8 @@
 // Client Supabase partagé entre tous les Studios
 // ─────────────────────────────────────────────
 
-const SB_URL = "https://islnwrgghdjozbhvugan.supabase.co";
-const SB_KEY = "sb_publishable_JIcs9BSYEl7Mf6y9-tDEAw_0wsf-vyQ";
+const SB_URL = import.meta.env.VITE_SUPABASE_URL;
+const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const sb = async (path, opts = {}) => {
   const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
