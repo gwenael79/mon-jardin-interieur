@@ -10,6 +10,7 @@ import AgentChat        from "./AgentChat";
 import MeetingRoom      from "./MeetingRoom";
 import ClarityDashboard from "./ClarityDashboard";
 import PinterestStudio  from "./PinterestStudio";
+import CalendrierPub    from "./CalendrierPub";
 
 const TABS = [
   { id:"hub",        icon:"🌿", label:"Hub"        },
@@ -24,6 +25,7 @@ const TABS = [
   { id:"meeting",    icon:"🪑",  label:"Réunion" },
   { id:"clarity",    icon:"📡", label:"Trafic"  },
   { id:"pinterest",  icon:"📌", label:"Pinterest" },
+  { id:"calendrier", icon:"📅", label:"Calendrier pub" },
 ];
 
 const HUB_CARDS = [
@@ -143,12 +145,13 @@ export default function Entreprise() {
 
       {/* ── Content ── */}
       {(() => {
-        const isAgent   = ["maestro","stratege","growth","contenu","meeting"].includes(active);
-        const isWide    = ["pinterest"].includes(active);
+        const isAgent    = ["maestro","stratege","growth","contenu","meeting"].includes(active);
+        const isWide     = ["pinterest"].includes(active);
+        const isFullWide = ["calendrier"].includes(active);
         return (
           <div style={{ padding: isAgent ? "20px 4%" : "16px",
-            maxWidth: isAgent ? "none" : isWide ? "900px" : "600px",
-            width: isAgent ? "80%" : "auto",
+            maxWidth: isAgent || isFullWide ? "none" : isWide ? "900px" : "600px",
+            width: isAgent || isFullWide ? "80%" : "auto",
             margin: "0 auto",
             boxSizing: "border-box" }}>
             {active==="hub"        && <Hub setActive={setActive} />}
@@ -163,6 +166,7 @@ export default function Entreprise() {
             {active==="meeting"  && <MeetingRoom />}
             {active==="clarity"    && <ClarityDashboard />}
             {active==="pinterest"  && <PinterestStudio />}
+            {active==="calendrier" && <CalendrierPub />}
           </div>
         );
       })()}
