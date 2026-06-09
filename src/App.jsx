@@ -28,6 +28,7 @@ import { useLastVisit }          from './hooks/useLastVisit'
 import GardenNotificationBanner  from './components/GardenNotificationBanner'
 import PlantIcon                 from './components/PlantIcon'
 import { CerclePublicPage }      from './pages/ScreenCercleFondateurs'
+import { ConfidentialitePage }   from './pages/ConfidentialitePage'
 
 const ADMIN_IDS = ['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7']
 
@@ -149,6 +150,8 @@ export default function App() {
       // ?cercle sans compte → page publique, pas la page d'inscription
       const p = new URLSearchParams(window.location.search)
       if (p.has('cercle') && p.get('cercle') !== 'success' && p.get('cercle') !== 'cancel') return
+      // ?confidentialite → page légale publique, pas de redirection auth
+      if (p.has('confidentialite')) return
       setScreen('auth'); return
     }
     if (isRecovery) { setScreen('recovery'); return }
@@ -356,8 +359,13 @@ export default function App() {
     setScreen('dashboard')
   }
 
-  // ── Lien d'invitation Cercle des Fondateurs (?cercle=invite ou ?cercle) ──
+  // ── Pages légales publiques ──────────────────────────────────────────────
   const params = new URLSearchParams(window.location.search)
+  if (params.has('confidentialite')) {
+    return <ConfidentialitePage />
+  }
+
+  // ── Lien d'invitation Cercle des Fondateurs (?cercle=invite ou ?cercle) ──
   if (params.has('cercle') && params.get('cercle') !== 'success' && params.get('cercle') !== 'cancel') {
     if (authLoading) return <div style={styles.loading}><span>🌱</span></div>
     // Non connecté → page publique standalone (partageable sans compte)
