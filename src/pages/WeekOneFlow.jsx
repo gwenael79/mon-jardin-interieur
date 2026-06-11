@@ -1286,6 +1286,8 @@ function BackButton({ onClick }) {
         fontSize: 13,
         fontFamily: "'Jost', sans-serif",
         letterSpacing: '0.02em',
+        whiteSpace: 'nowrap',
+        flexShrink: 0,
       }}
     >
       ‹ Retour
@@ -8480,7 +8482,7 @@ function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, 
         <div style={{ position: 'absolute', top: '-10%', left: '-8%', width: 380, height: 380, borderRadius: '50%', background: `radial-gradient(circle,${g1}18 0%,transparent 65%)` }} />
         <div style={{ position: 'absolute', bottom: '-8%', right: '-8%', width: 300, height: 300, borderRadius: '50%', background: `radial-gradient(circle,${g2}14 0%,transparent 65%)` }} />
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 28px 48px', boxSizing: 'border-box', position: 'relative', zIndex: 1, textAlign: 'center' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '32px 28px 48px', boxSizing: 'border-box', position: 'relative', zIndex: 1, textAlign: 'center' }}>
         <div style={{ animation: 'stepIn .38s ease .05s both', marginBottom: 20 }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,7vw,38px)', fontWeight: 400, color: '#2A1F18', margin: '0 0 6px', lineHeight: 1.15 }}>{r.title}</h2>
           <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.50)', margin: '0 0 6px' }}>{r.subtitle}</p>
@@ -8500,11 +8502,11 @@ function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, 
             <button
               onClick={() => setPhase(audioAvailable ? 'audio' : 'guided')}
               className="wof-cta-pulse"
-              style={{ padding: '18px 32px', width: '100%', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, whiteSpace: 'nowrap', boxSizing: 'border-box' }}
+              style={{ padding: 'clamp(12px, 3.5vw, 18px) clamp(18px, 5vw, 32px)', width: '100%', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 'clamp(13px, 3.8vw, 17px)', fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px, 2vw, 10px)', whiteSpace: 'nowrap', boxSizing: 'border-box' }}
               onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'none'}
             >
-              <span style={{ fontSize: 24, flexShrink: 0 }}>🔊</span> Commencer le rituel
+              <span style={{ fontSize: 'clamp(16px, 4.5vw, 24px)', flexShrink: 0 }}>🔊</span> Commencer le rituel
             </button>
             <div />
           </div>
