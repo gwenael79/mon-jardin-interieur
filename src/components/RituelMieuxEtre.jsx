@@ -284,48 +284,50 @@ const rmiStyles = `
   font-family:'Jost',sans-serif; color:var(--ink); line-height:1.55;
   position:fixed; inset:0; z-index:99999;
   display:flex; align-items:center; justify-content:center;
-  padding:24px; overflow-y:auto;
+  padding:clamp(10px, 4vw, 24px); overflow-y:auto;
   background:rgba(10,5,2,0.72); backdrop-filter:blur(6px);
 }
 .rmi-wrap *, .rmi-wrap *::before, .rmi-wrap *::after { box-sizing:border-box; }
 .rmi-card {
   background:var(--card); border:1px solid var(--line); border-radius:26px;
-  padding:40px 32px 34px; max-width:400px; width:100%;
+  padding:clamp(22px, 6vw, 40px) clamp(18px, 5vw, 32px) clamp(20px, 5vw, 34px);
+  max-width:400px; width:100%; max-height:calc(100dvh - 20px);
+  overflow-x:hidden; overflow-y:auto;
   box-shadow:0 30px 60px -20px rgba(44,58,51,.35);
-  position:relative; overflow:hidden;
+  position:relative;
 }
 .rmi-card::before {
   content:""; position:absolute; inset:0 0 auto 0; height:5px;
   background:linear-gradient(90deg,var(--sage),var(--gold));
 }
-.rmi-brand { display:flex; align-items:center; gap:10px; margin-bottom:16px; font-size:22px; }
+.rmi-brand { display:flex; align-items:center; gap:10px; margin-bottom:clamp(10px, 3vw, 16px); font-size:clamp(18px, 5vw, 22px); }
 .rmi-brand-name {
-  font-family:'Cormorant Garamond',serif; font-size:22px; font-style:italic;
+  font-family:'Cormorant Garamond',serif; font-size:clamp(18px, 5vw, 22px); font-style:italic;
   font-weight:600; color:var(--sage-deep);
 }
 .rmi-kicker {
   font-size:11px; letter-spacing:.22em; text-transform:uppercase;
-  color:var(--gold); font-weight:700; margin-bottom:12px;
+  color:var(--gold); font-weight:700; margin-bottom:clamp(8px, 2vw, 12px);
 }
 .rmi-title {
-  font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600;
-  line-height:1.15; margin:0 0 20px;
+  font-family:'Cormorant Garamond',serif; font-size:clamp(22px, 6.5vw, 30px); font-weight:600;
+  line-height:1.15; margin:0 0 clamp(12px, 3.5vw, 20px);
 }
-.rmi-intro { font-size:13.5px; color:var(--muted); line-height:1.65; margin:0 0 22px; }
+.rmi-intro { font-size:13px; color:var(--muted); line-height:1.55; margin:0 0 clamp(14px, 4vw, 22px); }
 .rmi-label {
   display:block; font-size:11px; font-weight:700; letter-spacing:.08em;
   text-transform:uppercase; color:var(--muted); margin-bottom:8px;
 }
-.rmi-times { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+.rmi-times { display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
 .rmi-time-row { display:flex; align-items:center; gap:8px; }
 .rmi-time-row input[type="time"] {
-  flex:1; font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:600;
-  color:var(--ink); padding:8px 14px; border:1.5px solid var(--line);
-  border-radius:14px; background:#fdfcf8;
+  flex:1; font-family:'Cormorant Garamond',serif; font-size:clamp(18px, 5.5vw, 26px); font-weight:600;
+  color:var(--ink); padding:6px 12px; border:1.5px solid var(--line);
+  border-radius:14px; background:#fdfcf8; min-width:0;
 }
 .rmi-time-row input[type="time"]:focus { outline:none; border-color:var(--sage); }
 .rmi-remove {
-  width:40px; height:40px; border:1.5px solid var(--line); border-radius:11px;
+  width:38px; height:38px; flex-shrink:0; border:1.5px solid var(--line); border-radius:11px;
   background:#fdfcf8; color:var(--muted); font-size:14px; cursor:pointer;
   display:flex; align-items:center; justify-content:center; transition:all .15s;
 }
@@ -333,25 +335,25 @@ const rmiStyles = `
 .rmi-add {
   width:100%; font-family:inherit; font-size:13px; font-weight:700;
   color:var(--sage-deep); background:transparent; border:1.5px dashed var(--sage);
-  border-radius:12px; padding:11px; cursor:pointer; margin-bottom:24px;
+  border-radius:12px; padding:10px; cursor:pointer; margin-bottom:clamp(14px, 4vw, 24px);
   transition:background .15s;
 }
 .rmi-add:hover { background:#eef3ec; }
-.rmi-pills { display:flex; gap:8px; margin-bottom:24px; }
+.rmi-pills { display:flex; gap:8px; margin-bottom:clamp(14px, 4vw, 24px); }
 .rmi-pill {
-  flex:1; font-family:inherit; font-size:13px; font-weight:600;
-  padding:11px 6px; border:1.5px solid var(--line); border-radius:11px;
+  flex:1; font-family:inherit; font-size:12.5px; font-weight:600;
+  padding:10px 4px; border:1.5px solid var(--line); border-radius:11px;
   background:#fdfcf8; color:var(--muted); cursor:pointer; transition:all .15s;
 }
 .rmi-pill.active { background:var(--sage); border-color:var(--sage); color:#fff; }
 .rmi-preview {
   background:#f1f5ef; border-radius:12px; padding:12px 14px;
-  font-size:13px; color:var(--sage-deep); text-align:center; margin-bottom:22px;
+  font-size:13px; color:var(--sage-deep); text-align:center; margin-bottom:clamp(14px, 4vw, 22px);
 }
 .rmi-cta {
   width:100%; border:none; background:var(--sage-deep); color:#fff;
-  font-family:inherit; font-size:15px; font-weight:700;
-  padding:16px; border-radius:14px; cursor:pointer;
+  font-family:inherit; font-size:14px; font-weight:700;
+  padding:14px; border-radius:14px; cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:10px;
   transition:background .18s, transform .12s;
 }
@@ -364,7 +366,7 @@ const rmiStyles = `
   transition:background .15s;
 }
 .rmi-cta-alt:hover { background:#f1f5ef; color:var(--sage-deep); border-color:var(--sage); }
-.rmi-hint { font-size:12px; color:var(--muted); text-align:center; margin-top:14px; }
+.rmi-hint { font-size:11.5px; color:var(--muted); text-align:center; margin-top:12px; }
 .rmi-close {
   position:absolute; top:14px; right:14px; width:34px; height:34px;
   border-radius:50%; border:1.5px solid var(--line); background:#fdfcf8;
