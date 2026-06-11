@@ -410,7 +410,7 @@ function DiscoveryProgressBar({ completedDays, currentDay }) {
         <span className="dpb-arrow done">→</span>
         <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Rituel d'initiation">✓</span>
         <span className="dpb-arrow done">→</span>
-        <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Choix de chemin">✓</span>
+        <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Choix du chemin">✓</span>
         <span className="dpb-arrow done">→</span>
         <div className="dpb-days">
           {[1, 2, 3, 4, 5, 6, 7].map((day) => {
@@ -2473,14 +2473,14 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
   /* ── Sub-slide 0 : accueil du jour ─── */
   if (subSlide === 0) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '24px 20px 24px' }}>
         <h1 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(24px, 6.5vw, 34px)',
+          fontSize: 'clamp(22px, 6vw, 34px)',
           fontWeight: 500,
           color: '#0f0808',
-          lineHeight: 1.3,
-          margin: '0 0 20px',
+          lineHeight: 1.25,
+          margin: '0 0 14px',
           letterSpacing: '-0.01em',
         }}>
           {data.headline}
@@ -2488,10 +2488,10 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 26px)',
+          fontSize: 'clamp(19px, 5vw, 26px)',
           fontWeight: 700,
           color: '#0f0808',
-          margin: '0 0 20px',
+          margin: '0 0 14px',
           opacity: tagVisible ? 1 : 0,
           transform: tagVisible ? 'translateY(0)' : 'translateY(8px)',
           transition: 'opacity 700ms ease, transform 700ms ease',
@@ -2502,12 +2502,12 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
         {prevNote && (
           <p style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 'clamp(20px, 5.5vw, 28px)',
+            fontSize: 'clamp(19px, 5vw, 28px)',
             fontWeight: 400,
             fontStyle: 'italic',
             color: '#2a1e1e',
-            lineHeight: 1.6,
-            margin: '0 0 12px',
+            lineHeight: 1.4,
+            margin: '0 0 10px',
           }}>
             {prevNote}
           </p>
@@ -2516,11 +2516,11 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
         {data.subtitle && (
           <p style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 'clamp(20px, 5.5vw, 28px)',
+            fontSize: 'clamp(19px, 5vw, 28px)',
             fontStyle: 'italic',
             color: '#2a1e1e',
-            lineHeight: 1.6,
-            margin: data.subtitleExtra ? '0 0 8px' : '0 0 32px',
+            lineHeight: 1.4,
+            margin: data.subtitleExtra ? '0 0 6px' : '0 0 20px',
           }}>
             {data.subtitle}
           </p>
@@ -2529,11 +2529,11 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
         {data.subtitleExtra && (
           <p style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 'clamp(20px, 5.5vw, 28px)',
+            fontSize: 'clamp(19px, 5vw, 28px)',
             fontWeight: 700,
             color: '#0f0808',
-            lineHeight: 1.6,
-            margin: data.subtitleFinal ? '0 0 8px' : '0 0 32px',
+            lineHeight: 1.4,
+            margin: data.subtitleFinal ? '0 0 6px' : '0 0 20px',
           }}>
             {data.subtitleExtra}
           </p>
@@ -2542,11 +2542,11 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
         {data.subtitleFinal && (
           <p style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 'clamp(26px, 7vw, 36px)',
+            fontSize: 'clamp(24px, 6.5vw, 36px)',
             fontWeight: 700,
             color: '#0f0808',
             lineHeight: 1.3,
-            margin: '0 0 32px',
+            margin: '0 0 20px',
           }}>
             {data.subtitleFinal}
           </p>
@@ -2566,31 +2566,31 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
   /* ── Sub-slide 1 : respiration ─── */
   if (subSlide === 1) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '24px 20px 24px' }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(19px, 5vw, 28px)',
           fontWeight: 400,
           fontStyle: 'italic',
           color: '#0f0808',
-          lineHeight: 1.6,
-          margin: '0 0 12px',
+          lineHeight: 1.4,
+          margin: '0 0 10px',
         }}>
           Reviens à ton souffle.
         </p>
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(19px, 5vw, 28px)',
           fontWeight: 700,
           color: '#0f0808',
-          lineHeight: 1.6,
-          margin: '0 0 32px',
+          lineHeight: 1.4,
+          margin: '0 0 20px',
         }}>
           {data.breatheIntro ?? "Aujourd'hui, observe-le un peu plus finement."}
         </p>
 
-        <div style={{ marginBottom: orbDone ? 24 : 40 }}>
+        <div style={{ marginBottom: orbDone ? 16 : 24 }}>
           {data.timerDuration ? (
             <CountdownTimer duration={data.timerDuration} buttonAfter={data.timerButtonAfter} guidanceText={data.orbGuidance} guidanceList={data.orbGuidanceList} onComplete={() => setOrbDone(true)} />
           ) : (
@@ -2609,16 +2609,16 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
             {!data.timerDuration && (
               <p className="wof-soft" style={{
                 fontFamily: 'Cormorant Garamond, Georgia, serif',
-                fontSize: 'clamp(20px, 5.5vw, 28px)',
+                fontSize: 'clamp(19px, 5vw, 28px)',
                 fontWeight: 700,
                 color: '#0f0808',
-                lineHeight: 1.6,
-                margin: '0 0 28px',
+                lineHeight: 1.4,
+                margin: '0 0 16px',
               }}>
                 {data.orbDonePhrase ?? 'Ton souffle devient plus stable.'}
               </p>
             )}
-            <div className="wof-soft" style={{ marginTop: data.timerDuration ? 28 : 0 }}>
+            <div className="wof-soft" style={{ marginTop: data.timerDuration ? 16 : 0 }}>
               <PrimaryButton onClick={() => data.skipBarometer ? onConditioningComplete(null) : setSubSlide(2)}>
                 {data.timerDuration ? 'Continuer' : data.skipBarometer ? 'Ressentir mon énergie' : 'Observer'}
               </PrimaryButton>
@@ -2631,7 +2631,7 @@ function ConditioningAccueil({ data, answers, onConditioningComplete, onScreenCh
 
   /* ── Sub-slide 2 : baromètre émotionnel ─── */
   return (
-    <div className="wof-soft" style={{ padding: '32px 20px 36px' }}>
+    <div className="wof-soft" style={{ padding: '16px 20px 20px' }}>
       <EmotionalBarometer
         answerKey="conditioning_feel"
         onAnswer={(_, value) => onConditioningComplete(value)}
