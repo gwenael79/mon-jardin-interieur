@@ -8495,27 +8495,25 @@ function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, 
           {invitationText}
         </p>
         <div style={{ animation: 'stepIn .4s ease .35s both', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr min(340px, 100%) 1fr', alignItems: 'center', width: '100%' }}>
-            <div style={{ justifySelf: 'start', marginLeft: -18 }}>
-              <BackButton onClick={onBack} />
-            </div>
+          <button
+            onClick={() => setPhase(audioAvailable ? 'audio' : 'guided')}
+            className="wof-cta-pulse"
+            style={{ padding: 'clamp(12px, 3.5vw, 18px) clamp(18px, 5vw, 32px)', width: '100%', maxWidth: 340, borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 'clamp(13px, 3.8vw, 17px)', fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px, 2vw, 10px)', whiteSpace: 'nowrap', boxSizing: 'border-box' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+          >
+            <span style={{ fontSize: 'clamp(16px, 4.5vw, 24px)', flexShrink: 0 }}>🔊</span> Commencer le rituel
+          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%' }}>
+            <div style={{ justifySelf: 'start', marginLeft: -18 }}><BackButton onClick={onBack} /></div>
             <button
-              onClick={() => setPhase(audioAvailable ? 'audio' : 'guided')}
-              className="wof-cta-pulse"
-              style={{ padding: 'clamp(12px, 3.5vw, 18px) clamp(18px, 5vw, 32px)', width: '100%', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 'clamp(13px, 3.8vw, 17px)', fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(6px, 2vw, 10px)', whiteSpace: 'nowrap', boxSizing: 'border-box' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+              onClick={() => setPhase('guided')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: `rgba(50,35,20,0.45)`, textDecoration: 'underline', textUnderlineOffset: 3, padding: 0, whiteSpace: 'nowrap' }}
             >
-              <span style={{ fontSize: 'clamp(16px, 4.5vw, 24px)', flexShrink: 0 }}>🔊</span> Commencer le rituel
+              tu préfères lire ?
             </button>
             <div />
           </div>
-          <button
-            onClick={() => setPhase('guided')}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: `rgba(50,35,20,0.45)`, textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}
-          >
-            tu préfères lire ?
-          </button>
         </div>
       </div>
     </div>
