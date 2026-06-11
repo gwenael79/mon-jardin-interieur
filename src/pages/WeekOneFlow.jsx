@@ -1,5 +1,6 @@
 ﻿// src/pages/WeekOneFlow.jsx
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 // Cache module-level pour la personnalisation fraîche (survit aux remounts)
 let _freshGardenSettings = null
@@ -9052,7 +9053,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
           onCalendrier={() => setCalendrierOnClose(() => () => setCalendrierOnClose(null))}
         />
       )}
-      {calendrierOnClose && <RituelMieuxEtre onClose={calendrierOnClose} />}
+      {calendrierOnClose && createPortal(<RituelMieuxEtre onClose={calendrierOnClose} />, document.body)}
       {step === 6 && dayIndex === 0 && (
         <J1TeaserScreen onNext={handleDayDone} />
       )}
