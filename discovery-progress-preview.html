@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Aperçu — Frise de progression du parcours</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap');
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 20px;
+    background: #f3ede6;
+    font-family: 'Jost', sans-serif;
+    color: #1a1208;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: 26px;
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .demo {
+    max-width: 480px;
+    margin: 0 auto 28px;
+  }
+  .demo-label {
+    font-size: 13px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(30,20,8,.45);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  /* ── Le composant frise — version légère ── */
+  .progress-bar {
+    background: #faf5f2;
+    border: 1px solid rgba(200,160,176,.20);
+    border-radius: 16px;
+    padding: 9px 14px 8px;
+    box-shadow: 0 2px 10px rgba(120,80,90,.05);
+  }
+
+  /* Étiquette de contexte — discrète, une seule ligne */
+  .pb-tag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(30,20,8,.38);
+    margin-bottom: 8px;
+  }
+  .pb-tag .accent { color: #a8607c; font-weight: 600; }
+  .pb-tag.unlocked .accent { color: #b8842a; }
+
+  /* Ligne unique : Inscription → frise → L'application */
+  .pb-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 5px;
+  }
+  .pb-end {
+    font-size: 10.5px;
+    letter-spacing: .02em;
+    color: rgba(30,20,8,.40);
+    flex-shrink: 0;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pb-end.app {
+    color: rgba(120,100,70,.60);
+  }
+  .pb-end.app.unlocked {
+    color: #b8842a;
+    font-weight: 600;
+  }
+
+  /* Bloc extrémité : pastille + libellé, alignés sur la ligne de la frise */
+  .pb-edge {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .pb-edge-label {
+    font-size: 10.5px;
+    letter-spacing: .02em;
+    color: rgba(30,20,8,.40);
+    white-space: nowrap;
+  }
+  .pb-edge-label.app {
+    color: rgba(120,100,70,.55);
+  }
+  .pb-edge-label.app.unlocked {
+    color: #b8842a;
+    font-weight: 600;
+  }
+
+  .pb-arrow {
+    font-size: 12px;
+    color: rgba(200,160,176,.45);
+    flex-shrink: 0;
+  }
+  .pb-arrow.done { color: #6fae4a; }
+
+  /* Pastilles d'étape (inscription, jours, application) */
+  .pb-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    transition: all .3s ease;
+  }
+  .pb-dot.done {
+    background: #6fae4a;
+    box-shadow: 0 0 0 0 rgba(111,174,74,.0);
+  }
+  .pb-dot.current {
+    background: #ffd23f;
+    box-shadow: 0 0 0 0 rgba(255,210,63,.65), 0 0 8px rgba(255,210,63,.9);
+    animation: pulse-gold 1.8s ease-out infinite;
+  }
+  .pb-dot.locked {
+    width: 16px; height: 16px;
+    background: rgba(170,150,120,.10);
+    border: 1.5px dashed rgba(170,150,120,.40);
+    color: rgba(120,100,70,.50);
+    font-size: 8px;
+  }
+  .pb-dot.upcoming {
+    background: transparent;
+    border: 1.5px solid rgba(200,160,176,.32);
+  }
+  .pb-end.upcoming-label {
+    color: rgba(30,20,8,.30);
+  }
+  @keyframes pulse-gold {
+    0%   { box-shadow: 0 0 0 0 rgba(255,210,63,.65), 0 0 8px rgba(255,210,63,.9); }
+    70%  { box-shadow: 0 0 0 8px rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+    100% { box-shadow: 0 0 0 0 rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+  }
+
+  /* zone des 7 dots = "la frise" */
+  .pb-days {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .pb-day {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(200,160,176,.26);
+    transition: all .3s ease;
+  }
+  .pb-day.done {
+    background: #6fae4a;
+  }
+  .pb-day.current {
+    width: 13px;
+    height: 13px;
+    background: #ffd23f;
+    animation: pulse-gold-small 1.8s ease-out infinite;
+  }
+  @keyframes pulse-gold-small {
+    0%   { box-shadow: 0 0 0 0 rgba(255,210,63,.65), 0 0 8px rgba(255,210,63,.9); }
+    70%  { box-shadow: 0 0 0 7px rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+    100% { box-shadow: 0 0 0 0 rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+  }
+
+  /* État final — message bienvenue, très court */
+  .pb-welcome {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: rgba(184,132,42,.85);
+  }
+
+  .toggle-row {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 13px;
+    color: rgba(30,20,8,.5);
+    line-height: 1.6;
+  }
+
+  /* Tooltip au survol / tap (remplace les libellés texte) */
+  .pb-tip {
+    position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pb-tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 9px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: #1a1208;
+    color: #faf5f2;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .02em;
+    padding: 6px 11px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 20;
+  }
+  .pb-tip::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 5px solid transparent;
+    border-top-color: #1a1208;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease;
+    z-index: 20;
+  }
+  .pb-tip:hover::after, .pb-tip:hover::before,
+  .pb-tip:focus::after, .pb-tip:focus::before,
+  .pb-tip:active::after, .pb-tip:active::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<h1>Frise de progression — étapes vertes ✓ / étape en cours dorée pulsante</h1>
+
+<!-- ÉTAT 1 — juste après inscription -->
+<div class="demo">
+  <div class="demo-label">Juste après l'inscription</div>
+  <div class="progress-bar">
+    <div class="pb-track">
+      <div class="pb-edge"><span class="pb-edge-label">Inscription</span><span class="pb-dot done">✓</span></div>
+      <span class="pb-arrow done">→</span>
+      <span class="pb-dot current pb-tip" tabindex="0" data-tip="Rituel d'initiation"></span>
+      <span class="pb-arrow">→</span>
+      <span class="pb-dot upcoming pb-tip" tabindex="0" data-tip="Choix de chemin"></span>
+      <span class="pb-arrow">→</span>
+      <div class="pb-days">
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 1"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 2"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 3"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 4"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 5"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 6"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 7"></div>
+      </div>
+      <span class="pb-arrow">→</span>
+      <div class="pb-edge"><span class="pb-dot locked">🔒</span><span class="pb-edge-label app">L'application t'attend !</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ÉTAT 2 — Jour 3 -->
+<div class="demo">
+  <div class="demo-label">Jour 3 · Chemin « Cheminer »</div>
+  <div class="progress-bar">
+    <div class="pb-track">
+      <div class="pb-edge"><span class="pb-edge-label">Inscription</span><span class="pb-dot done">✓</span></div>
+      <span class="pb-arrow done">→</span>
+      <span class="pb-dot done pb-tip" tabindex="0" data-tip="Rituel d'initiation">✓</span>
+      <span class="pb-arrow done">→</span>
+      <span class="pb-dot done pb-tip" tabindex="0" data-tip="Choix de chemin">✓</span>
+      <span class="pb-arrow done">→</span>
+      <div class="pb-days">
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 1"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 2"></div>
+        <div class="pb-day current pb-tip" tabindex="0" data-tip="Jour 3 (en cours)"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 4"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 5"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 6"></div>
+        <div class="pb-day pb-tip" tabindex="0" data-tip="Jour 7"></div>
+      </div>
+      <span class="pb-arrow">→</span>
+      <div class="pb-edge"><span class="pb-dot locked">🔒</span><span class="pb-edge-label app">L'application t'attend !</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ÉTAT 3 — Jour 7 terminé -->
+<div class="demo">
+  <div class="demo-label">Déverrouillage : l'application</div>
+  <div class="progress-bar">
+    <div class="pb-track">
+      <div class="pb-edge"><span class="pb-edge-label">Inscription</span><span class="pb-dot done">✓</span></div>
+      <span class="pb-arrow done">→</span>
+      <span class="pb-dot done pb-tip" tabindex="0" data-tip="Rituel d'initiation">✓</span>
+      <span class="pb-arrow done">→</span>
+      <span class="pb-dot done pb-tip" tabindex="0" data-tip="Choix de chemin">✓</span>
+      <span class="pb-arrow done">→</span>
+      <div class="pb-days">
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 1"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 2"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 3"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 4"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 5"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 6"></div>
+        <div class="pb-day done pb-tip" tabindex="0" data-tip="Jour 7"></div>
+      </div>
+      <span class="pb-arrow done">→</span>
+      <div class="pb-edge"><span class="pb-dot done">✓</span><span class="pb-edge-label app unlocked">Accède à l'appli</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="toggle-row">
+  Vert ✓ = étapes réalisées (inscription, jours passés, application débloquée).<br>
+  Doré pulsant = étape en cours (jour actuel).
+</div>
+
+</body>
+</html>

@@ -89,6 +89,19 @@ function GlobalStyles() {
       .wof-in { animation: stepIn 400ms ease both; }
       .wof-fl { animation: fleurFloat 6s ease-in-out infinite; }
 
+      @keyframes ctaPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(168,96,124,0.55); transform: scale(1);    }
+        50%      { box-shadow: 0 0 0 14px rgba(168,96,124,0); transform: scale(1.045); }
+      }
+      .wof-cta-pulse {
+        animation: ctaPulse 1.4s ease-in-out infinite;
+        will-change: transform, box-shadow;
+      }
+      .wof-cta-pulse:hover, .wof-cta-pulse:focus, .wof-cta-pulse:active {
+        animation: none;
+        transform: scale(1.03);
+      }
+
       @keyframes particleFloat {
         0%   { transform: translateY(0)    scale(1);   opacity: 0; }
         15%  { opacity: 1; }
@@ -223,7 +236,199 @@ function GlobalStyles() {
         70%  { opacity: 0.8; }
         100% { opacity: 0; }
       }
+
+      /* ── Frise de progression du parcours (DiscoveryProgressBar) ── */
+      .dpb-bar {
+        flex-shrink: 0;
+        background: #faf5f2;
+        border-bottom: 1px solid rgba(200,160,176,.20);
+        padding: 8px 14px 7px;
+      }
+      .dpb-track {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px 5px;
+      }
+      .dpb-edge {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+      }
+      .dpb-edge-label {
+        font-family: 'Jost', sans-serif;
+        font-size: 10.5px;
+        letter-spacing: .02em;
+        color: #1a1208;
+        white-space: nowrap;
+      }
+      .dpb-edge-label.app { color: #1a1208; }
+      @media (max-width: 480px) {
+        .dpb-bar { padding: 6px 8px 5px; }
+        .dpb-track { gap: 4px 3px; }
+        .dpb-edge-label { font-size: 9px; }
+        .dpb-arrow { font-size: 10px; }
+        .dpb-dot { width: 14px; height: 14px; font-size: 8px; }
+        .dpb-day { width: 6px; height: 6px; }
+        .dpb-day.current { width: 11px; height: 11px; }
+      }
+      @media (min-width: 768px) {
+        .dpb-bar { padding: 10px 18px 9px; }
+        .dpb-track { gap: 8px 7px; }
+        .dpb-edge-label { font-size: 12px; }
+        .dpb-arrow { font-size: 13px; }
+        .dpb-dot { width: 18px; height: 18px; font-size: 10px; }
+        .dpb-day { width: 8px; height: 8px; }
+        .dpb-day.current { width: 15px; height: 15px; }
+      }
+      @media (max-height: 700px) {
+        .dpb-bar { padding: 4px 8px 3px; }
+        .dpb-edge-label { font-size: 8.5px; }
+        .dpb-arrow { font-size: 9px; }
+        .dpb-dot { width: 12px; height: 12px; font-size: 7px; }
+        .dpb-day { width: 5px; height: 5px; }
+        .dpb-day.current { width: 10px; height: 10px; }
+      }
+      .dpb-arrow {
+        font-size: 12px;
+        color: rgba(200,160,176,.45);
+        flex-shrink: 0;
+      }
+      .dpb-arrow.done { color: #6fae4a; }
+      .dpb-dot {
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        font-size: 9px; font-weight: 700; color: #fff;
+        transition: all .3s ease;
+      }
+      .dpb-dot.done { background: #6fae4a; }
+      .dpb-dot.current {
+        background: #ffd23f;
+        box-shadow: 0 0 0 0 rgba(255,210,63,.65), 0 0 8px rgba(255,210,63,.9);
+        animation: dpbPulseGold 1.8s ease-out infinite;
+      }
+      .dpb-dot.locked {
+        background: rgba(170,150,120,.10);
+        border: 1.5px dashed rgba(170,150,120,.40);
+        color: rgba(120,100,70,.50);
+        font-size: 8px;
+      }
+      @keyframes dpbPulseGold {
+        0%   { box-shadow: 0 0 0 0 rgba(255,210,63,.65), 0 0 8px rgba(255,210,63,.9); }
+        70%  { box-shadow: 0 0 0 8px rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+        100% { box-shadow: 0 0 0 0 rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+      }
+      .dpb-days {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .dpb-day {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: rgba(200,160,176,.26);
+        transition: all .3s ease;
+      }
+      .dpb-day.done { background: #6fae4a; }
+      .dpb-day.current {
+        width: 13px; height: 13px;
+        background: #ffd23f;
+        animation: dpbPulseGoldSmall 1.8s ease-out infinite;
+      }
+      @keyframes dpbPulseGoldSmall {
+        0%   { box-shadow: 0 0 0 0 rgba(255,210,63,.65), 0 0 8px rgba(255,210,63,.9); }
+        70%  { box-shadow: 0 0 0 7px rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+        100% { box-shadow: 0 0 0 0 rgba(255,210,63,0), 0 0 8px rgba(255,210,63,.9); }
+      }
+      .dpb-tip {
+        position: relative;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .dpb-tip::after {
+        content: attr(data-tip);
+        position: absolute;
+        bottom: calc(100% + 9px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #1a1208;
+        color: #faf5f2;
+        font-family: 'Jost', sans-serif;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: .02em;
+        padding: 6px 11px;
+        border-radius: 8px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .18s ease, transform .18s ease;
+        z-index: 20;
+      }
+      .dpb-tip::before {
+        content: '';
+        position: absolute;
+        bottom: calc(100% + 4px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        border: 5px solid transparent;
+        border-top-color: #1a1208;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .18s ease, transform .18s ease;
+        z-index: 20;
+      }
+      .dpb-tip:hover::after, .dpb-tip:hover::before,
+      .dpb-tip:focus::after, .dpb-tip:focus::before,
+      .dpb-tip:active::after, .dpb-tip:active::before {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     `}</style>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Frise de progression du parcours de découverte
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DiscoveryProgressBar({ completedDays, currentDay }) {
+  return (
+    <div className="dpb-bar">
+      <div className="dpb-track">
+        <div className="dpb-edge">
+          <span className="dpb-edge-label">Inscription</span>
+          <span className="dpb-dot done">✓</span>
+        </div>
+        <span className="dpb-arrow done">→</span>
+        <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Rituel d'initiation">✓</span>
+        <span className="dpb-arrow done">→</span>
+        <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Choix de chemin">✓</span>
+        <span className="dpb-arrow done">→</span>
+        <div className="dpb-days">
+          {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+            const done = (completedDays || []).includes(day)
+            const current = !done && day === currentDay
+            const cls = done ? 'done' : current ? 'current' : ''
+            const label = current ? `Jour ${day} (en cours)` : `Jour ${day}`
+            return (
+              <div key={day} className={`dpb-day ${cls} dpb-tip`.trim()} tabIndex={0} data-tip={label} />
+            )
+          })}
+        </div>
+        <span className="dpb-arrow">→</span>
+        <div className="dpb-edge">
+          <span className="dpb-dot locked">🔒</span>
+          <span className="dpb-edge-label app">L'application t'attend !</span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -1036,6 +1241,7 @@ function PrimaryButton({ onClick, disabled, children, style }) {
     <button
       onClick={onClick}
       disabled={disabled}
+      className={disabled ? '' : 'wof-cta-pulse'}
       style={{
         fontFamily: 'Jost, sans-serif',
         fontSize: 15,
@@ -1068,20 +1274,21 @@ function BackButton({ onClick }) {
     <button
       onClick={onClick}
       style={{
-        fontFamily: 'Jost, sans-serif',
-        fontSize: 13,
-        color: '#1a1010',
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '12px 4px',
-        minHeight: 44,
         display: 'flex',
         alignItems: 'center',
+        gap: 6,
+        background: 'rgba(255,255,255,0.55)',
+        border: '1px solid rgba(180,160,140,0.25)',
+        borderRadius: 100,
+        padding: '7px 16px',
+        cursor: 'pointer',
+        color: 'rgba(50,35,20,0.65)',
+        fontSize: 13,
+        fontFamily: "'Jost', sans-serif",
         letterSpacing: '0.02em',
       }}
     >
-      ← Revenir
+      ‹ Retour
     </button>
   )
 }
@@ -2071,15 +2278,15 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
   if (subSlide === 0) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '24px 20px 24px' }}>
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.2vw, 26px)',
+          fontSize: 'clamp(19px, 4.8vw, 26px)',
           fontWeight: 500,
           color: '#0f0808',
-          lineHeight: 1.35,
-          margin: '0 0 24px',
+          lineHeight: 1.3,
+          margin: '0 0 16px',
           letterSpacing: '-0.01em',
           ...fadeStyle(true),
         }}>
@@ -2088,11 +2295,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.2vw, 26px)',
+          fontSize: 'clamp(19px, 4.8vw, 26px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
-          lineHeight: 1.6,
-          margin: '0 0 20px',
+          lineHeight: 1.5,
+          margin: '0 0 14px',
           ...fadeStyle(phase >= 1),
         }}>
           Quelque chose en toi sait qu'il est temps de ralentir.
@@ -2100,11 +2307,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.2vw, 26px)',
+          fontSize: 'clamp(19px, 4.8vw, 26px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
-          lineHeight: 1.6,
-          margin: '0 0 20px',
+          lineHeight: 1.5,
+          margin: '0 0 14px',
           ...fadeStyle(phase >= 2),
         }}>
           Pas pour faire plus. Mais pour faire autrement.
@@ -2112,11 +2319,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.2vw, 26px)',
+          fontSize: 'clamp(19px, 4.8vw, 26px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
-          lineHeight: 1.6,
-          margin: '0 0 32px',
+          lineHeight: 1.5,
+          margin: '0 0 20px',
           ...fadeStyle(phase >= 3),
         }}>
           Ce que tu vas commencer ici… se construit un jour à la fois.
@@ -2135,14 +2342,14 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   /* ── SLIDE 1 — ARRÊT ─────────────────────────────────────────── */
   if (subSlide === 1) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '24px 20px 24px' }}>
         <h1 style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(30px, 7.5vw, 46px)',
+          fontSize: 'clamp(28px, 7vw, 46px)',
           fontWeight: 500,
           color: '#0f0808',
           lineHeight: 1.15,
-          margin: '0 0 32px',
+          margin: '0 0 20px',
           letterSpacing: '-0.01em',
           ...fadeStyle(true),
         }}>
@@ -2151,11 +2358,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(19px, 5vw, 28px)',
           fontStyle: 'italic',
           color: '#2a1e1e',
-          lineHeight: 1.6,
-          margin: '0 0 44px',
+          lineHeight: 1.5,
+          margin: '0 0 24px',
           ...fadeStyle(phase >= 1),
         }}>
           Et pour une fois… tu n'as rien à faire de plus.
@@ -2163,11 +2370,11 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(20px, 5.5vw, 28px)',
+          fontSize: 'clamp(19px, 5vw, 28px)',
           fontWeight: 600,
           color: '#0f0808',
-          lineHeight: 1.6,
-          margin: '0 0 44px',
+          lineHeight: 1.5,
+          margin: '0 0 24px',
           ...fadeStyle(phase >= 1),
         }}>
           Juste être là.
@@ -2185,14 +2392,14 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   /* ── SLIDE 2 — CONNEXION ──────────────────────────────────────── */
   if (subSlide === 2) {
     return (
-      <div className="wof-soft" style={{ textAlign: 'center', padding: '40px 20px 36px' }}>
+      <div className="wof-soft" style={{ textAlign: 'center', padding: '24px 20px 24px' }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(22px, 5.5vw, 30px)',
+          fontSize: 'clamp(20px, 5.2vw, 30px)',
           fontWeight: 400,
           color: '#0f0808',
-          lineHeight: 1.5,
-          margin: '0 0 36px',
+          lineHeight: 1.4,
+          margin: '0 0 24px',
           ...fadeStyle(true),
         }}>
           Prends simplement un instant.
@@ -2226,7 +2433,7 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
 
   /* ── SLIDE 3 — BAROMÈTRE ÉMOTIONNEL ─────────────────────────── */
   return (
-    <div className="wof-soft" style={{ padding: '32px 20px 36px' }}>
+    <div className="wof-soft" style={{ padding: '16px 20px 20px' }}>
       <EmotionalBarometer answerKey={answerKey} onAnswer={onAnswer} />
     </div>
   )
@@ -5964,10 +6171,8 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange, onCalendri
   if (subSlide === 0) {
     const ctaPhase = hasBarometer ? 6 : 5
     return (
-      <div style={{ padding: '16px 20px 80px' }}>
-        <BackButton onClick={onBack} />
-
-        <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+      <div style={{ padding: '16px 20px 24px' }}>
+        <div style={{ textAlign: 'center', margin: '8px 0 24px' }}>
           <p style={{
             fontFamily: 'Jost, sans-serif',
             fontSize: 'clamp(11px, 2.8vw, 13px)',
@@ -5981,7 +6186,7 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange, onCalendri
           </p>
           <h2 style={{
             fontFamily: 'Cormorant Garamond, Georgia, serif',
-            fontSize: 'clamp(30px, 7.5vw, 40px)',
+            fontSize: 'clamp(26px, 6.5vw, 40px)',
             fontWeight: 700,
             fontStyle: 'italic',
             color: '#2a1010',
@@ -6005,18 +6210,20 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange, onCalendri
           <div style={{
             width: 40, height: 1,
             background: 'rgba(180,130,100,0.3)',
-            margin: '8px auto 40px',
+            margin: '8px auto 24px',
           }} />
         </>)}
 
         {block(hasBarometer ? 5 : 4, (
-          <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(21px, 5.2vw, 26px)', margin: '0 0 48px' }}>
+          <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 26px)', margin: '0 0 24px' }}>
             Et ce n'est que le début.
           </p>
         ))}
 
-        <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= ctaPhase), pointerEvents: phase >= ctaPhase ? 'auto' : 'none' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', ...fadeIn(phase >= ctaPhase), pointerEvents: phase >= ctaPhase ? 'auto' : 'none' }}>
+          <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={onBack} /></div>
           <PrimaryButton onClick={() => { setSubSlide(1) }}>Je continue…</PrimaryButton>
+          <div />
         </div>
       </div>
     )
@@ -6060,18 +6267,17 @@ function FeuillesValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
     return () => timers.forEach(clearTimeout)
   }, [subSlide])
 
-  const S = { fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(19px, 4.8vw, 23px)', color: '#0f0808', textAlign: 'center', lineHeight: 1.45, margin: '0 0 16px' }
+  const S = { fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontSize: 'clamp(17px, 4.4vw, 23px)', color: '#0f0808', textAlign: 'center', lineHeight: 1.4, margin: '0 0 12px' }
   function B({ children }) { return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong> }
   function block(n, content) { return <div style={{ ...fadeIn(phase >= n) }}>{content}</div> }
 
   if (subSlide === 0) return (
-    <div style={{ padding: '16px 20px 80px' }}>
-      <BackButton onClick={onBack} />
-      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+    <div style={{ padding: '16px 20px 24px' }}>
+      <div style={{ textAlign: 'center', margin: '8px 0 24px' }}>
         <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1010', margin: '0 0 8px' }}>
           Ce qui vient de se passer
         </p>
-        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(30px, 7.5vw, 40px)', fontWeight: 700, fontStyle: 'italic', color: '#2a1010', lineHeight: 1.15, margin: '0 0 10px' }}>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(26px, 6.5vw, 40px)', fontWeight: 700, fontStyle: 'italic', color: '#2a1010', lineHeight: 1.15, margin: '0 0 10px' }}>
           Tes feuilles s'ouvrent
         </h2>
         <div style={{ width: 48, height: 2, background: 'linear-gradient(to right, transparent, #5e8456, transparent)', margin: '0 auto' }} />
@@ -6079,11 +6285,13 @@ function FeuillesValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
       {block(1, <p style={S}>Tu viens de laisser quelque chose <B>traverser</B>. Sans le retenir.</p>)}
       {block(2, <p style={S}>Les feuilles ne gardent pas la lumière. Elles la <B>transforment</B>.</p>)}
       {block(3, <p style={S}>Ce que tu as observé aujourd'hui <B>change déjà de forme</B>.</p>)}
-      {block(4, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(21px, 5.2vw, 26px)', margin: '0 0 48px' }}>
+      {block(4, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 26px)', margin: '0 0 24px' }}>
         Ce qui circule en toi devient de la lumière.
       </p>)}
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 6), pointerEvents: phase >= 6 ? 'auto' : 'none' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', ...fadeIn(phase >= 6), pointerEvents: phase >= 6 ? 'auto' : 'none' }}>
+        <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={onBack} /></div>
         <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+        <div />
       </div>
     </div>
   )
@@ -6465,23 +6673,24 @@ function FleurValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
     const timers = T.map((ms,i) => setTimeout(() => setPhase(i+1), ms))
     return () => timers.forEach(clearTimeout)
   }, [subSlide])
-  const S = {fontFamily:'Cormorant Garamond, Georgia, serif',fontStyle:'italic',fontSize:'clamp(19px,4.8vw,23px)',color:'#0f0808',textAlign:'center',lineHeight:1.45,margin:'0 0 16px'}
+  const S = {fontFamily:'Cormorant Garamond, Georgia, serif',fontStyle:'italic',fontSize:'clamp(17px,4.4vw,23px)',color:'#0f0808',textAlign:'center',lineHeight:1.4,margin:'0 0 12px'}
   function B({children}) { return <strong style={{fontWeight:600,fontStyle:'inherit'}}>{children}</strong> }
   function block(n,c) { return <div style={{...fadeIn(phase>=n)}}>{c}</div> }
   if (subSlide === 0) return (
-    <div style={{padding:'16px 20px 80px'}}>
-      <BackButton onClick={onBack}/>
-      <div style={{textAlign:'center',margin:'12px 0 40px'}}>
+    <div style={{padding:'16px 20px 24px'}}>
+      <div style={{textAlign:'center',margin:'8px 0 24px'}}>
         <p style={{fontFamily:'Jost,sans-serif',fontSize:'clamp(11px,2.8vw,13px)',fontWeight:500,letterSpacing:'0.18em',textTransform:'uppercase',color:'#1a1010',margin:'0 0 8px'}}>Ce qui vient de se passer</p>
-        <h2 style={{fontFamily:'Cormorant Garamond,Georgia,serif',fontSize:'clamp(30px,7.5vw,40px)',fontWeight:700,fontStyle:'italic',color:'#2a1010',lineHeight:1.15,margin:'0 0 10px'}}>Ta fleur s'entrouvre</h2>
+        <h2 style={{fontFamily:'Cormorant Garamond,Georgia,serif',fontSize:'clamp(26px,6.5vw,40px)',fontWeight:700,fontStyle:'italic',color:'#2a1010',lineHeight:1.15,margin:'0 0 10px'}}>Ta fleur s'entrouvre</h2>
         <div style={{width:48,height:2,background:'linear-gradient(to right,transparent,#d4a0b0,transparent)',margin:'0 auto'}}/>
       </div>
       {block(1,<p style={S}>Tu viens de t'accorder quelque chose de <B>rare</B> : de l'espace.</p>)}
       {block(2,<p style={S}>Les fleurs ne s'ouvrent pas sur commande. Elles attendent <B>les conditions</B>.</p>)}
       {block(3,<p style={S}>Tu viens de les <B>créer</B>.</p>)}
-      {block(4,<p style={{...S,fontStyle:'normal',fontWeight:700,fontSize:'clamp(21px,5.2vw,26px)',margin:'0 0 48px'}}>Et quelque chose en toi s'est ouvert.</p>)}
-      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=6),pointerEvents:phase>=6?'auto':'none'}}>
+      {block(4,<p style={{...S,fontStyle:'normal',fontWeight:700,fontSize:'clamp(20px,5vw,26px)',margin:'0 0 24px'}}>Et quelque chose en toi s'est ouvert.</p>)}
+      <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',width:'100%',...fadeIn(phase>=6),pointerEvents:phase>=6?'auto':'none'}}>
+        <div style={{justifySelf:'start',marginLeft:-10}}><BackButton onClick={onBack}/></div>
         <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+        <div />
       </div>
     </div>
   )
@@ -6669,23 +6878,24 @@ function SouffleValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
     const timers = T.map((ms,i) => setTimeout(() => setPhase(i+1), ms))
     return () => timers.forEach(clearTimeout)
   }, [subSlide])
-  const S = {fontFamily:'Cormorant Garamond, Georgia, serif',fontStyle:'italic',fontSize:'clamp(19px,4.8vw,23px)',color:'#0f0808',textAlign:'center',lineHeight:1.45,margin:'0 0 16px'}
+  const S = {fontFamily:'Cormorant Garamond, Georgia, serif',fontStyle:'italic',fontSize:'clamp(17px,4.4vw,23px)',color:'#0f0808',textAlign:'center',lineHeight:1.4,margin:'0 0 12px'}
   function B({children}) { return <strong style={{fontWeight:600,fontStyle:'inherit'}}>{children}</strong> }
   function block(n,c) { return <div style={{...fadeIn(phase>=n)}}>{c}</div> }
   if (subSlide === 0) return (
-    <div style={{padding:'16px 20px 80px'}}>
-      <BackButton onClick={onBack}/>
-      <div style={{textAlign:'center',margin:'12px 0 40px'}}>
+    <div style={{padding:'16px 20px 24px'}}>
+      <div style={{textAlign:'center',margin:'8px 0 24px'}}>
         <p style={{fontFamily:'Jost,sans-serif',fontSize:'clamp(11px,2.8vw,13px)',fontWeight:500,letterSpacing:'0.18em',textTransform:'uppercase',color:'#1a1010',margin:'0 0 8px'}}>Ce qui vient de se passer</p>
-        <h2 style={{fontFamily:'Cormorant Garamond,Georgia,serif',fontSize:'clamp(30px,7.5vw,40px)',fontWeight:700,fontStyle:'italic',color:'#2a1010',lineHeight:1.15,margin:'0 0 10px'}}>Ton souffle a créé du lien</h2>
+        <h2 style={{fontFamily:'Cormorant Garamond,Georgia,serif',fontSize:'clamp(26px,6.5vw,40px)',fontWeight:700,fontStyle:'italic',color:'#2a1010',lineHeight:1.15,margin:'0 0 10px'}}>Ton souffle a créé du lien</h2>
         <div style={{width:48,height:2,background:'linear-gradient(to right,transparent,#c8a870,transparent)',margin:'0 auto'}}/>
       </div>
       {block(1,<p style={S}>Même quand le lien semblait loin… tu as <B>relié quelque chose</B>.</p>)}
       {block(2,<p style={S}>Le souffle tisse un fil invisible entre toi et le reste du <B>vivant</B>.</p>)}
       {block(3,<p style={S}>Ce geste vers l'autre a résonné <B>dans ton jardin</B>.</p>)}
-      {block(4,<p style={{...S,fontStyle:'normal',fontWeight:700,fontSize:'clamp(21px,5.2vw,26px)',margin:'0 0 48px'}}>Et ça existe.</p>)}
-      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=6),pointerEvents:phase>=6?'auto':'none'}}>
+      {block(4,<p style={{...S,fontStyle:'normal',fontWeight:700,fontSize:'clamp(20px,5vw,26px)',margin:'0 0 24px'}}>Et ça existe.</p>)}
+      <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',width:'100%',...fadeIn(phase>=6),pointerEvents:phase>=6?'auto':'none'}}>
+        <div style={{justifySelf:'start',marginLeft:-10}}><BackButton onClick={onBack}/></div>
         <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+        <div />
       </div>
     </div>
   )
@@ -6727,11 +6937,11 @@ function TigeValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
   const S = {
     fontFamily: 'Cormorant Garamond, Georgia, serif',
     fontStyle: 'italic',
-    fontSize: 'clamp(19px, 4.8vw, 23px)',
+    fontSize: 'clamp(17px, 4.4vw, 23px)',
     color: '#0f0808',
     textAlign: 'center',
-    lineHeight: 1.45,
-    margin: '0 0 16px',
+    lineHeight: 1.4,
+    margin: '0 0 12px',
   }
   function B({ children }) { return <strong style={{ fontWeight: 600, fontStyle: 'inherit' }}>{children}</strong> }
   function block(n, content) {
@@ -6739,13 +6949,12 @@ function TigeValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
   }
 
   if (subSlide === 0) return (
-    <div style={{ padding: '16px 20px 80px' }}>
-      <BackButton onClick={onBack} />
-      <div style={{ textAlign: 'center', margin: '12px 0 40px' }}>
+    <div style={{ padding: '16px 20px 24px' }}>
+      <div style={{ textAlign: 'center', margin: '8px 0 24px' }}>
         <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: 500, letterSpacing: '0.18em', textTransform: 'uppercase', color: '#1a1010', margin: '0 0 8px' }}>
           Ce qui vient de se passer
         </p>
-        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(30px, 7.5vw, 40px)', fontWeight: 700, fontStyle: 'italic', color: '#2a1010', lineHeight: 1.15, margin: '0 0 10px' }}>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(26px, 6.5vw, 40px)', fontWeight: 700, fontStyle: 'italic', color: '#2a1010', lineHeight: 1.15, margin: '0 0 10px' }}>
           Ta tige se redresse
         </h2>
         <div style={{ width: 48, height: 2, background: 'linear-gradient(to right, transparent, #7a9ab0, transparent)', margin: '0 auto' }} />
@@ -6754,12 +6963,14 @@ function TigeValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
       {block(1, <p style={S}>Tu viens de prendre soin de ton <B>axe intérieur</B>.</p>)}
       {block(2, <p style={S}>La tige porte sans plier. Elle <B>oscille</B>, revient, <B>tient bon</B>.</p>)}
       {block(3, <p style={S}>C'est ce que tu viens de <B>nourrir</B>.</p>)}
-      {block(4, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(21px, 5.2vw, 26px)', margin: '0 0 48px' }}>
+      {block(4, <p style={{ ...S, fontStyle: 'normal', fontWeight: 700, fontSize: 'clamp(20px, 5vw, 26px)', margin: '0 0 24px' }}>
         Et ce qui tient en toi s'affermit.
       </p>)}
 
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 5), pointerEvents: phase >= 5 ? 'auto' : 'none' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', ...fadeIn(phase >= 5), pointerEvents: phase >= 5 ? 'auto' : 'none' }}>
+        <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={onBack} /></div>
         <PrimaryButton onClick={() => setSubSlide(1)}>Je continue…</PrimaryButton>
+        <div />
       </div>
     </div>
   )
@@ -7846,18 +8057,11 @@ function WOFDayProgressionScreen({ dayNumber = 1, onContinue }) {
   }
 
   return (
-    <div style={{ minHeight: 'calc(64dvh)', display: 'flex', flexDirection: 'column', background: '#faf5f2', textAlign: 'center' }}>
-
-      {/* Badge — au-dessus de l'image */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, opacity: textVisible ? 1 : 0, transition: 'opacity 0.8s ease' }}>
-        <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '.18em', textTransform: 'uppercase', color, padding: '5px 16px', borderRadius: 100, background: `${color}20`, border: `1px solid ${color}50` }}>
-          {meta.badge}
-        </span>
-      </div>
+    <div style={{ minHeight: 'calc(54dvh)', display: 'flex', flexDirection: 'column', background: '#faf5f2', textAlign: 'center' }}>
 
       {/* Zone plante plein largeur avec fondus */}
       <div style={{ position: 'relative', width: 'calc(100% - 48px)', margin: '0 auto', flexShrink: 0 }}>
-        <div style={{ position: 'relative', borderRadius: 20, height: dayNumber <= 5 ? 340 : 260, overflow: 'hidden' }}>
+        <div style={{ position: 'relative', borderRadius: 20, height: dayNumber <= 5 ? 'min(340px, 38vh)' : 'min(260px, 32vh)', overflow: 'hidden' }}>
         {dayNumber === 1 ? (
           <WOFRacinesSVG animate={true} />
         ) : dayNumber === 2 ? (
@@ -7888,17 +8092,17 @@ function WOFDayProgressionScreen({ dayNumber = 1, onContinue }) {
       </div>
 
       {/* Badge + texte + CTA */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 24px 40px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 24px 24px' }}>
 
         {/* Texte de clôture */}
         <p style={{
           fontFamily: "'Cormorant Garamond',serif",
-          fontSize: 'clamp(20px,5.2vw,26px)',
+          fontSize: 'clamp(18px,4.6vw,26px)',
           fontStyle: 'italic',
           fontWeight: 500,
           color: '#2a1010',
-          lineHeight: 1.65,
-          margin: '0 0 36px',
+          lineHeight: 1.5,
+          margin: '0 0 20px',
           whiteSpace: 'pre-line',
           maxWidth: 340,
           opacity: textVisible ? 1 : 0,
@@ -7911,6 +8115,7 @@ function WOFDayProgressionScreen({ dayNumber = 1, onContinue }) {
         {/* CTA */}
         <button
           onClick={onContinue}
+          className={ctaVisible ? 'wof-cta-pulse' : ''}
           style={{
             padding: '14px 44px',
             borderRadius: 100,
@@ -7960,13 +8165,13 @@ const J1_FEELINGS_FULL = [
   { key: 'epanoui',  emoji: '☀️', label: 'Épanoui·e',          color: '#8bc34a', v: 4,   main: true },
 ]
 
-function RessentiScreen({ phase, onAnswer, onBack, dayLabel = 'Jour 1 · Racines' }) {
+function RessentiScreen({ phase, onAnswer, onBack }) {
   const [pos, setPos]     = useState(null)   // 0.0 (bas=Épuisé) → 1.0 (haut=Bien)
   const trackRef          = useRef(null)
   const dragging          = useRef(false)
   const isBefore          = phase === 'before'
   const C                 = '#c8a0b0'
-  const TRACK_H           = 260
+  const TRACK_H           = 'clamp(160px, 38vh, 260px)'
 
   const STAGES = J1_FEELINGS_FULL  // 9 positions
 
@@ -7997,12 +8202,7 @@ function RessentiScreen({ phase, onAnswer, onBack, dayLabel = 'Jour 1 · Racines
 
   return (
     <div className="wof-in" style={{ padding: '12px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <BackButton onClick={onBack} />
-
-      <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '.22em', textTransform: 'uppercase', color: '#a87f90', margin: '4px 0 10px' }}>
-        {isBefore ? dayLabel : 'Un instant pour toi'}
-      </p>
-      <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(18px,4.8vw,24px)', fontWeight: 300, fontStyle: 'italic', color: '#2a1c1c', lineHeight: 1.3, marginBottom: 5 }}>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(18px,4.8vw,24px)', fontWeight: 300, fontStyle: 'italic', color: '#2a1c1c', lineHeight: 1.3, marginBottom: 5, marginTop: 4 }}>
         {isBefore ? 'Comment te sens-tu, là, maintenant ?' : 'Et maintenant ?'}
       </h2>
       <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 12.5, fontWeight: 300, color: '#6e5852', lineHeight: 1.5, marginBottom: 18 }}>
@@ -8076,20 +8276,25 @@ function RessentiScreen({ phase, onAnswer, onBack, dayLabel = 'Jour 1 · Racines
         </div>
       </div>
 
-      <button
-        onClick={() => { if (feel) onAnswer(feel) }}
-        disabled={!feel}
-        style={{
-          fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 500, letterSpacing: '.04em',
-          color: '#fff', border: 'none', cursor: feel ? 'pointer' : 'default',
-          padding: '0 32px', height: 48, borderRadius: 100,
-          background: `linear-gradient(135deg, ${C}, #a87f90)`,
-          boxShadow: feel ? '0 8px 22px rgba(200,160,176,0.45)' : 'none',
-          opacity: feel ? 1 : 0.40, transition: 'opacity 0.3s ease',
-        }}
-      >
-        {isBefore ? 'Commencer le rituel' : 'Voir ce qui a bougé'}
-      </button>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%' }}>
+        <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={onBack} /></div>
+        <button
+          onClick={() => { if (feel) onAnswer(feel) }}
+          disabled={!feel}
+          className={feel ? 'wof-cta-pulse' : ''}
+          style={{
+            fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 500, letterSpacing: '.04em',
+            color: '#fff', border: 'none', cursor: feel ? 'pointer' : 'default',
+            padding: '0 32px', height: 48, borderRadius: 100,
+            background: `linear-gradient(135deg, ${C}, #a87f90)`,
+            boxShadow: feel ? '0 8px 22px rgba(200,160,176,0.45)' : 'none',
+            opacity: feel ? 1 : 0.40, transition: 'opacity 0.3s ease',
+          }}
+        >
+          {isBefore ? 'Commencer le rituel' : 'Voir ce qui a bougé'}
+        </button>
+        <div />
+      </div>
     </div>
   )
 }
@@ -8176,6 +8381,7 @@ function DeltaScreen({ answers, onNext }) {
 
       <button
         onClick={onNext}
+        className="wof-cta-pulse"
         style={{
           fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 500, color: '#fff',
           border: 'none', cursor: 'pointer', padding: '0 36px', height: 52, borderRadius: 100,
@@ -8274,16 +8480,7 @@ function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, 
         <div style={{ position: 'absolute', top: '-10%', left: '-8%', width: 380, height: 380, borderRadius: '50%', background: `radial-gradient(circle,${g1}18 0%,transparent 65%)` }} />
         <div style={{ position: 'absolute', bottom: '-8%', right: '-8%', width: 300, height: 300, borderRadius: '50%', background: `radial-gradient(circle,${g2}14 0%,transparent 65%)` }} />
       </div>
-      <div style={{ flexShrink: 0, padding: '18px 18px 0', display: 'flex', alignItems: 'center', position: 'relative', zIndex: 1 }}>
-        <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.55)', border: '1px solid rgba(180,160,140,0.25)', borderRadius: 100, padding: '7px 16px', cursor: 'pointer', color: 'rgba(50,35,20,0.65)', fontSize: 13, fontFamily: "'Jost',sans-serif" }}>‹ Retour</button>
-      </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 28px 48px', boxSizing: 'border-box', position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <div style={{ animation: 'stepIn .35s ease both', marginBottom: 18 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderRadius: 100, background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 4px 16px ${glow}` }}>
-            <span style={{ fontSize: 18 }}>{r.badge.icon}</span>
-            <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.95)', letterSpacing: '.08em', textTransform: 'uppercase' }}>{r.badge.label}</span>
-          </div>
-        </div>
         <div style={{ animation: 'stepIn .38s ease .05s both', marginBottom: 20 }}>
           <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(28px,7vw,38px)', fontWeight: 400, color: '#2A1F18', margin: '0 0 6px', lineHeight: 1.15 }}>{r.title}</h2>
           <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 14, color: 'rgba(50,35,20,0.50)', margin: '0 0 6px' }}>{r.subtitle}</p>
@@ -8295,15 +8492,22 @@ function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, 
         <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: '#1a0f0a', lineHeight: 1.6, margin: '0 0 52px', maxWidth: 340, animation: 'stepIn .4s ease .15s both' }}>
           {invitationText}
         </p>
-        <div style={{ animation: 'stepIn .4s ease .35s both', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-          <button
-            onClick={() => setPhase(audioAvailable ? 'audio' : 'guided')}
-            style={{ padding: '18px 32px', width: '100%', maxWidth: 340, borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, whiteSpace: 'nowrap', boxSizing: 'border-box' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
-          >
-            <span style={{ fontSize: 24, flexShrink: 0 }}>🔊</span> Commencer le rituel
-          </button>
+        <div style={{ animation: 'stepIn .4s ease .35s both', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr min(340px, 100%) 1fr', alignItems: 'center', width: '100%' }}>
+            <div style={{ justifySelf: 'start', marginLeft: -18 }}>
+              <BackButton onClick={onBack} />
+            </div>
+            <button
+              onClick={() => setPhase(audioAvailable ? 'audio' : 'guided')}
+              className="wof-cta-pulse"
+              style={{ padding: '18px 32px', width: '100%', borderRadius: 100, border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg,${g1},${g2})`, boxShadow: `0 8px 32px ${glow}`, transition: 'transform .18s ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, whiteSpace: 'nowrap', boxSizing: 'border-box' }}
+              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+            >
+              <span style={{ fontSize: 24, flexShrink: 0 }}>🔊</span> Commencer le rituel
+            </button>
+            <div />
+          </div>
           <button
             onClick={() => setPhase('guided')}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 14, color: `rgba(50,35,20,0.45)`, textDecoration: 'underline', textUnderlineOffset: 3, padding: 0 }}
@@ -8684,6 +8888,7 @@ function DayOneContentMenu({ onComplete, onBack, dayColor }) {
       {/* CTA Terminer */}
       <button
         onClick={onComplete}
+        className="wof-cta-pulse"
         style={{
           width: '100%',
           background: C,
@@ -8854,7 +9059,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
 
       {/* ── Jour 2 : même trame que J1, thème Tige ── */}
       {step === 1 && dayIndex === 1 && (
-        <RessentiScreen phase="before" dayLabel="Jour 2 · La Tige"
+        <RessentiScreen phase="before"
           onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j2', answerKey: 'feelBefore', value: f.key }); advance() }}
           onBack={goBack} />
       )}
@@ -8878,7 +9083,7 @@ function DayShell({ dayIndex, answers, completedDays, onDayComplete, onStepChang
 
       {/* ── Jour 3 : même trame — Les Feuilles ── */}
       {step === 1 && dayIndex === 2 && (
-        <RessentiScreen phase="before" dayLabel="Jour 3 · Les Feuilles"
+        <RessentiScreen phase="before"
           onAnswer={f => { onDayComplete({ type: 'answer', dayKey: 'j3', answerKey: 'feelBefore', value: f.key }); advance() }}
           onBack={goBack} />
       )}
@@ -9742,7 +9947,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
           transition: 'opacity 600ms ease, transform 600ms ease',
           pointerEvents: ctaVisible ? 'auto' : 'none',
         }}>
-          <button onClick={onDone} style={{
+          <button onClick={onDone} className={ctaVisible ? 'wof-cta-pulse' : ''} style={{
             width: '100%', fontFamily: 'Jost, sans-serif',
             fontSize: 15, fontWeight: 500, letterSpacing: '0.04em', color: '#fff',
             background: 'linear-gradient(135deg, #a8c098, #7a9870)',
@@ -9824,6 +10029,7 @@ function RitualVideoSlide({ src, onContinue }) {
         {/* Bouton continuer */}
         <button
           onClick={onContinue}
+          className="wof-cta-pulse"
           style={{
             width: '100%',
             fontFamily: 'Jost, sans-serif',
@@ -10430,7 +10636,7 @@ async function handleDayEvent(event) {
           {/* ── Image hero — cachée en vue garden ── */}
           <div style={{
             flexShrink: 0,
-            height: view === 'garden' ? 0 : isMobile ? '36%' : '40%',
+            height: view === 'garden' ? 0 : isMobile ? '28%' : '40%',
             minHeight: view === 'garden' ? 0 : undefined,
             position: 'relative',
             overflow: 'hidden',
@@ -10480,33 +10686,15 @@ async function handleDayEvent(event) {
               />
             )}
 
-            {/* Tag jour + compteur en overlay bas */}
-            <div style={{ position: 'absolute', bottom: 12, left: 16, right: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{
-                fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase',
-                color: accentColor, fontWeight: 600, padding: '4px 12px', borderRadius: 100,
-                background: 'rgba(255,255,255,0.82)', border: `1px solid ${accentColor}40`,
-                backdropFilter: 'blur(6px)', fontFamily: 'Jost, sans-serif',
-              }}>
-                {currentConfig.title}
-              </span>
-              {currentScreen === 'accueil_intro' && currentConfig.accueil?.timeBadge ? (
-                <span className="time-badge-pulse" style={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: 12, fontWeight: 600,
-                  color: '#7a4858',
-                  background: 'rgba(255,255,255,0.92)',
-                  border: '1.5px solid rgba(200,160,176,0.5)',
-                  padding: '5px 14px', borderRadius: 100,
-                  backdropFilter: 'blur(4px)',
-                  letterSpacing: '0.04em',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {currentConfig.accueil.timeBadge}
-                </span>
-              ) : null}
-            </div>
           </div>
+
+          {/* ── Frise de progression du parcours — remplace les badges position/timing ── */}
+          {view === 'day' && (
+            <DiscoveryProgressBar
+              completedDays={weekData.completedDays}
+              currentDay={weekData.currentDay}
+            />
+          )}
 
    {/* ── Contenu (scrollable) ── */}
 <div id="wof-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', display: 'flex', flexDirection: 'column', background: view === 'garden' ? 'linear-gradient(160deg, #0d2818, #071510)' : 'transparent', }}>
