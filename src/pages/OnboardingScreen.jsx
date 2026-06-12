@@ -3502,13 +3502,14 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
   useEffect(() => {
     if (!started) return
 
-    // Reprend l'audio démarré au clic précédent (geste utilisateur requis pour l'autoplay)
+    // Reprend l'audio démarré au clic précédent, mais on le met en pause :
+    // l'audio ne démarre qu'au clic sur "commencer" (bouton son)
     let audio = window._discoveryAudio
     window._discoveryAudio = null
     if (!audio) {
       audio = new Audio('/audio/Rituelaccueil.mp3')
-      audio.play().catch(() => {})
     }
+    audio.pause()
     audioRef.current = audio
 
     let fallback, fadeTimeout
@@ -3605,7 +3606,7 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
       borderRadius: 28, boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
       background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      padding: '90px 0 40px', minHeight: 800,
+      padding: '90px 0 40px', minHeight: window.innerWidth < 768 ? 800 : 900,
     }}>
       <style>{ONB_STYLES}</style>
       <NatureBg />
@@ -3636,18 +3637,20 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
             position: 'absolute', inset: 0, borderRadius: '50%',
             border: '2px solid rgba(180,110,90,0.55)',
             animation: `onbWave 5s ease-out ${i * 1.25}s infinite`,
+            animationPlayState: soundActivated ? 'running' : 'paused',
           }} />
         ))}
         <div style={{
           width: 90, height: 90, borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(230,170,120,1), rgba(160,100,90,0.75))',
           animation: 'breathe 6s ease-in-out infinite',
+          animationPlayState: soundActivated ? 'running' : 'paused',
           boxShadow: '0 0 70px rgba(180,110,90,0.65)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           {started && !soundActivated && (
-            <button onClick={handleActivateSound} title="Activer le son" style={{
-              width: 36, height: 36, borderRadius: '50%',
+            <button onClick={handleActivateSound} title="Commencer" style={{
+              width: 80, height: 80, borderRadius: '50%',
               background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.5)',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 0, transition: 'background .2s',
@@ -3655,10 +3658,8 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
               onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.5)'}
               onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              <svg width="56" height="56" viewBox="0 0 24 24" fill="#fff" stroke="none">
+                <polygon points="6 4 20 12 6 20" />
               </svg>
             </button>
           )}
@@ -3690,8 +3691,8 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
         zIndex: 1,
       }}>
         <h2 style={{
-          fontFamily: "'Cormorant Garamond',serif", fontWeight: 300,
-          fontSize: 'clamp(24px,5vw,34px)', color: '#000',
+          fontFamily: "'Cormorant Garamond',serif", fontWeight: 700,
+          fontSize: 'clamp(30px,6.5vw,44px)', color: '#000',
           lineHeight: 1.3, margin: '12px 0 8px',
         }}>
           {started
@@ -3722,6 +3723,27 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
           }}>Guidé par Gwenaël</span>
         </div>
 
+        {started && (
+          <div style={{ marginTop: 24, textAlign: 'center' }}>
+            <p style={{ fontSize: 16, color: '#000', fontWeight: 700, fontStyle: 'italic', margin: '0 0 6px' }}>
+              Pas au calme, là ? Ton rituel t'attend.
+            </p>
+            <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', margin: '0 0 10px' }}>
+              Reviens quand tu pourras l'écouter, au casque.
+            </p>
+            <button onClick={handlePause} style={{
+              background: 'none', border: '1px solid rgba(0,0,0,0.3)', borderRadius: 20,
+              cursor: 'pointer', color: 'rgba(0,0,0,0.65)', fontFamily: "'Jost',sans-serif",
+              fontSize: 12, letterSpacing: '.04em', padding: '6px 18px', transition: 'color .2s, border-color .2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.9)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.5)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.65)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.3)' }}
+            >
+              Revenir plus tard
+            </button>
+          </div>
+        )}
+
         {!started && (
           <button onClick={() => setStarted(true)} style={{
             marginTop: 28, background: 'linear-gradient(135deg, #e6aa78, #a0645a)',
@@ -3735,30 +3757,6 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
         )}
       </div>
 
-      {started && (
-        <>
-          {/* Ce n'est pas le bon moment ? — discret */}
-          <div style={{
-            position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)',
-            textAlign: 'center', zIndex: 1, width: '100%',
-            opacity: visible ? 1 : 0, transition: 'opacity 1.2s ease',
-          }}>
-            <p style={{ fontSize: 16, color: '#000', fontWeight: 700, fontStyle: 'italic', margin: '0 0 6px' }}>
-              Ce n'est pas le bon moment ?
-            </p>
-            <button onClick={handlePause} style={{
-              background: 'none', border: '1px solid rgba(0,0,0,0.3)', borderRadius: 20,
-              cursor: 'pointer', color: 'rgba(0,0,0,0.65)', fontFamily: "'Jost',sans-serif",
-              fontSize: 12, letterSpacing: '.04em', padding: '6px 18px', transition: 'color .2s, border-color .2s',
-            }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.9)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.5)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.65)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.3)' }}
-            >
-              Revenir plus tard
-            </button>
-          </div>
-        </>
-      )}
     </div>
     </div>
   )
