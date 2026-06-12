@@ -424,7 +424,6 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
             setScreen('weekone')
           }
         }}
-        onExit={() => { window.history.replaceState({}, '', window.location.pathname); setScreen('dashboard') }}
       />
     )
   }
@@ -783,7 +782,6 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
               setScreen('weekone')
             }
           }}
-          onExit={() => setScreen('dashboard')}
         />
       </>
     )

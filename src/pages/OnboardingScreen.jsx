@@ -3490,6 +3490,8 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
   const [leaving, setLeaving] = useState(false)
   // En reprise, on attend un clic sur "Je reprends" (geste requis pour l'autoplay)
   const [started, setStarted] = useState(!resuming)
+  const [soundActivated, setSoundActivated] = useState(false)
+  const [paused, setPaused] = useState(false)
   const audioRef = useRef(null)
 
   useEffect(() => {
@@ -3532,6 +3534,11 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
   function handlePause() {
     if (audioRef.current) audioRef.current.pause()
     onPause()
+    setPaused(true)
+  }
+
+  async function handleSignOutFromPause() {
+    await supabase.auth.signOut()
   }
 
   function handleRestart() {
@@ -3540,6 +3547,49 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
       audioRef.current.play().catch(() => {})
     }
   }
+
+  function handleActivateSound() {
+    if (audioRef.current) audioRef.current.play().catch(() => {})
+    setSoundActivated(true)
+  }
+
+  if (paused) return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 150,
+      background: 'rgba(20,12,8,0.45)', backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Jost',sans-serif", padding: 16,
+    }}>
+      <div style={{
+        position: 'relative', width: '100%', maxWidth: 460, overflow: 'hidden',
+        borderRadius: 28, boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
+        background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '48px 32px', textAlign: 'center',
+      }}>
+        <style>{ONB_STYLES}</style>
+        <h2 style={{
+          fontFamily: "'Cormorant Garamond',serif", fontWeight: 300,
+          fontSize: 'clamp(22px,5vw,30px)', color: '#000',
+          lineHeight: 1.3, margin: '0 0 12px',
+        }}>
+          C'est noté.<br/>On t'attendra.
+        </h2>
+        <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', lineHeight: 1.7, margin: '0 0 28px' }}>
+          Déconnecte-toi quand tu veux : à ta prochaine connexion, ton micro-rituel sera là où tu l'as laissé.
+        </p>
+        <button onClick={handleSignOutFromPause} style={{
+          background: 'linear-gradient(135deg, #e6aa78, #a0645a)',
+          border: 'none', borderRadius: 30, cursor: 'pointer',
+          color: '#fff8f2', fontFamily: "'Jost',sans-serif", fontWeight: 600,
+          fontSize: 14, letterSpacing: '.06em', padding: '14px 36px',
+          boxShadow: '0 6px 24px rgba(160,100,90,0.35)',
+        }}>
+          Se déconnecter
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div style={{
@@ -3571,10 +3621,16 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
           fontSize: 18, letterSpacing: '.16em', textTransform: 'uppercase',
           color: '#000', fontWeight: 600,
         }}>{started ? 'Avant de commencer' : 'Tu étais sur le point de commencer'}</span>
+        <div style={{
+          fontSize: 16, letterSpacing: '.06em', color: 'rgba(0,0,0,0.45)',
+          fontStyle: 'italic', marginTop: 6,
+        }}>
+          Ton premier rituel de découverte
+        </div>
       </div>
 
       {/* Cercle de respiration */}
-      <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, marginTop: 0 }}>
+      <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, marginTop: 40 }}>
         {[0, 1, 2, 3].map(i => (
           <div key={i} style={{
             position: 'absolute', inset: 0, borderRadius: '50%',
@@ -3589,7 +3645,24 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
           boxShadow: '0 0 70px rgba(180,110,90,0.65)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {started && (
+          {started && !soundActivated && (
+            <button onClick={handleActivateSound} title="Activer le son" style={{
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.5)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, transition: 'background .2s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.5)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </button>
+          )}
+          {started && soundActivated && (
             <button onClick={handleRestart} title="Recommencer" style={{
               width: 36, height: 36, borderRadius: '50%',
               background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.5)',
@@ -3691,7 +3764,7 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
   )
 }
 
-export function OnboardingScreen({ userId, onComplete, onExit }) {
+export function OnboardingScreen({ userId, onComplete }) {
   useTheme()
   // phase : -2=voile -1=intro 'decouverte'=micro-rituel audio 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=notifications 7=install 8=quizIntro 9=quiz
   const introSeenKey  = userId ? `mji_intro_seen_${userId}` : null
@@ -3792,7 +3865,6 @@ export function OnboardingScreen({ userId, onComplete, onExit }) {
       }}
       onPause={() => {
         if (decouvertePendingKey) localStorage.setItem(decouvertePendingKey, '1')
-        if (onExit) onExit()
       }}
     />
   )
