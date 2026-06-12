@@ -11,6 +11,7 @@ import { PlantSVG, DEFAULT_GARDEN_SETTINGS } from '../components/PlantSVG'
 import { GardenSettingsModal } from './ScreenMonJardin'
 import { LutinCompagnon, LUTIN_MESSAGES_WEEK_ONE } from '../components/LutinCompagnon'
 import RituelMieuxEtre from '../components/RituelMieuxEtre'
+import { useAmbiance, ambianceAsset } from '../hooks/useAmbiance'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Styles globaux — keyframes + responsive modal
@@ -3348,6 +3349,7 @@ function MaFleurLiveModal({ onClose }) {
 // ── Découverte Ma Fleur (Jour 6) ───────────────────────────────────────────
 
 function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
+  const ambiance = useAmbiance()
   const { user } = useAuth()
   const userId   = user?.id
   const [plantData, setPlantData] = useState(null)
@@ -3562,7 +3564,7 @@ function MaFleurDiscovery({ answerKey, onAnswer, onBack }) {
 
           {/* Couronne superposée */}
           <img
-            src="/couronne.png"
+            src={ambianceAsset('/couronne.png', ambiance)}
             alt=""
             style={{
               position: 'absolute',
@@ -7002,6 +7004,7 @@ function TigeValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function HelpBandeau({ helpText }) {
+  const ambiance = useAmbiance()
   const [open, setOpen] = useState(false)
   const bandeauRef = useRef(null)
   const [panelRect, setPanelRect] = useState(null)
@@ -7144,7 +7147,7 @@ function HelpBandeau({ helpText }) {
                 }} />
                 {/* Personnage posé sur le bandeau */}
                 <img
-                  src="/instructeur1.png"
+                  src={ambianceAsset('/instructeur1.png', ambiance)}
                   alt="Instructeur"
                   style={{
                     position: 'absolute',
@@ -7183,7 +7186,7 @@ function HelpBandeau({ helpText }) {
         }}
       >
         <img
-          src="/bandeau2.png"
+          src={ambianceAsset('/bandeau2.png', ambiance)}
           alt="Espace d'aide"
           style={{
             width: '100%', height: '100%', display: 'block',
@@ -9847,6 +9850,7 @@ const LUTIN_SLOTS = ['right', 'left']
 // Voile de transition avant le MP4 WeekOne
 // ─────────────────────────────────────────────────────────────────────────────
 function WelcomeVeil({ onDone, isReturn = false }) {
+  const ambiance = useAmbiance()
   const videoRef = useRef(null)
   const [muted,      setMuted]      = useState(true)
   const [ctaVisible, setCtaVisible] = useState(false)
@@ -9871,7 +9875,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
 
       {/* Barrière — plein écran, objectFit contain */}
       <img
-        src="/barriere.png"
+        src={ambianceAsset('/barriere.png', ambiance)}
         alt=""
         style={{
           position: 'absolute', inset: 0,
@@ -9911,7 +9915,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
       }}>
         <video
           ref={videoRef}
-          src="/video/cheminjours.mp4"
+          src={ambianceAsset('/video/cheminjours.mp4', ambiance)}
           autoPlay playsInline muted
           preload="auto"
           className="wveil-video"
@@ -10052,6 +10056,7 @@ function RitualVideoSlide({ src, onContinue }) {
 }
 
 function WelcomeWeekOne({ onStart }) {
+  const ambiance = useAmbiance()
   const [phase, setPhase] = useState(0)
 
   useEffect(() => {
@@ -10081,7 +10086,7 @@ function WelcomeWeekOne({ onStart }) {
         position: 'relative',
       }}>
         <img
-          src="/barriere.png"
+          src={ambianceAsset('/barriere.png', ambiance)}
           alt=""
           style={{ width: '100%', height: 'auto', display: 'block', minHeight: 260, objectFit: 'cover' }}
           onError={e => { e.target.onerror = null; e.target.style.minHeight = '320px'; e.target.style.background = '#0d2818' }}

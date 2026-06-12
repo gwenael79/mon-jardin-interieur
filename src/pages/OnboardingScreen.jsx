@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../core/supabaseClient'
 import { useTheme } from '../hooks/useTheme'
+import { useAmbiance, ambianceAsset } from '../hooks/useAmbiance'
 import { usePushNotification } from '../hooks/usePushNotification'
 import { PLANT_ZONES, useRituels, RitualZoneModal } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
@@ -128,8 +129,10 @@ export const ONBOARDING_SLIDES = [
 //  INTRO GWENAËL — modal de présentation avant les slides
 // ─────────────────────────────────────────────────────────────────────────────
 function IntroGwenael({ onStart }) {
+  const ambiance = useAmbiance()
   const [phase, setPhase] = useState(0)
   const [muted, setMuted] = useState(true)
+  const [veil, setVeil] = useState(false)
   const videoRef = useRef(null)
 
   useEffect(() => {
@@ -138,6 +141,15 @@ function IntroGwenael({ onStart }) {
     const t3 = setTimeout(() => setPhase(3), 2200)
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [])
+
+  function handleVideoEnded() {
+    if (ambiance !== 'zen') return
+    setVeil(true)
+    const audio = new Audio('/audio/decouverte.mp3')
+    audio.play().catch(() => {})
+    window._discoveryAudio = audio
+    setTimeout(() => onStart(), 700)
+  }
 
   const fade = (visible) => ({
     opacity:    visible ? 1 : 0,
@@ -164,13 +176,77 @@ function IntroGwenael({ onStart }) {
       }}>
         <video
           ref={videoRef}
-          src="/Accueil_lutin.mp4"
+          src={ambianceAsset('/Accueil_lutin.mp4', ambiance)}
           autoPlay
           playsInline
           muted={muted}
+          onEnded={handleVideoEnded}
           style={{ width: '100%', height: 'auto', display: 'block' }}
         />
-        {/* ── Bouton CTA en overlay bas ── */}
+        {/* ── Voile blanc de transition (ambiance zen, fin de vidéo) ── */}
+        {ambiance === 'zen' && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: '#fff',
+            opacity: veil ? 1 : 0,
+            transition: 'opacity 700ms ease',
+            pointerEvents: 'none',
+          }} />
+        )}
+        {/* ── Texte de bienvenue (ambiance zen uniquement) ── */}
+        {ambiance === 'zen' && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            padding: '32px 24px',
+            background: 'rgba(0,0,0,0.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            textAlign: 'center',
+            ...fade(phase >= 2),
+          }}>
+            <p style={{
+              margin: 0,
+              fontFamily: 'Cormorant Garamond, serif',
+              fontStyle: 'italic',
+              fontSize: '80px',
+              lineHeight: 1.25,
+              color: '#fff',
+              textShadow: '0 2px 12px rgba(0,0,0,0.25)',
+            }}>
+              Bienvenue dans ton jardin intérieur
+            </p>
+          </div>
+        )}
+        {/* ── Bouton son (ambiance zen) ── */}
+        {ambiance === 'zen' && (
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            padding: '16px',
+            display: 'flex', justifyContent: 'center',
+            ...fade(phase >= 3),
+            pointerEvents: phase >= 3 ? 'auto' : 'none',
+          }}>
+            <button
+              onClick={() => {
+                setMuted(false)
+                if (videoRef.current) {
+                  videoRef.current.muted = false
+                  videoRef.current.currentTime = 0
+                  videoRef.current.play()
+                }
+              }}
+              style={{
+                width: 56, height: 56, borderRadius: 50,
+                background: 'rgba(255,255,255,0.25)', border: '2px solid rgba(255,255,255,0.5)',
+                backdropFilter: 'blur(6px)',
+                cursor: 'pointer', fontSize: 24, color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+              }}
+            >{muted ? '🔇' : '🔊'}</button>
+          </div>
+        )}
+        {/* ── Bouton CTA en overlay bas (masqué en ambiance zen) ── */}
+        {ambiance !== 'zen' && (
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           padding: '48px 16px 16px',
@@ -198,7 +274,13 @@ function IntroGwenael({ onStart }) {
             }}
           >{muted ? '🔇' : '🔊'}</button>
           <button
-            onClick={onStart}
+            onClick={() => {
+              // Démarre l'audio de découverte dès maintenant (geste utilisateur requis pour l'autoplay)
+              const audio = new Audio('/audio/Rituelaccueil.mp3')
+              audio.play().catch(() => {})
+              window._discoveryAudio = audio
+              onStart()
+            }}
             style={{
               width: '100%',
               fontFamily: 'Jost, sans-serif',
@@ -215,6 +297,7 @@ function IntroGwenael({ onStart }) {
             Vous êtes prêt ? Allons-y ensemble...
           </button>
         </div>
+        )}
       </div>
 
       {/* Déconnexion discrète sous la vidéo */}
@@ -247,6 +330,7 @@ export const ONB_STYLES = `
   @keyframes onbIn    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
   @keyframes onbOut   { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-14px)} }
   @keyframes onbPulse { 0%,100%{transform:scale(1);opacity:.6} 50%{transform:scale(1.08);opacity:1} }
+  @keyframes onbWave  { 0%{transform:scale(0.8);opacity:.9} 100%{transform:scale(1.4);opacity:0} }
   @keyframes onbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
   @keyframes growBar  { from{width:0} }
   @keyframes progressBar { from{width:0} to{width:100%} }
@@ -783,6 +867,7 @@ function StepIntention({ onSelect }) {
 //  ÉTAPE MÉTAPHORE — pont entre l'intention et la fleur
 // ─────────────────────────────────────────────────────────────────────────────
 function StepMetaphore({ onNext }) {
+  const ambiance = useAmbiance()
   const isMobile = window.innerWidth < 768
 
   return (
@@ -811,7 +896,7 @@ function StepMetaphore({ onNext }) {
           flexShrink:0,
         }}>
           <img
-            src="/miroir2.png"
+            src={ambianceAsset('/miroir2.png', ambiance)}
             alt=""
             style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center' }}
           />
@@ -1058,6 +1143,7 @@ function StepCommunaute({ onComplete }) {
 //  SLIDES ÉDUCATIVES — layout colonne unique, propre
 // ─────────────────────────────────────────────────────────────────────────────
 function SlidesEducatives({ onComplete }) {
+  const ambiance = useAmbiance()
   const [step,    setStep]    = useState(0)
   const [leaving, setLeaving] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -1105,7 +1191,7 @@ function SlidesEducatives({ onComplete }) {
         transition:'opacity .28s ease',
       }}>
         <img
-          src="/champs.png"
+          src={ambianceAsset('/champs.png', ambiance)}
           alt=""
           style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 30%', display:'block' }}
         />
@@ -1115,7 +1201,7 @@ function SlidesEducatives({ onComplete }) {
         {/* Personnage en overlay hero — mobile uniquement */}
         {isMobile && (() => {
           const charMap = { benefices:'/instructeur3.png', promise:'/zen.png' }
-          const src = charMap[slide.id]
+          const src = charMap[slide.id] && ambianceAsset(charMap[slide.id], ambiance)
           if (!src) return null
           const isLeft = slide.id === 'benefices'
           const isFloat = slide.id === 'promise'
@@ -1222,7 +1308,7 @@ function SlidesEducatives({ onComplete }) {
                   )}
                   {slide.id === 'impact' && (
                     <img
-                      src="/stress3.png"
+                      src={ambianceAsset('/stress3.png', ambiance)}
                       alt=""
                       style={{ width:'100%', borderRadius:10, objectFit:'cover', maxHeight: isMobile ? 110 : 130, marginBottom:4, boxShadow:'0 4px 14px rgba(0,0,0,0.10)' }}
                     />
@@ -1252,7 +1338,7 @@ function SlidesEducatives({ onComplete }) {
                     </div>
                   )}
                   {isMobile && slide.id === 'spectrum' && (
-                    <img src="/stress2.png" alt="" style={{
+                    <img src={ambianceAsset('/stress2.png', ambiance)} alt="" style={{
                       position:'absolute', top:'5%', right:'-4%',
                       width:'52%', objectFit:'contain', display:'block',
                       zIndex:0, opacity:0.85,
@@ -1276,10 +1362,10 @@ function SlidesEducatives({ onComplete }) {
                 </div>
               )}
               {slide.id === 'pourquoi' && !isMobile && (
-                <img src="/stress1.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', marginLeft:'-20%' }}/>
+                <img src={ambianceAsset('/stress1.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', marginLeft:'-20%' }}/>
               )}
               {slide.id === 'benefices' && !isMobile && (
-                <img src="/instructeur3.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
+                <img src={ambianceAsset('/instructeur3.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
               )}
             </div>
 
@@ -1295,13 +1381,13 @@ function SlidesEducatives({ onComplete }) {
               WebkitOverflowScrolling: 'touch',
             }}>
               {slide.id === 'spectrum' && !isMobile && (
-                <img src="/stress2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'center bottom' }}/>
+                <img src={ambianceAsset('/stress2.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'center bottom' }}/>
               )}
               {slide.id === 'freins' && !isMobile && (
-                <img src="/instructeur2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
+                <img src={ambianceAsset('/instructeur2.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(40px)' }}/>
               )}
               {slide.id === 'promise' && !isMobile && (
-                <img src="/zen.png" alt="" style={{ width:'65%', height:'auto', objectFit:'contain', display:'block', marginLeft:'10%', animation:'onbFloat 4s ease-in-out infinite' }}/>
+                <img src={ambianceAsset('/zen.png', ambiance)} alt="" style={{ width:'65%', height:'auto', objectFit:'contain', display:'block', marginLeft:'10%', animation:'onbFloat 4s ease-in-out infinite' }}/>
               )}
               {slide.id === 'pourquoi' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', width:'100%', height:'100%' }}>
@@ -1315,7 +1401,7 @@ function SlidesEducatives({ onComplete }) {
                     {isMobile && (
                       <div style={{ display:'flex', justifyContent:'center', marginTop:8 }}>
                         <img
-                          src="/stress1.png"
+                          src={ambianceAsset('/stress1.png', ambiance)}
                           alt=""
                           style={{
                             height:220, width:'auto', objectFit:'contain', objectPosition:'bottom center',
@@ -1329,7 +1415,7 @@ function SlidesEducatives({ onComplete }) {
                 </div>
               )}
               {slide.id === 'stress' && !isMobile && (
-                <img src="/instructeur2.png" alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(20px)' }}/>
+                <img src={ambianceAsset('/instructeur2.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'contain', objectPosition:'bottom center', transform:'translateY(20px)' }}/>
               )}
               {slide.id === 'benefices' && (
                 <div style={{ display:'flex', flexDirection:'column', overflowY:'auto', WebkitOverflowScrolling:'touch', paddingBottom: isMobile ? 12 : 16, width:'100%' }}>
@@ -1371,7 +1457,7 @@ function SlidesEducatives({ onComplete }) {
           {slide.id === 'impact' && (
             <div style={{ display:'flex', justifyContent:'center' }}>
               <img
-                src="/stress3.png"
+                src={ambianceAsset('/stress3.png', ambiance)}
                 alt=""
                 style={{ width: isMobile ? '90%' : '52%', borderRadius:10, objectFit:'contain', boxShadow:'0 4px 14px rgba(0,0,0,0.10)', flexShrink:0, display:'block' }}
               />
@@ -3175,6 +3261,7 @@ En 3 phrases courtes et directes (tutoiement), explique pourquoi cette applicati
 
 // ─────────────────────────────────────────────────────────────────────────────
 function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLabel, initialShowRitual = false, onSignOut, showBg = false, onValidateOnboarding }) {
+  const ambiance = useAmbiance()
   const [showPanel,        setShowPanel]        = useState(false)
   const [showRitual,       setShowRitual]       = useState(initialShowRitual)
   const [showInitieConfirm, setShowInitieConfirm] = useState(false)
@@ -3254,7 +3341,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
 
       {/* Fond — chemin.png à la première connexion, beige au retour */}
       {showBg
-        ? <img src="/chemin.png" alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.onerror = null; e.target.src = '/champs2.png' }} />
+        ? <img src={ambianceAsset('/chemin.png', ambiance)} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.onerror = null; e.target.src = ambianceAsset('/champs2.png', ambiance) }} />
         : <><div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)' }} /><NatureBg /></>
       }
       {showBg && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(5,3,1,0.80) 0%, rgba(5,3,1,0.20) 50%, transparent 100%)', pointerEvents: 'none' }} />}
@@ -3268,23 +3355,25 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           padding: 24,
         }}>
           {/* Groupe lutin + modal centré comme une unité */}
-          <div style={{ display: 'flex', alignItems: 'center', position: 'relative', transform: 'translateX(-20%)' }}>
-          {/* Lutin à gauche */}
-          <img
-            src="/lutin-droit.png"
-            alt=""
-            style={{
-              height: 'min(480px, 65vh)', width: 'auto',
-              objectFit: 'contain',
-              alignSelf: 'center',
-              transform: 'translateY(15%)',
-              marginRight: -60,
-              flexShrink: 0,
-              position: 'relative', zIndex: 1,
-              filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.40))',
-              animation: 'modalIn .6s cubic-bezier(.22,1,.36,1) .1s both',
-            }}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', position: 'relative', transform: ambiance === 'zen' ? 'none' : 'translateX(-20%)' }}>
+          {/* Lutin à gauche — masqué en ambiance zen */}
+          {ambiance !== 'zen' && (
+            <img
+              src="/lutin-droit.png"
+              alt=""
+              style={{
+                height: 'min(480px, 65vh)', width: 'auto',
+                objectFit: 'contain',
+                alignSelf: 'center',
+                transform: 'translateY(15%)',
+                marginRight: -60,
+                flexShrink: 0,
+                position: 'relative', zIndex: 1,
+                filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.40))',
+                animation: 'modalIn .6s cubic-bezier(.22,1,.36,1) .1s both',
+              }}
+            />
+          )}
           {/* Modal */}
           <div style={{
             width: 480, maxHeight: '90vh', overflowY: 'auto',
@@ -3393,12 +3482,224 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
   )
 }
 
-export function OnboardingScreen({ userId, onComplete }) {
+// ─────────────────────────────────────────────────────────────────────────────
+//  ÉTAPE DÉCOUVERTE — premier micro-rituel audio (2 min), sans interaction
+// ─────────────────────────────────────────────────────────────────────────────
+function StepDecouverte({ onComplete, onPause, resuming }) {
+  const [visible, setVisible] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  // En reprise, on attend un clic sur "Je reprends" (geste requis pour l'autoplay)
+  const [started, setStarted] = useState(!resuming)
+  const audioRef = useRef(null)
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setVisible(true), 800)
+    return () => clearTimeout(t1)
+  }, [])
+
+  useEffect(() => {
+    if (!started) return
+
+    // Reprend l'audio démarré au clic précédent (geste utilisateur requis pour l'autoplay)
+    let audio = window._discoveryAudio
+    window._discoveryAudio = null
+    if (!audio) {
+      audio = new Audio('/audio/Rituelaccueil.mp3')
+      audio.play().catch(() => {})
+    }
+    audioRef.current = audio
+
+    let fallback, fadeTimeout
+    // Fondu de 3s avant de passer à l'écran suivant
+    const finish = () => {
+      setLeaving(true)
+      fadeTimeout = setTimeout(onComplete, 3000)
+    }
+    audio.addEventListener('ended', finish)
+    audio.addEventListener('error', () => {
+      // Fichier absent — on simule la durée (2 min) pour pouvoir tester le flux
+      fallback = setTimeout(finish, 120000)
+    })
+
+    return () => {
+      clearTimeout(fallback)
+      clearTimeout(fadeTimeout)
+      audio.removeEventListener('ended', finish)
+      audio.pause()
+    }
+  }, [started])
+
+  function handlePause() {
+    if (audioRef.current) audioRef.current.pause()
+    onPause()
+  }
+
+  function handleRestart() {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play().catch(() => {})
+    }
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 150,
+      background: 'rgba(20,12,8,0.45)', backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Jost',sans-serif", padding: 16,
+      opacity: leaving ? 0 : 1,
+      transition: 'opacity 3s ease',
+    }}>
+    <div style={{
+      position: 'relative', width: '100%', maxWidth: 620, maxHeight: '94vh', overflow: 'hidden',
+      borderRadius: 28, boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
+      background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
+      padding: '90px 0 40px', minHeight: 800,
+    }}>
+      <style>{ONB_STYLES}</style>
+      <NatureBg />
+
+      {/* Titre */}
+      <div style={{
+        position: 'absolute', top: 36, left: 0, right: 0, textAlign: 'center', zIndex: 1,
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(-10px)',
+        transition: 'opacity 1.2s ease, transform 1.2s ease',
+      }}>
+        <span style={{
+          fontSize: 18, letterSpacing: '.16em', textTransform: 'uppercase',
+          color: '#000', fontWeight: 600,
+        }}>{started ? 'Avant de commencer' : 'Tu étais sur le point de commencer'}</span>
+      </div>
+
+      {/* Cercle de respiration */}
+      <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, marginTop: 0 }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            border: '2px solid rgba(180,110,90,0.55)',
+            animation: `onbWave 5s ease-out ${i * 1.25}s infinite`,
+          }} />
+        ))}
+        <div style={{
+          width: 90, height: 90, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(230,170,120,1), rgba(160,100,90,0.75))',
+          animation: 'breathe 6s ease-in-out infinite',
+          boxShadow: '0 0 70px rgba(180,110,90,0.65)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {started && (
+            <button onClick={handleRestart} title="Recommencer" style={{
+              width: 36, height: 36, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.5)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, transition: 'background .2s',
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.5)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <path d="M3 3v5h5" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Texte */}
+      <div style={{
+        marginTop: 40, textAlign: 'center', maxWidth: 420, padding: '0 24px',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
+        transition: 'opacity 1.2s ease, transform 1.2s ease',
+        zIndex: 1,
+      }}>
+        <h2 style={{
+          fontFamily: "'Cormorant Garamond',serif", fontWeight: 300,
+          fontSize: 'clamp(24px,5vw,34px)', color: '#000',
+          lineHeight: 1.3, margin: '12px 0 8px',
+        }}>
+          {started
+            ? <>Offre-toi 2 minutes,<br/>rien que pour toi.</>
+            : <>Reprenons,<br/>quand tu es prêt(e).</>}
+        </h2>
+        <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', lineHeight: 1.7 }}>
+          {started
+            ? 'Installe-toi confortablement, et laisse-toi guider.'
+            : 'Ton micro-rituel t\'attend, là où tu l\'avais laissé.'}
+        </p>
+
+        <div style={{
+          marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+        }}>
+          <div style={{
+            width: 150, height: 150, borderRadius: '50%', overflow: 'hidden',
+            border: '2px solid rgba(255,255,255,0.8)',
+            boxShadow: '0 0 28px rgba(220,180,140,0.5)',
+          }}>
+            <img src="/equipe/gwenaelaccueil.jpeg" alt="Gwenaël" style={{
+              width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 0%',
+            }} />
+          </div>
+          <span style={{
+            fontSize: 11, letterSpacing: '.06em', color: 'rgba(0,0,0,0.45)',
+            fontStyle: 'italic',
+          }}>Guidé par Gwenaël</span>
+        </div>
+
+        {!started && (
+          <button onClick={() => setStarted(true)} style={{
+            marginTop: 28, background: 'linear-gradient(135deg, #e6aa78, #a0645a)',
+            border: 'none', borderRadius: 30, cursor: 'pointer',
+            color: '#fff8f2', fontFamily: "'Jost',sans-serif", fontWeight: 600,
+            fontSize: 14, letterSpacing: '.06em', padding: '14px 36px',
+            boxShadow: '0 6px 24px rgba(160,100,90,0.35)',
+          }}>
+            Je reprends
+          </button>
+        )}
+      </div>
+
+      {started && (
+        <>
+          {/* Ce n'est pas le bon moment ? — discret */}
+          <div style={{
+            position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)',
+            textAlign: 'center', zIndex: 1, width: '100%',
+            opacity: visible ? 1 : 0, transition: 'opacity 1.2s ease',
+          }}>
+            <p style={{ fontSize: 16, color: '#000', fontWeight: 700, fontStyle: 'italic', margin: '0 0 6px' }}>
+              Ce n'est pas le bon moment ?
+            </p>
+            <button onClick={handlePause} style={{
+              background: 'none', border: '1px solid rgba(0,0,0,0.3)', borderRadius: 20,
+              cursor: 'pointer', color: 'rgba(0,0,0,0.65)', fontFamily: "'Jost',sans-serif",
+              fontSize: 12, letterSpacing: '.04em', padding: '6px 18px', transition: 'color .2s, border-color .2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.9)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.5)' }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(0,0,0,0.65)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.3)' }}
+            >
+              Revenir plus tard
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+    </div>
+  )
+}
+
+export function OnboardingScreen({ userId, onComplete, onExit }) {
   useTheme()
-  // phase : -2=voile -1=intro 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=notifications 7=install 8=quizIntro 9=quiz
+  // phase : -2=voile -1=intro 'decouverte'=micro-rituel audio 0=slides 1=intention 2=metaphore 3=graine 4=communauté 5=équipe 6=notifications 7=install 8=quizIntro 9=quiz
   const introSeenKey  = userId ? `mji_intro_seen_${userId}` : null
   const introAlready  = !!(introSeenKey && localStorage.getItem(introSeenKey))
-  const [phase,        setPhase]        = useState(-2)
+  // "Revenir plus tard" sur l'étape découverte : on revient dessus à la reconnexion
+  const decouvertePendingKey = userId ? `mji_decouverte_pending_${userId}` : null
+  const decouvertePending    = !!(decouvertePendingKey && localStorage.getItem(decouvertePendingKey))
+  const [phase,        setPhase]        = useState(() => (introAlready && decouvertePending) ? 'decouverte' : -2)
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
   const [quizAlready,  setQuizAlready]  = useState(false)  // true si le quiz a déjà été complété
@@ -3475,12 +3776,25 @@ export function OnboardingScreen({ userId, onComplete }) {
           {/* Première fois : IntroGwenael (MP4) + VeilScreen par-dessus */}
           <IntroGwenael onStart={() => {
             if (introSeenKey) localStorage.setItem(introSeenKey, '1')
-            setPhase('chemin')
+            setPhase('decouverte')
           }} />
           {phase === -2 && <VeilScreen onDone={() => setPhase(-1)} />}
         </>
       )}
     </>
+  )
+  if (phase === 'decouverte') return (
+    <StepDecouverte
+      resuming={decouvertePending}
+      onComplete={() => {
+        if (decouvertePendingKey) localStorage.removeItem(decouvertePendingKey)
+        setPhase('chemin')
+      }}
+      onPause={() => {
+        if (decouvertePendingKey) localStorage.setItem(decouvertePendingKey, '1')
+        if (onExit) onExit()
+      }}
+    />
   )
   if (phase === 'chemin') return (
     <StepCheminChoix

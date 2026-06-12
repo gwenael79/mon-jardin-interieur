@@ -302,28 +302,6 @@ const css = `
 @keyframes ap-toastIn { from { opacity:0 } to { opacity:1 } }
 @keyframes ap-toastBounce { from { opacity:0; transform:scale(0.3) } to { opacity:1; transform:scale(1) } }
 
-/* Modal flower name */
-.ap-flower-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-  max-height: 260px; overflow-y: auto; margin-bottom: 22px;
-  scrollbar-width: thin; scrollbar-color: rgba(168,224,64,0.2) transparent;
-}
-.ap-flower-pill {
-  padding: 8px 6px; border-radius: 20px; font-size: 12px; text-align: center;
-  border: 1px solid var(--border2, rgba(0,0,0,0.12)); cursor: pointer;
-  color: var(--text3); transition: all 0.18s;
-  background: var(--surface-1, rgba(0,0,0,0.03));
-}
-.ap-flower-pill:hover { border-color: var(--greenT); color: var(--text2); background: var(--green3); }
-.ap-flower-pill.ap-sel { border-color: var(--greenT); background: var(--green3); color: var(--green); }
-.ap-flower-preview {
-  text-align: center; padding: 10px; margin-bottom: 16px;
-  font-family: 'Cormorant Garamond', serif; font-size: 18px;
-  color: var(--text3); letter-spacing: .04em;
-  min-height: 40px; transition: all .3s;
-}
-.ap-flower-preview span { color: var(--text); }
-
 @media (max-width: 768px) {
   /* Layout — scroll vertical, 1 colonne */
   .ap-root {
@@ -365,8 +343,6 @@ const css = `
     padding: 28px 24px 40px;
   }
   .ap-overlay { align-items: flex-end; padding: 0; }
-  .ap-flower-grid { grid-template-columns: repeat(3, 1fr); max-height: 220px; }
-  .ap-flower-pill { font-size: 11px; padding: 9px 4px; }
   .ap-modal-h2 { font-size: 26px; }
   .ap-plans { gap: 8px; }
   .ap-plan { padding: 12px 14px; }
@@ -411,9 +387,6 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
   const [selectedPlan,  setSelectedPlan]  = useState(null)
   const [paying,        setPaying]        = useState(false)
   const [toast,         setToast]         = useState(null)
-  const [flowerModal,   setFlowerModal]   = useState(false)
-  const [selectedFlower, setSelectedFlower] = useState(null)
-  const [savingFlower,  setSavingFlower]  = useState(false)
   const toastTimer = useRef(null)
 
   useEffect(() => {
@@ -426,31 +399,6 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
     clearTimeout(toastTimer.current)
     setToast({ icon, msg })
     toastTimer.current = setTimeout(() => setToast(null), 3400)
-  }
-
-  const handleFree = () => {
-    setFlowerModal(true)
-  }
-
-  const handleConfirmFlower = async () => {
-    if (!selectedFlower || savingFlower) return
-    setSavingFlower(true)
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('users')
-          .update({ flower_name: selectedFlower })
-          .eq('id', user.id)
-      }
-      setFlowerModal(false)
-      showToast('🌸', `Bienvenue, votre fleur est née !`)
-      setFlowerModal(false)
-      setTimeout(() => onActivateFree?.(), 2400)
-    } catch {
-      showToast('⚠️', 'Une erreur est survenue.')
-    } finally {
-      setSavingFlower(false)
-    }
   }
 
   const handlePay = async () => {
@@ -510,7 +458,7 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
             <li className="ap-locked"><span className="ap-check-lock"/><span>Ateliers collectifs</span></li>
           </ul>
           <div className="ap-btn-wrap">
-            <button className="ap-btn ap-btn-outline" onClick={handleFree}>Activer gratuitement</button>
+            <button className="ap-btn ap-btn-outline" onClick={onActivateFree}>Activer gratuitement</button>
           </div>
         </div>
 
@@ -604,65 +552,6 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
         </div>
       )}
 
-      {/* ── MODAL FLEUR ── */}
-      {flowerModal && (
-        <div style={{position:'fixed',inset:0,zIndex:1200,background:'rgba(10,20,5,.55)',backdropFilter:'blur(10px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20,fontFamily:"'Jost',sans-serif"}}>
-          <div style={{background:'rgba(252,248,242,.97)',borderRadius:24,width:'min(420px,100%)',maxHeight:'90vh',overflowY:'auto',padding:'36px 32px',position:'relative',boxShadow:'0 20px 60px rgba(30,60,10,.22)',border:'1.5px solid rgba(180,210,140,.35)'}}>
-            <button onClick={() => setFlowerModal(false)} style={{position:'absolute',top:14,right:16,width:32,height:32,borderRadius:'50%',border:'none',padding:0,background:'rgba(0,0,0,.07)',color:'rgba(30,20,8,.50)',fontSize:15,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-
-            {/* Titre */}
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:400,color:'#1a1208',marginBottom:8}}>
-              Votre identité florale 🌸
-            </div>
-
-            {/* Description */}
-            <div style={{fontSize:15,color:'#1a1208',marginBottom:6,lineHeight:1.65}}>
-              Ici pas de nom. Chaque membre du jardin est identifié par son prénom et une fleur.
-            </div>
-            <div style={{fontSize:13,color:'rgba(30,20,8,.40)',fontStyle:'italic',marginBottom:18}}>
-              Ex : Marie · Lavande
-            </div>
-
-            {/* Aperçu — uniquement quand une fleur est choisie */}
-            {selectedFlower && (
-              <div style={{textAlign:'center',padding:'8px 0 14px',fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:'#1a1208'}}>
-                🌸 {selectedFlower}
-              </div>
-            )}
-
-            {/* Grille */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:7,maxHeight:220,overflowY:'auto',marginBottom:20,scrollbarWidth:'thin'}}>
-              {FLOWER_NAMES.map(name => (
-                <div
-                  key={name}
-                  onClick={() => setSelectedFlower(name)}
-                  style={{
-                    padding:'8px 4px',borderRadius:20,fontSize:13,textAlign:'center',cursor:'pointer',transition:'all .15s',
-                    border: selectedFlower === name ? '1.5px solid rgba(90,154,40,.55)' : '1.5px solid rgba(200,160,150,.20)',
-                    background: selectedFlower === name ? 'rgba(90,154,40,.10)' : 'rgba(255,255,255,.55)',
-                    color: selectedFlower === name ? '#2e6808' : 'rgba(30,20,8,.55)',
-                    fontWeight: selectedFlower === name ? 500 : 400,
-                  }}
-                >{name}</div>
-              ))}
-            </div>
-
-            {/* Bouton */}
-            <button
-              onClick={handleConfirmFlower}
-              disabled={!selectedFlower || savingFlower}
-              style={{width:'100%',padding:'14px 20px',borderRadius:50,border:'none',background:'linear-gradient(135deg,#4a8a20,#2e6808)',color:'#fff',fontSize:16,fontWeight:600,letterSpacing:'.03em',fontFamily:"'Jost',sans-serif",cursor:'pointer',boxShadow:'0 5px 18px rgba(42,104,8,.28)',transition:'filter .2s',opacity:(!selectedFlower||savingFlower)?0.4:1}}
-            >
-              {savingFlower ? 'Enregistrement…' : selectedFlower ? `Entrer dans mon jardin · ${selectedFlower} →` : 'Choisissez une fleur'}
-            </button>
-
-            <div style={{marginTop:14,fontSize:13,color:'rgba(30,20,8,.38)',textAlign:'center',lineHeight:1.7}}>
-              Modifiable dans vos paramètres.
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── TOAST ── */}
       {toast && (
         <div className="ap-toast">
@@ -680,7 +569,7 @@ export default function AccessPage({ onActivateFree, onSuccess, onBack }) {
 //  FLOWER MODAL — composant autonome exporté
 //  Utilisé à l'inscription (App.jsx) et dans les paramètres (SettingsPanel)
 // ─────────────────────────────────────────────────────────────────────────────
-export function FlowerModal({ userId, onDone, onSkip }) {
+export function FlowerModal({ userId, displayName, onDone, onSkip }) {
   const [selectedFlower, setSelectedFlower] = useState(null)
   const [saving, setSaving]                 = useState(false)
 
@@ -776,7 +665,7 @@ export function FlowerModal({ userId, onDone, onSkip }) {
           <div className="fm2-example">Ex : Marie · Lavande</div>
 
           {selectedFlower && (
-            <div className="fm2-preview">🌸 {selectedFlower}</div>
+            <div className="fm2-preview">🌸 {displayName ? `${displayName} · ${selectedFlower}` : selectedFlower}</div>
           )}
 
           <div className="fm2-grid">

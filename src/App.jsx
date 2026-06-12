@@ -3,6 +3,7 @@ import { useAuthInit, useAuth } from './hooks/useAuth'
 import { AuthPage } from './pages/AuthPage'
 import DashboardPage from './pages/DashboardV2'
 import AccessPage, { FlowerModal, PremiumModal } from './pages/AccessPage'
+import AmbianceChoiceScreen from './pages/AmbianceChoiceScreen'
 import { useSubscription } from './hooks/useSubscription'
 import { AdminPage } from './pages/AdminPage'
 import { AdminClientsPage } from './pages/AdminClientsPage'
@@ -423,6 +424,7 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
             setScreen('weekone')
           }
         }}
+        onExit={() => { window.history.replaceState({}, '', window.location.pathname); setScreen('dashboard') }}
       />
     )
   }
@@ -445,7 +447,18 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
     return (
       <FlowerModal
         userId={user.id}
-        onDone={() => setScreen('onboarding')}
+        displayName={user.user_metadata?.display_name?.split(' ')[0] || ''}
+        onDone={() => setScreen('ambiance')}
+        onSkip={() => setScreen('ambiance')}
+      />
+    )
+  }
+
+  if (screen === 'ambiance') {
+    return (
+      <AmbianceChoiceScreen
+        userId={user.id}
+        onChoose={() => setScreen('onboarding')}
         onSkip={() => setScreen('onboarding')}
       />
     )
@@ -755,19 +768,23 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
   if (screen === 'onboarding') {
     return (
       <>
-        <OnboardingScreen userId={user.id} onComplete={async (plan) => {
-          await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
-          if (plan === 'free') {
-            // Valide l'onboarding + les 7 jours du WeekOneFlow par défaut
-            await supabase.from('profiles').update({
-              week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' }
-            }).eq('id', user.id)
-            localStorage.setItem(`mji_orientation_${user.id}`, '1')
-            setScreen('dashboard')
-          } else {
-            setScreen('weekone')
-          }
-        }} />
+        <OnboardingScreen
+          userId={user.id}
+          onComplete={async (plan) => {
+            await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
+            if (plan === 'free') {
+              // Valide l'onboarding + les 7 jours du WeekOneFlow par défaut
+              await supabase.from('profiles').update({
+                week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' }
+              }).eq('id', user.id)
+              localStorage.setItem(`mji_orientation_${user.id}`, '1')
+              setScreen('dashboard')
+            } else {
+              setScreen('weekone')
+            }
+          }}
+          onExit={() => setScreen('dashboard')}
+        />
       </>
     )
   }

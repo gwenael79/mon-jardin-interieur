@@ -24,6 +24,15 @@ Une **fleur** reflète l'état émotionnel : elle grandit quand on prend soin de
 2. **Progression visible dès le jour 1.** Ne plus cacher la fleur jusqu'au J6. Montrer la graine/les racines qui poussent dès la première séance. La floraison reste un cap, pas la première apparition.
 3. **Rythme du parcours :** un rituel par jour, pas de « tout enchaîner ». On peut aller **plus loin** (rester dans le thème du jour) mais pas **plus vite** (sauter au lendemain). Limite formulée comme un soin (« à demain »), jamais comme une serrure.
 
+## Identité de marque vs personnalisation interne (2 décisions distinctes, chantiers séparés)
+
+Constat de départ : « le bien-être doit être sérieux, car mon mal-être est sérieux ». Le logo actuel (`/icons/icon-192.png` et `/icons/icon-512.png` — personnage 3D type lutin/jeu pour enfants) est utilisé comme **icône PWA, favicon, badge de notification et logo dans ~17 fichiers** (toutes les pages, y compris admin). C'est le premier signal vu, avant tout texte — et il contredit le positionnement adulte/bien-être ("stress d'usure", "comment va votre jardin intérieur ?").
+
+1. **Décision marque (prioritaire, non encore actée) — remplacer le logo/icône.** Le lutin reste un bon **compagnon interne** (cf. `LutinCompagnon.jsx`, déjà cantonné à l'onboarding J1-J7), mais ne doit plus être la *vitrine* de la marque. Cherche un symbole chaleureux mais adulte (ex. la fleur lumineuse de `fond1.png`, ou un motif floral abstrait) pour icône PWA / favicon / logo d'app. Chantier à fort impact (touche le premier contact mobile) mais surface de code large.
+2. **Décision personnalisation interne (secondaire, complémentaire) — toggle d'ambiance post-inscription.** Après le choix de l'identité florale (StepGraine), proposer un choix « zen / florale » vs « ludique / féérique ». Implémentation légère envisagée : binaire d'affichage du lutin compagnon (zen = masqué, féérique = visible), pas deux univers graphiques à maintenir. Nécessite un réglage persistant par utilisateur (n'existe pas encore — `useTheme`/`app_settings` est un thème global admin, pas par compte).
+
+⚠️ Les deux ne sont **pas substituables** : le toggle personnalise l'expérience *après* inscription, mais ne corrige pas le signal envoyé par l'icône/logo *avant* inscription (écran d'accueil téléphone, favicon). Traiter la décision 1 même si la décision 2 est mise en œuvre.
+
 ## Jour 1 « Racines » — structure VERROUILLÉE (chantier en cours)
 
 Flux retenu (remplace les ~8 écrans de lecture actuels) :

@@ -3,6 +3,7 @@
 // bubbleOpen / onCloseBubble / onClickImage : contrôlés par le parent
 
 import { useState, useEffect } from 'react'
+import { useAmbiance } from '../hooks/useAmbiance'
 
 const LUTIN_STYLES = `
   @keyframes lutinFromRight {
@@ -93,13 +94,14 @@ export function LutinCompagnon({
   onClickImage,
   contained     = false,
 }) {
+  const ambiance = useAmbiance()
   const [show,    setShow]    = useState(false)
   const [leaving, setLeaving] = useState(false)
 
   const cfg = CONFIG[position] ?? CONFIG.right
 
   useEffect(() => {
-    if (visible) {
+    if (visible && ambiance !== 'zen') {
       setLeaving(false)
       const t = setTimeout(() => setShow(true), 60)
       return () => clearTimeout(t)
@@ -109,7 +111,7 @@ export function LutinCompagnon({
       const t = setTimeout(() => { setShow(false); setLeaving(false) }, 360)
       return () => clearTimeout(t)
     }
-  }, [visible])
+  }, [visible, ambiance])
 
   if (!show && !leaving) return null
 
