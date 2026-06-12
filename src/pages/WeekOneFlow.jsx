@@ -268,14 +268,26 @@ function GlobalStyles() {
         white-space: nowrap;
       }
       .dpb-edge-label.app { color: #1a1208; }
+      .dpb-caption {
+        text-align: center;
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-size: 18px;
+        color: #000;
+        margin-top: 4px;
+      }
+      .dpb-caption-sub {
+        font-size: 12px;
+        margin-left: 6px;
+      }
       @media (max-width: 480px) {
         .dpb-bar { padding: 6px 8px 5px; }
         .dpb-track { gap: 4px 3px; }
         .dpb-edge-label { font-size: 9px; }
         .dpb-arrow { font-size: 10px; }
         .dpb-dot { width: 14px; height: 14px; font-size: 8px; }
-        .dpb-day { width: 6px; height: 6px; }
-        .dpb-day.current { width: 11px; height: 11px; }
+        .dpb-day { width: 22px; height: 22px; font-size: 8px; }
+        .dpb-day.current { width: 28px; height: 28px; font-size: 9px; }
       }
       @media (min-width: 768px) {
         .dpb-bar { padding: 10px 18px 9px; }
@@ -283,16 +295,16 @@ function GlobalStyles() {
         .dpb-edge-label { font-size: 12px; }
         .dpb-arrow { font-size: 13px; }
         .dpb-dot { width: 18px; height: 18px; font-size: 10px; }
-        .dpb-day { width: 8px; height: 8px; }
-        .dpb-day.current { width: 15px; height: 15px; }
+        .dpb-day { width: 28px; height: 28px; font-size: 10px; }
+        .dpb-day.current { width: 34px; height: 34px; font-size: 11px; }
       }
       @media (max-height: 700px) {
         .dpb-bar { padding: 4px 8px 3px; }
         .dpb-edge-label { font-size: 8.5px; }
         .dpb-arrow { font-size: 9px; }
         .dpb-dot { width: 12px; height: 12px; font-size: 7px; }
-        .dpb-day { width: 5px; height: 5px; }
-        .dpb-day.current { width: 10px; height: 10px; }
+        .dpb-day { width: 20px; height: 20px; font-size: 8px; }
+        .dpb-day.current { width: 26px; height: 26px; font-size: 9px; }
       }
       .dpb-arrow {
         font-size: 12px;
@@ -332,15 +344,21 @@ function GlobalStyles() {
         flex-shrink: 0;
       }
       .dpb-day {
-        width: 7px; height: 7px;
+        width: 24px; height: 24px;
         border-radius: 50%;
         background: rgba(200,160,176,.26);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Jost', sans-serif;
+        font-size: 9px; font-weight: 700;
+        color: rgba(120,80,90,.55);
         transition: all .3s ease;
       }
-      .dpb-day.done { background: #6fae4a; }
+      .dpb-day.done { background: #6fae4a; color: #fff; }
       .dpb-day.current {
-        width: 13px; height: 13px;
+        width: 30px; height: 30px;
         background: #ffd23f;
+        color: #5a4400;
+        font-size: 10px;
         animation: dpbPulseGoldSmall 1.8s ease-out infinite;
       }
       @keyframes dpbPulseGoldSmall {
@@ -420,15 +438,19 @@ function DiscoveryProgressBar({ completedDays, currentDay }) {
             const cls = done ? 'done' : current ? 'current' : ''
             const label = current ? `Jour ${day} (en cours)` : `Jour ${day}`
             return (
-              <div key={day} className={`dpb-day ${cls} dpb-tip`.trim()} tabIndex={0} data-tip={label} />
+              <div key={day} className={`dpb-day ${cls} dpb-tip`.trim()} tabIndex={0} data-tip={label}>{`J${day}`}</div>
             )
           })}
         </div>
         <span className="dpb-arrow">→</span>
         <div className="dpb-edge">
           <span className="dpb-dot locked">🔒</span>
-          <span className="dpb-edge-label app">L'application t'attend !</span>
+          <span className="dpb-edge-label app">L'appli t'attend !</span>
         </div>
+      </div>
+      <div className="dpb-caption">
+        Visualise où tu en es !
+        <span className="dpb-caption-sub">À chaque visite, tu te rapproches de ton jardin intérieur.</span>
       </div>
     </div>
   )
@@ -494,6 +516,8 @@ const ZONE_COLORS = {
   fleurs:   '#d4a0b0',
   souffle:  '#c8a870',
 }
+
+const DAY_ZEN_LABELS = ['Les Racines', 'La Tige', 'Les Feuilles', 'Les Fleurs', 'Le Souffle', 'Mon Jardin', 'Le Jardin Ensemble']
 
 export const WEEK_ONE_DATA = [
   /* ── JOUR 1 ─────────────────────────────────────────────────────────────── */
@@ -10124,6 +10148,7 @@ function WelcomeWeekOne({ onStart }) {
 }
 
 export function WeekOneFlow({ userId, onComplete, onAllDone, forceGarden, forceDay, isPro: isProProp, onOpenProProfile }) {
+  const ambiance = useAmbiance()
   const { signOut } = useAuth()
   const [loading,     setLoading]     = useState(true)
 
@@ -10649,7 +10674,7 @@ async function handleDayEvent(event) {
             visibility: view === 'garden' ? 'hidden' : 'visible',
           }}>
             <img
-              src={dayIndex === 0 ? '/racines.png' : dayIndex === 1 ? '/tige.png' : dayIndex === 2 ? '/feuilles.png' : dayIndex === 3 ? '/fleur2.png' : dayIndex === 4 ? '/souffle.png' : '/champs.png'}
+              src={ambianceAsset(dayIndex === 0 ? '/racines.png' : dayIndex === 1 ? '/tige.png' : dayIndex === 2 ? '/feuilles.png' : dayIndex === 3 ? '/fleur2.png' : dayIndex === 4 ? '/souffle.png' : '/champs.png', ambiance)}
               alt=""
               style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: isMobile ? 'center center' : 'center 30%', display: 'block' }}
             />
@@ -10661,22 +10686,24 @@ async function handleDayEvent(event) {
               pointerEvents: 'none',
             }}/>
 
-            {/* Barre de progression en overlay haut */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', gap: 3 }}>
-              {WEEK_ONE_DATA.map((d) => {
-                const done   = weekData.completedDays.includes(d.day)
-                const active = d.day === weekData.currentDay
-                return (
-                  <div key={d.day} style={{
-                    flex: 1, height: 3,
-                    background: done ? (d.color || accentColor) : active ? `${d.color || accentColor}88` : 'rgba(255,255,255,0.35)',
-                    transition: 'background .4s ease',
-                  }}>
-                    {active && <div style={{ height: '100%', background: d.color || accentColor, animation: 'progressBar .3s ease both' }}/>}
-                  </div>
-                )
-              })}
-            </div>
+            {/* Overlay ambiance zen — libellé du jour */}
+            {ambiance === 'zen' && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(20,20,20,0.25)',
+                pointerEvents: 'none',
+              }}>
+                <div style={{
+                  fontFamily: "'Cormorant Garamond',serif", fontStyle: 'italic', fontWeight: 700,
+                  fontSize: isMobile ? 32 : 44, color: '#fff',
+                  textShadow: '0 2px 12px rgba(0,0,0,0.45)',
+                  textAlign: 'center', letterSpacing: '.02em',
+                }}>
+                  Jour {dayIndex + 1} – {DAY_ZEN_LABELS[dayIndex]}
+                </div>
+              </div>
+            )}
 
 
             {/* ── Lutin Félin dans le hero ── */}

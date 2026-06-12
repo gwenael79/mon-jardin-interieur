@@ -3286,10 +3286,8 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
       {/* RESSENTIR */}
       <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#1c3818,#2a5020)', boxShadow: '0 4px 16px rgba(28,56,24,0.30)' }}>
         <div style={{ padding: CARD_PAD }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: 'rgba(200,230,176,0.65)', marginBottom: 2 }}>RESSENTIR</div>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, color: '#fff', lineHeight: 1.2, marginBottom: 4 }}>« Je veux ressentir »</div>
-          <div style={{ fontSize: isMobile ? 13 : 14, color: 'rgba(200,230,176,0.70)', marginBottom: 5 }}>2 minutes, et ça change ta journée.</div>
-          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.88)', lineHeight: 1.5, margin: 0 }}>Tes rituels t'attendent, en libre accès. Pas de parcours imposé : tu choisis celui qui te parle aujourd'hui. La régularité fera le reste.</p>
+          <p style={{ fontSize: DESC_FS, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5, margin: 0 }}>Mes rituels, en libre accès.</p>
         </div>
         <button onClick={() => setShowRitual(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(200,230,176,0.15)', border:'none', borderTop:'1px solid rgba(200,230,176,0.15)', cursor:'pointer', color:'#fff', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(200,230,176,0.28)'}
@@ -3301,10 +3299,8 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
       {/* CHEMINER */}
       <div style={{ borderRadius: 12, overflow: 'hidden', background: 'linear-gradient(135deg,#c8a870,#a07840)', boxShadow: '0 4px 16px rgba(160,120,60,0.28)' }}>
         <div style={{ padding: CARD_PAD }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: '#333', marginBottom: 2 }}>CHEMINER</div>
           <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, color: '#111', lineHeight: 1.2, marginBottom: 4 }}>« Je veux cheminer »</div>
-          <div style={{ fontSize: isMobile ? 13 : 14, color: '#111', marginBottom: 5 }}>Un rendez-vous avec toi-même, sur 7 jours.</div>
-          <p style={{ fontSize: DESC_FS, color: '#222', lineHeight: 1.5, margin: 0 }}>Un parcours guidé, une étape par jour. On t'accompagne pas à pas, dans un ordre pensé pour t'enraciner en douceur. Pour celles et ceux qui choisissent la profondeur plutôt que la vitesse.</p>
+          <p style={{ fontSize: DESC_FS, color: '#222', lineHeight: 1.5, margin: 0 }}>Un parcours guidé, 7 jours.</p>
         </div>
         <button onClick={() => setShowInitieConfirm(true)} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(0,0,0,0.08)', border:'none', borderTop:'1px solid rgba(0,0,0,0.12)', cursor:'pointer', color:'#111', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(0,0,0,0.16)'}
@@ -3313,25 +3309,17 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
         </button>
       </div>
 
-      {/* COMPRENDRE */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(180,140,100,0.20)', boxShadow: '0 3px 10px rgba(0,0,0,0.06)', opacity: comprendreLabel ? 0.45 : 1, transition: 'opacity 0.4s ease' }}>
-        <div style={{ padding: CARD_PAD, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <span style={{ fontSize: isMobile ? 26 : 30, lineHeight: 1, flexShrink: 0 }}>💭</span>
-          <div>
-            <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 25, color: '#111', lineHeight: 1.2, marginBottom: 5 }}>Tu hésites ? Comprends d'abord.</div>
-            <p style={{ fontSize: DESC_FS, color: '#444', lineHeight: 1.5, margin: 0 }}>5 minutes pour voir ce qui se joue, puis tu choisiras ton chemin.</p>
-          </div>
-        </div>
-        <button onClick={onComprendre} style={{ display:'block', width:'100%', padding: BTN_PAD, background:'rgba(180,140,80,0.08)', border:'none', borderTop:'1px solid rgba(180,140,100,0.15)', cursor:'pointer', color:'#5a3e10', fontSize: BTN_FS, fontWeight:600, textAlign:'center', fontFamily:"'Jost',sans-serif", transition:'background .15s' }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(180,140,80,0.18)'}
-          onMouseLeave={e => e.currentTarget.style.background='rgba(180,140,80,0.08)'}>
-          {comprendreLabel || 'M\'éclairer d\'abord →'}
-        </button>
-      </div>
-
-      <p style={{ fontSize: isMobile ? 12 : 13, color: 'rgba(255,255,255,0.70)', textAlign: 'center', margin: '4px 0 0', lineHeight: 1.5 }}>
-        Choisis en conscience. Chaque chemin mène à ta fleur, à sa façon.
-      </p>
+      <button onClick={onComprendre} style={{
+        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+        margin: '4px auto 0', fontFamily: "'Jost',sans-serif",
+        fontSize: isMobile ? 12 : 13, color: 'rgba(255,255,255,0.60)',
+        textDecoration: 'underline', textUnderlineOffset: 3, lineHeight: 1.5,
+        opacity: comprendreLabel ? 0.45 : 1, transition: 'opacity 0.4s ease, color .15s',
+      }}
+        onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.85)'}
+        onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.60)'}>
+        {comprendreLabel || 'Pourquoi ces rituels ?'}
+      </button>
     </div>
   )
 
