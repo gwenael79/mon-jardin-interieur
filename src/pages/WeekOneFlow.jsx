@@ -9902,6 +9902,8 @@ function WelcomeVeil({ onDone, isReturn = false }) {
     setTimeout(() => setShowVideo(true), 3000)
   }
 
+  const overlayVisible = showVideo
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 250, background: '#0c1a0a' }}>
 
@@ -9928,13 +9930,17 @@ function WelcomeVeil({ onDone, isReturn = false }) {
       }}>
         <p style={{
           fontFamily: 'Cormorant Garamond, Georgia, serif',
-          fontSize: 'clamp(24px, 7vw, 38px)',
-          fontStyle: 'italic', fontWeight: 300,
+          fontSize: ambiance === 'zen' ? 'clamp(30px, 9vw, 48px)' : 'clamp(24px, 7vw, 38px)',
+          fontStyle: 'italic', fontWeight: ambiance === 'zen' ? 700 : 300,
           color: 'rgba(255,255,255,0.92)',
           lineHeight: 1.4, margin: 0,
           textShadow: '0 2px 16px rgba(0,0,0,0.7)',
+          display: 'inline-block',
+          background: ambiance === 'zen' ? 'rgba(0,0,0,0.42)' : 'transparent',
+          borderRadius: ambiance === 'zen' ? 16 : 0,
+          padding: ambiance === 'zen' ? '10px 22px' : 0,
         }}>
-          Ouvrons ensemble cette petite barrière
+          {ambiance === 'zen' ? <>Ouvrons ensemble<br />cette petite barrière</> : 'Ouvrons ensemble cette petite barrière'}
         </p>
       </div>
 
@@ -9947,7 +9953,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
       }}>
         <video
           ref={videoRef}
-          src="/video/cheminjours.mp4"
+          src={ambianceAsset('/video/cheminjours.mp4', ambiance)}
           autoPlay playsInline muted
           preload="auto"
           className="wveil-video"
@@ -9963,7 +9969,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
         padding: '80px 24px 40px',
         background: 'linear-gradient(to top, rgba(0,0,0,0.60) 0%, transparent 100%)',
         display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center',
-        opacity: showVideo ? 1 : 0,
+        opacity: overlayVisible ? 1 : 0,
         transition: 'opacity 0.8s ease',
       }}>
         {!ctaVisible && (
