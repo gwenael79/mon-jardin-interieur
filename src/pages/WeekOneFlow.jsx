@@ -9884,6 +9884,7 @@ const LUTIN_SLOTS = ['right', 'left']
 function WelcomeVeil({ onDone, isReturn = false }) {
   const ambiance = useAmbiance()
   const videoRef = useRef(null)
+  const readyFired = useRef(false)
   const [muted,      setMuted]      = useState(true)
   const [ctaVisible, setCtaVisible] = useState(false)
   const [showVideo,  setShowVideo]  = useState(false)
@@ -9898,6 +9899,8 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   }
 
   function handleVideoReady() {
+    if (readyFired.current) return
+    readyFired.current = true
     // Délai de 3s après le chargement avant de passer à la vidéo
     setTimeout(() => setShowVideo(true), 3000)
   }
@@ -9963,6 +9966,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
           autoPlay playsInline muted
           preload="auto"
           className="wveil-video"
+          onLoadedData={handleVideoReady}
           onCanPlayThrough={handleVideoReady}
           onEnded={() => setCtaVisible(true)}
           onError={onDone}
