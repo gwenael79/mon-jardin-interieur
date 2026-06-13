@@ -9963,6 +9963,30 @@ function WelcomeVeil({ onDone, isReturn = false }) {
         />
       </div>
 
+      {/* Texte de fin de vidéo */}
+      <div style={{
+        position: 'absolute', bottom: 130, left: 0, right: 0, zIndex: 2,
+        textAlign: 'center', padding: '0 24px',
+        opacity: ctaVisible ? 1 : 0,
+        transition: 'opacity 1s ease',
+        pointerEvents: 'none',
+      }}>
+        <p style={{
+          fontFamily: 'Cormorant Garamond, Georgia, serif',
+          fontSize: 48,
+          fontStyle: 'italic', fontWeight: 700,
+          color: 'rgba(255,255,255,0.95)',
+          margin: 0,
+          textShadow: '0 2px 16px rgba(0,0,0,0.7)',
+          display: 'inline-block',
+          background: 'rgba(0,0,0,0.5)',
+          borderRadius: 16,
+          padding: '10px 22px',
+        }}>
+          Un pas à la fois…
+        </p>
+      </div>
+
       {/* Overlay bas — son + bouton CTA */}
       <div style={{
         position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1,
