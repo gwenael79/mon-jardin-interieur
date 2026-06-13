@@ -9898,8 +9898,8 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   }
 
   function handleVideoReady() {
-    // Délai de 2.5s après le chargement avant de passer à la vidéo
-    setTimeout(() => setShowVideo(true), 2500)
+    // Délai de 3s après le chargement avant de passer à la vidéo
+    setTimeout(() => setShowVideo(true), 3000)
   }
 
   return (
