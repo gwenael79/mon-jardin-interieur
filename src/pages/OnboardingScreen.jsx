@@ -207,7 +207,7 @@ function IntroGwenael({ onStart }) {
               margin: 0,
               fontFamily: 'Cormorant Garamond, serif',
               fontStyle: 'italic',
-              fontSize: '80px',
+              fontSize: 'clamp(28px, 9vw, 80px)',
               lineHeight: 1.25,
               color: '#fff',
               textShadow: '0 2px 12px rgba(0,0,0,0.25)',
@@ -3590,11 +3590,11 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
       transition: 'opacity 3s ease',
     }}>
     <div style={{
-      position: 'relative', width: '100%', maxWidth: 620, maxHeight: '94vh', overflow: 'hidden',
+      position: 'relative', width: '100%', maxWidth: 620, maxHeight: '94vh', overflowY: 'auto', overflowX: 'hidden',
       borderRadius: 28, boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
       background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      padding: '90px 0 40px', minHeight: window.innerWidth < 768 ? 800 : 900,
+      padding: 'clamp(56px, 14vw, 90px) 0 40px',
     }}>
       <style>{ONB_STYLES}</style>
       <NatureBg />
