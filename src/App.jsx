@@ -237,7 +237,7 @@ export default function App() {
     ;(async () => {
       try {
         const { data: userData } = await supabase
-          .from('users').select('onboarded, onboarding_completed, role').eq('id', user.id).maybeSingle()
+          .from('users').select('onboarded, onboarding_completed, role, week_one_completed').eq('id', user.id).maybeSingle()
 
         // Détecter le rôle pro dès le départ
         if (userData?.role === 'pro') {

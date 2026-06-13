@@ -205,6 +205,11 @@ function ScreenBoiteAGraine({ userId }) {
 //  après-m 12:00–17:59 → ma fleur
 //  soir    18:00–23:59 → boite à graines
 // ─────────────────────────────────────────────────────────────────────────────
+function slideImage(slide, ambiance) {
+  if (slide.id === 'jardinotheque' && ambiance === 'zen') return '/zen-jardino.png'
+  return ambianceAsset(slide.image ?? '/champs.png', ambiance)
+}
+
 function getTimeSlot() {
   const h = new Date().getHours()
   if (h < 12) return 'morning'
@@ -294,7 +299,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         .nav-arrow { transition: transform .15s; }
       `}</style>
       {/* ── Bandeau titre mobile ── */}
-      <div style={{ flexShrink:0, height:48, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
+      <div style={{ flexShrink:0, height:'calc(48px + env(safe-area-inset-top, 0px))', boxSizing:'border-box', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'env(safe-area-inset-top, 0px) 12px 0', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <img src="/icons/icon-192.png" alt="" style={{ width:24, height:24, borderRadius:'50%' }}/>
@@ -320,7 +325,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
       </div>
 
       {/* ── Barre de progression ── */}
-      <div style={{ position:'absolute', top:48, left:14, right:14, display:'flex', gap:4, zIndex:20 }}>
+      <div style={{ position:'absolute', top:'calc(48px + env(safe-area-inset-top, 0px))', left:14, right:14, display:'flex', gap:4, zIndex:20 }}>
         {slides.map((s, i) => (
           <div key={s.id} style={{ flex:1, height:2.5, background:'rgba(160,100,90,.18)', borderRadius:3, overflow:'hidden' }}>
             <div style={{ height:'100%', borderRadius:3, background:s.color, width: i < curIdx ? '100%' : i === curIdx ? '60%' : '0%', transition: i === curIdx ? 'none' : 'width .3s' }}/>
@@ -329,9 +334,11 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
       </div>
 
       {/* ── Illustration — zone de swipe horizontal ── */}
-      <div style={{ flexShrink:0, height:200, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
-        <img src={ambianceAsset(slide.image ?? '/champs.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
-        <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 70%, rgba(237,229,222,1) 100%)' }}/>
+      <div style={{ flexShrink:0, height: 280, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
+        <img src={slideImage(slide, ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
+        {ambiance !== 'zen' && (
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 70%, rgba(237,229,222,1) 100%)' }}/>
+        )}
 
         {/* ── Flèches navigation ── */}
         {curIdx > 0 && (
@@ -360,7 +367,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
       )}
 
       {/* ── Preview texte — scroll vertical natif ── */}
-      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px 80px', display:'flex', flexDirection:'column', gap:8, position:'relative', zIndex:1 }}>
+      <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', WebkitOverflowScrolling:'touch', touchAction:'pan-y', padding:'16px 20px calc(80px + env(safe-area-inset-bottom, 0px))', display:'flex', flexDirection:'column', gap:8, position:'relative', zIndex:1 }}>
 
         {/* Tag */}
         <div style={{ display:'inline-flex', width:'fit-content', alignItems:'center', gap:5, padding:'4px 12px', borderRadius:100, fontSize:9.5, fontFamily:"'Jost',sans-serif", letterSpacing:'.12em', textTransform:'uppercase', fontWeight:600, background:`${slide.color}14`, border:`1px solid ${slide.color}30`, color:slide.color, flexShrink:0 }}>
@@ -405,7 +412,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         onClick={onGuide}
         title="Guide & Repérage"
         className="guide-btn"
-        style={{ position:'absolute', bottom:20, right:16, width:48, height:48, borderRadius:'50%', border:'none', background:'linear-gradient(135deg,#4cd964,#28a745)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, touchAction:'manipulation' }}
+        style={{ position:'absolute', bottom:'calc(20px + env(safe-area-inset-bottom, 0px))', right:16, width:48, height:48, borderRadius:'50%', border:'none', background:'linear-gradient(135deg,#4cd964,#28a745)', cursor:'pointer', fontFamily:"'Cormorant Garamond',serif", fontSize:24, fontWeight:700, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, touchAction:'manipulation' }}
       >?</button>
 
       {/* Guide panel mobile */}
@@ -535,8 +542,11 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
 
         {/* Header */}
         <div style={{
-          flexShrink:0, height:52, display:'flex', alignItems:'center',
-          justifyContent:'space-between', padding:'0 18px',
+          flexShrink:0,
+          height: isMobile ? 'calc(52px + env(safe-area-inset-top, 0px))' : 52,
+          boxSizing:'border-box',
+          display:'flex', alignItems:'center',
+          justifyContent:'space-between', padding: isMobile ? 'env(safe-area-inset-top, 0px) 18px 0' : '0 18px',
           borderBottom:'1px solid rgba(96,160,100,.2)',
           background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)',
         }}>
@@ -758,6 +768,29 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
   const [savedFlower,   setSavedFlower]   = useState(false)
   const [currentFlower, setCurrentFlower] = useState(null)
 
+  // ── Ambiance ──
+  const [ambiance,       setAmbianceState] = useState(null)
+  const [savingAmbiance, setSavingAmbiance] = useState(false)
+
+  useEffect(() => {
+    if (!userId) return
+    const t = setTimeout(() => {
+      supabase.from('users').select('ambiance').eq('id', userId).maybeSingle()
+        .then(({ data }) => setAmbianceState(data?.ambiance === 'zen' ? 'zen' : 'feerique'))
+    }, 150)
+    return () => clearTimeout(t)
+  }, [userId])
+
+  async function handleSetAmbiance(val) {
+    if (val === ambiance || savingAmbiance) return
+    setSavingAmbiance(true)
+    try {
+      await supabase.from('users').update({ ambiance: val }).eq('id', userId)
+      try { localStorage.setItem('mji_ambiance', val) } catch {}
+      window.location.reload()
+    } catch (e) { console.warn('[settings] ambiance', e); setSavingAmbiance(false) }
+  }
+
   // ── Notifications ──
   const { isSupported: pushSupported, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = usePushNotification(userId)
   const [horaires,      setHoraires]      = useState(['soir'])
@@ -945,6 +978,39 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
             </button>
           </div>
         )}
+
+        {/* ── Ambiance ── */}
+        <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+          <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Ambiance</div>
+          <div style={{ display:'flex', gap:8 }}>
+            <div
+              onClick={() => handleSetAmbiance('feerique')}
+              style={{
+                flex:1, padding:'10px 0', borderRadius:100, textAlign:'center',
+                border: ambiance === 'feerique' ? '1px solid rgba(200,160,150,.5)' : '1px solid rgba(0,0,0,.10)',
+                background: ambiance === 'feerique' ? 'rgba(200,160,150,.15)' : 'rgba(0,0,0,.03)',
+                color: ambiance === 'feerique' ? '#a07888' : 'rgba(30,20,8,.55)',
+                fontWeight: ambiance === 'feerique' ? 600 : 400,
+                fontSize:13, fontFamily:"'Jost',sans-serif", cursor: savingAmbiance ? 'default' : 'pointer', transition:'all .15s',
+              }}
+            >
+              ✨ Féérique
+            </div>
+            <div
+              onClick={() => handleSetAmbiance('zen')}
+              style={{
+                flex:1, padding:'10px 0', borderRadius:100, textAlign:'center',
+                border: ambiance === 'zen' ? '1px solid rgba(90,154,40,.5)' : '1px solid rgba(0,0,0,.10)',
+                background: ambiance === 'zen' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.03)',
+                color: ambiance === 'zen' ? '#3a7a18' : 'rgba(30,20,8,.55)',
+                fontWeight: ambiance === 'zen' ? 600 : 400,
+                fontSize:13, fontFamily:"'Jost',sans-serif", cursor: savingAmbiance ? 'default' : 'pointer', transition:'all .15s',
+              }}
+            >
+              🌿 Zen
+            </div>
+          </div>
+        </div>
 
         {/* ── Notifications ── */}
         <div style={{ background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', overflow:'hidden' }}>
@@ -2778,9 +2844,11 @@ export default function DashboardPage() {
               </div>
 
               {/* ── Illustration pleine largeur ── */}
-              <div style={{ flexShrink:0, height:360, position:'relative', overflow:'hidden' }}>
-                <img key={`illus-${slideIdx}`} src={ambianceAsset(slide.image ?? '/champs.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
-                <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 70%, rgba(250,245,242,1) 100%)' }}/>
+              <div style={{ flexShrink:0, height: 460, position:'relative', overflow:'hidden' }}>
+                <img key={`illus-${slideIdx}`} src={slideImage(slide, ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
+                {ambiance !== 'zen' && (
+                  <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 70%, rgba(250,245,242,1) 100%)' }}/>
+                )}
 
                 {/* Progress dots */}
                 <div style={{ position:'absolute', bottom:14, left:'50%', transform:'translateX(-50%)', display:'flex', gap:4, alignItems:'center' }}>
