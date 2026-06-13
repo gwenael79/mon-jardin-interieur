@@ -9906,6 +9906,16 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   }
 
   useEffect(() => {
+    // Filet de sécurité : sur iPhone, l'autoplay peut être bloqué (mode économie de données…)
+    // et la vidéo ne déclenche jamais loadeddata/canplaythrough. On débloque l'écran après 8s.
+    const t = setTimeout(() => {
+      setShowVideo(true)
+      setCtaVisible(true)
+    }, 8000)
+    return () => clearTimeout(t)
+  }, [])
+
+  useEffect(() => {
     if (!showVideo) return
     // Certains navigateurs mobiles n'enclenchent pas l'autoplay tant que la vidéo est masquée (opacity 0)
     videoRef.current?.play().catch(() => {})
