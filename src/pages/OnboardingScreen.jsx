@@ -158,15 +158,21 @@ function IntroGwenael({ onStart }) {
   })
 
   return (
-    <div style={{
+    <div className="ig-overlay" style={{
       position: 'fixed', inset: 0,
       background: 'linear-gradient(160deg, #f8f0ec, #e8d8d0)',
       zIndex: 100,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '8px 16px',
     }}>
+    <style>{`
+      @media (max-width: 640px) {
+        .ig-overlay { padding: 0 !important; }
+        .ig-video { max-width: 100% !important; width: 100vw !important; height: 100vh !important; max-height: 100vh !important; border-radius: 0 !important; box-shadow: none !important; }
+      }
+    `}</style>
       {/* ── Vidéo ── */}
-      <div style={{
+      <div className="ig-video" style={{
         width: '100%',
         maxWidth: 480,
         height: '80vh',
@@ -302,22 +308,6 @@ function IntroGwenael({ onStart }) {
         )}
       </div>
 
-      {/* Déconnexion discrète sous la vidéo */}
-      <div style={{ ...fade(phase >= 3), marginTop: 16, textAlign: 'center' }}>
-        <button
-          onClick={async () => { await supabase.auth.signOut() }}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 11, color: 'rgba(120,90,80,0.35)',
-            fontFamily: 'Jost, sans-serif', letterSpacing: '.06em',
-            padding: '4px 8px', transition: 'color .2s',
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = 'rgba(120,90,80,0.65)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'rgba(120,90,80,0.35)'}
-        >
-          ← déconnexion
-        </button>
-      </div>
     </div>
   )
 }
@@ -3594,7 +3584,7 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
     <style>{`
       @media (max-width: 640px) {
         .sd-overlay { background: transparent !important; backdrop-filter: none !important; padding: 0 !important; }
-        .sd-card { border-radius: 0 !important; box-shadow: none !important; max-width: 100% !important; max-height: 100vh !important; height: 100vh !important; }
+        .sd-card { border-radius: 0 !important; box-shadow: none !important; max-width: 100% !important; max-height: 100vh !important; height: 100vh !important; justify-content: center !important; }
       }
     `}</style>
     <div className="sd-card" style={{
@@ -3715,8 +3705,8 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
           </div>
           <span style={{
             fontSize: 11, letterSpacing: '.06em', color: 'rgba(0,0,0,0.45)',
-            fontStyle: 'italic',
-          }}>Guidé par Gwenaël</span>
+            fontStyle: 'italic', textAlign: 'center',
+          }}>Guidé par Gwenaël JEAUNEAU<br/>Hypnothérapeute</span>
         </div>
 
         {started && (
