@@ -9947,7 +9947,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
       }}>
         <video
           ref={videoRef}
-          src={ambianceAsset('/video/cheminjours.mp4', ambiance)}
+          src="/video/cheminjours.mp4"
           autoPlay playsInline muted
           preload="auto"
           className="wveil-video"
