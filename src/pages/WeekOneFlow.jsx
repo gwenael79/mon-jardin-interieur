@@ -6268,8 +6268,10 @@ function RacinesValidation({ answers, onNext, onBack, onScreenChange, onCalendri
       </p>)}
 
       {showBonus && <BonusRitualModal zoneId="roots" color="#c8a0b0" onClose={() => setShowBonus(false)} />}
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+        <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={() => setSubSlide(0)} /></div>
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+        <div />
       </div>
       {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#c8a0b0" zoneName="racines" onClick={() => setShowBonus(true)} /></div>}
       {phase >= 4 && onCalendrier && <div style={{ display: 'flex', justifyContent: 'center' }}><CalendrierButton onClick={onCalendrier} /></div>}
@@ -6330,8 +6332,10 @@ function FeuillesValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
       {block(2, <p style={S2}>Demain, une nouvelle invitation :</p>)}
       {block(3, <p style={{ ...S2, margin: '0 0 24px' }}><B>t'accorder ce qui manquait.</B></p>)}
       {showBonus && <BonusRitualModal zoneId="leaves" color="#7aaa88" onClose={() => setShowBonus(false)} />}
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+        <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={() => setSubSlide(0)} /></div>
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+        <div />
       </div>
       {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#7aaa88" zoneName="feuilles" onClick={() => setShowBonus(true)} /></div>}
       {phase >= 4 && onCalendrier && <div style={{ display: 'flex', justifyContent: 'center' }}><CalendrierButton onClick={onCalendrier} /></div>}
@@ -6728,8 +6732,10 @@ function FleurValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
       {block(2,<p style={S2}>Demain, une nouvelle dimension entre dans ton jardin :</p>)}
       {block(3,<p style={{...S2,margin:'0 0 24px'}}><B>la dimension du lien.</B></p>)}
       {showBonus && <BonusRitualModal zoneId="flowers" color="#d4a0b0" onClose={() => setShowBonus(false)} />}
-      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=4),pointerEvents:phase>=4?'auto':'none'}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',width:'100%',...fadeIn(phase>=4),pointerEvents:phase>=4?'auto':'none'}}>
+        <div style={{justifySelf:'start',marginLeft:-10}}><BackButton onClick={() => setSubSlide(0)}/></div>
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+        <div />
       </div>
       {phase >= 4 && <div style={{display:'flex',justifyContent:'center'}}><BonusButton color="#d4a0b0" zoneName="fleurs" onClick={() => setShowBonus(true)} /></div>}
       {phase >= 4 && onCalendrier && <div style={{display:'flex',justifyContent:'center'}}><CalendrierButton onClick={onCalendrier} /></div>}
@@ -6933,8 +6939,10 @@ function SouffleValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
       {block(2,<p style={S2}>Demain, pour la première fois,</p>)}
       {block(3,<p style={{...S2,margin:'0 0 24px'}}><B>tu vas à sa rencontre.</B></p>)}
       {showBonus && <BonusRitualModal zoneId="breath" color="#c8a870" onClose={() => setShowBonus(false)} />}
-      <div style={{display:'flex',justifyContent:'center',...fadeIn(phase>=4),pointerEvents:phase>=4?'auto':'none'}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',width:'100%',...fadeIn(phase>=4),pointerEvents:phase>=4?'auto':'none'}}>
+        <div style={{justifySelf:'start',marginLeft:-10}}><BackButton onClick={() => setSubSlide(0)}/></div>
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+        <div />
       </div>
       {phase >= 4 && <div style={{display:'flex',justifyContent:'center'}}><BonusButton color="#c8a870" zoneName="souffle" onClick={() => setShowBonus(true)} /></div>}
       {phase >= 4 && onCalendrier && <div style={{display:'flex',justifyContent:'center'}}><CalendrierButton onClick={onCalendrier} /></div>}
@@ -7010,8 +7018,10 @@ function TigeValidation({ onNext, onBack, onScreenChange, onCalendrier }) {
       {block(2, <p style={S2}>Demain, quelque chose de plus délicat t'attend :</p>)}
       {block(3, <p style={{ ...S2, margin: '0 0 24px' }}><B>les feuilles s'épanouissent.</B></p>)}
       {showBonus && <BonusRitualModal zoneId="stem" color="#9ab8c8" onClose={() => setShowBonus(false)} />}
-      <div style={{ display: 'flex', justifyContent: 'center', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', ...fadeIn(phase >= 4), pointerEvents: phase >= 4 ? 'auto' : 'none' }}>
+        <div style={{ justifySelf: 'start', marginLeft: -10 }}><BackButton onClick={() => setSubSlide(0)} /></div>
         <PrimaryButton onClick={onNext}>Continuer</PrimaryButton>
+        <div />
       </div>
       {phase >= 4 && <div style={{ display: 'flex', justifyContent: 'center' }}><BonusButton color="#9ab8c8" zoneName="tige" onClick={() => setShowBonus(true)} /></div>}
       {phase >= 4 && onCalendrier && <div style={{ display: 'flex', justifyContent: 'center' }}><CalendrierButton onClick={onCalendrier} /></div>}
@@ -8052,7 +8062,7 @@ function ArcTypewriterText({ text, startDelay = 3500, charDelay = 75 }) {
   )
 }
 
-function WOFDayProgressionScreen({ dayNumber = 1, onContinue }) {
+function WOFDayProgressionScreen({ dayNumber = 1, onContinue, onBack }) {
   const idx      = Math.min(dayNumber - 1, 6)
   const meta     = WOF_DAY_META[idx]
   const color    = WOF_DAY_COLORS[idx]
@@ -8141,28 +8151,28 @@ function WOFDayProgressionScreen({ dayNumber = 1, onContinue }) {
         </p>
 
         {/* CTA */}
-        <button
-          onClick={onContinue}
-          className={ctaVisible ? 'wof-cta-pulse' : ''}
-          style={{
-            padding: '14px 44px',
-            borderRadius: 100,
-            border: 'none',
-            background: `linear-gradient(135deg, ${color}, ${WOF_DAY_COLORS[Math.min(dayNumber, 6)]})`,
-            color: '#fff',
-            fontFamily: "'Jost',sans-serif",
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: `0 8px 28px ${color}40`,
-            opacity: ctaVisible ? 1 : 0,
-            transform: ctaVisible ? 'translateY(0)' : 'translateY(10px)',
-            transition: 'opacity 0.9s ease, transform 0.9s ease',
-            pointerEvents: ctaVisible ? 'auto' : 'none',
-          }}
-        >
-          Continuer
-        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', width: '100%', opacity: ctaVisible ? 1 : 0, transform: ctaVisible ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 0.9s ease, transform 0.9s ease', pointerEvents: ctaVisible ? 'auto' : 'none' }}>
+          <div style={{ justifySelf: 'start' }}>{onBack && <BackButton onClick={onBack} />}</div>
+          <button
+            onClick={onContinue}
+            className={ctaVisible ? 'wof-cta-pulse' : ''}
+            style={{
+              padding: '14px 44px',
+              borderRadius: 100,
+              border: 'none',
+              background: `linear-gradient(135deg, ${color}, ${WOF_DAY_COLORS[Math.min(dayNumber, 6)]})`,
+              color: '#fff',
+              fontFamily: "'Jost',sans-serif",
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: `0 8px 28px ${color}40`,
+            }}
+          >
+            Continuer
+          </button>
+          <div />
+        </div>
       </div>
     </div>
   )
@@ -8499,7 +8509,7 @@ function DayWOFRituelView({ ritualData, audioSrc, audioTitle, g1, g2, glow, bg, 
     <GuidedFallback onNext={() => setPhase('flower')} onBack={() => setPhase('view')} onAudio={audioAvailable ? () => setPhase('audio') : null} />
   )
   if (phase === 'flower') return (
-    <WOFDayProgressionScreen dayNumber={dayNumber} onContinue={onComplete} />
+    <WOFDayProgressionScreen dayNumber={dayNumber} onContinue={onComplete} onBack={() => setPhase('view')} />
   )
 
   return (
