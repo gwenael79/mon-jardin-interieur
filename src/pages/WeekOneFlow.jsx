@@ -23,12 +23,12 @@ function GlobalStyles() {
       @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
 
       @keyframes stepIn {
-        from { opacity: 0; transform: translateY(18px); }
-        to   { opacity: 1; transform: translateY(0);    }
+        from { opacity: 0; }
+        to   { opacity: 1; }
       }
       @keyframes softRise {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0);    }
+        from { opacity: 0; }
+        to   { opacity: 1; }
       }
       .wof-soft { animation: softRise 900ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
       .wveil-video {
