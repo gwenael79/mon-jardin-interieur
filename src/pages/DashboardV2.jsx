@@ -25,6 +25,7 @@ import { useCircle }    from '../hooks/useCircle'
 import { useDefi }      from '../hooks/useDefi'
 import { supabase }     from '../core/supabaseClient'
 import { useTheme }     from '../hooks/useTheme'
+import { useAmbiance, ambianceAsset } from '../hooks/useAmbiance'
 import { useAnalytics } from '../hooks/useAnalytics'
 import { logActivity }  from '../utils/logActivity'
 import '../styles/dashboard.css'
@@ -277,6 +278,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
   const slide  = slides[curIdx]
   const isLast = curIdx === slides.length - 1
   const swipe  = useSwipe(() => onNav(1), () => onNav(-1))
+  const ambiance = useAmbiance()
 
   return (
     <div
@@ -328,7 +330,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
 
       {/* ── Illustration — zone de swipe horizontal ── */}
       <div style={{ flexShrink:0, height:200, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
-        <img src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
+        <img src={ambianceAsset(slide.image ?? '/champs.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 70%, rgba(237,229,222,1) 100%)' }}/>
 
         {/* ── Flèches navigation ── */}
@@ -1716,6 +1718,7 @@ function CompteVipModal({ fondateur, isFondateurGraine, onClose }) {
 
 export default function DashboardPage() {
   const isMobile = useIsMobile()
+  const ambiance = useAmbiance()
   useTheme()
 
   // ── Polices ──
@@ -2776,7 +2779,7 @@ export default function DashboardPage() {
 
               {/* ── Illustration pleine largeur ── */}
               <div style={{ flexShrink:0, height:360, position:'relative', overflow:'hidden' }}>
-                <img key={`illus-${slideIdx}`} src={slide.image ?? '/champs.png'} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
+                <img key={`illus-${slideIdx}`} src={ambianceAsset(slide.image ?? '/champs.png', ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'dkIllusIn .42s cubic-bezier(.4,0,.2,1) both' }}/>
                 <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(250,245,242,0) 70%, rgba(250,245,242,1) 100%)' }}/>
 
                 {/* Progress dots */}

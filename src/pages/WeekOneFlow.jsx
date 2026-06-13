@@ -9888,6 +9888,7 @@ function WelcomeVeil({ onDone, isReturn = false }) {
   const [muted,      setMuted]      = useState(true)
   const [ctaVisible, setCtaVisible] = useState(false)
   const [showVideo,  setShowVideo]  = useState(false)
+  const [showEndText, setShowEndText] = useState(false)
 
   function handleSound() {
     const v = videoRef.current
@@ -9896,6 +9897,13 @@ function WelcomeVeil({ onDone, isReturn = false }) {
     v.muted = false
     v.currentTime = 0
     v.play()
+  }
+
+  function handleTimeUpdate() {
+    if (ambiance !== 'zen') return
+    const v = videoRef.current
+    if (!v || !v.duration) return
+    if (v.duration - v.currentTime <= 5) setShowEndText(true)
   }
 
   function handleVideoReady() {
@@ -9978,16 +9986,17 @@ function WelcomeVeil({ onDone, isReturn = false }) {
           className="wveil-video"
           onLoadedData={handleVideoReady}
           onCanPlayThrough={handleVideoReady}
+          onTimeUpdate={handleTimeUpdate}
           onEnded={() => setCtaVisible(true)}
           onError={onDone}
         />
       </div>
 
-      {/* Texte de fin de vidéo */}
+      {/* Texte de fin de vidéo — uniquement ambiance zen, 5 dernières secondes */}
       <div style={{
         position: 'absolute', bottom: 130, left: 0, right: 0, zIndex: 2,
         textAlign: 'center', padding: '0 24px',
-        opacity: ctaVisible ? 1 : 0,
+        opacity: showEndText ? 1 : 0,
         transition: 'opacity 1s ease',
         pointerEvents: 'none',
       }}>
