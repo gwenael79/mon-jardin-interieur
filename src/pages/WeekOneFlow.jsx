@@ -2299,7 +2299,6 @@ function DayAccueilSlide1({ answerKey, onAnswer, onScreenChange }) {
   function fadeStyle(visible) {
     return {
       opacity:    visible ? 1 : 0,
-      transform:  visible ? 'translateY(0)' : 'translateY(10px)',
       transition: T,
     }
   }
@@ -3830,7 +3829,6 @@ const TRANS = 'opacity 950ms cubic-bezier(0.25,0.46,0.45,0.94), transform 950ms 
 function fadeIn(visible) {
   return {
     opacity:    visible ? 1 : 0,
-    transform:  visible ? 'translateY(0)' : 'translateY(9px)',
     transition: TRANS,
   }
 }
@@ -8231,7 +8229,7 @@ function RessentiScreen({ phase, onAnswer, onBack }) {
   const thumbTop = pos !== null ? `${(1 - pos) * 100}%` : null
 
   return (
-    <div className="wof-in" style={{ padding: '12px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div className="wof-in" style={{ padding: '12px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100%', boxSizing: 'border-box' }}>
       <h2 style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(18px,4.8vw,24px)', fontWeight: 300, fontStyle: 'italic', color: '#2a1c1c', lineHeight: 1.3, marginBottom: 5, marginTop: 4 }}>
         {isBefore ? 'Comment te sens-tu, là, maintenant ?' : 'Et maintenant ?'}
       </h2>
@@ -8394,7 +8392,7 @@ function DeltaScreen({ answers, onNext }) {
   )
 
   return (
-    <div className="wof-in" style={{ padding: '40px 28px 56px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div className="wof-in" style={{ padding: '40px 28px 56px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100%', boxSizing: 'border-box' }}>
       <p style={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 600, letterSpacing: '.22em', textTransform: 'uppercase', color: '#a87f90', marginBottom: 32 }}>
         Ce qui a bougé
       </p>
