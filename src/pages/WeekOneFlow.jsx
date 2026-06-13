@@ -9902,6 +9902,12 @@ function WelcomeVeil({ onDone, isReturn = false }) {
     setTimeout(() => setShowVideo(true), 3000)
   }
 
+  useEffect(() => {
+    if (!showVideo) return
+    // Certains navigateurs mobiles n'enclenchent pas l'autoplay tant que la vidéo est masquée (opacity 0)
+    videoRef.current?.play().catch(() => {})
+  }, [showVideo])
+
   const overlayVisible = showVideo
 
   return (
