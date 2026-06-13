@@ -145,9 +145,9 @@ function IntroGwenael({ onStart }) {
   function handleVideoEnded() {
     if (ambiance !== 'zen') return
     setVeil(true)
-    const audio = new Audio('/audio/decouverte.mp3')
-    audio.play().catch(() => {})
-    window._discoveryAudio = audio
+    // Pas de play() ici : aucun geste utilisateur, iOS bloquerait l'audio.
+    // L'élément est créé à l'avance ; StepDecouverte le jouera au clic "Commencer".
+    window._discoveryAudio = new Audio('/audio/Rituelaccueil.mp3')
     setTimeout(() => onStart(), 700)
   }
 
@@ -169,6 +169,8 @@ function IntroGwenael({ onStart }) {
       <div style={{
         width: '100%',
         maxWidth: 480,
+        height: '80vh',
+        maxHeight: 640,
         borderRadius: 24,
         overflow: 'hidden',
         boxShadow: '0 24px 70px rgba(180,120,110,0.20)',
@@ -181,7 +183,7 @@ function IntroGwenael({ onStart }) {
           playsInline
           muted={muted}
           onEnded={handleVideoEnded}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
+          style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
         />
         {/* ── Voile blanc de transition (ambiance zen, fin de vidéo) ── */}
         {ambiance === 'zen' && (
@@ -3581,7 +3583,7 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
   )
 
   return (
-    <div style={{
+    <div className="sd-overlay" style={{
       position: 'fixed', inset: 0, zIndex: 150,
       background: 'rgba(20,12,8,0.45)', backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -3589,29 +3591,35 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
       opacity: leaving ? 0 : 1,
       transition: 'opacity 3s ease',
     }}>
-    <div style={{
+    <style>{`
+      @media (max-width: 640px) {
+        .sd-overlay { background: transparent !important; backdrop-filter: none !important; padding: 0 !important; }
+        .sd-card { border-radius: 0 !important; box-shadow: none !important; max-width: 100% !important; max-height: 100vh !important; height: 100vh !important; }
+      }
+    `}</style>
+    <div className="sd-card" style={{
       position: 'relative', width: '100%', maxWidth: 620, maxHeight: '94vh', overflowY: 'auto', overflowX: 'hidden',
       borderRadius: 28, boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
       background: 'linear-gradient(160deg, #f8f0ec 0%, #f0e4e8 30%, #e8d8d0 60%, #e0d0c8 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start',
-      padding: 'clamp(56px, 14vw, 90px) 0 40px',
+      padding: 'clamp(32px, 8vw, 48px) 16px 40px',
     }}>
       <style>{ONB_STYLES}</style>
       <NatureBg />
 
       {/* Titre */}
       <div style={{
-        position: 'absolute', top: 36, left: 0, right: 0, textAlign: 'center', zIndex: 1,
+        textAlign: 'center', zIndex: 1,
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(-10px)',
         transition: 'opacity 1.2s ease, transform 1.2s ease',
       }}>
         <span style={{
-          fontSize: 18, letterSpacing: '.16em', textTransform: 'uppercase',
+          fontSize: 'clamp(14px, 4vw, 18px)', letterSpacing: '.16em', textTransform: 'uppercase',
           color: '#000', fontWeight: 600,
         }}>{started ? 'Avant de commencer' : 'Tu étais sur le point de commencer'}</span>
         <div style={{
-          fontSize: 16, letterSpacing: '.06em', color: 'rgba(0,0,0,0.45)',
+          fontSize: 'clamp(13px, 3.5vw, 16px)', letterSpacing: '.06em', color: 'rgba(0,0,0,0.45)',
           fontStyle: 'italic', marginTop: 6,
         }}>
           Ton premier rituel de découverte
@@ -3619,17 +3627,17 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
       </div>
 
       {/* Cercle de respiration */}
-      <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, marginTop: 40 }}>
+      <div style={{ position: 'relative', width: 'clamp(130px, 38vw, 220px)', height: 'clamp(130px, 38vw, 220px)', aspectRatio: '1', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1, marginTop: 24 }}>
         {[0, 1, 2, 3].map(i => (
           <div key={i} style={{
-            position: 'absolute', inset: 0, borderRadius: '50%',
+            position: 'absolute', inset: 0, borderRadius: '50%', aspectRatio: '1',
             border: '2px solid rgba(180,110,90,0.55)',
             animation: `onbWave 5s ease-out ${i * 1.25}s infinite`,
             animationPlayState: soundActivated ? 'running' : 'paused',
           }} />
         ))}
         <div style={{
-          width: 90, height: 90, borderRadius: '50%',
+          width: '48%', height: '48%', aspectRatio: '1', borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(230,170,120,1), rgba(160,100,90,0.75))',
           animation: 'breathe 6s ease-in-out infinite',
           animationPlayState: soundActivated ? 'running' : 'paused',
@@ -3672,7 +3680,7 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
 
       {/* Texte */}
       <div style={{
-        marginTop: 40, textAlign: 'center', maxWidth: 420, padding: '0 24px',
+        marginTop: 24, textAlign: 'center', maxWidth: 420, padding: '0 24px',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(10px)',
         transition: 'opacity 1.2s ease, transform 1.2s ease',
@@ -3680,24 +3688,24 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
       }}>
         <h2 style={{
           fontFamily: "'Cormorant Garamond',serif", fontWeight: 700,
-          fontSize: 'clamp(30px,6.5vw,44px)', color: '#000',
-          lineHeight: 1.3, margin: '12px 0 8px',
+          fontSize: 'clamp(24px,6.5vw,44px)', color: '#000',
+          lineHeight: 1.25, margin: '8px 0 6px',
         }}>
           {started
             ? <>Offre-toi 2 minutes,<br/>rien que pour toi.</>
             : <>Reprenons,<br/>quand tu es prêt(e).</>}
         </h2>
-        <p style={{ fontSize: 14, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', lineHeight: 1.7 }}>
+        <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', lineHeight: 1.5 }}>
           {started
             ? 'Installe-toi confortablement, et laisse-toi guider.'
             : 'Ton micro-rituel t\'attend, là où tu l\'avais laissé.'}
         </p>
 
         <div style={{
-          marginTop: 28, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          marginTop: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
         }}>
           <div style={{
-            width: 150, height: 150, borderRadius: '50%', overflow: 'hidden',
+            width: 'clamp(80px, 24vw, 150px)', height: 'clamp(80px, 24vw, 150px)', aspectRatio: '1', borderRadius: '50%', overflow: 'hidden',
             border: '2px solid rgba(255,255,255,0.8)',
             boxShadow: '0 0 28px rgba(220,180,140,0.5)',
           }}>
@@ -3712,11 +3720,11 @@ function StepDecouverte({ onComplete, onPause, resuming }) {
         </div>
 
         {started && (
-          <div style={{ marginTop: 24, textAlign: 'center' }}>
-            <p style={{ fontSize: 16, color: '#000', fontWeight: 700, fontStyle: 'italic', margin: '0 0 6px' }}>
+          <div style={{ marginTop: 16, textAlign: 'center' }}>
+            <p style={{ fontSize: 15, color: '#000', fontWeight: 700, fontStyle: 'italic', margin: '0 0 6px' }}>
               Pas au calme, là ? Ton rituel t'attend.
             </p>
-            <p style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', margin: '0 0 10px' }}>
+            <p style={{ fontSize: 12, color: 'rgba(0,0,0,0.55)', fontStyle: 'italic', margin: '0 0 10px' }}>
               Reviens quand tu pourras l'écouter, au casque.
             </p>
             <button onClick={handlePause} style={{
