@@ -3380,7 +3380,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           background: 'rgba(10,6,2,0.95)', backdropFilter: 'blur(20px)',
           overflowY: 'auto',
           animation: 'onbIn .4s cubic-bezier(.22,1,.36,1) both',
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
           <div style={{ padding: '48px 0 8px', textAlign: 'center', flexShrink: 0 }}>
             <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 26, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.2 }}>

@@ -283,7 +283,7 @@ function GlobalStyles() {
       @media (max-width: 480px) {
         .dpb-bar { padding: 6px 8px 5px; }
         .dpb-track { gap: 4px 3px; }
-        .dpb-edge-label { font-size: 9px; }
+        .dpb-edge-label { display: none; }
         .dpb-arrow { font-size: 10px; }
         .dpb-dot { width: 14px; height: 14px; font-size: 8px; }
         .dpb-day { width: 22px; height: 22px; font-size: 8px; }
@@ -424,7 +424,7 @@ function DiscoveryProgressBar({ completedDays, currentDay }) {
       <div className="dpb-track">
         <div className="dpb-edge">
           <span className="dpb-edge-label">Inscription</span>
-          <span className="dpb-dot done">✓</span>
+          <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Inscription">✓</span>
         </div>
         <span className="dpb-arrow done">→</span>
         <span className="dpb-dot done dpb-tip" tabIndex={0} data-tip="Rituel d'initiation">✓</span>
@@ -444,7 +444,7 @@ function DiscoveryProgressBar({ completedDays, currentDay }) {
         </div>
         <span className="dpb-arrow">→</span>
         <div className="dpb-edge">
-          <span className="dpb-dot locked">🔒</span>
+          <span className="dpb-dot locked dpb-tip" tabIndex={0} data-tip="L'appli t'attend !">🔒</span>
           <span className="dpb-edge-label app">L'appli t'attend !</span>
         </div>
       </div>
