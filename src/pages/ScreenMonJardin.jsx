@@ -14,7 +14,13 @@ import { useIsMobile, LumenBadge, LumensCard, useProfile, AIInsightBlock } from 
 import { useSlideInsight } from '../hooks/useSlideInsight'
 import { ExerciseDetail, useRituels, PLANT_RITUALS_EMPTY } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
-import RitualSuggestionModal from '../components/RitualSuggestionModal'
+import RitualSuggestionModal, { RITUALS as SUGGESTION_RITUALS } from '../components/RitualSuggestionModal'
+
+const NEED_TO_ZONE = {
+  sleep: 'Feuilles', stress: 'Souffle', emotions: 'Feuilles',
+  grounding: 'Racines', thoughts: 'Souffle', energy: 'Tige',
+  selfconnect: 'Racines', softness: 'Fleurs',
+}
 
 const DEFAULT_GARDEN_SETTINGS = {
   sunriseH: 7, sunriseM: 0,
@@ -5420,7 +5426,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         plantHealth={plant?.health ?? 5}
         onCompleteRitual={async (needId, isLiked, delta) => {
           if (!isLiked) return
-          ritualJustCompleted.current = true  // toujours déclencher les étoiles si aimé
+          ritualJustCompleted.current = true
           const plantId = plant?.id ?? todayPlant?.id
           const currentHealth = plant?.health ?? todayPlant?.health ?? 5
           if (!plantId) { console.warn('[onCompleteRitual] plant.id manquant — plant:', plant, 'todayPlant:', todayPlant); return }
@@ -5429,6 +5435,12 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
           if (error) console.error('[onCompleteRitual] update failed:', error.message)
           else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
+          try {
+            const ritualName = SUGGESTION_RITUALS[needId]?.title ?? needId
+            const zone = NEED_TO_ZONE[needId] ?? 'Racines'
+            await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ritualName, zone, health_delta: delta })
+            await logActivity({ userId, action: 'ritual', ritual: ritualName, zone, circleId: null })
+          } catch (err) { console.error('[onCompleteRitual] log failed:', err.message) }
         }}
       />
     )}

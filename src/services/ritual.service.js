@@ -1,6 +1,7 @@
 // src/services/ritual.service.js
 import { supabase, query } from '../core/supabaseClient'
 import { plantService } from './plant.service'
+import { logActivity } from '../utils/logActivity'
 
 // Catalogue des rituels disponibles (statique pour l'instant)
 export const RITUAL_CATALOG = [
@@ -61,20 +62,10 @@ export const ritualService = {
 
     // Met à jour la plante — delta fixe 0.5% sur la zone du rituel
     const plant = await plantService.applyRitualEffect(plantId, 0.5, catalog.zone)
-// ─── LOG ACTIVITÉ (toujours, cercle optionnel) ───────────────────────────
-try {
-  await supabase
-    .from('activity')
-    .insert({
-      user_id:   userId,
-      action:    'a complété',
-      ritual:    catalog.name,
-      zone:      catalog.zone ?? 'Racines',
-      ...(circleId ? { circle_id: circleId } : {}),
-    })
-} catch (err) {
-  console.error('Erreur log activité:', err)
-}
+    // ─── LOG ACTIVITÉ (comptabilisé dans le palmarès) ──────────────────────
+    try {
+      await logActivity({ userId, action: 'ritual', ritual: catalog.name, zone: catalog.zone ?? 'Racines', circleId: circleId ?? null })
+    } catch (err) { console.error('Erreur log activité:', err) }
     // Illumine la fleur dans le jardin collectif (local + realtime pour les autres)
     try {
       await supabase.from('network_activity').insert({ user_id: userId, action_type: 'ritual_complete' })

@@ -2,6 +2,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
 import { supabase } from '../core/supabaseClient'
+import { logActivity } from '../utils/logActivity'
 import AudioRitualsModal from './AudioRitualsModal'
 
 // ─── Données ────────────────────────────────────────────────────────────────
@@ -341,6 +342,12 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
         await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
         window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
       } catch (e) { console.error('[ritual] health update failed:', e) }
+    }
+    if (userId && plantId && selected?.n) {
+      try {
+        await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: selected.n, zone: 'Racines', health_delta: 1 })
+        await logActivity({ userId, action: 'ritual', ritual: selected.n, zone: 'Racines', circleId: null })
+      } catch (e) { console.error('[ritual] log failed:', e) }
     }
     setTimeout(onClose, 1400)
   }

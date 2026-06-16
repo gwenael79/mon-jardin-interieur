@@ -287,7 +287,10 @@ export default function App() {
             }
 
             await activateFree()
-            await supabase.from('users').update({ onboarded: true }).eq('id', user.id)
+            await Promise.all([
+              supabase.from('users').update({ onboarded: true, plan: 'free' }).eq('id', user.id),
+              supabase.from('profiles').update({ onboarded: true, plan: 'free' }).eq('id', user.id),
+            ])
             await refresh()
           } catch (e) { console.warn('[auto-activate]', e) }
           if (localStorage.getItem('mji_show_pro_welcome') === '1') {
@@ -770,10 +773,11 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
         <OnboardingScreen
           userId={user.id}
           onComplete={async (plan) => {
-            await supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id)
+            await supabase.from('users').update({ onboarding_completed: true, plan: plan ?? 'free' }).eq('id', user.id)
             if (plan === 'free') {
               // Valide l'onboarding + les 7 jours du WeekOneFlow par défaut
               await supabase.from('profiles').update({
+                onboarded: true, plan: 'free',
                 week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' }
               }).eq('id', user.id)
               localStorage.setItem(`mji_orientation_${user.id}`, '1')
