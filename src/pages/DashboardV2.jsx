@@ -285,6 +285,14 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
   const swipe  = useSwipe(() => onNav(1), () => onNav(-1))
   const ambiance = useAmbiance()
 
+  // Précharge toutes les images des slides pour éviter le gel au swipe
+  useEffect(() => {
+    slides.forEach(s => {
+      const img = new window.Image()
+      img.src = slideImage(s, ambiance)
+    })
+  }, [slides, ambiance])
+
   return (
     <div
       style={{ position:'fixed', inset:0, display:'flex', flexDirection:'column', background:'linear-gradient(160deg,#f8f0ec,#ede5de)', zIndex:10 }}
@@ -297,6 +305,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         .guide-btn { animation: guidePulse 2s ease-in-out infinite; }
         @keyframes arrowBlink { 0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.28),0 0 0 0 rgba(40,160,80,0.6)} 50%{transform:scale(1.10);box-shadow:0 6px 22px rgba(0,0,0,0.22),0 0 0 9px rgba(40,160,80,0)} }
         .nav-arrow { transition: transform .15s; }
+        @keyframes slideImgIn { from{opacity:0} to{opacity:1} }
       `}</style>
       {/* ── Bandeau titre mobile ── */}
       <div style={{ flexShrink:0, height:'calc(48px + env(safe-area-inset-top, 0px))', boxSizing:'border-box', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'env(safe-area-inset-top, 0px) 12px 0', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
@@ -335,7 +344,7 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
 
       {/* ── Illustration — zone de swipe horizontal ── */}
       <div style={{ flexShrink:0, height: 280, position:'relative', overflow:'hidden', touchAction:'pan-y' }} {...swipe}>
-        <img src={slideImage(slide, ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block' }}/>
+        <img key={slideImage(slide, ambiance)} src={slideImage(slide, ambiance)} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', display:'block', animation:'slideImgIn .25s ease both' }}/>
         {ambiance !== 'zen' && (
           <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(248,240,236,0) 70%, rgba(237,229,222,1) 100%)' }}/>
         )}
@@ -1981,6 +1990,14 @@ export default function DashboardPage() {
       setIntroVideo(pickVideo(user.id))
     }
   }, [user?.id, ambiance])
+
+  // Si l'ambiance bascule sur zen après que introVideo a été défini (race Supabase), on annule
+  useEffect(() => {
+    if (ambiance === 'zen') {
+      setIntroVideo(null)
+      setShowVideoIntro(false)
+    }
+  }, [ambiance])
 
   const refreshGardenCount = useCallback(() => {
     const since = new Date(); since.setDate(since.getDate() - 7)
