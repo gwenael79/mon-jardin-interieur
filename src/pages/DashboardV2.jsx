@@ -1976,11 +1976,11 @@ export default function DashboardPage() {
     // Pré-sélectionne la vidéo et marque immédiatement comme vue (évite les répétitions si l'utilisateur recharge avant de cliquer)
     const today = new Date().toISOString().split('T')[0]
     const key   = `video_intro_last_seen__${user.id}`
-    if (localStorage.getItem(key) !== today) {
+    if (localStorage.getItem(key) !== today && ambiance !== 'zen') {
       localStorage.setItem(key, today)
       setIntroVideo(pickVideo(user.id))
     }
-  }, [user?.id])
+  }, [user?.id, ambiance])
 
   const refreshGardenCount = useCallback(() => {
     const since = new Date(); since.setDate(since.getDate() - 7)
@@ -2371,8 +2371,8 @@ export default function DashboardPage() {
         if (pv) { pv.muted = false; pv.play().catch(() => {}) }
         setIntroSoundUnlocked(true)
         setShowWelcome(false)
-        // introVideo est défini seulement si la vidéo n'a pas encore été vue aujourd'hui
-        if (introVideo) setShowVideoIntro(true)
+        // introVideo est défini seulement si la vidéo n'a pas encore été vue aujourd'hui (et ambiance ≠ zen)
+        if (introVideo && ambiance !== 'zen') setShowVideoIntro(true)
       }} />}
       {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
       {showBilanModal && (
