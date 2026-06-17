@@ -7,6 +7,8 @@ import { usePushNotification } from '../hooks/usePushNotification'
 import { PLANT_ZONES, useRituels, RitualZoneModal } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
 import RitualSuggestionModalOnboarding from '../components/RitualSuggestionModalOnboarding'
+import { RITUALS as SUGGESTION_RITUALS } from '../components/RitualSuggestionModal'
+import { logActivity } from '../utils/logActivity'
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  DONNÉES SLIDES
@@ -2843,6 +2845,12 @@ function VeilScreen({ onDone }) {
 // ─────────────────────────────────────────────────────────────────────────────
 const ZONE_ICONS = { roots: '🌱', stem: '🌿', leaves: '🍃', flowers: '🌸', breath: '🌬️' }
 
+const NEED_TO_ZONE = {
+  sleep: 'Feuilles', stress: 'Souffle', emotions: 'Feuilles',
+  grounding: 'Racines', thoughts: 'Souffle', energy: 'Tige',
+  selfconnect: 'Racines', softness: 'Fleurs',
+}
+
 const VITALITY_MILESTONES = {
    5: { label: 'Graine',             video: '/video/1v.mp4',
         title: 'Ta graine est semée 🌱',
@@ -2962,6 +2970,7 @@ function CelebOverlay({ milestone, src, onClose }) {
 }
 
 function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
+  const ambiance = useAmbiance()
   const vKey = userId ? `mji_vitality_${userId}` : 'mji_vitality'
   const [vitality, setVitality]      = useState(() => parseInt(localStorage.getItem(vKey) || '0', 10))
   const [celebVideo, setCelebVideo]         = useState(null)
@@ -2996,7 +3005,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
       })
   }, [userId])
 
-  const handleCompleteRitual = async () => {
+  const handleCompleteRitual = async (needId, isLiked, delta) => {
     // Premier rituel → valide l'onboarding en arrière-plan pour identifier l'utilisateur
     if (vitality === 0 && onValidateOnboarding) {
       onValidateOnboarding()
@@ -3020,7 +3029,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
     setTimeout(() => setPctPop(false), 500)
     setTimeout(() => setShowTip(false), 5000)
 
-    // Met à jour la santé de la plante en base (+2, plafonné à 100)
+    // Met à jour la santé de la plante en base (+5, plafonné à 100)
     if (userId) {
       const today = new Date().toISOString().split('T')[0]
       const { data: plant } = await supabase
@@ -3030,9 +3039,11 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
         .eq('date', today)
         .maybeSingle()
 
+      let plantId = null
       if (plant) {
         const newHealth = Math.min(100, (plant.health ?? 0) + 5)
         await supabase.from('plants').update({ health: newHealth }).eq('id', plant.id)
+        plantId = plant.id
       } else {
         // Récupère le health du jour précédent pour assurer la continuité
         const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
@@ -3040,13 +3051,27 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
           .from('plants').select('health')
           .eq('user_id', userId).eq('date', yesterday).maybeSingle()
         const baseHealth = Math.min(95, Math.max(5, (prev?.health ?? 5)))
-        await supabase.from('plants').insert({
+        const { data: newPlant } = await supabase.from('plants').insert({
           user_id: userId, date: today,
           health: Math.min(100, baseHealth + 5),
           zone_racines: 5, zone_tige: 5,
           zone_feuilles: 5, zone_fleurs: 5, zone_souffle: 5,
-        })
+        }).select('id').single()
+        plantId = newPlant?.id ?? null
       }
+
+      // Log rituel dans rituals + activity
+      if (needId) {
+        try {
+          const ritualName = SUGGESTION_RITUALS[needId]?.title ?? needId
+          const zone = NEED_TO_ZONE[needId] ?? 'Racines'
+          if (plantId) {
+            await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ritualName, zone, health_delta: delta ?? 2 })
+          }
+          await logActivity({ userId, action: 'ritual', ritual: ritualName, zone, circleId: null })
+        } catch (err) { console.error('[onboarding ritual] log failed:', err.message) }
+      }
+
       window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId } }))
     }
 
@@ -3143,7 +3168,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
         return (
           <CelebOverlay
             milestone={milestone}
-            src={celebVideo}
+            src={ambianceAsset(celebVideo, ambiance)}
             onClose={() => setCelebVideo(null)}
           />
         )

@@ -4985,7 +4985,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           {streak >= 1 && (
             <div style={{ position:'absolute', top:12, right:12, zIndex:3, display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', borderRadius:12, background:'rgba(20,10,5,.55)', border:'1px solid rgba(255,200,80,.25)', backdropFilter:'blur(4px)' }}>
               <span style={{ fontSize:14 }}>🔥</span>
-              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jours</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
               <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, color:'rgba(255,255,255,.5)', letterSpacing:'.06em' }}>de continuité</span>
             </div>
           )}
@@ -5011,15 +5011,15 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
                 <div style={{ flex:1, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
 
-                  {/* Hier */}
-                  {yesterdayHealth != null && (
+                  {/* Hier — seulement si la vitalité a progressé */}
+                  {yesterdayHealth != null && healthDelta != null && healthDelta > 0 && (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
                       <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Hier</span>
                       <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 34 : 40, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1 }}>{yesterdayHealth}%</span>
                     </div>
                   )}
 
-                  {yesterdayHealth != null && (
+                  {yesterdayHealth != null && healthDelta != null && healthDelta > 0 && (
                     <span style={{ fontSize:20, color:'rgba(255,255,255,.80)', alignSelf:'center', marginTop:6 }}>→</span>
                   )}
 

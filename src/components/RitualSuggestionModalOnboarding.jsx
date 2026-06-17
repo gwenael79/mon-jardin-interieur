@@ -1,10 +1,11 @@
-// RitualSuggestionModalOnboarding.jsx — rituel onboarding : vue + audio/respiration + completion
+// RitualSuggestionModalOnboarding.jsx — rituel onboarding : seuil + felt + completion
 import { useState, useEffect } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
 import RitualCompletion from './RitualCompletion'
 import {
   NEEDS, RITUALS, CSS, PHASE_PALETTE,
-  PhaseBreathing, PhaseAudio,
+  PhaseBreathing, PhaseAudio, PhaseDoing,
+  PhaseFelt, INTENT,
 } from './RitualSuggestionModal'
 
 // ─── Conversion vitalité → santé (même formule qu'OnboardingScreen) ───────────
@@ -19,13 +20,15 @@ function vitalityToHealth(v) {
   return pts[lo] + (pts[hi] - pts[lo]) * (step - lo)
 }
 
-// ─── Phase : vue initiale du rituel (onboarding) ─────────────────────────────
+// ─── Phase : seuil du rituel (onboarding) ────────────────────────────────────
 function PhaseViewOnboarding({ ritual, need, isMobile, startMode, onStart, onBack, onClose }) {
   const { g1, g2, glow } = need
+  const [stepsOpen, setStepsOpen] = useState(false)
+  const intent = INTENT[need.id] ?? ''
 
   const buttonLabel =
-    startMode === 'audio'     ? '🔊 Écouter le rituel guidé'  :
-    startMode === 'breathing' ? 'Faire le rituel'              :
+    startMode === 'audio'     ? '🔊 Écouter le rituel guidé' :
+    startMode === 'breathing' ? 'Faire le rituel'             :
                                 'J\'ai fait ce rituel ✓'
 
   return (
@@ -34,44 +37,79 @@ function PhaseViewOnboarding({ ritual, need, isMobile, startMode, onStart, onBac
         <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.25)', borderRadius:100, padding:'7px 16px', cursor:'pointer', color:'rgba(50,35,20,0.65)', fontSize:13, fontFamily:"'Jost',sans-serif" }}>‹ Autre besoin</button>
         <button onClick={onClose} style={{ width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.25)', cursor:'pointer', color:'rgba(50,35,20,0.45)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
       </div>
-      <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding: isMobile ? '24px 20px calc(env(safe-area-inset-bottom, 0px) + 40px)' : '28px 32px 32px', boxSizing:'border-box' }}>
+      <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', padding: isMobile ? '28px 20px calc(env(safe-area-inset-bottom, 0px) + 40px)' : '32px 32px 32px', boxSizing:'border-box' }}>
+
+        {/* Intention — écho */}
+        {intent && (
+          <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontStyle:'italic', color:'rgba(50,35,20,0.45)', margin:'0 0 20px', animation:'rs_in .35s ease both' }}>
+            {intent}
+          </p>
+        )}
+
+        {/* Badge besoin */}
         <div style={{ animation:'rs_in .35s ease both', marginBottom:18 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:100, background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 4px 16px ${glow}` }}>
             <span style={{ fontSize:18 }}>{ritual.icon}</span>
             <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.95)', letterSpacing:'.08em', textTransform:'uppercase' }}>{need.label}</span>
           </div>
         </div>
+
+        {/* Titre + accroche + durée */}
         <div style={{ animation:'rs_in .38s ease .05s both', marginBottom:20 }}>
           <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 34 : 44, fontWeight:400, color:'#2A1F18', margin:'0 0 6px', lineHeight:1.15 }}>{ritual.title}</h2>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 16, color:'rgba(50,35,20,0.50)', margin:'0 0 4px' }}>{ritual.subtitle}</p>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 16, color:'rgba(50,35,20,0.50)', margin:'0 0 8px' }}>{ritual.subtitle}</p>
           <div style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
             <span style={{ width:6, height:6, borderRadius:'50%', background:`linear-gradient(135deg,${g1},${g2})`, animation:'rs_pulse 2s ease-in-out infinite' }}/>
             <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(50,35,20,0.45)' }}>{ritual.duration}</span>
           </div>
         </div>
-        <div style={{ padding:'16px 20px', borderRadius:16, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.20)', marginBottom:24, animation:'rs_in .4s ease .1s both' }}>
+
+        {/* Carte intro */}
+        <div style={{ padding:'16px 20px', borderRadius:16, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.20)', marginBottom:20, animation:'rs_in .4s ease .1s both' }}>
           <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 19 : 22, fontStyle:'italic', color:'rgba(50,35,20,0.70)', margin:0, lineHeight:1.6 }}>{ritual.intro}</p>
         </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:20 }}>
-          {ritual.steps.map((step, i) => (
-            <div key={i} style={{ display:'flex', gap:14, alignItems:'flex-start', animation:`rs_stepIn .36s ease ${.15 + i * .07}s both` }}>
-              <div style={{ flexShrink:0, width:36, height:36, borderRadius:'50%', background:`linear-gradient(135deg,${g1},${g2})`, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 4px 12px ${glow}` }}>
-                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:700, color:'#fff' }}>{step.num}</span>
-              </div>
-              <div style={{ paddingTop:4 }}>
-                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600, color:'#2A1F18', marginBottom:4 }}>{step.label}</div>
-                <div style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:300, color:'rgba(50,35,20,0.82)', lineHeight:1.55 }}>{step.text}</div>
-              </div>
+
+        {/* Aperçu replié */}
+        <div style={{ marginBottom:28, animation:'rs_in .4s ease .18s both' }}>
+          <button
+            onClick={() => setStepsOpen(o => !o)}
+            style={{ background:'none', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(50,35,20,0.40)', padding:'4px 0', display:'flex', alignItems:'center', gap:5, letterSpacing:'.04em' }}
+          >
+            <span style={{ fontSize:11, display:'inline-block', transform: stepsOpen ? 'rotate(180deg)' : 'none', transition:'transform .2s' }}>▾</span>
+            {stepsOpen ? 'Masquer les étapes' : 'Voir les étapes'}
+          </button>
+          {stepsOpen && (
+            <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:12 }}>
+              {ritual.steps.map((step, i) => (
+                <div key={i} style={{ display:'flex', gap:14, alignItems:'flex-start' }}>
+                  <div style={{ flexShrink:0, width:32, height:32, borderRadius:'50%', background:`linear-gradient(135deg,${g1},${g2})`, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:`0 4px 10px ${glow}` }}>
+                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:700, color:'#fff' }}>{step.num}</span>
+                  </div>
+                  <div style={{ paddingTop:3 }}>
+                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'#2A1F18', marginBottom:3 }}>{step.label}</div>
+                    <div style={{ fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:300, color:'rgba(50,35,20,0.75)', lineHeight:1.55 }}>{step.text}</div>
+                  </div>
+                </div>
+              ))}
+              {ritual.tip && (
+                <div style={{ padding:'12px 16px', borderRadius:12, background:`linear-gradient(135deg,${g1}14,${g2}0a)`, border:`1px solid ${g1}22`, marginTop:4 }}>
+                  <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+                    <span style={{ fontSize:15, flexShrink:0 }}>💡</span>
+                    <p style={{ fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(50,35,20,0.60)', margin:0, lineHeight:1.6 }}>{ritual.tip}</p>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
+          )}
         </div>
-        <div style={{ padding:'14px 18px', borderRadius:14, background:`linear-gradient(135deg,${g1}18,${g2}10)`, border:`1px solid ${g1}28`, marginBottom:28, animation:'rs_in .4s ease .42s both' }}>
-          <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-            <span style={{ fontSize:16, flexShrink:0 }}>💡</span>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(50,35,20,0.65)', margin:0, lineHeight:1.6 }}>{ritual.tip}</p>
-          </div>
-        </div>
-        <div style={{ textAlign:'center', animation:'rs_in .4s ease .5s both', display:'flex', flexDirection:'column', alignItems:'center', gap:12 }}>
+
+        {/* CTA */}
+        <div style={{ textAlign:'center', animation:'rs_in .4s ease .22s both', display:'flex', flexDirection:'column', alignItems:'center' }}>
+          {startMode === 'done' && (
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 17 : 19, fontStyle:'italic', color:'rgba(50,35,20,0.40)', margin:'0 0 18px' }}>
+              Installe-toi. On commence quand tu veux.
+            </p>
+          )}
           <button onClick={onStart}
             style={{ padding:'18px 0', width:'100%', maxWidth:340, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 8px 32px ${glow}`, transition:'transform .18s ease' }}
             onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
@@ -99,11 +137,12 @@ export default function RitualSuggestionModalOnboarding({
   const [phase,          setPhase]          = useState('view')
   const [audioAvailable, setAudioAvailable] = useState(false)
   const [healthSnapshot, setHealthSnapshot] = useState(null)
+  const [mood,           setMood]           = useState(null)
 
   // Reset guard on mount
   useEffect(() => { _evalInProgress = false }, [])
 
-  // Détection audio via élément Audio (le fallback SPA de Vite retourne 200 sur HEAD)
+  // Détection audio
   useEffect(() => {
     if (!activeNeed?.id) return
     const audio = new Audio()
@@ -126,16 +165,17 @@ export default function RitualSuggestionModalOnboarding({
   function handleViewStart() {
     if      (startMode === 'audio')     setPhase('audio')
     else if (startMode === 'breathing') setPhase('ritual-breathing')
-    else                                handleDone()
+    else                                setPhase('doing')
   }
 
-  function handleDone() {
+  function handleMoodSelect(selectedMood) {
     if (_evalInProgress) return
     _evalInProgress = true
+    setMood(selectedMood)
     const beforeHealth  = vitalityToHealth(Math.max(0, vitalityTotal ?? 0))
     const displayHealth = vitalityToHealth(Math.min(50, (vitalityTotal ?? 0) + (vitalityGain ?? 5)))
     setHealthSnapshot({ beforeHealth, displayHealth })
-    onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2)
+    onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2, selectedMood)
     setPhase('completion')
   }
 
@@ -152,9 +192,10 @@ export default function RitualSuggestionModalOnboarding({
           displayHealth={healthSnapshot?.displayHealth ?? 0}
           vitalityGain={vitalityGain}
           vitalityTotal={vitalityTotal}
+          mood={mood}
           isMobile={isMobile}
           onContinue={() => {
-            if (healthSnapshot) window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthSnapshot.beforeHealth, after: healthSnapshot.displayHealth } }))
+            if (healthSnapshot) window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthSnapshot.beforeHealth, after: healthSnapshot.displayHealth, mood } }))
             ;(onSeeFlower ?? onClose)()
           }}
         />
@@ -181,13 +222,25 @@ export default function RitualSuggestionModalOnboarding({
       {phase === 'audio' && (
         <PhaseAudio
           ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onValidate={handleDone} onClose={onClose}
+          onValidate={() => setPhase('felt')} onClose={onClose}
         />
       )}
       {phase === 'ritual-breathing' && (
         <PhaseBreathing
           ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onDone={handleDone} onClose={onClose}
+          onDone={() => setPhase('felt')} onClose={onClose}
+        />
+      )}
+      {phase === 'doing' && (
+        <PhaseDoing
+          ritual={activeRitual} need={activeNeed} isMobile={isMobile}
+          onDone={() => setPhase('felt')} onClose={onClose}
+        />
+      )}
+      {phase === 'felt' && (
+        <PhaseFelt
+          ritual={activeRitual} need={activeNeed} isMobile={isMobile}
+          onMoodSelect={handleMoodSelect} onClose={onClose}
         />
       )}
     </div>

@@ -4891,9 +4891,21 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     return () => window.removeEventListener('plantCelebrate', celebrate)
   }, [])
 
-  const [ritualSnapshot, setRitualSnapshot] = useState(null) // { before, after }
+  const [ritualSnapshot, setRitualSnapshot] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem('mji_post_ritual')
+      if (!raw) return null
+      const d = JSON.parse(raw)
+      if (Date.now() - (d.ts ?? 0) > 5 * 60 * 1000) { sessionStorage.removeItem('mji_post_ritual'); return null }
+      return d
+    } catch { return null }
+  })
   useEffect(() => {
-    const handler = (e) => setRitualSnapshot(e.detail ?? null)
+    const handler = (e) => {
+      const d = e.detail ?? null
+      setRitualSnapshot(d)
+      if (d) try { sessionStorage.setItem('mji_post_ritual', JSON.stringify({ ...d, ts: Date.now() })) } catch {}
+    }
     window.addEventListener('ritualCompleteSnapshot', handler)
     return () => window.removeEventListener('ritualCompleteSnapshot', handler)
   }, [])
@@ -5143,6 +5155,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   const yesterdayHealth = history?.[0]?.health ?? null
   const displayBefore   = (isPostRitual && ritualSnapshot?.before != null) ? ritualSnapshot.before : yesterdayHealth
   const healthDelta     = displayBefore != null ? (plant?.health ?? 5) - displayBefore : null
+  const postRitualMood  = isPostRitual ? (ritualSnapshot?.mood ?? null) : null
+  const ritualDelta     = (ritualSnapshot?.delta != null) ? ritualSnapshot.delta : (ritualSnapshot?.after != null && ritualSnapshot?.before != null ? ritualSnapshot.after - ritualSnapshot.before : null)
+  const displayDelta    = ritualDelta ?? (healthDelta != null && healthDelta > 0 ? healthDelta : null)
 
   const NARRATIVES = {
     matin: {
@@ -5161,7 +5176,26 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
       accent: "Ce que tu offres à ta fleur, tu l'offres aussi à ton cœur.",
     },
   }
-  const narrative = NARRATIVES[timeContext]
+  const NARRATIVES_HEAVY = {
+    matin: {
+      headline: "Tu es là. C'est déjà quelque chose.",
+      body: "Tu es venu même quand c'était encore lourd. Ce rituel t'a accompagné — peut-être pas transformé, mais traversé. C'est déjà beaucoup.",
+      accent: "Il n'y a rien à forcer. Juste à être là, avec ce qui est.",
+    },
+    aprem: {
+      headline: "Tu es là. C'est déjà quelque chose.",
+      body: "Tu as pris soin de toi malgré le poids. Ce geste compte, même s'il ne se voit pas encore.",
+      accent: "Il n'y a rien à forcer. Juste à être là, avec ce qui est.",
+    },
+    soir: {
+      headline: "Tu es là. C'est déjà quelque chose.",
+      body: "Tu as terminé cette journée en prenant soin de toi. Même lourd, tu as tenu.",
+      accent: "Demain est une autre graine.",
+    },
+  }
+  const narrative = (postRitualMood === 'encore_lourd')
+    ? (NARRATIVES_HEAVY[timeContext] ?? NARRATIVES_HEAVY.aprem)
+    : NARRATIVES[timeContext]
 
   const ZONE_BENEFITS = {
     'Racines':  { icon:'🌱', title:"Un ancrage retrouvé",      desc:"Tu te sens plus stable, plus solide, posé-e dans ta journée.",    bg:'rgba(160,100,60,.18)',  border:'rgba(160,100,60,.40)' },
@@ -5424,8 +5458,9 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         onBack={() => { setShowRitualSuggestion(false); setShowNeedModal(true) }}
         onClose={() => { setShowRitualSuggestion(false); setSelectedNeed(null) }}
         plantHealth={plant?.health ?? 5}
-        onCompleteRitual={async (needId, isLiked, delta) => {
+        onCompleteRitual={async (needId, isLiked, delta, mood) => {
           if (!isLiked) return
+          if (ritualJustCompleted.current) return
           ritualJustCompleted.current = true
           const plantId = plant?.id ?? todayPlant?.id
           const currentHealth = plant?.health ?? todayPlant?.health ?? 5
@@ -5434,11 +5469,16 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: newHealth }))
           const { error } = await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
           if (error) console.error('[onCompleteRitual] update failed:', error.message)
-          else window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
+          else {
+            window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
+            const snapDetail = { before: currentHealth, after: newHealth, delta, mood: mood ?? null }
+            window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: snapDetail }))
+            try { sessionStorage.setItem('mji_post_ritual', JSON.stringify({ ...snapDetail, ts: Date.now() })) } catch {}
+          }
           try {
             const ritualName = SUGGESTION_RITUALS[needId]?.title ?? needId
             const zone = NEED_TO_ZONE[needId] ?? 'Racines'
-            await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ritualName, zone, health_delta: delta })
+            await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ritualName, zone, health_delta: delta, mood: mood ?? null })
             await logActivity({ userId, action: 'ritual', ritual: ritualName, zone, circleId: null })
           } catch (err) { console.error('[onCompleteRitual] log failed:', err.message) }
         }}
@@ -5496,7 +5536,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           {!isMobile && streak >= 1 && (
             <div style={{ position:'absolute', top:12, right:12, zIndex:3, display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', borderRadius:12, background:'rgba(20,10,5,.55)', border:'1px solid rgba(255,200,80,.25)', backdropFilter:'blur(4px)' }}>
               <span style={{ fontSize:14 }}>🔥</span>
-              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jours</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
               <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, color:'rgba(255,255,255,.5)', letterSpacing:'.06em' }}>de continuité</span>
             </div>
           )}
@@ -5550,7 +5590,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <div style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:12, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,200,80,.2)' }}>
                 <span style={{ fontSize:16 }}>🔥</span>
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
-                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jours</span>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
                   <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, color:'rgba(255,255,255,.5)', letterSpacing:'.06em' }}>de continuité</span>
                 </div>
               </div>
@@ -5568,15 +5608,15 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
                 <div style={{ flex:1, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
 
-                  {/* Hier (ou avant rituel si post-ritual) */}
-                  {displayBefore != null && (
+                  {/* Post-rituel uniquement : comparaison avant/après */}
+                  {isPostRitual && displayBefore != null && healthDelta != null && healthDelta > 0 && (
                     <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
-                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Précédemment</span>
+                      <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Avant</span>
                       <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 34 : 40, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1 }}>{displayBefore}%</span>
                     </div>
                   )}
 
-                  {displayBefore != null && (
+                  {isPostRitual && displayBefore != null && healthDelta != null && healthDelta > 0 && (
                     <span style={{ fontSize:20, color:'rgba(255,255,255,.80)', alignSelf:'center', marginTop:6 }}>→</span>
                   )}
 
@@ -5602,10 +5642,10 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 </div>
               </div>
 
-              {/* Delta */}
-              {healthDelta != null && healthDelta > 0 && (
+              {/* Delta — source : ritualDelta si dispo, sinon healthDelta */}
+              {displayDelta != null && displayDelta > 0 && (
                 <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, color:'rgba(160,255,150,1.0)', marginTop:8, fontWeight:600 }}>
-                  ✦ +{healthDelta}% grâce à ton attention
+                  ✦ +{displayDelta}% grâce à ton attention
                 </div>
               )}
 
@@ -5642,10 +5682,15 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         display:'flex', flexDirection:'column', gap:10,
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:20, flexShrink:0 }}>❤️</span>
+          <span style={{ fontSize:20, flexShrink:0 }}>{postRitualMood === 'encore_lourd' ? '🌿' : '❤️'}</span>
           <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 28, fontWeight:600, color:'#1a1208', lineHeight:1.3 }}>{narrative.headline}</span>
         </div>
-        {jardinInsightLoading ? (
+        {postRitualMood === 'encore_lourd' ? (
+          <>
+            <p style={{ margin:0, fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontStyle:'italic', color:'rgba(50,35,20,0.75)', lineHeight:1.7 }}>{narrative.body}</p>
+            <p style={{ margin:0, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 15, color:'rgba(50,35,20,0.45)', lineHeight:1.5 }}>{narrative.accent}</p>
+          </>
+        ) : jardinInsightLoading ? (
           <div style={{ display:'flex', alignItems:'center', gap:6, padding:'4px 0' }}>
             {[0, .2, .4].map(d => (
               <div key={d} style={{ width:5, height:5, borderRadius:'50%', background:'#7cb87c', opacity:.5, animation:`onbPulse 1.2s ease-in-out ${d}s infinite` }}/>

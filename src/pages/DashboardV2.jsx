@@ -2320,7 +2320,7 @@ export default function DashboardPage() {
     setShowRitualSuggestion(false)
     setSelectedNeed(null) 
   }}
-  onCompleteRitual={async (needId, isLiked, delta) => {
+  onCompleteRitual={async (needId, isLiked, delta, mood) => {
   if (ritualCompleteCalledRef.current) return
   ritualCompleteCalledRef.current = true
   track('ritual_need_complete', { needId, liked: isLiked }, 'jardin', 'engagement')
@@ -2346,8 +2346,16 @@ export default function DashboardPage() {
   const updatedPlant = { ...snapshot, ...update }
   usePlantStore.getState().setTodayPlant(updatedPlant)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
-  window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: snapshot.health ?? 5, after: newHealth } }))
-  try { await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' }) } catch(e) {}
+  const snapDetail = { before: snapshot.health ?? 5, after: newHealth, delta, mood: mood ?? null }
+  window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: snapDetail }))
+  try { sessionStorage.setItem('mji_post_ritual', JSON.stringify({ ...snapDetail, ts: Date.now() })) } catch {}
+  try {
+    await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' })
+    if (snapshot.id) {
+      const ZONE_NAMES = { zone_souffle:'Souffle', zone_racines:'Racines', zone_fleurs:'Fleurs', zone_feuilles:'Feuilles', zone_tige:'Tige' }
+      await supabase.from('rituals').insert({ user_id: user?.id, plant_id: snapshot.id, name: needId, zone: ZONE_NAMES[zoneKey] ?? 'Racines', health_delta: delta, mood: mood ?? null })
+    }
+  } catch(e) {}
   window.dispatchEvent(new CustomEvent('garden:activity', { detail: { userId: user?.id } }))
 }}
   onSeeFlower={() => {
