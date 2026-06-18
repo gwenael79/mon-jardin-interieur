@@ -3290,15 +3290,15 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
     return () => clearTimeout(t)
   }, [])
 
-  const titleFs = isMobile ? 'clamp(20px,7vw,30px)' : 32
-  const descFs  = isMobile ? 'clamp(12px,3.5vw,14px)' : 14
-  const badgeFs = isMobile ? 'clamp(9px,2.5vw,11px)' : 11
-  const btnPad  = isMobile ? 'clamp(11px,3.5vw,15px) clamp(12px,4vw,22px)' : '15px 22px'
-  const btnFs   = isMobile ? 'clamp(13px,3.8vw,15px)' : 15
-  const cardPad = isMobile ? 'clamp(12px,4vw,22px) clamp(12px,4vw,22px) 6px' : '22px 22px 8px'
+  const titleFs = isMobile ? (isSmall ? 18 : 20) : 32
+  const descFs  = isMobile ? (isSmall ? 12 : 13) : 14
+  const badgeFs = isMobile ? 10 : 11
+  const btnPad  = isMobile ? (isSmall ? '11px 14px' : '13px 18px') : '15px 22px'
+  const btnFs   = isMobile ? (isSmall ? 13 : 14) : 15
+  const cardPad = isMobile ? (isSmall ? '12px 14px 4px' : '14px 16px 5px') : '22px 22px 8px'
 
   const panel = (
-    <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 'clamp(8px,2.5vw,12px)' : 14, padding: isMobile ? '0 clamp(10px,4vw,16px) 24px' : '0 10px 24px' }}>
+    <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 14, padding: isMobile ? `0 ${isSmall ? 10 : 14}px ${isSmall ? 12 : 16}px` : '0 10px 24px' }}>
 
       {/* RESSENTIR */}
       <div style={{ borderRadius:16, background:'linear-gradient(145deg,#1e4020,#2d5e28)', boxShadow:'0 8px 24px rgba(20,50,18,0.55)', overflow:'hidden' }}>
@@ -3412,12 +3412,12 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           display: 'flex', flexDirection: 'column',
         }}>
           {/* En-tête titre */}
-          <div style={{ padding: 'clamp(36px,10vw,72px) 0 clamp(8px,2.5vw,14px)', textAlign: 'center', flexShrink: 0 }}>
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 'clamp(30px,10vw,46px)', fontWeight: 400, color: '#fff', margin: '0 0 clamp(6px,2vw,10px)', lineHeight: 1.2 }}>
+          <div style={{ padding: isSmall ? '20px 0 8px' : '28px 0 10px', textAlign: 'center', flexShrink: 0 }}>
+            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isSmall ? 26 : 32, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.15 }}>
               Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
             </h2>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: 'clamp(14px,4vw,18px)', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6, padding: '0 clamp(16px,5vw,24px)' }}>
-              Deux chemins s'offrent à toi.<br/>Suis ce qui résonne en toi aujourd'hui.
+            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isSmall ? 13 : 14, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.5, padding: '0 16px' }}>
+              Deux chemins s'offrent à toi. Suis ce qui résonne en toi aujourd'hui.
             </p>
           </div>
 
@@ -3427,7 +3427,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
               <img
                 src="/lutin-bas.png"
                 alt=""
-                style={{ height: 'clamp(120px,38vw,200px)', width:'auto', objectFit:'contain', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.45))', animation:'onbIn .5s cubic-bezier(.22,1,.36,1) both' }}
+                style={{ height: isSmall ? 110 : 140, width:'auto', objectFit:'contain', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.45))', animation:'onbIn .5s cubic-bezier(.22,1,.36,1) both' }}
               />
             </div>
           )}
