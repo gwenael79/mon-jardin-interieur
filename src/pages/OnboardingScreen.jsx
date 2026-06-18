@@ -3283,26 +3283,34 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
   const [showRitual,       setShowRitual]       = useState(initialShowRitual)
   const [showInitieConfirm, setShowInitieConfirm] = useState(false)
   const isMobile = window.innerWidth < 768
+  const isSmall  = window.innerWidth < 390
 
   useEffect(() => {
     const t = setTimeout(() => setShowPanel(true), isMobile ? 5000 : 1000)
     return () => clearTimeout(t)
   }, [])
 
+  const titleFs  = isSmall ? 24 : isMobile ? 28 : 32
+  const descFs   = isSmall ? 13 : 14
+  const badgeFs  = isSmall ? 10 : 11
+  const btnPad   = isSmall ? '13px 16px' : '15px 22px'
+  const btnFs    = isSmall ? 14 : 15
+  const cardPad  = isSmall ? '16px 16px 6px' : '22px 22px 8px'
+
   const panel = (
-    <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 12 : 14, padding: isMobile ? '0 16px 28px' : '0 10px 24px' }}>
+    <div style={{ display:'flex', flexDirection:'column', gap: isSmall ? 10 : 12, padding: isMobile ? `0 ${isSmall ? 12 : 16}px 24px` : '0 10px 24px' }}>
 
       {/* RESSENTIR */}
-      <div style={{ borderRadius:18, background:'linear-gradient(145deg,#1e4020,#2d5e28)', boxShadow:'0 10px 32px rgba(20,50,18,0.55)', overflow:'hidden' }}>
-        <div style={{ padding:'22px 22px 8px' }}>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:11, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(180,240,160,0.65)', margin:'0 0 6px' }}>Accès libre</p>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 30 : 32, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:8 }}>Je veux agir maintenant</div>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(210,255,190,0.82)', lineHeight:1.6, margin:'0 0 16px' }}>
+      <div style={{ borderRadius:16, background:'linear-gradient(145deg,#1e4020,#2d5e28)', boxShadow:'0 8px 24px rgba(20,50,18,0.55)', overflow:'hidden' }}>
+        <div style={{ padding: cardPad }}>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:badgeFs, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(180,240,160,0.65)', margin:'0 0 5px' }}>Accès libre</p>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:titleFs, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:6 }}>Je veux agir maintenant</div>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:descFs, color:'rgba(210,255,190,0.82)', lineHeight:1.55, margin:`0 0 ${isSmall ? 12 : 16}px` }}>
             Choisis un besoin, fais un rituel.<br/>Libre, à ton rythme, sans engagement.
           </p>
         </div>
         <button onClick={() => setShowRitual(true)}
-          style={{ display:'block', width:'100%', padding:'15px 22px', background:'linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))', border:'none', borderTop:'1px solid rgba(150,220,120,0.20)', cursor:'pointer', color:'#fff', fontSize:15, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', transition:'background .18s' }}
+          style={{ display:'block', width:'100%', padding:btnPad, background:'linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))', border:'none', borderTop:'1px solid rgba(150,220,120,0.20)', cursor:'pointer', color:'#fff', fontSize:btnFs, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', transition:'background .18s' }}
           onMouseEnter={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(100,180,80,0.50),rgba(60,140,50,0.38))'}
           onMouseLeave={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))'}>
           Choisir mon premier rituel →
@@ -3310,23 +3318,23 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
       </div>
 
       {/* CHEMINER */}
-      <div style={{ borderRadius:18, background:'linear-gradient(145deg,#b8902a,#8a6818)', boxShadow:'0 10px 32px rgba(140,100,20,0.45)', overflow:'hidden' }}>
-        <div style={{ padding:'22px 22px 8px' }}>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:11, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,230,140,0.70)', margin:'0 0 6px' }}>Parcours 7 jours</p>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 30 : 32, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:8 }}>Avancer pas à pas</div>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(255,240,200,0.85)', lineHeight:1.6, margin:'0 0 16px' }}>
+      <div style={{ borderRadius:16, background:'linear-gradient(145deg,#b8902a,#8a6818)', boxShadow:'0 8px 24px rgba(140,100,20,0.45)', overflow:'hidden' }}>
+        <div style={{ padding: cardPad }}>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:badgeFs, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,230,140,0.70)', margin:'0 0 5px' }}>Parcours 7 jours</p>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:titleFs, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:6 }}>Avancer pas à pas</div>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:descFs, color:'rgba(255,240,200,0.85)', lineHeight:1.55, margin:`0 0 ${isSmall ? 12 : 16}px` }}>
             Un rituel par jour, guidé pas à pas.<br/>Pour installer une vraie pratique.
           </p>
         </div>
         <button onClick={() => setShowInitieConfirm(true)}
-          style={{ display:'block', width:'100%', padding:'15px 22px', background:'linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))', border:'none', borderTop:'1px solid rgba(255,220,100,0.20)', cursor:'pointer', color:'#fff', fontSize:15, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em', transition:'background .18s' }}
+          style={{ display:'block', width:'100%', padding:btnPad, background:'linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))', border:'none', borderTop:'1px solid rgba(255,220,100,0.20)', cursor:'pointer', color:'#fff', fontSize:btnFs, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', transition:'background .18s' }}
           onMouseEnter={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(255,220,100,0.38),rgba(200,160,40,0.30))'}
           onMouseLeave={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))'}>
           Commencer mon premier jour →
         </button>
       </div>
 
-      <button onClick={onComprendre} style={{ background:'none', border:'none', cursor:'pointer', padding:0, margin:'4px auto 0', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,0.48)', textDecoration:'underline', textUnderlineOffset:3, transition:'color .15s' }}
+      <button onClick={onComprendre} style={{ background:'none', border:'none', cursor:'pointer', padding:'8px 0', margin:'0 auto', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,0.48)', textDecoration:'underline', textUnderlineOffset:3, transition:'color .15s' }}
         onMouseEnter={e => e.currentTarget.style.color='rgba(255,255,255,0.82)'}
         onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.48)'}>
         {comprendreLabel || 'Pourquoi ces rituels ?'}
@@ -3398,15 +3406,15 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
         <div style={{
           position: 'fixed', inset: 0, zIndex: 2,
           background: 'rgba(8,4,1,0.88)', backdropFilter: 'blur(24px)',
-          overflowY: 'auto',
+          overflowY: 'auto', WebkitOverflowScrolling: 'touch',
           animation: 'onbIn .4s cubic-bezier(.22,1,.36,1) both',
           display: 'flex', flexDirection: 'column', justifyContent: 'center',
         }}>
-          <div style={{ padding: '44px 0 20px', textAlign: 'center', flexShrink: 0 }}>
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 30, fontWeight: 400, color: '#fff', margin: '0 0 10px', lineHeight: 1.2 }}>
+          <div style={{ padding: isSmall ? '28px 0 12px' : '36px 0 16px', textAlign: 'center', flexShrink: 0 }}>
+            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isSmall ? 24 : 28, fontWeight: 400, color: '#fff', margin: '0 0 8px', lineHeight: 1.2 }}>
               Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
             </h2>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.62)', margin: '0 0 6px', lineHeight: 1.65, padding: '0 24px' }}>
+            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isSmall ? 13 : 14, color: 'rgba(255,255,255,0.58)', margin: '0 0 4px', lineHeight: 1.6, padding: '0 20px' }}>
               Deux chemins s'offrent à toi.<br/>Suis ce qui résonne en toi aujourd'hui.
             </p>
           </div>
