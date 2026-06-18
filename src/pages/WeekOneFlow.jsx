@@ -7242,9 +7242,9 @@ function HelpBandeau({ helpText }) {
 // Fond chaud (doré-rosé), 3 états : ready / playing / ended
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow = 'rgba(200,160,176,0.45)', darkAt = 50, onDone, onClose, bg: bgProp }) {
-  const [state,    setState]    = useState('ready')
-  const audioRef = useRef(null)
+export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890', glow = 'rgba(200,160,176,0.45)', darkAt = 50, onDone, onClose, bg: bgProp, hideReadyText = false, preloadedAudio = null }) {
+  const [state,    setState]    = useState(preloadedAudio ? 'playing' : 'ready')
+  const audioRef = useRef(preloadedAudio)
 
   const BG   = bgProp ?? 'linear-gradient(160deg, #fdf0e6 0%, #f5e6d8 45%, #ede0d0 100%)'
   const TEXT = '#0f0808'
@@ -7283,6 +7283,7 @@ export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890'
   const darkOpacityRef  = useRef(0)
   const [muted, setMuted] = useState(false)
 
+
   function toggleMute() {
     if (!audioRef.current) return
     audioRef.current.muted = !muted
@@ -7303,6 +7304,21 @@ export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890'
     setDarkOpacity(0)
     setBrightening(false)
   }
+
+  // Attach listeners si audio pré-lancé depuis l'extérieur
+  useEffect(() => {
+    if (!preloadedAudio) return
+    const audio = preloadedAudio
+    audio.onended = () => { setState('ended'); setTimeout(onDone, 800) }
+    audio.addEventListener('timeupdate', () => {
+      if (!audio.duration || brighteningRef.current) return
+      if (audio.duration - audio.currentTime <= 3) {
+        brighteningRef.current = true
+        cancelAnimationFrame(darkRafRef.current)
+        setBrightening(true)
+      }
+    })
+  }, [])
 
   // Sync ref pour l'interval
   useEffect(() => { pausedRef.current = paused }, [paused])
@@ -7383,14 +7399,16 @@ export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890'
         onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.06)'}
         onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
       >🔊</button>
-      <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: TEXT, margin: 0, lineHeight: 1.65, maxWidth: 320 }}>
-        Installe-toi confortablement, dans un endroit calme, assure-toi d'avoir du son ou d'utiliser un casque, et appuie pour commencer
-      </p>
+      {!hideReadyText && (
+        <p style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 'clamp(20px,5.2vw,26px)', fontStyle: 'italic', color: TEXT, margin: 0, lineHeight: 1.65, maxWidth: 320 }}>
+          Installe-toi confortablement, dans un endroit calme, assure-toi d'avoir du son ou d'utiliser un casque, et appuie pour commencer
+        </p>
+      )}
     </div>
   )
 
   if (state === 'playing') return (
-    <div style={{ ...BASE, cursor: 'pointer', overflow: 'hidden', justifyContent: 'center', paddingTop: darkMode ? 0 : '12%', paddingBottom: darkMode ? 0 : '4%' }} onClick={togglePause}>
+    <div style={{ ...BASE, cursor: 'pointer', overflow: 'hidden', justifyContent: 'center', padding: darkMode ? '40px 28px' : '12% 28px 4%' }} onClick={togglePause}>
       {quitBtn}
 
 

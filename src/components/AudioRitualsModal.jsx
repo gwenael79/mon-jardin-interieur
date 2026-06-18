@@ -7,11 +7,26 @@ import RitualCompletion from './RitualCompletion'
 import { supabase } from '../core/supabaseClient'
 
 const AUDIO_DAYS = [
-  { title:'Revenir à mes racines',     color:'#c8a0b0', g2:'#9a7890', glow:'rgba(200,160,176,0.45)', audio:'/audio/ancrage.mp3',  emoji:'🌱', darkAt:  50, needId:'grounding'   },
-  { title:'Retrouver mon appui',       color:'#9ab8c8', g2:'#7898b0', glow:'rgba(154,184,200,0.45)', audio:'/audio/tige.mp3',     emoji:'🌿', darkAt: 100, needId:'stress'      },
-  { title:'Laisser circuler',          color:'#7aaa88', g2:'#5a8870', glow:'rgba(122,170,136,0.45)', audio:'/audio/feuille.mp3',  emoji:'🍃', darkAt:  88, needId:'emotions'    },
-  { title:'Recevoir de la douceur',    color:'#d4a0b0', g2:'#b07890', glow:'rgba(212,160,176,0.45)', audio:'/audio/fleur.mp3',    emoji:'🌸', darkAt: 120, needId:'softness'    },
-  { title:'Laisser le souffle relier', color:'#c8a870', g2:'#a08050', glow:'rgba(200,168,112,0.45)', audio:'/audio/souffle.mp3',  emoji:'🌬️', darkAt: 120, needId:'selfconnect' },
+  {
+    title:'Revenir à mes racines', color:'#c8a0b0', g2:'#9a7890', glow:'rgba(200,160,176,0.45)', audio:'/audio/ancrage.mp3', emoji:'🌱', darkAt: 50, needId:'grounding',
+    intro: 'Cet audio d\'ancrage vous invite à ralentir quelques instants pour retrouver stabilité et présence. Grâce à la respiration et à la visualisation de racines profondes, vous renforcez votre sentiment de sécurité intérieure, apaisez le mental et revenez à l\'instant présent. Un moment simple pour cultiver calme, équilibre et confiance.',
+  },
+  {
+    title:'Retrouver mon appui', color:'#9ab8c8', g2:'#7898b0', glow:'rgba(154,184,200,0.45)', audio:'/audio/tige.mp3', emoji:'🌿', darkAt: 100, needId:'stress',
+    intro: 'La tige symbolise votre capacité à avancer, à grandir et à vous adapter. Cet audio vous invite à renforcer votre confiance, votre persévérance et votre élan intérieur. Prenez quelques minutes pour vous reconnecter à vos ressources et retrouver la force tranquille qui vous permet d\'avancer, un pas après l\'autre.',
+  },
+  {
+    title:'Laisser circuler', color:'#7aaa88', g2:'#5a8870', glow:'rgba(122,170,136,0.45)', audio:'/audio/feuille.mp3', emoji:'🍃', darkAt: 88, needId:'emotions',
+    intro: 'Les feuilles symbolisent notre relation au monde, à nos émotions et à ce que nous recevons de notre environnement. Cet audio vous invite à ralentir, à accueillir ce qui est présent en vous avec bienveillance et à retrouver une circulation plus fluide de vos ressentis. Un moment de calme pour respirer, observer et vous reconnecter à vous-même.',
+  },
+  {
+    title:'Recevoir de la douceur', color:'#d4a0b0', g2:'#b07890', glow:'rgba(212,160,176,0.45)', audio:'/audio/fleur.mp3', emoji:'🌸', darkAt: 120, needId:'softness',
+    intro: 'Cet audio vous invite à vous reconnecter à votre fleur intérieure, symbole de votre épanouissement personnel. À travers une visualisation douce et apaisante, vous apprendrez à reconnaître votre valeur, accueillir votre singularité et vous autoriser à rayonner davantage. Un moment de bienveillance pour cultiver confiance, estime de soi et ouverture à la vie.',
+  },
+  {
+    title:'Laisser le souffle relier', color:'#c8a870', g2:'#a08050', glow:'rgba(200,168,112,0.45)', audio:'/audio/souffle.mp3', emoji:'🌬️', darkAt: 120, needId:'selfconnect',
+    intro: 'Cet audio vous invite à ralentir et à revenir à l\'essentiel : votre souffle. À travers une visualisation douce inspirée de la nature, vous apprendrez à relâcher les tensions, apaiser le mental et retrouver votre présence intérieure. Quelques minutes suffisent pour vous reconnecter à vous-même et cultiver un sentiment durable de calme et d\'équilibre.',
+  },
 ]
 
 const CSS = `
@@ -33,15 +48,23 @@ const CSS = `
   }
 `
 
-// phase: 'list' | 'audio' | 'evaluate' | 'result'
+// phase: 'list' | 'intro' | 'audio' | 'evaluate' | 'result'
 export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHealthUpdate, onSeeFlower, onboarding, onCompleteRitual, vitalityTotal, vitalityGain = 5 }) {
-  const [phase,        setPhase]        = useState('list')
-  const [activeDay,    setActiveDay]    = useState(null)
-  const [healthData,   setHealthData]   = useState(null) // { before, after }
+  const [phase,         setPhase]        = useState('list')
+  const [activeDay,     setActiveDay]    = useState(null)
+  const [healthData,    setHealthData]   = useState(null)
+  const [launchedAudio, setLaunchedAudio] = useState(null)
 
   function openAudio(day) {
     setActiveDay(day)
-    setPhase('audio')
+    setPhase('intro')
+  }
+
+  function handleLaunchAudio() {
+    const audio = new Audio(activeDay.audio)
+    audio.play()
+      .then(() => { setLaunchedAudio(audio); setPhase('audio') })
+      .catch(() => { setLaunchedAudio(null); setPhase('audio') })
   }
 
   async function handleAudioDone() {
@@ -74,7 +97,7 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
   // need + ritual synthétiques pour PhaseEvaluate / PhaseResult
   const syntheticNeed = activeDay ? { id: activeDay.needId, g1: activeDay.color, g2: activeDay.g2, glow: activeDay.glow } : null
 
-  const isFullHeight = phase === 'audio'
+  const isFullHeight = phase === 'audio' || phase === 'intro'
   const bg = 'linear-gradient(160deg,#fdf0e6 0%,#f5e6d8 45%,#ffffff 100%)'
 
   return createPortal(
@@ -99,6 +122,42 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
           animation:'arm_fadeIn .25s ease both',
         }}>
 
+          {/* ── Intro avant audio ── */}
+          {phase === 'intro' && activeDay && (() => {
+            const intro = activeDay.intro ?? ''
+            const { color: g1, g2, glow } = activeDay
+            return (
+              <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+                <div style={{ flexShrink:0, padding:'18px 18px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <button onClick={() => setPhase('list')} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.25)', borderRadius:100, padding:'7px 16px', cursor:'pointer', color:'rgba(50,35,20,0.65)', fontSize:13, fontFamily:"'Jost',sans-serif" }}>‹ Retour</button>
+                  <button onClick={onClose} style={{ width:32, height:32, borderRadius:'50%', background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.25)', cursor:'pointer', color:'rgba(50,35,20,0.45)', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+                </div>
+                <div style={{ flex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', display:'flex', flexDirection:'column', justifyContent:'center', padding:'28px 22px calc(env(safe-area-inset-bottom,0px) + 32px)', gap:22 }}>
+                  <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 16px', borderRadius:100, background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 4px 16px ${glow}`, alignSelf:'flex-start', animation:'arm_cardIn .3s ease both' }}>
+                    <span style={{ fontSize:18 }}>{activeDay.emoji}</span>
+                    <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, fontWeight:600, color:'rgba(255,255,255,0.95)', letterSpacing:'.08em', textTransform:'uppercase' }}>{activeDay.title}</span>
+                  </div>
+                  {intro && (
+                    <div style={{ padding:'22px 20px', borderRadius:20, background:'rgba(255,255,255,0.75)', border:'1px solid rgba(180,160,140,0.22)', animation:'arm_cardIn .38s ease .06s both' }}>
+                      <p style={{ fontFamily:"'Jost',sans-serif", fontSize:22, fontWeight:300, color:'rgba(50,35,20,0.88)', margin:0, lineHeight:1.65, letterSpacing:'-.01em' }}>
+                        {intro}
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, animation:'arm_cardIn .4s ease .12s both' }}>
+                    <button onClick={handleLaunchAudio}
+                      style={{ padding:'18px 0', width:'100%', maxWidth:320, borderRadius:100, border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:17, fontWeight:700, color:'#fff', background:`linear-gradient(135deg,${g1},${g2})`, boxShadow:`0 8px 32px ${glow}`, transition:'transform .18s ease' }}
+                      onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+                      onMouseLeave={e => e.currentTarget.style.transform='none'}
+                    >
+                      🔊 Lancer l'audio
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
           {/* ── Player audio ── */}
           {phase === 'audio' && activeDay && (
             <WOFAudioPlayer
@@ -109,8 +168,9 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
               glow={activeDay.glow}
               darkAt={activeDay.darkAt}
               bg={bg}
-              onDone={handleAudioDone}
-              onClose={() => setPhase('list')}
+              preloadedAudio={launchedAudio}
+              onDone={() => { setLaunchedAudio(null); handleAudioDone() }}
+              onClose={() => { setLaunchedAudio(null); setPhase('list') }}
             />
           )}
 

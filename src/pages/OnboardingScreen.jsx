@@ -2854,7 +2854,7 @@ const NEED_TO_ZONE = {
 const VITALITY_MILESTONES = {
    5: { label: 'Graine',             video: '/video/1v.mp4',
         title: 'Ta graine est semée 🌱',
-        message: 'Un premier geste suffit pour tout changer. Tu viens de planter quelque chose de précieux — continue, et regarde ce qui va pousser.' },
+        message: 'Un premier geste suffit pour tout changer. Tu viens de planter quelque chose de précieux, continue et regarde ce qui va pousser.' },
   20: { label: 'Premières feuilles', video: '/video/2v.mp4',
         title: 'Les premières feuilles apparaissent 🍃',
         message: 'Ta régularité commence à porter ses fruits. Chaque rituel est une racine de plus. Tu es sur le bon chemin.' },
@@ -2869,7 +2869,7 @@ const VITALITY_MILESTONES = {
         message: 'Regarde ce que tu as accompli. Ta constance a fait éclore quelque chose de beau. Ton jardin t\'attend maintenant.' },
   60: { label: 'Fleur épanouie',     video: '/video/6v.mp4',
         title: 'Ta fleur est épanouie 🌺',
-        message: 'Tu as tenu ta promesse envers toi-même. Continue — chaque rituel nourrit ce que tu as fait pousser.' },
+        message: 'Tu as tenu ta promesse envers toi-même. Continue, chaque rituel nourrit ce que tu as fait pousser.' },
 }
 
 const SPARKLE_CSS = `
@@ -2930,13 +2930,13 @@ function VitalitySparkle({ x, y }) {
 function CelebOverlay({ milestone, src, onClose }) {
   const [ended, setEnded] = useState(false)
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 10300, background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10300, background: 'rgba(0,0,0,0.60)', backdropFilter: 'blur(6px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, paddingLeft: 'calc(64px + 24px)', gap: 20 }}>
       {/* Vidéo avec bouton en overlay bas */}
       <div style={{ position: 'relative', width: 'min(400px, 80vw)', borderRadius: 28, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.60)', animation: 'onbIn .35s ease both' }}>
         <video
           src={src}
           autoPlay playsInline
-          style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }}
+          style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
           onEnded={() => setEnded(true)}
           onError={onClose}
         />

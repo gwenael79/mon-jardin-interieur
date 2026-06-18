@@ -67,7 +67,7 @@ export const RITUALS = {
     title:    'Respiration 4-7-8',
     subtitle: 'Le rituel du sommeil apaisé',
     duration: '5 min',
-    intro:    'Cette technique active le système nerveux parasympathique et prépare le corps au sommeil en quelques cycles.',
+    intro:    'La technique 4-7-8 ralentit ton rythme cardiaque et réduit le cortisol en quelques cycles. En retenant le souffle, tu actives le nerf vague, qui signale à ton cerveau qu\'il est temps de dormir.',
     steps: [
       { num:'1', label:'Expirez complètement',  text:'Videz vos poumons par la bouche, lèvres légèrement ouvertes.' },
       { num:'2', label:'Inspirez 4 secondes',   text:'Bouche fermée, respirez lentement par le nez en comptant jusqu\'à 4.' },
@@ -83,7 +83,7 @@ export const RITUALS = {
     title:    'Cohérence cardiaque',
     subtitle: 'Le rituel anti-stress immédiat',
     duration: '5 min',
-    intro:    'Cinq respirations par minute synchronisent le cœur et le cerveau, effaçant le stress en quelques minutes.',
+    intro:    'Respirer 6 fois par minute synchronise ton cœur et ton cerveau, un état mesuré scientifiquement. En 5 minutes, ton taux de cortisol baisse et ta clarté mentale remonte.',
     steps: [
       { num:'1', label:'Installez-vous',        text:'Assis·e confortablement, dos droit, pieds à plat sur le sol.' },
       { num:'2', label:'Inspirez 5 secondes',   text:'Gonflez doucement le ventre, puis la poitrine.' },
@@ -99,7 +99,7 @@ export const RITUALS = {
     title:    "L'accueil de l'émotion",
     subtitle: 'Le rituel de la présence bienveillante',
     duration: '7 min',
-    intro:    'Accueillir une émotion sans la juger ni l\'effacer — c\'est le seul chemin pour qu\'elle se dissolve.',
+    intro:    'Nommer une émotion réduit l\'activité de ton amygdale, le centre d\'alarme du cerveau. Ce rituel t\'apprend à traverser ce que tu ressens plutôt qu\'à le fuir, ce qui accélère naturellement sa dissolution.',
     steps: [
       { num:'1', label:'Nommez-la',              text:'Fermez les yeux. Quelle émotion est là ? Tristesse, colère, peur… Donnez-lui un nom.' },
       { num:'2', label:'Localisez-la',           text:'Où la ressentez-vous dans le corps ? Gorge, poitrine, ventre ?' },
@@ -114,7 +114,7 @@ export const RITUALS = {
     title:    'Ancrage 5-4-3-2-1',
     subtitle: 'Le rituel du retour au présent',
     duration: '5 min',
-    intro:    'Cette technique sensorielle ramène instantanément le mental dans le moment présent et apaise l\'anxiété.',
+    intro:    'L\'anxiété vit dans le passé ou le futur, jamais dans le présent sensoriel. Cette technique interrompt la spirale de pensées en mobilisant tes cinq sens, ce qui calme l\'amygdale en moins de deux minutes.',
     steps: [
       { num:'5', label:'5 choses que vous voyez',    text:'Regardez autour de vous. Nommez 5 objets, formes ou couleurs.' },
       { num:'4', label:'4 choses que vous touchez',  text:'Sentez vos pieds sur le sol, vos mains, vos vêtements, un objet proche.' },
@@ -129,7 +129,7 @@ export const RITUALS = {
     title:    "La méditation de l'observateur",
     subtitle: 'Le rituel du silence intérieur',
     duration: '8 min',
-    intro:    'Vous n\'êtes pas vos pensées. Cet exercice crée de l\'espace entre vous et le flux mental.',
+    intro:    'La méditation réduit l\'activité du réseau par défaut, la zone du cerveau qui tourne en boucle. Après 8 minutes de pratique, tu retrouves une distance naturelle avec tes pensées, sans les combattre.',
     steps: [
       { num:'1', label:'Asseyez-vous',           text:'Fermez les yeux, dos droit, mains posées sur les genoux.' },
       { num:'2', label:'Observez le flux',       text:'Laissez les pensées passer comme des nuages. Ne les suivez pas.' },
@@ -144,7 +144,7 @@ export const RITUALS = {
     title:    'Activation corps & souffle',
     subtitle: 'Le rituel du réveil énergétique',
     duration: '6 min',
-    intro:    'Quelques mouvements doux combinés à la respiration suffisent à raviver l\'élan vital.',
+    intro:    'Bouger et respirer en rythme libère de la dopamine et de la noradrénaline, les neurotransmetteurs de l\'élan et de la motivation. En 6 minutes, ton niveau d\'énergie grimpe sans avoir besoin de café.',
     steps: [
       { num:'1', label:'Debout, étirez-vous',      text:'Levez les bras au-dessus de la tête, inspirez profondément.' },
       { num:'2', label:'Secouez doucement',        text:'Laissez les mains, les épaules, puis tout le corps se secouer librement 30 sec.' },
@@ -159,7 +159,7 @@ export const RITUALS = {
     title:    'Journaling express',
     subtitle: 'Le rituel de la reconnexion à soi',
     duration: '10 min',
-    intro:    'Trois questions simples pour retrouver le fil de soi, même dans les journées les plus chargées.',
+    intro:    'L\'écriture expressive réduit le cortisol et améliore la conscience de soi, c\'est prouvé en laboratoire. Trois questions suffisent pour déposer ce qui encombre et retrouver ce qui compte vraiment.',
     steps: [
       { num:'1', label:'Qu\'est-ce que je ressens vraiment ?',   text:'Sans filtre. Joyeux·se, épuisé·e, confus·e… Écrivez ce qui vient.' },
       { num:'2', label:'De quoi ai-je besoin là, maintenant ?',  text:'Repos ? Contact ? Mouvement ? Un mot d\'encouragement ?' },
@@ -174,7 +174,7 @@ export const RITUALS = {
     title:    'Auto-massage douceur',
     subtitle: 'Le rituel de la tendresse envers soi',
     duration: '7 min',
-    intro:    'Le toucher bienveillant active l\'ocytocine et apaise le système nerveux en quelques minutes.',
+    intro:    'Le toucher libère de l\'ocytocine et réduit le cortisol, même quand c\'est toi qui te touches toi-même. Ce rituel active ton système nerveux parasympathique et apaise le corps en quelques minutes.',
     steps: [
       { num:'1', label:'Mains',             text:'Massez chaque main lentement : paume, pouce, chaque doigt. Prenez votre temps.' },
       { num:'2', label:'Tempes et front',   text:'Cercles doux avec les pouces sur les tempes, puis le front. Expirez en massant.' },

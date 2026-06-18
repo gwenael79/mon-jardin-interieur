@@ -1,11 +1,10 @@
-// RitualSuggestionModalOnboarding.jsx — rituel onboarding : seuil + felt + completion
+// RitualSuggestionModalOnboarding.jsx — rituel onboarding : seuil + étapes + completion
 import { useState, useEffect } from 'react'
 import { useIsMobile } from '../pages/dashboardShared'
 import RitualCompletion from './RitualCompletion'
 import {
   NEEDS, RITUALS, CSS, PHASE_PALETTE,
-  PhaseBreathing, PhaseAudio, PhaseDoing,
-  PhaseFelt, INTENT,
+  PhaseBreathing, PhaseAudio, PhaseDoing, INTENT,
 } from './RitualSuggestionModal'
 
 // ─── Conversion vitalité → santé (même formule qu'OnboardingScreen) ───────────
@@ -41,7 +40,7 @@ function PhaseViewOnboarding({ ritual, need, isMobile, startMode, onStart, onBac
 
         {/* Intention — écho */}
         {intent && (
-          <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontStyle:'italic', color:'rgba(50,35,20,0.45)', margin:'0 0 20px', animation:'rs_in .35s ease both' }}>
+          <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 24 : 28, fontStyle:'italic', color:'#1a1008', margin:'0 0 20px', animation:'rs_in .35s ease both' }}>
             {intent}
           </p>
         )}
@@ -57,23 +56,23 @@ function PhaseViewOnboarding({ ritual, need, isMobile, startMode, onStart, onBac
         {/* Titre + accroche + durée */}
         <div style={{ animation:'rs_in .38s ease .05s both', marginBottom:20 }}>
           <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 34 : 44, fontWeight:400, color:'#2A1F18', margin:'0 0 6px', lineHeight:1.15 }}>{ritual.title}</h2>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 16, color:'rgba(50,35,20,0.50)', margin:'0 0 8px' }}>{ritual.subtitle}</p>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 15 : 16, color:'rgba(50,35,20,0.65)', margin:'0 0 8px' }}>{ritual.subtitle}</p>
           <div style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
             <span style={{ width:6, height:6, borderRadius:'50%', background:`linear-gradient(135deg,${g1},${g2})`, animation:'rs_pulse 2s ease-in-out infinite' }}/>
-            <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(50,35,20,0.45)' }}>{ritual.duration}</span>
+            <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(50,35,20,0.58)' }}>{ritual.duration}</span>
           </div>
         </div>
 
         {/* Carte intro */}
-        <div style={{ padding:'16px 20px', borderRadius:16, background:'rgba(255,255,255,0.55)', border:'1px solid rgba(180,160,140,0.20)', marginBottom:20, animation:'rs_in .4s ease .1s both' }}>
-          <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 19 : 22, fontStyle:'italic', color:'rgba(50,35,20,0.70)', margin:0, lineHeight:1.6 }}>{ritual.intro}</p>
+        <div style={{ padding: isMobile ? '20px 18px' : '22px 24px', borderRadius:16, background:'rgba(255,255,255,0.72)', border:'1px solid rgba(180,160,140,0.25)', marginBottom:20, animation:'rs_in .4s ease .1s both' }}>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:24, fontWeight:300, color:'rgba(50,35,20,0.85)', margin:0, lineHeight:1.65, letterSpacing:'-.01em' }}>{ritual.intro}</p>
         </div>
 
         {/* Aperçu replié */}
         <div style={{ marginBottom:28, animation:'rs_in .4s ease .18s both' }}>
           <button
             onClick={() => setStepsOpen(o => !o)}
-            style={{ background:'none', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(50,35,20,0.40)', padding:'4px 0', display:'flex', alignItems:'center', gap:5, letterSpacing:'.04em' }}
+            style={{ background:'none', border:'none', cursor:'pointer', fontFamily:"'Jost',sans-serif", fontSize:14, color:'rgba(50,35,20,0.55)', padding:'4px 0', display:'flex', alignItems:'center', gap:5, letterSpacing:'.04em' }}
           >
             <span style={{ fontSize:11, display:'inline-block', transform: stepsOpen ? 'rotate(180deg)' : 'none', transition:'transform .2s' }}>▾</span>
             {stepsOpen ? 'Masquer les étapes' : 'Voir les étapes'}
@@ -106,7 +105,7 @@ function PhaseViewOnboarding({ ritual, need, isMobile, startMode, onStart, onBac
         {/* CTA */}
         <div style={{ textAlign:'center', animation:'rs_in .4s ease .22s both', display:'flex', flexDirection:'column', alignItems:'center' }}>
           {startMode === 'done' && (
-            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 17 : 19, fontStyle:'italic', color:'rgba(50,35,20,0.40)', margin:'0 0 18px' }}>
+            <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 20, fontStyle:'italic', color:'rgba(50,35,20,0.55)', margin:'0 0 18px' }}>
               Installe-toi. On commence quand tu veux.
             </p>
           )}
@@ -137,7 +136,6 @@ export default function RitualSuggestionModalOnboarding({
   const [phase,          setPhase]          = useState('view')
   const [audioAvailable, setAudioAvailable] = useState(false)
   const [healthSnapshot, setHealthSnapshot] = useState(null)
-  const [mood,           setMood]           = useState(null)
 
   // Reset guard on mount
   useEffect(() => { _evalInProgress = false }, [])
@@ -168,40 +166,18 @@ export default function RitualSuggestionModalOnboarding({
     else                                setPhase('doing')
   }
 
-  function handleMoodSelect(selectedMood) {
+  function handleDone() {
     if (_evalInProgress) return
     _evalInProgress = true
-    setMood(selectedMood)
     const beforeHealth  = vitalityToHealth(Math.max(0, vitalityTotal ?? 0))
     const displayHealth = vitalityToHealth(Math.min(50, (vitalityTotal ?? 0) + (vitalityGain ?? 5)))
     setHealthSnapshot({ beforeHealth, displayHealth })
-    onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2, selectedMood)
+    onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2)
     setPhase('completion')
   }
 
   const { g1, g2 } = activeNeed
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
-
-  if (phase === 'completion') {
-    return (
-      <>
-        <style>{CSS}</style>
-        <RitualCompletion
-          need={activeNeed}
-          beforeHealth={healthSnapshot?.beforeHealth ?? 0}
-          displayHealth={healthSnapshot?.displayHealth ?? 0}
-          vitalityGain={vitalityGain}
-          vitalityTotal={vitalityTotal}
-          mood={mood}
-          isMobile={isMobile}
-          onContinue={() => {
-            if (healthSnapshot) window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthSnapshot.beforeHealth, after: healthSnapshot.displayHealth, mood } }))
-            ;(onSeeFlower ?? onClose)()
-          }}
-        />
-      </>
-    )
-  }
 
   const inner = (
     <div style={{ position:'relative', zIndex:1, width:'100%', flex:1, minHeight:0, background:bg, display:'flex', flexDirection:'column', overflow: isMobile ? 'auto' : 'hidden' }}>
@@ -222,25 +198,33 @@ export default function RitualSuggestionModalOnboarding({
       {phase === 'audio' && (
         <PhaseAudio
           ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onValidate={() => setPhase('felt')} onClose={onClose}
+          onValidate={handleDone} onClose={onClose}
         />
       )}
       {phase === 'ritual-breathing' && (
         <PhaseBreathing
           ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onDone={() => setPhase('felt')} onClose={onClose}
+          onDone={handleDone} onClose={onClose}
         />
       )}
       {phase === 'doing' && (
         <PhaseDoing
           ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onDone={() => setPhase('felt')} onClose={onClose}
+          onDone={handleDone} onClose={onClose}
         />
       )}
-      {phase === 'felt' && (
-        <PhaseFelt
-          ritual={activeRitual} need={activeNeed} isMobile={isMobile}
-          onMoodSelect={handleMoodSelect} onClose={onClose}
+      {phase === 'completion' && healthSnapshot && (
+        <RitualCompletion
+          need={activeNeed}
+          beforeHealth={healthSnapshot.beforeHealth}
+          displayHealth={healthSnapshot.displayHealth}
+          vitalityGain={vitalityGain}
+          vitalityTotal={vitalityTotal}
+          isMobile={isMobile}
+          onContinue={() => {
+            if (healthSnapshot) window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthSnapshot.beforeHealth, after: healthSnapshot.displayHealth } }))
+            ;(onSeeFlower ?? onClose)()
+          }}
         />
       )}
     </div>
