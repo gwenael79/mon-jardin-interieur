@@ -3431,19 +3431,6 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
         />
       )}
 
-      {/* Lien déconnexion */}
-      {onSignOut && (
-        <button onClick={onSignOut} style={{
-          position: 'fixed', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontFamily: "'Jost',sans-serif", fontSize: 11,
-          color: 'rgba(255,255,255,0.35)', letterSpacing: '.06em',
-          zIndex: 3, textDecoration: 'underline', textUnderlineOffset: 3,
-        }}>
-          Se déconnecter
-        </button>
-      )}
-
       {showInitieConfirm && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 10400,
