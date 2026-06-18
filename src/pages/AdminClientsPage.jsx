@@ -246,15 +246,16 @@ function TabStatistiques({ funnelUsers }) {
   ]
 
   useEffect(() => {
-    const j7Ids = funnelUsers
+    const allIds = funnelUsers.map(u => u.id)
+    const j7Ids  = funnelUsers
       .filter(u => (u.completedDays ?? []).some(d => Number(d) >= 7))
       .map(u => u.id)
-    load(j7Ids)
+    load(allIds, j7Ids)
   }, [period, funnelUsers.length])
 
-  async function load(j7Ids) {
+  async function load(allIds, j7Ids) {
     setLoading(true)
-    if (j7Ids.length === 0) { setData(null); setLoading(false); return }
+    if (allIds.length === 0) { setData(null); setLoading(false); return }
 
     const today   = new Date().toISOString().slice(0, 10)
     const ago     = n => new Date(Date.now() - n * 86400000)
@@ -264,19 +265,24 @@ function TabStatistiques({ funnelUsers }) {
       ? [today]
       : Array.from({ length: period }, (_, i) => ago(period - 1 - i).toISOString().slice(0, 10))
 
-    const [{ data: eventsData }] =
-      await Promise.all([
-        supabase.from('analytics_events').select('user_id, event_type, page, created_at').in('user_id', j7Ids).gte('created_at', fromISO),
-      ])
+    const { data: eventsAll } = await supabase
+      .from('analytics_events')
+      .select('user_id, event_type, page, created_at')
+      .in('user_id', allIds)
+      .gte('created_at', fromISO)
+    const allEvents = eventsAll ?? []
 
-    // ── Visiteurs de slides par jour (basé sur page_view)
-    const visitorsByDay = Object.fromEntries(dates.map(d => [d, new Set()]))
-    ;(eventsData ?? []).forEach(r => {
-      if (r.event_type !== 'page_view' || !r.page) return
+    // ── Connexions par jour — session_start, tous inscrits
+    const connexByDay = Object.fromEntries(dates.map(d => [d, new Set()]))
+    allEvents.forEach(r => {
+      if (r.event_type !== 'session_start') return
       const d = r.created_at.slice(0, 10)
-      if (visitorsByDay[d]) visitorsByDay[d].add(r.user_id)
+      if (connexByDay[d]) connexByDay[d].add(r.user_id)
     })
-    const dailyActive = dates.map(d => ({ date: d, count: visitorsByDay[d].size }))
+    const dailyActive = dates.map(d => ({ date: d, count: connexByDay[d].size }))
+
+    // ── Slides — uniquement les J7 (ces sections ne leur sont accessibles qu'après)
+    const eventsData = allEvents.filter(r => j7Ids.includes(r.user_id))
 
     // ── Utilisateurs uniques par slide (page_view events, champ page = slide id)
     const SLIDE_DEFS = [
@@ -307,18 +313,16 @@ function TabStatistiques({ funnelUsers }) {
       }
     }).sort((a, b) => b.count - a.count)
 
-    const totalSessions  = (eventsData ?? []).filter(r => r.event_type === 'session_start').length
-    // Visiteurs = J7 users ayant visité au moins un slide sur la période
-    const slideVisitors  = new Set(
-      (eventsData ?? []).filter(r => r.event_type === 'page_view' && r.page).map(r => r.user_id)
-    )
+    const totalSessions  = allEvents.filter(r => r.event_type === 'session_start').length
+    const connectedSet   = new Set(allEvents.filter(r => r.event_type === 'session_start').map(r => r.user_id))
 
     setData({
+      totalUsers:        allIds.length,
       j7Count:           j7Ids.length,
-      slideVisitors:     slideVisitors.size,
-      retentionRate:     j7Ids.length > 0 ? Math.round((slideVisitors.size / j7Ids.length) * 100) : 0,
+      connectedUsers:    connectedSet.size,
+      retentionRate:     allIds.length > 0 ? Math.round((connectedSet.size / allIds.length) * 100) : 0,
       totalSessions,
-      sessionsPerVisitor: slideVisitors.size > 0 ? (totalSessions / slideVisitors.size).toFixed(1) : '–',
+      sessionsPerVisitor: connectedSet.size > 0 ? (totalSessions / connectedSet.size).toFixed(1) : '–',
       dailyActive,
       sections,
     })
@@ -326,7 +330,7 @@ function TabStatistiques({ funnelUsers }) {
   }
 
   if (loading) return <div className="adm-empty">Chargement…</div>
-  if (!data)   return <div className="adm-empty">Aucun utilisateur n'a encore terminé les 7 jours.</div>
+  if (!data)   return <div className="adm-empty">Aucun utilisateur inscrit.</div>
 
   const maxDaily = Math.max(...data.dailyActive.map(d => d.count), 1)
   const periodLbl = PERIODS.find(p => p.val === period)?.label ?? `${period}j`
@@ -356,9 +360,9 @@ function TabStatistiques({ funnelUsers }) {
         {/* 3 KPIs fiables */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 10, marginBottom: period > 0 ? 20 : 0 }}>
           {[
-            { lbl: 'Ont terminé J7',  val: data.j7Count,            color: 'rgba(255,255,255,0.75)', sub: 'base totale des utilisateurs' },
-            { lbl: `Ont ouvert l'app · ${periodLbl}`, val: data.slideVisitors, color: '#7ab5f5', sub: `${data.retentionRate}% de retour` },
-            { lbl: 'Sessions · total',val: data.totalSessions,       color: '#b4a0f0',               sub: `moy. ${data.sessionsPerVisitor} par personne` },
+            { lbl: 'Inscrits au total',       val: data.totalUsers,      color: 'rgba(255,255,255,0.75)', sub: `dont ${data.j7Count} ont terminé J7` },
+            { lbl: `Connexions · ${periodLbl}`, val: data.connectedUsers, color: '#7ab5f5',               sub: `${data.retentionRate}% des inscrits` },
+            { lbl: 'Sessions · total',         val: data.totalSessions,   color: '#b4a0f0',               sub: `moy. ${data.sessionsPerVisitor} par personne` },
           ].map((k, i) => (
             <div key={i} style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 28 : 36, fontWeight: 300, color: k.color, lineHeight: 1, marginBottom: 6 }}>{k.val}</div>
@@ -371,14 +375,14 @@ function TabStatistiques({ funnelUsers }) {
         {/* Courbe actifs / jour (masquée pour "aujourd'hui") */}
         {period > 0 && (
           <>
-            <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>Ouvertures de l'app · par jour</div>
+            <div style={{ fontSize: 9, color: 'var(--text3)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>Connexions · par jour · tous inscrits</div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: period > 30 ? 1 : 2, height: 56 }}>
               {data.dailyActive.map((d, i) => {
                 const h = Math.max(3, Math.round((d.count / maxDaily) * 100))
                 const isToday = d.date === new Date().toISOString().slice(0, 10)
                 const lbl = new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
                 return (
-                  <div key={i} title={`${lbl} : ${d.count} actif${d.count > 1 ? 's' : ''}`}
+                  <div key={i} title={`${lbl} : ${d.count} connexion${d.count > 1 ? 's' : ''}`}
                     style={{ flex: 1, height: `${h}%`, minHeight: 3, borderRadius: '2px 2px 0 0',
                       background: isToday ? '#96d485' : 'rgba(150,212,133,0.28)',
                       boxShadow: isToday ? '0 0 8px rgba(150,212,133,0.45)' : 'none' }} />

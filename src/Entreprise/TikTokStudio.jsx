@@ -1,0 +1,697 @@
+// src/Entreprise/TikTokStudio.jsx
+// Studio TikTok manuel : clip + musique + voix + textes → Buffer
+import { useState, useRef, useCallback, useEffect } from "react";
+
+const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const WEBHOOK  = "https://n8n.srv1667605.hstgr.cloud/webhook/tiktok-studio";
+const SUPA_VIDEO_BASE = `${SUPA_URL}/storage/v1/object/public/n8n-images/posts`;
+
+// Clips disponibles dans /public/reseaux/
+const CLIPS = [
+  { id:"MJI1" }, { id:"MJI2" }, { id:"MJI3" }, { id:"MJI4" },
+  { id:"MJI5" }, { id:"MJI6" }, { id:"MJI7" },
+];
+
+// Pistes disponibles dans /public/musique/ (servies comme fichiers statiques)
+const MUSIC_TRACKS = [
+  { id:"music_prog",  label:"Music Prog",    src:"/musique/Music prog.mp3" },
+  { id:"clair_lune",  label:"Clair de Lune", src:"/musique/Clair de Lune.mp3" },
+  { id:"music2",      label:"Piste 2",        src:"/musique/music2.mp3" },
+  { id:"music3",      label:"Piste 3",        src:"/musique/music3.mp3" },
+  { id:"music4",      label:"Piste 4",        src:"/musique/music4.mp3" },
+  { id:"music5",      label:"Piste 5",        src:"/musique/music5.mp3" },
+  { id:"music6",      label:"Piste 6",        src:"/musique/music6.mp3" },
+];
+const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const V = {
+  bg:"#0e0e0e", card:"#1a1a1a", border:"#2a2a2a",
+  accent:"#ff2d55", accentSoft:"rgba(255,45,85,0.12)",
+  green:"#00f5a0", text:"#f0f0f0", sub:"#888", hint:"#555",
+};
+
+const S = {
+  section: {
+    background:V.card, border:`1px solid ${V.border}`,
+    borderRadius:16, padding:"20px 22px", marginBottom:16,
+  },
+  label: {
+    display:"block", fontSize:11, fontWeight:700,
+    letterSpacing:".1em", textTransform:"uppercase",
+    color:V.sub, marginBottom:10,
+  },
+  input: {
+    width:"100%", background:"#111", border:`1px solid ${V.border}`,
+    borderRadius:10, padding:"11px 14px", fontFamily:"inherit",
+    fontSize:14, color:V.text, boxSizing:"border-box",
+    outline:"none", resize:"vertical",
+  },
+  chip: (on) => ({
+    border:`1px solid ${on ? V.accent : V.border}`,
+    background: on ? V.accentSoft : "#111",
+    borderRadius:999, padding:"6px 13px", fontSize:12,
+    fontWeight:600, cursor:"pointer",
+    color: on ? V.accent : V.sub,
+    transition:".15s", whiteSpace:"nowrap",
+  }),
+  btn: (color="#ff2d55", bg=V.accentSoft) => ({
+    border:`1px solid ${color}`, borderRadius:12, padding:"11px 18px",
+    background:bg, color:color, fontFamily:"inherit",
+    fontWeight:700, fontSize:13, cursor:"pointer", transition:".15s",
+  }),
+};
+
+async function uploadToSupabase(file, folder) {
+  const name = `${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  const res = await fetch(
+    `${SUPA_URL}/storage/v1/object/tiktok-studio/${name}`,
+    {
+      method: "POST",
+      headers: {
+        "apikey": SUPA_KEY,
+        "Authorization": `Bearer ${SUPA_KEY}`,
+        "Content-Type": file.type || "application/octet-stream",
+        "x-upsert": "true",
+      },
+      body: file,
+    }
+  );
+  if (!res.ok) throw new Error(`Upload échoué (${res.status})`);
+  return `${SUPA_URL}/storage/v1/object/public/tiktok-studio/${name}`;
+}
+
+function Section({ title, icon, children }) {
+  return (
+    <div style={S.section}>
+      <div style={{ fontSize:11, fontWeight:700, letterSpacing:".08em",
+        textTransform:"uppercase", color:V.sub, marginBottom:14,
+        display:"flex", alignItems:"center", gap:8 }}>
+        <span>{icon}</span>{title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function UploadZone({ label, accept, onFile, file, uploading }) {
+  const ref = useRef();
+  return (
+    <div>
+      <div onClick={() => ref.current?.click()}
+        style={{ border:`1.5px dashed ${file ? V.accent : V.border}`,
+          borderRadius:10, padding:"12px 14px", cursor:"pointer",
+          background: file ? V.accentSoft : "#111",
+          display:"flex", alignItems:"center", gap:10, transition:".15s" }}>
+        <span style={{ fontSize:18 }}>{file ? "✓" : "⬆"}</span>
+        <div>
+          <div style={{ fontSize:12, color: file ? V.accent : V.sub, fontWeight:600 }}>
+            {uploading ? "Envoi en cours…" : file ? file.name : label}
+          </div>
+          {file && <div style={{ fontSize:11, color:V.hint, marginTop:2 }}>
+            {(file.size/1024/1024).toFixed(1)} Mo
+          </div>}
+        </div>
+      </div>
+      <input ref={ref} type="file" accept={accept} style={{ display:"none" }}
+        onChange={e => e.target.files?.[0] && onFile(e.target.files[0])} />
+    </div>
+  );
+}
+
+// ── Aperçu vidéo avec overlay texte ──────────────────────────────────────────
+function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, message, cta, generatedUrl, polling }) {
+  const videoRef = useRef();
+  const musicRef = useRef();
+  const voiceRef = useRef();
+  const [muted, setMuted] = useState(true);
+
+  // Appliquer les volumes dès que les refs ou valeurs changent
+  useEffect(() => {
+    if (musicRef.current) musicRef.current.volume = musicVol ?? 0.6;
+  }, [musicVol]);
+  useEffect(() => {
+    if (voiceRef.current) voiceRef.current.volume = voiceVol ?? 1.0;
+  }, [voiceVol]);
+
+  const applyMute = useCallback((m) => {
+    if (musicRef.current) {
+      musicRef.current.muted = m;
+      if (!m) { musicRef.current.volume = musicVol ?? 0.6; musicRef.current.play().catch(() => {}); }
+      else musicRef.current.pause();
+    }
+    if (voiceRef.current) {
+      voiceRef.current.muted = m;
+      if (!m) { voiceRef.current.volume = voiceVol ?? 1.0; voiceRef.current.play().catch(() => {}); }
+      else voiceRef.current.pause();
+    }
+    if (videoRef.current && generatedUrl) videoRef.current.muted = m;
+  }, [generatedUrl, musicVol, voiceVol]);
+
+  // Quand la source clip change, relance la vidéo
+  useEffect(() => {
+    if (videoRef.current) { videoRef.current.load(); videoRef.current.play().catch(() => {}); }
+  }, [clipSrc]);
+
+  // Appliquer mute quand ça change
+  useEffect(() => { applyMute(muted); }, [muted, applyMute]);
+
+  // Relancer musique si src change
+  useEffect(() => {
+    if (musicRef.current && !muted) { musicRef.current.load(); musicRef.current.play().catch(() => {}); }
+  }, [musicSrc]);
+
+  // Relancer voix si src change
+  useEffect(() => {
+    if (voiceRef.current && !muted) { voiceRef.current.load(); voiceRef.current.play().catch(() => {}); }
+  }, [voiceSrc]);
+
+  const src = generatedUrl || clipSrc;
+  const isGenerated = !!generatedUrl;
+
+  return (
+    <div style={{ position:"relative", width:"100%", aspectRatio:"9/16",
+      borderRadius:14, overflow:"hidden", background:"#000",
+      boxShadow:"0 20px 60px rgba(0,0,0,0.6)" }}>
+
+      {/* Vidéo clip (toujours muette — le son vient de l'audio séparé ou de la vidéo générée) */}
+      <video
+        ref={videoRef}
+        key={src}
+        src={src}
+        autoPlay
+        loop
+        muted={!isGenerated || muted}
+        playsInline
+        style={{ position:"absolute", inset:0, width:"100%", height:"100%",
+          objectFit:"cover" }}
+      />
+
+      {/* Musique — avant génération */}
+      {musicSrc && !isGenerated && (
+        <audio ref={musicRef} src={musicSrc} loop muted={muted} />
+      )}
+
+      {/* Voix off — avant génération */}
+      {voiceSrc && !isGenerated && (
+        <audio ref={voiceRef} src={voiceSrc} muted={muted} />
+      )}
+
+      {/* Bouton son */}
+      <button
+        onClick={() => setMuted(m => !m)}
+        style={{ position:"absolute", bottom:44, right:10, zIndex:10,
+          width:34, height:34, borderRadius:"50%", border:"none",
+          background:"rgba(0,0,0,0.55)", color:"#fff", cursor:"pointer",
+          fontSize:15, display:"flex", alignItems:"center", justifyContent:"center",
+          backdropFilter:"blur(4px)", transition:".15s" }}
+        title={muted ? "Activer le son" : "Couper le son"}>
+        {muted ? "🔇" : "🔊"}
+      </button>
+
+      {/* Spinner pendant le polling */}
+      {polling && (
+        <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.6)",
+          display:"flex", flexDirection:"column", alignItems:"center",
+          justifyContent:"center", gap:12 }}>
+          <div style={{ width:40, height:40, border:`3px solid rgba(0,245,160,0.3)`,
+            borderTopColor:V.green, borderRadius:"50%",
+            animation:"spin 1s linear infinite" }} />
+          <div style={{ fontSize:12, color:V.green, textAlign:"center", lineHeight:1.4 }}>
+            Génération en cours…<br/>
+            <span style={{ opacity:.6 }}>3-5 min</span>
+          </div>
+        </div>
+      )}
+
+      {/* Logo MJI — toujours visible (comme dans la vidéo finale) */}
+      {!polling && (
+        <div style={{ position:"absolute", top:8, left:"50%",
+          transform:"translateX(-50%)", zIndex:5,
+          width:48, height:48, borderRadius:10, overflow:"hidden",
+          boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
+          <img src="/icons/logo.png" alt="MJI"
+            style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+        </div>
+      )}
+
+      {/* Overlay texte — visible uniquement avant génération */}
+      {!generatedUrl && !polling && (
+        <>
+          {/* Hook — bandeau haut */}
+          {hook && (
+            <div style={{ position:"absolute", top:"4%", left:"4%", right:"4%",
+              background:"rgba(0,0,0,0.7)", borderRadius:9, padding:"9px 12px",
+              backdropFilter:"blur(2px)" }}>
+              <div style={{ fontSize:"clamp(12px,3.5vw,16px)", fontWeight:800,
+                color:"#fff", lineHeight:1.3, textAlign:"center" }}>{hook}</div>
+            </div>
+          )}
+          {/* Message — bandeau milieu haut */}
+          {message && (
+            <div style={{ position:"absolute", top:"27%", left:"4%", right:"4%",
+              background:"rgba(0,0,0,0.6)", borderRadius:9, padding:"9px 12px",
+              backdropFilter:"blur(2px)" }}>
+              <div style={{ fontSize:"clamp(10px,3vw,13px)", color:"rgba(255,255,255,0.9)",
+                lineHeight:1.5, textAlign:"center" }}>{message}</div>
+            </div>
+          )}
+          {/* CTA — bandeau bas */}
+          {cta && (
+            <div style={{ position:"absolute", bottom:"4%", left:"4%", right:"4%",
+              background:"rgba(255,45,85,0.8)", borderRadius:9, padding:"9px 12px",
+              backdropFilter:"blur(2px)" }}>
+              <div style={{ fontSize:"clamp(11px,3.2vw,14px)", fontWeight:700,
+                color:"#fff", textAlign:"center" }}>{cta}</div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Badge "Généré ✓" */}
+      {isGenerated && (
+        <div style={{ position:"absolute", top:10, left:10,
+          background:"rgba(0,245,160,0.9)", borderRadius:6,
+          padding:"4px 10px", fontSize:11, fontWeight:700, color:"#000" }}>
+          ✓ Généré
+        </div>
+      )}
+
+      {/* Durée */}
+      <div style={{ position:"absolute", top:10, right:10,
+        fontSize:10, color:"rgba(255,255,255,0.45)", fontWeight:600 }}>
+        15s · 1080×1920
+      </div>
+
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+}
+
+// ── Composant principal ───────────────────────────────────────────────────────
+export default function TikTokStudio() {
+  const [clipId,    setClipId]    = useState("MJI1");
+  const [clipFile,  setClipFile]  = useState(null);
+  const [clipUrl,   setClipUrl]   = useState(null);
+  const [clipUploading, setClipUploading] = useState(false);
+
+  // Piste sélectionnée pour la preview (locale) + piste custom uploadée
+  const [selectedTrack,  setSelectedTrack]  = useState(() => pickRandom(MUSIC_TRACKS));
+  const [musicFile,      setMusicFile]      = useState(null);
+  const [musicUrl,       setMusicUrl]       = useState(null);  // URL Supabase si custom
+  const [musicUploading, setMusicUploading] = useState(false);
+
+  // Src de musique pour la preview : custom uploadé > piste locale sélectionnée
+  const previewMusicSrc = musicUrl || selectedTrack.src;
+
+  const [voiceFile,       setVoiceFile]       = useState(null);
+  const [voiceUrl,        setVoiceUrl]        = useState(null);  // URL Supabase (pour le VPS)
+  const [voiceLocalUrl,   setVoiceLocalUrl]   = useState(null);  // objectURL (preview immédiate)
+  const [voiceUploading,  setVoiceUploading]  = useState(false);
+  const [recording,       setRecording]       = useState(false);
+  const mediaRecRef = useRef(null);
+  const chunksRef   = useRef([]);
+  const localUrlRef = useRef(null); // pour révoquer l'objectURL précédent
+
+  const [hook,    setHook]    = useState("");
+  const [message, setMessage] = useState("");
+  const [cta,     setCta]     = useState("Enregistre-le pour ce soir.");
+
+  const [musicVol, setMusicVol] = useState(0.6);
+  const [voiceVol, setVoiceVol] = useState(1.0);
+
+  const [generating,    setGenerating]    = useState(false);
+  const [polling,       setPolling]       = useState(false);
+  const [generatedUrl,  setGeneratedUrl]  = useState(null);
+  const [statusMsg,     setStatusMsg]     = useState(null);
+  const [error,         setError]         = useState(null);
+
+  const pollRef = useRef(null);
+
+  // Nettoyage au démontage
+  useEffect(() => () => {
+    clearInterval(pollRef.current);
+    if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
+  }, []);
+
+  const handleClipFile = useCallback(async (file) => {
+    setClipFile(file); setClipUploading(true);
+    try { const url = await uploadToSupabase(file, "clips"); setClipUrl(url); }
+    catch(e) { alert("Erreur upload clip : " + e.message); }
+    finally { setClipUploading(false); }
+  }, []);
+
+  const handleMusicFile = useCallback(async (file) => {
+    setMusicFile(file); setMusicUploading(true);
+    try {
+      const url = await uploadToSupabase(file, "musique");
+      setMusicUrl(url);
+      // Crée une entrée temporaire dans MUSIC_TRACKS pour l'affichage
+      setSelectedTrack({ id:"custom", label: file.name, src: url });
+    }
+    catch(e) { alert("Erreur upload musique : " + e.message); }
+    finally { setMusicUploading(false); }
+  }, []);
+
+  const handleVoiceFile = useCallback(async (file) => {
+    // URL locale immédiate pour la preview
+    if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
+    const localUrl = URL.createObjectURL(file);
+    localUrlRef.current = localUrl;
+    setVoiceLocalUrl(localUrl);
+
+    setVoiceFile(file); setVoiceUploading(true);
+    try { const url = await uploadToSupabase(file, "voix"); setVoiceUrl(url); }
+    catch(e) { alert("Erreur upload voix : " + e.message); }
+    finally { setVoiceUploading(false); }
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, {
+        mimeType: "audio/webm;codecs=opus",
+        audioBitsPerSecond: 128000,
+      });
+      chunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+
+        // URL locale immédiate → preview sans attendre l'upload
+        if (localUrlRef.current) URL.revokeObjectURL(localUrlRef.current);
+        const localUrl = URL.createObjectURL(blob);
+        localUrlRef.current = localUrl;
+        setVoiceLocalUrl(localUrl);
+
+        // Upload en parallèle
+        const file = new File([blob], `voix_${Date.now()}.webm`, { type: "audio/webm" });
+        setVoiceFile(file); setVoiceUploading(true);
+        try { const url = await uploadToSupabase(file, "voix"); setVoiceUrl(url); }
+        catch(e) { alert("Erreur upload voix : " + e.message); }
+        finally { setVoiceUploading(false); }
+      };
+      mr.start(); mediaRecRef.current = mr; setRecording(true);
+    } catch(e) { alert("Micro non disponible : " + e.message); }
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    mediaRecRef.current?.stop(); setRecording(false);
+  }, []);
+
+  // Polling Supabase pour détecter la vidéo générée
+  const startPolling = useCallback((jobId) => {
+    const videoUrl = `${SUPA_VIDEO_BASE}/studio_${jobId}.mp4`;
+    let attempts = 0;
+    const maxAttempts = 50; // ~8 minutes (50 × 10s)
+
+    setPolling(true);
+    setGeneratedUrl(null);
+
+    pollRef.current = setInterval(async () => {
+      attempts++;
+      try {
+        const res = await fetch(videoUrl, { method: "HEAD" });
+        if (res.ok) {
+          clearInterval(pollRef.current);
+          setPolling(false);
+          setGeneratedUrl(videoUrl);
+          setStatusMsg("✓ Vidéo prête — programmée dans Buffer");
+        }
+      } catch {}
+      if (attempts >= maxAttempts) {
+        clearInterval(pollRef.current);
+        setPolling(false);
+        setStatusMsg("⏱ Timeout — vérifie Buffer manuellement");
+      }
+    }, 10000); // poll toutes les 10s
+  }, []);
+
+  const generate = useCallback(async () => {
+    if (!hook.trim())    { alert("Le hook est obligatoire."); return; }
+    if (!message.trim()) { alert("Le message est obligatoire."); return; }
+    if (!cta.trim())     { alert("Le CTA est obligatoire."); return; }
+
+    const b64 = (s) => { try { return btoa(unescape(encodeURIComponent(s))); } catch { return btoa(s); } };
+
+    // jobId unique → permet de savoir où sera la vidéo dans Supabase
+    const jobId = Date.now();
+
+    setGenerating(true);
+    setError(null);
+    setStatusMsg(null);
+    setGeneratedUrl(null);
+    clearInterval(pollRef.current);
+
+    try {
+      const payload = {
+        job_id:      String(jobId),
+        clip:        clipUrl || clipId,
+        music:       musicUrl || "random",
+        music_vol:   musicVol,
+        voice_vol:   voiceVol,
+        hook_b64:    b64(hook),
+        message_b64: b64(message),
+        cta_b64:     b64(cta),
+      };
+      // Voix uniquement si uploadée sur Supabase (URL distante nécessaire pour le VPS)
+      if (voiceUrl) payload.voice_url = voiceUrl;
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15000);
+      try {
+        const res = await fetch(WEBHOOK, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload), signal: ctrl.signal,
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      } finally { clearTimeout(timer); }
+
+      // Pipeline lancé → commencer le polling
+      startPolling(jobId);
+    } catch(e) {
+      if (e.name === "AbortError") {
+        // Proxy a coupé mais le pipeline tourne peut-être
+        startPolling(jobId);
+      } else {
+        setError(e.message);
+      }
+    } finally {
+      setGenerating(false);
+    }
+  }, [clipId, clipUrl, musicUrl, voiceUrl, hook, message, cta, startPolling]);
+
+  const canGenerate = hook.trim() && message.trim() && cta.trim()
+    && !generating && !polling && !clipUploading && !musicUploading && !voiceUploading;
+
+  const resetGenerated = () => {
+    setGeneratedUrl(null); setStatusMsg(null); setPolling(false);
+    clearInterval(pollRef.current);
+  };
+
+  return (
+    <div style={{ background:V.bg, borderRadius:20, padding:"24px 20px",
+      fontFamily:"system-ui,-apple-system,sans-serif", color:V.text }}>
+
+      {/* Header */}
+      <div style={{ marginBottom:24 }}>
+        <div style={{ fontSize:11, letterSpacing:".2em", textTransform:"uppercase",
+          color:V.sub, fontWeight:700, marginBottom:6 }}>Mon Jardin Intérieur</div>
+        <h1 style={{ fontFamily:"Georgia,serif", fontSize:"clamp(20px,4vw,28px)",
+          fontWeight:600, color:"#fff", margin:"0 0 8px", lineHeight:1.1 }}>
+          Studio TikTok
+        </h1>
+        <p style={{ fontSize:13, color:V.sub, margin:0 }}>
+          Clip · musique · voix · textes → Buffer
+        </p>
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"1fr min(320px,40%)",
+        gap:20, alignItems:"start" }}>
+
+        {/* ── Formulaire ── */}
+        <div>
+
+          {/* Clip */}
+          <Section title="Clip de fond" icon="🎬">
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
+              {CLIPS.map(c => (
+                <button key={c.id}
+                  onClick={() => { setClipId(c.id); setClipUrl(null); setClipFile(null); resetGenerated(); }}
+                  style={S.chip(!clipFile && clipId === c.id)}>
+                  {c.id}
+                </button>
+              ))}
+            </div>
+            <UploadZone label="Importer un clip MP4 custom"
+              accept="video/mp4,video/*" onFile={handleClipFile}
+              file={clipFile} uploading={clipUploading} />
+          </Section>
+
+          {/* Musique */}
+          <Section title="Musique" icon="🎵">
+            <div style={{ fontSize:12, color:V.hint, marginBottom:10 }}>
+              Choisir une piste · audible dans l'aperçu
+            </div>
+            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
+              {MUSIC_TRACKS.map(t => (
+                <button key={t.id}
+                  onClick={() => { setSelectedTrack(t); setMusicUrl(null); setMusicFile(null); }}
+                  style={S.chip(!musicFile && selectedTrack.id === t.id)}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <UploadZone label="Importer ta propre piste (MP3, M4A…)" accept="audio/*"
+              onFile={handleMusicFile} file={musicFile} uploading={musicUploading} />
+          </Section>
+
+          {/* Voix */}
+          <Section title="Voix off (optionnel)" icon="🎙">
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:12 }}>
+              {!recording
+                ? <button style={S.btn(V.green,"rgba(0,245,160,0.1)")} onClick={startRecording}>● Enregistrer</button>
+                : <button style={S.btn("#ff6b6b","rgba(255,107,107,0.1)")} onClick={stopRecording}>■ Arrêter</button>}
+              {voiceUrl && !recording && <span style={{ fontSize:12, color:V.green, alignSelf:"center" }}>✓ Prête</span>}
+            </div>
+            <UploadZone label="Importer MP3 / WAV / M4A" accept="audio/*"
+              onFile={handleVoiceFile}
+              file={voiceFile && !chunksRef.current.length ? voiceFile : null}
+              uploading={voiceUploading} />
+          </Section>
+
+          {/* Textes */}
+          <Section title="Textes" icon="✍️">
+            <span style={S.label}>Hook · 5-9 mots</span>
+            <input type="text" value={hook} maxLength={60}
+              onChange={e => setHook(e.target.value)}
+              placeholder="Ton mental ne s'éteint pas le soir ?"
+              style={S.input} />
+            <div style={{ fontSize:11, color:V.hint, marginTop:3, marginBottom:12 }}>{hook.length}/60</div>
+
+            <span style={S.label}>Message · valeur concrète · dicible en 8s</span>
+            <textarea rows={3} value={message} maxLength={200}
+              onChange={e => setMessage(e.target.value)}
+              placeholder="Pose une main sur ta poitrine. Inspire 4 secondes, souffle 6."
+              style={S.input} />
+            <div style={{ fontSize:11, color:V.hint, marginTop:3, marginBottom:12 }}>{message.length}/200</div>
+
+            <span style={S.label}>CTA · 4-8 mots</span>
+            <input type="text" value={cta} maxLength={50}
+              onChange={e => setCta(e.target.value)}
+              placeholder="Enregistre-le pour ce soir."
+              style={S.input} />
+          </Section>
+
+          {/* Bouton */}
+          <button onClick={generate} disabled={!canGenerate}
+            style={{ width:"100%", border:"none", borderRadius:14, padding:16,
+              background: canGenerate ? "linear-gradient(135deg,#ff2d55,#ff6b35)" : "#2a2a2a",
+              color: canGenerate ? "#fff" : V.hint, fontFamily:"inherit",
+              fontWeight:800, fontSize:15, cursor: canGenerate ? "pointer" : "not-allowed",
+              boxShadow: canGenerate ? "0 8px 28px rgba(255,45,85,0.3)" : "none",
+              transition:".2s" }}>
+            {generating ? "⏳ Lancement…" : polling ? "⏳ Génération en cours…" : "▶ Générer & Publier"}
+          </button>
+
+          {/* Statut */}
+          {statusMsg && (
+            <div style={{ marginTop:12, background:"rgba(0,245,160,0.08)",
+              border:`1px solid ${V.green}`, borderRadius:10,
+              padding:"12px 14px", fontSize:13, color:V.green }}>
+              {statusMsg}
+            </div>
+          )}
+          {error && (
+            <div style={{ marginTop:12, background:"rgba(255,45,85,0.08)",
+              border:`1px solid ${V.accent}`, borderRadius:10,
+              padding:"12px 14px", fontSize:13, color:V.accent }}>
+              ✗ {error}
+            </div>
+          )}
+        </div>
+
+        {/* ── Aperçu vidéo ── */}
+        <div style={{ position:"sticky", top:24 }}>
+          <div style={{ fontSize:11, fontWeight:700, letterSpacing:".1em",
+            textTransform:"uppercase", color:V.sub, marginBottom:10,
+            display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+            <span>Aperçu</span>
+            {generatedUrl && (
+              <button onClick={resetGenerated}
+                style={{ fontSize:11, color:V.sub, background:"none",
+                  border:"none", cursor:"pointer" }}>
+                ↺ Réinitialiser
+              </button>
+            )}
+          </div>
+
+          <VideoPreview
+            clipSrc={clipUrl || `/reseaux/${clipId}.mp4`}
+            musicSrc={previewMusicSrc}
+            voiceSrc={voiceLocalUrl}
+            musicVol={musicVol}
+            voiceVol={voiceVol}
+            hook={hook} message={message} cta={cta}
+            generatedUrl={generatedUrl}
+            polling={polling}
+          />
+
+          <p style={{ textAlign:"center", fontSize:11, color:V.hint, marginTop:10 }}>
+            {generatedUrl
+              ? "Vidéo générée · avec son"
+              : "Clip de fond en direct · textes en simulation"}
+          </p>
+
+          {/* Sélection récap */}
+          <div style={{ marginTop:14, background:V.card, border:`1px solid ${V.border}`,
+            borderRadius:12, padding:"12px 14px", fontSize:12 }}>
+            {[
+              ["🎬 Clip",    clipFile ? clipFile.name : `${clipId}.mp4`],
+              ["🎵 Musique", musicFile ? musicFile.name : selectedTrack.label],
+              ["🎙 Voix",    voiceLocalUrl ? (voiceUrl ? "✓ Prête" : "⏳ Upload…") : "Aucune"],
+            ].map(([k,v]) => (
+              <div key={k} style={{ display:"flex", justifyContent:"space-between",
+                marginBottom:5, color:V.text }}>
+                <span style={{ color:V.sub }}>{k}</span>
+                <span style={{ maxWidth:"55%", textAlign:"right", overflow:"hidden",
+                  textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Réglages volume */}
+          <div style={{ marginTop:10, background:V.card, border:`1px solid ${V.border}`,
+            borderRadius:12, padding:"14px 16px" }}>
+            <div style={{ fontSize:11, fontWeight:700, letterSpacing:".08em",
+              textTransform:"uppercase", color:V.sub, marginBottom:14 }}>
+              Volumes (aperçu)
+            </div>
+            {[
+              { label:"🎵 Musique", val:musicVol, set:setMusicVol, color:"#00f5a0" },
+              { label:"🎙 Voix",    val:voiceVol, set:setVoiceVol, color:"#ff9f43" },
+            ].map(({ label, val, set, color }) => (
+              <div key={label} style={{ marginBottom:12 }}>
+                <div style={{ display:"flex", justifyContent:"space-between",
+                  fontSize:12, marginBottom:6 }}>
+                  <span style={{ color:V.sub }}>{label}</span>
+                  <span style={{ color, fontWeight:700, fontVariantNumeric:"tabular-nums" }}>
+                    {Math.round(val * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range" min={0} max={1} step={0.01} value={val}
+                  onChange={e => set(parseFloat(e.target.value))}
+                  style={{ width:"100%", accentColor:color, cursor:"pointer",
+                    height:4, borderRadius:2 }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

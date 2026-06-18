@@ -10,6 +10,7 @@ import AgentChat        from "./AgentChat";
 import MeetingRoom      from "./MeetingRoom";
 import ClarityDashboard from "./ClarityDashboard";
 import PinterestStudio  from "./PinterestStudio";
+import TikTokStudio     from "./TikTokStudio";
 import CalendrierPub    from "./CalendrierPub";
 
 const TABS = [
@@ -25,6 +26,7 @@ const TABS = [
   { id:"meeting",    icon:"🪑",  label:"Réunion" },
   { id:"clarity",    icon:"📡", label:"Trafic"  },
   { id:"pinterest",  icon:"📌", label:"Pinterest" },
+  { id:"tiktok",     icon:"🎬", label:"TikTok Studio" },
   { id:"calendrier", icon:"📅", label:"Calendrier pub" },
 ];
 
@@ -146,7 +148,7 @@ export default function Entreprise() {
       {/* ── Content ── */}
       {(() => {
         const isAgent    = ["maestro","stratege","growth","contenu","meeting"].includes(active);
-        const isWide     = ["pinterest"].includes(active);
+        const isWide     = ["pinterest","tiktok"].includes(active);
         const isFullWide = ["calendrier"].includes(active);
         return (
           <div style={{ padding: isAgent ? "20px 4%" : "16px",
@@ -166,6 +168,7 @@ export default function Entreprise() {
             {active==="meeting"  && <MeetingRoom />}
             {active==="clarity"    && <ClarityDashboard />}
             {active==="pinterest"  && <PinterestStudio />}
+            {active==="tiktok"     && <TikTokStudio />}
             {active==="calendrier" && <CalendrierPub />}
           </div>
         );
