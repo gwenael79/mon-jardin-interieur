@@ -3286,7 +3286,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
   const isSmall  = window.innerWidth < 390
 
   useEffect(() => {
-    const t = setTimeout(() => setShowPanel(true), isMobile ? 5000 : 1000)
+    const t = setTimeout(() => setShowPanel(true), isMobile ? 3000 : 1000)
     return () => clearTimeout(t)
   }, [])
 
@@ -3408,17 +3408,33 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           background: 'rgba(8,4,1,0.88)', backdropFilter: 'blur(24px)',
           overflowY: 'auto', WebkitOverflowScrolling: 'touch',
           animation: 'onbIn .4s cubic-bezier(.22,1,.36,1) both',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
         }}>
-          <div style={{ padding: isSmall ? '28px 0 12px' : '36px 0 16px', textAlign: 'center', flexShrink: 0 }}>
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isSmall ? 24 : 28, fontWeight: 400, color: '#fff', margin: '0 0 8px', lineHeight: 1.2 }}>
+          {/* En-tête titre */}
+          <div style={{ padding: `clamp(48px,12vw,84px) 0 clamp(10px,3vw,16px)`, textAlign: 'center', flexShrink: 0 }}>
+            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 'clamp(32px,11vw,46px)', fontWeight: 400, color: '#fff', margin: '0 0 8px', lineHeight: 1.2 }}>
               Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
             </h2>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isSmall ? 13 : 14, color: 'rgba(255,255,255,0.58)', margin: '0 0 4px', lineHeight: 1.6, padding: '0 20px' }}>
+            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: 'clamp(14px,4.5vw,18px)', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6, padding: '0 20px' }}>
               Deux chemins s'offrent à toi.<br/>Suis ce qui résonne en toi aujourd'hui.
             </p>
           </div>
-          {panel}
+
+          {/* Lutin — ambiance féérique uniquement */}
+          {ambiance !== 'zen' && (
+            <div style={{ flexShrink:0, display:'flex', justifyContent:'center', marginBottom: -20, position:'relative', zIndex:2 }}>
+              <img
+                src="/lutin-bas.png"
+                alt=""
+                style={{ height: 'clamp(140px,42vw,200px)', width:'auto', objectFit:'contain', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.45))', animation:'onbIn .5s cubic-bezier(.22,1,.36,1) both' }}
+              />
+            </div>
+          )}
+
+          {/* Cards */}
+          <div style={{ position:'relative', zIndex:1, paddingBottom:'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+            {panel}
+          </div>
         </div>
       )}
 
