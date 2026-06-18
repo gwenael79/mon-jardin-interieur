@@ -3290,15 +3290,15 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
     return () => clearTimeout(t)
   }, [])
 
-  const titleFs  = isSmall ? 24 : isMobile ? 28 : 32
-  const descFs   = isSmall ? 13 : 14
-  const badgeFs  = isSmall ? 10 : 11
-  const btnPad   = isSmall ? '13px 16px' : '15px 22px'
-  const btnFs    = isSmall ? 14 : 15
-  const cardPad  = isSmall ? '16px 16px 6px' : '22px 22px 8px'
+  const titleFs = isMobile ? 'clamp(20px,7vw,30px)' : 32
+  const descFs  = isMobile ? 'clamp(12px,3.5vw,14px)' : 14
+  const badgeFs = isMobile ? 'clamp(9px,2.5vw,11px)' : 11
+  const btnPad  = isMobile ? 'clamp(11px,3.5vw,15px) clamp(12px,4vw,22px)' : '15px 22px'
+  const btnFs   = isMobile ? 'clamp(13px,3.8vw,15px)' : 15
+  const cardPad = isMobile ? 'clamp(12px,4vw,22px) clamp(12px,4vw,22px) 6px' : '22px 22px 8px'
 
   const panel = (
-    <div style={{ display:'flex', flexDirection:'column', gap: isSmall ? 10 : 12, padding: isMobile ? `0 ${isSmall ? 12 : 16}px 24px` : '0 10px 24px' }}>
+    <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 'clamp(8px,2.5vw,12px)' : 14, padding: isMobile ? '0 clamp(10px,4vw,16px) 24px' : '0 10px 24px' }}>
 
       {/* RESSENTIR */}
       <div style={{ borderRadius:16, background:'linear-gradient(145deg,#1e4020,#2d5e28)', boxShadow:'0 8px 24px rgba(20,50,18,0.55)', overflow:'hidden' }}>
@@ -3404,18 +3404,21 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
 
       {showPanel && isMobile && (
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 2,
+          position: 'fixed', top: 0, left: 0, right: 0,
+          height: '100dvh', minHeight: '-webkit-fill-available',
+          zIndex: 2,
           background: 'rgba(8,4,1,0.88)', backdropFilter: 'blur(24px)',
           overflowY: 'auto', WebkitOverflowScrolling: 'touch',
           animation: 'onbIn .4s cubic-bezier(.22,1,.36,1) both',
           display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
+          boxSizing: 'border-box',
         }}>
           {/* En-tête titre */}
-          <div style={{ padding: `clamp(48px,12vw,84px) 0 clamp(10px,3vw,16px)`, textAlign: 'center', flexShrink: 0 }}>
-            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 'clamp(32px,11vw,46px)', fontWeight: 400, color: '#fff', margin: '0 0 8px', lineHeight: 1.2 }}>
+          <div style={{ padding: 'clamp(36px,10vw,72px) 0 clamp(8px,2.5vw,14px)', textAlign: 'center', flexShrink: 0 }}>
+            <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 'clamp(30px,10vw,46px)', fontWeight: 400, color: '#fff', margin: '0 0 clamp(6px,2vw,10px)', lineHeight: 1.2 }}>
               Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
             </h2>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: 'clamp(14px,4.5vw,18px)', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6, padding: '0 20px' }}>
+            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: 'clamp(14px,4vw,18px)', color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6, padding: '0 clamp(16px,5vw,24px)' }}>
               Deux chemins s'offrent à toi.<br/>Suis ce qui résonne en toi aujourd'hui.
             </p>
           </div>
@@ -3426,7 +3429,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
               <img
                 src="/lutin-bas.png"
                 alt=""
-                style={{ height: 'clamp(140px,42vw,200px)', width:'auto', objectFit:'contain', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.45))', animation:'onbIn .5s cubic-bezier(.22,1,.36,1) both' }}
+                style={{ height: 'clamp(120px,38vw,200px)', width:'auto', objectFit:'contain', filter:'drop-shadow(0 4px 16px rgba(0,0,0,0.45))', animation:'onbIn .5s cubic-bezier(.22,1,.36,1) both' }}
               />
             </div>
           )}
