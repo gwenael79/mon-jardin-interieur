@@ -3404,14 +3404,12 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
 
       {showPanel && isMobile && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0,
-          height: '100dvh', minHeight: '-webkit-fill-available',
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           zIndex: 2,
           background: 'rgba(8,4,1,0.88)', backdropFilter: 'blur(24px)',
           overflowY: 'auto', WebkitOverflowScrolling: 'touch',
           animation: 'onbIn .4s cubic-bezier(.22,1,.36,1) both',
-          display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
-          boxSizing: 'border-box',
+          display: 'flex', flexDirection: 'column',
         }}>
           {/* En-tête titre */}
           <div style={{ padding: 'clamp(36px,10vw,72px) 0 clamp(8px,2.5vw,14px)', textAlign: 'center', flexShrink: 0 }}>
