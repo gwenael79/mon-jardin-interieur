@@ -2,10 +2,11 @@
 // Studio TikTok manuel : clip + musique + voix + textes → Buffer
 import { useState, useRef, useCallback, useEffect } from "react";
 
-const SUPA_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const WEBHOOK  = "https://n8n.srv1667605.hstgr.cloud/webhook/tiktok-studio";
+const SUPA_URL    = import.meta.env.VITE_SUPABASE_URL;
+const SUPA_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const WEBHOOK     = "https://n8n.srv1667605.hstgr.cloud/webhook/tiktok-studio";
 const SUPA_VIDEO_BASE = `${SUPA_URL}/storage/v1/object/public/n8n-images/posts`;
+const AGENT_URL   = `${SUPA_URL}/functions/v1/entreprise-agent`;
 
 // Clips disponibles dans /public/reseaux/
 const CLIPS = [
@@ -96,6 +97,11 @@ function Section({ title, icon, children }) {
 
 function UploadZone({ label, accept, onFile, file, uploading }) {
   const ref = useRef();
+  // Réinitialise l'input DOM quand le fichier est effacé,
+  // sinon onChange ne se redéclenche pas si on resélectionne le même fichier
+  useEffect(() => {
+    if (!file && ref.current) ref.current.value = '';
+  }, [file]);
   return (
     <div>
       <div onClick={() => ref.current?.click()}
@@ -119,8 +125,187 @@ function UploadZone({ label, accept, onFile, file, uploading }) {
   );
 }
 
+// ── Panneau Lucie ─────────────────────────────────────────────────────────────
+function LuciePanel({ onApply }) {
+  const [msgs,    setMsgs]    = useState([]);
+  const [input,   setInput]   = useState("");
+  const [loading, setLoading] = useState(false);
+  const [parsed,  setParsed]  = useState(null);
+  const [sessionId]           = useState(() => 'lucie-tiktok-' + Date.now());
+  const bottomRef = useRef();
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
+
+  const send = useCallback(async (text) => {
+    const content = (text ?? input).trim();
+    if (!content || loading) return;
+    setInput("");
+    const next = [...msgs, { role:"user", content }];
+    setMsgs(next);
+    setLoading(true);
+    setParsed(null);
+    try {
+      const res = await fetch(AGENT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: next, session_id: sessionId, agent_id: "contenu" }),
+      });
+      const data = await res.json();
+      const reply = data.text || data.error || "Pas de réponse";
+      const updated = [...next, { role:"assistant", content: reply }];
+      setMsgs(updated);
+      // Essayer de parser un JSON dans la réponse
+      const m = reply.match(/\{[\s\S]*\}/);
+      if (m) {
+        try { setParsed(JSON.parse(m[0])); } catch {}
+      }
+    } catch(e) {
+      setMsgs(p => [...p, { role:"assistant", content:"⚠️ " + e.message, err:true }]);
+    } finally { setLoading(false); }
+  }, [msgs, input, loading, sessionId]);
+
+  const PROMPT_SUGGESTION = "Génère pour une vidéo TikTok 30s. Retourne un JSON avec : prompt_video (en anglais, ambiance clip), hook (5-9 mots, accroche), message (2-3 phrases, valeur concrète, dicible en 15s), cta (4-8 mots, ressenti), prompt_voix (script voix off 25-28s, chaleureux, tutoiement). JSON uniquement.";
+
+  const FIELDS = [
+    { key:"prompt_video", label:"🎬 Prompt vidéo", apply: v => onApply("prompt_video", v) },
+    { key:"hook",         label:"🪝 Hook",          apply: v => onApply("hook", v) },
+    { key:"message",      label:"💬 Message",       apply: v => onApply("message", v) },
+    { key:"cta",          label:"📣 CTA",           apply: v => onApply("cta", v) },
+    { key:"prompt_voix",  label:"🎙 Voix off",      apply: v => onApply("prompt_voix", v) },
+  ];
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", gap:10 }}>
+      {/* Header */}
+      <div style={{ background:"#1a1a2e", border:"1px solid #2a2a4a",
+        borderRadius:12, padding:"12px 14px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4 }}>
+          <img src="https://randomuser.me/api/portraits/women/44.jpg"
+            alt="Lucie" style={{ width:28, height:28, borderRadius:"50%", objectFit:"cover" }} />
+          <span style={{ fontSize:13, fontWeight:700, color:"#a29bfe" }}>LUCIE</span>
+          <span style={{ fontSize:10, color:"#666", background:"#111",
+            padding:"1px 6px", borderRadius:4 }}>Contenu</span>
+        </div>
+        <div style={{ fontSize:11, color:"#555", lineHeight:1.4 }}>
+          Décris ton thème → Lucie génère les textes + prompts
+        </div>
+      </div>
+
+      {/* Zone de saisie thème */}
+      <div style={{ fontSize:10, fontWeight:700, letterSpacing:".1em",
+        textTransform:"uppercase", color:"#666", marginBottom:6 }}>
+        Thème de la vidéo
+      </div>
+      <textarea
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        placeholder={"Ex : La fatigue mentale du dimanche soir\nEx : Quand les pensées ne s'arrêtent pas\nEx : Rituel de respiration pour les moments d'anxiété…"}
+        rows={4}
+        style={{ background:"#111", border:"1px solid #a29bfe44", borderRadius:10,
+          padding:"10px 12px", color:"#f0f0f0", fontFamily:"inherit",
+          fontSize:12, outline:"none", resize:"vertical", lineHeight:1.6,
+          width:"100%", boxSizing:"border-box" }}
+      />
+
+      {/* Bouton générer */}
+      <button onClick={() => {
+          const theme = input.trim() || "bien-être mental, fatigue, retour à soi";
+          send(PROMPT_SUGGESTION + "\n\nThème : " + theme);
+        }}
+        disabled={loading || !input.trim()}
+        style={{ border:"none", borderRadius:10, padding:"11px 14px",
+          background: input.trim() && !loading
+            ? "linear-gradient(135deg,#a29bfe,#6c5ce7)"
+            : "#1a1a2e",
+          color: input.trim() && !loading ? "#fff" : "#444",
+          cursor: input.trim() && !loading ? "pointer" : "not-allowed",
+          fontFamily:"inherit", fontWeight:700, fontSize:13,
+          boxShadow: input.trim() && !loading ? "0 4px 16px rgba(162,155,254,0.3)" : "none",
+          transition:".2s" }}>
+        {loading ? "⏳ Lucie développe…" : "✨ Développer avec Lucie"}
+      </button>
+
+      {/* Suggestions parsées */}
+      {parsed && (
+        <div style={{ background:"#111", border:"1px solid #2a2a4a",
+          borderRadius:10, padding:"10px 12px" }}>
+          <div style={{ fontSize:10, fontWeight:700, letterSpacing:".1em",
+            textTransform:"uppercase", color:"#a29bfe", marginBottom:10 }}>
+            Suggestions
+          </div>
+          {FIELDS.map(f => parsed[f.key] ? (
+            <div key={f.key} style={{ marginBottom:8, paddingBottom:8,
+              borderBottom:"1px solid #1a1a2e" }}>
+              <div style={{ display:"flex", justifyContent:"space-between",
+                alignItems:"center", marginBottom:4 }}>
+                <span style={{ fontSize:10, fontWeight:700, color:"#555" }}>{f.label}</span>
+                <button onClick={() => f.apply(parsed[f.key])}
+                  style={{ fontSize:10, border:"1px solid #a29bfe", borderRadius:4,
+                    padding:"2px 7px", background:"rgba(162,155,254,0.1)",
+                    color:"#a29bfe", cursor:"pointer", fontFamily:"inherit",
+                    fontWeight:700 }}>
+                  Appliquer →
+                </button>
+              </div>
+              <div style={{ fontSize:11, color:"#888", lineHeight:1.4,
+                maxHeight:52, overflow:"hidden", textOverflow:"ellipsis" }}>
+                {parsed[f.key].substring(0, 120)}{parsed[f.key].length > 120 ? "…" : ""}
+              </div>
+            </div>
+          ) : null)}
+        </div>
+      )}
+
+      {/* Historique conversation */}
+      <div style={{ flex:1, overflowY:"auto", display:"flex",
+        flexDirection:"column", gap:6, minHeight:0 }}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{
+            background: m.role === "user" ? "rgba(162,155,254,0.1)" : "#1a1a1a",
+            border: `1px solid ${m.role === "user" ? "#2a2a4a" : "#222"}`,
+            borderRadius:8, padding:"8px 10px",
+            alignSelf: m.role === "user" ? "flex-end" : "flex-start",
+            maxWidth:"90%",
+          }}>
+            <div style={{ fontSize:11, color: m.err ? "#ff6b6b" : m.role==="user" ? "#a29bfe" : "#888",
+              lineHeight:1.5, whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
+              {m.content.length > 300 ? m.content.substring(0, 300) + "…" : m.content}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div style={{ background:"#1a1a1a", border:"1px solid #222",
+            borderRadius:8, padding:"8px 10px", alignSelf:"flex-start" }}>
+            <div style={{ fontSize:11, color:"#555" }}>Lucie réfléchit…</div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  );
+}
+
+// ── Bouton reformulation IA ───────────────────────────────────────────────────
+function AiBtn({ field, text, reformulating, onReformulate }) {
+  const loading = reformulating === field;
+  const disabled = !text.trim() || reformulating !== null;
+  return (
+    <button
+      onClick={() => onReformulate(field, text)}
+      disabled={disabled}
+      title="Reformuler avec l'IA"
+      style={{ flexShrink:0, border:`1px solid ${disabled ? "#333" : "#a29bfe"}`,
+        borderRadius:8, padding:"3px 9px", background: disabled ? "#111" : "rgba(162,155,254,0.12)",
+        color: disabled ? "#444" : "#a29bfe", cursor: disabled ? "not-allowed" : "pointer",
+        fontSize:11, fontWeight:700, display:"flex", alignItems:"center", gap:4,
+        transition:".15s", whiteSpace:"nowrap" }}>
+      {loading ? "⏳" : "✨"} IA
+    </button>
+  );
+}
+
 // ── Aperçu vidéo avec overlay texte ──────────────────────────────────────────
-function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, message, cta, generatedUrl, polling }) {
+function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, message, cta, generatedUrl, polling, pollElapsed }) {
   const videoRef = useRef();
   const musicRef = useRef();
   const voiceRef = useRef();
@@ -217,19 +402,20 @@ function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, m
           <div style={{ width:40, height:40, border:`3px solid rgba(0,245,160,0.3)`,
             borderTopColor:V.green, borderRadius:"50%",
             animation:"spin 1s linear infinite" }} />
-          <div style={{ fontSize:12, color:V.green, textAlign:"center", lineHeight:1.4 }}>
+          <div style={{ fontSize:12, color:V.green, textAlign:"center", lineHeight:1.6 }}>
             Génération en cours…<br/>
-            <span style={{ opacity:.6 }}>3-5 min</span>
+            <span style={{ fontSize:18, fontWeight:700 }}>{pollElapsed || 0}s</span><br/>
+            <span style={{ opacity:.5, fontSize:11 }}>~80s attendues</span>
           </div>
         </div>
       )}
 
-      {/* Logo MJI — toujours visible (comme dans la vidéo finale) */}
-      {!polling && (
+      {/* Logo MJI — uniquement en aperçu (la vidéo générée l'a déjà intégré) */}
+      {!polling && !isGenerated && (
         <div style={{ position:"absolute", top:8, left:"50%",
           transform:"translateX(-50%)", zIndex:5,
-          width:48, height:48, borderRadius:10, overflow:"hidden",
-          boxShadow:"0 2px 8px rgba(0,0,0,0.4)" }}>
+          width:80, height:80, borderRadius:16, overflow:"hidden",
+          boxShadow:"0 2px 12px rgba(0,0,0,0.5)" }}>
           <img src="/icons/logo.png" alt="MJI"
             style={{ width:"100%", height:"100%", objectFit:"cover" }} />
         </div>
@@ -280,7 +466,7 @@ function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, m
       {/* Durée */}
       <div style={{ position:"absolute", top:10, right:10,
         fontSize:10, color:"rgba(255,255,255,0.45)", fontWeight:600 }}>
-        15s · 1080×1920
+        30s · 1080×1920
       </div>
 
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -309,8 +495,10 @@ export default function TikTokStudio() {
   const [voiceLocalUrl,   setVoiceLocalUrl]   = useState(null);  // objectURL (preview immédiate)
   const [voiceUploading,  setVoiceUploading]  = useState(false);
   const [recording,       setRecording]       = useState(false);
-  const mediaRecRef = useRef(null);
-  const chunksRef   = useRef([]);
+  const [recCountdown,    setRecCountdown]     = useState(30);
+  const countdownRef = useRef(null);
+  const mediaRecRef  = useRef(null);
+  const chunksRef    = useRef([]);
   const localUrlRef = useRef(null); // pour révoquer l'objectURL précédent
 
   const [hook,    setHook]    = useState("");
@@ -319,6 +507,27 @@ export default function TikTokStudio() {
 
   const [musicVol, setMusicVol] = useState(0.6);
   const [voiceVol, setVoiceVol] = useState(1.0);
+
+  const [reformulating, setReformulating] = useState(null); // "hook"|"message"|"cta"|null
+
+  const reformulate = useCallback(async (field, text) => {
+    if (!text.trim() || reformulating) return;
+    setReformulating(field);
+    try {
+      const res = await fetch('https://n8n.srv1667605.hstgr.cloud/webhook/tiktok-reformulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ field, text }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (json.text) {
+        if (field === 'hook')    setHook(json.text);
+        if (field === 'message') setMessage(json.text);
+        if (field === 'cta')     setCta(json.text);
+      }
+    } catch {}
+    finally { setReformulating(null); }
+  }, [reformulating]);
 
   const [generating,    setGenerating]    = useState(false);
   const [polling,       setPolling]       = useState(false);
@@ -393,31 +602,66 @@ export default function TikTokStudio() {
         finally { setVoiceUploading(false); }
       };
       mr.start(); mediaRecRef.current = mr; setRecording(true);
+      // Décompte 30 → 0
+      setRecCountdown(30);
+      countdownRef.current = setInterval(() => {
+        setRecCountdown(n => {
+          if (n <= 1) {
+            clearInterval(countdownRef.current);
+            mediaRecRef.current?.stop();
+            setRecording(false);
+            return 0;
+          }
+          return n - 1;
+        });
+      }, 1000);
     } catch(e) { alert("Micro non disponible : " + e.message); }
   }, []);
 
   const stopRecording = useCallback(() => {
-    mediaRecRef.current?.stop(); setRecording(false);
+    clearInterval(countdownRef.current);
+    setRecCountdown(30);
+    mediaRecRef.current?.stop();
+    setRecording(false);
   }, []);
 
   // Polling Supabase pour détecter la vidéo générée
+  const [pollElapsed, setPollElapsed] = useState(0);
+
   const startPolling = useCallback((jobId) => {
     const videoUrl = `${SUPA_VIDEO_BASE}/studio_${jobId}.mp4`;
     let attempts = 0;
-    const maxAttempts = 50; // ~8 minutes (50 × 10s)
+    const maxAttempts = 60; // 10 minutes
+    const startTime = Date.now();
 
     setPolling(true);
     setGeneratedUrl(null);
+    setPollElapsed(0);
 
     pollRef.current = setInterval(async () => {
       attempts++;
+      const elapsed = Math.round((Date.now() - startTime) / 1000);
+      setPollElapsed(elapsed);
       try {
-        const res = await fetch(videoUrl, { method: "HEAD" });
-        if (res.ok) {
+        // GET + abort immédiat (plus fiable que HEAD pour Supabase)
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 5000);
+        let ok = false;
+        try {
+          const res = await fetch(videoUrl + '?t=' + Date.now(), {
+            method: 'GET',
+            headers: { 'Range': 'bytes=0-0' },
+            signal: ctrl.signal,
+          });
+          ok = res.ok || res.status === 206;
+        } catch {} finally { clearTimeout(timer); }
+
+        if (ok) {
           clearInterval(pollRef.current);
           setPolling(false);
           setGeneratedUrl(videoUrl);
           setStatusMsg("✓ Vidéo prête — programmée dans Buffer");
+          return;
         }
       } catch {}
       if (attempts >= maxAttempts) {
@@ -425,7 +669,7 @@ export default function TikTokStudio() {
         setPolling(false);
         setStatusMsg("⏱ Timeout — vérifie Buffer manuellement");
       }
-    }, 10000); // poll toutes les 10s
+    }, 10000);
   }, []);
 
   const generate = useCallback(async () => {
@@ -455,7 +699,6 @@ export default function TikTokStudio() {
         message_b64: b64(message),
         cta_b64:     b64(cta),
       };
-      // Voix uniquement si uploadée sur Supabase (URL distante nécessaire pour le VPS)
       if (voiceUrl) payload.voice_url = voiceUrl;
 
       const ctrl = new AbortController();
@@ -507,10 +750,29 @@ export default function TikTokStudio() {
         </p>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr min(320px,40%)",
-        gap:20, alignItems:"start" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"380px minmax(260px,1fr) 260px",
+        gap:16, alignItems:"start" }}>
 
-        {/* ── Formulaire ── */}
+        {/* ── Colonne Lucie ── */}
+        <div style={{ background:V.card, border:`1px solid #2a2a4a`,
+          borderRadius:16, padding:"16px 14px", height:640,
+          display:"flex", flexDirection:"column" }}>
+          <LuciePanel onApply={(field, value) => {
+            if (field === "hook")    setHook(value);
+            if (field === "message") setMessage(value);
+            if (field === "cta")     setCta(value);
+            // prompt_video et prompt_voix : copier dans le clipboard
+            if (field === "prompt_video" || field === "prompt_voix") {
+              navigator.clipboard?.writeText(value).catch(()=>{});
+              alert('Copié dans le presse-papier : ' + value.substring(0,60) + '…');
+            }
+          }} />
+        </div>
+
+        {/* ── Formulaire 2 sous-colonnes ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, alignItems:"start" }}>
+
+        {/* ── Sous-colonne gauche : médias ── */}
         <div>
 
           {/* Clip */}
@@ -545,39 +807,105 @@ export default function TikTokStudio() {
             </div>
             <UploadZone label="Importer ta propre piste (MP3, M4A…)" accept="audio/*"
               onFile={handleMusicFile} file={musicFile} uploading={musicUploading} />
+            {musicFile && (
+              <button onClick={() => {
+                  setMusicFile(null); setMusicUrl(null);
+                  setSelectedTrack(pickRandom(MUSIC_TRACKS));
+                }}
+                style={{ marginTop:8, ...S.btn("#ff6b6b","rgba(255,107,107,0.08)"),
+                  fontSize:12, padding:"7px 14px" }}>
+                ✕ Supprimer la musique importée
+              </button>
+            )}
           </Section>
 
           {/* Voix */}
           <Section title="Voix off (optionnel)" icon="🎙">
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:12 }}>
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:12, alignItems:"center" }}>
               {!recording
                 ? <button style={S.btn(V.green,"rgba(0,245,160,0.1)")} onClick={startRecording}>● Enregistrer</button>
                 : <button style={S.btn("#ff6b6b","rgba(255,107,107,0.1)")} onClick={stopRecording}>■ Arrêter</button>}
-              {voiceUrl && !recording && <span style={{ fontSize:12, color:V.green, alignSelf:"center" }}>✓ Prête</span>}
+              {/* Compteur décompte */}
+              {recording && (
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <div style={{ position:"relative", width:44, height:44 }}>
+                    <svg width="44" height="44" style={{ transform:"rotate(-90deg)" }}>
+                      <circle cx="22" cy="22" r="18" fill="none"
+                        stroke="rgba(255,107,107,0.2)" strokeWidth="3" />
+                      <circle cx="22" cy="22" r="18" fill="none"
+                        stroke="#ff6b6b" strokeWidth="3"
+                        strokeDasharray={`${2*Math.PI*18}`}
+                        strokeDashoffset={`${2*Math.PI*18*(1 - recCountdown/30)}`}
+                        strokeLinecap="round"
+                        style={{ transition:"stroke-dashoffset 1s linear" }} />
+                    </svg>
+                    <div style={{ position:"absolute", inset:0, display:"flex",
+                      alignItems:"center", justifyContent:"center",
+                      fontSize:13, fontWeight:800, color:"#ff6b6b",
+                      fontVariantNumeric:"tabular-nums" }}>
+                      {recCountdown}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {voiceLocalUrl && !recording && (
+                <span style={{ fontSize:12, color:V.green, alignSelf:"center" }}>
+                  {voiceUrl ? "✓ Prête" : "⏳ Upload…"}
+                </span>
+              )}
             </div>
             <UploadZone label="Importer MP3 / WAV / M4A" accept="audio/*"
               onFile={handleVoiceFile}
               file={voiceFile && !chunksRef.current.length ? voiceFile : null}
               uploading={voiceUploading} />
+            {voiceLocalUrl && !recording && (
+              <button onClick={() => {
+                  if (localUrlRef.current) { URL.revokeObjectURL(localUrlRef.current); localUrlRef.current = null; }
+                  setVoiceLocalUrl(null); setVoiceUrl(null); setVoiceFile(null);
+                  chunksRef.current = [];
+                }}
+                style={{ marginTop:8, ...S.btn("#ff6b6b","rgba(255,107,107,0.08)"),
+                  fontSize:12, padding:"7px 14px" }}>
+                ✕ Supprimer la voix off
+              </button>
+            )}
+
           </Section>
+
+        </div>{/* fin sous-colonne gauche */}
+
+        {/* ── Sous-colonne droite : textes + action ── */}
+        <div>
 
           {/* Textes */}
           <Section title="Textes" icon="✍️">
-            <span style={S.label}>Hook · 5-9 mots</span>
+            {/* Hook */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+              <span style={{ ...S.label, marginBottom:0 }}>Hook · 5-9 mots</span>
+              <AiBtn field="hook" text={hook} reformulating={reformulating} onReformulate={reformulate} />
+            </div>
             <input type="text" value={hook} maxLength={60}
               onChange={e => setHook(e.target.value)}
               placeholder="Ton mental ne s'éteint pas le soir ?"
               style={S.input} />
             <div style={{ fontSize:11, color:V.hint, marginTop:3, marginBottom:12 }}>{hook.length}/60</div>
 
-            <span style={S.label}>Message · valeur concrète · dicible en 8s</span>
+            {/* Message */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+              <span style={{ ...S.label, marginBottom:0 }}>Message · valeur concrète · dicible en 8s</span>
+              <AiBtn field="message" text={message} reformulating={reformulating} onReformulate={reformulate} />
+            </div>
             <textarea rows={3} value={message} maxLength={200}
               onChange={e => setMessage(e.target.value)}
               placeholder="Pose une main sur ta poitrine. Inspire 4 secondes, souffle 6."
               style={S.input} />
             <div style={{ fontSize:11, color:V.hint, marginTop:3, marginBottom:12 }}>{message.length}/200</div>
 
-            <span style={S.label}>CTA · 4-8 mots</span>
+            {/* CTA */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+              <span style={{ ...S.label, marginBottom:0 }}>CTA · 4-8 mots</span>
+              <AiBtn field="cta" text={cta} reformulating={reformulating} onReformulate={reformulate} />
+            </div>
             <input type="text" value={cta} maxLength={50}
               onChange={e => setCta(e.target.value)}
               placeholder="Enregistre-le pour ce soir."
@@ -610,7 +938,9 @@ export default function TikTokStudio() {
               ✗ {error}
             </div>
           )}
-        </div>
+
+        </div>{/* fin sous-colonne droite */}
+        </div>{/* fin grille 2 sous-colonnes */}
 
         {/* ── Aperçu vidéo ── */}
         <div style={{ position:"sticky", top:24 }}>
@@ -636,11 +966,12 @@ export default function TikTokStudio() {
             hook={hook} message={message} cta={cta}
             generatedUrl={generatedUrl}
             polling={polling}
+            pollElapsed={pollElapsed}
           />
 
           <p style={{ textAlign:"center", fontSize:11, color:V.hint, marginTop:10 }}>
             {generatedUrl
-              ? "Vidéo générée · avec son"
+              ? "Vidéo générée 30s · avec son"
               : "Clip de fond en direct · textes en simulation"}
           </p>
 
@@ -674,17 +1005,25 @@ export default function TikTokStudio() {
             ].map(({ label, val, set, color }) => (
               <div key={label} style={{ marginBottom:12 }}>
                 <div style={{ display:"flex", justifyContent:"space-between",
-                  fontSize:12, marginBottom:6 }}>
+                  alignItems:"center", fontSize:12, marginBottom:6 }}>
                   <span style={{ color:V.sub }}>{label}</span>
-                  <span style={{ color, fontWeight:700, fontVariantNumeric:"tabular-nums" }}>
-                    {Math.round(val * 100)}%
-                  </span>
+                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    {val === 0 && (
+                      <span style={{ fontSize:10, color:"#ff6b6b", fontWeight:700 }}>
+                        ⚠ muet
+                      </span>
+                    )}
+                    <span style={{ color: val === 0 ? "#ff6b6b" : color,
+                      fontWeight:700, fontVariantNumeric:"tabular-nums" }}>
+                      {Math.round(val * 100)}%
+                    </span>
+                  </div>
                 </div>
                 <input
                   type="range" min={0} max={1} step={0.01} value={val}
                   onChange={e => set(parseFloat(e.target.value))}
-                  style={{ width:"100%", accentColor:color, cursor:"pointer",
-                    height:4, borderRadius:2 }}
+                  style={{ width:"100%", accentColor: val === 0 ? "#ff6b6b" : color,
+                    cursor:"pointer", height:4, borderRadius:2 }}
                 />
               </div>
             ))}

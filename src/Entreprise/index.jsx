@@ -148,12 +148,12 @@ export default function Entreprise() {
       {/* ── Content ── */}
       {(() => {
         const isAgent    = ["maestro","stratege","growth","contenu","meeting"].includes(active);
-        const isWide     = ["pinterest","tiktok"].includes(active);
-        const isFullWide = ["calendrier"].includes(active);
+        const isWide     = ["pinterest"].includes(active);
+        const isFullWide = ["calendrier","tiktok"].includes(active);
         return (
-          <div style={{ padding: isAgent ? "20px 4%" : "16px",
+          <div style={{ padding: isAgent ? "20px 4%" : isFullWide ? "16px 2%" : "16px",
             maxWidth: isAgent || isFullWide ? "none" : isWide ? "900px" : "600px",
-            width: isAgent || isFullWide ? "80%" : "auto",
+            width: isAgent || isFullWide ? "100%" : "auto",
             margin: "0 auto",
             boxSizing: "border-box" }}>
             {active==="hub"        && <Hub setActive={setActive} />}
