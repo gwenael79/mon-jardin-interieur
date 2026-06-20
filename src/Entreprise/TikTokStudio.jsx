@@ -476,6 +476,7 @@ function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, m
 
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function TikTokStudio() {
+  const [mode,      setMode]      = useState("clip"); // "clip" | "slideshow"
   const [clipId,    setClipId]    = useState("MJI1");
   const [clipFile,  setClipFile]  = useState(null);
   const [clipUrl,   setClipUrl]   = useState(null);
@@ -691,6 +692,7 @@ export default function TikTokStudio() {
     try {
       const payload = {
         job_id:      String(jobId),
+        mode,
         clip:        clipUrl || clipId,
         music:       musicUrl || "random",
         music_vol:   musicVol,
@@ -775,8 +777,26 @@ export default function TikTokStudio() {
         {/* ── Sous-colonne gauche : médias ── */}
         <div>
 
-          {/* Clip */}
-          <Section title="Clip de fond" icon="🎬">
+          {/* Mode */}
+          <div style={{ display:"flex", gap:8, marginBottom:16 }}>
+            {[
+              { id:"clip",      label:"🎬 Clips MJI",  desc:"Vidéo animée + textes" },
+              { id:"slideshow", label:"🖼 Slideshow",   desc:"2 images + citation" },
+            ].map(m => (
+              <button key={m.id} onClick={() => setMode(m.id)}
+                style={{ flex:1, border:`1.5px solid ${mode===m.id ? V.accent : V.border}`,
+                  background: mode===m.id ? V.accentSoft : "#111",
+                  borderRadius:12, padding:"10px 12px", cursor:"pointer",
+                  fontFamily:"inherit", transition:".15s", textAlign:"left" }}>
+                <div style={{ fontSize:13, fontWeight:700,
+                  color: mode===m.id ? V.accent : V.text }}>{m.label}</div>
+                <div style={{ fontSize:11, color:V.hint, marginTop:2 }}>{m.desc}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Clip — masqué en mode slideshow */}
+          {mode === "clip" && <Section title="Clip de fond" icon="🎬">
             <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
               {CLIPS.map(c => (
                 <button key={c.id}
@@ -789,7 +809,7 @@ export default function TikTokStudio() {
             <UploadZone label="Importer un clip MP4 custom"
               accept="video/mp4,video/*" onFile={handleClipFile}
               file={clipFile} uploading={clipUploading} />
-          </Section>
+          </Section>}
 
           {/* Musique */}
           <Section title="Musique" icon="🎵">
@@ -817,7 +837,21 @@ export default function TikTokStudio() {
                 ✕ Supprimer la musique importée
               </button>
             )}
-          </Section>
+          </Section>}
+
+          {/* Message slideshow */}
+          {mode === "slideshow" && (
+            <div style={{ background:"rgba(162,155,254,0.08)", border:"1px solid #a29bfe44",
+              borderRadius:12, padding:"14px 16px", marginBottom:16, fontSize:12, color:"#a29bfe",
+              lineHeight:1.6 }}>
+              <div style={{ fontWeight:700, marginBottom:6 }}>🖼 Mode Slideshow</div>
+              <div style={{ color:V.hint }}>
+                Carte 1 : <strong style={{color:V.text}}>mieuxetre.png</strong> · 15s<br/>
+                Carte 2 : <strong style={{color:V.text}}>fond.png</strong> + citation aléatoire · 15s<br/>
+                Musique : Terracotta Throb (ou dossier reseaux/musique)
+              </div>
+            </div>
+          )}
 
           {/* Voix */}
           <Section title="Voix off (optionnel)" icon="🎙">
