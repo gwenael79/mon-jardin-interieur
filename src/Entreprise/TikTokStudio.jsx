@@ -474,9 +474,9 @@ function VideoPreview({ clipSrc, musicSrc, voiceSrc, musicVol, voiceVol, hook, m
   );
 }
 
+
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function TikTokStudio() {
-  const [mode,      setMode]      = useState("clip"); // "clip" | "slideshow"
   const [clipId,    setClipId]    = useState("MJI1");
   const [clipFile,  setClipFile]  = useState(null);
   const [clipUrl,   setClipUrl]   = useState(null);
@@ -502,9 +502,10 @@ export default function TikTokStudio() {
   const chunksRef    = useRef([]);
   const localUrlRef = useRef(null); // pour révoquer l'objectURL précédent
 
-  const [hook,    setHook]    = useState("");
-  const [message, setMessage] = useState("");
-  const [cta,     setCta]     = useState("Enregistre-le pour ce soir.");
+  const [hook,        setHook]        = useState("");
+  const [message,     setMessage]     = useState("");
+  const [cta,         setCta]         = useState("Enregistre-le pour ce soir.");
+  const [voicePrompt, setVoicePrompt] = useState(""); // script voix off généré par Lucie
 
   const [musicVol, setMusicVol] = useState(0.6);
   const [voiceVol, setVoiceVol] = useState(1.0);
@@ -692,7 +693,6 @@ export default function TikTokStudio() {
     try {
       const payload = {
         job_id:      String(jobId),
-        mode,
         clip:        clipUrl || clipId,
         music:       musicUrl || "random",
         music_vol:   musicVol,
@@ -760,14 +760,11 @@ export default function TikTokStudio() {
           borderRadius:16, padding:"16px 14px", height:640,
           display:"flex", flexDirection:"column" }}>
           <LuciePanel onApply={(field, value) => {
-            if (field === "hook")    setHook(value);
-            if (field === "message") setMessage(value);
-            if (field === "cta")     setCta(value);
-            // prompt_video et prompt_voix : copier dans le clipboard
-            if (field === "prompt_video" || field === "prompt_voix") {
-              navigator.clipboard?.writeText(value).catch(()=>{});
-              alert('Copié dans le presse-papier : ' + value.substring(0,60) + '…');
-            }
+            if (field === "hook")         setHook(value);
+            if (field === "message")      setMessage(value);
+            if (field === "cta")          setCta(value);
+            if (field === "prompt_voix")  setVoicePrompt(value);
+            if (field === "prompt_video") navigator.clipboard?.writeText(value).catch(()=>{});
           }} />
         </div>
 
@@ -777,26 +774,8 @@ export default function TikTokStudio() {
         {/* ── Sous-colonne gauche : médias ── */}
         <div>
 
-          {/* Mode */}
-          <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-            {[
-              { id:"clip",      label:"🎬 Clips MJI",  desc:"Vidéo animée + textes" },
-              { id:"slideshow", label:"🖼 Slideshow",   desc:"2 images + citation" },
-            ].map(m => (
-              <button key={m.id} onClick={() => setMode(m.id)}
-                style={{ flex:1, border:`1.5px solid ${mode===m.id ? V.accent : V.border}`,
-                  background: mode===m.id ? V.accentSoft : "#111",
-                  borderRadius:12, padding:"10px 12px", cursor:"pointer",
-                  fontFamily:"inherit", transition:".15s", textAlign:"left" }}>
-                <div style={{ fontSize:13, fontWeight:700,
-                  color: mode===m.id ? V.accent : V.text }}>{m.label}</div>
-                <div style={{ fontSize:11, color:V.hint, marginTop:2 }}>{m.desc}</div>
-              </button>
-            ))}
-          </div>
-
-          {/* Clip — masqué en mode slideshow */}
-          {mode === "clip" && <Section title="Clip de fond" icon="🎬">
+          {/* Clip */}
+          <Section title="Clip de fond" icon="🎬">
             <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
               {CLIPS.map(c => (
                 <button key={c.id}
@@ -809,7 +788,7 @@ export default function TikTokStudio() {
             <UploadZone label="Importer un clip MP4 custom"
               accept="video/mp4,video/*" onFile={handleClipFile}
               file={clipFile} uploading={clipUploading} />
-          </Section>}
+          </Section>
 
           {/* Musique */}
           <Section title="Musique" icon="🎵">
@@ -837,24 +816,38 @@ export default function TikTokStudio() {
                 ✕ Supprimer la musique importée
               </button>
             )}
-          </Section>}
-
-          {/* Message slideshow */}
-          {mode === "slideshow" && (
-            <div style={{ background:"rgba(162,155,254,0.08)", border:"1px solid #a29bfe44",
-              borderRadius:12, padding:"14px 16px", marginBottom:16, fontSize:12, color:"#a29bfe",
-              lineHeight:1.6 }}>
-              <div style={{ fontWeight:700, marginBottom:6 }}>🖼 Mode Slideshow</div>
-              <div style={{ color:V.hint }}>
-                Carte 1 : <strong style={{color:V.text}}>mieuxetre.png</strong> · 15s<br/>
-                Carte 2 : <strong style={{color:V.text}}>fond.png</strong> + citation aléatoire · 15s<br/>
-                Musique : Terracotta Throb (ou dossier reseaux/musique)
-              </div>
-            </div>
-          )}
+          </Section>
 
           {/* Voix */}
           <Section title="Voix off (optionnel)" icon="🎙">
+
+            {/* Card script voix off de Lucie */}
+            {voicePrompt && (
+              <div style={{ background:"rgba(0,245,160,0.06)", border:"1px solid rgba(0,245,160,0.25)",
+                borderRadius:10, padding:"12px 14px", marginBottom:14, position:"relative" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+                  marginBottom:8 }}>
+                  <span style={{ fontSize:11, fontWeight:700, letterSpacing:".08em",
+                    textTransform:"uppercase", color:"#00f5a0" }}>🎙 Script Lucie</span>
+                  <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={() => navigator.clipboard?.writeText(voicePrompt).catch(()=>{})}
+                      style={{ fontSize:10, border:"1px solid rgba(0,245,160,0.4)", borderRadius:6,
+                        padding:"2px 8px", background:"transparent", color:"#00f5a0",
+                        cursor:"pointer", fontFamily:"inherit" }}>
+                      Copier
+                    </button>
+                    <button onClick={() => setVoicePrompt("")}
+                      style={{ fontSize:10, border:"none", background:"none",
+                        color:"#444", cursor:"pointer", padding:"2px 6px" }}>✕</button>
+                  </div>
+                </div>
+                <div style={{ fontSize:13, color:"#d0f0e0", lineHeight:1.7,
+                  whiteSpace:"pre-wrap", fontStyle:"italic" }}>
+                  {voicePrompt}
+                </div>
+              </div>
+            )}
+
             <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:12, alignItems:"center" }}>
               {!recording
                 ? <button style={S.btn(V.green,"rgba(0,245,160,0.1)")} onClick={startRecording}>● Enregistrer</button>
@@ -973,8 +966,8 @@ export default function TikTokStudio() {
             </div>
           )}
 
-        </div>{/* fin sous-colonne droite */}
-        </div>{/* fin grille 2 sous-colonnes */}
+        </div>
+        </div>
 
         {/* ── Aperçu vidéo ── */}
         <div style={{ position:"sticky", top:24 }}>

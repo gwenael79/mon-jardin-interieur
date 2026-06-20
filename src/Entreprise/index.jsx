@@ -46,45 +46,9 @@ const HUB_CARDS = [
 
 const BRAND = { dark:"#1c3818", text:"#c8e6b0", sub:"#7ab36a" };
 
-const TIKTOK_TEST_WEBHOOK = "https://n8n.srv1667605.hstgr.cloud/webhook/tiktok-test-manuel";
-
-function TikTokTestButton() {
-  const [status, setStatus] = useState(null); // null | "running" | "ok" | "error"
-  const trigger = async () => {
-    if (status === "running") return;
-    setStatus("running");
-    try {
-      const res = await fetch(TIKTOK_TEST_WEBHOOK, { method: "POST" });
-      setStatus(res.ok ? "ok" : "error");
-    } catch { setStatus("error"); }
-    setTimeout(() => setStatus(null), 5000);
-  };
-  const colors = { running:"#ff9f43", ok:"#5DCAA5", error:"#ff6b6b", null:"#ff2d55" };
-  const labels = { running:"⏳ Lancé — ~60s", ok:"✓ Pipeline lancé", error:"✗ Erreur", null:"▶ Tester TikTok Auto" };
-  return (
-    <div style={{ background:"#1a0a0e", border:`.5px solid ${colors[status]||colors.null}30`,
-      borderRadius:"12px", padding:"14px 16px", cursor: status==="running"?"not-allowed":"pointer",
-      display:"flex", alignItems:"center", gap:"14px" }}
-      onClick={trigger}>
-      <span style={{ fontSize:"22px", flexShrink:0 }}>🎬</span>
-      <div style={{ flex:1 }}>
-        <div style={{ fontSize:"14px", fontWeight:"500", color: colors[status]||colors.null, marginBottom:"2px" }}>
-          {labels[status]}
-        </div>
-        <div style={{ fontSize:"12px", color:"#ff6b6b", opacity:.7, lineHeight:"1.4" }}>
-          Circuit automatique · slideshow 30s · citations
-        </div>
-      </div>
-      <span style={{ fontSize:"16px", color: colors[status]||colors.null, opacity:.5 }}>↗</span>
-    </div>
-  );
-}
-
 function Hub({ setActive }) {
   return (
     <div>
-      <TikTokTestButton />
-      <div style={{ height:"12px" }} />
       <div style={{ background:"#EAF3DE", border:".5px solid #C0DD97", borderRadius:"12px",
         padding:"14px 16px", marginBottom:"20px" }}>
         <div style={{ fontFamily:"Georgia,serif", fontSize:"15px", fontWeight:"600",
