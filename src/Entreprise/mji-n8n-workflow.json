@@ -52,7 +52,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1000,\n  \"system\": \"{{ $json.systemPrompt }}\",\n  \"messages\": [{ \"role\": \"user\", \"content\": \"{{ $json.userPrompt }}\" }]\n}"
+        "body": "={\n  \"model\": \"claude-sonnet-4-6\",\n  \"max_tokens\": 1000,\n  \"system\": \"{{ $json.systemPrompt }}\",\n  \"messages\": [{ \"role\": \"user\", \"content\": \"{{ $json.userPrompt }}\" }]\n}"
       }
     },
     {

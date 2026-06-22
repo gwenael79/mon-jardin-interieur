@@ -14,16 +14,31 @@ const CLIPS = [
   { id:"MJI5" }, { id:"MJI6" }, { id:"MJI7" },
 ];
 
-// Pistes disponibles dans /public/musique/ (servies comme fichiers statiques)
-const MUSIC_TRACKS = [
-  { id:"music_prog",  label:"Music Prog",    src:"/musique/Music prog.mp3" },
-  { id:"clair_lune",  label:"Clair de Lune", src:"/musique/Clair de Lune.mp3" },
-  { id:"music2",      label:"Piste 2",        src:"/musique/music2.mp3" },
-  { id:"music3",      label:"Piste 3",        src:"/musique/music3.mp3" },
-  { id:"music4",      label:"Piste 4",        src:"/musique/music4.mp3" },
-  { id:"music5",      label:"Piste 5",        src:"/musique/music5.mp3" },
-  { id:"music6",      label:"Piste 6",        src:"/musique/music6.mp3" },
+// Pistes groupées par dossier
+const MUSIC_GROUPS = [
+  {
+    label: "🎬 Réseaux",
+    tracks: [
+      { id:"terracotta",  label:"Terracotta Throb", src:"/reseaux/musique/Terracotta Throb.m4a" },
+      { id:"brisa_calle", label:"Brisa de Calle",   src:"/reseaux/musique/Brisa de Calle.m4a" },
+      { id:"sunrise",     label:"Sunrise",           src:"/reseaux/musique/Sunrise.m4a" },
+    ],
+  },
+  {
+    label: "🎵 Bibliothèque",
+    tracks: [
+      { id:"music_prog",  label:"Music Prog",    src:"/musique/Music prog.mp3" },
+      { id:"clair_lune",  label:"Clair de Lune", src:"/musique/Clair de Lune.mp3" },
+      { id:"music2",      label:"Piste 2",        src:"/musique/music2.mp3" },
+      { id:"music3",      label:"Piste 3",        src:"/musique/music3.mp3" },
+      { id:"music4",      label:"Piste 4",        src:"/musique/music4.mp3" },
+      { id:"music5",      label:"Piste 5",        src:"/musique/music5.mp3" },
+      { id:"music6",      label:"Piste 6",        src:"/musique/music6.mp3" },
+    ],
+  },
 ];
+// Flat list pour compatibilité
+const MUSIC_TRACKS = MUSIC_GROUPS.flatMap(g => g.tracks);
 const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
 
 const V = {
@@ -125,13 +140,22 @@ function UploadZone({ label, accept, onFile, file, uploading }) {
   );
 }
 
-// ── Panneau Lucie ─────────────────────────────────────────────────────────────
+// ── Panneau Lucie (vrai agent entreprise-agent / contenu) ─────────────────────
+const LUCIE_SESSION_KEY = 'lucie_tiktok_session';
+function getLucieSession() {
+  try {
+    let s = localStorage.getItem(LUCIE_SESSION_KEY);
+    if (!s) { s = 'lucie-tk-' + Date.now(); localStorage.setItem(LUCIE_SESSION_KEY, s); }
+    return s;
+  } catch { return 'lucie-tk-' + Date.now(); }
+}
+
 function LuciePanel({ onApply }) {
   const [msgs,    setMsgs]    = useState([]);
   const [input,   setInput]   = useState("");
   const [loading, setLoading] = useState(false);
   const [parsed,  setParsed]  = useState(null);
-  const [sessionId]           = useState(() => 'lucie-tiktok-' + Date.now());
+  const [sessionId]           = useState(getLucieSession); // session persistante = mémoire
   const bottomRef = useRef();
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
@@ -164,7 +188,18 @@ function LuciePanel({ onApply }) {
     } finally { setLoading(false); }
   }, [msgs, input, loading, sessionId]);
 
-  const PROMPT_SUGGESTION = "Génère pour une vidéo TikTok 30s. Retourne un JSON avec : prompt_video (en anglais, ambiance clip), hook (5-9 mots, accroche), message (2-3 phrases, valeur concrète, dicible en 15s), cta (4-8 mots, ressenti), prompt_voix (script voix off 25-28s, chaleureux, tutoiement). JSON uniquement.";
+  // Prompt envoyé à la VRAIE Lucie (agent entreprise-agent/contenu)
+  const PROMPT_SUGGESTION =
+    "Génère le contenu complet pour une vidéo TikTok 30s sur ce thème. " +
+    "RÈGLE ABSOLUE : le champ prompt_video doit être OBLIGATOIREMENT EN FRANÇAIS — pas en anglais. " +
+    "Réponds UNIQUEMENT avec un JSON valide (aucun texte autour) :\n" +
+    "{\n" +
+    "  \"prompt_video\": \"[FRANÇAIS OBLIGATOIRE] description du clip de fond (ambiance, couleurs, style visuel — PAS de personnage ni de texte dans l'image)\",\n" +
+    "  \"hook\": \"5-9 mots, accroche directe, tutoiement, sans emoji\",\n" +
+    "  \"message\": \"2-3 phrases courtes, valeur concrète, dicible en 15s à voix haute, tutoiement\",\n" +
+    "  \"cta\": \"4-8 mots, orienté ressenti ou enregistrement, jamais l'appli\",\n" +
+    "  \"prompt_voix\": \"script voix off pédagogique 25-28s : (1) observation d'une situation vécue (2-3s) (2) explication du pourquoi ancrée en psychologie/neurologie, simple (8-10s) (3) micro-exercice guidé étape par étape (10-12s) (4) invitation finale chaleureuse (2-3s). Tutoiement, ton d'un ami qui explique.\"\n" +
+    "}";
 
   const FIELDS = [
     { key:"prompt_video", label:"🎬 Prompt vidéo", apply: v => onApply("prompt_video", v) },
@@ -281,6 +316,60 @@ function LuciePanel({ onApply }) {
         )}
         <div ref={bottomRef} />
       </div>
+    </div>
+  );
+}
+
+// ── Accordéon musique ─────────────────────────────────────────────────────────
+function MusicAccordion({ groups, selectedTrack, musicFile, onSelect }) {
+  const defaultOpen = groups.findIndex(g => g.tracks.some(t => t.id === selectedTrack?.id));
+  const [openIdx, setOpenIdx] = useState(defaultOpen >= 0 ? defaultOpen : 0);
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+      {groups.map((group, idx) => {
+        const isOpen    = openIdx === idx;
+        const hasActive = !musicFile && group.tracks.some(t => t.id === selectedTrack?.id);
+        return (
+          <div key={group.label} style={{ border:`1px solid ${hasActive ? "#ff2d55" : V.border}`,
+            borderRadius:10, overflow:"hidden", transition:".15s" }}>
+            {/* Header */}
+            <button onClick={() => setOpenIdx(isOpen ? -1 : idx)}
+              style={{ width:"100%", display:"flex", justifyContent:"space-between",
+                alignItems:"center", padding:"9px 12px", background:"#111",
+                border:"none", cursor:"pointer", fontFamily:"inherit" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <span style={{ fontSize:12, fontWeight:700,
+                  color: hasActive ? V.accent : V.text }}>
+                  {group.label}
+                </span>
+                {hasActive && (
+                  <span style={{ fontSize:10, background:V.accentSoft, color:V.accent,
+                    padding:"1px 7px", borderRadius:4, fontWeight:700 }}>
+                    ▶ {selectedTrack?.label}
+                  </span>
+                )}
+              </div>
+              <span style={{ fontSize:11, color:V.hint, transition:".2s",
+                transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                ▾
+              </span>
+            </button>
+            {/* Tracks */}
+            {isOpen && (
+              <div style={{ padding:"8px 12px 10px", background:"#0a0a0a",
+                display:"flex", gap:5, flexWrap:"wrap" }}>
+                {group.tracks.map(t => (
+                  <button key={t.id} onClick={() => onSelect(t)}
+                    style={S.chip(!musicFile && selectedTrack?.id === t.id)}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -502,6 +591,8 @@ export default function TikTokStudio() {
   const chunksRef    = useRef([]);
   const localUrlRef = useRef(null); // pour révoquer l'objectURL précédent
 
+  const [videoPrompt, setVideoPrompt] = useState(""); // prompt vidéo généré par Lucie
+  const [videoPromptEditing, setVideoPromptEditing] = useState(false);
   const [hook,        setHook]        = useState("");
   const [message,     setMessage]     = useState("");
   const [cta,         setCta]         = useState("Enregistre-le pour ce soir.");
@@ -764,7 +855,7 @@ export default function TikTokStudio() {
             if (field === "message")      setMessage(value);
             if (field === "cta")          setCta(value);
             if (field === "prompt_voix")  setVoicePrompt(value);
-            if (field === "prompt_video") navigator.clipboard?.writeText(value).catch(()=>{});
+            if (field === "prompt_video") { setVideoPrompt(value); setVideoPromptEditing(false); }
           }} />
         </div>
 
@@ -773,6 +864,46 @@ export default function TikTokStudio() {
 
         {/* ── Sous-colonne gauche : médias ── */}
         <div>
+
+          {/* Card Prompt vidéo (Lucie) */}
+          {videoPrompt && (
+            <div style={{ background:"rgba(255,45,85,0.06)", border:"1px solid rgba(255,45,85,0.25)",
+              borderRadius:12, padding:"12px 14px", marginBottom:4 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+                marginBottom:8 }}>
+                <span style={{ fontSize:11, fontWeight:700, letterSpacing:".08em",
+                  textTransform:"uppercase", color:V.accent }}>🎬 Prompt vidéo</span>
+                <div style={{ display:"flex", gap:6 }}>
+                  <button onClick={() => setVideoPromptEditing(e => !e)}
+                    style={{ fontSize:11, border:`1px solid ${V.accent}44`, borderRadius:6,
+                      padding:"3px 10px", background:"transparent", color:V.accent,
+                      cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
+                    {videoPromptEditing ? "✓ Valider" : "✏ Modifier"}
+                  </button>
+                  <button onClick={() => navigator.clipboard?.writeText(videoPrompt).catch(()=>{})}
+                    style={{ fontSize:11, border:`1px solid ${V.accent}44`, borderRadius:6,
+                      padding:"3px 10px", background:"transparent", color:V.accent,
+                      cursor:"pointer", fontFamily:"inherit", fontWeight:600 }}>
+                    Copier
+                  </button>
+                  <button onClick={() => { setVideoPrompt(""); setVideoPromptEditing(false); }}
+                    style={{ fontSize:11, border:"none", background:"none",
+                      color:"#444", cursor:"pointer", padding:"3px 6px" }}>✕</button>
+                </div>
+              </div>
+              {videoPromptEditing ? (
+                <textarea value={videoPrompt} onChange={e => setVideoPrompt(e.target.value)}
+                  rows={3} autoFocus
+                  style={{ width:"100%", background:"#111", border:`1px solid ${V.accent}44`,
+                    borderRadius:8, padding:"8px 10px", fontFamily:"inherit", fontSize:12,
+                    color:V.text, outline:"none", resize:"vertical", boxSizing:"border-box" }} />
+              ) : (
+                <div style={{ fontSize:12, color:"#ffb3c1", lineHeight:1.6 }}>
+                  {videoPrompt}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Clip */}
           <Section title="Clip de fond" icon="🎬">
@@ -792,18 +923,12 @@ export default function TikTokStudio() {
 
           {/* Musique */}
           <Section title="Musique" icon="🎵">
-            <div style={{ fontSize:12, color:V.hint, marginBottom:10 }}>
-              Choisir une piste · audible dans l'aperçu
-            </div>
-            <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
-              {MUSIC_TRACKS.map(t => (
-                <button key={t.id}
-                  onClick={() => { setSelectedTrack(t); setMusicUrl(null); setMusicFile(null); }}
-                  style={S.chip(!musicFile && selectedTrack.id === t.id)}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
+            <MusicAccordion
+              groups={MUSIC_GROUPS}
+              selectedTrack={selectedTrack}
+              musicFile={musicFile}
+              onSelect={t => { setSelectedTrack(t); setMusicUrl(null); setMusicFile(null); }}
+            />
             <UploadZone label="Importer ta propre piste (MP3, M4A…)" accept="audio/*"
               onFile={handleMusicFile} file={musicFile} uploading={musicUploading} />
             {musicFile && (

@@ -82,7 +82,7 @@ export default function ClarityDashboard() {
       if (!res.ok) throw new Error(payload?.error || `Erreur clarity-proxy ${res.status}`);
 
       setCurrent(payload);
-      await analyze(payload);
+      await analyze(payload, session.access_token);
       loadHistory();
       loadReqCount();
     } catch (e) {
@@ -93,7 +93,7 @@ export default function ClarityDashboard() {
   }
 
   // 2) Envoie le brut à claude-proxy pour une analyse en français
-  async function analyze(data) {
+  async function analyze(data, accessToken) {
     setAnalyzing(true);
     try {
       const prompt = `Tu es analyste web pour "Mon Jardin Intérieur", une app de bien-être.
@@ -108,21 +108,25 @@ Rédige une analyse claire et bienveillante en français (200 mots max) :
 - 2 à 3 actions concrètes et prioritaires.
 Réponds en texte simple, sans Markdown.`;
 
-      // claude-proxy n'exige pas d'Authorization — on appelle via fetch nu
-      // pour ne pas déclencher de preflight CORS sur un header qu'il n'autorise pas.
       const proxyRes = await fetch(
         `${SB}/functions/v1/claude-proxy`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
           body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-sonnet-4-6",
             max_tokens: 1500,
             messages: [{ role: "user", content: prompt }],
           }),
         }
       );
-      if (!proxyRes.ok) throw new Error(`claude-proxy ${proxyRes.status}`);
+      if (!proxyRes.ok) {
+        const errBody = await proxyRes.text();
+        throw new Error(`claude-proxy ${proxyRes.status}: ${errBody}`);
+      }
       const raw = await proxyRes.json();
 
       const text =

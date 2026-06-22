@@ -246,7 +246,7 @@ Réponds directement en Markdown — pas de JSON, pas d'intro, juste l'article.`
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model:      "claude-sonnet-4-20250514",
+          model:      "claude-sonnet-4-6",
           max_tokens: 4000,
           system:     `Tu es le rédacteur SEO de Mon Jardin Intérieur. Tu rédiges des articles de blog optimisés, dans un ton personnel, poétique et ancré. Tu réponds directement en Markdown — jamais en JSON.`,
           messages:   [{ role:"user", content: prompt }],
