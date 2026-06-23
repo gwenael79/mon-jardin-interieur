@@ -1015,7 +1015,7 @@ function FormulaireRejoindre({ tier, montant, onClose, onSuccess }) {
 
           {/* En-tête */}
           <div style={{ padding:'28px 28px 16px', textAlign:'center', flexShrink:0 }}>
-            <img src="/icons/feline.png" alt="" style={{ width:72, height:72, objectFit:'cover', borderRadius:12, display:'block', margin:'0 auto 10px' }}/>
+            <img src="/icons/logo.png" alt="" style={{ width:72, height:72, objectFit:'cover', borderRadius:12, display:'block', margin:'0 auto 10px' }}/>
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:26, fontWeight:300, color:'#1a1208', lineHeight:1.25, marginBottom:8 }}>
               Rejoindre le Cercle
             </div>
