@@ -191,10 +191,10 @@ const SLIDES_CONFIG = [
 // ─────────────────────────────────────────────────────────────────────────────
 //  SLIDE BOÎTE À GRAINES — délègue au composant existant BoiteAGraines
 // ─────────────────────────────────────────────────────────────────────────────
-function ScreenBoiteAGraine({ userId }) {
+function ScreenBoiteAGraine({ userId, isPremium, onUpgrade }) {
   return (
     <div style={{ height:'100%', overflowY:'auto', padding:'8px 4px 16px' }}>
-      <BoiteAGraines userId={userId} inline />
+      <BoiteAGraines userId={userId} inline isPremium={isPremium} onUpgrade={onUpgrade} />
     </div>
   )
 }
@@ -626,7 +626,42 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
               </button>
             </div>
           ) : (
-            slide.Component && <slide.Component {...screenProps}/>
+            slide.Component && (
+              (['defis', 'jardinotheque'].includes(slide.id) && !screenProps?.isPremium) ? (
+                <div style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column' }}>
+                  {/* Contenu flouté */}
+                  <div style={{ flex:1, overflow:'hidden', filter:'blur(7px)', transform:'scale(1.04)', transition:'filter .4s ease', pointerEvents:'none' }}>
+                    <slide.Component {...screenProps}/>
+                  </div>
+                  {/* Carte premium centrée */}
+                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', zIndex:10 }}>
+                    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:14, padding: isMobile ? '28px 32px' : '36px 48px', borderRadius:20, background:'rgba(250,245,242,.88)', backdropFilter:'blur(14px)', border:'1px solid rgba(26,74,40,.12)', boxShadow:'0 8px 48px rgba(0,0,0,.18)', maxWidth:300, textAlign:'center' }}>
+                      <span style={{ fontSize: isMobile ? 36 : 44 }}>{slide.icon}</span>
+                      <div>
+                        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 28, fontWeight:600, color:'rgba(26,18,8,.92)', marginBottom:8, lineHeight:1.25 }}>
+                          {slide.id === 'defis' ? 'Défis communautaires' : 'La Jardinothèque'}
+                        </div>
+                        <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 13 : 14, color:'rgba(26,18,8,.50)', lineHeight:1.6 }}>
+                          {slide.id === 'defis'
+                            ? 'Rejoins les défis de la communauté et cultive ta pratique au quotidien.'
+                            : 'Accède aux méditations, hypnoses et e-books pour aller plus loin.'}
+                        </div>
+                      </div>
+                      <button
+                        onClick={screenProps?.onUpgrade}
+                        style={{ padding:'14px 32px', borderRadius:100, border:'none', cursor:'pointer', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 13 : 14, fontWeight:600, letterSpacing:'.06em', boxShadow:'0 8px 24px rgba(90,154,40,.30)', transition:'transform .15s', width:'100%' }}
+                        onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+                        onMouseLeave={e => e.currentTarget.style.transform='none'}
+                      >
+                        Passer Premium ✦
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <slide.Component {...screenProps}/>
+              )
+            )
           )}
         </div>
 

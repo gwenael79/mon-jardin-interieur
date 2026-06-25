@@ -2022,16 +2022,16 @@ let PLANT_RITUALS = PLANT_RITUALS_EMPTY
 
 
 const PLANT_QUESTIONS = [
-  { id:'q1',  zone:'roots',   theme:'Énergie vitale',   icon:'⚡', text:'Comment est votre énergie physique en ce moment ?',            sub:'Fermez les yeux. Scannez votre corps de la tête aux pieds.',          answers:[{label:'Vidé·e',emoji:'🪫',stress:95},{label:'Épuisé·e',emoji:'😴',stress:72},{label:'Passable',emoji:'😐',stress:48},{label:'Bien',emoji:'🌱',stress:20},{label:'Plein·e d\'élan',emoji:'✨',stress:0}] },
-  { id:'q2',  zone:'roots',   theme:'Sommeil',           icon:'🌙', text:'Quelle qualité avait votre sommeil cette nuit ?',             sub:'Nuit agitée, fragments de rêves, réveil difficile…',                  answers:[{label:'Cauchemardesque',emoji:'😩',stress:95},{label:'Agité·e',emoji:'😣',stress:72},{label:'Moyen',emoji:'😶',stress:45},{label:'Reposant',emoji:'😌',stress:15},{label:'Profond & doux',emoji:'🌟',stress:0}] },
-  { id:'q3',  zone:'stem',    theme:'Corps',             icon:'🤸', text:'Où en est votre corps en ce début de journée ?',             sub:'Tensions, lourdeurs, contractures… ou légèreté.',                    answers:[{label:'Douloureux',emoji:'😖',stress:95},{label:'Contracté',emoji:'😬',stress:70},{label:'Neutre',emoji:'😑',stress:45},{label:'Détendu',emoji:'😊',stress:18},{label:'Léger & libre',emoji:'🕊️',stress:0}] },
-  { id:'q4',  zone:'stem',    theme:'Flexibilité',       icon:'🌊', text:'Face à un imprévu, votre posture intérieure est…',           sub:'Ce que vous sentez avant même qu\'il arrive.',                        answers:[{label:'Effondrement',emoji:'😤',stress:95},{label:'Résistance',emoji:'😰',stress:70},{label:'Hésitation',emoji:'🤔',stress:48},{label:'Adaptation',emoji:'🙆',stress:20},{label:'Fluidité totale',emoji:'🌿',stress:0}] },
-  { id:'q5',  zone:'leaves',  theme:'Lien aux autres',   icon:'🤝', text:'Votre désir de connexion avec les autres ce matin ?',        sub:'Envie de partager, d\'échanger, de rire ensemble…',                   answers:[{label:'Retrait total',emoji:'🙈',stress:95},{label:'Isolé·e',emoji:'🫥',stress:72},{label:'Neutre',emoji:'🙂',stress:48},{label:'Présent·e',emoji:'😄',stress:20},{label:'Rayonnant·e',emoji:'🌞',stress:0}] },
-  { id:'q6',  zone:'leaves',  theme:'Humeur',            icon:'🎨', text:'Quelle couleur peindrait votre humeur en ce moment ?',       sub:'Une teinte émotionnelle, pas un jugement.',                           answers:[{label:'Noir profond',emoji:'🌑',stress:95},{label:'Gris lourd',emoji:'🌥️',stress:72},{label:'Beige terne',emoji:'🌤️',stress:48},{label:'Jaune doux',emoji:'🌼',stress:18},{label:'Or lumineux',emoji:'☀️',stress:0}] },
-  { id:'q7',  zone:'flowers', theme:'Rapport à soi',     icon:'💆', text:'Comment vous sentez-vous vis-à-vis de vous-même ?',          sub:'Bienveillance, indifférence, critique intérieure…',                   answers:[{label:'Très dur·e',emoji:'😞',stress:95},{label:'Déconnecté·e',emoji:'😕',stress:70},{label:'Neutre',emoji:'😌',stress:45},{label:'Avec douceur',emoji:'🌸',stress:18},{label:'Avec amour',emoji:'💖',stress:0}] },
-  { id:'q8',  zone:'flowers', theme:'Anticipation',      icon:'🌅', text:'Face à la journée qui s\'ouvre, votre ressenti est…',        sub:'Ce que vous sentez avant même qu\'elle commence.',                    answers:[{label:'Angoisse',emoji:'😨',stress:95},{label:'Préoccupation',emoji:'😟',stress:70},{label:'Neutralité',emoji:'😐',stress:45},{label:'Sérénité',emoji:'🙂',stress:18},{label:'Joie anticipée',emoji:'🌟',stress:0}] },
-  { id:'q9',  zone:'breath',  theme:'Stress intérieur',  icon:'🌀', text:'Quel est le niveau de tension que vous sentez là, maintenant ?', sub:'Pas dans les idées — dans le ventre, la gorge, les épaules.',      answers:[{label:'Insupportable',emoji:'🔥',stress:100},{label:'Élevé',emoji:'⚠️',stress:75},{label:'Gérable',emoji:'💛',stress:48},{label:'Faible',emoji:'💚',stress:18},{label:'Absent',emoji:'🌬️',stress:0}] },
-  { id:'q10', zone:'breath',  theme:'Présence',          icon:'🔮', text:'Êtes-vous dans votre corps, ou perdu·e dans vos pensées ?',  sub:'Le fil entre le mental et le vivant.',                                answers:[{label:'Tourbillon mental',emoji:'🌪️',stress:95},{label:'Plutôt dans la tête',emoji:'💭',stress:70},{label:'Entre les deux',emoji:'⚖️',stress:45},{label:'Ancré·e',emoji:'🌱',stress:15},{label:'Pleinement ici',emoji:'🧘',stress:0}] },
+  { id:'q1',  zone:'roots',   theme:'Énergie vitale',   icon:'⚡', text:'Comment est ton énergie physique en ce moment ?',             sub:'Ferme les yeux. Scanne ton corps de la tête aux pieds.',              answers:[{label:'Vidé·e',emoji:'🪫',stress:95},{label:'Épuisé·e',emoji:'😴',stress:72},{label:'Passable',emoji:'😐',stress:48},{label:'Bien',emoji:'🌱',stress:20},{label:'Plein·e d\'élan',emoji:'✨',stress:0}] },
+  { id:'q2',  zone:'roots',   theme:'Sommeil',           icon:'🌙', text:'Quelle qualité avait ton sommeil cette nuit ?',              sub:'Nuit agitée, fragments de rêves, réveil difficile…',                  answers:[{label:'Cauchemardesque',emoji:'😩',stress:95},{label:'Agité·e',emoji:'😣',stress:72},{label:'Moyen',emoji:'😶',stress:45},{label:'Reposant',emoji:'😌',stress:15},{label:'Profond & doux',emoji:'🌟',stress:0}] },
+  { id:'q3',  zone:'stem',    theme:'Corps',             icon:'🤸', text:'Où en est ton corps en ce début de journée ?',              sub:'Tensions, lourdeurs, contractures… ou légèreté.',                    answers:[{label:'Douloureux',emoji:'😖',stress:95},{label:'Contracté',emoji:'😬',stress:70},{label:'Neutre',emoji:'😑',stress:45},{label:'Détendu',emoji:'😊',stress:18},{label:'Léger & libre',emoji:'🕊️',stress:0}] },
+  { id:'q4',  zone:'stem',    theme:'Flexibilité',       icon:'🌊', text:'Face à ce qui t\'échappe en ce moment, tu ressens…',        sub:'Ce que tu sens là, dans ton ventre — pas dans tes idées.',            answers:[{label:'Effondrement',emoji:'😩',stress:95},{label:'Résistance',emoji:'😰',stress:70},{label:'Hésitation',emoji:'🤔',stress:48},{label:'Adaptation',emoji:'🙆',stress:20},{label:'Fluidité totale',emoji:'🌿',stress:0}] },
+  { id:'q5',  zone:'leaves',  theme:'Lien aux autres',   icon:'🤝', text:'Ton envie de connexion avec les autres ce matin ?',         sub:'Envie de partager, d\'échanger, de rire ensemble…',                  answers:[{label:'Retrait total',emoji:'🧊',stress:95},{label:'Isolé·e',emoji:'🫥',stress:72},{label:'Neutre',emoji:'🙂',stress:48},{label:'Présent·e',emoji:'😄',stress:20},{label:'Rayonnant·e',emoji:'🌞',stress:0}] },
+  { id:'q6',  zone:'leaves',  theme:'Humeur',            icon:'🎨', text:'Quelle couleur peindrait ton humeur en ce moment ?',        sub:'Une teinte émotionnelle, pas un jugement.',                           answers:[{label:'Noir profond',emoji:'🌑',stress:95},{label:'Gris lourd',emoji:'🌥️',stress:72},{label:'Beige terne',emoji:'🌤️',stress:48},{label:'Jaune doux',emoji:'🌼',stress:18},{label:'Or lumineux',emoji:'☀️',stress:0}] },
+  { id:'q7',  zone:'flowers', theme:'Rapport à soi',     icon:'💆', text:'Comment tu te sens vis-à-vis de toi-même ?',               sub:'Bienveillance, indifférence, critique intérieure…',                   answers:[{label:'Très dur·e',emoji:'😞',stress:95},{label:'Déconnecté·e',emoji:'😕',stress:70},{label:'Neutre',emoji:'😌',stress:45},{label:'Avec tendresse',emoji:'🌸',stress:18},{label:'Avec amour',emoji:'💖',stress:0}] },
+  { id:'q8',  zone:'flowers', theme:'Anticipation',      icon:'🌅', text:'Face à la journée qui s\'ouvre, ton ressenti est…',        sub:'Ce que tu ressens maintenant, avant de te lancer.',                  answers:[{label:'Angoisse',emoji:'😨',stress:95},{label:'Préoccupation',emoji:'😟',stress:70},{label:'Neutralité',emoji:'😐',stress:45},{label:'Sérénité',emoji:'🙂',stress:18},{label:'Joie anticipée',emoji:'🌟',stress:0}] },
+  { id:'q9',  zone:'breath',  theme:'Stress intérieur',  icon:'🌀', text:'Quel niveau de tension ressens-tu là, maintenant ?',       sub:'Pas dans les idées — dans le ventre, la gorge, les épaules.',        answers:[{label:'Insupportable',emoji:'🔥',stress:95},{label:'Élevé',emoji:'⚠️',stress:75},{label:'Gérable',emoji:'💛',stress:48},{label:'Faible',emoji:'💚',stress:18},{label:'Absent',emoji:'🌬️',stress:0}] },
+  { id:'q10', zone:'breath',  theme:'Présence',          icon:'🔮', text:'Es-tu dans ton corps, ou perdu·e dans tes pensées ?',      sub:'Le fil entre le mental et le vivant.',                                answers:[{label:'Tourbillon mental',emoji:'🌪️',stress:95},{label:'Plutôt dans la tête',emoji:'💭',stress:70},{label:'Entre les deux',emoji:'⚖️',stress:45},{label:'Ancré·e',emoji:'🌱',stress:15},{label:'Pleinement ici',emoji:'🧘',stress:0}] },
 ]
 
 function computeDegradation(answers) {
@@ -2395,8 +2395,8 @@ function getBilanRecommendation(degradation) {
 
   if (allGood) return {
     type: 'good',
-    message: "Votre jardin intérieur est dans un bel équilibre ce matin.",
-    sub: "Tous vos rituels méritent votre attention aujourd'hui — choisissez celui qui vous attire.",
+    message: "Ton jardin intérieur est dans un bel équilibre ce matin.",
+    sub: "Tous tes rituels méritent ton attention aujourd'hui — choisis celui qui t'attire.",
     zones: [],
   }
 
@@ -2405,8 +2405,8 @@ function getBilanRecommendation(degradation) {
 
   return {
     type: 'focus',
-    message: `D'après votre bilan, ${zoneNames} ${zones.length > 1 ? 'semblent' : 'semble'} avoir besoin de votre attention aujourd'hui.`,
-    sub: "Nous vous suggérons de commencer par les rituels de " + zones.map(z => `${z.emoji} ${z.desc}`).join(', ') + ".",
+    message: `D'après ton bilan, ${zoneNames} ${zones.length > 1 ? 'semblent' : 'semble'} avoir besoin de ton attention aujourd'hui.`,
+    sub: "On te suggère de commencer par les rituels de " + zones.map(z => `${z.emoji} ${z.desc}`).join(', ') + ".",
     zones: top.map(([id]) => id),
   }
 }
@@ -2577,10 +2577,10 @@ const choose = (idx) => {
         <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
           <div style={{ fontSize:56, marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
-          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'clamp(32px, 8vw, 42px)', color:'#0f0a06', fontWeight:500, lineHeight:1.15, marginBottom:12 }}>Comment vous<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sentez-vous</em> aujourd'hui ?</h2>
+          <h2 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'clamp(32px, 8vw, 42px)', color:'#0f0a06', fontWeight:500, lineHeight:1.15, marginBottom:12 }}>Comment tu te<br /><em style={{ fontStyle:'italic', color:'var(--gold-warm)' }}>sens</em> aujourd'hui ?</h2>
           <div style={{ width:40, height:1, background:'rgba(var(--gold-warm-rgb),0.3)', margin:'16px auto' }} />
-          <p style={{ color:'#0f0a06', fontSize:17, lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre votre pouls intérieur.</p>
-          <p style={{ color:'#1a1208', fontSize:15, lineHeight:1.7, marginBottom:32 }}>Votre plante reflétera votre état et révèlera les zones à soigner en priorité.</p>
+          <p style={{ color:'#0f0a06', fontSize:17, lineHeight:1.7, marginBottom:6 }}>Dix questions pour prendre ton pouls intérieur.</p>
+          <p style={{ color:'#1a1208', fontSize:15, lineHeight:1.7, marginBottom:32 }}>Ta plante reflétera ton état et révèlera les zones à soigner en priorité.</p>
           <button onClick={startQuiz} style={{ padding:'16px 40px', borderRadius:50, border:'none', background:'linear-gradient(135deg, #c8a040, #a07820)', color:'#fff', fontSize:16, fontWeight:700, cursor:'pointer', letterSpacing:'0.08em', display:'block', width:'100%', marginBottom:12, boxShadow:'0 4px 18px rgba(160,120,32,0.38)' }}>Commencer le bilan</button>
           <button onClick={onSkip} style={{ padding:'12px 40px', borderRadius:50, border:'1.5px solid rgba(20,14,6,0.25)', background:'rgba(20,14,6,0.04)', color:'#1a1208', fontSize:14, fontWeight:500, cursor:'pointer', letterSpacing:'0.05em', display:'block', width:'100%' }}>Passer pour aujourd'hui</button>
           <p style={{ color:'#1a1208', fontSize:13, marginTop:12 }}>Environ 2 minutes · Confidentiel</p>
@@ -3251,7 +3251,9 @@ const GRAINE_TAGS = [
   { id: 'merci', emoji: '🙏', label: 'Merci' },
 ]
 
-function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) {
+const FREE_GRAINES_LIMIT = 7
+
+function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false, isPremium = false, onUpgrade }) {
   const isMobile = useIsMobile()
   const [text, setText]             = useState('')
   const [tags, setTags]             = useState([])
@@ -3263,7 +3265,9 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
   const [grainesCount, setGrainesCount] = useState(0)
   const [loadingG, setLoadingG]     = useState(false)
 
-  const today = new Date().toISOString().slice(0, 10)
+  // Date locale YYYY-MM-DD (pas UTC) — utilisée pour le label "aujourd'hui" dans le modal
+  const d = new Date()
+  const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 
   function toggleTag(id) {
     setTags(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
@@ -3272,12 +3276,16 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
   // Vérifie si la personne a déjà écrit aujourd'hui + compte total pour le bouton inline
   useEffect(() => {
     if (!userId) return
+    // Minuit heure locale → ISO UTC pour comparer correctement les timestamptz Supabase
+    const startOfToday = new Date()
+    startOfToday.setHours(0, 0, 0, 0)
     supabase
       .from('graines_estime')
       .select('*')
       .eq('user_id', userId)
-      .gte('created_at', today + 'T00:00:00')
-      .lte('created_at', today + 'T23:59:59')
+      .gte('created_at', startOfToday.toISOString())
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle()
       .then(({ data }) => {
         if (data) { setTodayEntry(data); setSavedToday(true) }
@@ -3426,6 +3434,30 @@ function BoiteAGraines({ userId, inline, aiMessage = null, aiLoading = false }) 
             <div style={{ fontSize: 14, color:'#5a6840', marginTop:2, fontWeight:400 }}>
               Reviens demain soir pour planter une nouvelle graine 🌿
             </div>
+          </div>
+        ) : (!isPremium && grainesCount >= FREE_GRAINES_LIMIT) ? (
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, padding: isMobile ? '24px 16px' : '28px 20px', textAlign:'center' }}>
+            <TreasureChestIcon size={isMobile ? 52 : 60} />
+            <div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 22 : 26, fontWeight:600, color:'#1a1208', lineHeight:1.3, marginBottom:8 }}>
+                {FREE_GRAINES_LIMIT} graines plantées ✦
+              </div>
+              <div style={{ fontSize: isMobile ? 14 : 15, color:'rgba(26,18,8,.55)', lineHeight:1.65, fontFamily:"'Jost',sans-serif", maxWidth:280 }}>
+                Tu as cultivé tes {FREE_GRAINES_LIMIT} premières graines d'estime.<br/>
+                Continue à faire grandir ta confiance avec Premium.
+              </div>
+            </div>
+            <div onClick={openModal} style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 22px', borderRadius:100, background:'rgba(60,120,60,0.10)', border:'1px solid rgba(60,120,60,0.25)', cursor:'pointer', fontSize: isMobile ? 14 : 15, color:'#1a4a18', fontFamily:"'Jost',sans-serif", fontWeight:500 }}>
+              <TreasureChestIcon size={18} /><span>Voir mes {FREE_GRAINES_LIMIT} graines</span>
+            </div>
+            <button
+              onClick={onUpgrade}
+              style={{ padding:'14px 32px', borderRadius:100, border:'none', cursor:'pointer', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 15, fontWeight:600, letterSpacing:'.06em', boxShadow:'0 8px 24px rgba(90,154,40,.30)', transition:'transform .15s' }}
+              onMouseEnter={e => e.currentTarget.style.transform='translateY(-2px)'}
+              onMouseLeave={e => e.currentTarget.style.transform='none'}
+            >
+              Passer Premium ✦
+            </button>
           </div>
         ) : (
           <>
@@ -4751,7 +4783,7 @@ function FleurShareModal({ imageUrl, firstName = '', onClose }) {
   )
 }
 
-function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal, isPostRitual = false, userLevel }) {
+function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumens, bilanDoneToday, onOpenBilan, openRitualsModal, onCloseRituals, onOpenNeedModal, isPostRitual = false, userLevel, isPremium = false, onUpgrade }) {
   // ── Charge PLANT_RITUALS depuis Supabase ──────────────────
   const { rituals: _rituals, loading: ritualsLoading } = useRituels()
   useEffect(() => {
@@ -5450,6 +5482,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
         plantHealth={plant?.health ?? todayPlant?.health ?? 5}
         onHealthUpdate={h => setPlantOverride(prev => ({ ...(prev ?? todayPlant), health: h }))}
         onSeeFlower={() => setShowNeedModal(false)}
+        isPremium={isPremium}
+        onUpgrade={onUpgrade}
       />
     )}
     {showRitualSuggestion && selectedNeed && (
@@ -5973,7 +6007,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                 <ColonneFleur plant={plant} gardenSettings={gardenSettings} lumens={lumens} isMobile={isMobile} todayLabel={todayLabel} profile={profile} userId={userId} setGardenTier={setGardenTier} setShowGardenSettings={setShowGardenSettings} streak={stats?.streak ?? 0} />
               </div>
               {/* Mobile : boîte à graines en dessous, pleine largeur */}
-              <BoiteAGraines userId={userId} />
+              <BoiteAGraines userId={userId} isPremium={isPremium} onUpgrade={onUpgrade} />
             </>
           ) : (
             /* Desktop : 2 colonnes */
@@ -6010,7 +6044,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
                     Un instant pour mon jardin
                   </span>
                 </div>
-                <BoiteAGraines userId={userId} inline />
+                <BoiteAGraines userId={userId} inline isPremium={isPremium} onUpgrade={onUpgrade} />
               </div>
             </div>
           )

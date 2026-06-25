@@ -646,7 +646,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         {(
           <div style={{ flexShrink:0, paddingBottom: isMobile ? 12 : 16, animation:'nm_fadeUp .45s ease .3s both' }}>
             <button
-              onClick={() => setShowAudio(true)}
+              onClick={() => isPremium ? setShowAudio(true) : onUpgrade?.()}
               style={{
                 width:'100%', display:'flex', alignItems:'center', gap: isMobile ? 14 : 18,
                 padding: isMobile ? '16px 20px' : '20px 28px',
@@ -662,7 +662,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
               <div style={{ flexShrink:0, filter:'drop-shadow(0 1px 4px rgba(0,0,0,0.2))' }}>
                 <Icon id="audio" size={isMobile ? 28 : 34} />
               </div>
-              <div>
+              <div style={{ flex:1 }}>
                 <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:700, fontStyle:'italic', color:'#fff', lineHeight:1.2, textShadow:'0 1px 6px rgba(0,0,0,0.18)' }}>
                   Rituels guidés en audio
                 </div>
@@ -670,7 +670,14 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
                   La voix te porte, tu fermes les yeux
                 </div>
               </div>
-              <div style={{ marginLeft:'auto', fontSize: isMobile ? 18 : 22, opacity:0.80 }}>▶</div>
+              {isPremium ? (
+                <div style={{ marginLeft:'auto', fontSize: isMobile ? 18 : 22, opacity:0.80 }}>▶</div>
+              ) : (
+                <div style={{ marginLeft:'auto', flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                  <span style={{ fontSize: isMobile ? 18 : 20 }}>🔒</span>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:10, fontWeight:600, letterSpacing:'.08em', color:'rgba(255,255,255,0.90)', textTransform:'uppercase' }}>Premium</span>
+                </div>
+              )}
             </button>
           </div>
         )}
