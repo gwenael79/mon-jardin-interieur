@@ -1,0 +1,323 @@
+import { useState, useRef, useEffect } from 'react'
+
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500;600&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+@keyframes prpFadeUp   { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }
+@keyframes prpPulse    { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
+@keyframes prpRipple   { 0% { transform:scale(1); opacity:.35 } 100% { transform:scale(2.2); opacity:0 } }
+@keyframes prpSlideUp  { from { opacity:0; transform:scale(.94) translateY(16px) } to { opacity:1; transform:scale(1) translateY(0) } }
+
+.prp-root {
+  position:fixed; inset:0;
+  font-family:'Jost',sans-serif;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.prp-bg {
+  position:absolute; inset:0; z-index:0;
+}
+.prp-bg img {
+  width:100%; height:100%; object-fit:cover; object-position:center top;
+}
+.prp-bg::after {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(160deg, rgba(252,246,240,.90), rgba(224,200,210,.84));
+}
+
+/* ── LANDING ── */
+.prp-landing {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center;
+  text-align:center; padding:36px 28px; max-width:480px; width:100%;
+}
+.prp-logo {
+  width:72px; height:72px; border-radius:50%;
+  box-shadow:0 4px 20px rgba(60,100,20,.18);
+  margin-bottom:24px;
+  animation:prpFadeUp .6s ease both, prpPulse 3.5s ease-in-out 1s infinite;
+}
+.prp-eyebrow {
+  font-size:10px; letter-spacing:2.5px; text-transform:uppercase;
+  color:#c8a0b0; font-weight:500; margin-bottom:16px;
+  animation:prpFadeUp .6s .08s ease both;
+}
+.prp-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(34px,8vw,52px); font-weight:300;
+  color:#1a1208; line-height:1.2; margin-bottom:14px;
+  animation:prpFadeUp .6s .14s ease both;
+}
+.prp-title em { font-style:italic; color:#a07888; }
+.prp-sub {
+  font-size:15px; color:rgba(30,20,8,.52); line-height:1.75;
+  margin-bottom:40px; font-weight:300; max-width:320px;
+  animation:prpFadeUp .6s .20s ease both;
+}
+.prp-listen-btn {
+  display:flex; align-items:center; gap:10px;
+  padding:17px 40px; border-radius:100px; border:none;
+  background:linear-gradient(135deg,#c8a0b0,#a07888);
+  color:#fff; font-family:'Jost',sans-serif;
+  font-size:15.5px; font-weight:500; letter-spacing:.05em;
+  cursor:pointer; box-shadow:0 8px 28px rgba(160,100,130,.32);
+  transition:filter .2s, transform .15s;
+  margin-bottom:18px;
+  animation:prpFadeUp .6s .28s ease both;
+}
+.prp-listen-btn:hover { filter:brightness(1.08); transform:translateY(-2px); }
+.prp-listen-btn:active { transform:translateY(0); }
+.prp-free-note {
+  font-size:12px; color:rgba(30,20,8,.36);
+  letter-spacing:.04em;
+  animation:prpFadeUp .6s .36s ease both;
+}
+
+/* ── PLAYING ── */
+.prp-playing {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center;
+  text-align:center; padding:36px 28px; max-width:480px; width:100%;
+  animation:prpFadeUp .5s ease both;
+}
+.prp-circle-wrap {
+  position:relative; width:140px; height:140px;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:36px;
+}
+.prp-ripple {
+  position:absolute; inset:0; border-radius:50%;
+  border:1.5px solid rgba(200,160,176,.45);
+  animation:prpRipple 2.4s ease-out infinite;
+}
+.prp-ripple:nth-child(2) { animation-delay:.8s; }
+.prp-ripple:nth-child(3) { animation-delay:1.6s; }
+.prp-circle {
+  width:100px; height:100px; border-radius:50%;
+  background:linear-gradient(135deg,rgba(200,160,176,.18),rgba(160,120,136,.14));
+  border:1.5px solid rgba(200,160,176,.40);
+  display:flex; align-items:center; justify-content:center;
+  font-size:36px;
+  animation:prpPulse 2.6s ease-in-out infinite;
+}
+.prp-playing-label {
+  font-size:10px; letter-spacing:2.5px; text-transform:uppercase;
+  color:#c8a0b0; font-weight:500; margin-bottom:10px;
+}
+.prp-playing-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px; font-weight:300; color:rgba(30,20,8,.68);
+  font-style:italic; margin-bottom:8px;
+}
+.prp-playing-hint {
+  font-size:12.5px; color:rgba(30,20,8,.36); margin-bottom:44px;
+  letter-spacing:.05em;
+}
+.prp-progress-wrap { width:100%; max-width:280px; }
+.prp-progress-bg {
+  width:100%; height:2px; background:rgba(200,160,176,.20);
+  border-radius:4px; overflow:hidden; margin-bottom:8px;
+}
+.prp-progress-bar {
+  height:2px; background:linear-gradient(90deg,#c8a0b0,#a07888);
+  border-radius:4px; transition:width .8s linear;
+}
+.prp-time {
+  font-size:11.5px; color:rgba(30,20,8,.32);
+  display:flex; justify-content:space-between;
+}
+
+/* ── MODAL FIN ── */
+.prp-overlay {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(20,8,4,.65); backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  animation:prpFadeUp .32s ease both;
+}
+.prp-modal {
+  background:linear-gradient(160deg,#faf5f0,#f2e8e4);
+  border:1px solid rgba(200,160,150,.28);
+  border-radius:28px; width:100%; max-width:420px;
+  padding:48px 32px 40px; position:relative; text-align:center;
+  box-shadow:0 28px 80px rgba(160,100,120,.22);
+  animation:prpSlideUp .42s cubic-bezier(.22,1,.36,1) both;
+}
+.prp-modal-close {
+  position:absolute; top:16px; right:18px;
+  width:30px; height:30px; border-radius:50%;
+  background:rgba(0,0,0,.06); border:none;
+  color:rgba(30,20,8,.30); cursor:pointer; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .18s;
+}
+.prp-modal-close:hover { background:rgba(0,0,0,.12); color:rgba(30,20,8,.55); }
+.prp-modal-icon {
+  font-size:52px; margin-bottom:20px; display:block;
+  animation:prpFadeUp .4s .08s ease both;
+}
+.prp-modal-title {
+  font-family:'Cormorant Garamond',serif;
+  font-size:27px; font-weight:300; color:#1a1208;
+  line-height:1.28; margin-bottom:16px;
+  animation:prpFadeUp .4s .14s ease both;
+}
+.prp-modal-body {
+  font-size:14px; color:rgba(30,20,8,.58); line-height:1.80;
+  margin-bottom:30px;
+  animation:prpFadeUp .4s .20s ease both;
+}
+.prp-modal-cta {
+  width:100%; padding:16px; border-radius:100px; border:none;
+  background:linear-gradient(135deg,#5a9a28,#3a7a18);
+  color:#fff; font-family:'Jost',sans-serif;
+  font-size:15px; font-weight:500; letter-spacing:.04em;
+  cursor:pointer; box-shadow:0 6px 24px rgba(60,120,20,.28);
+  transition:filter .2s, transform .15s;
+  margin-bottom:12px;
+  animation:prpFadeUp .4s .26s ease both;
+}
+.prp-modal-cta:hover { filter:brightness(1.08); transform:translateY(-1px); }
+.prp-modal-cta:active { transform:translateY(0); }
+.prp-modal-secondary {
+  font-size:11.5px; color:rgba(30,20,8,.35);
+  margin-bottom:0;
+  animation:prpFadeUp .4s .32s ease both;
+}
+
+@media (max-width:480px) {
+  .prp-modal {
+    border-radius:24px 24px 0 0;
+    position:fixed; bottom:0; left:0; right:0;
+    max-width:100%; padding:36px 24px 44px;
+  }
+  .prp-overlay { align-items:flex-end; padding:0; }
+}
+`
+
+function formatTime(secs) {
+  if (!isFinite(secs) || secs < 0) return '0:00'
+  const m = Math.floor(secs / 60)
+  const s = Math.floor(secs % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+export function PublicRituelPage({ onRegister }) {
+  const [state,       setState]       = useState('landing')  // 'landing' | 'playing' | 'done'
+  const [showModal,   setShowModal]   = useState(false)
+  const [progress,    setProgress]    = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration,    setDuration]    = useState(0)
+  const audioRef = useRef(null)
+
+  useEffect(() => () => { audioRef.current?.pause() }, [])
+
+  function handleListen() {
+    const audio = new Audio('/audio/Rituelaccueil.mp3')
+    audioRef.current = audio
+    audio.addEventListener('loadedmetadata', () => setDuration(audio.duration))
+    audio.addEventListener('timeupdate', () => {
+      setCurrentTime(audio.currentTime)
+      if (audio.duration) setProgress((audio.currentTime / audio.duration) * 100)
+    })
+    audio.addEventListener('ended', () => {
+      setState('done')
+      setShowModal(true)
+    })
+    audio.play().catch(() => {})
+    setState('playing')
+  }
+
+  function handleSignUp() {
+    // Clic CTA → skip StepDecouverte à l'inscription
+    localStorage.setItem('mji_decouverte_done', '1')
+    onRegister()
+  }
+
+  function handleClose() {
+    // X close → page inscription sans skip
+    onRegister()
+  }
+
+  return (
+    <>
+      <style>{css}</style>
+      <div className="prp-root">
+        <div className="prp-bg">
+          <img src="/fond1.png" alt="" />
+        </div>
+
+        {/* ── LANDING ── */}
+        {state === 'landing' && (
+          <div className="prp-landing">
+            <img src="/icons/icon-192.png" alt="logo" className="prp-logo" />
+            <div className="prp-eyebrow">Mon Jardin Intérieur</div>
+            <h1 className="prp-title">
+              Un rituel pour<br />retrouver vos <em>racines</em>
+            </h1>
+            <p className="prp-sub">
+              2 minutes offertes pour vous ancrer,<br />
+              respirer et revenir à vous.
+            </p>
+            <button className="prp-listen-btn" onClick={handleListen}>
+              <span>🎧</span>
+              <span>Écouter le rituel</span>
+            </button>
+            <p className="prp-free-note">Sans inscription · Gratuit</p>
+          </div>
+        )}
+
+        {/* ── PLAYING ── */}
+        {(state === 'playing' || state === 'done') && !showModal && (
+          <div className="prp-playing">
+            <div className="prp-circle-wrap">
+              <div className="prp-ripple" />
+              <div className="prp-ripple" />
+              <div className="prp-ripple" />
+              <div className="prp-circle">🌸</div>
+            </div>
+            <div className="prp-playing-label">Rituel d'accueil</div>
+            <div className="prp-playing-title">Retrouver ses racines…</div>
+            <div className="prp-playing-hint">Fermez les yeux · laissez venir</div>
+            <div className="prp-progress-wrap">
+              <div className="prp-progress-bg">
+                <div className="prp-progress-bar" style={{ width: `${progress}%` }} />
+              </div>
+              <div className="prp-time">
+                <span>{formatTime(currentTime)}</span>
+                <span>{duration ? formatTime(duration) : '--:--'}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODAL DE CONVERSION ── */}
+        {showModal && (
+          <div className="prp-overlay">
+            <div className="prp-modal">
+              <button className="prp-modal-close" onClick={handleClose}>✕</button>
+              <span className="prp-modal-icon">🌱</span>
+              <h2 className="prp-modal-title">
+                Ce que vous venez de ressentir…<br />
+                <em style={{ fontStyle:'italic', color:'#a07888' }}>c'est votre jardin intérieur.</em>
+              </h2>
+              <p className="prp-modal-body">
+                Chaque jour, un rituel. Une graine plantée.<br />
+                Une transformation douce, à votre rythme.<br /><br />
+                Votre espace vous attend — et il grandit avec vous.
+              </p>
+              <button className="prp-modal-cta" onClick={handleSignUp}>
+                Créer mon espace · C'est gratuit
+              </button>
+              <p className="prp-modal-secondary">
+                Accès immédiat · Sans carte bancaire
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}

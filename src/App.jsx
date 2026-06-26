@@ -30,6 +30,7 @@ import GardenNotificationBanner  from './components/GardenNotificationBanner'
 import PlantIcon                 from './components/PlantIcon'
 import { CerclePublicPage }      from './pages/ScreenCercleFondateurs'
 import { ConfidentialitePage }   from './pages/ConfidentialitePage'
+import { PublicRituelPage }      from './pages/PublicRituelPage'
 
 const ADMIN_IDS = ['aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7']
 
@@ -376,6 +377,24 @@ export default function App() {
     if (!user) return <CerclePublicPage />
     // Connecté → ouvre le slide cercle dans le dashboard
     sessionStorage.setItem('pending_open_tab', 'cercle')
+    window.history.replaceState({}, '', window.location.pathname)
+  }
+
+  // ── Page publique rituel d'accueil (?decouverte) — réseaux sociaux ──
+  if (params.has('decouverte')) {
+    if (authLoading) return <div style={styles.loading}><span>🌱</span></div>
+    if (!user) {
+      return (
+        <PublicRituelPage
+          onRegister={() => {
+            localStorage.setItem('mji_go_register', '1')
+            window.history.replaceState({}, '', window.location.pathname)
+            setScreen('auth')
+          }}
+        />
+      )
+    }
+    // Connecté → routing normal (weekone, dashboard, etc.), on nettoie l'URL
     window.history.replaceState({}, '', window.location.pathname)
   }
 

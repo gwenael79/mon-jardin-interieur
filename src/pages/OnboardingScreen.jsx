@@ -3790,13 +3790,25 @@ export function OnboardingScreen({ userId, onComplete }) {
   // "Revenir plus tard" sur l'étape découverte : on revient dessus à la reconnexion
   const decouvertePendingKey = userId ? `mji_decouverte_pending_${userId}` : null
   const decouvertePending    = !!(decouvertePendingKey && localStorage.getItem(decouvertePendingKey))
-  const [phase,        setPhase]        = useState(() => (introAlready && decouvertePending) ? 'decouverte' : -2)
+  const decouverteDone       = !!localStorage.getItem('mji_decouverte_done')
+  const [phase,        setPhase]        = useState(() => {
+    if (decouverteDone) return 'chemin'
+    if (introAlready && decouvertePending) return 'decouverte'
+    return -2
+  })
   const [intention,    setIntention]    = useState(null)
   const [quizChecked,  setQuizChecked]  = useState(false)  // true une fois la vérification Supabase faite
   const [quizAlready,  setQuizAlready]  = useState(false)  // true si le quiz a déjà été complété
   const [showOverlay,  setShowOverlay]  = useState(false)  // true après 20s sur phase 6/7
   const [hasCompris,        setHasCompris]        = useState(false)  // true après parcours COMPRENDRE
   const [openRitual,        setOpenRitual]        = useState(false)  // ouvre RitualModal dès l'arrivée sur chemin
+
+  // ── Nettoyage flag ?decouverte après skip StepDecouverte ──
+  useEffect(() => {
+    if (!decouverteDone) return
+    localStorage.removeItem('mji_decouverte_done')
+    if (introSeenKey) localStorage.setItem(introSeenKey, '1')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignOut() {
     await supabase.auth.signOut()
