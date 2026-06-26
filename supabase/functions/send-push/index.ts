@@ -66,17 +66,43 @@ async function getAccessToken(): Promise<string> {
 // ── Payloads ──────────────────────────────────────────────────────────────────
 const BASE_URL = 'https://monjardininterieur.com'
 
-function buildPayload(type: string, data?: Record<string, string>) {
-  const map: Record<string, { title: string; body: string; tag: string; url: string }> = {
-    ritual_reminder: { title: "🌱 Féline t'attend dans le jardin",                    body: "Et si tu prenais une minute pour toi aujourd'hui ?",       tag: 'ritual',      url: '/' },
-    degradation_1:   { title: "🍃 Ton jardin est resté calme aujourd'hui",            body: 'Une petite attention suffit parfois à le faire refleurir.', tag: 'degradation', url: '/' },
-    degradation_3:   { title: "🌧 Féline n'a plus vu tes pas depuis quelques jours", body: 'Ton jardin semble attendre doucement ton retour.',          tag: 'degradation', url: '/' },
-    degradation_7:   { title: '🌙 Féline veille encore sur ton jardin',               body: 'Même après plusieurs jours, il peut renaître.',             tag: 'degradation', url: '/' },
-    coeur_recu:      { title: "🌸 Quelqu'un a déposé une fleur pour toi",             body: data?.senderName ? `${data.senderName} a pensé à toi.` : 'Une présence bienveillante pense à toi.', tag: 'coeur', url: '/' },
-    relance:         { title: '🌿 Ton jardin intérieur t\'attend',                    body: 'Reviens quand tu veux — sans pression, sans jugement.',      tag: 'relance',     url: '/' },
-  }
-  const notif = map[type] ?? map['ritual_reminder']
-  return { ...notif, type }
+type NotifEntry = { title: string; body: string; tag: string; url: string }
+type AmbianceMap = { feerique: NotifEntry; zen: NotifEntry }
+
+const MESSAGES: Record<string, AmbianceMap> = {
+  ritual_reminder: {
+    feerique: { title: "🌱 Féline t'attend dans le jardin",                     body: "Et si tu prenais une minute pour toi aujourd'hui ?",        tag: 'ritual',      url: '/' },
+    zen:      { title: '🌿 Un moment pour toi',                                 body: "Ton jardin intérieur t'attend, en douceur.",                 tag: 'ritual',      url: '/' },
+  },
+  degradation_1: {
+    feerique: { title: "🍃 Ton jardin est resté calme aujourd'hui",             body: 'Une petite attention suffit parfois à le faire refleurir.',  tag: 'degradation', url: '/' },
+    zen:      { title: '🍃 Ton jardin s\'est reposé aujourd\'hui',              body: 'Un souffle, un geste doux — c\'est tout ce qu\'il faut.',    tag: 'degradation', url: '/' },
+  },
+  degradation_3: {
+    feerique: { title: "🌧 Féline n'a plus vu tes pas depuis quelques jours",  body: 'Ton jardin semble attendre doucement ton retour.',           tag: 'degradation', url: '/' },
+    zen:      { title: '🌱 Ton jardin attend patiemment',                       body: 'Il sera là, calme et accueillant, quand tu reviendras.',      tag: 'degradation', url: '/' },
+  },
+  degradation_7: {
+    feerique: { title: '🌙 Féline veille encore sur ton jardin',                body: 'Même après plusieurs jours, il peut renaître.',              tag: 'degradation', url: '/' },
+    zen:      { title: '🌙 Ton jardin intérieur est toujours là',               body: 'Il peut renaître à tout moment, quand tu es prêt·e.',        tag: 'degradation', url: '/' },
+  },
+  coeur_recu: {
+    feerique: { title: "🌸 Quelqu'un a déposé une fleur pour toi",              body: '',  tag: 'coeur', url: '/' },
+    zen:      { title: '🌸 Une pensée douce t\'a été envoyée',                  body: '',  tag: 'coeur', url: '/' },
+  },
+  relance: {
+    feerique: { title: "🌿 Féline t'invite à revenir",                          body: 'Ton jardin t\'attend — sans pression, sans jugement.',       tag: 'relance',     url: '/' },
+    zen:      { title: '🌿 Ton jardin intérieur t\'attend',                     body: 'Reviens quand tu veux — sans pression, sans jugement.',      tag: 'relance',     url: '/' },
+  },
+}
+
+function buildPayload(type: string, ambiance: 'zen' | 'feerique' = 'feerique', data?: Record<string, string>) {
+  const entry = (MESSAGES[type] ?? MESSAGES['ritual_reminder'])[ambiance]
+  // Corps dynamique pour coeur_recu
+  const body = type === 'coeur_recu'
+    ? (data?.senderName ? `${data.senderName} a pensé à toi.` : 'Une présence bienveillante pense à toi.')
+    : entry.body
+  return { ...entry, body, type }
 }
 
 // ── Fetch REST Supabase ───────────────────────────────────────────────────────
@@ -111,7 +137,11 @@ async function sendToUser(userId: string, type: string, data?: Record<string, st
   const subs = await dbSelect('push_subscriptions', { user_id: userId })
   if (!subs?.length) { console.log('[send] no subs for', userId); return { sent: 0 } }
 
-  const notif   = buildPayload(type, data) as Record<string, string>
+  // Lire l'ambiance du user (zen | feerique)
+  const userRows = await dbSelect('users', { id: userId })
+  const ambiance: 'zen' | 'feerique' = userRows?.[0]?.ambiance === 'zen' ? 'zen' : 'feerique'
+
+  const notif   = buildPayload(type, ambiance, data) as Record<string, string>
   const token   = await getAccessToken()
   let sent = 0
 
