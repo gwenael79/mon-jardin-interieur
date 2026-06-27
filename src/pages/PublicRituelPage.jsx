@@ -7,7 +7,7 @@ const css = `
 @keyframes prpFadeUp   { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
 @keyframes prpPulse    { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
 @keyframes prpSlideUp  { from { opacity:0; transform:scale(.94) translateY(16px) } to { opacity:1; transform:scale(1) translateY(0) } }
-@keyframes prpWaveOut  { 0% { transform:scale(.42); opacity:1 } 60% { opacity:.55 } 100% { transform:scale(2.2); opacity:0 } }
+@keyframes prpWaveOut  { 0% { transform:scale(1); opacity:1 } 60% { opacity:.50 } 100% { transform:scale(3.6); opacity:0 } }
 
 /* ── ROOT — plein écran avec fond ── */
 .prp-root {
@@ -72,20 +72,19 @@ const css = `
   .prp-playing-label { margin-bottom: 8px; }
   .prp-playing-hint { font-size: 16px; margin-bottom: 26px; }
   .prp-time { font-size: 14px; }
-  .prp-controls { flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
-  .prp-btn-pause, .prp-btn-restart { width: 100%; justify-content: center; padding: 13px 20px; }
+  .prp-controls { gap: 20px; margin-top: 24px; }
 }
 
 /* ── TRÈS PETIT MOBILE ≤375px ── */
 @media (max-width: 375px) {
-  .prp-card { padding: 40px 20px 36px; }
-  .prp-logo { width: 46px; height: 46px; margin-bottom: 12px; }
-  .prp-title { font-size: clamp(26px, 9vw, 34px); }
-  .prp-sub { font-size: 14px; margin-bottom: 22px; }
-  .prp-sound-wrap { width: 126px; height: 126px; margin-bottom: 16px; }
-  .prp-speaker-bg { width: 70px; height: 70px; }
-  .prp-speaker-bg svg { width: 32px; height: 32px; }
-  .prp-playing-hint { font-size: 14px; margin-bottom: 20px; }
+  .prp-card { padding: 44px 18px 32px; }
+  .prp-logo { width: 44px; height: 44px; margin-bottom: 10px; }
+  .prp-title { font-size: clamp(24px, 9vw, 32px); }
+  .prp-sub { font-size: 14px; margin-bottom: 20px; }
+  .prp-sound-wrap { width: 120px; height: 120px; margin-bottom: 14px; }
+  .prp-speaker-bg { width: 68px; height: 68px; }
+  .prp-speaker-bg svg { width: 30px; height: 30px; }
+  .prp-playing-hint { font-size: 14px; margin-bottom: 18px; }
 }
 
 /* ── LANDING ── */
@@ -137,9 +136,14 @@ const css = `
   margin-bottom: 36px;
 }
 .prp-wave-ring {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 4px solid #c8a0b0;
-  box-shadow: 0 0 12px rgba(200,160,176,.45);
+  /* Centré sur le speaker — toujours rond quelle que soit la taille du parent */
+  position: absolute;
+  width: 110px; height: 110px;
+  top: 50%; left: 50%;
+  margin-top: -55px; margin-left: -55px;
+  border-radius: 50%;
+  border: 3.5px solid #c8a0b0;
+  box-shadow: 0 0 10px rgba(200,160,176,.40);
   animation: prpWaveOut 2.6s ease-out infinite;
 }
 .prp-wave-ring:nth-child(2) { animation-delay: .86s; }
@@ -181,27 +185,18 @@ const css = `
   display: flex; justify-content: space-between;
 }
 .prp-controls {
-  display: flex; gap: 14px; justify-content: center;
+  display: flex; gap: 24px; justify-content: center;
   margin-top: 28px;
 }
-.prp-btn-pause {
-  display: flex; align-items: center; gap: 8px;
-  padding: 13px 30px; border-radius: 100px;
+.prp-ctrl-btn {
+  width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .2s;
   border: 2px solid #c8a0b0; background: transparent;
-  color: #c8a0b0; font-family: 'Jost', sans-serif;
-  font-size: 15px; font-weight: 500; cursor: pointer;
-  transition: all .2s;
 }
-.prp-btn-pause:hover { background: rgba(200,160,176,.12); }
-.prp-btn-restart {
-  display: flex; align-items: center; gap: 8px;
-  padding: 13px 30px; border-radius: 100px;
-  border: 2px solid rgba(0,0,0,.18); background: transparent;
-  color: #000; font-family: 'Jost', sans-serif;
-  font-size: 15px; font-weight: 500; cursor: pointer;
-  transition: all .2s;
-}
-.prp-btn-restart:hover { border-color: rgba(0,0,0,.40); }
+.prp-ctrl-btn:hover { background: rgba(200,160,176,.12); }
+.prp-ctrl-restart { border-color: rgba(0,0,0,.20); }
+.prp-ctrl-restart:hover { border-color: rgba(0,0,0,.42); background: rgba(0,0,0,.04); }
 /* Ondes figées quand en pause */
 .prp-sound-wrap--paused .prp-wave-ring { animation-play-state: paused; }
 .prp-sound-wrap--paused .prp-speaker-bg { animation-play-state: paused; }
@@ -420,18 +415,16 @@ export function PublicRituelPage({ onRegister }) {
                 </div>
               </div>
               <div className="prp-controls">
-                <button className="prp-btn-pause" onClick={paused ? handleResume : handlePause}>
-                  {paused ? (
-                    <><svg width="16" height="16" viewBox="0 0 24 24" fill="#c8a0b0"><polygon points="5,3 19,12 5,21"/></svg> Reprendre</>
-                  ) : (
-                    <><svg width="16" height="16" viewBox="0 0 24 24" fill="#c8a0b0"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg> Pause</>
-                  )}
+                <button className="prp-ctrl-btn" onClick={paused ? handleResume : handlePause} title={paused ? 'Reprendre' : 'Pause'}>
+                  {paused
+                    ? <svg width="22" height="22" viewBox="0 0 24 24" fill="#c8a0b0"><polygon points="5,3 19,12 5,21"/></svg>
+                    : <svg width="20" height="20" viewBox="0 0 24 24" fill="#c8a0b0"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                  }
                 </button>
-                <button className="prp-btn-restart" onClick={handleRestart}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round">
+                <button className="prp-ctrl-btn prp-ctrl-restart" onClick={handleRestart} title="Recommencer">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
                   </svg>
-                  Recommencer
                 </button>
               </div>
             </>
