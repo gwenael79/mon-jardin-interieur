@@ -8,6 +8,7 @@ import { PLANT_ZONES, useRituels, RitualZoneModal } from './mafleur_rituels'
 import NeedSelectionModal from '../components/NeedSelectionModal'
 import RitualSuggestionModalOnboarding from '../components/RitualSuggestionModalOnboarding'
 import { RITUALS as SUGGESTION_RITUALS } from '../components/RitualSuggestionModal'
+import { PremiumModal } from './AccessPage'
 import { logActivity } from '../utils/logActivity'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2981,6 +2982,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
   const [glowing, setGlowing]         = useState(false)
   const [pctPop, setPctPop]           = useState(false)
   const [showTip, setShowTip]         = useState(false)
+  const [showPremium, setShowPremium] = useState(false)
   const barRef  = useRef(null)
   const isMobile = window.innerWidth < 768
   const markers = [60, 50, 40, 30, 20, 5]
@@ -3094,12 +3096,21 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
           appUnlocked={appUnlocked}
           onEnterApp={onEnterApp}
           onboarding
+          onUpgrade={() => setShowPremium(true)}
           onCompleteRitual={handleCompleteRitual}
           vitalityTotal={vitality}
           vitalityGain={5}
           onSeeFlower={() => {
             if (pendingCelebVideo) { setCelebVideo(pendingCelebVideo); setPendingCelebVideo(null) }
           }}
+        />
+      )}
+
+      {/* ── PremiumModal — déclenché par le clic sur "Rituels guidés en audio" ── */}
+      {showPremium && (
+        <PremiumModal
+          onClose={() => setShowPremium(false)}
+          onSuccess={() => { setShowPremium(false); window.location.reload() }}
         />
       )}
 

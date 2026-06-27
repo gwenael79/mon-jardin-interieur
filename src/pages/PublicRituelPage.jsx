@@ -292,6 +292,15 @@ const css = `
 }
 `
 
+// ── Ajouter ici chaque nouveau MP3 déposé dans /public/audio/pubreseaux/ ──
+const PUBRESEAUX_TRACKS = [
+  '/audio/pubreseaux/Rituelaccueil.mp3',
+]
+
+function pickTrack() {
+  return PUBRESEAUX_TRACKS[Math.floor(Math.random() * PUBRESEAUX_TRACKS.length)]
+}
+
 function formatTime(secs) {
   if (!isFinite(secs) || secs < 0) return '0:00'
   const m = Math.floor(secs / 60)
@@ -311,7 +320,7 @@ export function PublicRituelPage({ onRegister }) {
   useEffect(() => () => { audioRef.current?.pause() }, [])
 
   function handleListen() {
-    const audio = new Audio('/audio/Rituelaccueil.mp3')
+    const audio = new Audio(pickTrack())
     audioRef.current = audio
     audio.addEventListener('loadedmetadata', () => setDuration(audio.duration))
     audio.addEventListener('timeupdate', () => {
