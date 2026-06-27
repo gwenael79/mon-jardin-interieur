@@ -47,13 +47,48 @@ const css = `
   }
 }
 
+/* ── MOBILE ≤768px — plein écran scrollable ── */
 @media (max-width: 768px) {
+  .prp-root { align-items: flex-start; overflow-y: auto; }
   .prp-card {
     max-width: 100%;
-    min-height: 100vh;
-    padding: 56px 28px 52px;
+    min-height: 100svh;
+    padding: 48px 28px 44px;
     justify-content: center;
   }
+}
+
+/* ── PETIT MOBILE ≤480px ── */
+@media (max-width: 480px) {
+  .prp-card { padding: 40px 22px 36px; }
+  .prp-logo { width: 54px; height: 54px; margin-bottom: 14px; }
+  .prp-eyebrow { margin-bottom: 12px; }
+  .prp-title { font-size: clamp(28px, 9vw, 40px); margin-bottom: 10px; }
+  .prp-sub { font-size: 16px; margin-bottom: 26px; }
+  .prp-listen-btn { padding: 14px 28px; font-size: 15px; }
+  .prp-free-note { font-size: 15px; }
+
+  .prp-sound-wrap { width: 160px; height: 160px; margin-bottom: 20px; }
+  .prp-speaker-bg { width: 88px; height: 88px; }
+  .prp-speaker-bg svg { width: 40px; height: 40px; }
+  .prp-playing-hint { font-size: 16px; margin-bottom: 28px; }
+  .prp-time { font-size: 14px; }
+  .prp-controls { flex-direction: column; gap: 10px; width: 100%; max-width: 280px; }
+  .prp-btn-pause, .prp-btn-restart { width: 100%; justify-content: center; padding: 12px 20px; }
+}
+
+/* ── TRÈS PETIT MOBILE ≤375px (SE, petits Android) ── */
+@media (max-width: 375px) {
+  .prp-card { padding: 32px 18px 28px; }
+  .prp-logo { width: 46px; height: 46px; margin-bottom: 10px; }
+  .prp-title { font-size: clamp(26px, 9vw, 34px); }
+  .prp-sub { font-size: 14px; margin-bottom: 22px; }
+  .prp-sound-wrap { width: 136px; height: 136px; margin-bottom: 16px; }
+  .prp-speaker-bg { width: 74px; height: 74px; }
+  .prp-speaker-bg svg { width: 34px; height: 34px; }
+  .prp-playing-label { margin-bottom: 6px; }
+  .prp-playing-hint { font-size: 14px; margin-bottom: 20px; }
+  .prp-controls { max-width: 260px; }
 }
 
 /* ── LANDING ── */
@@ -232,12 +267,22 @@ const css = `
 
 /* Mobile : modal en bottom sheet */
 @media (max-width: 480px) {
+  .prp-overlay { align-items: flex-end; padding: 0; }
   .prp-modal {
     border-radius: 24px 24px 0 0;
     position: fixed; bottom: 0; left: 0; right: 0;
-    max-width: 100%; padding: 36px 24px 48px;
+    max-width: 100%; max-height: 92svh;
+    overflow-y: auto;
+    padding: 32px 22px 44px;
   }
-  .prp-overlay { align-items: flex-end; padding: 0; }
+  .prp-modal-title { font-size: 23px; }
+  .prp-modal-body { font-size: 15px; margin-bottom: 22px; }
+  .prp-modal-cta { font-size: 15px; padding: 14px; }
+  .prp-modal-secondary { font-size: 13px; }
+}
+@media (max-width: 375px) {
+  .prp-modal { padding: 28px 18px 40px; }
+  .prp-modal-title { font-size: 21px; }
 }
 `
 
@@ -318,7 +363,7 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── LANDING ── */}
           {state === 'landing' && (
             <>
-              <img src="/icons/logo2.png" alt="logo" className="prp-logo" />
+              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" />
               <div className="prp-eyebrow">Mon Jardin Intérieur</div>
               <h1 className="prp-title">
                 Un rituel pour<br />retrouver tes <em>racines</em>
@@ -338,7 +383,7 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── PLAYING ── */}
           {(state === 'playing' || state === 'done') && !showModal && (
             <>
-              <img src="/icons/logo2.png" alt="logo" className="prp-logo" style={{ marginBottom: 24 }} />
+              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 24 }} />
               <div className={`prp-sound-wrap${paused ? ' prp-sound-wrap--paused' : ''}`}>
                 <div className="prp-wave-ring" />
                 <div className="prp-wave-ring" />
@@ -388,7 +433,7 @@ export function PublicRituelPage({ onRegister }) {
           <div className="prp-overlay">
             <div className="prp-modal">
               <button className="prp-modal-close" onClick={handleClose}>✕</button>
-              <img src="/icons/logo2.png" alt="logo" className="prp-logo" style={{ marginBottom: 20 }} />
+              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 20 }} />
               <h2 className="prp-modal-title">
                 Ce que tu viens de ressentir,<br />
                 <em>c'est une attention à toi-même.</em>
