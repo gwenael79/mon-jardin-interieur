@@ -3121,6 +3121,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
       {showPremium && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10300 }}>
           <PremiumModal
+            context="onboarding_audio"
             onClose={() => setShowPremium(false)}
             onSuccess={() => { setShowPremium(false); window.location.reload() }}
           />
