@@ -148,6 +148,31 @@ const css = `
   font-size: 18px; color: #000;
   display: flex; justify-content: space-between;
 }
+.prp-controls {
+  display: flex; gap: 14px; justify-content: center;
+  margin-top: 28px;
+}
+.prp-btn-pause {
+  display: flex; align-items: center; gap: 8px;
+  padding: 13px 30px; border-radius: 100px;
+  border: 2px solid #c8a0b0; background: transparent;
+  color: #c8a0b0; font-family: 'Jost', sans-serif;
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  transition: all .2s;
+}
+.prp-btn-pause:hover { background: rgba(200,160,176,.12); }
+.prp-btn-restart {
+  display: flex; align-items: center; gap: 8px;
+  padding: 13px 30px; border-radius: 100px;
+  border: 2px solid rgba(0,0,0,.18); background: transparent;
+  color: #000; font-family: 'Jost', sans-serif;
+  font-size: 15px; font-weight: 500; cursor: pointer;
+  transition: all .2s;
+}
+.prp-btn-restart:hover { border-color: rgba(0,0,0,.40); }
+/* Ondes figées quand en pause */
+.prp-sound-wrap--paused .prp-wave-ring { animation-play-state: paused; }
+.prp-sound-wrap--paused .prp-speaker-bg { animation-play-state: paused; }
 
 /* ── MODAL FIN ── */
 .prp-overlay {
@@ -230,6 +255,7 @@ function formatTime(secs) {
 export function PublicRituelPage({ onRegister }) {
   const [state,       setState]       = useState('landing') // 'landing' | 'playing' | 'done'
   const [showModal,   setShowModal]   = useState(false)
+  const [paused,      setPaused]      = useState(false)
   const [progress,    setProgress]    = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration,    setDuration]    = useState(0)
@@ -250,6 +276,26 @@ export function PublicRituelPage({ onRegister }) {
       setShowModal(true)
     })
     audio.play().catch(() => {})
+    setState('playing')
+    setPaused(false)
+  }
+
+  function handlePause() {
+    audioRef.current?.pause()
+    setPaused(true)
+  }
+
+  function handleResume() {
+    audioRef.current?.play().catch(() => {})
+    setPaused(false)
+  }
+
+  function handleRestart() {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = 0
+    audio.play().catch(() => {})
+    setPaused(false)
     setState('playing')
   }
 
@@ -296,7 +342,7 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── PLAYING ── */}
           {(state === 'playing' || state === 'done') && !showModal && (
             <>
-              <div className="prp-sound-wrap">
+              <div className={`prp-sound-wrap${paused ? ' prp-sound-wrap--paused' : ''}`}>
                 <div className="prp-wave-ring" />
                 <div className="prp-wave-ring" />
                 <div className="prp-wave-ring" />
@@ -319,6 +365,21 @@ export function PublicRituelPage({ onRegister }) {
                   <span>{formatTime(currentTime)}</span>
                   <span>{duration ? formatTime(duration) : '--:--'}</span>
                 </div>
+              </div>
+              <div className="prp-controls">
+                <button className="prp-btn-pause" onClick={paused ? handleResume : handlePause}>
+                  {paused ? (
+                    <><svg width="16" height="16" viewBox="0 0 24 24" fill="#c8a0b0"><polygon points="5,3 19,12 5,21"/></svg> Reprendre</>
+                  ) : (
+                    <><svg width="16" height="16" viewBox="0 0 24 24" fill="#c8a0b0"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg> Pause</>
+                  )}
+                </button>
+                <button className="prp-btn-restart" onClick={handleRestart}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2" strokeLinecap="round">
+                    <polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-4.5"/>
+                  </svg>
+                  Recommencer
+                </button>
               </div>
             </>
           )}
