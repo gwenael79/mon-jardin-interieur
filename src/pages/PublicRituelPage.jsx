@@ -199,10 +199,6 @@ const css = `
   transition: all .18s;
 }
 .prp-modal-close:hover { background: rgba(0,0,0,.11); color: rgba(0,0,0,.60); }
-.prp-modal-icon {
-  font-size: 50px; margin-bottom: 20px; display: block;
-  animation: prpFadeUp .4s .06s ease both;
-}
 .prp-modal-title {
   font-family: 'Cormorant Garamond', serif;
   font-size: 27px; font-weight: 300;
@@ -342,6 +338,7 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── PLAYING ── */}
           {(state === 'playing' || state === 'done') && !showModal && (
             <>
+              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 24 }} />
               <div className={`prp-sound-wrap${paused ? ' prp-sound-wrap--paused' : ''}`}>
                 <div className="prp-wave-ring" />
                 <div className="prp-wave-ring" />
@@ -391,7 +388,7 @@ export function PublicRituelPage({ onRegister }) {
           <div className="prp-overlay">
             <div className="prp-modal">
               <button className="prp-modal-close" onClick={handleClose}>✕</button>
-              <span className="prp-modal-icon">🌱</span>
+              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 20 }} />
               <h2 className="prp-modal-title">
                 Ce que tu viens de ressentir…<br />
                 <em>c'est ton jardin intérieur.</em>
