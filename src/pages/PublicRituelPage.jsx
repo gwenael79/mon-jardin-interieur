@@ -318,7 +318,7 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── LANDING ── */}
           {state === 'landing' && (
             <>
-              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" />
+              <img src="/icons/logo2.png" alt="logo" className="prp-logo" />
               <div className="prp-eyebrow">Mon Jardin Intérieur</div>
               <h1 className="prp-title">
                 Un rituel pour<br />retrouver tes <em>racines</em>
@@ -338,7 +338,7 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── PLAYING ── */}
           {(state === 'playing' || state === 'done') && !showModal && (
             <>
-              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 24 }} />
+              <img src="/icons/logo2.png" alt="logo" className="prp-logo" style={{ marginBottom: 24 }} />
               <div className={`prp-sound-wrap${paused ? ' prp-sound-wrap--paused' : ''}`}>
                 <div className="prp-wave-ring" />
                 <div className="prp-wave-ring" />
@@ -388,7 +388,7 @@ export function PublicRituelPage({ onRegister }) {
           <div className="prp-overlay">
             <div className="prp-modal">
               <button className="prp-modal-close" onClick={handleClose}>✕</button>
-              <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 20 }} />
+              <img src="/icons/logo2.png" alt="logo" className="prp-logo" style={{ marginBottom: 20 }} />
               <h2 className="prp-modal-title">
                 Ce que tu viens de ressentir,<br />
                 <em>c'est une attention à toi-même.</em>
