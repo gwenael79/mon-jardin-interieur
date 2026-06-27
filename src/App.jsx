@@ -49,6 +49,7 @@ export default function App() {
 
   const [screen,          setScreen]          = useState('loading')
   const [isPro,           setIsPro]           = useState(false)
+  const [isPremium,       setIsPremium]       = useState(false)
   const [showProProfile,  setShowProProfile]  = useState(false)
   const [showProWelcome,  setShowProWelcome]  = useState(false)
   const [showProFlower,   setShowProFlower]   = useState(false)
@@ -203,8 +204,16 @@ export default function App() {
         setTimeout(() => setToast(null), 3500)
         // Respecter l'état d'onboarding : si non terminé → retour en onboarding
         const { data: userData } = await supabase
-          .from('users').select('onboarding_completed').eq('id', user.id).maybeSingle()
-        setScreen(userData?.onboarding_completed ? 'dashboard' : 'onboarding')
+          .from('users').select('onboarding_completed, plan, week_one_completed').eq('id', user.id).maybeSingle()
+        const nowPremium = userData?.plan === 'premium' || userData?.plan === 'fondateur_graine'
+        setIsPremium(nowPremium)
+        if (!userData?.onboarding_completed) {
+          setScreen('onboarding')
+        } else if (completedDays.length < 7 && !userData?.week_one_completed) {
+          setScreen('weekone')
+        } else {
+          setScreen('dashboard')
+        }
       }, 3000)
       return
     }
@@ -252,7 +261,11 @@ export default function App() {
     ;(async () => {
       try {
         const { data: userData } = await supabase
-          .from('users').select('onboarded, onboarding_completed, role, week_one_completed').eq('id', user.id).maybeSingle()
+          .from('users').select('onboarded, onboarding_completed, role, week_one_completed, plan').eq('id', user.id).maybeSingle()
+
+        // Détecter le plan premium
+        const userIsPremium = userData?.plan === 'premium' || userData?.plan === 'fondateur_graine'
+        setIsPremium(userIsPremium)
 
         // Détecter le rôle pro dès le départ
         if (userData?.role === 'pro') {
@@ -825,7 +838,7 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
         <WeekOneFlow
           userId={user.id}
           onComplete={() => setScreen('weekone_rest')}
-          onAllDone={() => setScreen(isPro ? 'dashboard' : 'endofweek')}
+          onAllDone={() => setScreen((isPro || isPremium) ? 'dashboard' : 'endofweek')}
           onOpenProProfile={() => setShowProProfile(true)}
           isPro={isPro}
         />
