@@ -265,23 +265,28 @@ const css = `
   animation: prpFadeUp .4s .30s ease both;
 }
 
-/* Mobile : modal en bottom sheet */
-@media (max-width: 480px) {
-  .prp-overlay { align-items: flex-end; padding: 0; }
+/* Mobile : modal plein écran */
+@media (max-width: 768px) {
+  .prp-overlay { padding: 0; align-items: stretch; }
   .prp-modal {
-    border-radius: 24px 24px 0 0;
-    position: fixed; bottom: 0; left: 0; right: 0;
-    max-width: 100%; max-height: 92svh;
+    border-radius: 0;
+    position: fixed; inset: 0;
+    max-width: 100%; max-height: 100svh;
     overflow-y: auto;
-    padding: 32px 22px 44px;
+    padding: 60px 28px 48px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
   }
+}
+@media (max-width: 480px) {
+  .prp-modal { padding: 48px 22px 40px; }
   .prp-modal-title { font-size: 23px; }
   .prp-modal-body { font-size: 15px; margin-bottom: 22px; }
   .prp-modal-cta { font-size: 15px; padding: 14px; }
   .prp-modal-secondary { font-size: 13px; }
 }
 @media (max-width: 375px) {
-  .prp-modal { padding: 28px 18px 40px; }
+  .prp-modal { padding: 40px 18px 36px; }
   .prp-modal-title { font-size: 21px; }
 }
 `
