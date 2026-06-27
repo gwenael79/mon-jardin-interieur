@@ -2983,9 +2983,19 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
   const [pctPop, setPctPop]           = useState(false)
   const [showTip, setShowTip]         = useState(false)
   const [showPremium, setShowPremium] = useState(false)
+  const [isPremium,   setIsPremium]   = useState(false)
   const barRef  = useRef(null)
   const isMobile = window.innerWidth < 768
   const markers = [60, 50, 40, 30, 20, 5]
+
+  // Lecture du plan premium au montage
+  useEffect(() => {
+    if (!userId) return
+    supabase.from('users').select('plan').eq('id', userId).maybeSingle()
+      .then(({ data }) => {
+        setIsPremium(data?.plan === 'premium' || data?.plan === 'fondateur_graine')
+      })
+  }, [userId])
 
   // Sync vitalité depuis Supabase au montage — cherche la plante la plus récente
   useEffect(() => {
@@ -3096,6 +3106,7 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
           appUnlocked={appUnlocked}
           onEnterApp={onEnterApp}
           onboarding
+          isPremium={isPremium}
           onUpgrade={() => setShowPremium(true)}
           onCompleteRitual={handleCompleteRitual}
           vitalityTotal={vitality}

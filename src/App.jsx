@@ -201,7 +201,10 @@ export default function App() {
         await refresh()
         setToast({ icon: '✨', msg: 'Abonnement activé — bienvenue dans Mon Jardin Premium !' })
         setTimeout(() => setToast(null), 3500)
-        setScreen('dashboard')
+        // Respecter l'état d'onboarding : si non terminé → retour en onboarding
+        const { data: userData } = await supabase
+          .from('users').select('onboarding_completed').eq('id', user.id).maybeSingle()
+        setScreen(userData?.onboarding_completed ? 'dashboard' : 'onboarding')
       }, 3000)
       return
     }
