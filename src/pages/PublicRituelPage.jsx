@@ -4,10 +4,10 @@ const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500;600&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-@keyframes prpFadeUp  { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
-@keyframes prpPulse   { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
-@keyframes prpRipple  { 0% { transform:scale(1); opacity:.30 } 100% { transform:scale(2.4); opacity:0 } }
-@keyframes prpSlideUp { from { opacity:0; transform:scale(.94) translateY(16px) } to { opacity:1; transform:scale(1) translateY(0) } }
+@keyframes prpFadeUp   { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
+@keyframes prpPulse    { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
+@keyframes prpSlideUp  { from { opacity:0; transform:scale(.94) translateY(16px) } to { opacity:1; transform:scale(1) translateY(0) } }
+@keyframes prpWaveOut  { 0% { transform:scale(.45); opacity:.70 } 100% { transform:scale(2.0); opacity:0 } }
 
 /* ── ROOT — plein écran avec fond ── */
 .prp-root {
@@ -76,8 +76,8 @@ const css = `
 }
 .prp-title em { font-style: italic; color: #a07888; }
 .prp-sub {
-  font-size: 14.5px; color: rgba(0,0,0,.55); line-height: 1.78;
-  margin-bottom: 38px; font-weight: 300; max-width: 310px;
+  font-size: 18px; color: #000; line-height: 1.78;
+  margin-bottom: 38px; font-weight: 300; max-width: 340px;
   animation: prpFadeUp .6s .18s ease both;
 }
 .prp-listen-btn {
@@ -94,29 +94,29 @@ const css = `
 .prp-listen-btn:hover  { filter: brightness(1.08); transform: translateY(-2px); }
 .prp-listen-btn:active { transform: translateY(0); }
 .prp-free-note {
-  font-size: 12px; color: rgba(0,0,0,.35); letter-spacing: .04em;
+  font-size: 18px; color: #000; letter-spacing: .04em;
   animation: prpFadeUp .6s .34s ease both;
 }
 
-/* ── PLAYING ── */
-.prp-circle-wrap {
-  position: relative; width: 136px; height: 136px;
+/* ── PLAYING — icône son ── */
+.prp-sound-wrap {
+  position: relative; width: 200px; height: 200px;
   display: flex; align-items: center; justify-content: center;
-  margin-bottom: 34px;
+  margin-bottom: 36px;
 }
-.prp-ripple {
+.prp-wave-ring {
   position: absolute; inset: 0; border-radius: 50%;
-  border: 1.5px solid rgba(200,160,176,.42);
-  animation: prpRipple 2.5s ease-out infinite;
+  border: 2px solid rgba(200,160,176,.55);
+  animation: prpWaveOut 2.4s ease-out infinite;
 }
-.prp-ripple:nth-child(2) { animation-delay: .83s; }
-.prp-ripple:nth-child(3) { animation-delay: 1.66s; }
-.prp-circle {
-  width: 96px; height: 96px; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(200,160,176,.16), rgba(160,120,136,.12));
-  border: 1.5px solid rgba(200,160,176,.38);
+.prp-wave-ring:nth-child(2) { animation-delay: .8s; }
+.prp-wave-ring:nth-child(3) { animation-delay: 1.6s; }
+.prp-speaker-bg {
+  position: relative; z-index: 1;
+  width: 110px; height: 110px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(200,160,176,.22), rgba(160,120,136,.14));
+  border: 2px solid rgba(200,160,176,.42);
   display: flex; align-items: center; justify-content: center;
-  font-size: 36px;
   animation: prpPulse 2.6s ease-in-out infinite;
 }
 .prp-playing-label {
@@ -129,7 +129,7 @@ const css = `
   color: #000; font-style: italic; margin-bottom: 8px;
 }
 .prp-playing-hint {
-  font-size: 12.5px; color: rgba(0,0,0,.40);
+  font-size: 18px; color: #000;
   margin-bottom: 44px; letter-spacing: .05em;
 }
 .prp-progress-wrap { width: 100%; max-width: 270px; }
@@ -144,7 +144,7 @@ const css = `
   border-radius: 4px; transition: width .8s linear;
 }
 .prp-time {
-  font-size: 11px; color: rgba(0,0,0,.32);
+  font-size: 18px; color: #000;
   display: flex; justify-content: space-between;
 }
 
@@ -184,7 +184,7 @@ const css = `
 }
 .prp-modal-title em { font-style: italic; color: #a07888; }
 .prp-modal-body {
-  font-size: 14px; color: rgba(0,0,0,.55); line-height: 1.82;
+  font-size: 18px; color: #000; line-height: 1.82;
   margin-bottom: 30px;
   animation: prpFadeUp .4s .18s ease both;
 }
@@ -201,7 +201,7 @@ const css = `
 .prp-modal-cta:hover  { filter: brightness(1.08); transform: translateY(-1px); }
 .prp-modal-cta:active { transform: translateY(0); }
 .prp-modal-secondary {
-  font-size: 11.5px; color: rgba(0,0,0,.32);
+  font-size: 18px; color: #000;
   animation: prpFadeUp .4s .30s ease both;
 }
 
@@ -292,11 +292,17 @@ export function PublicRituelPage({ onRegister }) {
           {/* ── PLAYING ── */}
           {(state === 'playing' || state === 'done') && !showModal && (
             <>
-              <div className="prp-circle-wrap">
-                <div className="prp-ripple" />
-                <div className="prp-ripple" />
-                <div className="prp-ripple" />
-                <div className="prp-circle">🌸</div>
+              <div className="prp-sound-wrap">
+                <div className="prp-wave-ring" />
+                <div className="prp-wave-ring" />
+                <div className="prp-wave-ring" />
+                <div className="prp-speaker-bg">
+                  <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#c8a0b0"/>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="#c8a0b0" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="#c8a0b0" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+                  </svg>
+                </div>
               </div>
               <div className="prp-playing-label">Rituel d'accueil</div>
               <div className="prp-playing-title">Retrouver ses racines…</div>
