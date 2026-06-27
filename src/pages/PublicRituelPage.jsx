@@ -390,13 +390,13 @@ export function PublicRituelPage({ onRegister }) {
               <button className="prp-modal-close" onClick={handleClose}>✕</button>
               <img src="/icons/icon-192.png" alt="logo" className="prp-logo" style={{ marginBottom: 20 }} />
               <h2 className="prp-modal-title">
-                Ce que tu viens de ressentir…<br />
-                <em>c'est ton jardin intérieur.</em>
+                Ce que tu viens de ressentir,<br />
+                <em>c'est une attention à toi-même.</em>
               </h2>
               <p className="prp-modal-body">
-                Chaque jour, un rituel. Une graine plantée.<br />
-                Une transformation douce, à ton rythme.<br /><br />
-                Ton espace t'attend — et il grandit avec toi.
+                Mon Jardin Intérieur t'aide à la cultiver chaque jour,
+                avec des rituels simples et rapides.<br /><br />
+                Si tu le souhaites, viens découvrir l'application.
               </p>
               <button className="prp-modal-cta" onClick={handleSignUp}>
                 Créer mon espace · C'est gratuit
