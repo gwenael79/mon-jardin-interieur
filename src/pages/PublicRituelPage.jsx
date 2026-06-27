@@ -47,48 +47,45 @@ const css = `
   }
 }
 
-/* ── MOBILE ≤768px — plein écran scrollable ── */
+/* ── MOBILE ≤768px — plein écran fond solide ── */
 @media (max-width: 768px) {
-  .prp-root { align-items: flex-start; overflow-y: auto; }
+  .prp-bg { display: none; }
+  .prp-root { align-items: stretch; overflow-y: auto; background: #faf7f3; }
   .prp-card {
     max-width: 100%;
     min-height: 100svh;
-    padding: 48px 28px 44px;
+    background: #faf7f3;
+    padding: 52px 28px 44px;
     justify-content: center;
   }
-}
-
-/* ── PETIT MOBILE ≤480px ── */
-@media (max-width: 480px) {
-  .prp-card { padding: 40px 22px 36px; }
-  .prp-logo { width: 54px; height: 54px; margin-bottom: 14px; }
+  .prp-logo { width: 54px; height: 54px; margin-bottom: 16px; }
   .prp-eyebrow { margin-bottom: 12px; }
-  .prp-title { font-size: clamp(28px, 9vw, 40px); margin-bottom: 10px; }
-  .prp-sub { font-size: 16px; margin-bottom: 26px; }
-  .prp-listen-btn { padding: 14px 28px; font-size: 15px; }
+  .prp-title { font-size: clamp(30px, 9vw, 44px); margin-bottom: 10px; }
+  .prp-sub { font-size: 16px; margin-bottom: 28px; }
+  .prp-listen-btn { padding: 15px 32px; font-size: 15px; }
   .prp-free-note { font-size: 15px; }
 
-  .prp-sound-wrap { width: 160px; height: 160px; margin-bottom: 20px; }
-  .prp-speaker-bg { width: 88px; height: 88px; }
-  .prp-speaker-bg svg { width: 40px; height: 40px; }
-  .prp-playing-hint { font-size: 16px; margin-bottom: 28px; }
+  /* Son — cercle réduit pour tenir sur l'écran */
+  .prp-sound-wrap { width: 150px; height: 150px; margin-bottom: 22px; }
+  .prp-speaker-bg { width: 84px; height: 84px; }
+  .prp-speaker-bg svg { width: 38px; height: 38px; }
+  .prp-playing-label { margin-bottom: 8px; }
+  .prp-playing-hint { font-size: 16px; margin-bottom: 26px; }
   .prp-time { font-size: 14px; }
-  .prp-controls { flex-direction: column; gap: 10px; width: 100%; max-width: 280px; }
-  .prp-btn-pause, .prp-btn-restart { width: 100%; justify-content: center; padding: 12px 20px; }
+  .prp-controls { flex-direction: column; gap: 10px; width: 100%; max-width: 300px; }
+  .prp-btn-pause, .prp-btn-restart { width: 100%; justify-content: center; padding: 13px 20px; }
 }
 
-/* ── TRÈS PETIT MOBILE ≤375px (SE, petits Android) ── */
+/* ── TRÈS PETIT MOBILE ≤375px ── */
 @media (max-width: 375px) {
-  .prp-card { padding: 32px 18px 28px; }
-  .prp-logo { width: 46px; height: 46px; margin-bottom: 10px; }
+  .prp-card { padding: 40px 20px 36px; }
+  .prp-logo { width: 46px; height: 46px; margin-bottom: 12px; }
   .prp-title { font-size: clamp(26px, 9vw, 34px); }
   .prp-sub { font-size: 14px; margin-bottom: 22px; }
-  .prp-sound-wrap { width: 136px; height: 136px; margin-bottom: 16px; }
-  .prp-speaker-bg { width: 74px; height: 74px; }
-  .prp-speaker-bg svg { width: 34px; height: 34px; }
-  .prp-playing-label { margin-bottom: 6px; }
+  .prp-sound-wrap { width: 126px; height: 126px; margin-bottom: 16px; }
+  .prp-speaker-bg { width: 70px; height: 70px; }
+  .prp-speaker-bg svg { width: 32px; height: 32px; }
   .prp-playing-hint { font-size: 14px; margin-bottom: 20px; }
-  .prp-controls { max-width: 260px; }
 }
 
 /* ── LANDING ── */
@@ -265,21 +262,30 @@ const css = `
   animation: prpFadeUp .4s .30s ease both;
 }
 
-/* Mobile : modal plein écran */
+/* Mobile : overlay = plein écran crème, modal s'étire dedans */
 @media (max-width: 768px) {
-  .prp-overlay { padding: 0; align-items: stretch; }
+  .prp-overlay {
+    padding: 0;
+    background: #faf7f3;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    align-items: stretch;
+  }
   .prp-modal {
+    flex: 1;
     border-radius: 0;
-    position: fixed; inset: 0;
-    max-width: 100%; max-height: 100svh;
+    box-shadow: none;
+    border: none;
+    max-width: 100%;
+    max-height: none;
     overflow-y: auto;
-    padding: 60px 28px 48px;
+    padding: 56px 28px 48px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
   }
 }
 @media (max-width: 480px) {
-  .prp-modal { padding: 48px 22px 40px; }
+  .prp-modal { padding: 48px 22px 44px; }
   .prp-modal-title { font-size: 23px; }
   .prp-modal-body { font-size: 15px; margin-bottom: 22px; }
   .prp-modal-cta { font-size: 15px; padding: 14px; }
