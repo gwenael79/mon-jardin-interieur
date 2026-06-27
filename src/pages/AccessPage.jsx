@@ -808,9 +808,18 @@ export function PremiumModal({ onSuccess, onClose }) {
         .pm-cta:hover { filter:brightness(1.08); box-shadow:0 8px 28px rgba(60,120,20,.40); }
         .pm-cta:disabled { opacity:.4; cursor:not-allowed; box-shadow:none; filter:none; }
         .pm-note { font-size:12px; color:rgba(30,20,8,.52); text-align:center; display:flex; align-items:center; justify-content:center; gap:5px; }
-        @media(max-width:600px) {
-          .pm-modal { border-radius:24px 24px 0 0; position:fixed; bottom:0; left:0; right:0; max-width:100%; padding:28px 24px 40px; }
-          .pm-overlay { align-items:flex-end; padding:0; }
+        @media(max-width:768px) {
+          .pm-overlay { padding:0; align-items:stretch; background:#f5f1eb; backdrop-filter:none; }
+          .pm-modal {
+            flex:1; border-radius:0; border:none; box-shadow:none;
+            max-width:100%; max-height:none;
+            overflow-y:auto;
+            padding:52px 24px 44px;
+            display:flex; flex-direction:column;
+          }
+        }
+        @media(max-width:375px) {
+          .pm-modal { padding:44px 18px 36px; }
         }
       `}</style>
       <div className="pm-overlay" onClick={e => e.target === e.currentTarget && onClose?.()}>

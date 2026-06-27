@@ -3117,12 +3117,14 @@ function RitualModal({ userId, onClose, onEnterApp, onValidateOnboarding }) {
         />
       )}
 
-      {/* ── PremiumModal — déclenché par le clic sur "Rituels guidés en audio" ── */}
+      {/* ── PremiumModal — au-dessus de la barre de vitalité (zIndex 10200) ── */}
       {showPremium && (
-        <PremiumModal
-          onClose={() => setShowPremium(false)}
-          onSuccess={() => { setShowPremium(false); window.location.reload() }}
-        />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10300 }}>
+          <PremiumModal
+            onClose={() => setShowPremium(false)}
+            onSuccess={() => { setShowPremium(false); window.location.reload() }}
+          />
+        </div>
       )}
 
       {/* ── RitualSuggestionModal — passe au-dessus de la barre de vitalité ── */}
