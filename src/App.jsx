@@ -63,6 +63,9 @@ export default function App() {
   const [weekOneCompletedDays, setWeekOneCompletedDays] = useState([])
   const [toast,  setToast]  = useState(null)
   const [hash,   setHash]   = useState(window.location.hash)
+  const [decouverteMode, setDecouverteMode] = useState(() =>
+    new URLSearchParams(window.location.search).has('decouverte')
+  )
   const toastTimer = useRef(null)
 
   const [banner,     setBanner]     = useState(null)
@@ -102,6 +105,14 @@ export default function App() {
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
+
+  // Connecté sur ?decouverte → routing normal, on nettoie l'URL
+  useEffect(() => {
+    if (decouverteMode && user) {
+      window.history.replaceState({}, '', window.location.pathname)
+      setDecouverteMode(false)
+    }
+  }, [decouverteMode, user])
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -381,21 +392,17 @@ export default function App() {
   }
 
   // ── Page publique rituel d'accueil (?decouverte) — réseaux sociaux ──
-  if (params.has('decouverte')) {
+  if (decouverteMode && !user) {
     if (authLoading) return <div style={styles.loading}><span>🌱</span></div>
-    if (!user) {
-      return (
-        <PublicRituelPage
-          onRegister={() => {
-            localStorage.setItem('mji_go_register', '1')
-            window.history.replaceState({}, '', window.location.pathname)
-            setScreen('auth')
-          }}
-        />
-      )
-    }
-    // Connecté → routing normal (weekone, dashboard, etc.), on nettoie l'URL
-    window.history.replaceState({}, '', window.location.pathname)
+    return (
+      <PublicRituelPage
+        onRegister={() => {
+          localStorage.setItem('mji_go_register', '1')
+          window.history.replaceState({}, '', window.location.pathname)
+          setDecouverteMode(false)
+        }}
+      />
+    )
   }
 
   // ── Test URL params ────────────────────────────────────────────────────────
