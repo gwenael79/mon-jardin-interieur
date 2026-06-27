@@ -397,7 +397,6 @@ export default function App() {
     return (
       <PublicRituelPage
         onRegister={() => {
-          localStorage.setItem('mji_go_register', '1')
           window.history.replaceState({}, '', window.location.pathname)
           setDecouverteMode(false)
         }}
