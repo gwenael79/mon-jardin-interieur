@@ -7,7 +7,7 @@ const css = `
 @keyframes prpFadeUp   { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
 @keyframes prpPulse    { 0%,100% { transform:scale(1) } 50% { transform:scale(1.06) } }
 @keyframes prpSlideUp  { from { opacity:0; transform:scale(.94) translateY(16px) } to { opacity:1; transform:scale(1) translateY(0) } }
-@keyframes prpWaveOut  { 0% { transform:scale(.45); opacity:.70 } 100% { transform:scale(2.0); opacity:0 } }
+@keyframes prpWaveOut  { 0% { transform:scale(.42); opacity:1 } 60% { opacity:.55 } 100% { transform:scale(2.2); opacity:0 } }
 
 /* ── ROOT — plein écran avec fond ── */
 .prp-root {
@@ -106,11 +106,12 @@ const css = `
 }
 .prp-wave-ring {
   position: absolute; inset: 0; border-radius: 50%;
-  border: 2px solid rgba(200,160,176,.55);
-  animation: prpWaveOut 2.4s ease-out infinite;
+  border: 4px solid #c8a0b0;
+  box-shadow: 0 0 12px rgba(200,160,176,.45);
+  animation: prpWaveOut 2.6s ease-out infinite;
 }
-.prp-wave-ring:nth-child(2) { animation-delay: .8s; }
-.prp-wave-ring:nth-child(3) { animation-delay: 1.6s; }
+.prp-wave-ring:nth-child(2) { animation-delay: .86s; }
+.prp-wave-ring:nth-child(3) { animation-delay: 1.72s; }
 .prp-speaker-bg {
   position: relative; z-index: 1;
   width: 110px; height: 110px; border-radius: 50%;
@@ -161,6 +162,7 @@ const css = `
   border-radius: 28px; width: 100%; max-width: 420px;
   padding: 52px 36px 42px; position: relative; text-align: center;
   box-shadow: 0 28px 80px rgba(0,0,0,.18);
+  font-family: 'Jost', sans-serif;
   animation: prpSlideUp .4s cubic-bezier(.22,1,.36,1) both;
 }
 .prp-modal-close {
@@ -184,6 +186,7 @@ const css = `
 }
 .prp-modal-title em { font-style: italic; color: #a07888; }
 .prp-modal-body {
+  font-family: 'Jost', sans-serif;
   font-size: 18px; color: #000; line-height: 1.82;
   margin-bottom: 30px;
   animation: prpFadeUp .4s .18s ease both;
@@ -192,7 +195,7 @@ const css = `
   width: 100%; padding: 16px; border-radius: 100px; border: none;
   background: linear-gradient(135deg, #5a9a28, #3a7a18);
   color: #fff; font-family: 'Jost', sans-serif;
-  font-size: 15px; font-weight: 500; letter-spacing: .04em;
+  font-size: 18px; font-weight: 500; letter-spacing: .04em;
   cursor: pointer; box-shadow: 0 6px 24px rgba(60,120,20,.26);
   transition: filter .2s, transform .15s;
   margin-bottom: 12px;
@@ -201,6 +204,7 @@ const css = `
 .prp-modal-cta:hover  { filter: brightness(1.08); transform: translateY(-1px); }
 .prp-modal-cta:active { transform: translateY(0); }
 .prp-modal-secondary {
+  font-family: 'Jost', sans-serif;
   font-size: 18px; color: #000;
   animation: prpFadeUp .4s .30s ease both;
 }
@@ -275,11 +279,11 @@ export function PublicRituelPage({ onRegister }) {
               <img src="/icons/icon-192.png" alt="logo" className="prp-logo" />
               <div className="prp-eyebrow">Mon Jardin Intérieur</div>
               <h1 className="prp-title">
-                Un rituel pour<br />retrouver vos <em>racines</em>
+                Un rituel pour<br />retrouver tes <em>racines</em>
               </h1>
               <p className="prp-sub">
-                2 minutes offertes pour vous ancrer,<br />
-                respirer et revenir à vous.
+                2 minutes offertes pour t'ancrer,<br />
+                respirer et revenir à toi.
               </p>
               <button className="prp-listen-btn" onClick={handleListen}>
                 <span>🎧</span>
@@ -306,7 +310,7 @@ export function PublicRituelPage({ onRegister }) {
               </div>
               <div className="prp-playing-label">Rituel d'accueil</div>
               <div className="prp-playing-title">Retrouver ses racines…</div>
-              <div className="prp-playing-hint">Fermez les yeux · laissez venir</div>
+              <div className="prp-playing-hint">Ferme les yeux · laisse venir</div>
               <div className="prp-progress-wrap">
                 <div className="prp-progress-bg">
                   <div className="prp-progress-bar" style={{ width: `${progress}%` }} />
@@ -328,13 +332,13 @@ export function PublicRituelPage({ onRegister }) {
               <button className="prp-modal-close" onClick={handleClose}>✕</button>
               <span className="prp-modal-icon">🌱</span>
               <h2 className="prp-modal-title">
-                Ce que vous venez de ressentir…<br />
-                <em>c'est votre jardin intérieur.</em>
+                Ce que tu viens de ressentir…<br />
+                <em>c'est ton jardin intérieur.</em>
               </h2>
               <p className="prp-modal-body">
                 Chaque jour, un rituel. Une graine plantée.<br />
-                Une transformation douce, à votre rythme.<br /><br />
-                Votre espace vous attend — et il grandit avec vous.
+                Une transformation douce, à ton rythme.<br /><br />
+                Ton espace t'attend — et il grandit avec toi.
               </p>
               <button className="prp-modal-cta" onClick={handleSignUp}>
                 Créer mon espace · C'est gratuit
