@@ -845,7 +845,7 @@ export function PremiumModal({ onSuccess, onClose, context }) {
           {/* Bénéfices clés */}
           <div style={{ display:'flex', flexDirection:'column', gap:6, margin:'16px 0 4px', padding:'14px 16px', background:'rgba(90,154,40,.06)', borderRadius:12, border:'1px solid rgba(90,154,40,.15)' }}>
             {(isAudioCtx
-              ? ['Rituels guidés par la voix — disponibles maintenant', 'Méditations & hypnoses dans la Jardinothèque', 'Et tout l\'espace premium à la fin de ton parcours']
+              ? ['Rituels guidés par la voix — disponibles maintenant', 'Et tout l\'espace premium à la fin de ton parcours d\'initiation']
               : ['Club des jardiniers & jardin collectif','Défis communautaires — toutes les zones','Jardinothèque complète (méditations, hypnoses, e-books)','Ateliers guidés & accompagnements']
             ).map(f => (
               <div key={f} style={{ display:'flex', alignItems:'center', gap:8, fontSize:13.5, color:'rgba(30,20,8,.82)', fontFamily:"'Jost',sans-serif" }}>

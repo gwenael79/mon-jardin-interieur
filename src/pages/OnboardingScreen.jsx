@@ -3325,36 +3325,36 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
   const panel = (
     <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 8 : 14, padding: isMobile ? `0 ${isSmall ? 10 : 14}px ${isSmall ? 12 : 16}px` : '0 10px 24px' }}>
 
-      {/* RESSENTIR */}
-      <div style={{ borderRadius:16, background:'linear-gradient(145deg,#1e4020,#2d5e28)', boxShadow:'0 8px 24px rgba(20,50,18,0.55)', overflow:'hidden' }}>
+      {/* JE DÉCOUVRE PAR MOI-MÊME */}
+      <div style={{ borderRadius:16, background:'linear-gradient(145deg,#b8902a,#8a6818)', boxShadow:'0 8px 24px rgba(140,100,20,0.45)', overflow:'hidden' }}>
         <div style={{ padding: cardPad }}>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:badgeFs, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(180,240,160,0.65)', margin:'0 0 5px' }}>Accès libre</p>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:titleFs, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:6 }}>Je veux agir maintenant</div>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:descFs, color:'rgba(210,255,190,0.82)', lineHeight:1.55, margin:`0 0 ${isSmall ? 12 : 16}px` }}>
-            Choisis un besoin, fais un rituel.<br/>Libre, à ton rythme, sans engagement.
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:badgeFs, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,230,140,0.70)', margin:'0 0 5px' }}>🌿 Accès libre</p>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:titleFs, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:6 }}>Je découvre par moi-même</div>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:descFs, color:'rgba(255,240,200,0.85)', lineHeight:1.55, margin:`0 0 ${isSmall ? 12 : 16}px` }}>
+            L'app, tout de suite.<br/>Libre, à ton rythme, sans engagement.
           </p>
         </div>
-        <button onClick={() => setShowRitual(true)}
-          style={{ display:'block', width:'100%', padding:btnPad, background:'linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))', border:'none', borderTop:'1px solid rgba(150,220,120,0.20)', cursor:'pointer', color:'#fff', fontSize:btnFs, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', transition:'background .18s' }}
-          onMouseEnter={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(100,180,80,0.50),rgba(60,140,50,0.38))'}
-          onMouseLeave={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))'}>
-          Choisir mon premier rituel →
+        <button onClick={onAgir}
+          style={{ display:'block', width:'100%', padding:btnPad, background:'linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))', border:'none', borderTop:'1px solid rgba(255,220,100,0.20)', cursor:'pointer', color:'#fff', fontSize:btnFs, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', transition:'background .18s' }}
+          onMouseEnter={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(255,220,100,0.38),rgba(200,160,40,0.30))'}
+          onMouseLeave={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))'}>
+          Entrer dans l'app →
         </button>
       </div>
 
-      {/* CHEMINER */}
-      <div style={{ borderRadius:16, background:'linear-gradient(145deg,#b8902a,#8a6818)', boxShadow:'0 8px 24px rgba(140,100,20,0.45)', overflow:'hidden' }}>
+      {/* PRENDS-MOI PAR LA MAIN */}
+      <div style={{ borderRadius:16, background:'linear-gradient(145deg,#1e4020,#2d5e28)', boxShadow:'0 8px 24px rgba(20,50,18,0.55)', overflow:'hidden' }}>
         <div style={{ padding: cardPad }}>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:badgeFs, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(255,230,140,0.70)', margin:'0 0 5px' }}>Parcours 7 jours</p>
-          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:titleFs, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:6 }}>Avancer pas à pas</div>
-          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:descFs, color:'rgba(255,240,200,0.85)', lineHeight:1.55, margin:`0 0 ${isSmall ? 12 : 16}px` }}>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:badgeFs, letterSpacing:'.18em', textTransform:'uppercase', color:'rgba(180,240,160,0.65)', margin:'0 0 5px' }}>🤲 Parcours 7 jours</p>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:titleFs, fontWeight:600, fontStyle:'italic', color:'#fff', lineHeight:1.1, marginBottom:6 }}>Guide-moi pas à pas</div>
+          <p style={{ fontFamily:"'Jost',sans-serif", fontSize:descFs, color:'rgba(210,255,190,0.82)', lineHeight:1.55, margin:`0 0 ${isSmall ? 12 : 16}px` }}>
             Un rituel par jour, guidé pas à pas.<br/>Pour installer une vraie pratique.
           </p>
         </div>
         <button onClick={() => setShowInitieConfirm(true)}
-          style={{ display:'block', width:'100%', padding:btnPad, background:'linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))', border:'none', borderTop:'1px solid rgba(255,220,100,0.20)', cursor:'pointer', color:'#fff', fontSize:btnFs, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', transition:'background .18s' }}
-          onMouseEnter={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(255,220,100,0.38),rgba(200,160,40,0.30))'}
-          onMouseLeave={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(255,220,100,0.22),rgba(200,160,40,0.18))'}>
+          style={{ display:'block', width:'100%', padding:btnPad, background:'linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))', border:'none', borderTop:'1px solid rgba(150,220,120,0.20)', cursor:'pointer', color:'#fff', fontSize:btnFs, fontWeight:700, textAlign:'center', fontFamily:"'Jost',sans-serif", letterSpacing:'.04em', transition:'background .18s' }}
+          onMouseEnter={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(100,180,80,0.50),rgba(60,140,50,0.38))'}
+          onMouseLeave={e => e.currentTarget.style.background='linear-gradient(135deg,rgba(100,180,80,0.35),rgba(60,140,50,0.25))'}>
           Commencer mon premier jour →
         </button>
       </div>
@@ -3417,7 +3417,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           }}>
             <div style={{ padding: '28px 10px 4px', textAlign: 'center' }}>
               <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: 32, fontWeight: 400, color: '#fff', margin: '0 0 8px', lineHeight: 1.2 }}>
-                Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
+                Tu veux explorer librement,<br/><em style={{ color: '#d4a870' }}>ou je te guide pas à pas ?</em>
               </h2>
               <p style={{ fontFamily:"'Jost',sans-serif", fontSize: 15, color: 'rgba(255,255,255,0.58)', margin: '0 0 20px', lineHeight: 1.65 }}>Deux chemins s'offrent à toi.<br/>Suis ce qui résonne en toi aujourd'hui.</p>
             </div>
@@ -3439,7 +3439,7 @@ function StepCheminChoix({ userId, onComprendre, onAgir, onInitie, comprendreLab
           {/* En-tête titre */}
           <div style={{ padding: isSmall ? '20px 0 8px' : '28px 0 10px', textAlign: 'center', flexShrink: 0 }}>
             <h2 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isSmall ? 26 : 32, fontWeight: 400, color: '#fff', margin: '0 0 6px', lineHeight: 1.15 }}>
-              Comment veux-tu<br/><em style={{ color: '#d4a870' }}>entrer dans ton jardin ?</em>
+              Tu veux explorer librement,<br/><em style={{ color: '#d4a870' }}>ou je te guide pas à pas ?</em>
             </h2>
             <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isSmall ? 13 : 14, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.5, padding: '0 16px' }}>
               Deux chemins s'offrent à toi. Suis ce qui résonne en toi aujourd'hui.

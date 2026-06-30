@@ -7369,7 +7369,13 @@ export function WOFAudioPlayer({ audioSrc, title, g1 = '#c8a0b0', g2 = '#9a7890'
     return () => cancelAnimationFrame(brightRafRef.current)
   }, [brightening])
 
-  useEffect(() => () => stopAll(), [])
+  // Arrêt différé au démontage — survit au double-mount StrictMode (dev) qui sinon
+  // coupe immédiatement l'audio préchargé (preloadedAudio) sans jamais le relancer.
+  const stopTimeoutRef = useRef(null)
+  useEffect(() => {
+    if (stopTimeoutRef.current) { clearTimeout(stopTimeoutRef.current); stopTimeoutRef.current = null }
+    return () => { stopTimeoutRef.current = setTimeout(stopAll, 0) }
+  }, [])
 
   function togglePause() {
     if (!audioRef.current) return

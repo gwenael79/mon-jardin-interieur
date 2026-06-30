@@ -646,7 +646,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         {(
           <div style={{ flexShrink:0, paddingBottom: isMobile ? 12 : 16, animation:'nm_fadeUp .45s ease .3s both' }}>
             <button
-              onClick={() => isPremium ? setShowAudio(true) : onUpgrade?.()}
+              onClick={() => setShowAudio(true)}
               style={{
                 width:'100%', display:'flex', alignItems:'center', gap: isMobile ? 14 : 18,
                 padding: isMobile ? '16px 20px' : '20px 28px',
@@ -667,17 +667,10 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
                   Rituels guidés en audio
                 </div>
                 <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 14, color:'rgba(255,255,255,0.82)', marginTop:4, letterSpacing:'.02em' }}>
-                  La voix te porte, tu fermes les yeux
+                  {isPremium ? 'La voix te porte, tu fermes les yeux' : '2 rituels offerts, le reste en Premium'}
                 </div>
               </div>
-              {isPremium ? (
-                <div style={{ marginLeft:'auto', fontSize: isMobile ? 18 : 22, opacity:0.80 }}>▶</div>
-              ) : (
-                <div style={{ marginLeft:'auto', flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
-                  <span style={{ fontSize: isMobile ? 18 : 20 }}>🔒</span>
-                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:10, fontWeight:600, letterSpacing:'.08em', color:'rgba(255,255,255,0.90)', textTransform:'uppercase' }}>Premium</span>
-                </div>
-              )}
+              <div style={{ marginLeft:'auto', fontSize: isMobile ? 18 : 22, opacity:0.80 }}>▶</div>
             </button>
           </div>
         )}
@@ -722,7 +715,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           </div>
         )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
-        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} onboarding={onboarding} onCompleteRitual={onCompleteRitual} vitalityTotal={vitalityTotal} vitalityGain={vitalityGain} />}
+        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} onboarding={onboarding} onCompleteRitual={onCompleteRitual} vitalityTotal={vitalityTotal} vitalityGain={vitalityGain} isPremium={isPremium} onUpgrade={onUpgrade} />}
       </div>
     </>
   )

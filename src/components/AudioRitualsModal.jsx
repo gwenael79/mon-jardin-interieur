@@ -48,14 +48,17 @@ const CSS = `
   }
 `
 
+const FREE_AUDIO_COUNT = 2
+
 // phase: 'list' | 'intro' | 'audio' | 'evaluate' | 'result'
-export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHealthUpdate, onSeeFlower, onboarding, onCompleteRitual, vitalityTotal, vitalityGain = 5 }) {
+export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHealthUpdate, onSeeFlower, onboarding, onCompleteRitual, vitalityTotal, vitalityGain = 5, isPremium, onUpgrade }) {
   const [phase,         setPhase]        = useState('list')
   const [activeDay,     setActiveDay]    = useState(null)
   const [healthData,    setHealthData]   = useState(null)
   const [launchedAudio, setLaunchedAudio] = useState(null)
 
-  function openAudio(day) {
+  function openAudio(day, index) {
+    if (index >= FREE_AUDIO_COUNT && !isPremium) { onUpgrade?.(); return }
     setActiveDay(day)
     setPhase('intro')
   }
@@ -226,10 +229,12 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
               </h2>
 
               <div style={{ display:'flex', flexDirection:'column', gap:11 }}>
-                {AUDIO_DAYS.map((day, i) => (
+                {AUDIO_DAYS.map((day, i) => {
+                  const locked = i >= FREE_AUDIO_COUNT && !isPremium
+                  return (
                   <button
                     key={i}
-                    onClick={() => openAudio(day)}
+                    onClick={() => openAudio(day, i)}
                     style={{
                       width:'100%', display:'flex', alignItems:'center', gap:16,
                       padding:'15px 18px',
@@ -240,6 +245,7 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
                       cursor:'pointer', textAlign:'left',
                       animation:`arm_cardIn .38s ease ${i * .07}s both`,
                       transition:'transform 0.15s, box-shadow 0.15s',
+                      opacity: locked ? 0.78 : 1,
                     }}
                     onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px) scale(1.012)'; e.currentTarget.style.boxShadow=`0 16px 36px ${day.glow}` }}
                     onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 8px 22px ${day.glow}, inset 0 1px 2px rgba(255,255,255,0.28)` }}
@@ -257,9 +263,17 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
                         {day.title}
                       </div>
                     </div>
-                    <div style={{ color:'rgba(255,255,255,0.70)', fontSize:17, flexShrink:0 }}>▶</div>
+                    {locked ? (
+                      <div style={{ flexShrink:0, display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+                        <span style={{ fontSize:17 }}>🔒</span>
+                        <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, fontWeight:600, letterSpacing:'.07em', color:'rgba(255,255,255,0.90)', textTransform:'uppercase' }}>Premium</span>
+                      </div>
+                    ) : (
+                      <div style={{ color:'rgba(255,255,255,0.70)', fontSize:17, flexShrink:0 }}>▶</div>
+                    )}
                   </button>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
