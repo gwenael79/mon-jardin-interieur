@@ -987,7 +987,12 @@ export function AdminClientsPage() {
           actifs30j,
           health:       plantHealthMap[u.id] ?? null,
         }
-      }).sort((a, b) => b.connexions - a.connexions || b.actifs30j - a.actifs30j)
+      }).sort((a, b) => {
+        if (a.last_active === b.last_active) return b.connexions - a.connexions
+        if (!a.last_active) return 1
+        if (!b.last_active) return -1
+        return b.last_active.localeCompare(a.last_active)
+      })
 
       setPalmares(pal)
     } catch (e) { console.error('[clients] palmares error:', e) }
