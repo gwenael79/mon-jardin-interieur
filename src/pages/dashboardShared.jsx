@@ -250,9 +250,9 @@ export const ZONES = [
 
 // ── Composant LumensCard ─────────────────────────────────────────────────────
 const LUMEN_PACKS = [
-  { lumens: 50,  price: 20, label: 'Lumens Graines', icon: '🌱', priceId: 'price_1TAs4GFtS3pnlbfxqzSKAWIt' },
-  { lumens: 100, price: 40, label: 'Floraison',      icon: '🌸', priceId: 'price_1TAs5bFtS3pnlbfxy4wQAfOE' },
-  { lumens: 150, price: 80, label: 'Rayonnement',    icon: '✦',  priceId: 'price_1TAs60FtS3pnlbfxayTbh2gH' },
+  { lumens: 50,  price: 20, label: 'Lumens Graines', icon: '🌱', priceId: 'price_1TMpOGCIpPVJTaopkipwkvDT' },
+  { lumens: 100, price: 40, label: 'Floraison',      icon: '🌸', priceId: 'price_1TMpOSCIpPVJTaopNRKgm3rn' },
+  { lumens: 150, price: 80, label: 'Rayonnement',    icon: '✦',  priceId: 'price_1TMpObCIpPVJTaopdCLedWAg' },
 ]
 
 export function LumensCard({ lumens, userId, awardLumens, onRefresh }) {

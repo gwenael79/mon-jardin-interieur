@@ -4,6 +4,7 @@ import { useIsMobile } from '../pages/dashboardShared'
 import { supabase } from '../core/supabaseClient'
 import { logActivity } from '../utils/logActivity'
 import AudioRitualsModal from './AudioRitualsModal'
+import { ExerciseDetail } from '../pages/mafleur_rituels'
 
 // ─── Données ────────────────────────────────────────────────────────────────
 
@@ -358,7 +359,7 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
     setRituals([])
     setSelected(null)
     setDone(false)
-    let q = supabase.from('rituels').select('n, title, dur, zone, desc, icon').order('n')
+    let q = supabase.from('rituels').select('*').order('n')
     if (bucket.durs) {
       q = q.in('dur', bucket.durs)
     } else {
@@ -476,17 +477,9 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
 
           {/* Détail rituel */}
           {selected && (
-            <div>
-              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
-                <span style={{ fontSize:36 }}>{selected.icon || '🌿'}</span>
-                <div>
-                  <h3 style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:600, fontStyle:'italic', color:'#1a1008', margin:0, lineHeight:1.2 }}>{selected.title}</h3>
-                  <p style={{ fontFamily:"'Jost',sans-serif", fontSize:12, color: ZONE_COLORS[selected.zone] || '#888', margin:'4px 0 0' }}>{ZONE_LABELS[selected.zone] || selected.zone} · {selected.dur}</p>
-                </div>
-              </div>
-              <button onClick={() => { setSelected(null); setDone(false) }} style={{ background:'none', border:'none', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.45)', cursor:'pointer', padding:'0 0 12px', display:'flex', alignItems:'center', gap:4 }}>‹ Retour à la liste</button>
-              <p style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:17, fontStyle:'italic', color:'#1a1008', lineHeight:1.7, background:'rgba(0,0,0,0.03)', borderRadius:12, padding:'16px', margin:'0 0 16px' }}>{selected.desc}</p>
-              {inCooldown ? (
+            inCooldown ? (
+              <div>
+                <button onClick={() => { setSelected(null); setDone(false) }} style={{ background:'none', border:'none', fontFamily:"'Jost',sans-serif", fontSize:12, color:'rgba(30,20,8,0.45)', cursor:'pointer', padding:'0 0 16px', display:'flex', alignItems:'center', gap:4 }}>‹ Retour à la liste</button>
                 <div style={{ textAlign:'center', padding:'14px 0' }}>
                   <p style={{ fontFamily:"'Jost',sans-serif", fontSize:13, color:'#c04030', margin:'0 0 4px' }}>
                     Vous avez fait 2 rituels dans cette session.
@@ -495,28 +488,16 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
                     Revenez dans <strong>{cooldownLabel}</strong> pour continuer.
                   </p>
                 </div>
-              ) : (
-                <button
-                  onClick={handleValidate}
-                  disabled={!canValidate || done}
-                  style={{
-                    width:'100%', padding:'15px 0', borderRadius:50, border:'none',
-                    cursor: (!canValidate || done) ? 'default' : 'pointer',
-                    fontFamily:"'Jost',sans-serif", fontSize:15, fontWeight:600,
-                    letterSpacing:'.06em', transition:'background .3s, transform .15s',
-                    background: done
-                      ? 'linear-gradient(135deg,#4a9a60,#2a7a40)'
-                      : 'linear-gradient(135deg,#a07888,#c8a0b0)',
-                    color:'#fff',
-                    boxShadow: done ? '0 4px 16px rgba(40,120,60,0.30)' : '0 4px 16px rgba(160,100,120,0.28)',
-                  }}
-                  onMouseEnter={e => { if (canValidate && !done) e.currentTarget.style.transform = 'translateY(-2px)' }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'none' }}
-                >
-                  {done ? '✓ Accompli · +1% vitalité' : `J'ai fait ce rituel ✓`}
-                </button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <ExerciseDetail
+                exercise={selected}
+                zone={{ name: ZONE_LABELS[selected.zone] || selected.zone, color: ZONE_COLORS[selected.zone] || '#888', accent: ZONE_COLORS[selected.zone] || '#888' }}
+                initialMarked={done}
+                onBack={() => { setSelected(null); setDone(false) }}
+                onDone={handleValidate}
+              />
+            )
           )}
         </div>
       </div>

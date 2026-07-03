@@ -1433,6 +1433,38 @@ function ScreenClubJardiniers({ userId, awardLumens, onCoeurSeen, isPremium = fa
             ))}
           </div>
 
+          {/* Bandeau Premium requis */}
+          {!isPremium && (
+            <div
+              onClick={onUpgrade}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: isMobile ? '16px' : '18px 22px', borderRadius: 16, cursor: 'pointer',
+                background: 'linear-gradient(135deg, rgba(212,146,10,0.16), rgba(212,146,10,0.06))',
+                border: '1px solid rgba(212,146,10,0.4)',
+                boxShadow: '0 0 24px rgba(212,146,10,0.15)',
+              }}
+            >
+              <div style={{ fontSize: isMobile ? 26 : 30, flexShrink: 0, filter: 'drop-shadow(0 0 8px rgba(212,146,10,0.6))' }}>🔒</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 16 : 18, fontWeight: 600, color: '#7a5208', marginBottom: 2 }}>
+                  Le Club des Jardiniers est réservé aux membres Premium
+                </div>
+                <div style={{ fontSize: isMobile ? 12 : 13, color: '#5a4010', lineHeight: 1.5 }}>
+                  Passez Premium pour rejoindre l'Égrégore, soutenir le Jardin et vous lier à vos ami(e)s jardinier(e)s.
+                </div>
+              </div>
+              <div style={{
+                flexShrink: 0, padding: isMobile ? '8px 14px' : '9px 18px', borderRadius: 100,
+                fontSize: isMobile ? 13 : 13, fontWeight: 500, color: '#fff',
+                background: 'linear-gradient(135deg, #D4920A, #b97a06)',
+                whiteSpace: 'nowrap',
+              }}>
+                Découvrir Premium
+              </div>
+            </div>
+          )}
+
           {/* Texte de bienvenue */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0, padding: '18px 20px', borderRadius: 16, background: 'var(--surface-1)', border: '1px solid var(--surface-2)' }}>
             <p style={{ margin: '0 0 16px', fontSize:'var(--fs-h5, 12px)', color: '#1a1208', lineHeight: 1.75, textAlign: 'center', fontStyle: 'italic' }}>

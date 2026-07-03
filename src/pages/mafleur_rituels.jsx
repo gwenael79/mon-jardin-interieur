@@ -1,6 +1,7 @@
 // @refresh reset
 import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "../core/supabaseClient";
+import { RitualCard } from "../components/RitualCard";
 
 // mafleur_rituels.data.js
 // Données pures — pas de JSX, compatible Fast Refresh
@@ -98,6 +99,15 @@ export function useRituels() {
             icon:  row.icon,
             desc:  row.desc,
             tool:  row.tool ?? undefined,
+            objective:  row.objective  ?? undefined,
+            why:        row.why        ?? undefined,
+            steps:      row.steps      ?? undefined,
+            benefits:   row.benefits   ?? undefined,
+            reflection: row.reflection ?? undefined,
+            subtitle:      row.subtitle      ?? undefined,
+            image_url:     row.image_url     ?? undefined,
+            audio_url:     row.audio_url     ?? undefined,
+            audio_duration:row.audio_duration ?? undefined,
           }
           map[row.zone][row.rituel][row.mode].push(ex)
         }
@@ -648,8 +658,43 @@ function VisualisationTool({ exercise, color, accent }) {
   )
 }
 
-export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
-  const [marked,  setMarked]  = useState(false)
+const ZONE_CATEGORY_ICON = { 'Racines': '🌱', 'Tige': '🌿', 'Feuilles': '🍃', 'Fleurs': '🌸', 'Souffle': '🌬️' }
+const DEFAULT_REFLECTION = 'Comment vous sentez-vous maintenant ?'
+
+function truncate(text, max) {
+  if (!text) return ''
+  return text.length > max ? text.slice(0, max).trim() + '…' : text
+}
+
+// Construit l'objet JSON attendu par <RitualCard> à partir d'un exercice
+// Supabase. Champs manquants → repli propre (voir RitualCard : une section
+// sans contenu ne s'affiche pas). Exporté pour être réutilisé tel quel par
+// l'aperçu live de l'admin (AdminActivitePage) — même logique de repli.
+export function buildRitualData(exercise, zone) {
+  return {
+    icon: exercise.icon,
+    // Pas de repli sur une illustration de zone : les assets /racines.png,
+    // /tige.png… portent du texte intégré au visuel (« jour 2 », etc.)
+    // pensé pour l'écran d'accueil du parcours 7 jours, pas pour une fiche
+    // générique. Sans image_url dédiée, la fiche retombe sur l'icône.
+    image: exercise.image_url || undefined,
+    categoryIcon: ZONE_CATEGORY_ICON[zone?.name],
+    title: exercise.title,
+    category: zone?.name,
+    duration: exercise.dur,
+    subtitle: exercise.subtitle?.trim() || undefined,
+    audioUrl: exercise.audio_url || undefined,
+    audioDuration: exercise.audio_duration || undefined,
+    objective: exercise.objective?.trim() || truncate(exercise.desc, 100),
+    why: exercise.why?.trim() || exercise.desc || '',
+    steps: Array.isArray(exercise.steps) ? exercise.steps.filter(s => s?.title || s?.text) : [],
+    benefits: Array.isArray(exercise.benefits) ? exercise.benefits.filter(Boolean) : [],
+    reflection: exercise.reflection?.trim() || DEFAULT_REFLECTION,
+  }
+}
+
+export function ExerciseDetail({ exercise, zone, onDone, onBack, variant = 'premium', initialMarked = false }) {
+  const [marked,  setMarked]  = useState(initialMarked)
   const [started, setStarted] = useState(false)
 
   // ScreenMonJardin peut passer un exercice sans champ tool.
@@ -672,67 +717,32 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack }) {
   }, [exercise])
 
   const type  = detectExerciseType(fullExercise)
-  const toolEnabled = type === 'breath'
+  const toolEnabled = !!type
   const color  = zone?.color  ?? 'var(--green)'
   const accent = zone?.accent ?? 'var(--badge-lvl1)'
   const handleMark = () => { setMarked(true); setTimeout(onDone, 600) }
+  // La présentation d'un rituel ne dépend pas de l'ambiance zen/féérique —
+  // celle-ci ne concerne que le compagnon lutin et quelques écrans dédiés.
+  const ritual = useMemo(() => buildRitualData(fullExercise, zone), [fullExercise, zone])
+
+  const toolContent = !toolEnabled ? null
+    : type === 'breath'        ? <BreathingTool     exercise={fullExercise} color={color} accent={accent} />
+    : type === 'timer'         ? <TimerTool          exercise={exercise} color={color} accent={accent} />
+    : type === 'gratitude'     ? <GratitudeTool      exercise={exercise} color={color} accent={accent} />
+    : type === 'movement'      ? <MovementTool       exercise={exercise} color={color} accent={accent} />
+    : type === 'visualisation' ? <VisualisationTool  exercise={exercise} color={color} accent={accent} />
+    : null
 
   return (
-    <div style={{ animation:'fadeUp 0.28s ease both' }}>
-      <button onClick={onBack} style={{ display:'flex', alignItems:'center', gap:8, background:'none', border:'none', color:'rgba(var(--ritual-modal-text-rgb),0.45)', fontSize:'var(--fs-h5, 12px)', cursor:'pointer', marginBottom:16, padding:0, letterSpacing:'0.05em' }}>← Retour</button>
-
-      {/* En-tête */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }}>
-        <span style={{ fontSize:'var(--fs-emoji-md, 24px)' }}>{exercise.icon}</span>
-        <div>
-          <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'var(--fs-h3, 19px)', color:'var(--ritual-modal-text)', fontWeight:400, lineHeight:1.15 }}>{exercise.title}</h3>
-          <span style={{ fontSize:'var(--fs-h5, 10px)', color:accent, fontWeight:500, letterSpacing:'0.06em' }}>⏱ {exercise.dur}</span>
-        </div>
-      </div>
-      <div style={{ height:1, background:'var(--track)', margin:'10px 0' }} />
-
-      {/* Description — toujours visible */}
-      <p style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--ritual-modal-text)', lineHeight:1.85, margin:'0 0 16px', fontWeight:300 }}>{exercise.desc}</p>
-
-      {/* Outil interactif — affiché après clic sur Commencer */}
-      {toolEnabled && !started && (
-        <button onClick={() => setStarted(true)} style={{
-          width:'100%', padding:'12px', borderRadius:12, marginBottom:12,
-          border:`1px solid ${color}40`, background:`${color}12`,
-          color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer',
-          letterSpacing:'.04em', fontFamily:"'Jost',sans-serif",
-          display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-        }}>
-          ▶ Commencer l'exercice
-        </button>
-      )}
-
-      {toolEnabled && started && (
-        <div style={{ animation:'fadeUp 0.3s ease both' }}>
-          <div style={{ height:1, background:'var(--surface-2)', margin:'0 0 4px' }} />
-          {type === 'breath'        && <BreathingTool     exercise={fullExercise} color={color} accent={accent} />}
-          {type === 'timer'         && <TimerTool          exercise={exercise} color={color} accent={accent} />}
-          {type === 'gratitude'     && <GratitudeTool      exercise={exercise} color={color} accent={accent} />}
-          {type === 'movement'      && <MovementTool       exercise={exercise} color={color} accent={accent} />}
-          {type === 'visualisation' && <VisualisationTool  exercise={exercise} color={color} accent={accent} />}
-        </div>
-      )}
-
-      <div style={{ height:1, background:'var(--surface-2)', margin:'12px 0' }} />
-
-      {/* Bouton valider */}
-      <button onClick={handleMark} style={{
-        width:'100%', padding:14, borderRadius:12, border:'none',
-        background: marked ? 'rgba(var(--green-rgb),0.25)' : `linear-gradient(135deg,${color}28,${accent}18)`,
-        color: marked ? 'var(--green)' : accent,
-        fontSize:'var(--fs-h4, 13px)', cursor:'pointer', fontWeight:500, letterSpacing:'0.06em',
-        boxShadow:`0 0 0 1px ${marked ? 'rgba(var(--green-rgb),0.4)' : color+'35'}`,
-        transition:'all 0.3s', display:'flex', alignItems:'center', justifyContent:'center', gap:8,
-        fontFamily:"'Jost',sans-serif",
-      }}>
-        {marked ? '✓ Rituel accompli !' : "✓ J'ai fait cet exercice"}
-      </button>
-    </div>
+    <RitualCard
+      ritual={ritual}
+      color={color}
+      variant={variant}
+      marked={marked}
+      onBack={onBack}
+      onComplete={handleMark}
+      practice={toolEnabled ? { started, onStart: () => setStarted(true), content: toolContent } : null}
+    />
   )
 }
 // ═══════════════════════════════════════════════════════════

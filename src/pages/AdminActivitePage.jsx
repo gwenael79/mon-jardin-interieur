@@ -5,6 +5,8 @@ import { supabase } from '../core/supabaseClient'
 import { ADMIN_IDS, AdminNav } from './AdminPage'
 import { useIsMobile } from './dashboardShared'
 import { LevelUpModal } from '../components/LevelUpModal'
+import { RitualCard } from '../components/RitualCard'
+import { buildRitualData } from './mafleur_rituels'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -20,7 +22,7 @@ html,body,#root{height:100%;width:100%}
   --red:rgba(210,80,80,0.85);--red2:rgba(210,80,80,0.12);--redT:rgba(210,80,80,0.35);
   --zone-roots:#C8894A;--zone-stem:#5AAF78;--zone-leaves:#4A9E5C;--zone-flowers:#D4779A;--zone-breath:#6ABBE4;
 }
-.adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *{color:#ffffff!important;font-size:clamp(13px,3vw,18px)!important}
+.adm-root{font-family:'Jost',sans-serif;background:#2b2f33!important;min-height:100vh;width:100vw;color:#ffffff!important;display:flex;flex-direction:column}.adm-root *:not(:where(.adm-preview,.adm-preview *)){color:#ffffff!important;font-size:clamp(13px,3vw,18px)!important}
 .adm-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 40px;border-bottom:1px solid var(--border2);background:#353a3f!important;backdrop-filter:blur(10px);position:sticky;top:0;z-index:10}
 .adm-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300;letter-spacing:.05em;color:#ffffff}
 .adm-logo em{font-style:italic;color:var(--green)}
@@ -83,11 +85,29 @@ html,body,#root{height:100%;width:100%}
 .adm-inp{color:#1a1208!important;background:#ffffff!important}
 .adm-inp::placeholder{color:#888!important}
 .adm-sel{color:#1a1208!important;background:#ffffff!important}
+/* Île d'aperçu (RitualCard) : .adm-root * exclut désormais .adm-preview et
+   ses descendants (cf. règle ci-dessus) — la fiche garde ses propres
+   couleurs sans qu'aucune règle !important n'ait besoin de les neutraliser.
+   (Un ancien correctif ici utilisait color:unset!important, mais un
+   !important gagne toujours face à un style inline non-important : ça
+   écrasait par erreur les couleurs propres de RitualCard au lieu de
+   seulement neutraliser le blanc forcé.) */
 `
 
 // ═══════════════════════════════════════════════════════════
 //  RituelsEditor
 // ═══════════════════════════════════════════════════════════
+const AUDIO_RITUELS_DIR = '/audio/audiorituels/'
+
+// Un simple nom de fichier ("essai.mp3") est résolu vers le dossier fixe
+// public/audio/audiorituels/. Un chemin ("/…") ou une URL ("https://…")
+// déjà complets sont laissés tels quels.
+function resolveAudioPath(value) {
+  const v = value.trim()
+  if (!v || v.startsWith('/') || v.startsWith('http://') || v.startsWith('https://')) return v
+  return AUDIO_RITUELS_DIR + v
+}
+
 const ZONES_RITUELS = {
   roots:   { name: 'Racines',  color: '#C8894A' },
   stem:    { name: 'Tige',     color: '#5AAF78' },
@@ -113,6 +133,20 @@ function RituelsEditor({ showToast }) {
   const [openZone,  setOpenZone]  = useState('')
   const [editRituel,setEditRituel]= useState('')
   const [editTitle, setEditTitle] = useState('')
+  const [editIcon,  setEditIcon]  = useState('')
+  // ── Fiche rituel enrichie ──
+  const [objective,  setObjective]  = useState('')
+  const [why,        setWhy]        = useState('')
+  const [steps,      setSteps]      = useState([])
+  const [benefits,   setBenefits]   = useState([])
+  const [reflection, setReflection] = useState('')
+  const [subtitle,      setSubtitle]      = useState('')
+  const [imageUrl,      setImageUrl]      = useState('')
+  const [audioUrl,      setAudioUrl]      = useState('')
+  const [audioDuration, setAudioDuration] = useState('')
+  const [imageUploading, setImageUploading] = useState(false)
+  const [audioUploading, setAudioUploading] = useState(false)
+  const [previewVariant, setPreviewVariant] = useState('premium')
 
   const zColors = { roots: '#C8894A', stem: '#5AAF78', leaves: '#4A9E5C', flowers: '#D4779A', breath: '#6ABBE4' }
   const inp = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border2)', background: '#fff', color: '#1a1208', fontSize: 13, fontFamily: "'Jost',sans-serif", outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none' }
@@ -141,6 +175,12 @@ function RituelsEditor({ showToast }) {
         setLoading(false)
         if (!data) return
         setExercise(data); setDesc(data.desc || ''); setDur(data.dur || '')
+        setObjective(data.objective || ''); setWhy(data.why || '')
+        setSteps(Array.isArray(data.steps) ? data.steps : [])
+        setBenefits(Array.isArray(data.benefits) ? data.benefits.map(b => typeof b === 'string' ? { icon: '', label: b, text: '' } : { icon: b.icon || '', label: b.label || '', text: b.text || '' }) : [])
+        setReflection(data.reflection || '')
+        setSubtitle(data.subtitle || ''); setImageUrl(data.image_url || '')
+        setAudioUrl(data.audio_url || ''); setAudioDuration(data.audio_duration || '')
         const t = data.tool
         if (!t) { setToolType('none'); return }
         setToolType(t.type || 'none')
@@ -150,6 +190,7 @@ function RituelsEditor({ showToast }) {
 
   useEffect(() => { setEditRituel(exercise?.rituel || '') }, [exercise])
   useEffect(() => { setEditTitle(exercise?.title   || '') }, [exercise])
+  useEffect(() => { setEditIcon(exercise?.icon     || '') }, [exercise])
 
   const toggleZone = (k) => {
     const next = openZone === k ? '' : k
@@ -162,12 +203,47 @@ function RituelsEditor({ showToast }) {
     setSaving(true)
     const tool = toolType === 'none' ? null : toolType === 'breath' ? { type: 'breath', ...toolObj } : { type: toolType }
     const { error } = await supabase.from('rituels')
-      .update({ rituel: editRituel, title: editTitle, desc, dur, tool, updated_at: new Date().toISOString() })
+      .update({
+        rituel: editRituel, title: editTitle, icon: editIcon, desc, dur, tool, updated_at: new Date().toISOString(),
+        objective: objective.trim() || null,
+        why: why.trim() || null,
+        steps: steps.filter(s => s.title?.trim() || s.text?.trim()),
+        benefits: benefits.filter(b => b.label?.trim()).map(b => ({ icon: b.icon?.trim() || '', label: b.label.trim(), text: b.text?.trim() || '' })),
+        reflection: reflection.trim() || null,
+        subtitle: subtitle.trim() || null,
+        image_url: imageUrl.trim() || null,
+        audio_url: resolveAudioPath(audioUrl) || null,
+        audio_duration: audioDuration.trim() || null,
+      })
       .eq('n', exercise.n)
     setSaving(false)
     if (error) { showToast('✗ Erreur : ' + error.message); return }
     if (window.__PLANT_RITUALS_CACHE__) delete window.__PLANT_RITUALS_CACHE__
     showToast('✓ Enregistré — MaFleur se mettra à jour au prochain chargement')
+  }
+
+  const handleImageUpload = async (file) => {
+    if (!file) return
+    setImageUploading(true)
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error } = await supabase.storage.from('rituel-images').upload(path, file, { upsert: true })
+    if (error) { setImageUploading(false); showToast('✗ Upload : ' + error.message); return }
+    const { data } = supabase.storage.from('rituel-images').getPublicUrl(path)
+    setImageUploading(false)
+    setImageUrl(data.publicUrl)
+    showToast('✓ Image importée')
+  }
+
+  const handleAudioFileUpload = async (file) => {
+    if (!file) return
+    setAudioUploading(true)
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error } = await supabase.storage.from('rituel-audio').upload(path, file, { upsert: true })
+    if (error) { setAudioUploading(false); showToast('✗ Upload : ' + error.message); return }
+    const { data } = supabase.storage.from('rituel-audio').getPublicUrl(path)
+    setAudioUploading(false)
+    setAudioUrl(data.publicUrl)
+    showToast('✓ Audio importé')
   }
 
   const zc = zColors[zone] || '#96d485'
@@ -239,17 +315,124 @@ function RituelsEditor({ showToast }) {
               <span style={label}>Nom du rituel</span>
               <input className="adm-inp" value={editRituel} onChange={e => setEditRituel(e.target.value)} style={inp} />
             </div>
-            <div>
-              <span style={label}>Titre de l'exercice</span>
-              <input className="adm-inp" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={inp} />
-            </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={label}>Description</span>
-                <span style={{ fontSize: 10, color: desc.length > 450 ? '#e87060' : 'rgba(242,237,224,0.22)' }}>{desc.length} / 500</span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <span style={label}>Titre de l'exercice</span>
+                <input className="adm-inp" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={inp} />
               </div>
-              <textarea className="adm-inp" value={desc} onChange={e => setDesc(e.target.value.slice(0, 500))} rows={6} style={{ ...inp, resize: 'vertical', lineHeight: 1.8 }} />
+              <div style={{ width: 70, flexShrink: 0 }}>
+                <span style={label}>Icône</span>
+                <input className="adm-inp" value={editIcon} onChange={e => setEditIcon(e.target.value)} placeholder="🌱" style={{ ...inp, textAlign: 'center' }} />
+              </div>
             </div>
+            <div>
+              <span style={label}>Sous-titre — affiché sous le titre, sur la fiche</span>
+              <input className="adm-inp" value={subtitle} onChange={e => setSubtitle(e.target.value)} placeholder="Un rituel tout simple pour revenir dans l'instant présent…" style={inp} />
+            </div>
+            {/* ── Fiche rituel enrichie ── */}
+            <div style={{ paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ fontSize: 10, color: zc, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 14, marginTop: 14 }}>🌿 Fiche rituel</div>
+
+              <div style={{ marginBottom: 14 }}>
+                <span style={label}>🎯 Objectif — phrase courte</span>
+                <input className="adm-inp" value={objective} onChange={e => setObjective(e.target.value)} placeholder="Retrouver son calme et revenir dans le moment présent." style={inp} />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <span style={label}>🌼 Pourquoi ce rituel ? — bénéfice émotionnel</span>
+                <textarea className="adm-inp" value={why} onChange={e => setWhy(e.target.value)} rows={3} placeholder="Quelques lignes sur ce que ce rituel apaise ou nourrit…" style={{ ...inp, resize: 'vertical', lineHeight: 1.7 }} />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ ...label, marginBottom: 0 }}>✨ Comment faire ? — étapes</span>
+                  <button onClick={() => setSteps(s => [...s, { icon: '', title: '', text: '' }])}
+                    style={{ padding: '4px 12px', borderRadius: 8, border: `1px solid ${zc}40`, background: `${zc}12`, color: zc, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif" }}>+ Étape</button>
+                </div>
+                {steps.length === 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>Aucune étape — la section "Comment faire ?" restera masquée sur la fiche.</div>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {steps.map((s, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      <input className="adm-inp" value={s.icon} onChange={e => setSteps(arr => arr.map((x, j) => j === i ? { ...x, icon: e.target.value } : x))}
+                        placeholder="👣" style={{ ...inp, width: 46, flexShrink: 0, textAlign: 'center', padding: '8px 4px' }} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <input className="adm-inp" value={s.title} onChange={e => setSteps(arr => arr.map((x, j) => j === i ? { ...x, title: e.target.value } : x))}
+                          placeholder="Titre de l'étape (ex: Observer)" style={inp} />
+                        <textarea className="adm-inp" value={s.text} onChange={e => setSteps(arr => arr.map((x, j) => j === i ? { ...x, text: e.target.value } : x))}
+                          placeholder="Courte explication…" rows={2} style={{ ...inp, resize: 'vertical', lineHeight: 1.6, fontSize: 12 }} />
+                      </div>
+                      <button onClick={() => setSteps(arr => arr.filter((_, j) => j !== i))}
+                        style={{ padding: '6px 9px', borderRadius: 7, border: '1px solid rgba(210,80,80,0.25)', background: 'rgba(210,80,80,0.08)', color: 'rgba(255,140,140,0.7)', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ ...label, marginBottom: 0 }}>🌱 Ce que nourrit ce rituel — bienfaits</span>
+                  <button onClick={() => setBenefits(b => [...b, { icon: '', label: '', text: '' }])}
+                    style={{ padding: '4px 12px', borderRadius: 8, border: `1px solid ${zc}40`, background: `${zc}12`, color: zc, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif" }}>+ Bienfait</button>
+                </div>
+                {benefits.length === 0 && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>Aucun bienfait renseigné — la section "Ce que nourrit ce rituel" restera masquée sur la fiche.</div>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {benefits.map((b, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', padding: 10, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                      <input className="adm-inp" value={b.icon} onChange={e => setBenefits(arr => arr.map((x, j) => j === i ? { ...x, icon: e.target.value } : x))}
+                        placeholder="🌱" style={{ ...inp, width: 46, flexShrink: 0, textAlign: 'center', padding: '8px 4px' }} />
+                      <input className="adm-inp" value={b.label} onChange={e => setBenefits(arr => arr.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
+                        placeholder="Présence" style={{ ...inp, flex: 1 }} />
+                      <input className="adm-inp" value={b.text} onChange={e => setBenefits(arr => arr.map((x, j) => j === i ? { ...x, text: e.target.value } : x))}
+                        placeholder="Être pleinement ici" style={{ ...inp, flex: 1 }} />
+                      <button onClick={() => setBenefits(arr => arr.filter((_, j) => j !== i))}
+                        style={{ padding: '6px 9px', borderRadius: 7, border: '1px solid rgba(210,80,80,0.25)', background: 'rgba(210,80,80,0.08)', color: 'rgba(255,140,140,0.7)', cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <span style={label}>💚 Pour terminer — question de réflexion</span>
+                <input className="adm-inp" value={reflection} onChange={e => setReflection(e.target.value)} placeholder="Comment vous sentez-vous maintenant ?" style={inp} />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <span style={label}>Illustration du hero — vide = pas d'image (icône seule)</span>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  {imageUrl && (
+                    <img src={imageUrl} alt="" style={{ width: 54, height: 68, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid rgba(255,255,255,0.15)' }} />
+                  )}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.06)', color: imageUrl ? '#96d485' : 'rgba(242,237,224,0.40)', fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textAlign: 'center', display: 'block' }}>
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleImageUpload(e.target.files[0])} />
+                      {imageUploading ? '⏳ Import en cours…' : imageUrl ? '✓ Changer l\'image' : '📁 Choisir une image'}
+                    </label>
+                    <input className="adm-inp" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="…ou coller une URL directement" style={{ ...inp, fontSize: 11 }} />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <span style={label}>Rituel guidé en audio — vide = pas de lecteur audio</span>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.06)', color: audioUrl ? '#96d485' : 'rgba(242,237,224,0.40)', fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textAlign: 'center', display: 'block' }}>
+                      <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={e => handleAudioFileUpload(e.target.files[0])} />
+                      {audioUploading ? '⏳ Import en cours…' : audioUrl ? '✓ Changer l\'audio' : '📁 Choisir un fichier audio'}
+                    </label>
+                    <input className="adm-inp" value={audioUrl} onChange={e => setAudioUrl(e.target.value)} placeholder="…ou juste le nom du fichier (ex: essai.mp3)" style={{ ...inp, fontSize: 11 }} />
+                    {audioUrl && <audio controls src={resolveAudioPath(audioUrl)} style={{ width: '100%', height: 32 }} />}
+                  </div>
+                  <div style={{ width: 90, flexShrink: 0 }}>
+                    <span style={label}>Durée</span>
+                    <input className="adm-inp" value={audioDuration} onChange={e => setAudioDuration(e.target.value)} placeholder="1:00" style={inp} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }} />
+
             <div>
               <span style={label}>Durée (ex: "5 min")</span>
               <input className="adm-inp" value={dur} onChange={e => setDur(e.target.value)} placeholder="5 min" style={{ ...inp, maxWidth: isMobile ? '100%' : 160 }} />
@@ -276,6 +459,42 @@ function RituelsEditor({ showToast }) {
               style={{ padding: '12px 24px', borderRadius: 10, border: `1px solid ${zc}50`, background: `${zc}18`, color: zc, fontSize: 13, fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: "'Jost',sans-serif", letterSpacing: '.06em', opacity: saving ? 0.6 : 1 }}>
               {saving ? 'Enregistrement…' : '✓ Enregistrer'}
             </button>
+
+            {/* ── Aperçu en direct de la fiche ── */}
+            <div style={{ paddingTop: 18, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <span style={label}>👁 Aperçu de la fiche</span>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {['standard', 'premium'].map(v => (
+                    <button key={v} onClick={() => setPreviewVariant(v)}
+                      style={{ padding: '4px 12px', borderRadius: 8, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textTransform: 'capitalize', border: `1px solid ${previewVariant === v ? zc + '60' : 'rgba(255,255,255,0.12)'}`, background: previewVariant === v ? `${zc}18` : 'rgba(255,255,255,0.04)', color: previewVariant === v ? zc : 'rgba(255,255,255,0.4)' }}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="adm-preview" style={{
+                borderRadius: '20px', padding: '24px 20px 28px', maxWidth: 480,
+                background: 'linear-gradient(175deg, var(--ritual-modal-bg-start, #fffaf7) 0%, var(--ritual-modal-bg-end, #f5ede8) 100%)',
+                border: `1px solid ${zc}30`, boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
+              }}>
+                <RitualCard
+                  ritual={buildRitualData(
+                    {
+                      icon: editIcon, title: editTitle || 'Titre du rituel', dur, desc, objective, why, steps, benefits, reflection,
+                      subtitle, image_url: imageUrl, audio_url: resolveAudioPath(audioUrl), audio_duration: audioDuration,
+                    },
+                    { name: ZONES_RITUELS[zone]?.name }
+                  )}
+                  color={zc}
+                  variant={previewVariant}
+                  marked={false}
+                  onBack={() => {}}
+                  onComplete={() => {}}
+                  practice={toolType !== 'none' ? { started: false, onStart: () => {}, content: null } : null}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>
