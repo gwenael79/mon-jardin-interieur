@@ -385,11 +385,15 @@ function BreathingTool({ exercise, color, accent }) {
 
   const LABELS = { ready:'', inhale:'INSPIREZ', hold:'RETENEZ', exhale:'EXPIREZ', holdEmpty:'POUMONS VIDES', done:'Terminé' }
 
-  // ── Keyframes (labelFade, holdPulse) ────────────────────────
+  // ── Keyframes (labelFade, holdPulse, ondes) ──────────────────
   const css = `
     @keyframes labelFade { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
     @keyframes holdPulse { 0%,100%{opacity:.55} 50%{opacity:.85} }
+    @keyframes waveRipple { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(1.85);opacity:0} }
   `
+  // Rythme des ondes calé sur la respiration : plus lent pendant la rétention,
+  // plus vif sur inspire/expire — jamais figé, toujours un souffle qui irradie.
+  const waveDur = phase === 'hold' || phase === 'holdEmpty' ? 4.2 : Math.max(2.4, transDur)
 
   // ── Arc SVG de progression de phase ─────────────────────────
   // L'arc se remplit sur toute la durée de la phase via CSS transition.
@@ -448,6 +452,17 @@ function BreathingTool({ exercise, color, accent }) {
             pointerEvents:'none',
           }}/>
         )}
+
+        {/* Ondes — vagues concentriques qui irradient de l'orbe au rythme du souffle */}
+        {isActive && [0, 1, 2].map(i => (
+          <div key={i} style={{
+            position:'absolute', borderRadius:'50%',
+            width: ORB_MAX, height: ORB_MAX,
+            border: `1px solid ${color}50`,
+            animation: `waveRipple ${waveDur}s ease-out ${(i * waveDur) / 3}s infinite`,
+            pointerEvents:'none',
+          }}/>
+        ))}
 
         {/* Orbe principale */}
         <div style={{
