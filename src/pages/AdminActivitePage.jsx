@@ -144,8 +144,10 @@ function RituelsEditor({ showToast }) {
   const [imageUrl,      setImageUrl]      = useState('')
   const [audioUrl,      setAudioUrl]      = useState('')
   const [audioDuration, setAudioDuration] = useState('')
+  const [stepsIllustrationUrl, setStepsIllustrationUrl] = useState('')
   const [imageUploading, setImageUploading] = useState(false)
   const [audioUploading, setAudioUploading] = useState(false)
+  const [stepsIllustrationUploading, setStepsIllustrationUploading] = useState(false)
   const [previewVariant, setPreviewVariant] = useState('premium')
 
   const zColors = { roots: '#C8894A', stem: '#5AAF78', leaves: '#4A9E5C', flowers: '#D4779A', breath: '#6ABBE4' }
@@ -181,6 +183,7 @@ function RituelsEditor({ showToast }) {
         setReflection(data.reflection || '')
         setSubtitle(data.subtitle || ''); setImageUrl(data.image_url || '')
         setAudioUrl(data.audio_url || ''); setAudioDuration(data.audio_duration || '')
+        setStepsIllustrationUrl(data.steps_illustration_url || '')
         const t = data.tool
         if (!t) { setToolType('none'); return }
         setToolType(t.type || 'none')
@@ -214,6 +217,7 @@ function RituelsEditor({ showToast }) {
         image_url: imageUrl.trim() || null,
         audio_url: resolveAudioPath(audioUrl) || null,
         audio_duration: audioDuration.trim() || null,
+        steps_illustration_url: stepsIllustrationUrl.trim() || null,
       })
       .eq('n', exercise.n)
     setSaving(false)
@@ -232,6 +236,18 @@ function RituelsEditor({ showToast }) {
     setImageUploading(false)
     setImageUrl(data.publicUrl)
     showToast('✓ Image importée')
+  }
+
+  const handleStepsIllustrationUpload = async (file) => {
+    if (!file) return
+    setStepsIllustrationUploading(true)
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error } = await supabase.storage.from('rituel-images').upload(path, file, { upsert: true })
+    if (error) { setStepsIllustrationUploading(false); showToast('✗ Upload : ' + error.message); return }
+    const { data } = supabase.storage.from('rituel-images').getPublicUrl(path)
+    setStepsIllustrationUploading(false)
+    setStepsIllustrationUrl(data.publicUrl)
+    showToast('✓ Illustration importée')
   }
 
   const handleAudioFileUpload = async (file) => {
@@ -366,6 +382,21 @@ function RituelsEditor({ showToast }) {
                     </div>
                   ))}
                 </div>
+                <div style={{ marginTop: 12 }}>
+                  <span style={label}>Illustration du bouton "Illustration" — vide = bouton masqué sur la fiche</span>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    {stepsIllustrationUrl && (
+                      <img src={stepsIllustrationUrl} alt="" style={{ width: 54, height: 68, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid rgba(255,255,255,0.15)' }} />
+                    )}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.06)', color: stepsIllustrationUrl ? '#96d485' : 'rgba(242,237,224,0.40)', fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textAlign: 'center', display: 'block' }}>
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleStepsIllustrationUpload(e.target.files[0])} />
+                        {stepsIllustrationUploading ? '⏳ Import en cours…' : stepsIllustrationUrl ? '✓ Changer l\'illustration' : '📁 Choisir une illustration'}
+                      </label>
+                      <input className="adm-inp" value={stepsIllustrationUrl} onChange={e => setStepsIllustrationUrl(e.target.value)} placeholder="…ou coller une URL directement" style={{ ...inp, fontSize: 11 }} />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div style={{ marginBottom: 14 }}>
@@ -473,27 +504,41 @@ function RituelsEditor({ showToast }) {
                   ))}
                 </div>
               </div>
-              <div className="adm-preview" style={{
-                borderRadius: '20px', padding: '24px 20px 28px', maxWidth: 480,
-                background: 'linear-gradient(175deg, var(--ritual-modal-bg-start, #fffaf7) 0%, var(--ritual-modal-bg-end, #f5ede8) 100%)',
-                border: `1px solid ${zc}30`, boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
-              }}>
-                <RitualCard
-                  ritual={buildRitualData(
-                    {
-                      icon: editIcon, title: editTitle || 'Titre du rituel', dur, desc, objective, why, steps, benefits, reflection,
-                      subtitle, image_url: imageUrl, audio_url: resolveAudioPath(audioUrl), audio_duration: audioDuration,
-                    },
-                    { name: ZONES_RITUELS[zone]?.name }
-                  )}
-                  color={zc}
-                  variant={previewVariant}
-                  marked={false}
-                  onBack={() => {}}
-                  onComplete={() => {}}
-                  practice={toolType !== 'none' ? { started: false, onStart: () => {}, content: null } : null}
-                />
-              </div>
+              {(() => {
+                const ritualData = buildRitualData(
+                  {
+                    icon: editIcon, title: editTitle || 'Titre du rituel', dur, desc, objective, why, steps, benefits, reflection,
+                    subtitle, image_url: imageUrl, audio_url: resolveAudioPath(audioUrl), audio_duration: audioDuration,
+                    steps_illustration_url: stepsIllustrationUrl,
+                  },
+                  { name: ZONES_RITUELS[zone]?.name }
+                )
+                const sharedProps = {
+                  ritual: ritualData, color: zc, variant: previewVariant, marked: false,
+                  onBack: () => {}, onComplete: () => {},
+                  practice: toolType !== 'none' ? { started: false, onStart: () => {}, content: null } : null,
+                }
+                const cardStyle = {
+                  borderRadius: '20px', padding: '24px 20px 28px', width: '100%', maxWidth: 420, boxSizing: 'border-box',
+                  background: 'linear-gradient(175deg, var(--ritual-modal-bg-start, #fffaf7) 0%, var(--ritual-modal-bg-end, #f5ede8) 100%)',
+                  border: `1px solid ${zc}30`, boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
+                }
+                const pcCardStyle = { ...cardStyle, maxWidth: 'none', padding: '32px 40px 36px' }
+                return (
+                  <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>📱 Mobile</div>
+                      <div className="adm-preview" style={cardStyle}><RitualCard {...sharedProps} layout="mobile" /></div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 320 }}>
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>🖥 PC</div>
+                      <div style={{ padding: 40, display: 'flex', background: 'rgba(0,0,0,0.18)', borderRadius: 16, boxSizing: 'border-box' }}>
+                        <div className="adm-preview" style={pcCardStyle}><RitualCard {...sharedProps} layout="desktop" /></div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           </div>
         )}

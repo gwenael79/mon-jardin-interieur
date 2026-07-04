@@ -44,6 +44,9 @@ function useRitualCardFont() {
 //    variant : 'standard' | 'premium'  (défaut 'premium' — ajoute une
 //              entrée en fondu échelonnée et de très légères touches
 //              décoratives ; la structure est identique dans les deux cas)
+//    layout  : 'mobile' | 'desktop'  (défaut 'mobile' — 'desktop' donne un
+//              hero pleine largeur et deux colonnes pour Objectif/Pourquoi
+//              et les étapes, pensé pour un cadre large type PC)
 //    marked  : bool — le rituel vient d'être validé
 //    onBack, onComplete, onMore (optionnel)
 //    practice : { started, onStart, content } | null — outil interactif
@@ -84,6 +87,7 @@ export function RitualCard({
   ritual,
   color = 'var(--green)',
   variant = 'premium',
+  layout = 'mobile',
   marked = false,
   onBack,
   onMore,
@@ -92,16 +96,19 @@ export function RitualCard({
 }) {
   useRitualCardFont()
   const premium = variant === 'premium'
+  const desktop = layout === 'desktop'
   const {
     image, icon, categoryIcon, title, category, duration, subtitle,
     audioUrl, audioDuration,
     objective, why,
     steps = [], benefits: rawBenefits = [], reflection,
+    stepsIllustration,
   } = ritual
   const benefits = rawBenefits.map(normalizeBenefit).filter(b => b?.label)
 
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
+  const [showIllustration, setShowIllustration] = useState(false)
   const toggleAudio = () => {
     const el = audioRef.current
     if (!el) return
@@ -129,39 +136,74 @@ export function RitualCard({
         )}
       </div>
 
-      {/* ── HERO : image + titre côte à côte ── */}
-      <div style={{ display: 'flex', gap: 18, marginBottom: 22, alignItems: 'flex-start' }}>
-        <div style={{
-          width: 168, height: 204, borderRadius: 22, flexShrink: 0, overflow: 'hidden', position: 'relative',
-          background: image ? undefined : `linear-gradient(160deg, ${MAUVE}25, ${FOREST}1c)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: premium ? '0 14px 30px rgba(40,20,10,0.18)' : '0 3px 10px rgba(40,20,10,0.09)',
-        }}>
-          {image
-            ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            : <span style={{ fontSize: 60 }}>{icon || '🌿'}</span>}
+      {/* ── HERO ── */}
+      {desktop ? (
+        <div style={{ display: 'flex', gap: 28, marginBottom: 26, alignItems: 'flex-start' }}>
+          <div style={{
+            width: 220, height: 220, flexShrink: 0, borderRadius: 22, overflow: 'hidden', position: 'relative',
+            background: image ? `${MAUVE}0a` : `linear-gradient(160deg, ${MAUVE}25, ${FOREST}1c)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: premium ? '0 14px 30px rgba(40,20,10,0.18)' : '0 3px 10px rgba(40,20,10,0.09)',
+          }}>
+            {image
+              ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              : <span style={{ fontSize: 72 }}>{icon || '🌿'}</span>}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, paddingTop: 8 }}>
+            {(category || duration) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+                {category && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: MAUVE }}>
+                    {categoryIcon && <span style={{ fontSize: 13 }}>{categoryIcon}</span>}{category}
+                  </span>
+                )}
+                {category && duration && <span style={{ color: TEXT_FAINT, fontSize: 11 }}>•</span>}
+                {duration && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: TEXT_MUTED }}>⏱ {duration}</span>
+                )}
+              </div>
+            )}
+            <h1 style={{
+              fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 'clamp(26px, 3.5vw, 36px)',
+              color: FOREST, fontWeight: 700, lineHeight: 1.12, margin: '0 0 12px',
+            }}>{title}</h1>
+            {subtitle && <p style={{ fontSize: 18, color: TEXT_MUTED, lineHeight: 1.5, margin: 0, fontWeight: 400 }}>{subtitle}</p>}
+          </div>
         </div>
-        <div style={{ flex: 1, minWidth: 0, paddingTop: 6 }}>
-          {(category || duration) && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-              {category && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: MAUVE }}>
-                  {categoryIcon && <span style={{ fontSize: 13 }}>{categoryIcon}</span>}{category}
-                </span>
-              )}
-              {category && duration && <span style={{ color: TEXT_FAINT, fontSize: 11 }}>•</span>}
-              {duration && (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: TEXT_MUTED }}>⏱ {duration}</span>
-              )}
-            </div>
-          )}
-          <h1 style={{
-            fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 'clamp(22px, 6.5vw, 28px)',
-            color: FOREST, fontWeight: 700, lineHeight: 1.12, margin: '0 0 10px',
-          }}>{title}</h1>
-          {subtitle && <p style={{ fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.6, margin: 0, fontWeight: 400 }}>{subtitle}</p>}
+      ) : (
+        <div style={{ display: 'flex', gap: 18, marginBottom: 22, alignItems: 'flex-start' }}>
+          <div style={{
+            width: 168, height: 204, borderRadius: 22, flexShrink: 0, overflow: 'hidden', position: 'relative',
+            background: image ? undefined : `linear-gradient(160deg, ${MAUVE}25, ${FOREST}1c)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: premium ? '0 14px 30px rgba(40,20,10,0.18)' : '0 3px 10px rgba(40,20,10,0.09)',
+          }}>
+            {image
+              ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span style={{ fontSize: 60 }}>{icon || '🌿'}</span>}
+          </div>
+          <div style={{ flex: 1, minWidth: 0, paddingTop: 6 }}>
+            {(category || duration) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                {category && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: MAUVE }}>
+                    {categoryIcon && <span style={{ fontSize: 13 }}>{categoryIcon}</span>}{category}
+                  </span>
+                )}
+                {category && duration && <span style={{ color: TEXT_FAINT, fontSize: 11 }}>•</span>}
+                {duration && (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: TEXT_MUTED }}>⏱ {duration}</span>
+                )}
+              </div>
+            )}
+            <h1 style={{
+              fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 'clamp(22px, 6.5vw, 28px)',
+              color: FOREST, fontWeight: 700, lineHeight: 1.12, margin: '0 0 10px',
+            }}>{title}</h1>
+            {subtitle && <p style={{ fontSize: 18, color: TEXT_MUTED, lineHeight: 1.5, margin: 0, fontWeight: 400 }}>{subtitle}</p>}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── ÉCOUTER (émotion avant l'explication) ── */}
       {audioUrl && (
@@ -179,19 +221,24 @@ export function RitualCard({
         </>
       )}
 
-      {/* ── OBJECTIF ── */}
-      {objective && (
-        <div style={{ marginBottom: 32, ...fadeIn(0, premium) }}>
-          <SectionLabel icon="🎯" color={MAUVE}>Objectif</SectionLabel>
-          <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, margin: 0, fontWeight: 400 }}>{objective}</p>
-        </div>
-      )}
-
-      {/* ── POURQUOI CE RITUEL ── */}
-      {why && (
-        <div style={{ marginBottom: 32, ...fadeIn(1, premium) }}>
-          <SectionLabel icon="🌼" color={FOREST}>Pourquoi ce rituel ?</SectionLabel>
-          <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, margin: 0, fontWeight: 400 }}>{why}</p>
+      {/* ── OBJECTIF + POURQUOI CE RITUEL — côte à côte en desktop ── */}
+      {(objective || why) && (
+        <div style={{
+          display: desktop ? 'grid' : 'block', gridTemplateColumns: desktop ? '1fr 1fr' : undefined, gap: desktop ? 32 : 0,
+          marginBottom: 32,
+        }}>
+          {objective && (
+            <div style={{ marginBottom: desktop ? 0 : 32, ...fadeIn(0, premium) }}>
+              <SectionLabel icon="🎯" color={MAUVE}>Objectif</SectionLabel>
+              <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, margin: 0, fontWeight: 400 }}>{objective}</p>
+            </div>
+          )}
+          {why && (
+            <div style={{ ...fadeIn(1, premium) }}>
+              <SectionLabel icon="🌼" color={FOREST}>Pourquoi ce rituel ?</SectionLabel>
+              <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, margin: 0, fontWeight: 400 }}>{why}</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -199,7 +246,10 @@ export function RitualCard({
       {steps.length > 0 && (
         <div style={{ marginBottom: 32, ...fadeIn(2, premium) }}>
           <SectionLabel icon="✨" color={FOREST}>Comment faire ?</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 22, marginTop: 4 }}>
+          <div style={desktop
+            ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 32px', marginTop: 4 }
+            : { display: 'flex', flexDirection: 'column', gap: 22, marginTop: 4 }
+          }>
             {steps.map((s, i) => (
               <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                 <div style={{
@@ -218,6 +268,22 @@ export function RitualCard({
               </div>
             ))}
           </div>
+          {stepsIllustration && (
+            <div style={{ marginTop: 18 }}>
+              <button onClick={() => setShowIllustration(v => !v)} style={{
+                width: '100%', padding: '12px', borderRadius: 100,
+                border: `1px solid ${FOREST}40`, background: `${FOREST}0c`,
+                color: FOREST, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                letterSpacing: '.04em', fontFamily: "'Jost',sans-serif",
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}>🖼 {showIllustration ? 'Masquer l’illustration' : 'Illustration du rituel'}</button>
+              {showIllustration && (
+                <div style={{ marginTop: 14, borderRadius: 16, overflow: 'hidden', animation: 'fadeUp 0.3s ease both' }}>
+                  <img src={stepsIllustration} alt="" style={{ width: '100%', display: 'block' }} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

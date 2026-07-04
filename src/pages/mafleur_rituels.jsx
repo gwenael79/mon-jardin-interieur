@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "../core/supabaseClient";
 import { RitualCard } from "../components/RitualCard";
+import { useIsMobile } from "./dashboardShared";
 
 // mafleur_rituels.data.js
 // Données pures — pas de JSX, compatible Fast Refresh
@@ -108,6 +109,7 @@ export function useRituels() {
             image_url:     row.image_url     ?? undefined,
             audio_url:     row.audio_url     ?? undefined,
             audio_duration:row.audio_duration ?? undefined,
+            steps_illustration_url: row.steps_illustration_url ?? undefined,
           }
           map[row.zone][row.rituel][row.mode].push(ex)
         }
@@ -688,6 +690,7 @@ export function buildRitualData(exercise, zone) {
     objective: exercise.objective?.trim() || truncate(exercise.desc, 100),
     why: exercise.why?.trim() || exercise.desc || '',
     steps: Array.isArray(exercise.steps) ? exercise.steps.filter(s => s?.title || s?.text) : [],
+    stepsIllustration: exercise.steps_illustration_url || undefined,
     benefits: Array.isArray(exercise.benefits) ? exercise.benefits.filter(Boolean) : [],
     reflection: exercise.reflection?.trim() || DEFAULT_REFLECTION,
   }
@@ -696,6 +699,7 @@ export function buildRitualData(exercise, zone) {
 export function ExerciseDetail({ exercise, zone, onDone, onBack, variant = 'premium', initialMarked = false }) {
   const [marked,  setMarked]  = useState(initialMarked)
   const [started, setStarted] = useState(false)
+  const isMobile = useIsMobile()
 
   // ScreenMonJardin peut passer un exercice sans champ tool.
   // On cherche la version complète dans PLANT_RITUALS par titre.
@@ -738,6 +742,7 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack, variant = 'prem
       ritual={ritual}
       color={color}
       variant={variant}
+      layout={isMobile ? 'mobile' : 'desktop'}
       marked={marked}
       onBack={onBack}
       onComplete={handleMark}

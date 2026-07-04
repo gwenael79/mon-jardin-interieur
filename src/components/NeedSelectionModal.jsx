@@ -5,6 +5,9 @@ import { supabase } from '../core/supabaseClient'
 import { logActivity } from '../utils/logActivity'
 import AudioRitualsModal from './AudioRitualsModal'
 import { ExerciseDetail } from '../pages/mafleur_rituels'
+import { playChime } from '../utils/playChime'
+import { completeRitualHealth, RITUAL_DELTA } from '../utils/completeRitualHealth'
+import RitualFinderModal from './RitualFinderModal'
 
 // ─── Données ────────────────────────────────────────────────────────────────
 
@@ -293,7 +296,43 @@ function saveSession(s) {
   localStorage.setItem(SESSION_KEY, JSON.stringify(s))
 }
 
-function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpdate }) {
+// Salve de paillettes — retour visuel immédiat quand la fleur évolue.
+// La fleur elle-même n'est pas visible pendant que ce modal plein écran
+// est ouvert, d'où ce feedback local en plus de l'événement plantCelebrate.
+const SPARKLE_PARTICLES = Array.from({ length: 10 }, (_, i) => ({
+  angle: (i / 10) * 360 + (i % 2) * 18,
+  dist: 70 + (i % 3) * 22,
+  delay: (i % 4) * 0.04,
+  size: 14 + (i % 3) * 6,
+}))
+
+function SparkleBurst() {
+  return (
+    <div aria-hidden style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'visible', zIndex:5 }}>
+      <style>{`
+        @keyframes sparkleBurst {
+          0%   { transform:translate(-50%,-50%) scale(0.3); opacity:0; }
+          25%  { opacity:1; }
+          100% { transform:translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(1); opacity:0; }
+        }
+      `}</style>
+      {SPARKLE_PARTICLES.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180
+        const sx = `${Math.cos(rad) * p.dist}px`
+        const sy = `${Math.sin(rad) * p.dist}px`
+        return (
+          <span key={i} style={{
+            position:'absolute', top:'50%', left:'50%', fontSize:p.size,
+            '--sx':sx, '--sy':sy,
+            animation:`sparkleBurst 0.9s ease-out ${p.delay}s both`,
+          }}>✨</span>
+        )
+      })}
+    </div>
+  )
+}
+
+function RitualByTimeModal({ onClose, userId, plantId, onHealthUpdate }) {
   const [bucket,   setBucket]   = useState(null)
   const [rituals,  setRituals]  = useState([])
   const [loading,  setLoading]  = useState(false)
@@ -335,19 +374,15 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
     setSession(newSession)
     saveSession(newSession)
     setDone(true)
-    // +1% santé de la fleur
-    if (plantId) {
-      const newHealth = Math.min(100, (plantHealth ?? 5) + 1)
-      onHealthUpdate?.(newHealth)
-      try {
-        await supabase.from('plants').update({ health: newHealth }).eq('id', plantId)
-        window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
-      } catch (e) { console.error('[ritual] health update failed:', e) }
-    }
+    playChime()
+    const zoneLabel = ZONE_LABELS[selected?.zone] || 'Racines'
+    try {
+      await completeRitualHealth({ plantId, zoneId: selected?.zone, onHealthUpdate, userId })
+    } catch (e) { console.error('[ritual] health update failed:', e) }
     if (userId && plantId && selected?.n) {
       try {
-        await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: selected.n, zone: 'Racines', health_delta: 1 })
-        await logActivity({ userId, action: 'ritual', ritual: selected.n, zone: 'Racines', circleId: null })
+        await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: selected.title || String(selected.n), zone: zoneLabel, health_delta: RITUAL_DELTA })
+        await logActivity({ userId, action: 'ritual', ritual: selected.title || String(selected.n), zone: zoneLabel, circleId: null })
       } catch (e) { console.error('[ritual] log failed:', e) }
     }
     setTimeout(onClose, 1400)
@@ -380,7 +415,7 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
       padding: isMobile ? 0 : 24,
     }}>
       <div style={{
-        width: isMobile ? '100%' : 'min(520px,95vw)',
+        width: isMobile ? '100%' : selected ? 'min(900px,95vw)' : 'min(520px,95vw)',
         height: isMobile ? '100%' : 'auto',
         maxHeight: isMobile ? '100%' : '90vh',
         background:'linear-gradient(160deg,#fdf9f4,#f4ede4)',
@@ -388,6 +423,7 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
         display:'flex', flexDirection:'column',
         overflow:'hidden',
         boxShadow:'0 32px 80px rgba(0,0,0,0.4)',
+        transition: 'width 0.25s ease',
       }}>
         {/* Header */}
         <div style={{ padding:'20px 20px 12px', display:'flex', alignItems:'center', gap:12, borderBottom:'1px solid rgba(0,0,0,0.06)', flexShrink:0 }}>
@@ -490,13 +526,16 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
                 </div>
               </div>
             ) : (
-              <ExerciseDetail
-                exercise={selected}
-                zone={{ name: ZONE_LABELS[selected.zone] || selected.zone, color: ZONE_COLORS[selected.zone] || '#888', accent: ZONE_COLORS[selected.zone] || '#888' }}
-                initialMarked={done}
-                onBack={() => { setSelected(null); setDone(false) }}
-                onDone={handleValidate}
-              />
+              <div style={{ position:'relative' }}>
+                <ExerciseDetail
+                  exercise={selected}
+                  zone={{ name: ZONE_LABELS[selected.zone] || selected.zone, color: ZONE_COLORS[selected.zone] || '#888', accent: ZONE_COLORS[selected.zone] || '#888' }}
+                  initialMarked={done}
+                  onBack={() => { setSelected(null); setDone(false) }}
+                  onDone={handleValidate}
+                />
+                {done && <SparkleBurst />}
+              </div>
             )
           )}
         </div>
@@ -510,6 +549,7 @@ function RitualByTimeModal({ onClose, userId, plantId, plantHealth, onHealthUpda
 function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }) {
   const [showByTime,  setShowByTime]  = useState(false)
   const [showAudio,   setShowAudio]   = useState(false)
+  const [showFinder,  setShowFinder]  = useState(false)
   return (
     <>
       {/* Grain subtil */}
@@ -535,14 +575,16 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           }}/>
         ))}
       </div>
-      {/* Bouton fermer */}
-      <button onClick={onClose} style={{
-        position:'absolute', top:16, right:16, zIndex:10,
-        width:32, height:32, borderRadius:'50%',
-        background:'rgba(255,255,255,0.50)', border:'1px solid rgba(180,160,200,.30)',
-        backdropFilter:'blur(8px)', cursor:'pointer', fontSize:13, color:'rgba(50,35,70,.45)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-      }}>✕</button>
+      {/* Bouton fermer — masqué quand un sous-modal plein écran est ouvert (sinon il reste visible au-dessus, cf. contexte d'empilement) */}
+      {!showByTime && !showAudio && !showFinder && (
+        <button onClick={onClose} style={{
+          position:'absolute', top:16, right:16, zIndex:10,
+          width:32, height:32, borderRadius:'50%',
+          background:'rgba(255,255,255,0.50)', border:'1px solid rgba(180,160,200,.30)',
+          backdropFilter:'blur(8px)', cursor:'pointer', fontSize:13, color:'rgba(50,35,70,.45)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+        }}>✕</button>
+      )}
       {/* Contenu */}
       <div style={{
         position:'relative', zIndex:1, flex:1, minHeight:0, overflowY:'auto',
@@ -573,6 +615,31 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             margin:0, letterSpacing:'.01em',
           }}>Un seul choix suffit pour commencer</p>
         </div>
+
+        {/* "Trouve tes rituels" — carte de test, dev uniquement pour l'instant */}
+        {import.meta.env.DEV && (
+          <button onClick={() => setShowFinder(true)} style={{
+            flexShrink: 0, width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
+            marginBottom: isMobile ? 12 : 16, padding: isMobile ? '16px 18px' : '20px 22px',
+            borderRadius: 18, background: 'linear-gradient(135deg,#7d4368,#a06a8c)',
+            color: '#fff', boxShadow: '0 6px 20px rgba(125,67,104,0.30)',
+            display: 'flex', alignItems: 'center', gap: 14, animation: 'nm_fadeUp .5s ease both',
+            position: 'relative',
+          }}>
+            {!isPremium && (
+              <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 15 }}>🔒</div>
+            )}
+            <span style={{ fontSize: 26, flexShrink: 0 }}>🧭</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 19, fontStyle: 'italic', fontWeight: 600, marginBottom: 2 }}>Définir mon protocole de rituels personnalisé</div>
+              <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, opacity: 0.85 }}>
+                {isPremium ? 'Un questionnaire, une sélection de rituels rien que pour toi — DEV' : '3 problématiques offertes, le reste en Premium — DEV'}
+              </div>
+            </div>
+            <span style={{ fontSize: 16, opacity: 0.8 }}>›</span>
+          </button>
+        )}
+
         {/* Bouton jardin — visible quand 50% de vitalité atteints */}
         {appUnlocked && (
           <div style={{ flexShrink:0, padding: isMobile ? '4px 0 calc(env(safe-area-inset-bottom,0px) + 20px)' : '8px 0 28px', animation:'nm_fadeUp .5s ease both' }}>
@@ -697,6 +764,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
         {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} onboarding={onboarding} onCompleteRitual={onCompleteRitual} vitalityTotal={vitalityTotal} vitalityGain={vitalityGain} isPremium={isPremium} onUpgrade={onUpgrade} />}
+        {showFinder && <RitualFinderModal onClose={() => setShowFinder(false)} userId={userId} plantId={plantId} onHealthUpdate={onHealthUpdate} isPremium={isPremium} onUpgrade={onUpgrade} />}
       </div>
     </>
   )
