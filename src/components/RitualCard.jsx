@@ -260,7 +260,7 @@ export function RitualCard({
                 <div style={{ flex: 1, minWidth: 0, paddingTop: 5 }}>
                   {s.title && (
                     <div style={{ fontSize: 13.5, fontWeight: 600, color: FOREST, marginBottom: 3 }}>
-                      <span style={{ color: TEXT_FAINT, fontWeight: 600, marginRight: 6 }}>{i + 1}</span>{s.title}
+                      {s.title}
                     </div>
                   )}
                   {s.text && <div style={{ fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.6 }}>{s.text}</div>}
