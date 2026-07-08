@@ -19,7 +19,7 @@ import { supabase } from '../core/supabaseClient'
 // ─── Helpers cache ────────────────────────────────────────────────────────────
 
 const today = () => new Date().toISOString().slice(0, 10)
-const CACHE_VERSION = 'v5'  // incrémenté — invalide les anciens caches v4 générés avec payload vide
+const CACHE_VERSION = 'v7'  // incrémenté — contexte "problematiques" nettoyé (retrait rituels/plante hors-sujet)
 
 // Hash léger basé sur les champs clés du payload pour éviter de servir un cache
 // généré quand stats n'était pas encore chargé (streak=0, ritualsMonth=0).
@@ -132,6 +132,7 @@ export async function prefetchAllSlideInsights({ userId, payload = {} }) {
   const SLIDE_IDS = [
     'bilan', 'jardin', 'champ', 'defis',
     'club', 'ateliers', 'bibliotheque', 'jardinotheque', 'boite_graine',
+    ...(import.meta.env.DEV ? ['problematiques'] : []), // slide 'problematiques' encore en dev uniquement
   ]
 
   await Promise.allSettled(

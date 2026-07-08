@@ -115,6 +115,25 @@ export function RitualCard({
     if (playing) el.pause(); else el.play()
   }
 
+  // ── Bouton d'écoute — sous le sous-titre en desktop (dans la colonne du
+  // titre), sous le hero entier en mobile (image + titre trop étroits pour
+  // l'accueillir à côté) ──
+  const audioBlock = audioUrl && (
+    <>
+      <audio ref={audioRef} src={audioUrl} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
+      <button onClick={toggleAudio} style={{
+        width: desktop ? 300 : '100%', maxWidth: '100%', margin: desktop ? '20px 0 0' : 0, padding: desktop ? '15px 20px' : 16,
+        borderRadius: 100, border: 'none', cursor: 'pointer',
+        background: MAUVE, color: '#fff', fontSize: desktop ? 14 : 14, fontWeight: 500, letterSpacing: '0.03em',
+        boxShadow: '0 10px 26px rgba(125,67,104,0.30)', marginBottom: desktop ? 0 : 14,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        fontFamily: "'Jost',sans-serif",
+      }}>
+        {playing ? '❚❚ Écoute en cours…' : `▶ Écouter le rituel${audioDuration ? ` · ${audioDuration}` : ''}`}
+      </button>
+    </>
+  )
+
   return (
     <div style={{ animation: 'fadeUp 0.3s ease both' }}>
 
@@ -138,36 +157,45 @@ export function RitualCard({
 
       {/* ── HERO ── */}
       {desktop ? (
-        <div style={{ display: 'flex', gap: 28, marginBottom: 26, alignItems: 'flex-start' }}>
-          <div style={{
-            width: 220, height: 220, flexShrink: 0, borderRadius: 22, overflow: 'hidden', position: 'relative',
-            background: image ? `${MAUVE}0a` : `linear-gradient(160deg, ${MAUVE}25, ${FOREST}1c)`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: premium ? '0 14px 30px rgba(40,20,10,0.18)' : '0 3px 10px rgba(40,20,10,0.09)',
-          }}>
-            {image
-              ? <img src={image} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-              : <span style={{ fontSize: 72 }}>{icon || '🌿'}</span>}
-          </div>
-          <div style={{ flex: 1, minWidth: 0, paddingTop: 8 }}>
+        <div style={{
+          display: 'flex', gap: 36, marginBottom: 40, alignItems: 'center', padding: '8px 8px 8px 0',
+        }}>
+          {image ? (
+            <img src={image} alt="" style={{
+              width: 'auto', height: 'auto', maxWidth: 320, maxHeight: 380, flexShrink: 0,
+              borderRadius: 26, display: 'block', objectFit: 'contain',
+              boxShadow: premium ? '0 24px 48px rgba(40,20,10,0.22)' : '0 6px 16px rgba(40,20,10,0.10)',
+            }} />
+          ) : (
+            <div style={{
+              width: 320, height: 320, flexShrink: 0, borderRadius: 26,
+              background: `linear-gradient(160deg, ${MAUVE}25, ${FOREST}1c)`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: premium ? '0 24px 48px rgba(40,20,10,0.22)' : '0 6px 16px rgba(40,20,10,0.10)',
+            }}>
+              <span style={{ fontSize: 96 }}>{icon || '🌿'}</span>
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
             {(category || duration) && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
                 {category && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, letterSpacing: '.08em', textTransform: 'uppercase', color: MAUVE }}>
-                    {categoryIcon && <span style={{ fontSize: 13 }}>{categoryIcon}</span>}{category}
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: MAUVE }}>
+                    {categoryIcon && <span style={{ fontSize: 15 }}>{categoryIcon}</span>}{category}
                   </span>
                 )}
-                {category && duration && <span style={{ color: TEXT_FAINT, fontSize: 11 }}>•</span>}
+                {category && duration && <span style={{ color: TEXT_FAINT, fontSize: 12 }}>•</span>}
                 {duration && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: TEXT_MUTED }}>⏱ {duration}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: TEXT_MUTED }}>⏱ {duration}</span>
                 )}
               </div>
             )}
             <h1 style={{
-              fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 'clamp(26px, 3.5vw, 36px)',
-              color: FOREST, fontWeight: 700, lineHeight: 1.12, margin: '0 0 12px',
+              fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 'clamp(34px, 3.8vw, 46px)',
+              color: FOREST, fontWeight: 700, lineHeight: 1.08, margin: '0 0 16px', maxWidth: 560,
             }}>{title}</h1>
-            {subtitle && <p style={{ fontSize: 18, color: TEXT_MUTED, lineHeight: 1.5, margin: 0, fontWeight: 400 }}>{subtitle}</p>}
+            {subtitle && <p style={{ fontSize: 19, color: TEXT_MUTED, lineHeight: 1.55, margin: 0, fontWeight: 400, maxWidth: 480 }}>{subtitle}</p>}
+            {audioBlock}
           </div>
         </div>
       ) : (
@@ -205,38 +233,22 @@ export function RitualCard({
         </div>
       )}
 
-      {/* ── ÉCOUTER (émotion avant l'explication) ── */}
-      {audioUrl && (
-        <>
-          <audio ref={audioRef} src={audioUrl} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
-          <button onClick={toggleAudio} style={{
-            width: '100%', padding: 16, borderRadius: 100, border: 'none', cursor: 'pointer',
-            background: MAUVE, color: '#fff', fontSize: 14, fontWeight: 500, letterSpacing: '0.03em',
-            boxShadow: '0 10px 26px rgba(125,67,104,0.30)', marginBottom: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            fontFamily: "'Jost',sans-serif",
-          }}>
-            {playing ? '❚❚ Écoute en cours…' : `▶ Écouter le rituel${audioDuration ? ` · ${audioDuration}` : ''}`}
-          </button>
-        </>
-      )}
+      {/* ── ÉCOUTER — en desktop, déjà placé sous le sous-titre dans le hero ── */}
+      {!desktop && audioBlock}
 
-      {/* ── OBJECTIF + POURQUOI CE RITUEL — côte à côte en desktop ── */}
+      {/* ── OBJECTIF + POURQUOI CE RITUEL — une seule colonne ── */}
       {(objective || why) && (
-        <div style={{
-          display: desktop ? 'grid' : 'block', gridTemplateColumns: desktop ? '1fr 1fr' : undefined, gap: desktop ? 32 : 0,
-          marginBottom: 32,
-        }}>
+        <div style={{ marginBottom: desktop ? 44 : 32, padding: '0 10px' }}>
           {objective && (
-            <div style={{ marginBottom: desktop ? 0 : 32, ...fadeIn(0, premium) }}>
+            <div style={{ marginBottom: 32, ...fadeIn(0, premium) }}>
               <SectionLabel icon="🎯" color={MAUVE}>Objectif</SectionLabel>
-              <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, margin: 0, fontWeight: 400 }}>{objective}</p>
+              <p style={{ fontSize: desktop ? 16 : 14, color: TEXT, lineHeight: 1.75, margin: 0, fontWeight: 400 }}>{objective}</p>
             </div>
           )}
           {why && (
             <div style={{ ...fadeIn(1, premium) }}>
               <SectionLabel icon="🌼" color={FOREST}>Pourquoi ce rituel ?</SectionLabel>
-              <p style={{ fontSize: 14, color: TEXT, lineHeight: 1.7, margin: 0, fontWeight: 400 }}>{why}</p>
+              <p style={{ fontSize: desktop ? 16 : 14, color: TEXT, lineHeight: 1.75, margin: 0, fontWeight: 400 }}>{why}</p>
             </div>
           )}
         </div>
@@ -244,26 +256,26 @@ export function RitualCard({
 
       {/* ── COMMENT FAIRE ── */}
       {steps.length > 0 && (
-        <div style={{ marginBottom: 32, ...fadeIn(2, premium) }}>
+        <div style={{ marginBottom: desktop ? 44 : 32, ...fadeIn(2, premium) }}>
           <SectionLabel icon="✨" color={FOREST}>Comment faire ?</SectionLabel>
           <div style={desktop
-            ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px 32px', marginTop: 4 }
+            ? { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px 40px', marginTop: 8 }
             : { display: 'flex', flexDirection: 'column', gap: 22, marginTop: 4 }
           }>
             {steps.map((s, i) => (
-              <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <div key={i} style={{ display: 'flex', gap: desktop ? 16 : 14, alignItems: 'flex-start' }}>
                 <div style={{
-                  width: 42, height: 42, borderRadius: '50%', flexShrink: 0,
+                  width: desktop ? 48 : 42, height: desktop ? 48 : 42, borderRadius: '50%', flexShrink: 0,
                   background: DOT_PALETTE[i % DOT_PALETTE.length].bg,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: desktop ? 20 : 18,
                 }}>{s.icon || '•'}</div>
-                <div style={{ flex: 1, minWidth: 0, paddingTop: 5 }}>
+                <div style={{ flex: 1, minWidth: 0, paddingTop: desktop ? 7 : 5 }}>
                   {s.title && (
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: FOREST, marginBottom: 3 }}>
+                    <div style={{ fontSize: desktop ? 15 : 13.5, fontWeight: 600, color: FOREST, marginBottom: 4 }}>
                       {s.title}
                     </div>
                   )}
-                  {s.text && <div style={{ fontSize: 12.5, color: TEXT_MUTED, lineHeight: 1.6 }}>{s.text}</div>}
+                  {s.text && <div style={{ fontSize: desktop ? 13.5 : 12.5, color: TEXT_MUTED, lineHeight: 1.65 }}>{s.text}</div>}
                 </div>
               </div>
             ))}
@@ -271,7 +283,8 @@ export function RitualCard({
           {stepsIllustration && (
             <div style={{ marginTop: 18 }}>
               <button onClick={() => setShowIllustration(v => !v)} style={{
-                width: '100%', padding: '12px', borderRadius: 100,
+                width: desktop ? 340 : '100%', maxWidth: '100%', margin: desktop ? '0 auto' : 0, padding: '12px',
+                borderRadius: 100,
                 border: `1px solid ${FOREST}40`, background: `${FOREST}0c`,
                 color: FOREST, fontSize: 13, fontWeight: 500, cursor: 'pointer',
                 letterSpacing: '.04em', fontFamily: "'Jost',sans-serif",
@@ -289,11 +302,12 @@ export function RitualCard({
 
       {/* ── PRATIQUE GUIDÉE (outil interactif) ── */}
       {practice && (
-        <div style={{ marginBottom: 32, ...fadeIn(3, premium) }}>
+        <div style={{ marginBottom: desktop ? 44 : 32, ...fadeIn(3, premium) }}>
           <SectionLabel icon="🧘" color={color}>Pratique guidée</SectionLabel>
           {!practice.started ? (
             <button onClick={practice.onStart} style={{
-              width: '100%', padding: '12px', borderRadius: 100,
+              width: desktop ? 340 : '100%', maxWidth: '100%', margin: desktop ? '0 auto' : 0, padding: '12px',
+              borderRadius: 100,
               border: `1px solid ${color}40`, background: `${color}12`,
               color, fontSize: 13, fontWeight: 500, cursor: 'pointer',
               letterSpacing: '.04em', fontFamily: "'Jost',sans-serif",
@@ -307,17 +321,20 @@ export function RitualCard({
 
       {/* ── CE QUE NOURRIT CE RITUEL ── */}
       {benefits.length > 0 && (
-        <div style={{ marginBottom: 32, ...fadeIn(4, premium) }}>
+        <div style={{ marginBottom: desktop ? 44 : 32, ...fadeIn(4, premium) }}>
           <SectionLabel icon="🌱" color={FOREST}>Ce que nourrit ce rituel</SectionLabel>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px 22px', marginTop: 6 }}>
+          <div style={desktop
+            ? { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px 32px', marginTop: 10 }
+            : { display: 'flex', flexWrap: 'wrap', gap: '14px 22px', marginTop: 6 }
+          }>
             {benefits.map((b, i) => {
               const pal = DOT_PALETTE[i % DOT_PALETTE.length]
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                  <div style={{ width: 26, height: 26, borderRadius: '50%', flexShrink: 0, background: pal.bg, color: pal.fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>{b.icon || '✓'}</div>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: desktop ? 12 : 8, minWidth: 0 }}>
+                  <div style={{ width: desktop ? 32 : 26, height: desktop ? 32 : 26, borderRadius: '50%', flexShrink: 0, background: pal.bg, color: pal.fg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: desktop ? 14 : 12 }}>{b.icon || '✓'}</div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT, lineHeight: 1.2 }}>{b.label}</div>
-                    {b.text && <div style={{ fontSize: 10.5, color: TEXT_MUTED, lineHeight: 1.3 }}>{b.text}</div>}
+                    <div style={{ fontSize: desktop ? 14.5 : 12.5, fontWeight: 600, color: TEXT, lineHeight: 1.25 }}>{b.label}</div>
+                    {b.text && <div style={{ fontSize: desktop ? 12.5 : 10.5, color: TEXT_MUTED, lineHeight: 1.35 }}>{b.text}</div>}
                   </div>
                 </div>
               )
@@ -328,22 +345,23 @@ export function RitualCard({
 
       {/* ── POUR TERMINER ── */}
       {reflection && (
-        <div style={{ position: 'relative', textAlign: 'center', marginBottom: 36, padding: '0 10px', ...fadeIn(5, premium) }}>
-          {premium && <span aria-hidden style={{ position: 'absolute', top: -14, right: 2, fontSize: 44, opacity: 0.10, pointerEvents: 'none' }}>🌸</span>}
+        <div style={{ position: 'relative', textAlign: 'center', marginBottom: desktop ? 44 : 36, padding: '0 10px', ...fadeIn(5, premium) }}>
+          {premium && <span aria-hidden style={{ position: 'absolute', top: -14, right: desktop ? 40 : 2, fontSize: desktop ? 56 : 44, opacity: 0.10, pointerEvents: 'none' }}>🌸</span>}
           <SectionLabel icon="💚" color={MAUVE} center>Pour terminer</SectionLabel>
           <div style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 24, color: MAUVE, opacity: 0.35, lineHeight: 1 }}>«</div>
-          <p style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: 19, fontStyle: 'italic', color: TEXT, lineHeight: 1.45, margin: '2px 0 0', fontWeight: 400 }}>{reflection}</p>
+          <p style={{ fontFamily: "'Cormorant Garamond','Georgia',serif", fontSize: desktop ? 21 : 19, fontStyle: 'italic', color: TEXT, lineHeight: 1.5, margin: desktop ? '4px auto 0' : '2px 0 0', fontWeight: 400, maxWidth: desktop ? 560 : 'none' }}>{reflection}</p>
         </div>
       )}
 
       {/* ── CTA — le seul aplat de couleur franc de la fiche ── */}
       <button onClick={onComplete} style={{
-        width: '100%', padding: 17, borderRadius: 100, border: 'none',
+        width: desktop ? 380 : '100%', maxWidth: '100%', margin: desktop ? '0 auto' : 0, display: 'flex',
+        padding: desktop ? 18 : 17, borderRadius: 100, border: 'none',
         background: marked ? 'rgba(90,130,80,0.85)' : MAUVE,
         color: '#fff',
-        fontSize: 14, cursor: 'pointer', fontWeight: 500, letterSpacing: '0.04em',
+        fontSize: desktop ? 15 : 14, cursor: 'pointer', fontWeight: 500, letterSpacing: '0.04em',
         boxShadow: '0 10px 26px rgba(125,67,104,0.32)',
-        transition: 'all 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        transition: 'all 0.3s', alignItems: 'center', justifyContent: 'center', gap: 8,
         fontFamily: "'Jost',sans-serif",
       }}>
         {marked ? '✓ Rituel accompli !' : "✓ J'ai fait ce rituel"}

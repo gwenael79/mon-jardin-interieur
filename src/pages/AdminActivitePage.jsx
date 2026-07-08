@@ -7,6 +7,7 @@ import { useIsMobile } from './dashboardShared'
 import { LevelUpModal } from '../components/LevelUpModal'
 import { RitualCard } from '../components/RitualCard'
 import { buildRitualData } from './mafleur_rituels'
+import { PROBLEMATIQUE_CATEGORIES, CAT_COLOR as PROBLEMATIQUE_CAT_COLOR } from './ScreenProblematiques'
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');
@@ -523,14 +524,14 @@ function RituelsEditor({ showToast }) {
                   background: 'linear-gradient(175deg, var(--ritual-modal-bg-start, #fffaf7) 0%, var(--ritual-modal-bg-end, #f5ede8) 100%)',
                   border: `1px solid ${zc}30`, boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
                 }
-                const pcCardStyle = { ...cardStyle, maxWidth: 'none', padding: '32px 40px 36px' }
+                const pcCardStyle = { ...cardStyle, width: 900, maxWidth: 900, padding: '32px 40px 36px', flexShrink: 0 }
                 return (
-                  <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                    <div>
+                  <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', overflowX: 'auto', paddingBottom: 8 }}>
+                    <div style={{ flexShrink: 0 }}>
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>📱 Mobile</div>
                       <div className="adm-preview" style={cardStyle}><RitualCard {...sharedProps} layout="mobile" /></div>
                     </div>
-                    <div style={{ flex: 1, minWidth: 320 }}>
+                    <div style={{ flexShrink: 0 }}>
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>🖥 PC</div>
                       <div style={{ padding: 40, display: 'flex', background: 'rgba(0,0,0,0.18)', borderRadius: 16, boxSizing: 'border-box' }}>
                         <div className="adm-preview" style={pcCardStyle}><RitualCard {...sharedProps} layout="desktop" /></div>
@@ -1209,6 +1210,328 @@ function BoutiqueEditor({ showToast }) {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  ProblematiquesEditor — gestion du slide "🧭 Trouve une réponse à ce que tu vis !"
+//  Buckets Supabase Storage requis (public) : problematiques-audio,
+//  problematiques-video, problematiques-pdf — à créer une fois dans le
+//  dashboard Supabase (Storage → New bucket → Public bucket).
+// ═══════════════════════════════════════════════════════════
+const EMPTY_FORM_PBM = {
+  categorie: PROBLEMATIQUE_CATEGORIES[0], emoji: '🧭', titre: '', accroche: '', symptomes: ['', '', ''], description: '',
+  audio_titre: '', audio_url: '', audio_duree_min: '', audio_is_premium: false,
+  exercice_titre: '', exercice_texte: '', exercice_duree_min: '', exercice_is_premium: false,
+  coaching_type: 'texte', coaching_titre: '', coaching_texte: '', coaching_video_url: '', coaching_pdf_url: '', coaching_is_premium: false,
+  statut: 'actif', ordre: 0,
+}
+
+// ── Toggle Free / Premium réutilisable pour chaque outil ──────────────────────
+function PremiumToggle({ value, onChange }) {
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[['free', false], ['premium', true]].map(([key, val]) => (
+        <button key={key} type="button" onClick={() => onChange(val)}
+          style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontWeight: 600,
+            border: `1px solid ${value === val ? (val ? 'rgba(232,192,96,0.5)' : 'rgba(150,212,133,0.5)') : 'rgba(255,255,255,0.12)'}`,
+            background: value === val ? (val ? 'rgba(232,192,96,0.15)' : 'rgba(150,212,133,0.12)') : 'rgba(255,255,255,0.04)',
+            color: value === val ? (val ? '#e8c060' : '#96d485') : 'rgba(242,237,224,0.40)' }}>
+          {val ? '🔒 Premium' : 'Free'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ProblematiquesEditor({ showToast }) {
+  const [items,        setItems]        = useState([])
+  const [loading,       setLoading]      = useState(true)
+  const [filterCat,     setFilterCat]    = useState('all')
+  const [form,          setForm]         = useState(EMPTY_FORM_PBM)
+  const [editId,        setEditId]       = useState(null)
+  const [showForm,      setShowForm]     = useState(false)
+  const [saving,        setSaving]       = useState(false)
+  const [audioUploading, setAudioUploading] = useState(false)
+  const [videoUploading, setVideoUploading] = useState(false)
+  const [pdfUploading,   setPdfUploading]   = useState(false)
+
+  const inp = { padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border2)', background: '#181717', color: '#1a1208', fontSize: 13, fontFamily: "'Jost',sans-serif", outline: 'none', width: '100%', boxSizing: 'border-box', appearance: 'none', WebkitAppearance: 'none' }
+  const lbl = { fontSize: 10, color: '#555', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6, display: 'block' }
+
+  const load = () => {
+    setLoading(true)
+    supabase.from('problematiques').select('*').order('ordre').order('created_at', { ascending: false })
+      .then(({ data, error }) => { if (error) showToast('⚠ ' + error.message); setItems(data || []); setLoading(false) })
+  }
+  useEffect(() => { load() }, [])
+
+  const filtered = filterCat === 'all' ? items : items.filter(p => p.categorie === filterCat)
+  const openNew  = () => { setForm(EMPTY_FORM_PBM); setEditId(null); setShowForm(true) }
+  const openEdit = (p) => {
+    setForm({
+      categorie: p.categorie || PROBLEMATIQUE_CATEGORIES[0], emoji: p.emoji || '🧭', titre: p.titre || '', accroche: p.accroche || '',
+      symptomes: [0, 1, 2].map(i => p.symptomes?.[i] || ''), description: p.description || '',
+      audio_titre: p.audio_titre || '', audio_url: p.audio_url || '', audio_duree_min: p.audio_duree_min ?? '', audio_is_premium: p.audio_is_premium || false,
+      exercice_titre: p.exercice_titre || '', exercice_texte: p.exercice_texte || '', exercice_duree_min: p.exercice_duree_min ?? '', exercice_is_premium: p.exercice_is_premium || false,
+      coaching_type: p.coaching_type || 'texte', coaching_titre: p.coaching_titre || '', coaching_texte: p.coaching_texte || '', coaching_video_url: p.coaching_video_url || '', coaching_pdf_url: p.coaching_pdf_url || '', coaching_is_premium: p.coaching_is_premium || false,
+      statut: p.statut || 'actif', ordre: p.ordre || 0,
+    })
+    setEditId(p.id); setShowForm(true)
+  }
+
+  async function uploadTo(bucket, file, setUploading, onDone) {
+    if (!file) return
+    setUploading(true)
+    const path = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
+    setUploading(false)
+    if (error) { showToast('⚠ Upload : ' + error.message); return }
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+    onDone(data.publicUrl)
+  }
+
+  const handleSave = async () => {
+    if (!form.titre.trim()) { showToast('⚠ Titre obligatoire'); return }
+    setSaving(true)
+    const payload = {
+      categorie: form.categorie, emoji: form.emoji.trim() || '🧭', titre: form.titre.trim(),
+      accroche: form.accroche.trim() || null,
+      symptomes: form.symptomes.map(s => s.trim()).filter(Boolean),
+      description: form.description.trim() || null,
+      audio_titre: form.audio_titre.trim() || null, audio_url: form.audio_url.trim() || null,
+      audio_duree_min: form.audio_duree_min !== '' ? parseInt(form.audio_duree_min) : null,
+      audio_is_premium: !!form.audio_is_premium,
+      exercice_titre: form.exercice_titre.trim() || null, exercice_texte: form.exercice_texte.trim() || null,
+      exercice_duree_min: form.exercice_duree_min !== '' ? parseInt(form.exercice_duree_min) : null,
+      exercice_is_premium: !!form.exercice_is_premium,
+      coaching_type: form.coaching_type, coaching_titre: form.coaching_titre.trim() || null,
+      coaching_texte: form.coaching_texte.trim() || null,
+      coaching_video_url: form.coaching_video_url.trim() || null,
+      coaching_pdf_url: form.coaching_pdf_url.trim() || null,
+      coaching_is_premium: !!form.coaching_is_premium,
+      statut: form.statut, ordre: parseInt(form.ordre) || 0,
+      updated_at: new Date().toISOString(),
+    }
+    const { error } = editId
+      ? await supabase.from('problematiques').update(payload).eq('id', editId)
+      : await supabase.from('problematiques').insert({ ...payload, created_at: new Date().toISOString() })
+    setSaving(false)
+    if (error) { showToast('⚠ ' + error.message); return }
+    showToast(editId ? '✓ Fiche mise à jour' : '✓ Fiche créée')
+    setShowForm(false); load()
+  }
+
+  const handleDelete = async (id, titre) => {
+    if (!window.confirm(`Supprimer "${titre}" ?`)) return
+    const { error } = await supabase.from('problematiques').delete().eq('id', id)
+    if (error) { showToast('⚠ ' + error.message); return }
+    showToast('✓ Supprimée'); load()
+  }
+  const toggleStatut = async (p) => {
+    await supabase.from('problematiques').update({ statut: p.statut === 'actif' ? 'inactif' : 'actif' }).eq('id', p.id)
+    load()
+  }
+
+  const tc = PROBLEMATIQUE_CAT_COLOR[form.categorie] ?? '#96d485'
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ padding: '10px 14px', background: 'rgba(92,124,150,0.08)', border: '1px solid rgba(92,124,150,0.25)', borderRadius: 10, fontSize: 11, color: 'rgba(150,180,210,0.85)', lineHeight: 1.6 }}>
+        🧭 Slide visible uniquement en dev pour le moment (flag <code>devOnly</code> dans <code>DashboardV2.jsx</code>).
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', paddingBottom: 14, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        {['all', ...PROBLEMATIQUE_CATEGORIES].map(c => {
+          const color = c === 'all' ? '#96d485' : (PROBLEMATIQUE_CAT_COLOR[c] ?? '#96d485')
+          return (
+            <button key={c} onClick={() => setFilterCat(c)}
+              style={{ padding: '5px 14px', borderRadius: 20, fontSize: 11, cursor: 'pointer', fontFamily: "'Jost',sans-serif", border: filterCat === c ? `1px solid ${color}55` : '1px solid rgba(255,255,255,0.10)', background: filterCat === c ? `${color}15` : 'transparent', color: filterCat === c ? color : 'rgba(242,237,224,0.38)' }}>
+              {c === 'all' ? 'Toutes' : c}
+            </button>
+          )
+        })}
+        <div style={{ marginLeft: 'auto' }}>
+          <button onClick={openNew} style={{ padding: '8px 18px', borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(150,212,133,0.12)', border: '1px solid rgba(150,212,133,0.35)', color: '#96d485', fontWeight: 500 }}>+ Ajouter une fiche</button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', padding: '20px 0' }}>Chargement…</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', textAlign: 'center', padding: '40px 0' }}>Aucune fiche — cliquez sur "+ Ajouter"</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {filtered.map(p => {
+            const c = PROBLEMATIQUE_CAT_COLOR[p.categorie] ?? '#96d485'
+            const formats = [p.audio_url && '🎧', p.coaching_texte && '📝', p.coaching_video_url && '🎬', p.coaching_pdf_url && '📄'].filter(Boolean).join(' ')
+            const premiumTools = [p.audio_is_premium && 'Audio', p.exercice_is_premium && 'Exercice', p.coaching_is_premium && 'Comprendre'].filter(Boolean)
+            return (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 16px', borderRadius: 10, border: `1px solid ${p.statut === 'actif' ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.03)'}`, background: p.statut === 'actif' ? 'rgba(255,255,255,0.025)' : 'rgba(255,255,255,0.01)', opacity: p.statut === 'actif' ? 1 : 0.5 }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{p.emoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: 'rgba(242,237,224,0.88)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.titre}</div>
+                  <div style={{ fontSize: 10, color: 'rgba(242,237,224,0.30)', marginTop: 2 }}>{p.categorie} · ordre {p.ordre}{formats ? ` · ${formats}` : ''}</div>
+                </div>
+                {premiumTools.length > 0 && (
+                  <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, flexShrink: 0, background: 'rgba(232,192,96,0.12)', border: '1px solid rgba(232,192,96,0.30)', color: '#e8c060' }}>🔒 {premiumTools.join(' · ')}</span>
+                )}
+                <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 20, flexShrink: 0, background: p.statut === 'actif' ? 'rgba(150,212,133,0.10)' : 'rgba(255,255,255,0.05)', border: p.statut === 'actif' ? '1px solid rgba(150,212,133,0.25)' : '1px solid rgba(255,255,255,0.07)', color: p.statut === 'actif' ? '#96d485' : 'rgba(242,237,224,0.30)' }}>{p.statut}</span>
+                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                  <button onClick={() => toggleStatut(p)} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(242,237,224,0.45)' }}>{p.statut === 'actif' ? 'Désactiver' : 'Activer'}</button>
+                  <button onClick={() => openEdit(p)} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: `${c}12`, border: `1px solid ${c}35`, color: c }}>✎ Modifier</button>
+                  <button onClick={() => handleDelete(p.id, p.titre)} style={{ padding: '5px 10px', borderRadius: 7, fontSize: 10, cursor: 'pointer', fontFamily: "'Jost',sans-serif", background: 'rgba(210,80,80,0.08)', border: '1px solid rgba(210,80,80,0.25)', color: 'rgba(255,140,140,0.7)' }}>✕</button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Formulaire fiche */}
+      {showForm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 500, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }} onClick={() => setShowForm(false)}>
+          <div style={{ width: '100%', maxWidth: 640, borderRadius: '22px 22px 0 0', background: '#12201a', border: '1px solid rgba(255,255,255,0.09)', borderBottom: 'none', padding: '24px 28px 48px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 20, fontWeight: 300, color: 'rgba(242,237,224,0.88)' }}>{editId ? 'Modifier la fiche' : 'Nouvelle fiche'}</div>
+              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: 'rgba(242,237,224,0.35)', fontSize: 18, cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* ── Carte ── */}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ width: 70, flexShrink: 0 }}>
+                  <span style={lbl}>Emoji</span>
+                  <input value={form.emoji} onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))} style={{ ...inp, textAlign: 'center' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={lbl}>Titre *</span>
+                  <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} placeholder="Ex: Stress chronique" style={inp} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                  <span style={lbl}>Catégorie</span>
+                  <select value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie: e.target.value }))} style={inp}>
+                    {PROBLEMATIQUE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <span style={lbl}>Ordre d'affichage</span>
+                  <input type="number" min="0" value={form.ordre} onChange={e => setForm(f => ({ ...f, ordre: e.target.value }))} style={inp} />
+                </div>
+              </div>
+              <div>
+                <span style={lbl}>Accroche — phrase courte affichée sur la carte</span>
+                <input value={form.accroche} onChange={e => setForm(f => ({ ...f, accroche: e.target.value }))} placeholder="Cette tension qui ne redescend jamais vraiment." style={inp} />
+              </div>
+              <div>
+                <span style={lbl}>Symptômes — 3 signes concrets affichés sur la carte</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {[0, 1, 2].map(i => (
+                    <input key={i} value={form.symptomes[i]}
+                      onChange={e => setForm(f => ({ ...f, symptomes: f.symptomes.map((s, j) => j === i ? e.target.value : s) }))}
+                      placeholder={`Symptôme ${i + 1}`} style={inp} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span style={lbl}>Description — intro affichée dans la fiche</span>
+                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} style={{ ...inp, resize: 'vertical', lineHeight: 1.7 }} />
+              </div>
+              <div>
+                <span style={lbl}>Statut</span>
+                <select value={form.statut} onChange={e => setForm(f => ({ ...f, statut: e.target.value }))} style={{ ...inp, maxWidth: 220 }}>
+                  <option value="actif">Actif — visible</option>
+                  <option value="inactif">Inactif — masqué</option>
+                </select>
+              </div>
+
+              {/* ── Audio hypnose ── */}
+              <div style={{ paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '14px 0' }}>
+                  <div style={{ fontSize: 10, color: tc, letterSpacing: '.12em', textTransform: 'uppercase' }}>🎧 Écoute immédiate (audio)</div>
+                  <PremiumToggle value={form.audio_is_premium} onChange={val => setForm(f => ({ ...f, audio_is_premium: val }))} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 10, marginBottom: 10 }}>
+                  <div><span style={lbl}>Titre de l'audio</span><input value={form.audio_titre} onChange={e => setForm(f => ({ ...f, audio_titre: e.target.value }))} placeholder="Relâcher la pression" style={inp} /></div>
+                  <div><span style={lbl}>Durée (min)</span><input type="number" min="0" value={form.audio_duree_min} onChange={e => setForm(f => ({ ...f, audio_duree_min: e.target.value }))} style={inp} /></div>
+                </div>
+                <label style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.06)', color: form.audio_url ? '#96d485' : 'rgba(242,237,224,0.40)', fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textAlign: 'center', display: 'block', marginBottom: 6 }}>
+                  <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={e => uploadTo('problematiques-audio', e.target.files[0], setAudioUploading, url => setForm(f => ({ ...f, audio_url: url })))} />
+                  {audioUploading ? '⏳ Import en cours…' : form.audio_url ? '✓ Changer l\'audio' : '📤 Choisir un fichier audio'}
+                </label>
+                <input value={form.audio_url} onChange={e => setForm(f => ({ ...f, audio_url: e.target.value }))} placeholder="…ou coller une URL directement" style={{ ...inp, fontSize: 11 }} />
+                {form.audio_url && <audio controls src={form.audio_url} style={{ width: '100%', height: 32, marginTop: 8 }} />}
+              </div>
+
+              {/* ── Exercice ── */}
+              <div style={{ paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '14px 0' }}>
+                  <div style={{ fontSize: 10, color: tc, letterSpacing: '.12em', textTransform: 'uppercase' }}>🧘 Exercice express</div>
+                  <PremiumToggle value={form.exercice_is_premium} onChange={val => setForm(f => ({ ...f, exercice_is_premium: val }))} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 90px', gap: 10, marginBottom: 10 }}>
+                  <div><span style={lbl}>Titre de l'exercice</span><input value={form.exercice_titre} onChange={e => setForm(f => ({ ...f, exercice_titre: e.target.value }))} placeholder="Respiration 4-7-8" style={inp} /></div>
+                  <div><span style={lbl}>Durée (min)</span><input type="number" min="0" value={form.exercice_duree_min} onChange={e => setForm(f => ({ ...f, exercice_duree_min: e.target.value }))} style={inp} /></div>
+                </div>
+                <textarea value={form.exercice_texte} onChange={e => setForm(f => ({ ...f, exercice_texte: e.target.value }))} rows={3} placeholder="Consigne pas à pas…" style={{ ...inp, resize: 'vertical', lineHeight: 1.7 }} />
+              </div>
+
+              {/* ── Compréhension (texte / vidéo / pdf) ── */}
+              <div style={{ paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '14px 0' }}>
+                  <div style={{ fontSize: 10, color: tc, letterSpacing: '.12em', textTransform: 'uppercase' }}>📖 Pour mieux comprendre</div>
+                  <PremiumToggle value={form.coaching_is_premium} onChange={val => setForm(f => ({ ...f, coaching_is_premium: val }))} />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <span style={lbl}>Titre commun</span>
+                  <input value={form.coaching_titre} onChange={e => setForm(f => ({ ...f, coaching_titre: e.target.value }))} placeholder="Comprendre le stress chronique" style={inp} />
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <span style={lbl}>Format ouvert par défaut</span>
+                  <select value={form.coaching_type} onChange={e => setForm(f => ({ ...f, coaching_type: e.target.value }))} style={{ ...inp, maxWidth: 200 }}>
+                    <option value="texte">📝 Texte</option>
+                    <option value="video">🎬 Vidéo</option>
+                    <option value="pdf">📄 PDF</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span style={lbl}>📝 Contenu texte</span>
+                  <textarea value={form.coaching_texte} onChange={e => setForm(f => ({ ...f, coaching_texte: e.target.value }))} rows={4} placeholder="Explication de fond…" style={{ ...inp, resize: 'vertical', lineHeight: 1.7 }} />
+                </div>
+
+                <div style={{ marginBottom: 12, padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span style={lbl}>🎬 Vidéo</span>
+                  <label style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.06)', color: form.coaching_video_url ? '#96d485' : 'rgba(242,237,224,0.40)', fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textAlign: 'center', display: 'block', marginBottom: 6 }}>
+                    <input type="file" accept="video/*" style={{ display: 'none' }} onChange={e => uploadTo('problematiques-video', e.target.files[0], setVideoUploading, url => setForm(f => ({ ...f, coaching_video_url: url })))} />
+                    {videoUploading ? '⏳ Import en cours…' : form.coaching_video_url ? '✓ Changer la vidéo' : '📤 Choisir un fichier vidéo'}
+                  </label>
+                  <input value={form.coaching_video_url} onChange={e => setForm(f => ({ ...f, coaching_video_url: e.target.value }))} placeholder="…ou coller une URL directement" style={{ ...inp, fontSize: 11 }} />
+                  {form.coaching_video_url && <video controls src={form.coaching_video_url} style={{ width: '100%', maxHeight: 160, marginTop: 8, borderRadius: 8, background: '#000' }} />}
+                </div>
+
+                <div style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <span style={lbl}>📄 PDF</span>
+                  <label style={{ padding: '9px 12px', borderRadius: 8, border: '1px dashed rgba(150,212,133,0.35)', background: 'rgba(150,212,133,0.06)', color: form.coaching_pdf_url ? '#96d485' : 'rgba(242,237,224,0.40)', fontSize: 12, cursor: 'pointer', fontFamily: "'Jost',sans-serif", textAlign: 'center', display: 'block', marginBottom: 6 }}>
+                    <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={e => uploadTo('problematiques-pdf', e.target.files[0], setPdfUploading, url => setForm(f => ({ ...f, coaching_pdf_url: url })))} />
+                    {pdfUploading ? '⏳ Import en cours…' : form.coaching_pdf_url ? '✓ Changer le PDF' : '📤 Choisir un fichier PDF'}
+                  </label>
+                  <input value={form.coaching_pdf_url} onChange={e => setForm(f => ({ ...f, coaching_pdf_url: e.target.value }))} placeholder="…ou coller une URL directement" style={{ ...inp, fontSize: 11 }} />
+                  {form.coaching_pdf_url && <a href={form.coaching_pdf_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#96d485', display: 'inline-block', marginTop: 6 }}>↗ Ouvrir le PDF</a>}
+                </div>
+              </div>
+
+              <button onClick={handleSave} disabled={saving}
+                style={{ padding: 13, borderRadius: 10, border: `1px solid ${tc}50`, background: `${tc}18`, color: tc, fontSize: 13, fontWeight: 500, cursor: saving ? 'wait' : 'pointer', fontFamily: "'Jost',sans-serif", letterSpacing: '.06em', opacity: saving ? 0.6 : 1, marginTop: 4 }}>
+                {saving ? 'Enregistrement…' : editId ? '✓ Mettre à jour' : '✓ Créer la fiche'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════
 //  Page principale AdminActivitePage
 // ═══════════════════════════════════════════════════════════
 export function AdminActivitePage() {
@@ -1472,6 +1795,7 @@ export function AdminActivitePage() {
           <div className={`adm-tab${tab === 'animateurs'   ? ' active' : ''}`} onClick={() => setTab('animateurs')}>🌿 Animateurs</div>
           <div className={`adm-tab${tab === 'ateliers'     ? ' active' : ''}`} onClick={() => setTab('ateliers')}>🎓 Ateliers</div>
           <div className={`adm-tab${tab === 'defis'        ? ' active' : ''}`} onClick={() => setTab('defis')}>✨ Défis</div>
+          <div className={`adm-tab${tab === 'problematiques' ? ' active' : ''}`} onClick={() => setTab('problematiques')}>🧭 Ce que tu vis</div>
           <div className={`adm-tab${tab === 'palmares'     ? ' active' : ''}`} onClick={() => setTab('palmares')}>🏆 Palmarès</div>
         </div>
 
@@ -1800,6 +2124,13 @@ export function AdminActivitePage() {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── CE QUI PÈSE ── */}
+        {tab === 'problematiques' && (
+          <div className="adm-section">
+            <ProblematiquesEditor showToast={showToast} />
           </div>
         )}
 

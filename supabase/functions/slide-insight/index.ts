@@ -25,6 +25,11 @@ RÈGLE ABSOLUE : adapte ton langage à l'état visuel de la plante. Si l'état e
   champ: `Tu es un accompagnateur de bien-être. Commente la présence de l'utilisateur dans le jardin collectif — sa régularité, sa contribution. Relie son parcours individuel à la dynamique commune de manière inspirante. MAXIMUM 2 phrases courtes, moins de 35 mots au total, tutoie, sans émojis.
 RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones.`,
 
+  problematiques: `Tu es un accompagnateur de bien-être. Ce slide aide l'utilisateur à mettre des mots sur ce qui lui pèse en ce moment (stress, sommeil, émotions, confiance en soi, relations) et à agir tout de suite : chaque fiche propose un audio d'hypnose immédiat, un exercice express et une clé de compréhension. Ton message doit d'abord l'aider à identifier ce qui le perturbe, puis lui rappeler qu'il peut agir maintenant, pas seulement plus tard.
+Si des bilans récents sont disponibles (stress moyen, tendance, dernier score), appuie-toi dessus de façon concrète et précise pour orienter vers une action immédiate — par exemple si le stress est élevé ou en hausse, nomme-le et invite-le à explorer une fiche adaptée maintenant. Si aucun bilan récent n'existe, invite-le simplement et chaleureusement à repérer ce qui lui pèse aujourd'hui.
+Ne pose jamais de diagnostic médical. MAXIMUM 2 phrases courtes, moins de 35 mots au total, tutoie, sans émojis.
+RÈGLE ABSOLUE : ne mentionne JAMAIS les zones, la plante, la graine, les rituels ou la croissance/floraison — ce slide n'a rien à voir avec le jardin. Concentre-toi uniquement sur le stress/l'état émotionnel et l'invitation à agir maintenant.`,
+
   defis: `Tu es un accompagnateur de bien-être. Analyse l'engagement de l'utilisateur dans les défis. Si tu connais ses défis en cours, mentionne-en un ou deux par nom et valorise sa progression concrète (jours validés). S'il n'en a pas encore rejoint, invite-le à s'y plonger sans pression. Sois précis et personnel. MAXIMUM 2 phrases courtes, moins de 35 mots au total, tutoie, sans émojis.
 RÈGLE ABSOLUE : ne mentionne jamais les zones (racines, tige, feuilles, fleurs, souffle) ni les pourcentages de zones.`,
 
@@ -161,13 +166,18 @@ function buildContext(slide: string, payload: Record<string, unknown>, bilans: a
       : `État visuel de la plante : ${plantStage}. Vitalité globale : ${health}%.`
     : 'Pas de données de plante aujourd\'hui.'
 
-  const lines = [
-    `Slide : ${slide}`,
-    `Régularité : ${streak} jour${Number(streak) > 1 ? 's' : ''} d'affilée, ${ritualsMonth} rituels ce mois.`,
-    favoriteZone ? `Zone favorite : ${favoriteZone}.` : '',
-    `Bilans récents : ${bilanSummary}`,
-    plantSummary,
-  ]
+  // Slide "problematiques" : contexte volontairement minimal (pas de rituels/plante)
+  // pour éviter que le modèle ne dérive vers une métaphore de graine/croissance
+  // hors-sujet — seul le bilan de stress est pertinent ici.
+  const lines = slide === 'problematiques'
+    ? [`Slide : ${slide}`, `Bilans récents : ${bilanSummary}`]
+    : [
+        `Slide : ${slide}`,
+        `Régularité : ${streak} jour${Number(streak) > 1 ? 's' : ''} d'affilée, ${ritualsMonth} rituels ce mois.`,
+        favoriteZone ? `Zone favorite : ${favoriteZone}.` : '',
+        `Bilans récents : ${bilanSummary}`,
+        plantSummary,
+      ]
 
   if (slide === 'stimulation')  lines.push(`Rituels accomplis aujourd'hui : ${ritualsDone}.`)
   if (slide === 'jardin_benefits' || slide === 'jardin_quote') {

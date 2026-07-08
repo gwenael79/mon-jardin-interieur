@@ -44,6 +44,7 @@ import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardi
 import { WelcomeScreen }             from './WelcomeScreen'
 import { VideoIntro, pickVideo }    from './VideoIntro'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
+import { ScreenProblematiques }      from './ScreenProblematiques'
 import { ScreenClubJardiniers }      from './ScreenClubJardiniers'
 import { ScreenCercleFondateurs }    from './ScreenCercleFondateurs'
 import { ScreenAteliers }            from './ScreenAteliers'
@@ -100,6 +101,19 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #d4b050, #a87c28)',
     btnShadow: 'rgba(180,140,40,.36)',
     Component: ScreenJardinCollectif,
+  },
+  {
+    id:        'problematiques', illusKey: 'problematiques', image: '/reponse.png',
+    badge:     'Solutions Express', icon: '🧭',
+    title:     'Trouve une réponse\nà ce que tu vis !',
+    subtitle:  'Identifie ce qui perturbe ton équilibre et reçois une réponse immédiate : hypnose, exercice et clés de compréhension.',
+    guideDesc: 'Trouve une réponse à ce que tu vis',
+    color:     '#5c7c96',
+    btnLabel:  'Je trouve ma réponse',
+    btnGrad:   'linear-gradient(135deg, #7ca0bc, #46647c)',
+    btnShadow: 'rgba(70,100,130,.36)',
+    Component: ScreenProblematiques,
+    devOnly:   true, // ⚠️ visible uniquement en dev — retirer ce flag pour passer en prod
   },
   {
     id:        'defis',     illusKey: 'defis',     image: '/defi.png',
@@ -1948,7 +1962,7 @@ export default function DashboardPage() {
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
-    const visible = SLIDES_CONFIG.filter(s => !s.hiddenFromCarousel)
+    const visible = SLIDES_CONFIG.filter(s => !s.hiddenFromCarousel && (!s.devOnly || import.meta.env.DEV))
     const slot = getTimeSlot()
     if (slot === 'morning') return visible
     const withoutBilan = visible.filter(s => s.id !== 'bilan')
