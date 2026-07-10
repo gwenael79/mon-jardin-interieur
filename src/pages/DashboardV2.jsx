@@ -612,7 +612,7 @@ function ScreenModal({ slideId, slides, screenProps, bilanDoneToday, bilanHistor
         {/* Contenu du screen — prend tout l'espace restant */}
         <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0 }}>
           {slide.isBilan ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:16, padding:'28px 24px' }}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'flex-start', height:'100%', overflowY:'auto', WebkitOverflowScrolling:'touch', gap:16, padding:'28px 24px', boxSizing:'border-box' }}>
               <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:32, fontWeight:300, color:'#1a1208', textAlign:'center', lineHeight:1.2 }}>
                 Comment te sens-tu<br/>aujourd'hui ?
               </div>
