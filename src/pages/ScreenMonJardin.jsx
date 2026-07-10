@@ -2021,18 +2021,107 @@ const ZONE_DB_KEY = {
 let PLANT_RITUALS = PLANT_RITUALS_EMPTY
 
 
-const PLANT_QUESTIONS = [
-  { id:'q1',  zone:'roots',   theme:'Énergie vitale',   icon:'⚡', text:'Comment est ton énergie physique en ce moment ?',             sub:'Ferme les yeux. Scanne ton corps de la tête aux pieds.',              answers:[{label:'Vidé·e',emoji:'🪫',stress:95},{label:'Épuisé·e',emoji:'😴',stress:72},{label:'Passable',emoji:'😐',stress:48},{label:'Bien',emoji:'🌱',stress:20},{label:'Plein·e d\'élan',emoji:'✨',stress:0}] },
-  { id:'q2',  zone:'roots',   theme:'Sommeil',           icon:'🌙', text:'Quelle qualité avait ton sommeil cette nuit ?',              sub:'Nuit agitée, fragments de rêves, réveil difficile…',                  answers:[{label:'Cauchemardesque',emoji:'😩',stress:95},{label:'Agité·e',emoji:'😣',stress:72},{label:'Moyen',emoji:'😶',stress:45},{label:'Reposant',emoji:'😌',stress:15},{label:'Profond & doux',emoji:'🌟',stress:0}] },
-  { id:'q3',  zone:'stem',    theme:'Corps',             icon:'🤸', text:'Où en est ton corps en ce début de journée ?',              sub:'Tensions, lourdeurs, contractures… ou légèreté.',                    answers:[{label:'Douloureux',emoji:'😖',stress:95},{label:'Contracté',emoji:'😬',stress:70},{label:'Neutre',emoji:'😑',stress:45},{label:'Détendu',emoji:'😊',stress:18},{label:'Léger & libre',emoji:'🕊️',stress:0}] },
-  { id:'q4',  zone:'stem',    theme:'Flexibilité',       icon:'🌊', text:'Face à ce qui t\'échappe en ce moment, tu ressens…',        sub:'Ce que tu sens là, dans ton ventre — pas dans tes idées.',            answers:[{label:'Effondrement',emoji:'😩',stress:95},{label:'Résistance',emoji:'😰',stress:70},{label:'Hésitation',emoji:'🤔',stress:48},{label:'Adaptation',emoji:'🙆',stress:20},{label:'Fluidité totale',emoji:'🌿',stress:0}] },
-  { id:'q5',  zone:'leaves',  theme:'Lien aux autres',   icon:'🤝', text:'Ton envie de connexion avec les autres ce matin ?',         sub:'Envie de partager, d\'échanger, de rire ensemble…',                  answers:[{label:'Retrait total',emoji:'🧊',stress:95},{label:'Isolé·e',emoji:'🫥',stress:72},{label:'Neutre',emoji:'🙂',stress:48},{label:'Présent·e',emoji:'😄',stress:20},{label:'Rayonnant·e',emoji:'🌞',stress:0}] },
-  { id:'q6',  zone:'leaves',  theme:'Humeur',            icon:'🎨', text:'Quelle couleur peindrait ton humeur en ce moment ?',        sub:'Une teinte émotionnelle, pas un jugement.',                           answers:[{label:'Noir profond',emoji:'🌑',stress:95},{label:'Gris lourd',emoji:'🌥️',stress:72},{label:'Beige terne',emoji:'🌤️',stress:48},{label:'Jaune doux',emoji:'🌼',stress:18},{label:'Or lumineux',emoji:'☀️',stress:0}] },
-  { id:'q7',  zone:'flowers', theme:'Rapport à soi',     icon:'💆', text:'Comment tu te sens vis-à-vis de toi-même ?',               sub:'Bienveillance, indifférence, critique intérieure…',                   answers:[{label:'Très dur·e',emoji:'😞',stress:95},{label:'Déconnecté·e',emoji:'😕',stress:70},{label:'Neutre',emoji:'😌',stress:45},{label:'Avec tendresse',emoji:'🌸',stress:18},{label:'Avec amour',emoji:'💖',stress:0}] },
-  { id:'q8',  zone:'flowers', theme:'Anticipation',      icon:'🌅', text:'Face à la journée qui s\'ouvre, ton ressenti est…',        sub:'Ce que tu ressens maintenant, avant de te lancer.',                  answers:[{label:'Angoisse',emoji:'😨',stress:95},{label:'Préoccupation',emoji:'😟',stress:70},{label:'Neutralité',emoji:'😐',stress:45},{label:'Sérénité',emoji:'🙂',stress:18},{label:'Joie anticipée',emoji:'🌟',stress:0}] },
-  { id:'q9',  zone:'breath',  theme:'Stress intérieur',  icon:'🌀', text:'Quel niveau de tension ressens-tu là, maintenant ?',       sub:'Pas dans les idées — dans le ventre, la gorge, les épaules.',        answers:[{label:'Insupportable',emoji:'🔥',stress:95},{label:'Élevé',emoji:'⚠️',stress:75},{label:'Gérable',emoji:'💛',stress:48},{label:'Faible',emoji:'💚',stress:18},{label:'Absent',emoji:'🌬️',stress:0}] },
-  { id:'q10', zone:'breath',  theme:'Présence',          icon:'🔮', text:'Es-tu dans ton corps, ou perdu·e dans tes pensées ?',      sub:'Le fil entre le mental et le vivant.',                                answers:[{label:'Tourbillon mental',emoji:'🌪️',stress:95},{label:'Plutôt dans la tête',emoji:'💭',stress:70},{label:'Entre les deux',emoji:'⚖️',stress:45},{label:'Ancré·e',emoji:'🌱',stress:15},{label:'Pleinement ici',emoji:'🧘',stress:0}] },
+// Structure fixe des 10 emplacements (zone / thème / icône) — stable pour le scoring.
+const PLANT_QUESTION_SLOTS = [
+  { id:'q1',  zone:'roots',   theme:'Énergie vitale',   icon:'⚡' },
+  { id:'q2',  zone:'roots',   theme:'Sommeil',           icon:'🌙' },
+  { id:'q3',  zone:'stem',    theme:'Corps',             icon:'🤸' },
+  { id:'q4',  zone:'stem',    theme:'Flexibilité',       icon:'🌊' },
+  { id:'q5',  zone:'leaves',  theme:'Lien aux autres',   icon:'🤝' },
+  { id:'q6',  zone:'leaves',  theme:'Humeur',            icon:'🎨' },
+  { id:'q7',  zone:'flowers', theme:'Rapport à soi',     icon:'💆' },
+  { id:'q8',  zone:'flowers', theme:'Anticipation',      icon:'🌅' },
+  { id:'q9',  zone:'breath',  theme:'Stress intérieur',  icon:'🌀' },
+  { id:'q10', zone:'breath',  theme:'Présence',          icon:'🔮' },
 ]
+
+// 5 variantes de formulation par emplacement — évite d'avoir le même bilan chaque jour.
+// Chaque variante garde la même répartition de stress que l'original de sa zone (scoring inchangé).
+const PLANT_QUESTION_VARIANTS = {
+  q1: [
+    { text:'Comment est ton énergie physique en ce moment ?',                 sub:'Ferme les yeux. Scanne ton corps de la tête aux pieds.',                answers:[{label:'Vidé·e',emoji:'🪫',stress:95},{label:'Épuisé·e',emoji:'😴',stress:72},{label:'Passable',emoji:'😐',stress:48},{label:'Bien',emoji:'🌱',stress:20},{label:'Plein·e d\'élan',emoji:'✨',stress:0}] },
+    { text:'Si ton corps parlait, que dirait-il de son énergie ce matin ?',   sub:'Un instant pour sentir, sans chercher à l\'expliquer.',                  answers:[{label:'À plat',emoji:'🥱',stress:95},{label:'Fatigué·e',emoji:'😪',stress:72},{label:'Ça va',emoji:'🙂',stress:48},{label:'Tonique',emoji:'💪',stress:20},{label:'Débordant·e d\'énergie',emoji:'🔥',stress:0}] },
+    { text:'Quel est ton niveau de batterie interne aujourd\'hui ?',          sub:'Comme un pourcentage, sans te juger.',                                   answers:[{label:'0–10 %',emoji:'🪫',stress:95},{label:'20–30 %',emoji:'🔌',stress:72},{label:'50 %',emoji:'🔋',stress:48},{label:'70–80 %',emoji:'⚡',stress:20},{label:'100 %',emoji:'✨',stress:0}] },
+    { text:'Ton corps a-t-il envie de bouger, ou de rester immobile ?',       sub:'Écoute ce qu\'il te souffle, pas ce que tu "devrais" faire.',           answers:[{label:'Envie de rien',emoji:'🛌',stress:95},{label:'Lourd·e',emoji:'⛰️',stress:72},{label:'Neutre',emoji:'😐',stress:48},{label:'Envie de bouger',emoji:'🚶',stress:20},{label:'Envie de courir',emoji:'🏃',stress:0}] },
+    { text:'En une image, ton énergie ce matin ressemble à…',                sub:'La première image qui te vient, sans réfléchir.',                       answers:[{label:'Une bougie éteinte',emoji:'🕯️',stress:95},{label:'Une braise qui faiblit',emoji:'♨️',stress:72},{label:'Un feu qui couve',emoji:'🔥',stress:48},{label:'Une flamme vive',emoji:'🔥',stress:20},{label:'Un soleil éclatant',emoji:'☀️',stress:0}] },
+  ],
+  q2: [
+    { text:'Quelle qualité avait ton sommeil cette nuit ?',                  sub:'Nuit agitée, fragments de rêves, réveil difficile…',                    answers:[{label:'Cauchemardesque',emoji:'😩',stress:95},{label:'Agité·e',emoji:'😣',stress:72},{label:'Moyen',emoji:'😶',stress:45},{label:'Reposant',emoji:'😌',stress:15},{label:'Profond & doux',emoji:'🌟',stress:0}] },
+    { text:'Comment t\'es-tu réveillé·e ce matin ?',                         sub:'Le tout premier instant, avant même d\'ouvrir les yeux.',               answers:[{label:'Épuisé·e',emoji:'😵',stress:95},{label:'Groggy',emoji:'🥴',stress:72},{label:'Dans le brouillard',emoji:'🌫️',stress:45},{label:'Frais·che',emoji:'🙂',stress:15},{label:'Plein·e de vitalité',emoji:'😃',stress:0}] },
+    { text:'Combien de fois t\'es-tu réveillé·e cette nuit ?',               sub:'Compte large, ce n\'est pas un examen.',                                 answers:[{label:'Sans arrêt',emoji:'⏰',stress:95},{label:'Plusieurs fois',emoji:'😖',stress:72},{label:'Une ou deux fois',emoji:'😐',stress:45},{label:'À peine',emoji:'😌',stress:15},{label:'Pas une seule',emoji:'😴',stress:0}] },
+    { text:'Ton sommeil t\'a-t-il vraiment reposé·e cette nuit ?',           sub:'Pas la durée — la sensation de récupération.',                          answers:[{label:'Pas du tout',emoji:'😩',stress:95},{label:'Très peu',emoji:'😔',stress:72},{label:'Un peu',emoji:'😶',stress:45},{label:'Plutôt bien',emoji:'🙂',stress:15},{label:'Totalement',emoji:'😊',stress:0}] },
+    { text:'Quelle texture avait ta nuit ?',                                 sub:'Comme un tissu — rêche, doux, troué…',                                   answers:[{label:'Déchirée',emoji:'⚡',stress:95},{label:'Rugueuse',emoji:'🪨',stress:72},{label:'Ordinaire',emoji:'〰️',stress:45},{label:'Douce',emoji:'🧵',stress:15},{label:'Soyeuse',emoji:'🌙',stress:0}] },
+  ],
+  q3: [
+    { text:'Où en est ton corps en ce début de journée ?',                   sub:'Tensions, lourdeurs, contractures… ou légèreté.',                       answers:[{label:'Douloureux',emoji:'😖',stress:95},{label:'Contracté',emoji:'😬',stress:70},{label:'Neutre',emoji:'😑',stress:45},{label:'Détendu',emoji:'😊',stress:18},{label:'Léger & libre',emoji:'🕊️',stress:0}] },
+    { text:'Si tu scannes ton corps là, maintenant, que remarques-tu ?',     sub:'Épaules, mâchoire, ventre… où ça tire ?',                               answers:[{label:'Ça fait mal',emoji:'🤕',stress:95},{label:'Tout est noué',emoji:'🪢',stress:70},{label:'Quelques tensions',emoji:'😑',stress:45},{label:'Plutôt souple',emoji:'🙆',stress:18},{label:'Totalement relâché',emoji:'🧘',stress:0}] },
+    { text:'Quel poids ton corps porte-t-il ce matin ?',                     sub:'Une charge physique, pas seulement mentale.',                           answers:[{label:'Une pierre',emoji:'🪨',stress:95},{label:'Un sac lourd',emoji:'🎒',stress:70},{label:'Un léger poids',emoji:'📦',stress:45},{label:'Presque rien',emoji:'🪶',stress:18},{label:'Aucun poids',emoji:'☁️',stress:0}] },
+    { text:'Ton corps a-t-il envie d\'être massé, étiré, chouchouté ?',      sub:'Ou plutôt d\'être simplement laissé tranquille.',                       answers:[{label:'Il crie au secours',emoji:'🆘',stress:95},{label:'Il en aurait besoin',emoji:'💆',stress:70},{label:'Pas particulièrement',emoji:'😐',stress:45},{label:'Il va bien',emoji:'🙂',stress:18},{label:'Il rayonne',emoji:'✨',stress:0}] },
+    { text:'Comment décrirais-tu ta posture actuelle ?',                     sub:'Recroquevillé·e, droit·e, affalé·e…',                                   answers:[{label:'Recroquevillé·e',emoji:'🫂',stress:95},{label:'Voûté·e',emoji:'😣',stress:70},{label:'Ordinaire',emoji:'🧍',stress:45},{label:'Ouvert·e',emoji:'🙆',stress:18},{label:'Ancré·e et droit·e',emoji:'🌳',stress:0}] },
+  ],
+  q4: [
+    { text:'Face à ce qui t\'échappe en ce moment, tu ressens…',             sub:'Ce que tu sens là, dans ton ventre — pas dans tes idées.',              answers:[{label:'Effondrement',emoji:'😩',stress:95},{label:'Résistance',emoji:'😰',stress:70},{label:'Hésitation',emoji:'🤔',stress:48},{label:'Adaptation',emoji:'🙆',stress:20},{label:'Fluidité totale',emoji:'🌿',stress:0}] },
+    { text:'Quand un imprévu arrive, comment réagit ton corps ?',            sub:'La toute première réaction, avant la réflexion.',                       answers:[{label:'Panique',emoji:'😱',stress:95},{label:'Crispation',emoji:'😬',stress:70},{label:'Vigilance',emoji:'🤨',stress:48},{label:'Curiosité',emoji:'🤔',stress:20},{label:'Calme',emoji:'😌',stress:0}] },
+    { text:'Es-tu plutôt roseau ou chêne aujourd\'hui ?',                    sub:'Celui qui plie, ou celui qui tient droit coûte que coûte.',            answers:[{label:'Cassé·e',emoji:'💔',stress:95},{label:'Chêne rigide',emoji:'🌳',stress:70},{label:'Un peu des deux',emoji:'🌿',stress:48},{label:'Roseau souple',emoji:'🎋',stress:20},{label:'Danse avec le vent',emoji:'🍃',stress:0}] },
+    { text:'Ta capacité à lâcher prise aujourd\'hui est…',                   sub:'Sur ce que tu ne contrôles pas.',                                        answers:[{label:'Inexistante',emoji:'🔒',stress:95},{label:'Très limitée',emoji:'😤',stress:70},{label:'Moyenne',emoji:'😶',stress:48},{label:'Assez bonne',emoji:'🤲',stress:20},{label:'Totale',emoji:'🕊️',stress:0}] },
+    { text:'Si la vie te bousculait aujourd\'hui, tu…',                     sub:'Une intuition, pas une prédiction.',                                     answers:[{label:'Tomberais',emoji:'😵',stress:95},{label:'Vacillerais fort',emoji:'😰',stress:70},{label:'Trébucherais un peu',emoji:'😅',stress:48},{label:'Te rattraperais vite',emoji:'🙆',stress:20},{label:'Resterais stable',emoji:'🧘',stress:0}] },
+  ],
+  q5: [
+    { text:'Ton envie de connexion avec les autres ce matin ?',              sub:'Envie de partager, d\'échanger, de rire ensemble…',                    answers:[{label:'Retrait total',emoji:'🧊',stress:95},{label:'Isolé·e',emoji:'🫥',stress:72},{label:'Neutre',emoji:'🙂',stress:48},{label:'Présent·e',emoji:'😄',stress:20},{label:'Rayonnant·e',emoji:'🌞',stress:0}] },
+    { text:'As-tu envie qu\'on te parle, ce matin ?',                        sub:'Vraiment envie — pas par politesse.',                                    answers:[{label:'Surtout pas',emoji:'🙅',stress:95},{label:'Pas trop',emoji:'😕',stress:72},{label:'Si besoin',emoji:'😐',stress:48},{label:'Volontiers',emoji:'🙂',stress:20},{label:'J\'en ai hâte',emoji:'🤗',stress:0}] },
+    { text:'Comment imagines-tu être avec les autres aujourd\'hui ?',        sub:'Renfermé·e, disponible, expansif·ve…',                                   answers:[{label:'Fermé·e comme une huître',emoji:'🦪',stress:95},{label:'Sur la réserve',emoji:'🙁',stress:72},{label:'Ni plus ni moins',emoji:'😐',stress:48},{label:'Ouvert·e',emoji:'🙋',stress:20},{label:'Généreux·se',emoji:'🌟',stress:0}] },
+    { text:'Le monde extérieur te semble-t-il un refuge ou une menace ce matin ?', sub:'Une impression globale, pas une personne précise.',               answers:[{label:'Une menace',emoji:'⚠️',stress:95},{label:'Fatigant',emoji:'😫',stress:72},{label:'Neutre',emoji:'🌆',stress:48},{label:'Accueillant',emoji:'🏡',stress:20},{label:'Un refuge',emoji:'🤗',stress:0}] },
+    { text:'Ta jauge sociale du matin est à…',                               sub:'0 = vide, 100 = pleine.',                                                answers:[{label:'0 %',emoji:'🔇',stress:95},{label:'25 %',emoji:'🔉',stress:72},{label:'50 %',emoji:'🔊',stress:48},{label:'75 %',emoji:'📣',stress:20},{label:'100 %',emoji:'🎉',stress:0}] },
+  ],
+  q6: [
+    { text:'Quelle couleur peindrait ton humeur en ce moment ?',             sub:'Une teinte émotionnelle, pas un jugement.',                             answers:[{label:'Noir profond',emoji:'🌑',stress:95},{label:'Gris lourd',emoji:'🌥️',stress:72},{label:'Beige terne',emoji:'🌤️',stress:48},{label:'Jaune doux',emoji:'🌼',stress:18},{label:'Or lumineux',emoji:'☀️',stress:0}] },
+    { text:'Quelle météo intérieure fait-il aujourd\'hui ?',                 sub:'Le ciel de ton humeur, tel qu\'il est vraiment.',                       answers:[{label:'Orage',emoji:'⛈️',stress:95},{label:'Ciel bas',emoji:'🌧️',stress:72},{label:'Nuageux',emoji:'⛅',stress:48},{label:'Éclaircies',emoji:'🌤️',stress:18},{label:'Grand soleil',emoji:'☀️',stress:0}] },
+    { text:'Si ton humeur était une musique, elle serait…',                  sub:'Le tempo, l\'ambiance générale.',                                       answers:[{label:'Une note dissonante',emoji:'🎻',stress:95},{label:'Un blues lent',emoji:'🎷',stress:72},{label:'Un morceau neutre',emoji:'🎹',stress:48},{label:'Une mélodie douce',emoji:'🎵',stress:18},{label:'Une symphonie joyeuse',emoji:'🎶',stress:0}] },
+    { text:'À quel point ton humeur est-elle stable aujourd\'hui ?',         sub:'Ou plutôt changeante, à fleur de peau.',                                answers:[{label:'Ça part dans tous les sens',emoji:'🌪️',stress:95},{label:'Très instable',emoji:'📉',stress:72},{label:'Ça varie un peu',emoji:'〰️',stress:48},{label:'Assez stable',emoji:'📊',stress:18},{label:'Parfaitement stable',emoji:'⚖️',stress:0}] },
+    { text:'Ton humeur du jour, en un mot ?',                                sub:'Le premier mot qui te vient, sans filtre.',                             answers:[{label:'Sombre',emoji:'🖤',stress:95},{label:'Lourde',emoji:'🩶',stress:72},{label:'Ordinaire',emoji:'🤍',stress:48},{label:'Légère',emoji:'💛',stress:18},{label:'Radieuse',emoji:'🧡',stress:0}] },
+  ],
+  q7: [
+    { text:'Comment tu te sens vis-à-vis de toi-même ?',                     sub:'Bienveillance, indifférence, critique intérieure…',                     answers:[{label:'Très dur·e',emoji:'😞',stress:95},{label:'Déconnecté·e',emoji:'😕',stress:70},{label:'Neutre',emoji:'😌',stress:45},{label:'Avec tendresse',emoji:'🌸',stress:18},{label:'Avec amour',emoji:'💖',stress:0}] },
+    { text:'Quelle voix intérieure parle le plus fort ce matin ?',           sub:'Celle qui te juge, ou celle qui te soutient ?',                         answers:[{label:'Le juge sévère',emoji:'⚖️',stress:95},{label:'Le critique',emoji:'😤',stress:70},{label:'Une voix neutre',emoji:'🎙️',stress:45},{label:'Un ami bienveillant',emoji:'🤗',stress:18},{label:'Une voix aimante',emoji:'💗',stress:0}] },
+    { text:'Si tu étais ton ou ta meilleur·e ami·e, comment te traiterais-tu aujourd\'hui ?', sub:'Compare avec la façon dont tu te parles vraiment.',      answers:[{label:'Avec dureté',emoji:'💢',stress:95},{label:'Avec froideur',emoji:'🧊',stress:70},{label:'Correctement',emoji:'🙂',stress:45},{label:'Avec gentillesse',emoji:'😊',stress:18},{label:'Avec une immense douceur',emoji:'💞',stress:0}] },
+    { text:'Ton regard sur toi-même ce matin est…',                          sub:'Le tout premier regard dans le miroir, intérieur ou réel.',            answers:[{label:'Rejet',emoji:'🙈',stress:95},{label:'Déception',emoji:'😔',stress:70},{label:'Indifférence',emoji:'😐',stress:45},{label:'Acceptation',emoji:'🙂',stress:18},{label:'Fierté douce',emoji:'🥰',stress:0}] },
+    { text:'As-tu de la place pour toi dans ta propre journée ?',            sub:'Un espace rien qu\'à toi, sans culpabilité.',                           answers:[{label:'Aucune',emoji:'🚫',stress:95},{label:'Très peu',emoji:'⏳',stress:70},{label:'Un minimum',emoji:'🕐',stress:45},{label:'Une vraie place',emoji:'🌷',stress:18},{label:'Toute la place nécessaire',emoji:'🌺',stress:0}] },
+  ],
+  q8: [
+    { text:'Face à la journée qui s\'ouvre, ton ressenti est…',              sub:'Ce que tu ressens maintenant, avant de te lancer.',                     answers:[{label:'Angoisse',emoji:'😨',stress:95},{label:'Préoccupation',emoji:'😟',stress:70},{label:'Neutralité',emoji:'😐',stress:45},{label:'Sérénité',emoji:'🙂',stress:18},{label:'Joie anticipée',emoji:'🌟',stress:0}] },
+    { text:'Si ta journée était un chemin, à quoi ressemble-t-il ?',         sub:'Escarpé, plat, bordé de fleurs…',                                       answers:[{label:'Un mur infranchissable',emoji:'🧱',stress:95},{label:'Une montée raide',emoji:'⛰️',stress:70},{label:'Un chemin ordinaire',emoji:'🚶',stress:45},{label:'Un sentier agréable',emoji:'🌿',stress:18},{label:'Un chemin en fleurs',emoji:'🌼',stress:0}] },
+    { text:'Qu\'est-ce qui domine quand tu penses à aujourd\'hui ?',         sub:'La première chose qui pèse ou qui porte.',                              answers:[{label:'La peur',emoji:'😰',stress:95},{label:'Le poids des tâches',emoji:'📋',stress:70},{label:'Rien de spécial',emoji:'😐',stress:45},{label:'Une pointe d\'enthousiasme',emoji:'🙂',stress:18},{label:'L\'envie d\'y être',emoji:'🎉',stress:0}] },
+    { text:'As-tu envie que cette journée commence ?',                       sub:'Sincèrement, là, maintenant.',                                          answers:[{label:'Non, pas du tout',emoji:'🙅',stress:95},{label:'Pas vraiment',emoji:'😔',stress:70},{label:'Sans avis',emoji:'🤷',stress:45},{label:'Plutôt oui',emoji:'🙂',stress:18},{label:'Oui, avec envie',emoji:'😄',stress:0}] },
+    { text:'Ton énergie face à l\'inconnu du jour ?',                        sub:'Ce que tu ne maîtrises pas encore, dans les prochaines heures.',       answers:[{label:'Ça me terrifie',emoji:'😨',stress:95},{label:'Ça m\'inquiète',emoji:'😟',stress:70},{label:'Ça m\'indiffère',emoji:'😐',stress:45},{label:'Ça m\'intrigue',emoji:'🧐',stress:18},{label:'Ça m\'excite',emoji:'✨',stress:0}] },
+  ],
+  q9: [
+    { text:'Quel niveau de tension ressens-tu là, maintenant ?',             sub:'Pas dans les idées — dans le ventre, la gorge, les épaules.',          answers:[{label:'Insupportable',emoji:'🔥',stress:95},{label:'Élevé',emoji:'⚠️',stress:75},{label:'Gérable',emoji:'💛',stress:48},{label:'Faible',emoji:'💚',stress:18},{label:'Absent',emoji:'🌬️',stress:0}] },
+    { text:'Si ton stress était une jauge, où est l\'aiguille ?',            sub:'Regarde-la vraiment, sans l\'arrondir.',                                answers:[{label:'Dans le rouge',emoji:'🔴',stress:95},{label:'Zone orange',emoji:'🟠',stress:75},{label:'Milieu de jauge',emoji:'🟡',stress:48},{label:'Zone verte',emoji:'🟢',stress:18},{label:'Aiguille au repos',emoji:'🔵',stress:0}] },
+    { text:'Où sens-tu la tension dans ton corps, maintenant ?',             sub:'Gorge serrée, ventre noué, épaules remontées…',                         answers:[{label:'Partout à la fois',emoji:'🌪️',stress:95},{label:'Très présente',emoji:'😣',stress:75},{label:'Par endroits',emoji:'😐',stress:48},{label:'À peine',emoji:'🙂',stress:18},{label:'Nulle part',emoji:'😌',stress:0}] },
+    { text:'Si tu devais respirer profondément là, ce serait…',              sub:'Facile, ou un effort ?',                                                answers:[{label:'Impossible tellement c\'est serré',emoji:'😖',stress:95},{label:'Très difficile',emoji:'😤',stress:75},{label:'Faisable avec effort',emoji:'😣',stress:48},{label:'Assez facile',emoji:'🙂',stress:18},{label:'Naturel et fluide',emoji:'🌬️',stress:0}] },
+    { text:'Ton corps est-il en alerte ou en repos ?',                       sub:'Le mode dans lequel il tourne, là, maintenant.',                        answers:[{label:'Alerte maximale',emoji:'🚨',stress:95},{label:'Sur le qui-vive',emoji:'👀',stress:75},{label:'Vigilance légère',emoji:'😐',stress:48},{label:'Plutôt détendu',emoji:'😊',stress:18},{label:'Repos complet',emoji:'😴',stress:0}] },
+  ],
+  q10: [
+    { text:'Es-tu dans ton corps, ou perdu·e dans tes pensées ?',            sub:'Le fil entre le mental et le vivant.',                                  answers:[{label:'Tourbillon mental',emoji:'🌪️',stress:95},{label:'Plutôt dans la tête',emoji:'💭',stress:70},{label:'Entre les deux',emoji:'⚖️',stress:45},{label:'Ancré·e',emoji:'🌱',stress:15},{label:'Pleinement ici',emoji:'🧘',stress:0}] },
+    { text:'Où est ton esprit, là, tout de suite ?',                        sub:'Dans le passé, le futur, ou vraiment ici ?',                             answers:[{label:'Ailleurs, très loin',emoji:'🌌',stress:95},{label:'Dans hier ou demain',emoji:'⏳',stress:70},{label:'Un peu partout',emoji:'🔀',stress:45},{label:'Presque ici',emoji:'📍',stress:15},{label:'Totalement présent',emoji:'🧘',stress:0}] },
+    { text:'Combien de pensées tournent en boucle dans ta tête ?',           sub:'Une estimation honnête, pas parfaite.',                                 answers:[{label:'Un tourbillon sans fin',emoji:'🌀',stress:95},{label:'Beaucoup trop',emoji:'💭',stress:70},{label:'Quelques-unes',emoji:'💬',stress:45},{label:'Presque le calme',emoji:'🍃',stress:15},{label:'Silence intérieur',emoji:'🕊️',stress:0}] },
+    { text:'Si on te demandait "à quoi tu penses ?", tu répondrais…',       sub:'La première réponse honnête, pas la polie.',                            answers:[{label:'À tout et n\'importe quoi',emoji:'🎡',stress:95},{label:'À mes soucis',emoji:'😟',stress:70},{label:'À des trucs sans importance',emoji:'💭',stress:45},{label:'À pas grand-chose',emoji:'🙂',stress:15},{label:'À rien — je suis juste là',emoji:'✨',stress:0}] },
+    { text:'Sens-tu tes pieds sur le sol, là, maintenant ?',                 sub:'Un ancrage tout simple, physique.',                                     answers:[{label:'Pas du tout',emoji:'☁️',stress:95},{label:'À peine',emoji:'🌫️',stress:70},{label:'Un peu',emoji:'😐',stress:45},{label:'Oui, assez bien',emoji:'🙂',stress:15},{label:'Complètement ancré·e',emoji:'🌳',stress:0}] },
+  ],
+}
+
+// Décale la variante choisie par emplacement (dayIndex + index du slot) afin que chaque
+// question change de formulation d'un jour à l'autre, sans que ce soit un pack figé "jour A/B/C…".
+function buildDailyQuestions(dateStr) {
+  const dayIndex = Math.floor(Date.parse(dateStr + 'T00:00:00.000Z') / 86400000)
+  return PLANT_QUESTION_SLOTS.map((slot, i) => {
+    const variants = PLANT_QUESTION_VARIANTS[slot.id]
+    const variant  = variants[(dayIndex + i) % variants.length]
+    return { ...slot, ...variant }
+  })
+}
+
+const PLANT_QUESTIONS = buildDailyQuestions(new Date().toISOString().slice(0, 10))
 
 function computeDegradation(answers) {
   const acc = {}
@@ -2478,11 +2567,13 @@ function DailyQuizModal({ onComplete, onDismiss, onSkip, onSoinDeMoi }) {
   const [transitioning, setTransitioning] = useState(false)
   const [visible,       setVisible]       = useState(true)
   const [result,        setResult]        = useState(null)  // écran de résultat
+  const [showResumeNotice, setShowResumeNotice] = useState(!!_saved)
   const isMobile = useIsMobile()
 
   const startQuiz = () => { setVisible(false); setTimeout(() => { setStep(0); setVisible(true) }, 250) }
 const choose = (idx) => {
   if (transitioning) return
+  setShowResumeNotice(false)
   setSelected(idx)
   // Auto-avance après 320ms — laisse le temps de voir la sélection
   setTimeout(() => {
@@ -2502,7 +2593,19 @@ const choose = (idx) => {
     }, 280)
   }, 320)
 }
- 
+
+const goBack = () => {
+  if (step <= 0 || transitioning) return
+  setShowResumeNotice(false)
+  setTransitioning(true); setVisible(false)
+  setTimeout(() => {
+    const prevStep = step - 1
+    try { sessionStorage.setItem(_bilanKey, JSON.stringify({ step: prevStep, answers })) } catch {}
+    setStep(prevStep)
+    setSelected(answers[PLANT_QUESTIONS[prevStep].id] ?? null)
+    setTransitioning(false); setVisible(true)
+  }, 280)
+}
 
   // ── Écran de résultat ────────────────────────────────────────────────────────
   if (result) {
@@ -2573,7 +2676,7 @@ const choose = (idx) => {
   // Écran d'accueil
   if (step === -1) return (
     <div style={{ position:'fixed', inset:0, zIndex:500, background: isMobile ? 'var(--quiz-modal-bg)' : 'rgba(0,0,0,0.55)', backdropFilter: isMobile ? 'none' : 'blur(12px)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflow:'hidden', padding:'40px 28px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', position:'relative' }}>
+      <div style={{ width: isMobile ? '100%' : 480, height: isMobile ? '100%' : 'auto', maxHeight: isMobile ? '100%' : '88vh', borderRadius: isMobile ? 0 : 20, background:'var(--quiz-modal-bg)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', overflowY:'auto', WebkitOverflowScrolling:'touch', boxSizing:'border-box', padding:'40px 28px', boxShadow: isMobile ? 'none' : '0 24px 60px rgba(0,0,0,0.45)', position:'relative' }}>
         <button onClick={onSkip} style={{ position:'absolute', top:16, right:16, background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.6)', fontSize:'var(--fs-h4, 13px)', cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
         <div style={{ textAlign:'center', maxWidth:340, opacity: visible ? 1 : 0, transition:'opacity 0.5s ease' }}>
           <div style={{ fontSize:56, marginBottom:24, display:'inline-block', animation:'pulse 3s ease-in-out infinite' }}>🌹</div>
@@ -2611,13 +2714,23 @@ const choose = (idx) => {
           })}
         </div>
         <div style={{ padding:'14px 24px 0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ fontSize:14, textTransform:'uppercase', letterSpacing:'0.1em', color:zone.color, fontWeight:700 }}>{zone.name} · {q.theme}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {step > 0 && (
+              <button onClick={goBack} disabled={transitioning} title="Question précédente" style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:28, height:28, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.7)', fontSize:15, cursor: transitioning ? 'default' : 'pointer', lineHeight:1, flexShrink:0, opacity: transitioning ? 0.5 : 1 }}>‹</button>
+            )}
+            <span style={{ fontSize:14, textTransform:'uppercase', letterSpacing:'0.1em', color:zone.color, fontWeight:700 }}>{zone.name} · {q.theme}</span>
+          </div>
           <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <span style={{ fontSize:16, color:'#0f0a06', fontWeight:700 }}>{step+1} <span style={{ opacity:0.45 }}>/ 10</span></span>
+            <span style={{ fontSize:16, color:'#0f0a06', fontWeight:700 }}>{step+1} <span style={{ opacity:0.45 }}>/ {PLANT_QUESTIONS.length}</span></span>
             <button onClick={onSkip} style={{ background:'var(--track)', border:'1px solid var(--surface-3)', borderRadius:'50%', width:30, height:30, display:'flex', alignItems:'center', justifyContent:'center', color:'rgba(var(--quiz-modal-text-rgb),0.7)', fontSize:14, cursor:'pointer', lineHeight:1, flexShrink:0 }}>✕</button>
           </div>
         </div>
-        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'16px 24px 24px', maxWidth:440, width:'100%', margin:'0 auto', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
+        {showResumeNotice && (
+          <div style={{ margin:'10px 24px 0', padding:'8px 14px', borderRadius:10, background:'rgba(200,160,64,0.12)', border:'1px solid rgba(200,160,64,0.28)', fontSize:12, color:'#a07820', fontFamily:"'Jost',sans-serif", display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+            ↻ Bilan repris là où tu l'avais laissé
+          </div>
+        )}
+        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'flex-start', overflowY:'auto', WebkitOverflowScrolling:'touch', padding:'16px 24px 24px', maxWidth:440, width:'100%', margin:'0 auto', boxSizing:'border-box', opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)', transition:'opacity 0.28s ease, transform 0.28s ease' }}>
           <div style={{ fontSize:44, marginBottom:12 }}>{q.icon}</div>
           <h3 style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", fontSize:'clamp(26px, 7vw, 34px)', color:'#0f0a06', fontWeight:600, lineHeight:1.2, marginBottom:6 }}>{q.text}</h3>
           <p style={{ fontSize:16, color:'rgba(20,14,6,0.6)', lineHeight:1.6, marginBottom:18, fontStyle:'italic' }}>{q.sub}</p>
