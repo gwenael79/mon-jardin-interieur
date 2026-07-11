@@ -320,6 +320,9 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
         @keyframes arrowBlink { 0%,100%{transform:scale(1);box-shadow:0 4px 16px rgba(0,0,0,0.28),0 0 0 0 rgba(40,160,80,0.6)} 50%{transform:scale(1.10);box-shadow:0 6px 22px rgba(0,0,0,0.22),0 0 0 9px rgba(40,160,80,0)} }
         .nav-arrow { transition: transform .15s; }
         @keyframes slideImgIn { from{opacity:0} to{opacity:1} }
+        @keyframes pmPulse { 0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.20),0 0 0 0 rgba(90,154,40,.55)} 50%{box-shadow:0 4px 16px rgba(0,0,0,.20),0 0 0 8px rgba(90,154,40,0)} }
+        .pm-slide-btn { animation: pmPulse 2s ease-in-out infinite; transition: transform .15s; }
+        .pm-slide-btn:active { transform:scale(0.96); }
       `}</style>
       {/* ── Bandeau titre mobile ── */}
       <div style={{ flexShrink:0, height:'calc(48px + env(safe-area-inset-top, 0px))', boxSizing:'border-box', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'env(safe-area-inset-top, 0px) 12px 0', background:'rgba(200,230,200,.35)', backdropFilter:'blur(8px)', borderBottom:'1px solid rgba(96,160,100,.2)', zIndex:20 }}>
@@ -373,6 +376,15 @@ function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, 
           <button onClick={() => onNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:16, right:16, width:58, height:58, borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', border:'1.5px solid rgba(255,255,255,0.40)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 10px rgba(0,0,0,0.15)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
             <svg width="46" height="46" viewBox="0 0 20 20" fill="none"><path d="M8 2L15 10L8 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 2L10 10L3 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </button>
+        )}
+
+        {/* ── Bouton Passer Premium — comptes free uniquement ── */}
+        {!screenProps?.isPremium && (
+          <button
+            onClick={() => { screenProps?.track?.('premium_button_slide', {}, slide.id, 'monetization'); screenProps?.onUpgrade?.() }}
+            className="pm-slide-btn"
+            style={{ position:'absolute', bottom:84, right:16, padding:'9px 16px', borderRadius:100, border:'1px solid rgba(255,255,255,0.35)', background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize:12.5, fontWeight:600, letterSpacing:'.02em', cursor:'pointer', display:'flex', alignItems:'center', gap:5, whiteSpace:'nowrap' }}
+          >✨ Passer Premium</button>
         )}
 
       </div>
@@ -791,6 +803,57 @@ function TrialInfoModal({ daysLeft, trialActive, onActivate, onClose, onUpgrade 
         {/* CTA secondaire */}
         <button onClick={onUpgrade} style={{ width:'100%', padding:'10px', borderRadius:14, border:'1px solid rgba(140,100,20,.25)', background:'transparent', color:'rgba(140,100,20,.65)', fontSize:12, cursor:'pointer' }}>
           Passer au Premium payant →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── PremiumTeaserModal — popup de stimulation avant la modale de paiement ──
+// Explique l'intérêt du Premium (bénéfices concrets, personnalisés si possible)
+// avant d'envoyer vers PremiumModal pour le choix de formule.
+function PremiumTeaserModal({ onDiscover, onClose }) {
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:490, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 16px' }}>
+      <div style={{ position:'absolute', inset:0, background:'rgba(10,22,8,.55)', backdropFilter:'blur(10px)' }} onClick={onClose} />
+      <div style={{
+        position:'relative', width:'100%', maxWidth:400, borderRadius:22,
+        background:'linear-gradient(160deg,#f4f9ef,#e9f3e0)',
+        border:'1px solid rgba(90,154,40,.32)',
+        boxShadow:'0 32px 80px rgba(0,0,0,.25)',
+        padding:'30px 26px 24px',
+        fontFamily:"'Jost',sans-serif",
+        animation:'fadeUp .35s ease both',
+      }}>
+        <button onClick={onClose} style={{ position:'absolute', top:14, right:14, background:'rgba(255,255,255,.6)', border:'1px solid rgba(90,154,40,.25)', borderRadius:'50%', width:28, height:28, cursor:'pointer', color:'rgba(30,20,8,.5)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>✕</button>
+
+        {/* Icône + titre */}
+        <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }}>
+          <div style={{ width:52, height:52, borderRadius:14, background:'linear-gradient(135deg,#78c040,#4a8820)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, flexShrink:0 }}>🌱</div>
+          <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:500, color:'#1a1208', lineHeight:1.15 }}>Tu n'as encore<br/>rien vu…</div>
+        </div>
+
+        {/* Accroche */}
+        <p style={{ fontSize:14, fontWeight:400, color:'#1a1208', lineHeight:1.7, marginBottom:6 }}>
+          La version gratuite te permet de découvrir quelques rituels.
+        </p>
+        <p style={{ fontSize:14, fontWeight:400, color:'#1a1208', lineHeight:1.7, marginBottom:18 }}>
+          Avec Premium, profite de <strong style={{ fontWeight:700 }}>120 rituels</strong>, des <strong style={{ fontWeight:700 }}>séances audio guidées</strong>, de la <strong style={{ fontWeight:700 }}>Jardinothèque complète</strong>, du <strong style={{ fontWeight:700 }}>Club des Jardiniers</strong>, et bien plus encore…
+        </p>
+
+        {/* Tagline de clôture */}
+        <p style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:16, color:'#1a1208', textAlign:'center', margin:'0 0 18px' }}>
+          Prends soin de toi, sans limite.
+        </p>
+
+        {/* CTA principal */}
+        <button onClick={onDiscover} style={{ width:'100%', padding:'13px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#5a9a28,#3a7a18)', color:'#fff', fontSize:14, fontWeight:500, cursor:'pointer', marginBottom:10, boxShadow:'0 6px 20px rgba(60,120,20,.30)' }}>
+          Découvrir Premium →
+        </button>
+
+        {/* CTA secondaire */}
+        <button onClick={onClose} style={{ width:'100%', padding:'10px', borderRadius:14, border:'1px solid rgba(90,154,40,.20)', background:'transparent', color:'rgba(26,18,8,.55)', fontSize:12, cursor:'pointer' }}>
+          Plus tard
         </button>
       </div>
     </div>
@@ -1932,6 +1995,7 @@ export default function DashboardPage() {
   const [showRituelCalendrier,   setShowRituelCalendrier]   = useState(false)
   const [fondateurData,       setFondateurData]       = useState(null)
   const [showPremiumModal,    setShowPremiumModal]    = useState(false)
+  const [showPremiumTeaser,   setShowPremiumTeaser]   = useState(false)
   const [showTrialInfoModal,  setShowTrialInfoModal]  = useState(false)
   const [trialCardSeen,       setTrialCardSeen]       = useState(() => !!localStorage.getItem(`trial_card_seen_${user?.id}`))
   const [profileView,         setProfileView]         = useState('main') // 'main' | 'settings'
@@ -2172,6 +2236,35 @@ export default function DashboardPage() {
     window.openAccessModal = () => setShowPremiumModal(true)
     return () => { delete window.openAccessModal }
   }, [])
+
+  // ── Popup Premium automatique — 20s après l'arrivée sur le dashboard, pour les comptes free ──
+  // Une fois par jour maximum (localStorage), quel que soit le slide actif, et attend qu'aucun
+  // autre écran (welcome, vidéo d'intro, bilan, besoin, etc.) ne soit ouvert avant de s'afficher.
+  const dashboardBlockedRef  = useRef(false)
+  const premiumPopupShownRef = useRef(false)
+  useEffect(() => {
+    dashboardBlockedRef.current = showWelcome || showVideoIntro || showBilanModal || showNeedModal
+      || showRitualSuggestion || showOrientationModal || !!openModalId || showProfileModal
+      || showAccessModal || showPremiumModal || showPremiumTeaser
+  })
+
+  useEffect(() => {
+    if (!user?.id || isPremium || premiumPopupShownRef.current) return
+    const today   = new Date().toISOString().split('T')[0]
+    const lsKey   = `premium_popup_seen_${user.id}`
+    if (localStorage.getItem(lsKey) === today) return
+    let cancelled = false
+    const tryShow = () => {
+      if (cancelled || premiumPopupShownRef.current) return
+      if (dashboardBlockedRef.current) { setTimeout(tryShow, 3000); return }
+      premiumPopupShownRef.current = true
+      localStorage.setItem(lsKey, today)
+      setShowPremiumTeaser(true)
+      track('premium_teaser_auto', {}, active, 'monetization')
+    }
+    const t = setTimeout(tryShow, 20000)
+    return () => { cancelled = true; clearTimeout(t) }
+  }, [user?.id, isPremium])
 
   // ── Tracking : vue initiale du slide au chargement (une seule fois par session) ──
   const _initialSlideTracked = useRef(false)
@@ -2491,6 +2584,12 @@ export default function DashboardPage() {
         </div>
       )}
       {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => setShowPremiumModal(false)} />}
+      {showPremiumTeaser && (
+        <PremiumTeaserModal
+          onDiscover={() => { setShowPremiumTeaser(false); setShowPremiumModal(true); track('premium_teaser_cta', {}, active, 'monetization') }}
+          onClose={() => { setShowPremiumTeaser(false); track('premium_teaser_dismiss', {}, active, 'monetization') }}
+        />
+      )}
       {showTrialInfoModal && <TrialInfoModal daysLeft={trialDaysLeft} trialActive={isTrialActive} onActivate={async () => { await activateTrialNow(); setShowTrialInfoModal(false) }} onClose={() => setShowTrialInfoModal(false)} onUpgrade={() => { setShowTrialInfoModal(false); setShowPremiumModal(true) }} />}
       {showAvisModal && <AppAvisModal userId={user?.id} displayName={profile?.display_name ?? ''} onClose={() => setShowAvisModal(false)} />}
       {showLevelInfo && (() => {
@@ -2859,6 +2958,9 @@ export default function DashboardPage() {
           .cta-btn:active { transform:scale(0.97) !important; }
           @keyframes guidePulse { 0%,100%{box-shadow:0 0 0 0 rgba(80,200,80,.6),0 4px 16px rgba(60,160,60,.4)} 50%{box-shadow:0 0 0 8px rgba(80,200,80,0),0 4px 20px rgba(60,160,60,.6)} }
           .guide-btn { animation: guidePulse 2s ease-in-out infinite; }
+          @keyframes pmPulse { 0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.20),0 0 0 0 rgba(90,154,40,.55)} 50%{box-shadow:0 4px 16px rgba(0,0,0,.20),0 0 0 9px rgba(90,154,40,0)} }
+          .pm-slide-btn { animation: pmPulse 2s ease-in-out infinite; transition: transform .15s; }
+          .pm-slide-btn:hover { transform:translateY(-1px) scale(1.03); }
         `}</style>
 
         <div style={{ position:'fixed', inset:0, zIndex:10, fontFamily:"'Jost',sans-serif" }}>
@@ -2941,6 +3043,15 @@ export default function DashboardPage() {
                   <button onClick={() => handleNav(1)} className="nav-arrow" style={{ position:'absolute', bottom:20, right:20, width:62, height:62, borderRadius:'50%', background:'rgba(255,255,255,0.18)', backdropFilter:'blur(6px)', border:'1.5px solid rgba(255,255,255,0.40)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 12px rgba(0,0,0,0.15)', animation:'arrowBlink 1.8s ease-in-out infinite .3s' }}>
                     <svg width="50" height="50" viewBox="0 0 20 20" fill="none"><path d="M8 2L15 10L8 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 2L10 10L3 18" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
+                )}
+
+                {/* ── Bouton Passer Premium — comptes free uniquement ── */}
+                {!isPremium && (
+                  <button
+                    onClick={() => { track('premium_button_slide', {}, slide.id, 'monetization'); setShowPremiumModal(true) }}
+                    className="pm-slide-btn"
+                    style={{ position:'absolute', bottom:92, right:20, padding:'10px 18px', borderRadius:100, border:'1px solid rgba(255,255,255,0.35)', background:'linear-gradient(135deg,#78c040,#4a8820)', color:'#fff', fontFamily:"'Jost',sans-serif", fontSize:13, fontWeight:600, letterSpacing:'.02em', cursor:'pointer', display:'flex', alignItems:'center', gap:6, whiteSpace:'nowrap' }}
+                  >✨ Passer Premium</button>
                 )}
 
               </div>
