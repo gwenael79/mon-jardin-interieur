@@ -652,7 +652,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         {/* "Trouve tes rituels" — carte de test, dev uniquement pour l'instant */}
         {import.meta.env.DEV && (
           <button onClick={() => setShowFinder(true)} style={{
-            flexShrink: 0, width: '100%', aspectRatio: isMobile ? '5.4 / 1' : '7.2 / 1', textAlign: 'left', border: 'none', cursor: 'pointer',
+            flexShrink: 0, width: '100%', aspectRatio: isMobile ? '5.4 / 1' : '7.2 / 1', minHeight: isMobile ? 76 : 92, textAlign: 'left', border: 'none', cursor: 'pointer',
             marginBottom: isMobile ? 12 : 16, padding: 0,
             borderRadius: 18, background: 'linear-gradient(135deg,#7d4368,#a06a8c)',
             color: '#fff', boxShadow: '0 6px 20px rgba(125,67,104,0.30)',
@@ -756,7 +756,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             <button
               onClick={() => setShowAudio(true)}
               style={{
-                width:'100%', aspectRatio: isMobile ? '4.36 / 1' : '5.6 / 1', display:'flex', alignItems:'stretch', padding:0,
+                width:'100%', aspectRatio: isMobile ? '4.36 / 1' : '5.6 / 1', minHeight: isMobile ? 96 : 120, display:'flex', alignItems:'stretch', padding:0,
                 borderRadius:20, border:'1px solid rgba(180,130,170,0.25)',
                 background:'linear-gradient(135deg, #F1E6F3, #F9EAEE)',
                 boxShadow:'0 6px 18px rgba(140,90,140,0.12)',
