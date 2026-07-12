@@ -652,7 +652,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         {/* "Trouve tes rituels" — carte de test, dev uniquement pour l'instant */}
         {import.meta.env.DEV && (
           <button onClick={() => setShowFinder(true)} style={{
-            flexShrink: 0, width: '100%', aspectRatio: isMobile ? '5.4 / 1' : '7.2 / 1', minHeight: isMobile ? 76 : 92, textAlign: 'left', border: 'none', cursor: 'pointer',
+            flexShrink: 0, width: '100%', height: isMobile ? 130 : 150, textAlign: 'left', border: 'none', cursor: 'pointer',
             marginBottom: isMobile ? 12 : 16, padding: 0,
             borderRadius: 18, background: 'linear-gradient(135deg,#7d4368,#a06a8c)',
             color: '#fff', boxShadow: '0 6px 20px rgba(125,67,104,0.30)',
@@ -663,21 +663,16 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
               <div style={{ position: 'absolute', zIndex: 2, top: 10, right: 12, fontSize: 22 }}>🔒</div>
             )}
 
-            {/* Illustration — object-fit:cover force un zoom trop fort sur ce format très large/bas.
-                On affiche l'image à une taille réduite (45% de largeur) et on la décale pour cadrer
-                le dôme entier plutôt qu'un fragment. */}
-            <div style={{
-              position:'absolute', inset:0, overflow:'hidden',
-              maskImage: 'linear-gradient(90deg, #000 0%, #000 12%, transparent 28%)',
-              WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 12%, transparent 28%)',
-            }}>
-              <img src="/carte5.png" alt="" style={{
-                position:'absolute', width:'45%', height:'auto', display:'block',
-                left:'0%', top: isMobile ? '-65%' : '-101%',
-              }}/>
-            </div>
+            {/* Illustration plein cadre, fondue — banderole assez haute désormais pour que
+                object-fit:cover montre le dôme correctement (plus de médaillon ni de décalage manuel) */}
+            <img src="/carte5.png" alt="" style={{
+              position:'absolute', inset:0, width:'100%', height:'100%',
+              objectFit:'cover', objectPosition:'16% 62%', display:'block',
+              maskImage: 'linear-gradient(90deg, #000 0%, #000 14%, transparent 34%)',
+              WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 14%, transparent 34%)',
+            }}/>
 
-            <div style={{ position:'relative', zIndex:1, flex: 1, minWidth:0, padding: isMobile ? '14px 16px 14px 100px' : '18px 20px 18px 150px' }}>
+            <div style={{ position:'relative', zIndex:1, flex: 1, minWidth:0, padding: isMobile ? '14px 16px 14px 108px' : '18px 20px 18px 160px' }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 27, fontStyle: 'italic', fontWeight: 600, marginBottom: isMobile ? 2 : 4, lineHeight:1.15 }}>Définir mon protocole de rituels personnalisé</div>
               <div style={{ fontFamily: "'Jost',sans-serif", fontWeight:500, fontSize: isMobile ? 12 : 17, opacity: 0.92, lineHeight:1.3 }}>
                 {isPremium ? 'Un questionnaire, une sélection de rituels rien que pour toi — DEV' : '3 problématiques offertes, le reste en Premium — DEV'}
@@ -756,7 +751,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             <button
               onClick={() => setShowAudio(true)}
               style={{
-                width:'100%', aspectRatio: isMobile ? '4.36 / 1' : '5.6 / 1', minHeight: isMobile ? 96 : 120, display:'flex', alignItems:'stretch', padding:0,
+                width:'100%', height: isMobile ? 138 : 156, display:'flex', alignItems:'stretch', padding:0,
                 borderRadius:20, border:'1px solid rgba(180,130,170,0.25)',
                 background:'linear-gradient(135deg, #F1E6F3, #F9EAEE)',
                 boxShadow:'0 6px 18px rgba(140,90,140,0.12)',
@@ -767,23 +762,19 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
               onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 26px rgba(140,90,140,0.18)' }}
               onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 18px rgba(140,90,140,0.12)' }}
             >
-              {/* Illustration — image réduite à 50% de largeur puis décalée pour cadrer le casque entier
-                  (object-fit:cover zoomait trop fort sur ce format très large/bas). */}
-              <div style={{
-                position:'absolute', inset:0, overflow:'hidden',
-                maskImage: 'linear-gradient(90deg, #000 0%, #000 6%, transparent 34%)',
-                WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 6%, transparent 34%)',
-              }}>
-                <img src="/carte6.png" alt="" style={{
-                  position:'absolute', width:'50%', height:'auto', display:'block',
-                  left:'0%', top: isMobile ? '-52%' : '-81%',
-                }}/>
-              </div>
+              {/* Illustration plein cadre, fondue — carte assez haute désormais pour que
+                  object-fit:cover montre le casque correctement (plus de médaillon ni de décalage manuel) */}
+              <img src="/carte6.png" alt="" style={{
+                position:'absolute', inset:0, width:'100%', height:'100%',
+                objectFit:'cover', objectPosition:'16% 66%', display:'block',
+                maskImage: 'linear-gradient(90deg, #000 0%, #000 12%, transparent 32%)',
+                WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 12%, transparent 32%)',
+              }}/>
 
               <div style={{
                 position:'relative', zIndex:1, flex:1, minWidth:0, height:'100%',
                 display:'flex', alignItems:'center', gap: isMobile ? 12 : 16,
-                padding: isMobile ? '0 12px 0 110px' : '0 18px 0 160px',
+                padding: isMobile ? '0 12px 0 110px' : '0 18px 0 150px',
               }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 23 : 28, fontWeight:600, fontStyle:'italic', color:'#5C3A66', lineHeight:1.2 }}>
