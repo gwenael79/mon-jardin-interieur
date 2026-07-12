@@ -652,7 +652,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         {/* "Trouve tes rituels" — carte de test, dev uniquement pour l'instant */}
         {import.meta.env.DEV && (
           <button onClick={() => setShowFinder(true)} style={{
-            flexShrink: 0, width: '100%', height: isMobile ? 88 : 100, textAlign: 'left', border: 'none', cursor: 'pointer',
+            flexShrink: 0, width: '100%', aspectRatio: isMobile ? '5.4 / 1' : '7.2 / 1', textAlign: 'left', border: 'none', cursor: 'pointer',
             marginBottom: isMobile ? 12 : 16, padding: 0,
             borderRadius: 18, background: 'linear-gradient(135deg,#7d4368,#a06a8c)',
             color: '#fff', boxShadow: '0 6px 20px rgba(125,67,104,0.30)',
@@ -756,7 +756,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             <button
               onClick={() => setShowAudio(true)}
               style={{
-                width:'100%', height: isMobile ? 110 : 128, display:'flex', alignItems:'stretch', padding:0,
+                width:'100%', aspectRatio: isMobile ? '4.36 / 1' : '5.6 / 1', display:'flex', alignItems:'stretch', padding:0,
                 borderRadius:20, border:'1px solid rgba(180,130,170,0.25)',
                 background:'linear-gradient(135deg, #F1E6F3, #F9EAEE)',
                 boxShadow:'0 6px 18px rgba(140,90,140,0.12)',
@@ -771,8 +771,8 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
                   (object-fit:cover zoomait trop fort sur ce format très large/bas). */}
               <div style={{
                 position:'absolute', inset:0, overflow:'hidden',
-                maskImage: 'linear-gradient(90deg, #000 0%, #000 10%, transparent 24%)',
-                WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 10%, transparent 24%)',
+                maskImage: 'linear-gradient(90deg, #000 0%, #000 6%, transparent 34%)',
+                WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 6%, transparent 34%)',
               }}>
                 <img src="/carte6.png" alt="" style={{
                   position:'absolute', width:'50%', height:'auto', display:'block',
@@ -783,7 +783,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
               <div style={{
                 position:'relative', zIndex:1, flex:1, minWidth:0, height:'100%',
                 display:'flex', alignItems:'center', gap: isMobile ? 12 : 16,
-                padding: isMobile ? '0 12px 0 80px' : '0 18px 0 118px',
+                padding: isMobile ? '0 12px 0 110px' : '0 18px 0 160px',
               }}>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 23 : 28, fontWeight:600, fontStyle:'italic', color:'#5C3A66', lineHeight:1.2 }}>
@@ -798,10 +798,18 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
               <div style={{
                 position:'relative', zIndex:1, alignSelf:'center', flexShrink:0, marginRight: isMobile ? 12 : 16,
                 width: isMobile ? 44 : 54, height: isMobile ? 44 : 54, borderRadius:'50%',
-                background:'linear-gradient(135deg,#7B4FA8,#5C3A66)', color:'#fff',
-                display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 17 : 20,
+                background:'linear-gradient(135deg,#7B4FA8,#5C3A66)',
+                display:'flex', alignItems:'center', justifyContent:'center',
                 boxShadow:'0 4px 10px rgba(0,0,0,0.25)',
-              }}>▶</div>
+              }}>
+                {/* Triangle dessiné en CSS — le glyphe "▶" se rend mal sur iOS (mal centré, épaisseur variable) */}
+                <div style={{
+                  width:0, height:0, marginLeft: isMobile ? 3 : 4,
+                  borderTop: `${isMobile ? 7 : 9}px solid transparent`,
+                  borderBottom: `${isMobile ? 7 : 9}px solid transparent`,
+                  borderLeft: `${isMobile ? 11 : 14}px solid #fff`,
+                }}/>
+              </div>
             </button>
           </div>
         )}
