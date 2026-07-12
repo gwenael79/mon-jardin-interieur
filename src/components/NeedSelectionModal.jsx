@@ -30,6 +30,25 @@ const NEEDS = [
     g1:'#902060', g2:'#E090B8', glow:'rgba(190,80,140,0.25)' },
 ]
 
+// ─── Univers — regroupement éditorial des besoins, présentation haut de gamme ─
+const UNIVERSES = [
+  { id:'dormir',      title:'Dormir',      icon:'sleep',   image:'/carte1.png',
+    subtitle:'Retrouver un sommeil apaisé',
+    color:'#4B3E7A', accent:'#8B7BC7', needIds:['sleep'] },
+  { id:'apaiser',     title:'Apaiser',     icon:'stress',  image:'/carte2.png',
+    subtitle:'Apaiser le stress, calmer mes pensées, apaiser mes émotions',
+    color:'#3F6E52', accent:'#8FBFA0', needIds:['stress','thoughts','emotions'] },
+  { id:'energie',     title:'Énergie',     icon:'sun',     image:'/carte3.png',
+    subtitle:"Retrouver de l'énergie, me sentir ancré",
+    color:'#B07A24', accent:'#F0C36B', needIds:['energy','grounding'] },
+  { id:'reconnexion', title:'Reconnexion', icon:'feather', image:'/carte4.png',
+    subtitle:'Me reconnecter à moi, retrouver de la douceur',
+    color:'#B36F92', accent:'#F0B8D0', needIds:['selfconnect','softness'] },
+]
+
+function needById(id) { return NEEDS.find(n => n.id === id) }
+function universeForNeed(needId) { return UNIVERSES.find(u => u.needIds.includes(needId)) }
+
 // ─── Icônes SVG outline ──────────────────────────────────────────────────────
 
 function Icon({ id, size = 28 }) {
@@ -44,6 +63,8 @@ function Icon({ id, size = 28 }) {
     selfconnect: <><circle {...s} cx="12" cy="8" r="4"/><path {...s} d="M4 20c0-3.5 3.6-6.5 8-6.5s8 3 8 6.5"/></>,
     softness:    <><circle {...s} cx="12" cy="12" r="2.5"/><path {...s} d="M12 2a3.5 3.5 0 0 1 0 7"/><path {...s} d="M12 22a3.5 3.5 0 0 1 0-7"/><path {...s} d="M2 12a3.5 3.5 0 0 1 7 0"/><path {...s} d="M22 12a3.5 3.5 0 0 1-7 0"/></>,
     audio:       <><path {...s} d="M3 18v-6a9 9 0 0 1 18 0v6"/><path {...s} d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></>,
+    sun:         <><circle {...s} cx="12" cy="12" r="4"/><path {...s} d="M12 2v2.5M12 19.5V22M4.22 4.22l1.77 1.77M17.99 17.99l1.77 1.77M2 12h2.5M19.5 12H22M4.22 19.78l1.77-1.77M17.99 6.01l1.77-1.77"/></>,
+    feather:     <><path {...s} d="M20.24 3.76a6 6 0 0 0-8.49 0L3 12.5V21h8.5l8.74-8.74a6 6 0 0 0 0-8.5z"/><path {...s} d="M16 8L2 22M17.5 15H9"/></>,
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" style={{display:'block',filter:'drop-shadow(0 1px 4px rgba(0,0,0,0.2))'}}>
@@ -146,125 +167,123 @@ const CSS = `
 `
 
 // ─── Card ────────────────────────────────────────────────────────────────────
+// Carte "univers" large avec illustration — remplace l'ancienne grille 8 besoins
+// par 4 univers éditoriaux, dans l'esprit Apple Santé / Calm.
 
-function NeedCard({ need, index, onSelect, isMobile, isRecommended }) {
-  const btnRef = useRef(null)
+function UniverseCard({ universe, index, onSelect, onToggleExpand, isMobile, isRecommended, isExpanded }) {
+  const hasChoice = universe.needIds.length > 1
+  const cardH = isMobile ? 128 : 156
+  const textW = isMobile ? '64%' : '58%'
 
-  function handleClick(e) {
-    const btn  = btnRef.current
-    if (!btn) { onSelect(need); return }
-    const rect = btn.getBoundingClientRect()
-    const rip  = document.createElement('span')
-    const size = Math.max(rect.width, rect.height)
-    Object.assign(rip.style, {
-      position:'absolute',
-      left:`${e.clientX - rect.left - size/2}px`,
-      top:`${e.clientY - rect.top  - size/2}px`,
-      width:`${size}px`, height:`${size}px`,
-      borderRadius:'50%',
-      background:'rgba(255,255,255,0.28)',
-      animation:'nm_ripple .55s ease-out forwards',
-      pointerEvents:'none', zIndex:6,
-    })
-    btn.appendChild(rip)
-    setTimeout(() => rip.remove(), 580)
-    setTimeout(() => onSelect(need), 240)
+  function handleClick() {
+    if (hasChoice) onToggleExpand(universe.id)
+    else onSelect(needById(universe.needIds[0]))
   }
-
-  const cardH   = isMobile ? 82 : 115
-  const iconSz  = isMobile ? 26  : 32
-  const titleFz = isMobile ? 16  : 22
-  const descFz  = isMobile ? 12  : 15
-  const pad     = isMobile ? '14px' : '20px'
-
-  // Dégradé enrichi : lumière interne + couleurs
-  const bg = `radial-gradient(circle at 28% 18%, rgba(255,255,255,0.26), transparent 58%),
-               linear-gradient(145deg, ${need.g1}, ${need.g2})`
 
   return (
     <button
-      ref={btnRef}
-      className={isRecommended ? 'nm-card nm-recommended' : 'nm-card'}
       onClick={handleClick}
-      style={{ '--card-glow': need.glow,
-        display:'flex', flexDirection:'column', justifyContent:'space-between',
-        padding:pad, height:cardH, width:'100%',
-        borderRadius:20,
-        background:bg,
-        border:'1px solid rgba(255,255,255,0.18)',
-        cursor:'pointer', textAlign:'left',
-        position:'relative', overflow:'hidden',
-        boxShadow:`0 10px 25px ${need.glow}, inset 0 1px 2px rgba(255,255,255,0.30)`,
-        animation:`nm_cardIn .42s ease ${index*.058}s both`,
+      className={isRecommended ? 'nm-card nm-recommended' : 'nm-card'}
+      style={{
+        display:'block', width:'100%', height:cardH,
+        borderRadius:22, border:'1px solid rgba(255,255,255,0.6)',
+        background:'rgba(255,253,248,0.85)',
+        cursor:'pointer', textAlign:'left', overflow:'hidden',
+        position:'relative', padding:0,
+        boxShadow: isExpanded ? `0 4px 18px ${universe.color}35` : '0 8px 22px rgba(60,40,20,0.10)',
+        animation:`nm_cardIn .42s ease ${index*.08}s both`,
         boxSizing:'border-box',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-4px) scale(1.015)'
-        e.currentTarget.style.boxShadow = `0 18px 36px ${need.glow}, inset 0 1px 2px rgba(255,255,255,0.35)`
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'none'
-        e.currentTarget.style.boxShadow = `0 10px 25px ${need.glow}, inset 0 1px 2px rgba(255,255,255,0.30)`
+        transition:'box-shadow .2s ease, transform .2s ease',
       }}
     >
+      {/* Illustration — plein cadre, fondue sur toute la carte (pas de bord net) */}
+      <img src={universe.image} alt="" style={{
+        position:'absolute', inset:0, width:'100%', height:'100%',
+        objectFit:'cover', objectPosition:'center', display:'block',
+        maskImage: 'linear-gradient(90deg, transparent 0%, transparent 50%, #000 74%, #000 100%)',
+        WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, transparent 50%, #000 74%, #000 100%)',
+      }}/>
+
       {/* Badge recommandé */}
       {isRecommended && (
         <div style={{
-          position:'absolute', top:8, right:8, zIndex:8,
-          background:'rgba(255,255,255,0.92)',
-          border:'none',
+          position:'absolute', top:10, left:10, zIndex:8,
+          background:'rgba(255,255,255,0.94)',
           borderRadius:100, padding:'4px 10px',
           fontFamily:"'Jost',sans-serif", fontSize:9,
-          fontWeight:800, letterSpacing:'0.12em',
-          color: need.g1,
-          textTransform:'uppercase',
+          fontWeight:800, letterSpacing:'0.10em',
+          color: universe.color, textTransform:'uppercase',
           animation:'nm_badge_pulse 1.6s ease-in-out infinite',
-          boxShadow:'0 2px 8px rgba(0,0,0,0.18)',
+          boxShadow:'0 2px 8px rgba(0,0,0,0.14)',
         }}>
           ✦ Recommandé
         </div>
       )}
-      {/* Lumière interne animée (shimmer lent) */}
+
+      {/* Panneau texte — verre dépoli, garantit la lisibilité quelle que soit l'image */}
       <div style={{
-        position:'absolute', inset:0,
-        background:'radial-gradient(circle at 22% 14%, rgba(255,255,255,0.18), transparent 52%)',
-        animation:`nm_shimmer ${4.2 + index * 0.35}s ease-in-out infinite`,
-        pointerEvents:'none', zIndex:0,
-      }}/>
-
-      {/* Reflet statique haut */}
-      <div style={{
-        position:'absolute', top:0, left:0, right:0, height:'38%',
-        background:'linear-gradient(180deg,rgba(255,255,255,0.14) 0%,transparent 100%)',
-        borderRadius:'20px 20px 0 0', pointerEvents:'none', zIndex:1,
-      }}/>
-
-      {/* Icône SVG */}
-      <div style={{position:'relative', zIndex:2}}>
-        <Icon id={need.icon} size={iconSz}/>
-      </div>
-
-      {/* Texte */}
-      <div style={{position:'relative', zIndex:2}}>
-        <div style={{
-          fontFamily:"'Inter','Jost',sans-serif",
-          fontSize:titleFz, fontWeight:500,
-          color:'rgba(255,255,255,0.97)',
-          lineHeight:1.22, letterSpacing:'-.01em',
-          textShadow:'0 1px 4px rgba(0,0,0,0.20)',
-        }}>
-          {need.label}
+        position:'relative', zIndex:1, width:textW, height:'100%',
+        padding: isMobile ? '12px 12px 12px 16px' : '18px 22px 18px 26px',
+        display:'flex', flexDirection:'column', justifyContent:'center', gap: isMobile ? 4 : 6,
+        background:'linear-gradient(90deg, rgba(255,253,248,0.92) 0%, rgba(255,253,248,0.92) 78%, rgba(255,253,248,0) 100%)',
+        backdropFilter:'blur(1.5px)', WebkitBackdropFilter:'blur(1.5px)',
+      }}>
+        <div style={{ display:'flex', alignItems:'center', gap: isMobile ? 10 : 13 }}>
+          <div style={{
+            width: isMobile ? 36 : 46, height: isMobile ? 36 : 46, borderRadius:'50%', flexShrink:0,
+            background:`linear-gradient(145deg, ${universe.color}, ${universe.accent})`,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            boxShadow:`0 4px 12px ${universe.color}45`,
+          }}>
+            <Icon id={universe.icon} size={isMobile ? 17 : 22}/>
+          </div>
+          <div style={{
+            fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic',
+            fontSize: isMobile ? 21 : 29, fontWeight:600,
+            color: universe.color, lineHeight:1.1,
+          }}>
+            {universe.title}
+          </div>
         </div>
         <div style={{
-          fontFamily:"'Inter','Jost',sans-serif",
-          fontSize:descFz, fontWeight:300,
-          color:'rgba(255,255,255,0.68)',
-          marginTop:isMobile ? 3 : 6, lineHeight:1.35,
+          fontFamily:"'Jost',sans-serif", fontWeight:500,
+          fontSize: isMobile ? 13 : 15.5, color:'rgba(30,20,10,0.82)',
+          lineHeight:1.4,
         }}>
-          {need.description}
+          {universe.subtitle}
+        </div>
+        <div style={{
+          fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 14, fontWeight:700,
+          color: universe.color, marginTop: isMobile ? 2 : 5,
+        }}>
+          {hasChoice ? (isExpanded ? 'Choisis un rituel ↑' : 'Voir les rituels →') : 'Voir les rituels →'}
         </div>
       </div>
     </button>
+  )
+}
+
+// Choix fin — apparaît sous une carte univers regroupant plusieurs besoins
+function NeedSubChoice({ universe, onSelect, isMobile }) {
+  return (
+    <div style={{ display:'flex', flexWrap:'wrap', gap: isMobile ? 6 : 8, padding: isMobile ? '2px 4px 2px 8px' : '2px 4px 2px 16px', animation:'nm_fadeUp .3s ease both' }}>
+      {universe.needIds.map(id => {
+        const need = needById(id)
+        if (!need) return null
+        return (
+          <button key={id} onClick={() => onSelect(need)} style={{
+            padding: isMobile ? '7px 12px' : '11px 20px', borderRadius:100,
+            border:`1.5px solid ${universe.color}55`, background:'#fff',
+            boxShadow:'0 2px 8px rgba(0,0,0,0.10)',
+            color:universe.color, fontFamily:"'Jost',sans-serif",
+            fontSize: isMobile ? 12 : 16.5, fontWeight:600,
+            cursor:'pointer', display:'flex', alignItems:'center', gap: isMobile ? 4 : 6,
+          }}>
+            {need.label} <span style={{ opacity:.6 }}>→</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -550,6 +569,20 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
   const [showByTime,  setShowByTime]  = useState(false)
   const [showAudio,   setShowAudio]   = useState(false)
   const [showFinder,  setShowFinder]  = useState(false)
+  const [expandedUniverse, setExpandedUniverse] = useState(null)
+
+  const recommendedUniverseIds = [...new Set(
+    recommendedIds.map(id => universeForNeed(id)?.id).filter(Boolean)
+  )]
+
+  function handleUniverseSelect(need) {
+    setExpandedUniverse(null)
+    onSelectNeed(need)
+  }
+  function handleUniverseToggle(universeId) {
+    setExpandedUniverse(prev => prev === universeId ? null : universeId)
+  }
+
   return (
     <>
       {/* Grain subtil */}
@@ -604,14 +637,14 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           </h1>
           <p style={{
             fontFamily:"'Jost',sans-serif",
-            fontSize: isMobile ? 13 : 18,
-            fontWeight:500, color:'#1a1008',
+            fontSize: isMobile ? 20 : 26,
+            fontWeight:600, color:'#1a1008',
             margin:'0 0 2px', letterSpacing:'.01em',
           }}>Suis ce qui résonne en toi</p>
           <p style={{
             fontFamily:"'Jost',sans-serif",
-            fontSize: isMobile ? 12 : 16,
-            fontWeight:400, color:'rgba(30,20,8,0.55)',
+            fontSize: isMobile ? 15 : 19,
+            fontWeight:600, color:'#1a1008',
             margin:0, letterSpacing:'.01em',
           }}>Un seul choix suffit pour commencer</p>
         </div>
@@ -619,24 +652,38 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
         {/* "Trouve tes rituels" — carte de test, dev uniquement pour l'instant */}
         {import.meta.env.DEV && (
           <button onClick={() => setShowFinder(true)} style={{
-            flexShrink: 0, width: '100%', textAlign: 'left', border: 'none', cursor: 'pointer',
-            marginBottom: isMobile ? 12 : 16, padding: isMobile ? '16px 18px' : '20px 22px',
+            flexShrink: 0, width: '100%', height: isMobile ? 88 : 100, textAlign: 'left', border: 'none', cursor: 'pointer',
+            marginBottom: isMobile ? 12 : 16, padding: 0,
             borderRadius: 18, background: 'linear-gradient(135deg,#7d4368,#a06a8c)',
             color: '#fff', boxShadow: '0 6px 20px rgba(125,67,104,0.30)',
-            display: 'flex', alignItems: 'center', gap: 14, animation: 'nm_fadeUp .5s ease both',
-            position: 'relative',
+            display: 'flex', alignItems: 'center', animation: 'nm_fadeUp .5s ease both',
+            position: 'relative', overflow: 'hidden',
           }}>
             {!isPremium && (
-              <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 15 }}>🔒</div>
+              <div style={{ position: 'absolute', zIndex: 2, top: 10, right: 12, fontSize: 22 }}>🔒</div>
             )}
-            <span style={{ fontSize: 26, flexShrink: 0 }}>🧭</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: 19, fontStyle: 'italic', fontWeight: 600, marginBottom: 2 }}>Définir mon protocole de rituels personnalisé</div>
-              <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, opacity: 0.85 }}>
+
+            {/* Illustration — object-fit:cover force un zoom trop fort sur ce format très large/bas.
+                On affiche l'image à une taille réduite (45% de largeur) et on la décale pour cadrer
+                le dôme entier plutôt qu'un fragment. */}
+            <div style={{
+              position:'absolute', inset:0, overflow:'hidden',
+              maskImage: 'linear-gradient(90deg, #000 0%, #000 12%, transparent 28%)',
+              WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 12%, transparent 28%)',
+            }}>
+              <img src="/carte5.png" alt="" style={{
+                position:'absolute', width:'45%', height:'auto', display:'block',
+                left:'0%', top: isMobile ? '-65%' : '-101%',
+              }}/>
+            </div>
+
+            <div style={{ position:'relative', zIndex:1, flex: 1, minWidth:0, padding: isMobile ? '14px 16px 14px 100px' : '18px 20px 18px 150px' }}>
+              <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 27, fontStyle: 'italic', fontWeight: 600, marginBottom: isMobile ? 2 : 4, lineHeight:1.15 }}>Définir mon protocole de rituels personnalisé</div>
+              <div style={{ fontFamily: "'Jost',sans-serif", fontWeight:500, fontSize: isMobile ? 12 : 17, opacity: 0.92, lineHeight:1.3 }}>
                 {isPremium ? 'Un questionnaire, une sélection de rituels rien que pour toi — DEV' : '3 problématiques offertes, le reste en Premium — DEV'}
               </div>
             </div>
-            <span style={{ fontSize: 16, opacity: 0.8 }}>›</span>
+            <span style={{ position:'relative', zIndex:1, fontSize: isMobile ? 14 : 16, opacity: 0.8, marginRight: isMobile ? 12 : 20, flexShrink:0 }}>›</span>
           </button>
         )}
 
@@ -683,10 +730,23 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           </div>
         )}
 
-        {/* Grille */}
-        <div style={{ display:'grid', gridTemplateColumns: onboarding && isMobile ? '1fr' : 'repeat(2,1fr)', gap: isMobile ? 8 : 18, flexShrink:0, paddingBottom: isMobile ? 24 : 40 }}>
-          {NEEDS.map((need,i) => (
-            <NeedCard key={need.id} need={need} index={i} onSelect={onSelectNeed} isMobile={isMobile} isRecommended={recommendedIds.includes(need.id)}/>
+        {/* Univers */}
+        <div style={{ display:'flex', flexDirection:'column', gap: isMobile ? 12 : 16, flexShrink:0, paddingBottom: isMobile ? 24 : 32 }}>
+          {UNIVERSES.map((universe, i) => (
+            <div key={universe.id} style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              <UniverseCard
+                universe={universe}
+                index={i}
+                onSelect={handleUniverseSelect}
+                onToggleExpand={handleUniverseToggle}
+                isMobile={isMobile}
+                isRecommended={recommendedUniverseIds.includes(universe.id)}
+                isExpanded={expandedUniverse === universe.id}
+              />
+              {expandedUniverse === universe.id && (
+                <NeedSubChoice universe={universe} onSelect={handleUniverseSelect} isMobile={isMobile}/>
+              )}
+            </div>
           ))}
         </div>
 
@@ -696,70 +756,100 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             <button
               onClick={() => setShowAudio(true)}
               style={{
-                width:'100%', display:'flex', alignItems:'center', gap: isMobile ? 14 : 18,
-                padding: isMobile ? '16px 20px' : '20px 28px',
-                borderRadius:20, border:'1px solid rgba(255,255,255,0.22)',
-                background:'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.22), transparent 55%), linear-gradient(135deg, #7B4FA8, #C87040 60%, #E89030)',
-                boxShadow:'0 10px 28px rgba(160,90,40,0.30), inset 0 1px 2px rgba(255,255,255,0.28)',
+                width:'100%', height: isMobile ? 110 : 128, display:'flex', alignItems:'stretch', padding:0,
+                borderRadius:20, border:'1px solid rgba(180,130,170,0.25)',
+                background:'linear-gradient(135deg, #F1E6F3, #F9EAEE)',
+                boxShadow:'0 6px 18px rgba(140,90,140,0.12)',
                 cursor:'pointer', textAlign:'left', position:'relative', overflow:'hidden',
                 transition:'transform 0.15s, box-shadow 0.15s',
+                boxSizing:'border-box',
               }}
-              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px) scale(1.012)'; e.currentTarget.style.boxShadow='0 18px 36px rgba(160,90,40,0.40), inset 0 1px 2px rgba(255,255,255,0.32)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 10px 28px rgba(160,90,40,0.30), inset 0 1px 2px rgba(255,255,255,0.28)' }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 10px 26px rgba(140,90,140,0.18)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 18px rgba(140,90,140,0.12)' }}
             >
-              <div style={{ flexShrink:0, filter:'drop-shadow(0 1px 4px rgba(0,0,0,0.2))' }}>
-                <Icon id="audio" size={isMobile ? 28 : 34} />
+              {/* Illustration — image réduite à 50% de largeur puis décalée pour cadrer le casque entier
+                  (object-fit:cover zoomait trop fort sur ce format très large/bas). */}
+              <div style={{
+                position:'absolute', inset:0, overflow:'hidden',
+                maskImage: 'linear-gradient(90deg, #000 0%, #000 10%, transparent 24%)',
+                WebkitMaskImage: 'linear-gradient(90deg, #000 0%, #000 10%, transparent 24%)',
+              }}>
+                <img src="/carte6.png" alt="" style={{
+                  position:'absolute', width:'50%', height:'auto', display:'block',
+                  left:'0%', top: isMobile ? '-52%' : '-81%',
+                }}/>
               </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 22, fontWeight:700, fontStyle:'italic', color:'#fff', lineHeight:1.2, textShadow:'0 1px 6px rgba(0,0,0,0.18)' }}>
-                  Rituels guidés en audio
-                </div>
-                <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 14, color:'rgba(255,255,255,0.82)', marginTop:4, letterSpacing:'.02em' }}>
-                  {isPremium ? 'La voix te porte, tu fermes les yeux' : '2 rituels offerts, le reste en Premium'}
+
+              <div style={{
+                position:'relative', zIndex:1, flex:1, minWidth:0, height:'100%',
+                display:'flex', alignItems:'center', gap: isMobile ? 12 : 16,
+                padding: isMobile ? '0 12px 0 80px' : '0 18px 0 118px',
+              }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 23 : 28, fontWeight:600, fontStyle:'italic', color:'#5C3A66', lineHeight:1.2 }}>
+                    Rituels guidés en audio
+                  </div>
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontWeight:500, fontSize: isMobile ? 14.5 : 17, color:'rgba(74,38,86,0.85)', marginTop:5, letterSpacing:'.02em' }}>
+                    {isPremium ? 'La voix te porte, tu fermes les yeux' : '2 rituels offerts, le reste en Premium'}
+                  </div>
                 </div>
               </div>
-              <div style={{ marginLeft:'auto', fontSize: isMobile ? 18 : 22, opacity:0.80 }}>▶</div>
+
+              <div style={{
+                position:'relative', zIndex:1, alignSelf:'center', flexShrink:0, marginRight: isMobile ? 12 : 16,
+                width: isMobile ? 44 : 54, height: isMobile ? 44 : 54, borderRadius:'50%',
+                background:'linear-gradient(135deg,#7B4FA8,#5C3A66)', color:'#fff',
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 17 : 20,
+                boxShadow:'0 4px 10px rgba(0,0,0,0.25)',
+              }}>▶</div>
             </button>
           </div>
         )}
 
         {/* Footer — accès aux 120 rituels (conditionné premium, caché en onboarding) */}
         {!onboarding && (
-          <div style={{ textAlign:'center', padding:'8px 0 32px', flexShrink:0, animation:'nm_fadeUp .5s ease .35s both' }}>
-            <p style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 14 : 16, fontWeight:500, color:'rgba(30,20,8,0.55)', margin:'0 0 14px', lineHeight:1.4 }}>
-              Tu veux choisir ton propre rituel parmi 120 propositions ?
-            </p>
-            <div style={{ display:'flex', justifyContent:'center' }}>
-              <button
-                onClick={() => isPremium ? setShowByTime(true) : onUpgrade?.()}
-                style={{
-                  width: isMobile ? '80%' : '50%', minWidth:160,
-                  background: isPremium
-                    ? 'linear-gradient(135deg, #c87840 0%, #9070c8 35%, #2058B0 65%, #1A6645 100%)'
-                    : 'linear-gradient(135deg,#9a9090,#7a7080)',
-                  border:'none', borderRadius:20, padding:'18px 14px',
-                  cursor:'pointer', textAlign:'center', color:'#fff',
-                  boxShadow: isPremium ? '0 6px 24px rgba(100,80,160,0.35)' : '0 4px 16px rgba(0,0,0,0.18)',
-                  transition:'transform 0.15s, box-shadow 0.15s',
-                  position:'relative', overflow:'hidden', opacity: isPremium ? 1 : 0.85,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform='scale(1.04)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform='scale(1)' }}
-              >
-                {!isPremium && (
-                  <div style={{ position:'absolute', top:10, right:12, fontSize:18 }}>🔒</div>
-                )}
-                <div style={{ fontSize:24, marginBottom:8 }}>{isPremium ? '✨' : '🌿'}</div>
-                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:'clamp(18px,5vw,22px)', fontWeight:700, fontStyle:'italic', lineHeight:1.25 }}>
-                  {isPremium ? 'Je choisis mon rituel' : 'Accès Premium'}
+          <div style={{ flexShrink:0, paddingBottom: isMobile ? 20 : 28, animation:'nm_fadeUp .5s ease .35s both' }}>
+            <button
+              onClick={() => isPremium ? setShowByTime(true) : onUpgrade?.()}
+              style={{
+                width:'100%', display:'flex', alignItems:'center', gap: isMobile ? 14 : 18,
+                padding: isMobile ? '16px 18px' : '20px 26px',
+                borderRadius:20, border:'none', textAlign:'left', cursor:'pointer',
+                background: isPremium
+                  ? 'linear-gradient(135deg,#5a9a28,#3a7a18)'
+                  : 'linear-gradient(135deg,#2c4a1e,#1a3012)',
+                boxShadow: isPremium ? '0 8px 26px rgba(60,120,20,.30)' : '0 8px 26px rgba(20,40,10,0.32)',
+                position:'relative', overflow:'hidden',
+                transition:'transform 0.15s, box-shadow 0.15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform='none' }}
+            >
+              {!isPremium && (
+                <div style={{ position:'absolute', top:14, right:16, fontSize:24 }}>🔒</div>
+              )}
+              <div style={{
+                flexShrink:0, width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, borderRadius:'50%',
+                background:'rgba(255,255,255,0.14)', border:'1px solid rgba(255,255,255,0.28)',
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize: isMobile ? 24 : 28,
+              }}>
+                {isPremium ? '✨' : '🌿'}
+              </div>
+              <div style={{ flex:1, minWidth:0, color:'#fff' }}>
+                <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 11.5 : 13, fontWeight:600, opacity:0.78, letterSpacing:'.04em', textTransform:'uppercase', marginBottom:4 }}>
+                  {isPremium ? 'Accède aux 120 rituels disponibles' : '120 rituels disponibles en Premium'}
+                </div>
+                <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 19 : 24, fontWeight:700, fontStyle:'italic', lineHeight:1.2 }}>
+                  {isPremium ? 'Je choisis mon rituel' : 'Débloquer l\'accès Premium'}
                 </div>
                 {!isPremium && (
-                  <div style={{ fontFamily:"'Jost',sans-serif", fontSize:11, marginTop:6, opacity:0.80, letterSpacing:'.04em' }}>
-                    Débloque les 120 rituels
+                  <div style={{ fontFamily:"'Jost',sans-serif", fontWeight:500, fontSize: isMobile ? 12 : 13.5, marginTop:5, opacity:0.82 }}>
+                    Choisis ton rituel selon le temps que tu as devant toi
                   </div>
                 )}
-              </button>
-            </div>
+              </div>
+              <span style={{ fontSize: isMobile ? 18 : 22, color:'rgba(255,255,255,0.7)', flexShrink:0 }}>→</span>
+            </button>
           </div>
         )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
@@ -772,7 +862,13 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
 
 export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }) {
   const isMobile = useIsMobile()
-  const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
+  const bgStyle = {
+    backgroundColor: '#f7f0e6',
+    backgroundImage: 'linear-gradient(rgba(255,251,244,0.55),rgba(255,251,244,0.55)), url(/fondchoix.png)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center top',
+    backgroundRepeat: 'no-repeat',
+  }
   const recommendedIds = getRecommendedNeeds(bilanDegradation)
   const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }
 
@@ -784,7 +880,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegrada
         <div style={{
           position:'relative', zIndex:1,
           width:'min(780px, 95vw)', maxHeight:'92vh',
-          borderRadius:24, overflow:'hidden', background:bg,
+          borderRadius:24, overflow:'hidden', ...bgStyle,
           display:'flex', flexDirection:'column',
           boxShadow:'0 32px 80px rgba(0,0,0,0.32)',
         }}>
@@ -797,7 +893,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegrada
   return (
     <>
       <style>{CSS}</style>
-      <div style={{ position:'fixed', inset:0, zIndex:260, background:bg, display:'flex', flexDirection:'column' }}>
+      <div style={{ position:'fixed', inset:0, zIndex:260, ...bgStyle, display:'flex', flexDirection:'column' }}>
         <NeedModalInner {...shared} isMobile={true} />
       </div>
     </>
