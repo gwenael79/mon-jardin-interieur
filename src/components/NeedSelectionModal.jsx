@@ -649,8 +649,8 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           }}>Un seul choix suffit pour commencer</p>
         </div>
 
-        {/* "Trouve tes rituels" — carte de test, dev uniquement pour l'instant */}
-        {import.meta.env.DEV && (
+        {/* "Trouve tes rituels" — protocole personnalisé */}
+        {(
           <button onClick={() => setShowFinder(true)} style={{
             flexShrink: 0, width: '100%', height: isMobile ? 130 : 150, textAlign: 'left', border: 'none', cursor: 'pointer',
             marginBottom: isMobile ? 12 : 16, padding: 0,
@@ -675,7 +675,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             <div style={{ position:'relative', zIndex:1, flex: 1, minWidth:0, padding: isMobile ? '14px 16px 14px 108px' : '18px 20px 18px 160px' }}>
               <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: isMobile ? 18 : 27, fontStyle: 'italic', fontWeight: 600, marginBottom: isMobile ? 2 : 4, lineHeight:1.15 }}>Définir mon protocole de rituels personnalisé</div>
               <div style={{ fontFamily: "'Jost',sans-serif", fontWeight:500, fontSize: isMobile ? 12 : 17, opacity: 0.92, lineHeight:1.3 }}>
-                {isPremium ? 'Un questionnaire, une sélection de rituels rien que pour toi — DEV' : '3 problématiques offertes, le reste en Premium — DEV'}
+                {isPremium ? 'Un questionnaire, une sélection de rituels rien que pour toi' : '3 problématiques offertes, le reste en Premium'}
               </div>
             </div>
             <span style={{ position:'relative', zIndex:1, fontSize: isMobile ? 14 : 16, opacity: 0.8, marginRight: isMobile ? 12 : 20, flexShrink:0 }}>›</span>
