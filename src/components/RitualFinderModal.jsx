@@ -7,6 +7,7 @@ import { useIsMobile } from '../pages/dashboardShared'
 import { ExerciseDetail } from '../pages/mafleur_rituels'
 import { PROBLEMATIQUES, PORTE_DE_SORTIE } from '../data/problematiques'
 import { completeRitualHealth, RITUAL_DELTA } from '../utils/completeRitualHealth'
+import { loadRitualSession, saveRitualSession } from '../utils/ritualSession'
 import { playChime } from '../utils/playChime'
 
 const ZONE_LABELS = { roots: 'Racines', stem: 'Tige', leaves: 'Feuilles', flowers: 'Fleurs', breath: 'Souffle' }
@@ -25,8 +26,12 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
   const [ritualDetails, setRitualDetails] = useState([]) // lignes rituels complètes
   const [kept, setKept] = useState(new Set())
   const [activeExercise, setActiveExercise] = useState(null) // rituel ouvert en fiche complète
-  const [doneNs, setDoneNs] = useState(new Set())
-  const [savingSel, setSavingSel] = useState(false)
+  const [doneNs, setDoneNs] = useState(new Set()) // rituels déjà faits AUJOURD'HUI (persiste le "✓ fait" toute la journée)
+  // Session partagée "2 rituels max / heure" (même compteur que "Définir mon
+  // protocole") — sert uniquement à limiter le RYTHME des nouvelles validations,
+  // pas à décider ce qui s'affiche "✓ fait" (ça, c'est doneNs, sur la journée).
+  const [session, setSession] = useState(loadRitualSession)
+  const [, setTick] = useState(0)
 
   // ── Charge la sélection déjà enregistrée, s'il y en a une ──
   useEffect(() => {
@@ -50,6 +55,28 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
       })
   }, [userId])
 
+  // Tick chaque seconde pendant le cooldown pour mettre à jour l'affichage
+  useEffect(() => {
+    if (!session.cooldownUntil) return
+    const id = setInterval(() => {
+      if (Date.now() >= new Date(session.cooldownUntil).getTime()) {
+        const reset = { count: 0, cooldownUntil: null, doneIds: [] }
+        setSession(reset)
+        saveRitualSession(reset)
+      }
+      setTick(t => t + 1)
+    }, 1000)
+    return () => clearInterval(id)
+  }, [session.cooldownUntil])
+
+  const now = Date.now()
+  const cooldownMs = session.cooldownUntil ? Math.max(0, new Date(session.cooldownUntil).getTime() - now) : 0
+  const inCooldown = cooldownMs > 0
+  const canValidate = !inCooldown && session.count < 2
+  const cooldownH = Math.floor(cooldownMs / 3600000)
+  const cooldownM = Math.floor((cooldownMs % 3600000) / 60000)
+  const cooldownLabel = cooldownH > 0 ? `${cooldownH}h ${cooldownM} min` : `${cooldownM} min`
+
   const chooseProblematique = (p) => {
     setProblematique(p)
     setShowExitDoor(false)
@@ -64,46 +91,61 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
     const { data } = await supabase.from('rituels').select('*').in('n', ns)
     const ordered = ns.map(n => data?.find(r => r.n === n)).filter(Boolean)
     setRitualDetails(ordered)
-    setKept(new Set(ns))
+    // Ne pré-coche que ce qui fait déjà partie du protocole enregistré — le
+    // reste attend une décision explicite de l'utilisateur, une fois le
+    // rituel fait (voir toggleKeepInProtocol).
+    const savedIds = new Set(saved?.ritual_ids ?? [])
+    setKept(new Set(ns.filter(n => savedIds.has(n))))
   }
 
-  const toggleKeep = (n) => {
+  // Coche/décoche un rituel dans le protocole personnel — persiste immédiatement
+  // en fusionnant avec la sélection existante (jamais un remplacement complet),
+  // pour que les protocoles de plusieurs problématiques s'additionnent.
+  const toggleKeepInProtocol = async (ex) => {
+    if (!userId) return
+    const alreadyKept = kept.has(ex.n)
     setKept(prev => {
       const next = new Set(prev)
-      if (next.has(n)) next.delete(n); else next.add(n)
+      if (alreadyKept) next.delete(ex.n); else next.add(ex.n)
       return next
     })
+    const nextIds = new Set(saved?.ritual_ids ?? [])
+    if (alreadyKept) nextIds.delete(ex.n); else nextIds.add(ex.n)
+    const nextProblematiqueIds = new Set(saved?.problematique_ids ?? [])
+    if (!alreadyKept) nextProblematiqueIds.add(problematique.id)
+    const row = {
+      user_id: userId,
+      problematique_ids: Array.from(nextProblematiqueIds),
+      ritual_ids: Array.from(nextIds),
+      format: saved?.format ?? null,
+      timing: saved?.timing ?? null,
+      updated_at: new Date().toISOString(),
+    }
+    // Mise à jour optimiste immédiate — sinon un clic rapide sur "Valider" (qui
+    // bascule vers la vue "saved") pouvait arriver avant la fin de l'upsert
+    // réseau, et afficher un protocole encore vide ("le check effacé").
+    setSaved(row)
+    const { data } = await supabase.from('user_ritual_selections').upsert(row, { onConflict: 'user_id' }).select().single()
+    if (data) setSaved(data)
+    if (!alreadyKept) playChime()
   }
 
   const handleRitualDone = async (ex) => {
     // Déjà validé aujourd'hui — on ferme juste la fiche, sans réincrémenter la fleur
     if (doneNs.has(ex.n)) { setActiveExercise(null); return }
+    if (!canValidate) { setActiveExercise(null); return }
     setDoneNs(prev => new Set(prev).add(ex.n))
+    const newCount = session.count + 1
+    const newCooldownUntil = newCount >= 2 ? new Date(now + 60 * 60 * 1000).toISOString() : null
+    const newSession = { count: newCount, cooldownUntil: newCooldownUntil, doneIds: [...session.doneIds, ex.n] }
+    setSession(newSession)
+    saveRitualSession(newSession)
     playChime()
     try { await completeRitualHealth({ plantId, zoneId: ex.zone, onHealthUpdate, userId }) } catch (e) { console.error('[ritual-finder] health update failed:', e) }
     try {
       await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ex.title, zone: ZONE_LABELS[ex.zone] || ex.zone, health_delta: RITUAL_DELTA, ritual_id: String(ex.n) })
     } catch (e) { console.error('[ritual-finder] log failed:', e) }
     setActiveExercise(null)
-  }
-
-  const saveSelection = async () => {
-    if (!userId || kept.size === 0) return
-    setSavingSel(true)
-    const row = {
-      user_id: userId,
-      problematique_ids: [problematique.id],
-      ritual_ids: Array.from(kept),
-      format: null,
-      timing: null,
-      updated_at: new Date().toISOString(),
-    }
-    const { data } = await supabase.from('user_ritual_selections').upsert(row, { onConflict: 'user_id' }).select().single()
-    setSavingSel(false)
-    playChime()
-    window.dispatchEvent(new CustomEvent('plantCelebrate'))
-    setSaved(data || row)
-    setStep('saved')
   }
 
   const restart = () => { setProblematique(null); setRitualDetails([]); setActiveExercise(null); setStep('list') }
@@ -127,6 +169,17 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
               {step === 'saved' ? 'Tes rituels quotidiens' : step === 'list' ? 'Quel est ton problème du moment ?' : problematique?.besoin}
             </p>
             {step === 'list' && <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 18, color: '#1a1008', margin: '4px 0 0' }}>Un seul choix suffit pour commencer</p>}
+            {step === 'result' && !activeExercise && (
+              inCooldown ? (
+                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, background: 'rgba(200,80,60,0.10)', color: '#c04030', borderRadius: 20, padding: '2px 8px', display: 'inline-block', marginTop: 6 }}>
+                  Cooldown · {cooldownLabel}
+                </span>
+              ) : (
+                <span style={{ fontFamily: "'Jost',sans-serif", fontSize: 11, background: 'rgba(60,140,80,0.10)', color: '#3a8050', borderRadius: 20, padding: '2px 8px', display: 'inline-block', marginTop: 6 }}>
+                  {session.count}/2 rituels
+                </span>
+              )
+            )}
           </div>
           {!activeExercise && (
             <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.06)', border: 'none', borderRadius: '50%', width: 32, height: 32, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(30,20,8,0.6)', flexShrink: 0 }}>✕</button>
@@ -208,18 +261,29 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 12, color: '#000', margin: '0 0 12px' }}>
+                Une fois un rituel fait, coche-le pour le garder dans ton protocole personnel.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
                 {ritualDetails.map((ex, i) => {
                   const isKept = kept.has(ex.n)
                   const isDone = doneNs.has(ex.n)
+                  const canToggleKeep = isDone || isKept
                   const isPrincipal = problematique.rituels.find(r => r.n === ex.n)?.principal
                   return (
                     <div key={ex.n} style={{ display: 'flex', alignItems: 'center', gap: 12, background: PASTELS[i % PASTELS.length], border: `1px solid ${isPrincipal ? ZONE_COLORS[ex.zone] + '40' : 'rgba(0,0,0,0.06)'}`, borderRadius: 14, padding: '13px 15px' }}>
-                      <button onClick={() => toggleKeep(ex.n)} aria-label={isKept ? 'Retirer' : 'Garder'} style={{
-                        width: 22, height: 22, borderRadius: 6, flexShrink: 0, cursor: 'pointer',
-                        border: `1.5px solid ${isKept ? ZONE_COLORS[ex.zone] : 'rgba(0,0,0,0.25)'}`, background: isKept ? ZONE_COLORS[ex.zone] : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff',
-                      }}>{isKept ? '✓' : ''}</button>
+                      <button
+                        onClick={() => canToggleKeep && toggleKeepInProtocol(ex)}
+                        disabled={!canToggleKeep}
+                        aria-label={isKept ? 'Retirer de mon protocole' : 'Garder dans mon protocole'}
+                        title={canToggleKeep ? (isKept ? 'Retirer de mon protocole' : 'Garder dans mon protocole') : 'Fais ce rituel pour pouvoir le garder'}
+                        style={{
+                          width: 22, height: 22, borderRadius: 6, flexShrink: 0, cursor: canToggleKeep ? 'pointer' : 'default',
+                          border: `1.5px solid ${isKept ? ZONE_COLORS[ex.zone] : 'rgba(0,0,0,0.25)'}`, background: isKept ? ZONE_COLORS[ex.zone] : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: '#fff',
+                          opacity: canToggleKeep ? 1 : 0.3,
+                        }}>{isKept ? '✓' : ''}</button>
                       <button onClick={() => setActiveExercise(ex)} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 17.5, fontWeight: 500, color: '#1a1008', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -234,26 +298,40 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
                 })}
               </div>
 
-              <button onClick={saveSelection} disabled={kept.size === 0 || savingSel} style={{
-                width: '100%', padding: '15px 0', borderRadius: 50, border: 'none',
+              <button onClick={() => setStep('saved')} disabled={kept.size === 0} style={{
+                width: '100%', padding: '15px 0', borderRadius: 50, border: 'none', marginTop: 12,
                 cursor: kept.size === 0 ? 'default' : 'pointer', opacity: kept.size === 0 ? 0.5 : 1,
                 fontFamily: "'Jost',sans-serif", fontSize: 15, fontWeight: 600, letterSpacing: '.06em',
                 background: 'linear-gradient(135deg,#a07888,#c8a0b0)', color: '#fff', boxShadow: '0 4px 16px rgba(160,100,120,0.28)',
               }}>
-                {savingSel ? 'Enregistrement…' : `Garder cette sélection (${kept.size})`}
+                Valider {kept.size > 0 ? `(${kept.size})` : ''}
               </button>
             </div>
           )}
 
           {/* ── FICHE COMPLÈTE D'UN RITUEL ── */}
           {!loading && activeExercise && (
-            <ExerciseDetail
-              exercise={activeExercise}
-              zone={{ name: ZONE_LABELS[activeExercise.zone], color: ZONE_COLORS[activeExercise.zone] || '#888', accent: ZONE_COLORS[activeExercise.zone] || '#888' }}
-              initialMarked={doneNs.has(activeExercise.n)}
-              onBack={() => setActiveExercise(null)}
-              onDone={() => handleRitualDone(activeExercise)}
-            />
+            inCooldown && !doneNs.has(activeExercise.n) ? (
+              <div>
+                <button onClick={() => setActiveExercise(null)} style={{ background: 'none', border: 'none', fontFamily: "'Jost',sans-serif", fontSize: 12, color: 'rgba(30,20,8,0.45)', cursor: 'pointer', padding: '0 0 16px', display: 'flex', alignItems: 'center', gap: 4 }}>‹ Retour à la liste</button>
+                <div style={{ textAlign: 'center', padding: '14px 0' }}>
+                  <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: '#c04030', margin: '0 0 4px' }}>
+                    Vous avez fait 2 rituels dans cette session.
+                  </p>
+                  <p style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: 'rgba(30,20,8,0.55)', margin: 0 }}>
+                    Revenez dans <strong>{cooldownLabel}</strong> pour continuer.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ExerciseDetail
+                exercise={activeExercise}
+                zone={{ name: ZONE_LABELS[activeExercise.zone], color: ZONE_COLORS[activeExercise.zone] || '#888', accent: ZONE_COLORS[activeExercise.zone] || '#888' }}
+                initialMarked={doneNs.has(activeExercise.n)}
+                onBack={() => setActiveExercise(null)}
+                onDone={() => handleRitualDone(activeExercise)}
+              />
+            )
           )}
         </div>
       </div>
@@ -302,7 +380,7 @@ function SavedSelectionView({ saved, onModify, onOpen, doneNs }) {
       <button onClick={onModify} style={{
         width: '100%', padding: '13px 0', borderRadius: 50, border: '1px solid rgba(0,0,0,0.10)',
         background: 'transparent', cursor: 'pointer', fontFamily: "'Jost',sans-serif", fontSize: 13, color: 'rgba(30,20,8,0.55)',
-      }}>↻ Redéfinir mes besoins</button>
+      }}>+ Ajouter d'autres rituels à mon protocole</button>
     </div>
   )
 }

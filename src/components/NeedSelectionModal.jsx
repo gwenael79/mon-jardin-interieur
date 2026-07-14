@@ -7,6 +7,7 @@ import AudioRitualsModal from './AudioRitualsModal'
 import { ExerciseDetail } from '../pages/mafleur_rituels'
 import { playChime } from '../utils/playChime'
 import { completeRitualHealth, RITUAL_DELTA } from '../utils/completeRitualHealth'
+import { loadRitualSession, saveRitualSession } from '../utils/ritualSession'
 import RitualFinderModal from './RitualFinderModal'
 
 // ─── Données ────────────────────────────────────────────────────────────────
@@ -298,23 +299,6 @@ const TIME_BUCKETS = [
 
 const SHORT_DURS = ['1 min','2 min','3 min','10 min','10 min/soir','15 min']
 
-// ─── Gestion de session (2 rituels max, cooldown 1h) ─────────────────────────
-const SESSION_KEY = 'ritual_session_v2'
-
-function loadSession() {
-  try {
-    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}')
-    if (s.cooldownUntil && Date.now() >= new Date(s.cooldownUntil).getTime()) {
-      return { count: 0, cooldownUntil: null, doneIds: [] }
-    }
-    return { count: s.count ?? 0, cooldownUntil: s.cooldownUntil ?? null, doneIds: s.doneIds ?? [] }
-  } catch { return { count: 0, cooldownUntil: null, doneIds: [] } }
-}
-
-function saveSession(s) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(s))
-}
-
 // Salve de paillettes — retour visuel immédiat quand la fleur évolue.
 // La fleur elle-même n'est pas visible pendant que ce modal plein écran
 // est ouvert, d'où ce feedback local en plus de l'événement plantCelebrate.
@@ -357,7 +341,7 @@ function RitualByTimeModal({ onClose, userId, plantId, onHealthUpdate }) {
   const [loading,  setLoading]  = useState(false)
   const [selected, setSelected] = useState(null)
   const [done,     setDone]     = useState(false)
-  const [session,  setSession]  = useState(loadSession)
+  const [session,  setSession]  = useState(loadRitualSession)
   const [, setTick]             = useState(0)
   const isMobile = useIsMobile()
 
@@ -369,7 +353,7 @@ function RitualByTimeModal({ onClose, userId, plantId, onHealthUpdate }) {
       if (Date.now() >= new Date(session.cooldownUntil).getTime()) {
         const reset = { count: 0, cooldownUntil: null, doneIds: [] }
         setSession(reset)
-        saveSession(reset)
+        saveRitualSession(reset)
       }
       setTick(t => t + 1)
     }, 1000)
@@ -391,7 +375,7 @@ function RitualByTimeModal({ onClose, userId, plantId, onHealthUpdate }) {
     const newDoneIds = [...session.doneIds, selected.n]
     const newSession = { count: newCount, cooldownUntil: newCooldownUntil, doneIds: newDoneIds }
     setSession(newSession)
-    saveSession(newSession)
+    saveRitualSession(newSession)
     setDone(true)
     playChime()
     const zoneLabel = ZONE_LABELS[selected?.zone] || 'Racines'
