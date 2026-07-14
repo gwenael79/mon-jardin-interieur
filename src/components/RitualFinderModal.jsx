@@ -6,7 +6,7 @@ import { supabase } from '../core/supabaseClient'
 import { useIsMobile } from '../pages/dashboardShared'
 import { ExerciseDetail } from '../pages/mafleur_rituels'
 import { PROBLEMATIQUES, PORTE_DE_SORTIE } from '../data/problematiques'
-import { completeRitualHealth } from '../utils/completeRitualHealth'
+import { completeRitualHealth, RITUAL_DELTA } from '../utils/completeRitualHealth'
 import { playChime } from '../utils/playChime'
 
 const ZONE_LABELS = { roots: 'Racines', stem: 'Tige', leaves: 'Feuilles', flowers: 'Fleurs', breath: 'Souffle' }
@@ -82,7 +82,7 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
     playChime()
     try { await completeRitualHealth({ plantId, zoneId: ex.zone, onHealthUpdate, userId }) } catch (e) { console.error('[ritual-finder] health update failed:', e) }
     try {
-      await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ex.title, zone: ZONE_LABELS[ex.zone] || ex.zone, health_delta: 1, ritual_id: String(ex.n) })
+      await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: ex.title, zone: ZONE_LABELS[ex.zone] || ex.zone, health_delta: RITUAL_DELTA, ritual_id: String(ex.n) })
     } catch (e) { console.error('[ritual-finder] log failed:', e) }
     setActiveExercise(null)
   }

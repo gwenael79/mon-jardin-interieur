@@ -2154,8 +2154,10 @@ function computeDegradation(answers) {
 //   courbeRalentissement = 1 - (health / 100) * 0.65  → à 5% = ×0.97, à 80% = ×0.48
 //   bonusStreak : +0% / +20% / +40% / +60% selon jours consécutifs (0/1/2/3+)
 
-// Delta fixe : chaque rituel crédite +0.5% sur sa zone uniquement
-const RITUAL_DELTA = 0.5
+// Delta fixe : chaque rituel crédite +2 sur sa zone uniquement.
+// health / zone_* sont des colonnes `integer` en base — un delta de 0.5 se faisait arrondir
+// au pair par Postgres à l'écriture, annulant l'incrément la moitié du temps (fleur bloquée).
+const RITUAL_DELTA = 2
 
 
 function useRitualsState(userId, awardLumens) {

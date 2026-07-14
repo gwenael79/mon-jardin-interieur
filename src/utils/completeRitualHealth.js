@@ -2,7 +2,9 @@
 import { supabase } from '../core/supabaseClient'
 
 const ZONE_DB_KEY = { roots: 'zone_racines', stem: 'zone_tige', leaves: 'zone_feuilles', flowers: 'zone_fleurs', breath: 'zone_souffle' }
-const RITUAL_DELTA = 0.5
+// health / zone_* sont des colonnes `integer` en base : un delta de 0.5 se faisait arrondir
+// au pair par Postgres à l'écriture, ce qui annulait l'incrément la moitié du temps.
+const RITUAL_DELTA = 2
 
 // Incrémente la zone concernée + la santé globale d'une fleur suite à un
 // rituel complété. N'écrit jamais `health` comme une moyenne recalculée des
@@ -25,8 +27,9 @@ export async function completeRitualHealth({ plantId, zoneId, onHealthUpdate, us
   if (!plant) return null
   const newZoneVal = Math.min(100, (plant[dbKey] ?? 5) + RITUAL_DELTA)
   const newHealth  = Math.min(100, (plant.health ?? 5) + RITUAL_DELTA)
+  const { error } = await supabase.from('plants').update({ [dbKey]: newZoneVal, health: newHealth }).eq('id', id)
+  if (error) { console.error('[completeRitualHealth] update failed — la fleur n\'a pas évolué', error); return null }
   onHealthUpdate?.(newHealth)
-  await supabase.from('plants').update({ [dbKey]: newZoneVal, health: newHealth }).eq('id', id)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: id } }))
   window.dispatchEvent(new CustomEvent('plantCelebrate'))
   return newHealth
