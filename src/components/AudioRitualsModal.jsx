@@ -5,6 +5,18 @@ import { WOFAudioPlayer } from '../pages/WeekOneFlow'
 import { PhaseResult } from './RitualSuggestionModal'
 import RitualCompletion from './RitualCompletion'
 import { supabase } from '../core/supabaseClient'
+import { completeRitualHealth } from '../utils/completeRitualHealth'
+
+// Les 5 audios sont rangés par besoin (needId), pas par zone — mapping identique
+// à NEED_TO_ZONE (DashboardV2.jsx) pour rester cohérent avec le reste de l'app.
+const NEED_TO_ZONE = {
+  grounding:   'roots',
+  stress:      'roots',
+  emotions:    'flowers',
+  softness:    'breath',
+  selfconnect: 'flowers',
+}
+const ZONE_LABELS = { roots: 'Racines', stem: 'Tige', leaves: 'Feuilles', flowers: 'Fleurs', breath: 'Souffle' }
 
 const AUDIO_DAYS = [
   {
@@ -51,7 +63,7 @@ const CSS = `
 const FREE_AUDIO_COUNT = 2
 
 // phase: 'list' | 'intro' | 'audio' | 'evaluate' | 'result'
-export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHealthUpdate, onSeeFlower, onboarding, onCompleteRitual, vitalityTotal, vitalityGain = 5, isPremium, onUpgrade }) {
+export default function AudioRitualsModal({ onClose, userId, plantId, plantHealth, onHealthUpdate, onSeeFlower, onboarding, onCompleteRitual, vitalityTotal, vitalityGain = 5, isPremium, onUpgrade }) {
   const [phase,         setPhase]        = useState('list')
   const [activeDay,     setActiveDay]    = useState(null)
   const [healthData,    setHealthData]   = useState(null)
@@ -77,21 +89,24 @@ export default function AudioRitualsModal({ onClose, plantId, plantHealth, onHea
       const g      = vitalityGain  ?? 5
       const before = Math.min(100, v + 5)   // health_DB avant ritual = vitality + 5
       const after  = Math.min(100, before + g)
-      await onCompleteRitual?.()
+      // needId + isLiked + delta — même signature que RitualSuggestionModal.PhaseFelt,
+      // sinon le log dans `rituals` est silencieusement sauté côté OnboardingScreen.
+      await onCompleteRitual?.(activeDay?.needId, true, g)
       // Appeler setHealthData APRÈS l'await avec les variables figées
       setHealthData({ before, after })
       setPhase('result')
     } else {
-      // ── Mode dashboard : santé plante +2, PhaseResult ──
+      // ── Mode dashboard : passe par completeRitualHealth comme tous les autres
+      // points d'entrée rituels (retrouve la plante du jour via userId si plantId
+      // n'est pas encore chargé, au lieu de sauter l'écriture en silence) ──
       const before = plantHealth ?? 5
-      const after  = Math.min(100, before + 2)
-      setHealthData({ before, after })
-      if (plantId) {
-        onHealthUpdate?.(after)
+      const zoneId = NEED_TO_ZONE[activeDay?.needId] ?? 'roots'
+      const after  = await completeRitualHealth({ plantId, zoneId, onHealthUpdate, userId })
+      setHealthData({ before, after: after ?? before })
+      if (after != null && userId) {
         try {
-          await supabase.from('plants').update({ health: after }).eq('id', plantId)
-          window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: after, plantId } }))
-        } catch (e) { console.error('[audioRitual] health update failed:', e) }
+          await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: activeDay?.title ?? 'Rituel audio', zone: ZONE_LABELS[zoneId] ?? zoneId, health_delta: after - before })
+        } catch (e) { console.error('[audioRitual] log failed:', e) }
       }
       setPhase('result')
     }

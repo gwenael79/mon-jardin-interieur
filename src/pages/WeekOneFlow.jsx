@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 // Cache module-level pour la personnalisation fraîche (survit aux remounts)
 let _freshGardenSettings = null
 import { supabase } from '../core/supabaseClient'
+import { completeRitualHealth } from '../utils/completeRitualHealth'
 import { RitualZoneModal, useRituels, useRitualsState } from './mafleur_rituels'
 import { useAuth } from '../hooks/useAuth'
 import { PlantSVG, DEFAULT_GARDEN_SETTINGS } from '../components/PlantSVG'
@@ -6013,16 +6014,24 @@ function BonusRitualModal({ zoneId, color = '#c8a0b0', onClose }) {
     if (!user?.id) return
     const wasCompleted = !!completedRituals[ritualId]
     if (!wasCompleted) {
+      // Met réellement à jour la fleur — avant, seul le log `rituals` était écrit,
+      // jamais `plants.health` : le rituel bonus s'affichait "fait" sans jamais
+      // faire grandir la fleur. userId suffit, completeRitualHealth retrouve la
+      // plante du jour lui-même.
+      const newHealth = await completeRitualHealth({ zoneId, userId: user.id })
+
       // Cherche le rituel pour avoir son nom et sa zone
       const ritualObj = Object.values(plantRituals || {}).flat().find(r => r?.id === ritualId)
       const ZONE_MAP = { roots: 'racines', stem: 'tige', leaves: 'feuilles', flowers: 'fleurs', breath: 'souffle' }
-      await Promise.resolve(supabase.from('rituals').upsert({
-        user_id:      user.id,
-        name:         ritualObj?.text ?? ritualId,
-        zone:         ZONE_MAP[zoneId] ?? zoneId,
-        health_delta: 0.5,
-        ritual_id:    ritualId,
-      }, { onConflict: 'user_id,ritual_id' })).catch(() => {})
+      if (newHealth != null) {
+        await Promise.resolve(supabase.from('rituals').upsert({
+          user_id:      user.id,
+          name:         ritualObj?.text ?? ritualId,
+          zone:         ZONE_MAP[zoneId] ?? zoneId,
+          health_delta: 2,
+          ritual_id:    ritualId,
+        }, { onConflict: 'user_id,ritual_id' })).catch(() => {})
+      }
     }
   }
   // Hex → RGB pour les variables CSS

@@ -5065,9 +5065,15 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
     // Un rituel complété ne peut pas être décoché — 1 seul par jour
     if (alreadyDone) return
 
-    _toggleRitual(ritualId)
+    // La fleur du jour doit être chargée avant de cocher le rituel à l'écran —
+    // sinon l'UI affiche "complété" alors que rien n'a été écrit en base (fleur
+    // qui n'évolue jamais malgré des rituels marqués comme faits).
+    if (!plant?.id) {
+      console.warn('[handleToggleRitual] plante du jour pas encore chargée — rituel ignoré')
+      return
+    }
 
-    if (!plant?.id) return
+    _toggleRitual(ritualId)
 
     // Trouve le rituel dans PLANT_RITUALS
     let ritualName = ritualId, ritualZoneStr = 'Racines', ritualZoneId = 'roots'

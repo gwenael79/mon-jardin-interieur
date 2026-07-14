@@ -852,7 +852,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           </div>
         )}
         {showByTime && <RitualByTimeModal onClose={() => setShowByTime(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} />}
-        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} onboarding={onboarding} onCompleteRitual={onCompleteRitual} vitalityTotal={vitalityTotal} vitalityGain={vitalityGain} isPremium={isPremium} onUpgrade={onUpgrade} />}
+        {showAudio && <AudioRitualsModal onClose={() => setShowAudio(false)} userId={userId} plantId={plantId} plantHealth={plantHealth} onHealthUpdate={onHealthUpdate} onSeeFlower={onSeeFlower ?? onClose} onboarding={onboarding} onCompleteRitual={onCompleteRitual} vitalityTotal={vitalityTotal} vitalityGain={vitalityGain} isPremium={isPremium} onUpgrade={onUpgrade} />}
         {showFinder && <RitualFinderModal onClose={() => setShowFinder(false)} userId={userId} plantId={plantId} onHealthUpdate={onHealthUpdate} isPremium={isPremium} onUpgrade={onUpgrade} />}
       </div>
     </>
