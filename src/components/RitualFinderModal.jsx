@@ -130,6 +130,16 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
     if (!alreadyKept) playChime()
   }
 
+  // Retire un rituel du protocole enregistré, depuis la vue "Tes rituels quotidiens".
+  const removeFromProtocol = async (n) => {
+    if (!userId || !saved) return
+    setKept(prev => { const next = new Set(prev); next.delete(n); return next })
+    const row = { ...saved, ritual_ids: (saved.ritual_ids ?? []).filter(id => id !== n), updated_at: new Date().toISOString() }
+    setSaved(row)
+    const { data } = await supabase.from('user_ritual_selections').upsert(row, { onConflict: 'user_id' }).select().single()
+    if (data) setSaved(data)
+  }
+
   const handleRitualDone = async (ex) => {
     // Déjà validé aujourd'hui — on ferme juste la fiche, sans réincrémenter la fleur
     if (doneNs.has(ex.n)) { setActiveExercise(null); return }
@@ -192,7 +202,7 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
 
           {/* ── SAUVEGARDÉ ── */}
           {!loading && step === 'saved' && saved && !activeExercise && (
-            <SavedSelectionView saved={saved} onModify={restart} onOpen={setActiveExercise} doneNs={doneNs} />
+            <SavedSelectionView saved={saved} onModify={restart} onOpen={setActiveExercise} onRemove={removeFromProtocol} doneNs={doneNs} />
           )}
 
           {/* ── LISTE DES PROBLÉMATIQUES ── */}
@@ -340,9 +350,10 @@ export default function RitualFinderModal({ onClose, userId, plantId, onHealthUp
 }
 
 // ── Sélection déjà enregistrée : accès rapide ──
-function SavedSelectionView({ saved, onModify, onOpen, doneNs }) {
+function SavedSelectionView({ saved, onModify, onOpen, onRemove, doneNs }) {
   const [rows, setRows] = useState(null)
   useEffect(() => {
+    if (!saved.ritual_ids?.length) { setRows([]); return }
     supabase.from('rituels').select('*').in('n', saved.ritual_ids)
       .then(({ data }) => setRows(saved.ritual_ids.map(n => data?.find(r => r.n === n)).filter(Boolean)))
   }, [saved])
@@ -354,25 +365,42 @@ function SavedSelectionView({ saved, onModify, onOpen, doneNs }) {
       </p>
       {!rows ? (
         <p style={{ textAlign: 'center', color: 'rgba(30,20,8,0.4)', fontFamily: "'Jost',sans-serif", fontSize: 14, padding: '20px 0' }}>Chargement…</p>
+      ) : rows.length === 0 ? (
+        <p style={{ textAlign: 'center', color: 'rgba(30,20,8,0.4)', fontFamily: "'Jost',sans-serif", fontSize: 14, padding: '20px 0' }}>Ton protocole est vide pour l'instant.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
           {rows.map((ex, i) => {
             const isDone = doneNs?.has(ex.n)
             return (
-              <button key={ex.n} onClick={() => onOpen(ex)} style={{
-                display: 'flex', alignItems: 'center', gap: 10, background: PASTELS[i % PASTELS.length], border: '1px solid rgba(0,0,0,0.06)',
-                borderRadius: 14, padding: '14px 16px', cursor: 'pointer', textAlign: 'left', width: '100%',
+              <div key={ex.n} style={{
+                display: 'flex', alignItems: 'center', gap: 6, background: PASTELS[i % PASTELS.length], border: '1px solid rgba(0,0,0,0.06)',
+                borderRadius: 14, padding: '8px 8px 8px 16px',
               }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 24, fontWeight: 500, color: '#1a1008' }}>{ex.title}</div>
-                  <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: 'rgba(30,20,8,0.4)' }}>{ex.dur}</div>
-                </div>
-                {isDone ? (
-                  <span style={{ fontSize: 28, color: '#3a8050', flexShrink: 0 }}>✓ fait</span>
-                ) : (
-                  <span style={{ color: 'rgba(30,20,8,0.25)', fontSize: 15, flexShrink: 0 }}>›</span>
-                )}
-              </button>
+                <button onClick={() => onOpen(ex)} style={{
+                  flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10,
+                  background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: '6px 0',
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 24, fontWeight: 500, color: '#1a1008' }}>{ex.title}</div>
+                    <div style={{ fontFamily: "'Jost',sans-serif", fontSize: 13, color: 'rgba(30,20,8,0.4)' }}>{ex.dur}</div>
+                  </div>
+                  {isDone ? (
+                    <span style={{ fontSize: 28, color: '#3a8050', flexShrink: 0 }}>✓ fait</span>
+                  ) : (
+                    <span style={{ color: 'rgba(30,20,8,0.25)', fontSize: 15, flexShrink: 0 }}>›</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => onRemove?.(ex.n)}
+                  aria-label="Retirer du protocole"
+                  title="Retirer du protocole"
+                  style={{
+                    width: 30, height: 30, borderRadius: '50%', flexShrink: 0, cursor: 'pointer',
+                    border: 'none', background: 'rgba(0,0,0,0.06)', color: 'rgba(30,20,8,0.5)',
+                    fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >✕</button>
+              </div>
             )
           })}
         </div>
