@@ -2521,10 +2521,11 @@ const CLOSING_PHRASES = [
 ]
 
 function BilanClosingPhrase({ degradation, color }) {
-  const avg = degradation && typeof degradation === 'object'
+  const stressAvg = degradation && typeof degradation === 'object'
     ? Math.round(Object.values(degradation).reduce((a, b) => a + b, 0) / Object.values(degradation).length)
     : 50
-  const bucket = CLOSING_PHRASES.find(b => avg <= b.max) ?? CLOSING_PHRASES[CLOSING_PHRASES.length - 1]
+  const wellbeing = 100 - stressAvg  // degradation = score de stress (haut = plus stressé) ; on l'inverse pour matcher les buckets de bien-être
+  const bucket = CLOSING_PHRASES.find(b => wellbeing <= b.max) ?? CLOSING_PHRASES[CLOSING_PHRASES.length - 1]
   const phrase = useMemo(() => bucket.phrases[Math.floor(Math.random() * bucket.phrases.length)], [bucket])
 
   const [displayed, setDisplayed] = useState('')
