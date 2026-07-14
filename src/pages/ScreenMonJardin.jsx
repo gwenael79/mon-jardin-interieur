@@ -2394,7 +2394,7 @@ function RitualZoneModal({ zoneId, completed, onToggle, onClose, initialRitualId
 
   return (
     <div style={{ position:'fixed', inset:0, zIndex:300, display:'flex', alignItems:'center', justifyContent:'center', background:'var(--overlay)', backdropFilter:'blur(12px)', padding:'20px' }} onClick={!activeRitual ? onClose : undefined}>
-      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,var(--ritual-modal-bg-start, #06100A) 0%,var(--ritual-modal-bg-end, #030808) 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
+      <div style={{ width:'100%', maxWidth:520, borderRadius:22, padding:'28px 28px 36px', border:'1px solid var(--track)', background:`linear-gradient(175deg,var(--ritual-modal-bg-start, #fffaf7) 0%,var(--ritual-modal-bg-end, #f5ede8) 100%)`, maxHeight:'85vh', overflowY:'auto', animation:'fadeUp 0.3s cubic-bezier(0.34,1.4,0.64,1)' }} onClick={e => e.stopPropagation()}>
         {activeRitual ? (
           <RitualExercises ritual={activeRitual} zone={zone} onComplete={() => handleComplete(activeRitual.id)} onBack={() => setActiveRitual(null)} initialMode={initialMode} zoneAlreadyDone={rituals.some(r => completed[r.id])} />
         ) : (

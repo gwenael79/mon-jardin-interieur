@@ -303,7 +303,7 @@ export function RitualCard({
       {/* ── PRATIQUE GUIDÉE (outil interactif) ── */}
       {practice && (
         <div style={{ marginBottom: desktop ? 44 : 32, ...fadeIn(3, premium) }}>
-          <SectionLabel icon="🧘" color={color}>Pratique guidée</SectionLabel>
+          <SectionLabel icon="🧘" color={FOREST}>Pratique guidée</SectionLabel>
           {!practice.started ? (
             <button onClick={practice.onStart} style={{
               width: desktop ? 340 : '100%', maxWidth: '100%', margin: desktop ? '0 auto' : 0, padding: '12px',

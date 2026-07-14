@@ -300,10 +300,24 @@ function detectExerciseType(exercise) {
   return exercise.tool?.type ?? null
 }
 
-function BreathingTool({ exercise, color, accent }) {
-  const [phase, setPhase]   = useState('ready')
+function BreathingTool({ exercise, color = '#6D28D9', accent = '#A78BFA' }) {
+  const [phase, setPhase]   = useState('ready')  // ready | countdown | inhale | hold | exhale | holdEmpty | done
+  const [countdown, setCountdown] = useState(3)
   const [cycles, setCycles] = useState(0)
   const cyclesRef = useRef(0)
+
+  // ── Compte à rebours 3-2-1 avant de démarrer — même rituel d'entrée que PhaseBreathing ──
+  useEffect(() => {
+    if (phase !== 'countdown') return
+    setCountdown(3)
+    const id = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) { clearInterval(id); setPhase('inhale'); return 0 }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [phase])
 
   // ── Timings — tirés directement du champ tool ───────────────
   const timings = useMemo(() => {
@@ -335,12 +349,23 @@ function BreathingTool({ exercise, color, accent }) {
       return m ? +m[1] : 6
     })()
 
+  // ── Secondes affichées dans l'orbe — un simple ticker d'affichage, indépendant
+  //     du timer RAF ci-dessous qui, lui, garde la précision zéro-dérive. ──
+  const [displaySec, setDisplaySec] = useState(0)
+  useEffect(() => {
+    if (phase === 'ready' || phase === 'countdown' || phase === 'done') return
+    const dur = { inhale: timings.inhale, hold: timings.hold, exhale: timings.exhale, holdEmpty: timings.holdEmpty }[phase] ?? 5
+    setDisplaySec(dur)
+    const id = setInterval(() => setDisplaySec(s => Math.max(0, s - 1)), 1000)
+    return () => clearInterval(id)
+  }, [phase])
+
   // ── Machine à états : ancrage performance.now() — zéro dérive ─
   const phaseStartRef = useRef(null)
   const rafRef        = useRef(null)
 
   useEffect(() => {
-    if (phase === 'ready' || phase === 'done') return
+    if (phase === 'ready' || phase === 'countdown' || phase === 'done') return
     const durMs = ({ inhale: timings.inhale, hold: timings.hold, exhale: timings.exhale, holdEmpty: timings.holdEmpty }[phase] ?? 5) * 1000
     phaseStartRef.current = performance.now()
 
@@ -369,197 +394,191 @@ function BreathingTool({ exercise, color, accent }) {
   }, [phase])
 
   // ── Géométrie de l'orbe ─────────────────────────────────────
-  // La durée de transition CSS est calée exactement sur la phase en cours.
-  // hold / holdEmpty → transition quasi-instantanée (orbe figée).
+  const isMobile     = useIsMobile()
+  const isBreathPhase = phase === 'inhale' || phase === 'hold' || phase === 'exhale' || phase === 'holdEmpty'
+  const isFullScreen = phase === 'countdown' || isBreathPhase
   const isExpanding  = phase === 'inhale' || phase === 'hold'
-  const isActive     = phase !== 'ready' && phase !== 'done'
+  const isActive     = isBreathPhase
   const transDur     = phase === 'inhale' ? timings.inhale
                      : phase === 'exhale' ? timings.exhale
                      : 0.08  // hold / holdEmpty : pas de mouvement visible
   const easing       = phase === 'inhale' ? 'ease-in' : 'ease-out'
-  const ORB_MAX      = 156
-  const ORB_MIN      = 72
-  const orbSize      = phase === 'ready' ? ORB_MIN + 20
-                     : isExpanding       ? ORB_MAX
-                     : ORB_MIN
+  const ORB_MAX      = isMobile ? 122 : 156
+  const ORB_MIN      = isMobile ? 58  : 72
+  const orbSize      = isExpanding ? ORB_MAX : ORB_MIN
+  const SVG_SIZE     = isMobile ? 176 : 220
+  const SVG_CENTER   = SVG_SIZE / 2
 
-  const LABELS = { ready:'', inhale:'INSPIREZ', hold:'RETENEZ', exhale:'EXPIREZ', holdEmpty:'POUMONS VIDES', done:'Terminé' }
+  const LABELS = { countdown:'', inhale:'Inspirez', hold:'Retenez', exhale:'Expirez', holdEmpty:'Poumons vides' }
 
-  // ── Keyframes (labelFade, holdPulse, ondes) ──────────────────
+  // ── Keyframes (labelFade, holdPulse, ondes, countdown) ──────────
   const css = `
     @keyframes labelFade { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
     @keyframes holdPulse { 0%,100%{opacity:.55} 50%{opacity:.85} }
     @keyframes waveRipple { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(1.85);opacity:0} }
+    @keyframes countdown_pop { 0%{transform:scale(1.9);opacity:0} 55%{transform:scale(0.88)} 100%{transform:scale(1);opacity:1} }
   `
   // Rythme des ondes calé sur la respiration : plus lent pendant la rétention,
   // plus vif sur inspire/expire — jamais figé, toujours un souffle qui irradie.
   const waveDur = phase === 'hold' || phase === 'holdEmpty' ? 4.2 : Math.max(2.4, transDur)
 
   // ── Arc SVG de progression de phase ─────────────────────────
-  // L'arc se remplit sur toute la durée de la phase via CSS transition.
-  // Quand la phase change, on repart de 0 immédiatement.
-  const R    = 92, CIRC = 2 * Math.PI * R
-  // phasePct passe de 0 → 1 sur toute la durée de la phase.
-  // On déclenche la transition en passant de strokeDashoffset=CIRC (vide) à 0 (plein).
-  // On utilise un key sur le svg pour forcer le remount à chaque changement de phase.
+  const R    = SVG_CENTER - 18, CIRC = 2 * Math.PI * R
   const arcColor = isExpanding ? color : accent
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'12px 0 8px', gap:18 }}>
+    <>
       <style>{css}</style>
 
-      {/* ── Conteneur orbe + arc ── */}
-      <div style={{ position:'relative', width:220, height:220, display:'flex', alignItems:'center', justifyContent:'center' }}>
-
-        {/* Arc SVG — se remplit sur la durée exacte de la phase */}
-        <svg
-          key={`${phase}-${cycles}`}
-          width={220} height={220}
-          style={{ position:'absolute', inset:0, transform:'rotate(-90deg)', overflow:'visible' }}
-        >
-          {/* Piste grise */}
-          <circle cx={110} cy={110} r={R} fill="none" stroke="var(--surface-2)" strokeWidth={2}/>
-          {/* Arc animé */}
-          {isActive && (
-            <circle
-              cx={110} cy={110} r={R} fill="none"
-              stroke={arcColor} strokeWidth={2}
-              strokeDasharray={CIRC}
-              strokeDashoffset={0}
-              strokeLinecap="round"
-              style={{
-                strokeDashoffset: CIRC,
-                animation: `arcFill_${phase}_${cycles} ${transDur}s linear forwards`,
-              }}
-            />
-          )}
-          <style>{`
-            @keyframes arcFill_${phase}_${cycles} {
-              from { stroke-dashoffset: ${CIRC}; }
-              to   { stroke-dashoffset: 0; }
-            }
-          `}</style>
-        </svg>
-
-        {/* Halo diffus — taille synchronisée avec l'orbe */}
-        {isActive && (
-          <div style={{
-            position:'absolute', borderRadius:'50%',
-            width:  orbSize + 48,
-            height: orbSize + 48,
-            background:`radial-gradient(circle, ${color}12 0%, transparent 70%)`,
-            transition:`width ${transDur}s ${easing}, height ${transDur}s ${easing}`,
-            pointerEvents:'none',
-          }}/>
-        )}
-
-        {/* Ondes — vagues concentriques qui irradient de l'orbe au rythme du souffle */}
-        {isActive && [0, 1, 2].map(i => (
-          <div key={i} style={{
-            position:'absolute', borderRadius:'50%',
-            width: ORB_MAX, height: ORB_MAX,
-            border: `1px solid ${color}50`,
-            animation: `waveRipple ${waveDur}s ease-out ${(i * waveDur) / 3}s infinite`,
-            pointerEvents:'none',
-          }}/>
-        ))}
-
-        {/* Orbe principale */}
+      {/* ── Écran immersif — décompte 3-2-1 puis respiration active, comme PhaseBreathing.
+          En flux normal (pas position:fixed) : un ancêtre avec transform/backdrop-filter
+          (fréquent dans les modals de l'app) piégeait le fixed et le recadrait au milieu
+          de la page au lieu de couvrir l'écran — voir le bug remonté. */}
+      {isFullScreen && (
         <div style={{
-          width:  orbSize,
-          height: orbSize,
-          borderRadius:'50%',
-          background: `radial-gradient(circle at 36% 32%, ${color}65 0%, ${color}22 50%, transparent 76%)`,
-          border: `1px solid ${color}${phase === 'ready' ? '28' : isExpanding ? '70' : '42'}`,
-          boxShadow: isExpanding && isActive
-            ? `0 0 52px ${color}48, 0 0 22px ${color}28, inset 0 1px 0 var(--separator)`
-            : isActive
-              ? `0 0 18px ${color}18, inset 0 1px 0 var(--surface-3)`
-              : `0 0 12px ${color}12`,
-          // Transition calée sur la phase (≠ 1s figé de l'ancienne version)
-          transition: `width ${transDur}s ${easing}, height ${transDur}s ${easing}, box-shadow ${transDur}s ${easing}, border-color 0.4s ease`,
-          animation: (phase === 'hold' || phase === 'holdEmpty') ? 'holdPulse 2.4s ease-in-out infinite' : 'none',
-          display:'flex', alignItems:'center', justifyContent:'center',
-          flexShrink:0,
+          position:'relative', width:'100%', minHeight: isMobile ? '68vh' : '620px',
+          borderRadius:24, overflow:'hidden',
+          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+          background:'linear-gradient(180deg, #EDE7FA 0%, #D9CDF2 100%)',
+          padding:'24px', textAlign:'center',
         }}>
-          {phase === 'done' && <span style={{ fontSize:'var(--fs-emoji-lg, 28px)', opacity:.9 }}>✓</span>}
-        </div>
-      </div>
-
-      {/* ── Label de phase ── */}
-      <div
-        key={phase}
-        style={{
-          fontSize:'var(--fs-h4, 13px)', fontWeight:500, letterSpacing:'0.20em',
-          fontFamily:"'Jost',sans-serif", minHeight:20,
-          color: phase === 'done' ? 'var(--green)'
-               : isExpanding      ? 'rgba(var(--ritual-modal-text-rgb),0.88)'
-               :                    'rgba(var(--ritual-modal-text-rgb),0.70)',
-          animation: isActive ? 'labelFade .35s ease both' : 'none',
-          transition:'color .4s ease',
-        }}
-      >
-        {LABELS[phase]}
-      </div>
-
-      {/* ── Durée de la phase en cours ── */}
-      {isActive && (() => {
-        const d = { inhale: timings.inhale, hold: timings.hold, exhale: timings.exhale, holdEmpty: timings.holdEmpty }[phase]
-        return d > 0 ? (
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'var(--separator)', letterSpacing:'0.05em' }}>{d}s</div>
-        ) : null
-      })()}
-
-      {/* ── Dots de cycles ── */}
-      {isActive && totalCycles <= 24 && (
-        <div style={{ display:'flex', gap:5, flexWrap:'wrap', justifyContent:'center', maxWidth:200 }}>
-          {Array.from({length: Math.min(totalCycles, 20)}).map((_,i) => (
-            <div key={i} style={{
-              width:  i === cycles ? 8 : 5,
-              height: i === cycles ? 8 : 5,
-              borderRadius:'50%',
-              background: i < cycles  ? `${color}55`
-                        : i === cycles ? color
-                        : 'var(--surface-3)',
-              boxShadow: i === cycles ? `0 0 8px ${color}99` : 'none',
-              transition:'all .45s ease',
-              flexShrink:0,
-            }}/>
-          ))}
-        </div>
-      )}
-
-      {/* ── Phase ready : résumé rythme + bouton ── */}
-      {phase === 'ready' && (
-        <div style={{ textAlign:'center' }}>
-          <div style={{ fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.22)', marginBottom:16, letterSpacing:'.07em', lineHeight:1.8 }}>
-            {[
-              `${timings.inhale}s inspire`,
-              timings.hold      > 0 ? `${timings.hold}s retenir`      : null,
-              `${timings.exhale}s expirer`,
-              timings.holdEmpty > 0 ? `${timings.holdEmpty}s poumons vides` : null,
-            ].filter(Boolean).join(' · ')}
-            <br/>{totalCycles} cycles
-          </div>
           <button
-            onClick={() => { cyclesRef.current = 0; setCycles(0); setPhase('inhale') }}
-            style={{
-              padding:'11px 32px', borderRadius:100,
-              border:`1px solid ${color}50`, background:`${color}16`,
-              color, fontSize:'var(--fs-h4, 13px)', fontWeight:500, cursor:'pointer',
-              fontFamily:"'Jost',sans-serif", letterSpacing:'.05em',
-              transition:'all .2s',
-            }}
-          >▶ Commencer</button>
+            onClick={() => { cyclesRef.current = 0; setCycles(0); setPhase('ready') }}
+            style={{ position:'absolute', top:20, right:20, width:36, height:36, borderRadius:'50%', background:'rgba(109,40,217,0.10)', border:'1px solid rgba(109,40,217,0.20)', cursor:'pointer', color:'rgba(60,20,120,0.55)', fontSize:15, display:'flex', alignItems:'center', justifyContent:'center' }}
+          >✕</button>
+
+          {phase === 'countdown' ? (
+            <>
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 11 : 13, letterSpacing:'.16em', textTransform:'uppercase', color:'rgba(60,20,120,0.60)', marginBottom: isMobile ? 28 : 44, fontWeight:500 }}>
+                {exercise.title}
+              </div>
+              <div key={countdown} style={{ animation:'countdown_pop .55s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 'clamp(88px,26vw,120px)' : 'clamp(120px,20vw,180px)', fontWeight:200, color:'rgba(50,15,110,0.85)', letterSpacing:'-.04em' }}>{countdown}</span>
+              </div>
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 12 : 14, color:'rgba(60,20,120,0.55)', letterSpacing:'.14em', textTransform:'uppercase', marginTop: isMobile ? 22 : 32 }}>Préparez-vous</div>
+            </>
+          ) : (
+            <>
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 11 : 13, letterSpacing:'.16em', textTransform:'uppercase', color:'rgba(60,20,120,0.65)', marginBottom: isMobile ? 18 : 26, fontWeight:500 }}>
+                {exercise.title}
+              </div>
+
+              <div style={{ position:'relative', width:SVG_SIZE, height:SVG_SIZE, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                {/* Arc SVG — se remplit sur la durée exacte de la phase */}
+                <svg key={`${phase}-${cycles}`} width={SVG_SIZE} height={SVG_SIZE} style={{ position:'absolute', inset:0, transform:'rotate(-90deg)', overflow:'visible' }}>
+                  <circle cx={SVG_CENTER} cy={SVG_CENTER} r={R} fill="none" stroke={`${color}22`} strokeWidth={3}/>
+                  <circle
+                    cx={SVG_CENTER} cy={SVG_CENTER} r={R} fill="none"
+                    stroke={arcColor} strokeWidth={3}
+                    strokeDasharray={CIRC} strokeDashoffset={0} strokeLinecap="round"
+                    style={{ strokeDashoffset:CIRC, animation:`arcFill_${phase}_${cycles} ${transDur}s linear forwards`, filter:`drop-shadow(0 0 6px ${arcColor}80)` }}
+                  />
+                  <style>{`@keyframes arcFill_${phase}_${cycles} { from{stroke-dashoffset:${CIRC}} to{stroke-dashoffset:0} }`}</style>
+                </svg>
+
+                {/* Halo diffus */}
+                <div style={{ position:'absolute', borderRadius:'50%', width:orbSize+(isMobile?60:100), height:orbSize+(isMobile?60:100), background:`radial-gradient(circle, ${color}28 0%, ${color}0c 55%, transparent 75%)`, transition:`width ${transDur}s ${easing}, height ${transDur}s ${easing}`, pointerEvents:'none' }}/>
+
+                {/* Ondes concentriques */}
+                {[0, 1, 2].map(i => (
+                  <div key={i} style={{ position:'absolute', borderRadius:'50%', width:ORB_MAX, height:ORB_MAX, border:`1px solid ${color}60`, animation:`waveRipple ${waveDur}s ease-out ${(i * waveDur) / 3}s infinite`, pointerEvents:'none' }}/>
+                ))}
+
+                {/* Orbe principale — reflet spéculaire + chiffre du décompte, comme une bulle de verre */}
+                <div style={{
+                  width:orbSize, height:orbSize, borderRadius:'50%', position:'relative',
+                  background:`radial-gradient(circle at 34% 30%, ${color}ee 0%, ${color}99 45%, ${accent}55 80%, transparent 96%)`,
+                  border:`1px solid ${color}90`,
+                  boxShadow: isExpanding
+                    ? `0 12px 46px ${color}45, 0 0 65px ${color}50, inset 0 2px 3px rgba(255,255,255,0.55), inset 0 -8px 22px ${accent}40`
+                    : `0 8px 26px ${color}30, 0 0 24px ${color}28, inset 0 2px 3px rgba(255,255,255,0.45), inset 0 -6px 18px ${accent}35`,
+                  transition:`width ${transDur}s ${easing}, height ${transDur}s ${easing}, box-shadow ${transDur}s ${easing}`,
+                  animation: (phase === 'hold' || phase === 'holdEmpty') ? 'holdPulse 2.4s ease-in-out infinite' : 'none',
+                  display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+                }}>
+                  <div style={{ position:'absolute', top:'20%', left:'28%', width:orbSize*0.16, height:orbSize*0.16, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.4) 45%, transparent 100%)', filter:'blur(2px)', pointerEvents:'none' }}/>
+                  <span key={`sec-${displaySec}`} style={{ position:'relative', zIndex:2, fontFamily:"'Jost',sans-serif", fontSize: isMobile ? 46 : 56, fontWeight:300, color:'#fff', textShadow:'0 2px 10px rgba(40,10,90,0.45)', animation:'labelFade .3s ease both' }}>
+                    {displaySec}
+                  </span>
+                </div>
+              </div>
+
+              {/* Label de phase */}
+              <div key={phase} style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize: isMobile ? 'clamp(26px,8vw,32px)' : 'clamp(30px,7vw,42px)', fontWeight:600, color:'rgba(45,10,95,0.90)', marginTop: isMobile ? 16 : 24, animation:'labelFade .35s ease both' }}>
+                {LABELS[phase]}
+              </div>
+
+              {/* Barres de cycles — pilules qui s'allongent, comme PhaseBreathing */}
+              <div style={{ display:'flex', gap: isMobile ? 5 : 6, marginTop: isMobile ? 16 : 22, flexWrap:'wrap', justifyContent:'center', maxWidth: isMobile ? 240 : 320 }}>
+                {Array.from({ length: Math.min(totalCycles, 20) }).map((_, i) => (
+                  <div key={i} style={{
+                    width: i < cycles ? 22 : 8, height:5, borderRadius:4,
+                    background: i < cycles ? `linear-gradient(90deg, ${color}, ${accent})` : `${color}30`,
+                    transition:'all .5s ease',
+                  }}/>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {phase === 'done' && (
-        <div style={{ fontSize:'var(--fs-h4, 13px)', color:'var(--green)', fontWeight:400, letterSpacing:'.07em' }}>
-          Session terminée 🌿
+      {/* ── Carte encastrée — repos avant de démarrer / résumé après coup ── */}
+      {!isFullScreen && (
+        <div style={{
+          display:'flex', flexDirection:'column', alignItems:'center',
+          padding: isMobile ? '26px 18px 22px' : '32px 24px 26px', gap: isMobile ? 14 : 18, borderRadius:24,
+          background:`radial-gradient(circle at 50% 30%, ${color}0e 0%, transparent 65%), linear-gradient(180deg, rgba(255,253,248,0.6), rgba(255,253,248,0.3))`,
+          border:`1px solid ${color}18`,
+          boxShadow:`0 1px 2px rgba(0,0,0,0.03)`,
+        }}>
+          {phase === 'ready' ? (
+            <>
+              <div style={{ width: isMobile ? 76 : 92, height: isMobile ? 76 : 92, borderRadius:'50%', position:'relative', background:`radial-gradient(circle at 34% 30%, ${color}80 0%, ${color}35 55%, transparent 85%)`, border:`1px solid ${color}35`, boxShadow:`0 6px 18px ${color}20` }}>
+                <div style={{ position:'absolute', top:'22%', left:'30%', width:14, height:14, borderRadius:'50%', background:'radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 100%)', filter:'blur(1.5px)' }}/>
+              </div>
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 12px)', fontWeight:500, color:'rgba(var(--ritual-modal-text-rgb),0.42)', letterSpacing:'.05em', lineHeight:1.9, textAlign:'center' }}>
+                {[
+                  `${timings.inhale}s inspire`,
+                  timings.hold      > 0 ? `${timings.hold}s retenir`      : null,
+                  `${timings.exhale}s expirer`,
+                  timings.holdEmpty > 0 ? `${timings.holdEmpty}s poumons vides` : null,
+                ].filter(Boolean).join(' · ')}
+                <br/>{totalCycles} cycles
+              </div>
+              <button
+                onClick={() => { cyclesRef.current = 0; setCycles(0); setPhase('countdown') }}
+                style={{
+                  padding:'13px 36px', borderRadius:100, border:'none',
+                  background:`linear-gradient(135deg, ${color}, ${accent})`,
+                  boxShadow:`0 8px 22px ${color}45`,
+                  color:'#fff', fontSize:'var(--fs-h4, 14px)', fontWeight:600, cursor:'pointer',
+                  fontFamily:"'Jost',sans-serif", letterSpacing:'.05em',
+                  transition:'all .2s',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 12px 28px ${color}55` }}
+                onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow=`0 8px 22px ${color}45` }}
+              >▶ Commencer</button>
+            </>
+          ) : (
+            <>
+              <div style={{ position:'relative', width: isMobile ? 78 : 96, height: isMobile ? 78 : 96, borderRadius:'50%', background:`radial-gradient(circle at 38% 32%, rgba(255,255,255,0.6) 0%, ${color}dd 40%, ${accent} 100%)`, boxShadow:`0 0 40px ${color}40`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize: isMobile ? 30 : 38, fontWeight:300, color:'#fff' }}>✓</span>
+              </div>
+              <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:'clamp(18px,4vw,21px)', color:'var(--green)', fontWeight:600 }}>
+                Session terminée 🌿
+              </div>
+              <div style={{ fontFamily:"'Jost',sans-serif", fontSize:'var(--fs-h5, 11px)', color:'rgba(var(--ritual-modal-text-rgb),0.45)', letterSpacing:'.06em' }}>{cycles} cycles effectués</div>
+              <div style={{ display:'flex', gap:6 }}>
+                {Array.from({ length: Math.min(totalCycles, 20) }).map((_, i) => (
+                  <div key={i} style={{ width:20, height:4, borderRadius:4, background:`linear-gradient(90deg, ${color}, ${accent})` }}/>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
-    </div>
+    </>
   )
 }
 
@@ -745,7 +764,10 @@ export function ExerciseDetail({ exercise, zone, onDone, onBack, variant = 'prem
   const ritual = useMemo(() => buildRitualData(fullExercise, zone), [fullExercise, zone])
 
   const toolContent = !toolEnabled ? null
-    : type === 'breath'        ? <BreathingTool     exercise={fullExercise} color={color} accent={accent} />
+    // La couleur de zone "Souffle" (bleu froid) manque de chaleur pour l'orbe — on la
+    // remplace par le violet déjà utilisé pour la respiration guidée ailleurs dans l'app
+    // (RitualSuggestionModal / PhaseBreathing), pour une identité visuelle cohérente.
+    : type === 'breath'        ? <BreathingTool     exercise={fullExercise} color="#6D28D9" accent="#A78BFA" />
     : type === 'timer'         ? <TimerTool          exercise={exercise} color={color} accent={accent} />
     : type === 'gratitude'     ? <GratitudeTool      exercise={exercise} color={color} accent={accent} />
     : type === 'movement'      ? <MovementTool       exercise={exercise} color={color} accent={accent} />
@@ -894,7 +916,7 @@ export function RitualZoneModal({ zoneId, completed, onToggle, onClose, plantRit
     >
       <div
         className="ritual-modal-sheet"
-        style={{ background: `linear-gradient(175deg, var(--ritual-modal-bg-start, #06100A) 0%, var(--ritual-modal-bg-end, #030808) 100%)`, borderColor: zone.color + '20' }}
+        style={{ background: `linear-gradient(175deg, var(--ritual-modal-bg-start, #fffaf7) 0%, var(--ritual-modal-bg-end, #f5ede8) 100%)`, borderColor: zone.color + '20' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Lueur de zone en haut */}
