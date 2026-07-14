@@ -108,30 +108,56 @@ export function RitualCard({
 
   const audioRef = useRef(null)
   const [playing, setPlaying] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const [showIllustration, setShowIllustration] = useState(false)
   const toggleAudio = () => {
     const el = audioRef.current
     if (!el) return
-    if (playing) el.pause(); else el.play()
+    if (playing) {
+      el.pause()
+    } else {
+      // Une fois l'audio terminé, currentTime reste calé sur la fin — sans ce
+      // reset, un second clic relance play() sans rien à lire (silence).
+      if (el.ended) el.currentTime = 0
+      el.play()
+    }
+  }
+  const restartAudio = () => {
+    const el = audioRef.current
+    if (!el) return
+    el.currentTime = 0
+    el.play()
   }
 
   // ── Bouton d'écoute — sous le sous-titre en desktop (dans la colonne du
   // titre), sous le hero entier en mobile (image + titre trop étroits pour
-  // l'accueillir à côté) ──
+  // l'accueillir à côté) ── + bouton icône "recommencer" une fois l'écoute lancée.
   const audioBlock = audioUrl && (
-    <>
-      <audio ref={audioRef} src={audioUrl} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: desktop ? 300 : '100%', maxWidth: '100%', margin: desktop ? '20px 0 0' : 0, marginBottom: desktop ? 0 : 14 }}>
+      <audio ref={audioRef} src={audioUrl}
+        onPlay={() => { setPlaying(true); setHasStarted(true) }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+      />
       <button onClick={toggleAudio} style={{
-        width: desktop ? 300 : '100%', maxWidth: '100%', margin: desktop ? '20px 0 0' : 0, padding: desktop ? '15px 20px' : 16,
+        flex: 1, minWidth: 0, padding: desktop ? '15px 20px' : 16,
         borderRadius: 100, border: 'none', cursor: 'pointer',
         background: MAUVE, color: '#fff', fontSize: desktop ? 14 : 14, fontWeight: 500, letterSpacing: '0.03em',
-        boxShadow: '0 10px 26px rgba(125,67,104,0.30)', marginBottom: desktop ? 0 : 14,
+        boxShadow: '0 10px 26px rgba(125,67,104,0.30)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         fontFamily: "'Jost',sans-serif",
       }}>
         {playing ? '❚❚ Écoute en cours…' : `▶ Écouter le rituel${audioDuration ? ` · ${audioDuration}` : ''}`}
       </button>
-    </>
+      {hasStarted && (
+        <button onClick={restartAudio} title="Recommencer" aria-label="Recommencer l'écoute" style={{
+          flexShrink: 0, width: desktop ? 50 : 48, height: desktop ? 50 : 48,
+          borderRadius: '50%', border: `1px solid ${MAUVE}40`, background: `${MAUVE}12`,
+          color: MAUVE, fontSize: 18, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>↺</button>
+      )}
+    </div>
   )
 
   return (
