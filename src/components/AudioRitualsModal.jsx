@@ -210,8 +210,12 @@ export default function AudioRitualsModal({ onClose, userId, plantId, plantHealt
                 isMobile={true}
                 healthBefore={healthData.before}
                 healthAfter={healthData.after}
-                onSeeFlower={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); window.dispatchEvent(new CustomEvent('plantCelebrate')); (onSeeFlower ?? onClose)() }}
-                onClose={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); window.dispatchEvent(new CustomEvent('plantCelebrate')); onClose() }}
+                // completeRitualHealth (dans handleAudioDone) a déjà dispatché
+                // ritualCompleteSnapshot + plantCelebrate — les re-dispatcher ici
+                // faisait apparaître le popup "Ta fleur grandit" deux fois (avant
+                // et après cet écran) pour un seul rituel complété.
+                onSeeFlower={() => (onSeeFlower ?? onClose)()}
+                onClose={() => onClose()}
               />
             )
           )}

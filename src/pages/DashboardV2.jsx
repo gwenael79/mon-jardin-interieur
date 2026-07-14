@@ -40,7 +40,7 @@ import {
 import PushNotificationButton        from '../components/PushNotificationButton'
 import RituelMieuxEtre              from '../components/RituelMieuxEtre'
 import { usePushNotification }       from '../hooks/usePushNotification'
-import { ScreenMonJardin, DailyQuizModal, BoiteAGraines } from './ScreenMonJardin'
+import { ScreenMonJardin, DailyQuizModal, BoiteAGraines, PlantSVG, DEFAULT_GARDEN_SETTINGS } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
 import { VideoIntro, pickVideo }    from './VideoIntro'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
@@ -855,6 +855,58 @@ function PremiumTeaserModal({ onDiscover, onClose }) {
         <button onClick={onClose} style={{ width:'100%', padding:'10px', borderRadius:14, border:'1px solid rgba(90,154,40,.20)', background:'transparent', color:'rgba(26,18,8,.55)', fontSize:12, cursor:'pointer' }}>
           Plus tard
         </button>
+      </div>
+    </div>
+  )
+}
+
+// ── RitualCelebrationModal — popup temporaire après un rituel complété ──
+// Montée une seule fois au niveau racine, se ferme seule après 5s. La santé
+// affichée s'anime de `before` à `after` pour rendre la croissance visible,
+// pas juste un chiffre qui change d'un coup.
+function RitualCelebrationModal({ before, after, delta, gardenSettings, onClose }) {
+  const [displayHealth, setDisplayHealth] = useState(before)
+
+  useEffect(() => {
+    const duration = 1400
+    const start = performance.now()
+    let raf
+    const step = (now) => {
+      const t = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - t, 3)
+      setDisplayHealth(before + (after - before) * eased)
+      if (t < 1) raf = requestAnimationFrame(step)
+    }
+    raf = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(raf)
+  }, [before, after])
+
+  const gain = delta != null ? delta : Math.round((after - before) * 10) / 10
+
+  return (
+    <div style={{
+      // zIndex très élevé volontairement : AudioRitualsModal (99999) reste ouvert derrière
+      // (son propre écran de résultat) au moment où ce popup se déclenche — sans ce niveau,
+      // il restait invisible, caché sous ce modal encore affiché.
+      position:'fixed', inset:0, zIndex:200000, display:'flex', alignItems:'center', justifyContent:'center',
+      padding:20, background:'rgba(20,30,10,0.35)', backdropFilter:'blur(6px)', animation:'fadeUp .3s ease both',
+    }} onClick={onClose}>
+      <div style={{
+        position:'relative', width:'100%', maxWidth:460, borderRadius:32, padding:'44px 36px 36px', textAlign:'center',
+        background:'linear-gradient(170deg,#fdf9f2,#f3ece0)', boxShadow:'0 30px 80px rgba(0,0,0,.28)', border:'1px solid rgba(200,160,100,.25)',
+      }} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', border:'none', background:'rgba(0,0,0,.06)', color:'rgba(30,20,8,.5)', fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        <div style={{ width:300, height:196, margin:'0 auto' }}>
+          <PlantSVG health={displayHealth} gardenSettings={gardenSettings ?? DEFAULT_GARDEN_SETTINGS} celebrate />
+        </div>
+        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:32, fontWeight:600, color:'#3a5a1e', marginTop:14 }}>
+          Ta fleur grandit 🌱
+        </div>
+        {gain > 0 && (
+          <div style={{ fontFamily:"'Jost',sans-serif", fontSize:19, fontWeight:700, color:'#5a9a28', marginTop:8, letterSpacing:'.03em' }}>
+            +{gain}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -2023,6 +2075,27 @@ export default function DashboardPage() {
   const [showProLaunch,        setShowProLaunch]        = useState(() => localStorage.getItem('mji_show_pro_launch') === '1')
   const [showOrientationModal, setShowOrientationModal] = useState(false)
   const [showAvisModal,        setShowAvisModal]        = useState(false)
+  const [ritualCelebration,    setRitualCelebration]    = useState(null) // {before, after, delta} — popup temporaire fleur qui évolue
+  const [gardenSettings,       setGardenSettings]       = useState(DEFAULT_GARDEN_SETTINGS)
+
+  // Mêmes réglages (couleurs/forme des pétales) que la vraie fleur affichée dans
+  // ScreenMonJardin — sinon le popup de célébration montre une fleur différente.
+  useEffect(() => {
+    if (!user?.id) return
+    supabase.from('garden_settings').select('*').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => {
+        if (!data) return
+        setGardenSettings({
+          sunriseH: data.sunrise_h ?? 7,
+          sunriseM: data.sunrise_m ?? 0,
+          sunsetH:  data.sunset_h  ?? 20,
+          sunsetM:  data.sunset_m  ?? 0,
+          petalColor1: data.petal_color1 ?? 'var(--zone-flowers)',
+          petalColor2: data.petal_color2 ?? 'var(--zone-flowers)',
+          petalShape:  data.petal_shape  ?? 'round',
+        })
+      })
+  }, [user?.id])
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
@@ -2230,6 +2303,25 @@ export default function DashboardPage() {
     window.addEventListener('analytics_track', handler)
     return () => window.removeEventListener('analytics_track', handler)
   }, [track])
+
+  // ── Popup "fleur qui évolue" — montée globalement une seule fois, se déclenche
+  // pour n'importe quel rituel complété (peu importe le modal emprunté), puisque
+  // tous les chemins de complétion dispatchent déjà ritualCompleteSnapshot. ──
+  useEffect(() => {
+    const handler = e => {
+      const d = e.detail
+      if (!d || d.before == null || d.after == null) return
+      setRitualCelebration(d)
+    }
+    window.addEventListener('ritualCompleteSnapshot', handler)
+    return () => window.removeEventListener('ritualCompleteSnapshot', handler)
+  }, [])
+
+  useEffect(() => {
+    if (!ritualCelebration) return
+    const t = setTimeout(() => setRitualCelebration(null), 5000)
+    return () => clearTimeout(t)
+  }, [ritualCelebration])
 
   // window.openAccessModal (utilisé dans les sous-composants)
   useEffect(() => {
@@ -2489,7 +2581,9 @@ export default function DashboardPage() {
   usePlantStore.getState().setTodayPlant(updatedPlant)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
   const snapDetail = { before: snapshot.health ?? 5, after: newHealth, delta, mood: mood ?? null }
-  window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: snapDetail }))
+  // Pas de dispatch ritualCompleteSnapshot ici : PhaseResult (écran suivant de
+  // RitualSuggestionModal) affiche déjà "+delta de vitalité" — le popup global
+  // ferait doublon avec ce message. On garde juste la trace pour l'anim "Ma Fleur".
   try { sessionStorage.setItem('mji_post_ritual', JSON.stringify({ ...snapDetail, ts: Date.now() })) } catch {}
   try {
     await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' })
@@ -2588,6 +2682,15 @@ export default function DashboardPage() {
         <PremiumTeaserModal
           onDiscover={() => { setShowPremiumTeaser(false); setShowPremiumModal(true); track('premium_teaser_cta', {}, active, 'monetization') }}
           onClose={() => { setShowPremiumTeaser(false); track('premium_teaser_dismiss', {}, active, 'monetization') }}
+        />
+      )}
+      {ritualCelebration && (
+        <RitualCelebrationModal
+          before={ritualCelebration.before}
+          after={ritualCelebration.after}
+          delta={ritualCelebration.delta}
+          gardenSettings={gardenSettings}
+          onClose={() => setRitualCelebration(null)}
         />
       )}
       {showTrialInfoModal && <TrialInfoModal daysLeft={trialDaysLeft} trialActive={isTrialActive} onActivate={async () => { await activateTrialNow(); setShowTrialInfoModal(false) }} onClose={() => setShowTrialInfoModal(false)} onUpgrade={() => { setShowTrialInfoModal(false); setShowPremiumModal(true) }} />}

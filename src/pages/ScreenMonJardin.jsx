@@ -5134,6 +5134,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
 
       if (error) throw error
       localStorage.removeItem(PENDING_KEY)
+      window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: currentHealth, after: newHealth, delta } }))
     } catch (e) {
       // Retry une fois après 3s
       console.warn('ritual update failed, retrying in 3s…', e)
@@ -5148,6 +5149,7 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           console.warn('ritual update retry failed, saved to localStorage', error)
         } else {
           localStorage.removeItem(PENDING_KEY)
+          window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: currentHealth, after: newHealth, delta } }))
         }
       }, 3000)
     }
@@ -5628,7 +5630,8 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
           else {
             window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId } }))
             const snapDetail = { before: currentHealth, after: newHealth, delta, mood: mood ?? null }
-            window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: snapDetail }))
+            // Pas de dispatch ritualCompleteSnapshot ici : PhaseResult affiche déjà
+            // "+delta de vitalité" — le popup global ferait doublon avec ce message.
             try { sessionStorage.setItem('mji_post_ritual', JSON.stringify({ ...snapDetail, ts: Date.now() })) } catch {}
           }
           try {
@@ -6188,4 +6191,4 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   )
 }
 
-export { ScreenMonJardin, DailyQuizModal, BoiteAGraines, GardenSettingsModal }
+export { ScreenMonJardin, DailyQuizModal, BoiteAGraines, GardenSettingsModal, PlantSVG, DEFAULT_GARDEN_SETTINGS }

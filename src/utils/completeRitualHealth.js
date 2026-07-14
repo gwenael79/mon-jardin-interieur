@@ -32,6 +32,10 @@ export async function completeRitualHealth({ plantId, zoneId, onHealthUpdate, us
   onHealthUpdate?.(newHealth)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: id } }))
   window.dispatchEvent(new CustomEvent('plantCelebrate'))
+  // Alimente le popup "fleur qui évolue" (DashboardV2) — sans ce dispatch, seuls
+  // les rituels qui font leur propre update Supabase directe (RitualSuggestionModal)
+  // déclenchaient le popup ; tous les appelants de completeRitualHealth en étaient privés.
+  window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: plant.health ?? 5, after: newHealth, delta: RITUAL_DELTA } }))
   return newHealth
 }
 
