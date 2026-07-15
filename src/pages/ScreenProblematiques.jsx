@@ -174,7 +174,7 @@ export function ScreenProblematiques({ track, isPremium = false, onUpgrade }) {
         </div>
         <div style={{ width:40, height:2, background:'linear-gradient(90deg,#5c7c96,transparent)', marginBottom:12 }} />
         <p className="pbm-intro-text" style={{ color:'#000', lineHeight:1.7 }}>
-          Choisis ce qui te perturbe en ce moment — tu recevras une réponse immédiate : un audio guidé, un exercice express, et de quoi mieux comprendre ce que tu traverses.
+          Choisis ce qui te perturbe en ce moment, tu recevras une réponse immédiate : un audio guidé, un exercice express, et de quoi mieux comprendre ce que tu traverses.
         </p>
       </div>
 
