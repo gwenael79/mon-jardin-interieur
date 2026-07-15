@@ -112,7 +112,7 @@ const css = `
 .pbm-soon-text { font-size:15px; color:#000; font-style:italic; }
 
 @media(max-width:640px) {
-  .pbm-grid { grid-template-columns:1fr 1fr; gap:10px; }
+  .pbm-grid { grid-template-columns:1fr; gap:10px; }
   .pbm-hero { padding:26px 20px 18px; }
   .pbm-coaching-block { margin:0 16px 24px; }
   .pbm-intro-text { font-size:14px; }
