@@ -113,7 +113,6 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #7ca0bc, #46647c)',
     btnShadow: 'rgba(70,100,130,.36)',
     Component: ScreenProblematiques,
-    devOnly:   true, // ⚠️ visible uniquement en dev — retirer ce flag pour passer en prod
   },
   {
     id:        'defis',     illusKey: 'defis',     image: '/defi.png',
@@ -126,6 +125,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #a890d0, #7860a8)',
     btnShadow: 'rgba(140,110,190,.34)',
     Component: ScreenDefis,
+    hiddenFromCarousel: true,
   },
   {
     id:        'club',      illusKey: 'club',      image: '/club.png',

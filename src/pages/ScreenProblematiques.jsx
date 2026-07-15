@@ -103,6 +103,14 @@ const css = `
                    font-family:'Jost',sans-serif; letter-spacing:.03em; box-shadow:0 8px 20px rgba(180,140,40,.30); transition:transform .15s ease; }
 .pbm-locked-btn:hover { transform:translateY(-1px); }
 
+/* ── Badge "bientôt disponible" ── */
+.pbm-soon { padding:18px; border-radius:14px; text-align:center;
+            background:linear-gradient(160deg, rgba(120,120,120,.12), rgba(90,90,90,.04));
+            border:1px solid rgba(120,120,120,.25); }
+.pbm-soon-icon { width:36px; height:36px; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center;
+                 font-size:16px; background:rgba(120,120,120,.16); border:1px solid rgba(120,120,120,.3); }
+.pbm-soon-text { font-size:15px; color:#000; font-style:italic; }
+
 @media(max-width:640px) {
   .pbm-grid { grid-template-columns:1fr 1fr; gap:10px; }
   .pbm-hero { padding:26px 20px 18px; }
@@ -288,13 +296,16 @@ function ProblematiqueModal({ problematique: p, onClose, track, isPremium = fals
         <div className="pbm-tools">
           <div className="pbm-tool-card" style={toolCardStyle}>
             <SectionHead icon="🎧" color={color} label="Écoute immédiate" meta={`${p.audio_duree_min ?? '—'} min${p.audio_titre ? ' · ' + p.audio_titre : ''}`} />
-            {audioLocked ? (
+            {!p.audio_url ? (
+              <div className="pbm-soon">
+                <div className="pbm-soon-icon">⏳</div>
+                <div className="pbm-soon-text">Audio bientôt disponible</div>
+              </div>
+            ) : audioLocked ? (
               <LockedTool onUpgrade={onUpgrade} />
-            ) : p.audio_url ? (
+            ) : (
               <audio controls controlsList="nodownload" onContextMenu={e => e.preventDefault()} src={p.audio_url}
                 onPlay={() => track?.('problematique_audio_play', { problematique_id: p.id }, 'problematiques', 'engagement')} />
-            ) : (
-              <div style={{ fontSize:16, color:'#000', fontStyle:'italic' }}>Audio bientôt disponible.</div>
             )}
           </div>
 
