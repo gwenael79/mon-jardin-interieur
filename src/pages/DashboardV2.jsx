@@ -163,6 +163,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #78c088, #488858)',
     btnShadow: 'rgba(80,160,100,.34)',
     Component: ScreenAteliers,
+    hiddenFromCarousel: true,
   },
   {
     id:        'bibliotheque', illusKey: 'bibliotheque', image: '/biblio.png',
