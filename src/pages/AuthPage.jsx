@@ -1065,18 +1065,9 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
         <div className={isMobile && !mobileForm ? '' : 'auth-right-col'} style={mobileForm ? { position:'fixed', inset:0, zIndex:10, display:'flex', alignItems:'center', justifyContent:'center', padding:20 } : {}}>
           <div className="auth-frame" style={mobileForm ? { maxWidth:440, maxHeight:'90vh', width:'100%' } : {}}>
 
-            {/* Vidéo de démo de l'appli par défaut */}
+            {/* Image par défaut */}
             {rightPanel === 'image' && (
-              <video
-                key="video"
-                className="auth-frame-img"
-                src="/video/videomobile.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                poster="/fond1.png"
-              />
+              <img key="img" src="/fond1.png" alt="" className="auth-frame-img"/>
             )}
 
             {/* ── FORMULAIRE CONNEXION ── */}
