@@ -3,16 +3,9 @@ import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
 import { supabase } from '../core/supabaseClient'
 import { invalidateAdminCache } from '../hooks/useAdminPermissions'
+import { ADMIN_IDS } from '../constants/adminIds'
 
-// ── IDs des administrateurs ─────────────────────────────────────────────────
-// Ajoutez ici les UUIDs des utilisateurs ayant accès à l'interface admin.
-// Ces IDs sont aussi exclus des statistiques pour ne pas fausser les données.
-export const ADMIN_IDS = [
-  'aca666ad-c7f9-4a33-81bd-8ea2bd89b0e7', // Gwenaël (fondateur)
-  'fbcfb88f-0280-40ab-98d3-bcf750c5764d', // Co-admin
-  'b6d0d66c-7b3c-4dec-be98-dbae3bef54e7', // Admin (bonjour@monjardininterieur.com)
-  '504b3dfd-c23c-425c-9ce2-7f6cd7ba0679', // Gwenael JEAUNEAU (gwenael.jeauneau@monhypnotherapeute.com)
-]
+export { ADMIN_IDS }
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400;500&display=swap');

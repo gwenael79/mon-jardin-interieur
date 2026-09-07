@@ -1,17 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { useAuthInit, useAuth } from './hooks/useAuth'
 import { AuthPage } from './pages/AuthPage'
 import DashboardPage from './pages/DashboardV2'
 import AccessPage, { FlowerModal, PremiumModal } from './pages/AccessPage'
 import AmbianceChoiceScreen from './pages/AmbianceChoiceScreen'
 import { useSubscription } from './hooks/useSubscription'
-import { AdminPage } from './pages/AdminPage'
-import { AdminClientsPage } from './pages/AdminClientsPage'
-import { AdminActivitePage } from './pages/AdminActivitePage'
-import { AdminProsPage } from './pages/AdminProsPage'
-import { AdminMessagesPage } from './pages/AdminMessagesPage'
-import { AdminJardinothequePage } from './pages/AdminJardinothequePage'
-import { AdminFondateursPage } from './pages/AdminFondateursPage'
 import { AppAvisModal } from './components/AppAvisModal'
 import { query, supabase } from './core/supabaseClient'
 import { OnboardingScreen } from './pages/OnboardingScreen'
@@ -21,7 +14,17 @@ import { ProProfile }       from './pages/ProProfile'
 import InstallPrompt from './components/InstallPrompt'
 import { EngagementModals } from './components/EngagementModals'
 import { LevelUpModal } from './components/LevelUpModal'
-import Entreprise from './Entreprise'
+import SuspenseFallback from './components/SuspenseFallback'
+
+// Back-office (admin uniquement) — chargé à la demande, jamais dans le bundle initial.
+const AdminPage               = lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })))
+const AdminClientsPage        = lazy(() => import('./pages/AdminClientsPage').then(m => ({ default: m.AdminClientsPage })))
+const AdminActivitePage       = lazy(() => import('./pages/AdminActivitePage').then(m => ({ default: m.AdminActivitePage })))
+const AdminProsPage           = lazy(() => import('./pages/AdminProsPage').then(m => ({ default: m.AdminProsPage })))
+const AdminMessagesPage       = lazy(() => import('./pages/AdminMessagesPage').then(m => ({ default: m.AdminMessagesPage })))
+const AdminJardinothequePage  = lazy(() => import('./pages/AdminJardinothequePage').then(m => ({ default: m.AdminJardinothequePage })))
+const AdminFondateursPage     = lazy(() => import('./pages/AdminFondateursPage').then(m => ({ default: m.AdminFondateursPage })))
+const Entreprise              = lazy(() => import('./Entreprise'))
 
 import { useGardenNotification, getPlantStateIndex, PLANT_STATES } from './hooks/useGardenNotification'
 import { useNotificationSound } from './hooks/useNotificationSound'
@@ -438,19 +441,19 @@ if (screen === 'loading' || screen === 'activating' || authLoading) {
     )
   }
 
-  if (screen === 'admin')          return <AdminPage />
-  if (screen === 'admin-clients')  return <AdminClientsPage />
-  if (screen === 'admin-activite')      return <AdminActivitePage />
+  if (screen === 'admin')          return <Suspense fallback={<SuspenseFallback />}><AdminPage /></Suspense>
+  if (screen === 'admin-clients')  return <Suspense fallback={<SuspenseFallback />}><AdminClientsPage /></Suspense>
+  if (screen === 'admin-activite')      return <Suspense fallback={<SuspenseFallback />}><AdminActivitePage /></Suspense>
   // Popup avis — rendu par-dessus n'importe quel écran non-admin
   const reviewPopup = showReviewPopup && user?.id // && !ADMIN_IDS.includes(user.id)  // ← décommenter en prod
     ? <AppAvisModal userId={user.id} onClose={() => setShowReviewPopup(false)} />
     : null
-  if (screen === 'admin-jardinotheque') return <AdminJardinothequePage />
-  if (screen === 'admin-pros')          return <AdminProsPage />
-  if (screen === 'admin-messages')      return <AdminMessagesPage />
-  if (screen === 'admin-fondateurs')   return <AdminFondateursPage />
+  if (screen === 'admin-jardinotheque') return <Suspense fallback={<SuspenseFallback />}><AdminJardinothequePage /></Suspense>
+  if (screen === 'admin-pros')          return <Suspense fallback={<SuspenseFallback />}><AdminProsPage /></Suspense>
+  if (screen === 'admin-messages')      return <Suspense fallback={<SuspenseFallback />}><AdminMessagesPage /></Suspense>
+  if (screen === 'admin-fondateurs')   return <Suspense fallback={<SuspenseFallback />}><AdminFondateursPage /></Suspense>
 
-  if (screen === 'entreprise') return <Entreprise />
+  if (screen === 'entreprise') return <Suspense fallback={<SuspenseFallback />}><Entreprise /></Suspense>
 
   if (params.has('test-onboarding')) {
     return (

@@ -17,7 +17,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback, memo, startTransition } from 'react'
 import { AppAvisModal } from '../components/AppAvisModal'
-import { ADMIN_IDS }    from './AdminPage'
+import { ADMIN_IDS }    from '../constants/adminIds'
 import { useAuth }      from '../hooks/useAuth'
 import { usePlant }     from '../hooks/usePlant'
 import { usePlantStore } from '../store/plant.store'
