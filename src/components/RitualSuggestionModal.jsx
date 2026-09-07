@@ -863,7 +863,7 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
   const { g1, g2 } = activeNeed
   const bg = 'radial-gradient(circle at 50% 18%, #f5efe6, #e8dfd2 58%, #e0d4c0)'
 
-  function handleMoodSelect(selectedMood) {
+  async function handleMoodSelect(selectedMood) {
     if (_evalInProgress) return
     _evalInProgress = true
     setMood(selectedMood)
@@ -873,9 +873,12 @@ export default function RitualSuggestionModal({ need, onBack, onClose, onSeeFlow
     })
     if (!moodSubmittedRef.current) {
       moodSubmittedRef.current = true
-      onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2, selectedMood)
+      // Attendu : onCompleteRitual déclenche la popup "Ta fleur grandit" (RitualCelebrationModal,
+      // niveau racine) une fois l'écriture terminée — on referme seulement après, pour ne pas
+      // révéler "Quel est ton besoin" une fraction de seconde avant que la popup n'apparaisse.
+      await onCompleteRitual?.(activeNeed.id, true, activeRitual.delta ?? 2, selectedMood)
     }
-    setPhase('result')
+    onClose?.()
   }
 
   function handleStartAlternative(altNeed, altRitual) {

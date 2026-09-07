@@ -40,7 +40,7 @@ import {
 import PushNotificationButton        from '../components/PushNotificationButton'
 import RituelMieuxEtre              from '../components/RituelMieuxEtre'
 import { usePushNotification }       from '../hooks/usePushNotification'
-import { ScreenMonJardin, DailyQuizModal, BoiteAGraines, PlantSVG, DEFAULT_GARDEN_SETTINGS } from './ScreenMonJardin'
+import { ScreenMonJardin, DailyQuizModal, BoiteAGraines, PlantSVG, DEFAULT_GARDEN_SETTINGS, GardenSettingsModal, FleurShareModal } from './ScreenMonJardin'
 import { WelcomeScreen }             from './WelcomeScreen'
 import { VideoIntro, pickVideo }    from './VideoIntro'
 import { ScreenJardinCollectif, ScreenDefis } from './ScreenDefis'
@@ -77,6 +77,7 @@ const SLIDES_CONFIG = [
     btnShadow: 'rgba(200,140,50,.38)',
     isBilan:   true,
     Component: null,
+    hiddenFromCarousel: true,
   },
   {
     id:        'jardin',    illusKey: 'jardin',   image: '/fleur.png',
@@ -89,6 +90,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #c8a0d8, #9070a8)',
     btnShadow: 'rgba(160,100,180,.36)',
     Component: ScreenMonJardin,
+    hiddenFromCarousel: true,
   },
   {
     id:        'champ',     illusKey: 'champ',   image: '/collectif.png',
@@ -101,6 +103,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #d4b050, #a87c28)',
     btnShadow: 'rgba(180,140,40,.36)',
     Component: ScreenJardinCollectif,
+    hiddenFromCarousel: true,
   },
   {
     id:        'problematiques', illusKey: 'problematiques', image: '/reponse.png',
@@ -113,6 +116,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #7ca0bc, #46647c)',
     btnShadow: 'rgba(70,100,130,.36)',
     Component: ScreenProblematiques,
+    hiddenFromCarousel: true,
   },
   {
     id:        'defis',     illusKey: 'defis',     image: '/defi.png',
@@ -138,6 +142,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #80aad0, #5070a0)',
     btnShadow: 'rgba(80,120,180,.34)',
     Component: ScreenClubJardiniers,
+    hiddenFromCarousel: true,
   },
   {
     id:        'cercle',    illusKey: 'cercle',    image: '/club.png',
@@ -176,6 +181,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #c09060, #886040)',
     btnShadow: 'rgba(160,120,80,.34)',
     Component: MaBibliotheque,
+    hiddenFromCarousel: true,
   },
   {
     id:        'jardinotheque', illusKey: 'jardinotheque',
@@ -188,6 +194,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #70a8b8, #406878)',
     btnShadow: 'rgba(80,140,160,.34)',
     Component: ScreenJardinotheque,
+    hiddenFromCarousel: true,
   },
   {
     id:        'boite_graine', illusKey: 'boite_graine', image: '/Boiteagraines.png',
@@ -200,6 +207,7 @@ const SLIDES_CONFIG = [
     btnGrad:   'linear-gradient(135deg, #5a9870, #3a6850)',
     btnShadow: 'rgba(60,120,80,.34)',
     Component: ScreenBoiteAGraine,
+    hiddenFromCarousel: true,
   },
 ]
 
@@ -297,6 +305,10 @@ const SlideInsightsAI = memo(function SlideInsightsAI({ slideId, screenProps, co
 function MobileSlideFlow({ slides, curIdx, onNav, onOpenModal, onOpenNeedModal, bilanDoneToday, bilanHistory, screenProps, initial, onOpenProfile, onHelp, onSignOut, onGuide, showGuide, guideProps }) {
   const slide  = slides[curIdx]
   const isLast = curIdx === slides.length - 1
+
+  if (!slide) {
+    return <div style={{ position:'fixed', inset:0, background:'linear-gradient(160deg,#f8f0ec,#ede5de)', zIndex:10 }} />
+  }
   const swipe  = useSwipe(() => onNav(1), () => onNav(-1))
   const ambiance = useAmbiance()
 
@@ -861,12 +873,18 @@ function PremiumTeaserModal({ onDiscover, onClose }) {
   )
 }
 
-// ── RitualCelebrationModal — popup temporaire après un rituel complété ──
-// Montée une seule fois au niveau racine, se ferme seule après 5s. La santé
-// affichée s'anime de `before` à `after` pour rendre la croissance visible,
-// pas juste un chiffre qui change d'un coup.
-function RitualCelebrationModal({ before, after, delta, gardenSettings, onClose }) {
+// ── RitualCelebrationModal — popup après un rituel complété ──
+// Montée une seule fois au niveau racine — reprend la même carte "fleur" que
+// celle affichée dans Ma Fleur (scène + streak + palette + partage + stats
+// avant/aujourd'hui), pour que tous les rituels renvoient vers la même vue,
+// quel que soit le modal emprunté pour compléter le rituel.
+function RitualCelebrationModal({ before, after, delta, gardenSettings, streak = 0, userLevel = 1, isAdmin = false, profile, onSaveGardenSettings, onClose }) {
   const [displayHealth, setDisplayHealth] = useState(before)
+  const [showGardenSettings, setShowGardenSettings] = useState(false)
+  const [gardenTier,     setGardenTier]     = useState(userLevel)
+  const [shareImageUrl,  setShareImageUrl]  = useState(null)
+  const [generatingShare,setGeneratingShare]= useState(false)
+  const fleurZoneRef = useRef(null)
 
   useEffect(() => {
     const duration = 1400
@@ -882,7 +900,128 @@ function RitualCelebrationModal({ before, after, delta, gardenSettings, onClose 
     return () => cancelAnimationFrame(raf)
   }, [before, after])
 
-  const gain = delta != null ? delta : Math.round((after - before) * 10) / 10
+  const gain       = delta != null ? delta : Math.round((after - before) * 10) / 10
+  const animHealth = Math.round(displayHealth)
+  const barPct     = Math.min(100, Math.max(0, animHealth))
+  const animDeg    = Math.round(animHealth * 3.6)
+
+  async function generateShareImage() {
+    if (!fleurZoneRef.current || generatingShare) return
+    setGeneratingShare(true)
+    try {
+      const svgEl = fleurZoneRef.current.querySelector('svg')
+      if (!svgEl) return
+
+      const W_SVG = 1080, H_SVG = Math.round(1080 * 260 / 400)
+      const clone = svgEl.cloneNode(true)
+      clone.setAttribute('width',  String(W_SVG))
+      clone.setAttribute('height', String(H_SVG))
+      clone.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+
+      let svgStr = new XMLSerializer().serializeToString(clone)
+      if (!svgStr.includes('xmlns='))
+        svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"')
+      const rootStyle = getComputedStyle(document.documentElement)
+      svgStr = svgStr.replace(/var\(--([^)]+)\)/g, (_, name) =>
+        rootStyle.getPropertyValue('--' + name.trim()).trim() || 'transparent'
+      )
+
+      const svgUrl = URL.createObjectURL(new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' }))
+      const svgImg = await new Promise((res, rej) => {
+        const img = new Image()
+        img.onload = () => res(img)
+        img.onerror = rej
+        img.src = svgUrl
+      })
+      URL.revokeObjectURL(svgUrl)
+
+      const CW = 1080, CH = 1350
+      const canvas = document.createElement('canvas')
+      canvas.width = CW; canvas.height = CH
+      const ctx = canvas.getContext('2d')
+
+      const bg = ctx.createLinearGradient(0, 0, 0, CH)
+      bg.addColorStop(0, '#07070f'); bg.addColorStop(0.55, '#12121e'); bg.addColorStop(1, '#090913')
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, CW, CH)
+
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'
+      for (const [x,y,r] of [[80,55,1.2],[260,85,1],[500,38,1.5],[820,68,1],[1000,48,1.2],[155,155,0.9],[700,125,1.1],[28,275,1],[1045,195,0.9],[400,30,0.8],[600,170,0.7]]) {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
+      }
+
+      const soilCrop = Math.round(H_SVG * (72 / 260)) - 50
+      const croppedH = H_SVG - soilCrop
+      ctx.drawImage(svgImg, 0, 0, W_SVG, croppedH, 0, 10, W_SVG, croppedH)
+
+      await document.fonts.ready
+      ctx.textAlign = 'center'
+
+      const sepY = 10 + croppedH + 50
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(120, sepY); ctx.lineTo(CW - 120, sepY); ctx.stroke()
+
+      const firstName = (profile?.display_name ?? '').split(' ')[0] || ''
+      ctx.fillStyle = 'rgba(255,252,238,0.82)'
+      ctx.font = "300 46px 'Cormorant Garamond', Georgia, serif"
+      const msgLines = firstName ? [
+        `Voici la fleur de ${firstName},`,
+        `cultivée chaque jour dans son jardin intérieur.`,
+        '',
+        `${firstName} apprend à prendre soin de soi`,
+        'par de petites actions quotidiennes.',
+        '',
+        'Sa fleur devient un peu son reflet.',
+      ] : [
+        'Une fleur cultivée chaque jour,',
+        'dans un jardin intérieur.',
+        '',
+        'Apprendre à prendre soin de soi',
+        'par de petites actions quotidiennes.',
+        '',
+        "Ta fleur t'attend.",
+      ]
+      let ly = sepY + 70
+      for (const line of msgLines) {
+        if (line) { ctx.fillText(line, CW / 2, ly); ly += 64 }
+        else ly += 22
+      }
+
+      if (firstName) {
+        ly += 14
+        ctx.font = "400 italic 38px 'Cormorant Garamond', Georgia, serif"
+        ctx.fillStyle = 'rgba(255,252,238,0.55)'
+        ctx.fillText(`Rejoins-nous ! — ${firstName}`, CW / 2, ly)
+        ly += 14
+      }
+
+      const urlY = ly + 48
+      ctx.strokeStyle = 'rgba(93,200,122,0.18)'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(200, urlY - 34); ctx.lineTo(CW - 200, urlY - 34); ctx.stroke()
+      ctx.font = "600 34px 'Jost', system-ui, sans-serif"
+      ctx.fillStyle = 'rgba(93,200,122,0.92)'; ctx.fillText('monjardininterieur.com', CW / 2, urlY)
+      ctx.font = "300 22px 'Jost', system-ui, sans-serif"
+      ctx.fillStyle = 'rgba(255,255,255,0.20)'; ctx.fillText('Mon Jardin Intérieur', CW / 2, urlY + 46)
+
+      const lutinImg = await new Promise(res => {
+        const img = new Image()
+        img.onload = () => res(img)
+        img.onerror = () => res(null)
+        img.src = '/lutin-gauche.png'
+      })
+      if (lutinImg) {
+        const lutinW = 340
+        const lutinH = Math.round(lutinW * lutinImg.naturalHeight / lutinImg.naturalWidth)
+        ctx.drawImage(lutinImg, 0, CH - lutinH, lutinW, lutinH)
+      }
+
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.93))
+      setShareImageUrl(URL.createObjectURL(blob))
+    } catch (e) {
+      console.error('[generateShareImage]', e)
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
 
   return (
     <div style={{
@@ -893,22 +1032,100 @@ function RitualCelebrationModal({ before, after, delta, gardenSettings, onClose 
       padding:20, background:'rgba(20,30,10,0.35)', backdropFilter:'blur(6px)', animation:'fadeUp .3s ease both',
     }} onClick={onClose}>
       <div style={{
-        position:'relative', width:'100%', maxWidth:460, borderRadius:32, padding:'44px 36px 36px', textAlign:'center',
-        background:'linear-gradient(170deg,#fdf9f2,#f3ece0)', boxShadow:'0 30px 80px rgba(0,0,0,.28)', border:'1px solid rgba(200,160,100,.25)',
+        position:'relative', width:'100%', maxWidth:460, borderRadius:28, overflow:'hidden', textAlign:'center',
+        background:'#faf5f2', boxShadow:'0 30px 80px rgba(0,0,0,.28)', border:'1px solid rgba(200,160,100,.25)',
       }} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={{ position:'absolute', top:16, right:16, width:32, height:32, borderRadius:'50%', border:'none', background:'rgba(0,0,0,.06)', color:'rgba(30,20,8,.5)', fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
-        <div style={{ width:300, height:196, margin:'0 auto' }}>
+        <button onClick={onClose} style={{ position:'absolute', top:12, right:12, zIndex:5, width:32, height:32, borderRadius:'50%', border:'1px solid rgba(255,255,255,.25)', background:'rgba(0,0,0,.38)', color:'rgba(255,255,255,.90)', fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+
+        {/* Scène fleur */}
+        <div ref={fleurZoneRef} style={{ position:'relative', height:230 }}>
           <PlantSVG health={displayHealth} gardenSettings={gardenSettings ?? DEFAULT_GARDEN_SETTINGS} celebrate />
+
+          {streak >= 1 && (
+            <div style={{ position:'absolute', top:12, right:52, zIndex:3, display:'flex', flexDirection:'column', alignItems:'center', padding:'6px 12px', borderRadius:12, background:'rgba(20,10,5,.55)', border:'1px solid rgba(255,200,80,.25)', backdropFilter:'blur(4px)' }}>
+              <span style={{ fontSize:14 }}>🔥</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:12, fontWeight:700, color:'rgba(255,220,100,.95)', lineHeight:1.1 }}>{streak} jour{streak > 1 ? 's' : ''}</span>
+              <span style={{ fontFamily:"'Jost',sans-serif", fontSize:9, color:'rgba(255,255,255,.5)', letterSpacing:'.06em' }}>de continuité</span>
+            </div>
+          )}
+
+          <button
+            onClick={() => { setGardenTier(userLevel); setShowGardenSettings(true) }}
+            style={{ position:'absolute', top:12, left:12, zIndex:3, display:'flex', alignItems:'center', padding:'8px 14px', borderRadius:100, background:'rgba(20,10,5,.45)', border:'1px solid rgba(255,255,255,.18)', cursor:'pointer', fontSize:18, color:'rgba(255,255,255,.90)', backdropFilter:'blur(4px)' }}
+          >🎨</button>
+
+          <button
+            onClick={generateShareImage}
+            disabled={generatingShare}
+            title="Générer une image de partage"
+            style={{ position:'absolute', bottom:12, right:12, zIndex:3, display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:100, background:'rgba(20,10,5,.52)', border:'1px solid rgba(255,255,255,.20)', cursor: generatingShare ? 'wait' : 'pointer', fontFamily:"'Jost',sans-serif", fontSize:13, color:'rgba(255,255,255,.82)', backdropFilter:'blur(4px)', opacity: generatingShare ? 0.55 : 1 }}
+          >{generatingShare ? '⏳' : '📷'} Partager</button>
         </div>
-        <div style={{ fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic', fontSize:32, fontWeight:600, color:'#3a5a1e', marginTop:14 }}>
-          Ta fleur grandit 🌱
-        </div>
-        {gain > 0 && (
-          <div style={{ fontFamily:"'Jost',sans-serif", fontSize:19, fontWeight:700, color:'#5a9a28', marginTop:8, letterSpacing:'.03em' }}>
-            +{gain}
+
+        {/* Panneau stats */}
+        <div style={{ background:'linear-gradient(180deg,#1a1a28 0%,#0f0f1a 100%)', padding:'18px 20px 16px', textAlign:'left' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12 }}>
+            <div style={{ flex:1, display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+              {gain > 0 && (
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.90)' }}>Avant</span>
+                  <span style={{ fontFamily:"'Jost',sans-serif", fontSize:34, fontWeight:300, color:'rgba(255,255,255,.95)', lineHeight:1 }}>{Math.round(before)}%</span>
+                </div>
+              )}
+              {gain > 0 && (
+                <span style={{ fontSize:20, color:'rgba(255,255,255,.80)', alignSelf:'center', marginTop:6 }}>→</span>
+              )}
+              <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start' }}>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:14, letterSpacing:'.14em', textTransform:'uppercase', color:'rgba(255,255,255,.95)' }}>Aujourd'hui</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:38, fontWeight:300, color:'rgba(255,255,255,1.0)', lineHeight:1 }}>{animHealth}%</span>
+              </div>
+            </div>
+
+            <div style={{
+              width:72, height:72, borderRadius:'50%', flexShrink:0,
+              background:`conic-gradient(from -90deg, #5dc87a 0deg, #d4af37 ${Math.round(animDeg * .45)}deg, #c070a0 ${animDeg}deg, rgba(255,255,255,.08) ${animDeg}deg)`,
+              padding:4, boxShadow:`0 0 ${8 + Math.round(animHealth / 10)}px rgba(93,200,122,.3)`,
+            }}>
+              <div style={{ width:'100%', height:'100%', borderRadius:'50%', background:'#12121e', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:1 }}>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(255,255,255,.85)' }}>Vitalité</span>
+                <span style={{ fontFamily:"'Jost',sans-serif", fontSize:20, fontWeight:700, color:'#fff', lineHeight:1 }}>{animHealth}%</span>
+              </div>
+            </div>
           </div>
-        )}
+
+          {gain > 0 && (
+            <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, color:'rgba(160,255,150,1.0)', marginTop:8, fontWeight:600 }}>
+              ✦ +{gain}% grâce à ton attention
+            </div>
+          )}
+
+          <div style={{ position:'relative', marginTop:12, height:7, borderRadius:3, background:'rgba(255,255,255,.18)' }}>
+            <div style={{ width:`${barPct}%`, height:'100%', borderRadius:3, background:'linear-gradient(to right, #5dc87a, #d4af37)' }}/>
+          </div>
+
+          <div style={{ fontFamily:"'Jost',sans-serif", fontSize:15, color:'rgba(255,255,255,.90)', marginTop:10, letterSpacing:'.04em' }}>
+            Ta régularité fait toute la différence 🌿
+          </div>
+        </div>
       </div>
+
+      {showGardenSettings && (
+        <GardenSettingsModal
+          settings={gardenSettings ?? DEFAULT_GARDEN_SETTINGS}
+          level={userLevel}
+          tier={gardenTier}
+          isAdmin={isAdmin}
+          onSave={onSaveGardenSettings}
+          onClose={() => setShowGardenSettings(false)}
+        />
+      )}
+      {shareImageUrl && (
+        <FleurShareModal
+          imageUrl={shareImageUrl}
+          firstName={(profile?.display_name ?? '').split(' ')[0] || ''}
+          onClose={() => { URL.revokeObjectURL(shareImageUrl); setShareImageUrl(null) }}
+        />
+      )}
     </div>
   )
 }
@@ -1092,98 +1309,6 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
         <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
           <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:6 }}>Email</div>
           <div style={{ fontSize:15, color:'rgba(30,20,8,.72)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
-        </div>
-
-        {/* Ma fleur — picker inline */}
-        {!showFlower ? (
-          <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
-            <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Mon identité florale</div>
-            {currentFlower ? (
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <div style={{ fontSize:16, color:'#1a1208', fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic' }}>
-                  🌸 Vous avez choisi · <strong style={{ fontStyle:'normal' }}>{currentFlower}</strong>
-                </div>
-                <div onClick={() => { setShowFlower(true); setSelFlower(currentFlower) }} style={{ padding:'6px 14px', borderRadius:100, border:'1px solid rgba(200,160,150,.30)', background:'transparent', fontSize:12, color:'rgba(30,20,8,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap' }}>
-                  Modifier
-                </div>
-              </div>
-            ) : (
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <div style={{ fontSize:14, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Aucune fleur choisie</div>
-                <div onClick={() => setShowFlower(true)} style={{ padding:'6px 14px', borderRadius:100, border:'1px solid rgba(200,160,150,.30)', background:'transparent', fontSize:12, color:'rgba(30,20,8,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
-                  Choisir
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.25)' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
-              <div style={{ fontSize:12, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>🌸 Choisir ma fleur</div>
-              <div onClick={() => { setShowFlower(false); setSelFlower(null) }} style={{ fontSize:12, color:'rgba(30,20,8,.38)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>Annuler</div>
-            </div>
-            {selFlower && (
-              <div style={{ textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:'rgba(30,20,8,.55)', marginBottom:10 }}>
-                🌸 Votre fleur · <span style={{ color:'#1a1208', fontWeight:500 }}>{selFlower}</span>
-              </div>
-            )}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, maxHeight:180, overflowY:'auto', marginBottom:10 }}>
-              {FLOWER_NAMES_LIST.map(n => (
-                <div key={n} onClick={() => setSelFlower(n)} style={{ padding:'9px 4px', borderRadius:16, fontSize:12, textAlign:'center', cursor:'pointer', fontFamily:"'Jost',sans-serif", border: selFlower===n ? '1px solid rgba(90,154,40,.5)' : '1px solid rgba(0,0,0,.10)', background: selFlower===n ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.03)', color: selFlower===n ? '#3a7a18' : 'rgba(30,20,8,.55)', transition:'all .15s' }}>{n}</div>
-              ))}
-            </div>
-            <button
-              disabled={!selFlower || savingFlower}
-              onClick={async () => {
-                if (!selFlower || savingFlower) return
-                setSavingFlower(true)
-                try {
-                  await supabase.from('users').update({ flower_name: selFlower }).eq('id', userId)
-                  setCurrentFlower(selFlower)
-                  setSavedFlower(true)
-                  onNameSaved?.()
-                  setTimeout(() => { setShowFlower(false); setSelFlower(null); setSavedFlower(false) }, 1200)
-                } catch(e) { console.warn(e) }
-                setSavingFlower(false)
-              }}
-              style={{ width:'100%', padding:'11px', borderRadius:100, border:'none', background: savedFlower ? 'rgba(122,170,80,.85)' : 'linear-gradient(135deg,#c8a0b0,#a07888)', color:'#fff', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: selFlower ? 'pointer' : 'default', opacity: selFlower ? 1 : 0.4, transition:'all .2s' }}
-            >
-              {savedFlower ? '✓ Sauvegardé !' : savingFlower ? '…' : selFlower ? `Choisir · ${selFlower}` : 'Sélectionnez un nom'}
-            </button>
-          </div>
-        )}
-
-        {/* ── Ambiance ── */}
-        <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
-          <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Ambiance</div>
-          <div style={{ display:'flex', gap:8 }}>
-            <div
-              onClick={() => handleSetAmbiance('feerique')}
-              style={{
-                flex:1, padding:'10px 0', borderRadius:100, textAlign:'center',
-                border: ambiance === 'feerique' ? '1px solid rgba(200,160,150,.5)' : '1px solid rgba(0,0,0,.10)',
-                background: ambiance === 'feerique' ? 'rgba(200,160,150,.15)' : 'rgba(0,0,0,.03)',
-                color: ambiance === 'feerique' ? '#a07888' : 'rgba(30,20,8,.55)',
-                fontWeight: ambiance === 'feerique' ? 600 : 400,
-                fontSize:13, fontFamily:"'Jost',sans-serif", cursor: savingAmbiance ? 'default' : 'pointer', transition:'all .15s',
-              }}
-            >
-              ✨ Féérique
-            </div>
-            <div
-              onClick={() => handleSetAmbiance('zen')}
-              style={{
-                flex:1, padding:'10px 0', borderRadius:100, textAlign:'center',
-                border: ambiance === 'zen' ? '1px solid rgba(90,154,40,.5)' : '1px solid rgba(0,0,0,.10)',
-                background: ambiance === 'zen' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.03)',
-                color: ambiance === 'zen' ? '#3a7a18' : 'rgba(30,20,8,.55)',
-                fontWeight: ambiance === 'zen' ? 600 : 400,
-                fontSize:13, fontFamily:"'Jost',sans-serif", cursor: savingAmbiance ? 'default' : 'pointer', transition:'all .15s',
-              }}
-            >
-              🌿 Zen
-            </div>
-          </div>
         </div>
 
         {/* ── Notifications ── */}
@@ -2078,6 +2203,7 @@ export default function DashboardPage() {
   const [showAvisModal,        setShowAvisModal]        = useState(false)
   const [ritualCelebration,    setRitualCelebration]    = useState(null) // {before, after, delta} — popup temporaire fleur qui évolue
   const [gardenSettings,       setGardenSettings]       = useState(DEFAULT_GARDEN_SETTINGS)
+  const settingsLoadedRef = useRef(false)
 
   // Mêmes réglages (couleurs/forme des pétales) que la vraie fleur affichée dans
   // ScreenMonJardin — sinon le popup de célébration montre une fleur différente.
@@ -2085,6 +2211,7 @@ export default function DashboardPage() {
     if (!user?.id) return
     supabase.from('garden_settings').select('*').eq('user_id', user.id).maybeSingle()
       .then(({ data }) => {
+        settingsLoadedRef.current = true
         if (!data) return
         setGardenSettings({
           sunriseH: data.sunrise_h ?? 7,
@@ -2098,6 +2225,27 @@ export default function DashboardPage() {
       })
   }, [user?.id])
 
+  const resolveColor = (c) => {
+    if (!c || !c.startsWith('var(')) return c
+    return getComputedStyle(document.documentElement)
+      .getPropertyValue(c.slice(4, -1).trim()).trim() || c
+  }
+
+  const saveGardenSettings = async s => {
+    if (!settingsLoadedRef.current) {
+      console.warn('[gardenSettings] save bloqué — données pas encore chargées')
+      return
+    }
+    setGardenSettings(s)
+    await supabase.from('garden_settings').upsert({
+      user_id: user?.id, sunrise_h: s.sunriseH, sunrise_m: s.sunriseM,
+      sunset_h: s.sunsetH, sunset_m: s.sunsetM,
+      petal_color1: resolveColor(s.petalColor1),
+      petal_color2: resolveColor(s.petalColor2),
+      petal_shape: s.petalShape,
+    }, { onConflict: 'user_id' })
+  }
+
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
     const visible = SLIDES_CONFIG.filter(s => !s.hiddenFromCarousel && (!s.devOnly || import.meta.env.DEV))
@@ -2105,8 +2253,9 @@ export default function DashboardPage() {
     if (slot === 'morning') return visible
     const withoutBilan = visible.filter(s => s.id !== 'bilan')
     if (slot === 'afternoon') return withoutBilan
-    // soir : boite_graine en tête
+    // soir : boite_graine en tête (si présent dans le carrousel)
     const boite = withoutBilan.find(s => s.id === 'boite_graine')
+    if (!boite) return withoutBilan
     const rest  = withoutBilan.filter(s => s.id !== 'boite_graine')
     return [boite, ...rest]
   }, [])
@@ -2144,13 +2293,11 @@ export default function DashboardPage() {
     setPremiumTrialUntil(until)
   }
 
+  // Orientation modal — mise en sourdine (annexe, ne doit plus interrompre l'accès au jardin).
   useEffect(() => {
     if (!user?.id) return
     const key = `mji_orientation_${user.id}`
-    if (localStorage.getItem(key) === '1') {
-      localStorage.setItem(key, 'seen')
-      setShowOrientationModal(true)
-    }
+    if (localStorage.getItem(key) === '1') localStorage.setItem(key, 'seen')
   }, [user?.id])
 
   const isFirstToday = useMemo(() => {
@@ -2161,22 +2308,15 @@ export default function DashboardPage() {
     return false
   }, [user?.id])
 
-  // ── WelcomeScreen — affiché à chaque connexion ──
+  // ── Accès direct : "Quel est ton besoin en ce moment ?" à chaque connexion ──
+  // WelcomeScreen / VideoIntro mis en sourdine (annexe) : plus aucune slide avant le jardin.
   useEffect(() => {
     if (!user?.id || isStripeReturn) return
     const createdAt = user.created_at ? new Date(user.created_at) : null
     const isJustCreated = createdAt && (Date.now() - createdAt.getTime()) < 10 * 60 * 1000
     setIsNewUser(!!isJustCreated)
-    setWelcomeReady(true)
-    setShowWelcome(true)
-    // Pré-sélectionne la vidéo et marque immédiatement comme vue (évite les répétitions si l'utilisateur recharge avant de cliquer)
-    const today = new Date().toISOString().split('T')[0]
-    const key   = `video_intro_last_seen__${user.id}`
-    if (localStorage.getItem(key) !== today && ambiance !== 'zen') {
-      localStorage.setItem(key, today)
-      setIntroVideo(pickVideo(user.id))
-    }
-  }, [user?.id, ambiance])
+    setShowNeedModal(true)
+  }, [user?.id])
 
   // Si l'ambiance bascule sur zen après que introVideo a été défini (race Supabase), on annule
   useEffect(() => {
@@ -2317,12 +2457,6 @@ export default function DashboardPage() {
     window.addEventListener('ritualCompleteSnapshot', handler)
     return () => window.removeEventListener('ritualCompleteSnapshot', handler)
   }, [])
-
-  useEffect(() => {
-    if (!ritualCelebration) return
-    const t = setTimeout(() => setRitualCelebration(null), 5000)
-    return () => clearTimeout(t)
-  }, [ritualCelebration])
 
   // window.openAccessModal (utilisé dans les sous-composants)
   useEffect(() => {
@@ -2533,7 +2667,7 @@ export default function DashboardPage() {
       {showNeedModal && (
         <NeedSelectionModal
           onSelectNeed={need => { setShowNeedModal(false); setSelectedNeed(need); ritualCompleteCalledRef.current = false; setShowRitualSuggestion(true) }}
-          onClose={() => setShowNeedModal(false)}
+          onClose={() => signOut()}
           bilanDegradation={bilanDegradation}
           userId={user?.id}
           plantId={todayPlant?.id}
@@ -2541,7 +2675,8 @@ export default function DashboardPage() {
           onHealthUpdate={() => reloadPlant()}
           isPremium={isPremium || isFondateurGraine}
           onUpgrade={() => { setShowNeedModal(false); window.openAccessModal?.() }}
-          onSeeFlower={() => { setShowNeedModal(false); setPostRitualSlide(true); setOpenModalId('jardin') }}
+          onSeeFlower={() => setShowNeedModal(false)}
+          onOpenProfile={() => setShowProfileModal(true)}
         />
       )}
       {showRitualSuggestion && selectedNeed && (
@@ -2551,9 +2686,10 @@ export default function DashboardPage() {
   setShowRitualSuggestion(false)
   setShowNeedModal(true)
 }}
-  onClose={() => { 
+  onClose={() => {
     setShowRitualSuggestion(false)
-    setSelectedNeed(null) 
+    setSelectedNeed(null)
+    setShowNeedModal(true)
   }}
   onCompleteRitual={async (needId, isLiked, delta, mood) => {
   if (ritualCompleteCalledRef.current) return
@@ -2582,10 +2718,10 @@ export default function DashboardPage() {
   usePlantStore.getState().setTodayPlant(updatedPlant)
   window.dispatchEvent(new CustomEvent('plantHealthPatched', { detail: { health: newHealth, plantId: snapshot.id } }))
   const snapDetail = { before: snapshot.health ?? 5, after: newHealth, delta, mood: mood ?? null }
-  // Pas de dispatch ritualCompleteSnapshot ici : PhaseResult (écran suivant de
-  // RitualSuggestionModal) affiche déjà "+delta de vitalité" — le popup global
-  // ferait doublon avec ce message. On garde juste la trace pour l'anim "Ma Fleur".
   try { sessionStorage.setItem('mji_post_ritual', JSON.stringify({ ...snapDetail, ts: Date.now() })) } catch {}
+  // Déclenche la popup "Ta fleur grandit" (RitualCelebrationModal, niveau racine) dès la
+  // validation — le rituel se referme directement, sans écran "voir ma fleur" intermédiaire.
+  window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: snapDetail }))
   try {
     await supabase.from('network_activity').insert({ user_id: user?.id, action_type: 'ritual_complete' })
     if (snapshot.id) {
@@ -2598,8 +2734,11 @@ export default function DashboardPage() {
   onSeeFlower={() => {
     setShowRitualSuggestion(false)
     setSelectedNeed(null)
-    setPostRitualSlide(true)
-    setOpenModalId('jardin')
+    setShowNeedModal(true)
+    try {
+      const snap = JSON.parse(sessionStorage.getItem('mji_post_ritual') || 'null')
+      if (snap) window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: snap.before, after: snap.after, delta: snap.delta } }))
+    } catch {}
   }}
   plantHealth={todayPlant?.health ?? 5}
   plantId={todayPlant?.id}
@@ -2678,7 +2817,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => setShowPremiumModal(false)} />}
+      {showPremiumModal && <PremiumModal onSuccess={() => { setShowPremiumModal(false); clearProfileCache(user?.id) }} onClose={() => { setShowPremiumModal(false); setShowNeedModal(true) }} />}
       {showPremiumTeaser && (
         <PremiumTeaserModal
           onDiscover={() => { setShowPremiumTeaser(false); setShowPremiumModal(true); track('premium_teaser_cta', {}, active, 'monetization') }}
@@ -2691,6 +2830,11 @@ export default function DashboardPage() {
           after={ritualCelebration.after}
           delta={ritualCelebration.delta}
           gardenSettings={gardenSettings}
+          streak={plantStats?.streak ?? 0}
+          userLevel={userLevel}
+          isAdmin={isAdmin}
+          profile={profile}
+          onSaveGardenSettings={saveGardenSettings}
           onClose={() => setRitualCelebration(null)}
         />
       )}
@@ -2774,39 +2918,6 @@ export default function DashboardPage() {
                 <div style={{ fontSize:14, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>{name ?? 'Jardinier·ère'}</div>
                 <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
               </div>
-              {/* Badge niveau + barre */}
-              {(() => {
-                const lvl = userLevel
-                const isMax = lvl >= 3
-                const cfg = lvl === 3
-                  ? { label:'NIVEAU 3', bg:'rgba(200,137,74,0.14)', border:'rgba(200,137,74,0.38)', color:'#a06030' }
-                  : lvl === 2
-                  ? { label:'NIVEAU 2', bg:'rgba(90,154,40,0.12)', border:'rgba(90,154,40,0.35)', color:'#4a8820' }
-                  : { label:'NIVEAU 1', bg:'rgba(30,20,8,0.06)', border:'rgba(30,20,8,0.14)', color:'rgba(30,20,8,0.40)' }
-                const base = (lvl - 1) * 100
-                const pct = userActionCount !== null ? Math.min(100, Math.max(2, Math.round(((userActionCount - base) / 100) * 100))) : 0
-                const remaining = userActionCount !== null ? (lvl * 100) - userActionCount : null
-                return (
-                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:7, flexShrink:0 }}>
-                    <span style={{ fontSize:15, padding:'6px 16px', borderRadius:20, background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.color, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.10em' }}>{cfg.label}</span>
-                    {!isMax && (
-                      <div style={{ width:120 }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-                          <span style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(30,20,8,.40)' }}>Niv. {lvl}</span>
-                          <span style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(90,154,40,.70)' }}>Niv. {lvl+1}</span>
-                        </div>
-                        <div style={{ height:7, borderRadius:4, background:'rgba(90,154,40,0.12)', overflow:'hidden', marginBottom:5 }}>
-                          <div style={{ height:'100%', width:`${pct}%`, borderRadius:4, background:'linear-gradient(90deg,#78c040,#4a8820)', transition:'width .6s ease' }} />
-                        </div>
-                        <button onClick={() => setShowLevelInfo(true)} style={{ width:'100%', padding:'3px 8px', background:'rgba(140,100,200,0.15)', border:'1px solid rgba(140,100,200,0.35)', borderRadius:20, fontSize:10, color:'rgba(120,80,180,0.9)', fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:600, letterSpacing:'.04em' }}>
-                          En savoir +
-                        </button>
-                      </div>
-                    )}
-                    {isMax && <div style={{ fontSize:11, color:'#a06030', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em' }}>Maximum ✦</div>}
-                  </div>
-                )
-              })()}
             </div>
 
             {/* Abonnement — masqué pour les pros sauf admin (géré dans Compte Pro) */}
@@ -2901,31 +3012,6 @@ export default function DashboardPage() {
                   <div style={{ fontSize:10, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif" }}>Votre avis sur l'application</div>
                 </div>
               </div>
-              <div onClick={() => { setShowProfileModal(false); setOpenModalId('cercle') }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(138,106,154,.06)', borderRadius:12, border:'1px solid rgba(138,106,154,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(138,106,154,.14)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(138,106,154,.06)'}>
-                <span style={{ fontSize:16 }}>🌸</span>
-                <div>
-                  <div style={{ fontSize:12, fontWeight:500, color:'#6a4a7a', fontFamily:"'Jost',sans-serif" }}>Le Cercle des Fondateurs</div>
-                  <div style={{ fontSize:10, color:'rgba(106,74,122,.48)', fontFamily:"'Jost',sans-serif" }}>Ceux qui nous portent</div>
-                </div>
-              </div>
-              {isPro && (
-                <div onClick={() => { setShowProfileModal(false); setShowProProfileModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))', borderRadius:12, border:'1px solid rgba(122,64,16,.25)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(122,64,16,.14)'} onMouseLeave={e=>e.currentTarget.style.background='linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))'}>
-                  <span style={{ fontSize:16 }}>✦</span>
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:600, color:'#7a4010', fontFamily:"'Jost',sans-serif" }}>Compte Pro</div>
-                    <div style={{ fontSize:10, color:'rgba(122,64,16,.55)', fontFamily:"'Jost',sans-serif" }}>Ateliers, outils, identifiant partenaire</div>
-                  </div>
-                </div>
-              )}
-              {!isPro && (
-                <div onClick={() => { setShowProfileModal(false); setShowUpgradeToProModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.45)', borderRadius:12, border:'1px solid rgba(200,190,180,.22)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.75)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.45)'}>
-                  <span style={{ fontSize:15, opacity:.6 }}>🌿</span>
-                  <div>
-                    <div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Espace professionnel</div>
-                    <div style={{ fontSize:10, color:'rgba(30,20,8,.35)', fontFamily:"'Jost',sans-serif" }}>Ateliers, outils, partenariats</div>
-                  </div>
-                </div>
-              )}
               <div onClick={() => { setShowProfileModal(false); setProfileView('main'); signOut() }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
                 <span style={{ fontSize:16 }}>🚪</span>
                 <div><div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Se déconnecter</div></div>
@@ -3024,7 +3110,7 @@ export default function DashboardPage() {
       {openModalId && (
         <ScreenModal
           slideId={openModalId}
-          slides={openModalId === 'cercle' ? SLIDES_CONFIG : visibleSlides}
+          slides={SLIDES_CONFIG}
           screenProps={screenProps}
           bilanDoneToday={bilanDoneToday}
           bilanHistory={bilanHistory}
@@ -3045,6 +3131,15 @@ export default function DashboardPage() {
   if (!isMobile) {
     const slide  = visibleSlides[slideIdx]
     const isLast = slideIdx === visibleSlides.length - 1
+
+    if (!slide) {
+      return (
+        <>
+          {commonOverlays}
+          <div style={{ position:'fixed', inset:0, zIndex:10, background:'linear-gradient(160deg,#f8f0ec,#ede5de)' }} />
+        </>
+      )
+    }
 
     return (
       <>

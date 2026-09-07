@@ -6191,4 +6191,4 @@ function ScreenMonJardin({ userId, openCreate, onCreateClose, lumens, awardLumen
   )
 }
 
-export { ScreenMonJardin, DailyQuizModal, BoiteAGraines, GardenSettingsModal, PlantSVG, DEFAULT_GARDEN_SETTINGS }
+export { ScreenMonJardin, DailyQuizModal, BoiteAGraines, GardenSettingsModal, FleurShareModal, PlantSVG, DEFAULT_GARDEN_SETTINGS }

@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { WOFAudioPlayer } from '../pages/WeekOneFlow'
-import { PhaseResult } from './RitualSuggestionModal'
 import RitualCompletion from './RitualCompletion'
 import { supabase } from '../core/supabaseClient'
 import { completeRitualHealth } from '../utils/completeRitualHealth'
@@ -102,13 +101,15 @@ export default function AudioRitualsModal({ onClose, userId, plantId, plantHealt
       const before = plantHealth ?? 5
       const zoneId = NEED_TO_ZONE[activeDay?.needId] ?? 'roots'
       const after  = await completeRitualHealth({ plantId, zoneId, onHealthUpdate, userId })
-      setHealthData({ before, after: after ?? before })
       if (after != null && userId) {
         try {
           await supabase.from('rituals').insert({ user_id: userId, plant_id: plantId, name: activeDay?.title ?? 'Rituel audio', zone: ZONE_LABELS[zoneId] ?? zoneId, health_delta: after - before })
         } catch (e) { console.error('[audioRitual] log failed:', e) }
       }
-      setPhase('result')
+      // completeRitualHealth a déjà déclenché la popup "Ta fleur grandit" (RitualCelebrationModal,
+      // niveau racine) — l'écran PhaseResult avec son propre bouton "voir ma fleur" ferait doublon.
+      // On referme directement : la croix de la popup fleur retombe alors sur "Quel est ton besoin".
+      onClose()
     }
   }
 
@@ -192,32 +193,19 @@ export default function AudioRitualsModal({ onClose, userId, plantId, plantHealt
             />
           )}
 
-          {/* ── Résultat : RitualCompletion (onboarding) ou PhaseResult (dashboard) ── */}
-          {phase === 'result' && syntheticNeed && healthData && (
-            onboarding ? (
-              <RitualCompletion
-                need={syntheticNeed}
-                beforeHealth={healthData.before}
-                displayHealth={healthData.after}
-                vitalityGain={vitalityGain ?? 5}
-                vitalityTotal={healthData.after}
-                isMobile={false}
-                onContinue={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); onSeeFlower?.(); onClose() }}
-              />
-            ) : (
-              <PhaseResult
-                need={syntheticNeed}
-                isMobile={true}
-                healthBefore={healthData.before}
-                healthAfter={healthData.after}
-                // completeRitualHealth (dans handleAudioDone) a déjà dispatché
-                // ritualCompleteSnapshot + plantCelebrate — les re-dispatcher ici
-                // faisait apparaître le popup "Ta fleur grandit" deux fois (avant
-                // et après cet écran) pour un seul rituel complété.
-                onSeeFlower={() => (onSeeFlower ?? onClose)()}
-                onClose={() => onClose()}
-              />
-            )
+          {/* ── Résultat : RitualCompletion — onboarding uniquement. En mode dashboard,
+               handleAudioDone referme directement (cf. plus haut) : la popup "Ta fleur
+               grandit" (RitualCelebrationModal) fait déjà office d'écran de résultat. ── */}
+          {phase === 'result' && onboarding && syntheticNeed && healthData && (
+            <RitualCompletion
+              need={syntheticNeed}
+              beforeHealth={healthData.before}
+              displayHealth={healthData.after}
+              vitalityGain={vitalityGain ?? 5}
+              vitalityTotal={healthData.after}
+              isMobile={false}
+              onContinue={() => { window.dispatchEvent(new CustomEvent('ritualCompleteSnapshot', { detail: { before: healthData.before, after: healthData.after } })); onSeeFlower?.(); onClose() }}
+            />
           )}
 
           {/* ── Liste des 5 cards ── */}

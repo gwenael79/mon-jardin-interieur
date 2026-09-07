@@ -130,22 +130,8 @@ export default function App() {
     return () => { delete window.openAccessModal }
   }, [])
 
-  // ── Popup avis aléatoire — 1 fois par mois ─────────────────────────────────
-  useEffect(() => {
-    if (!user?.id) return
-    if (ADMIN_IDS.includes(user.id)) return   // ← décommenter en prod
-    if (screen === 'loading' || screen === 'auth' || screen.startsWith('admin')) return
-    const monthKey = `mji_review_shown_${new Date().toISOString().slice(0, 7)}`
-    if (localStorage.getItem(monthKey)) return
-     if (Math.random() > 0.5) return           // ← décommenter en prod
-    const delay = Math.floor(Math.random() * 75000) + 45000  // ← décommenter en prod
-    
-    const timer = setTimeout(() => {
-      setShowReviewPopup(true)
-      localStorage.setItem(monthKey, '1')
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [user?.id, screen])
+  // ── Popup avis aléatoire — mis en sourdine (annexe, ne doit plus interrompre) ──
+  useEffect(() => {}, [user?.id, screen])
 
   useEffect(() => {
     if (!ADMIN_IDS.includes(user?.id)) return
@@ -317,10 +303,14 @@ export default function App() {
               setScreen('dashboard'); return
             }
 
+            // Accès direct : plus de fleur / ambiance / parcours 7 jours imposés au démarrage.
             await activateFree()
             await Promise.all([
-              supabase.from('users').update({ onboarded: true, plan: 'free' }).eq('id', user.id),
-              supabase.from('profiles').update({ onboarded: true, plan: 'free' }).eq('id', user.id),
+              supabase.from('users').update({ onboarded: true, onboarding_completed: true, plan: 'free' }).eq('id', user.id),
+              supabase.from('profiles').update({
+                onboarded: true, plan: 'free',
+                week_one_data: { completedDays: [1, 2, 3, 4, 5, 6, 7], path: 'rituals' },
+              }).eq('id', user.id),
             ])
             await refresh()
           } catch (e) { console.warn('[auto-activate]', e) }
@@ -328,7 +318,7 @@ export default function App() {
             setProDisplayName(user.user_metadata?.display_name?.split(' ')[0] || '')
             setScreen('pro_welcome'); return
           }
-          setScreen('flower'); return
+          setScreen('dashboard'); return
         }
 
         // VIP check — avant les vérifications onboarding/weekone
@@ -358,17 +348,15 @@ export default function App() {
           }
         }
 
-        // Si l'onboarding n'est pas terminé → retourner à l'onboarding
+        // Accès direct au jardin : plus de blocage sur onboarding/parcours 7 jours non terminés.
         if (!userData?.onboarding_completed) {
-          setScreen('onboarding'); return
+          supabase.from('users').update({ onboarding_completed: true }).eq('id', user.id).then(() => {})
         }
 
         const { data: profileData } = await supabase
           .from('profiles').select('week_one_data').eq('id', user.id).maybeSingle()
         const completedDays = profileData?.week_one_data?.completedDays ?? []
         setWeekOneCompletedDays(completedDays)
-        // week_one_completed = filet de sécurité si la sauvegarde du j7 a foiré
-        if (completedDays.length < 7 && !userData?.week_one_completed) { setScreen('weekone'); return }
 
         setScreen('dashboard')
       } catch (e) {

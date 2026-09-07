@@ -165,6 +165,14 @@ const CSS = `
   .nm-recommended {
     animation: nm_cardIn .42s ease both !important;
   }
+  @keyframes nm_premium_glow {
+    0%, 100% { opacity: .75; text-shadow: 0 0 0 rgba(125,67,104,0); }
+    50%       { opacity: 1;   text-shadow: 0 0 10px rgba(125,67,104,.55); }
+  }
+  .nm-premium-word {
+    display: inline-block;
+    animation: nm_premium_glow 1.8s ease-in-out infinite;
+  }
 `
 
 // ─── Card ────────────────────────────────────────────────────────────────────
@@ -549,7 +557,7 @@ function RitualByTimeModal({ onClose, userId, plantId, onHealthUpdate }) {
 
 // ─── Modal principal ─────────────────────────────────────────────────────────
 
-function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }) {
+function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain, onOpenProfile }) {
   const [showByTime,  setShowByTime]  = useState(false)
   const [showAudio,   setShowAudio]   = useState(false)
   const [showFinder,  setShowFinder]  = useState(false)
@@ -592,15 +600,26 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
           }}/>
         ))}
       </div>
-      {/* Bouton fermer — masqué quand un sous-modal plein écran est ouvert (sinon il reste visible au-dessus, cf. contexte d'empilement) */}
+      {/* Bouton fermer + profil — masqués quand un sous-modal plein écran est ouvert (sinon ils restent visibles au-dessus, cf. contexte d'empilement) */}
       {!showByTime && !showAudio && !showFinder && (
-        <button onClick={onClose} style={{
-          position:'absolute', top:16, right:16, zIndex:10,
-          width:32, height:32, borderRadius:'50%',
-          background:'rgba(255,255,255,0.50)', border:'1px solid rgba(180,160,200,.30)',
-          backdropFilter:'blur(8px)', cursor:'pointer', fontSize:13, color:'rgba(50,35,70,.45)',
-          display:'flex', alignItems:'center', justifyContent:'center',
-        }}>✕</button>
+        <>
+          <button onClick={onClose} style={{
+            position:'absolute', top:16, right:16, zIndex:10,
+            width:32, height:32, borderRadius:'50%',
+            background:'rgba(255,255,255,0.50)', border:'1px solid rgba(180,160,200,.30)',
+            backdropFilter:'blur(8px)', cursor:'pointer', fontSize:13, color:'rgba(50,35,70,.45)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>✕</button>
+          {onOpenProfile && (
+            <button onClick={() => onOpenProfile?.()} title="Profil & paramètres" style={{
+              position:'absolute', top:62, right:16, zIndex:10,
+              width:48, height:48, borderRadius:'50%',
+              background:'rgba(255,255,255,0.50)', border:'1px solid rgba(180,160,200,.30)',
+              backdropFilter:'blur(8px)', cursor:'pointer', fontSize:24, color:'rgba(50,35,70,.55)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+            }}>⚙️</button>
+          )}
+        </>
       )}
       {/* Contenu */}
       <div style={{
@@ -631,6 +650,25 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
             fontWeight:600, color:'#1a1008',
             margin:0, letterSpacing:'.01em',
           }}>Un seul choix suffit pour commencer</p>
+          {!isPremium && (
+            <p
+              onClick={() => onUpgrade?.()}
+              style={{
+                fontFamily:"'Jost',sans-serif",
+                fontSize: isMobile ? 12.5 : 14,
+                fontWeight:500, color:'#7d4368',
+                margin: isMobile ? '10px auto 0' : '12px auto 0',
+                letterSpacing:'.01em', cursor:'pointer',
+                display:'inline-block',
+                padding: isMobile ? '8px 14px' : '9px 18px',
+                borderRadius: 100,
+                background:'rgba(125,67,104,0.10)',
+                border:'1px solid rgba(125,67,104,0.25)',
+              }}
+            >
+              Vous êtes en accès limité — accédez à l'ensemble avec l'<span className="nm-premium-word">accès Premium</span>
+            </p>
+          )}
         </div>
 
         {/* "Trouve tes rituels" — protocole personnalisé */}
@@ -843,7 +881,7 @@ function NeedModalInner({ onSelectNeed, onClose, isMobile, recommendedIds = [], 
   )
 }
 
-export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }) {
+export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegradation, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain, onOpenProfile }) {
   const isMobile = useIsMobile()
   const bgStyle = {
     backgroundColor: '#f7f0e6',
@@ -853,7 +891,7 @@ export default function NeedSelectionModal({ onSelectNeed, onClose, bilanDegrada
     backgroundRepeat: 'no-repeat',
   }
   const recommendedIds = getRecommendedNeeds(bilanDegradation)
-  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain }
+  const shared = { onSelectNeed, onClose, recommendedIds, userId, plantId, plantHealth, onHealthUpdate, appUnlocked, onEnterApp, onboarding, isPremium, onUpgrade, onAudio, onSeeFlower, onCompleteRitual, vitalityTotal, vitalityGain, onOpenProfile }
 
   if (!isMobile) return (
     <>
