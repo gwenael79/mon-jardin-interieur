@@ -6139,13 +6139,12 @@ function BonusButton({ color = '#c8a0b0', zoneName = 'racines', onClick }) {
         marginTop: 20,
         padding: '16px 24px',
         borderRadius: 18,
-        border: `1.5px solid ${color}55`,
+        border: `1.5px solid ${color}70`,
         background: `linear-gradient(135deg, ${color}22, ${color}12)`,
         cursor: 'pointer',
         textAlign: 'center',
         transition: 'all 0.22s ease',
         boxShadow: `0 4px 18px ${color}28`,
-        border: `1.5px solid ${color}70`,
       }}
       onMouseEnter={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}35, ${color}22)`; e.currentTarget.style.boxShadow = `0 6px 24px ${color}40` }}
       onMouseLeave={e => { e.currentTarget.style.background = `linear-gradient(135deg, ${color}22, ${color}12)`; e.currentTarget.style.boxShadow = `0 4px 18px ${color}28` }}
