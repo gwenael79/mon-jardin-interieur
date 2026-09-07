@@ -2,8 +2,9 @@
 import { useEffect, useCallback } from 'react'
 import { usePlantStore }   from '../store/plant.store'
 import { plantService }     from '../services/plant.service'
-import { ritualService }    from '../services/ritual.service'
+import { ritualService, RITUAL_CATALOG } from '../services/ritual.service'
 import { useCircle } from '../hooks/useCircle'
+import { supabase } from '../core/supabaseClient'
 
 // Module-level : évite de vider le store quand le MÊME userId monte dans un nouveau composant
 let _lastLoadedUserId = null
@@ -48,7 +49,6 @@ export function usePlant(userId) {
 
       if (todayIsDefault) {
         const todayKey = new Date().toISOString().slice(0, 10)
-        const { supabase } = await import('../core/supabaseClient')
 
         const { data: lastPlant } = await supabase
           .from('plants')
@@ -103,7 +103,7 @@ export function usePlant(userId) {
   const completeRitual = useCallback(async (ritualId) => {
     if (!todayPlant) return
 
-    const catalog = (await import('../services/ritual.service')).RITUAL_CATALOG.find(r => r.id === ritualId)
+    const catalog = RITUAL_CATALOG.find(r => r.id === ritualId)
     if (!catalog) return
 
     const previous = optimisticApplyDelta(catalog.delta, catalog.zone)

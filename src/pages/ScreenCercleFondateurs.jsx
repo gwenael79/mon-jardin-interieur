@@ -18,13 +18,13 @@ function useIsMobile() {
 }
 
 // Scan automatique de /public/fondateurs/ — images état vide
-const _fleurGlob = import.meta.glob('/public/fondateurs/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' })
+const _fleurGlob = import.meta.glob('/public/fondateurs/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })
 const FLEUR_IMAGES = Object.entries(_fleurGlob)
   .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
   .map(([key, url]) => (typeof url === 'string' && url.startsWith('/public') ? url.replace('/public', '') : url))
 
 // Scan automatique de /public/fondateurs/exemple/ — choix de fleur pour le client
-const _exempleGlob = import.meta.glob('/public/fondateurs/exemple/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' })
+const _exempleGlob = import.meta.glob('/public/fondateurs/exemple/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })
 const FLEUR_CHOIX = Object.entries(_exempleGlob)
   .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
   .map(([key, url]) => (typeof url === 'string' && url.startsWith('/public') ? url.replace('/public', '') : url))

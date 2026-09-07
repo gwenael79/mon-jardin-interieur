@@ -1702,7 +1702,7 @@ const AVANTAGES_VIP = {
 }
 
 // Scan fleurs exemple (même glob que ScreenCercleFondateurs)
-const _vipFleurGlob = import.meta.glob('/public/fondateurs/exemple/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' })
+const _vipFleurGlob = import.meta.glob('/public/fondateurs/exemple/*.{png,jpg,jpeg,webp}', { eager: true, query: '?url', import: 'default' })
 const VIP_FLEUR_CHOIX = Object.entries(_vipFleurGlob)
   .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
   .map(([, url]) => (typeof url === 'string' && url.startsWith('/public') ? url.replace('/public', '') : url))
