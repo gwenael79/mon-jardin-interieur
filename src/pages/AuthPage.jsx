@@ -999,7 +999,7 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
               <div className="auth-subtitle-wrap">
                 <div className="auth-sep"/>
                 <p className="auth-subtitle">
-                  Un espace doux pour comprendre,<br/>apaiser et faire évoluer ce que vous ressentez.
+                  Un espace pour vous, pour apaiser<br/>et faire évoluer naturellement ce que vous ressentez.
                 </p>
               </div>
             </div>
