@@ -1130,7 +1130,7 @@ function RitualCelebrationModal({ before, after, delta, gardenSettings, streak =
   )
 }
 
-function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCardSeen, isPro, isAdmin, userId, onBack, onOpenFleur, onUpgrade, onTrialInfo, onNameSaved }) {
+function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCardSeen, isPro, isAdmin, devMode, userId, onBack, onOpenFleur, onUpgrade, onTrialInfo, onNameSaved }) {
   const [portalLoading, setPortalLoading] = useState(false)
 
   async function openPortal() {
@@ -1310,6 +1310,103 @@ function SettingsPanel({ name, email, isPremium, isTrial, trialDaysLeft, trialCa
           <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:6 }}>Email</div>
           <div style={{ fontSize:15, color:'rgba(30,20,8,.72)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
         </div>
+
+        {/* ── Ma fleur + Ambiance — masqués par défaut, visibles quand le mode développeur est activé ── */}
+        {devMode && (
+          <>
+            {/* Ma fleur — picker inline */}
+            {!showFlower ? (
+              <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+                <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Mon identité florale</div>
+                {currentFlower ? (
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <div style={{ fontSize:16, color:'#1a1208', fontFamily:"'Cormorant Garamond',serif", fontStyle:'italic' }}>
+                      🌸 Vous avez choisi · <strong style={{ fontStyle:'normal' }}>{currentFlower}</strong>
+                    </div>
+                    <div onClick={() => { setShowFlower(true); setSelFlower(currentFlower) }} style={{ padding:'6px 14px', borderRadius:100, border:'1px solid rgba(200,160,150,.30)', background:'transparent', fontSize:12, color:'rgba(30,20,8,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif", whiteSpace:'nowrap' }}>
+                      Modifier
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <div style={{ fontSize:14, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", fontStyle:'italic' }}>Aucune fleur choisie</div>
+                    <div onClick={() => setShowFlower(true)} style={{ padding:'6px 14px', borderRadius:100, border:'1px solid rgba(200,160,150,.30)', background:'transparent', fontSize:12, color:'rgba(30,20,8,.55)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>
+                      Choisir
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.25)' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                  <div style={{ fontSize:12, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif" }}>🌸 Choisir ma fleur</div>
+                  <div onClick={() => { setShowFlower(false); setSelFlower(null) }} style={{ fontSize:12, color:'rgba(30,20,8,.38)', cursor:'pointer', fontFamily:"'Jost',sans-serif" }}>Annuler</div>
+                </div>
+                {selFlower && (
+                  <div style={{ textAlign:'center', fontSize:13, fontFamily:"'Cormorant Garamond',serif", color:'rgba(30,20,8,.55)', marginBottom:10 }}>
+                    🌸 Votre fleur · <span style={{ color:'#1a1208', fontWeight:500 }}>{selFlower}</span>
+                  </div>
+                )}
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, maxHeight:180, overflowY:'auto', marginBottom:10 }}>
+                  {FLOWER_NAMES_LIST.map(n => (
+                    <div key={n} onClick={() => setSelFlower(n)} style={{ padding:'9px 4px', borderRadius:16, fontSize:12, textAlign:'center', cursor:'pointer', fontFamily:"'Jost',sans-serif", border: selFlower===n ? '1px solid rgba(90,154,40,.5)' : '1px solid rgba(0,0,0,.10)', background: selFlower===n ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.03)', color: selFlower===n ? '#3a7a18' : 'rgba(30,20,8,.55)', transition:'all .15s' }}>{n}</div>
+                  ))}
+                </div>
+                <button
+                  disabled={!selFlower || savingFlower}
+                  onClick={async () => {
+                    if (!selFlower || savingFlower) return
+                    setSavingFlower(true)
+                    try {
+                      await supabase.from('users').update({ flower_name: selFlower }).eq('id', userId)
+                      setCurrentFlower(selFlower)
+                      setSavedFlower(true)
+                      onNameSaved?.()
+                      setTimeout(() => { setShowFlower(false); setSelFlower(null); setSavedFlower(false) }, 1200)
+                    } catch(e) { console.warn(e) }
+                    setSavingFlower(false)
+                  }}
+                  style={{ width:'100%', padding:'11px', borderRadius:100, border:'none', background: savedFlower ? 'rgba(122,170,80,.85)' : 'linear-gradient(135deg,#c8a0b0,#a07888)', color:'#fff', fontSize:13, fontFamily:"'Jost',sans-serif", cursor: selFlower ? 'pointer' : 'default', opacity: selFlower ? 1 : 0.4, transition:'all .2s' }}
+                >
+                  {savedFlower ? '✓ Sauvegardé !' : savingFlower ? '…' : selFlower ? `Choisir · ${selFlower}` : 'Sélectionnez un nom'}
+                </button>
+              </div>
+            )}
+
+            {/* ── Ambiance ── */}
+            <div style={{ padding:'12px 16px', background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)' }}>
+              <div style={{ fontSize:11, letterSpacing:'.10em', textTransform:'uppercase', color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif", marginBottom:8 }}>Ambiance</div>
+              <div style={{ display:'flex', gap:8 }}>
+                <div
+                  onClick={() => handleSetAmbiance('feerique')}
+                  style={{
+                    flex:1, padding:'10px 0', borderRadius:100, textAlign:'center',
+                    border: ambiance === 'feerique' ? '1px solid rgba(200,160,150,.5)' : '1px solid rgba(0,0,0,.10)',
+                    background: ambiance === 'feerique' ? 'rgba(200,160,150,.15)' : 'rgba(0,0,0,.03)',
+                    color: ambiance === 'feerique' ? '#a07888' : 'rgba(30,20,8,.55)',
+                    fontWeight: ambiance === 'feerique' ? 600 : 400,
+                    fontSize:13, fontFamily:"'Jost',sans-serif", cursor: savingAmbiance ? 'default' : 'pointer', transition:'all .15s',
+                  }}
+                >
+                  ✨ Féérique
+                </div>
+                <div
+                  onClick={() => handleSetAmbiance('zen')}
+                  style={{
+                    flex:1, padding:'10px 0', borderRadius:100, textAlign:'center',
+                    border: ambiance === 'zen' ? '1px solid rgba(90,154,40,.5)' : '1px solid rgba(0,0,0,.10)',
+                    background: ambiance === 'zen' ? 'rgba(90,154,40,.10)' : 'rgba(0,0,0,.03)',
+                    color: ambiance === 'zen' ? '#3a7a18' : 'rgba(30,20,8,.55)',
+                    fontWeight: ambiance === 'zen' ? 600 : 400,
+                    fontSize:13, fontFamily:"'Jost',sans-serif", cursor: savingAmbiance ? 'default' : 'pointer', transition:'all .15s',
+                  }}
+                >
+                  🌿 Zen
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* ── Notifications ── */}
         <div style={{ background:'rgba(255,255,255,.60)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', overflow:'hidden' }}>
@@ -2110,6 +2207,22 @@ export default function DashboardPage() {
   const [isPro,               setIsPro]               = useState(false)
   const [premiumTrialUntil,   setPremiumTrialUntil]   = useState(null)
   const isAdmin = ADMIN_IDS.includes(user?.id)
+  // Mode développeur : bascule perso (localStorage), activable depuis le profil, réservée à l'admin.
+  // Ne montre le contenu masqué que quand l'admin l'active explicitement — pas en permanence.
+  const [devMode, setDevMode] = useState(() => { try { return localStorage.getItem('mji_dev_mode') === '1' } catch { return false } })
+  const devModeActive = isAdmin && devMode
+  const toggleDevMode = () => {
+    setDevMode(prev => {
+      const next = !prev
+      try { localStorage.setItem('mji_dev_mode', next ? '1' : '0') } catch {}
+      return next
+    })
+    // Repart d'un écran propre : referme profil + modal besoin, laisse l'effet de connexion
+    // ré-afficher le bon accueil (WelcomeScreen en dev, "Quel est ton besoin" sinon).
+    setShowProfileModal(false)
+    setShowNeedModal(false)
+    setShowWelcome(false)
+  }
 
   const isPaidPremium = isPro || (
     (profile?.plan === 'premium' || !!profile?.premium_until)
@@ -2248,7 +2361,8 @@ export default function DashboardPage() {
 
   // ── Slides visibles selon la plage horaire ──
   const visibleSlides = useMemo(() => {
-    const visible = SLIDES_CONFIG.filter(s => !s.hiddenFromCarousel && (!s.devOnly || import.meta.env.DEV))
+    // Mode développeur activé : voit tous les slides normalement masqués au reste des comptes.
+    const visible = SLIDES_CONFIG.filter(s => (devModeActive || !s.hiddenFromCarousel) && (!s.devOnly || import.meta.env.DEV))
     const slot = getTimeSlot()
     if (slot === 'morning') return visible
     const withoutBilan = visible.filter(s => s.id !== 'bilan')
@@ -2258,7 +2372,7 @@ export default function DashboardPage() {
     if (!boite) return withoutBilan
     const rest  = withoutBilan.filter(s => s.id !== 'boite_graine')
     return [boite, ...rest]
-  }, [])
+  }, [devModeActive])
 
   // ── Stripe return ──
   const isStripeReturn = useMemo(() => {
@@ -2310,13 +2424,27 @@ export default function DashboardPage() {
 
   // ── Accès direct : "Quel est ton besoin en ce moment ?" à chaque connexion ──
   // WelcomeScreen / VideoIntro mis en sourdine (annexe) : plus aucune slide avant le jardin.
+  // Mode développeur activé : retrouve l'ancien écran d'accueil (WelcomeScreen → vidéo d'intro
+  // → carrousel de slides), pour comparer avec l'expérience simplifiée.
   useEffect(() => {
     if (!user?.id || isStripeReturn) return
     const createdAt = user.created_at ? new Date(user.created_at) : null
     const isJustCreated = createdAt && (Date.now() - createdAt.getTime()) < 10 * 60 * 1000
     setIsNewUser(!!isJustCreated)
+
+    if (devModeActive) {
+      setWelcomeReady(true)
+      setShowWelcome(true)
+      const today = new Date().toISOString().split('T')[0]
+      const key   = `video_intro_last_seen__${user.id}`
+      if (localStorage.getItem(key) !== today && ambiance !== 'zen') {
+        localStorage.setItem(key, today)
+        setIntroVideo(pickVideo(user.id))
+      }
+      return
+    }
     setShowNeedModal(true)
-  }, [user?.id])
+  }, [user?.id, devModeActive, ambiance])
 
   // Si l'ambiance bascule sur zen après que introVideo a été défini (race Supabase), on annule
   useEffect(() => {
@@ -2911,6 +3039,23 @@ export default function DashboardPage() {
             {/* Titre */}
             <div style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:22, fontWeight:400, color:'#1a1208', marginBottom:20 }}>Mon profil</div>
 
+            {/* Mode développeur — réservé à l'admin. Bascule tout ce qui est masqué au reste des
+                comptes (slides, niveau, cercle/pro, fleur, ambiance) visible ou non, à la demande. */}
+            {isAdmin && (
+              <div onClick={toggleDevMode} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, marginBottom:14, padding:'11px 14px', background: devMode ? 'rgba(90,154,40,.10)' : 'rgba(255,255,255,.55)', borderRadius:12, border: devMode ? '1px solid rgba(90,154,40,.35)' : '1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'all .15s' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                  <span style={{ fontSize:16 }}>🛠️</span>
+                  <div>
+                    <div style={{ fontSize:12, fontWeight:600, color: devMode ? '#3a7a18' : 'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Mode développeur</div>
+                    <div style={{ fontSize:10, color: devMode ? 'rgba(58,122,24,.60)' : 'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif" }}>{devMode ? 'Activé — tout est visible' : 'Affiche tout ce qui est masqué'}</div>
+                  </div>
+                </div>
+                <div style={{ width:38, height:22, borderRadius:100, background: devMode ? '#5a9a28' : 'rgba(0,0,0,.14)', position:'relative', flexShrink:0, transition:'background .2s' }}>
+                  <div style={{ position:'absolute', top:2, left: devMode ? 18 : 2, width:18, height:18, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 3px rgba(0,0,0,.25)', transition:'left .2s' }} />
+                </div>
+              </div>
+            )}
+
             {/* Avatar + identité */}
             <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20, padding:'14px 16px', background:'rgba(255,255,255,.60)', borderRadius:14, border:'1px solid rgba(200,160,150,.18)' }}>
               <div style={{ width:58, height:58, borderRadius:'50%', background:'linear-gradient(135deg,#c8a0b0,#a07888)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, fontWeight:600, color:'#fff', flexShrink:0 }}>{initial}</div>
@@ -2918,6 +3063,38 @@ export default function DashboardPage() {
                 <div style={{ fontSize:14, fontWeight:500, color:'#1a1208', fontFamily:"'Jost',sans-serif", marginBottom:2 }}>{name ?? 'Jardinier·ère'}</div>
                 <div style={{ fontSize:11, color:'rgba(30,20,8,.45)', fontFamily:"'Jost',sans-serif" }}>{email}</div>
               </div>
+              {/* Badge niveau + barre — masqué par défaut, visible quand le mode développeur est activé */}
+              {devModeActive && (() => {
+                const lvl = userLevel
+                const isMax = lvl >= 3
+                const cfg = lvl === 3
+                  ? { label:'NIVEAU 3', bg:'rgba(200,137,74,0.14)', border:'rgba(200,137,74,0.38)', color:'#a06030' }
+                  : lvl === 2
+                  ? { label:'NIVEAU 2', bg:'rgba(90,154,40,0.12)', border:'rgba(90,154,40,0.35)', color:'#4a8820' }
+                  : { label:'NIVEAU 1', bg:'rgba(30,20,8,0.06)', border:'rgba(30,20,8,0.14)', color:'rgba(30,20,8,0.40)' }
+                const base = (lvl - 1) * 100
+                const pct = userActionCount !== null ? Math.min(100, Math.max(2, Math.round(((userActionCount - base) / 100) * 100))) : 0
+                return (
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:7, flexShrink:0 }}>
+                    <span style={{ fontSize:15, padding:'6px 16px', borderRadius:20, background:cfg.bg, border:`1px solid ${cfg.border}`, color:cfg.color, fontFamily:"'Jost',sans-serif", fontWeight:700, letterSpacing:'.10em' }}>{cfg.label}</span>
+                    {!isMax && (
+                      <div style={{ width:120 }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                          <span style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(30,20,8,.40)' }}>Niv. {lvl}</span>
+                          <span style={{ fontSize:10, fontFamily:"'Jost',sans-serif", fontWeight:600, color:'rgba(90,154,40,.70)' }}>Niv. {lvl+1}</span>
+                        </div>
+                        <div style={{ height:7, borderRadius:4, background:'rgba(90,154,40,0.12)', overflow:'hidden', marginBottom:5 }}>
+                          <div style={{ height:'100%', width:`${pct}%`, borderRadius:4, background:'linear-gradient(90deg,#78c040,#4a8820)', transition:'width .6s ease' }} />
+                        </div>
+                        <button onClick={() => setShowLevelInfo(true)} style={{ width:'100%', padding:'3px 8px', background:'rgba(140,100,200,0.15)', border:'1px solid rgba(140,100,200,0.35)', borderRadius:20, fontSize:10, color:'rgba(120,80,180,0.9)', fontFamily:"'Jost',sans-serif", cursor:'pointer', fontWeight:600, letterSpacing:'.04em' }}>
+                          En savoir +
+                        </button>
+                      </div>
+                    )}
+                    {isMax && <div style={{ fontSize:11, color:'#a06030', fontFamily:"'Jost',sans-serif", letterSpacing:'.06em' }}>Maximum ✦</div>}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Abonnement — masqué pour les pros sauf admin (géré dans Compte Pro) */}
@@ -3012,6 +3189,35 @@ export default function DashboardPage() {
                   <div style={{ fontSize:10, color:'rgba(30,20,8,.40)', fontFamily:"'Jost',sans-serif" }}>Votre avis sur l'application</div>
                 </div>
               </div>
+              {/* Espace pro / Cercle des Fondateurs — masqués par défaut, visibles quand le mode développeur est activé */}
+              {devModeActive && (
+                <>
+                  <div onClick={() => { setShowProfileModal(false); setOpenModalId('cercle') }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(138,106,154,.06)', borderRadius:12, border:'1px solid rgba(138,106,154,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(138,106,154,.14)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(138,106,154,.06)'}>
+                    <span style={{ fontSize:16 }}>🌸</span>
+                    <div>
+                      <div style={{ fontSize:12, fontWeight:500, color:'#6a4a7a', fontFamily:"'Jost',sans-serif" }}>Le Cercle des Fondateurs</div>
+                      <div style={{ fontSize:10, color:'rgba(106,74,122,.48)', fontFamily:"'Jost',sans-serif" }}>Ceux qui nous portent</div>
+                    </div>
+                  </div>
+                  {isPro ? (
+                    <div onClick={() => { setShowProfileModal(false); setShowProProfileModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))', borderRadius:12, border:'1px solid rgba(122,64,16,.25)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(122,64,16,.14)'} onMouseLeave={e=>e.currentTarget.style.background='linear-gradient(135deg,rgba(122,64,16,.08),rgba(90,46,8,.05))'}>
+                      <span style={{ fontSize:16 }}>✦</span>
+                      <div>
+                        <div style={{ fontSize:12, fontWeight:600, color:'#7a4010', fontFamily:"'Jost',sans-serif" }}>Compte Pro</div>
+                        <div style={{ fontSize:10, color:'rgba(122,64,16,.55)', fontFamily:"'Jost',sans-serif" }}>Ateliers, outils, identifiant partenaire</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div onClick={() => { setShowProfileModal(false); setShowUpgradeToProModal(true) }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.45)', borderRadius:12, border:'1px solid rgba(200,190,180,.22)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.75)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.45)'}>
+                      <span style={{ fontSize:15, opacity:.6 }}>🌿</span>
+                      <div>
+                        <div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Espace professionnel</div>
+                        <div style={{ fontSize:10, color:'rgba(30,20,8,.35)', fontFamily:"'Jost',sans-serif" }}>Ateliers, outils, partenariats</div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
               <div onClick={() => { setShowProfileModal(false); setProfileView('main'); signOut() }} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', background:'rgba(255,255,255,.55)', borderRadius:12, border:'1px solid rgba(200,160,150,.18)', cursor:'pointer', transition:'background .15s' }} onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,.85)'} onMouseLeave={e=>e.currentTarget.style.background='rgba(255,255,255,.55)'}>
                 <span style={{ fontSize:16 }}>🚪</span>
                 <div><div style={{ fontSize:12, fontWeight:500, color:'rgba(30,20,8,.65)', fontFamily:"'Jost',sans-serif" }}>Se déconnecter</div></div>
@@ -3026,6 +3232,7 @@ export default function DashboardPage() {
                 trialDaysLeft={trialDaysLeft}
                 isPro={isPro}
                 isAdmin={isAdmin}
+                devMode={devModeActive}
                 userId={user?.id}
                 onBack={() => setProfileView('main')}
                 onOpenFleur={() => { setShowProfileModal(false); setProfileView('main'); setOpenModalId('jardin') }}

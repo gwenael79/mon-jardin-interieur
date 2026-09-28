@@ -657,6 +657,9 @@ function translateAuthError(msg) {
 
 export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated }) {
   const { signIn } = useAuth()
+  // Mode développeur (bascule activée depuis le profil, cf. DashboardV2) — persiste en
+  // localStorage donc reste lisible ici, avant toute connexion, sur le même appareil.
+  const devModeOn = (() => { try { return localStorage.getItem('mji_dev_mode') === '1' } catch { return false } })()
 
   // 'welcome' | 'login' | 'register' | 'flower' | 'reset' | 'newpassword'
   const [rightPanel, setRightPanel] = useState(
@@ -1023,19 +1026,22 @@ export function AuthPage({ initialView = 'login', resetError, onPasswordUpdated 
                 <div className="auth-tagline">Chaque geste de soin est une graine.</div>
               )}
 
-              {/* Entrée pro — séparée visuellement */}
-              <div style={{marginTop:16,paddingTop:14,borderTop:'1px solid rgba(42,104,8,.10)',textAlign:'center'}}>
-                <button
-                  onClick={() => setShowProModal(true)}
-                  style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:13,fontWeight:400,color:'rgba(15,42,8,.55)',textDecoration:'underline',textUnderlineOffset:3,transition:'color .15s',letterSpacing:'.01em'}}
-                  onMouseOver={e=>e.target.style.color='rgba(15,42,8,.85)'}
-                  onMouseOut={e=>e.target.style.color='rgba(15,42,8,.55)'}
-                >
-                  Vous êtes professionnel·le du bien-être ? Créer un espace pro
-                </button>
-              </div>
+              {/* Accès pro — masqué au public, visible seulement quand le mode développeur est
+                  activé (bascule dans le profil, persistée en localStorage sur cet appareil) */}
+              {devModeOn && (
+                <div style={{marginTop:16,paddingTop:14,borderTop:'1px solid rgba(42,104,8,.10)',textAlign:'center'}}>
+                  <button
+                    onClick={() => setShowProModal(true)}
+                    style={{background:'none',border:'none',padding:0,cursor:'pointer',fontFamily:"'Jost',sans-serif",fontSize:13,fontWeight:400,color:'rgba(15,42,8,.55)',textDecoration:'underline',textUnderlineOffset:3,transition:'color .15s',letterSpacing:'.01em'}}
+                    onMouseOver={e=>e.target.style.color='rgba(15,42,8,.85)'}
+                    onMouseOut={e=>e.target.style.color='rgba(15,42,8,.55)'}
+                  >
+                    Vous êtes professionnel·le du bien-être ? Créer un espace pro
+                  </button>
+                </div>
+              )}
 
-              {import.meta.env.DEV && (
+              {devModeOn && (
                 <button onClick={() => setShowProWelcome(true)} style={{marginTop:12,width:'100%',padding:'10px',borderRadius:8,border:'1px dashed rgba(90,154,40,.40)',background:'transparent',color:'rgba(90,154,40,.80)',fontSize:18,fontFamily:"'Jost',sans-serif",cursor:'pointer'}}>
                   ◎ Aperçu présentation pro
                 </button>
